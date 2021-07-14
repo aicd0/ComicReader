@@ -1,0 +1,57 @@
+﻿<Page
+    x:Class="ComicReader.Views.HistoryPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:ComicReader.Views"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:data="using:ComicReader.Data"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="Transparent"
+    NavigationCacheMode="Required">
+
+    <Page.Resources>
+        <CollectionViewSource x:Name="HistorySource" IsSourceGrouped="True"/>
+    </Page.Resources>
+
+    <Grid>
+        <ListView ItemsSource="{x:Bind HistorySource.View, Mode=OneWay}">
+            <ListView.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <ItemsStackPanel AreStickyGroupHeadersEnabled="False"/>
+                </ItemsPanelTemplate>
+            </ListView.ItemsPanel>
+            <ListView.ItemTemplate>
+                <DataTemplate x:DataType="data:HistoryItem">
+                    <StackPanel Orientation="Vertical"
+                                PointerPressed="ItemPointerPressed">
+                        <StackPanel.ContextFlyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem Text="Open in new tab"
+                                                Icon="Document"
+                                                Click="OpenInNewTabClick"/>
+                                <MenuFlyoutSeparator/>
+                                <MenuFlyoutItem Text="Delete"
+                                                Icon="Delete"
+                                                Click="DeleteClick"/>
+                            </MenuFlyout>
+                        </StackPanel.ContextFlyout>
+                        <TextBlock Text="{x:Bind Id}"/>
+                        <TextBlock Text="{x:Bind Time}"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ListView.ItemTemplate>
+            <ListView.GroupStyle>
+                <GroupStyle >
+                    <GroupStyle.HeaderTemplate>
+                        <DataTemplate x:DataType="data:HistoryItemGroup">
+                            <Border AutomationProperties.Name="{x:Bind Key}">
+                                <TextBlock Text="{x:Bind Key}" Style="{ThemeResource TitleTextBlockStyle}"/>
+                            </Border>
+                        </DataTemplate>
+                    </GroupStyle.HeaderTemplate>
+                </GroupStyle>
+            </ListView.GroupStyle>
+        </ListView>
+    </Grid>
+</Page>

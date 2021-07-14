@@ -1,0 +1,24 @@
+﻿<UserControl
+    x:Class="ComicReader.Controls.TagButton"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:ComicReader.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    d:DesignHeight="100"
+    d:DesignWidth="100">
+
+    <Button Background="CornflowerBlue"
+            CornerRadius="13"
+            Height="26"
+            MinWidth="26"
+            Content="{x:Bind Context.Tag}"
+            Padding="9,0,9,2"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Center"
+            FontSize="13"
+            FontWeight="Bold">
+    </Button>
+    
+</UserControl>

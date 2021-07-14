@@ -1,0 +1,172 @@
+﻿<Page
+    x:Class="ComicReader.Views.ContentPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:ComicReader.Views"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Resources/Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Page.Resources>
+
+    <Grid>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <Grid x:Name="TopTile"
+                  VerticalAlignment="Top"
+                  Background="{ThemeResource ContentPageTopBackground}"
+                  Visibility="{x:Bind Shared.IsFullscreenN, Mode=OneWay}">
+                <StackPanel Orientation="Vertical">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Top Left Buttons -->
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                            <AppBarButton Icon="Back"
+                                  Style="{StaticResource AppBarButtonRevealStyle}"
+                                  Width="40"
+                                  Height="40"
+                                  LabelPosition="Collapsed"
+                                  ToolTipService.ToolTip="Back"
+                                  Click="GoBackClick"
+                                  IsEnabled="{x:Bind ContentFrame.CanGoBack, Mode=OneWay}"/>
+                            <AppBarButton Icon="Forward"
+                                  Style="{StaticResource AppBarButtonRevealStyle}"
+                                  Width="40"
+                                  Height="40"
+                                  Margin="1,0,0,0"
+                                  LabelPosition="Collapsed"
+                                  ToolTipService.ToolTip="Forward"
+                                  Click="GoForwardClick"
+                                  IsEnabled="{x:Bind ContentFrame.CanGoForward, Mode=OneWay}"/>
+                            <AppBarButton Icon="Home"
+                                  Style="{StaticResource AppBarButtonRevealStyle}"
+                                  Width="40"
+                                  Height="40"
+                                  Margin="1,0,0,0"
+                                  LabelPosition="Collapsed"
+                                  ToolTipService.ToolTip="Home"
+                                  Click="HomeClick"/>
+                        </StackPanel>
+
+                        <!-- Search Box -->
+                        <AutoSuggestBox Style="{StaticResource AutoSuggestBoxStyle1}"
+                                x:Name="SearchBox"
+                                Grid.Column="1"
+                                TextChanged="SearchBox_TextChanged"
+                                QuerySubmitted="SearchBox_QuerySubmitted"
+                                PlaceholderText="Type here to search"
+                                QueryIcon="Find"
+                                VerticalAlignment="Center"
+                                Margin="15,0,15,0"
+                                HorizontalAlignment="Left"
+                                Width="300"/>
+
+                        <!-- Top Right Buttons -->
+                        <StackPanel Grid.Column="2"
+                            Margin="0,1,0,1"
+                            VerticalAlignment="Center"
+                            Orientation="Horizontal">
+                            <StackPanel Orientation="Horizontal" Visibility="{x:Bind Shared.IsReaderPage, Mode=OneWay}">
+                                <!-- Zoom -->
+                                <AppBarButton Style="{StaticResource ContentPageAppBarButtonStyle}"
+                                  ToolTipService.ToolTip="Zoom In"
+                                  IsEnabled="{x:Bind Shared.SharedReaderPage.CanZoomIn, Mode=OneWay}"
+                                  Click="ZoomIn_Click">
+                                    <AppBarButton.Content>
+                                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE8A3;"/>
+                                    </AppBarButton.Content>
+                                </AppBarButton>
+                                <AppBarButton Style="{StaticResource ContentPageAppBarButtonStyle}"
+                                  ToolTipService.ToolTip="Zoom Out"
+                                  IsEnabled="{x:Bind Shared.SharedReaderPage.CanZoomOut, Mode=OneWay}"
+                                  Click="ZoomOut_Click">
+                                    <AppBarButton.Content>
+                                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE71F;"/>
+                                    </AppBarButton.Content>
+                                </AppBarButton>
+                                <!-- Two pages mode -->
+                                <AppBarToggleButton Style="{StaticResource ContentPageAppBarToggleButtonStyle}"
+                                                    Checked="TwoPagesModeBt_Changed"
+                                                    Unchecked="TwoPagesModeBt_Changed"
+                                                    ToolTipService.ToolTip="Two pages">
+                                    <AppBarToggleButton.Content>
+                                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE89A;"/>
+                                    </AppBarToggleButton.Content>
+                                </AppBarToggleButton>
+                                <!-- Favorite -->
+                                <AppBarButton Style="{StaticResource ContentPageAppBarButtonStyle}"
+                                              ToolTipService.ToolTip="Add this comic to favorites"
+                                              IsEnabled="{x:Bind Shared.SharedReaderPage.IsInternal, Mode=OneWay}"
+                                              Click="AddToFavoriteBt_Click">
+                                    <AppBarButton.Content>
+                                        <Grid>
+                                            <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE734;"/>
+                                            <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE735;"
+                                                      Visibility="{x:Bind Shared.SharedReaderPage.IsFavorite, Mode=OneWay}"
+                                                      Foreground="DeepSkyBlue"/>
+                                        </Grid>
+                                    </AppBarButton.Content>
+                                </AppBarButton>
+                                <AppBarSeparator/>
+                            </StackPanel>
+                            <!-- Expand favorites pane -->
+                            <AppBarButton Click="FavoriteBt_Click"
+                                  Style="{StaticResource ContentPageAppBarButtonStyle}"
+                                  ToolTipService.ToolTip="Favorites">
+                                <AppBarButton.Content>
+                                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE728;"/>
+                                </AppBarButton.Content>
+                            </AppBarButton>
+                            <!-- More -->
+                            <AppBarButton Style="{StaticResource ContentPageAppBarButtonStyle}"
+                                  Margin="1,0,0,0"
+                                  ToolTipService.ToolTip="Settings and more">
+                                <AppBarButton.Content>
+                                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE712;"/>
+                                </AppBarButton.Content>
+                                <AppBarButton.Flyout>
+                                    <MenuFlyout Placement="BottomEdgeAlignedRight">
+                                        <MenuFlyoutItem Text="Comic Info"
+                                                        Click="ComicInfoBt_Click"
+                                                        Visibility="{x:Bind Shared.IsReaderPage, Mode=OneWay}">
+                                            <MenuFlyoutItem.Icon>
+                                                <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE946;"/>
+                                            </MenuFlyoutItem.Icon>
+                                        </MenuFlyoutItem>
+                                        <MenuFlyoutSeparator Visibility="{x:Bind Shared.IsReaderPage, Mode=OneWay}"/>
+                                        <MenuFlyoutItem Text="Settings" Icon="Setting" Click="SettingBt_Click"/>
+                                    </MenuFlyout>
+                                </AppBarButton.Flyout>
+                            </AppBarButton>
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Grid>
+            <SplitView x:Name="_UtilityPane"
+                       DisplayMode="Overlay"
+                       PanePlacement="Right"
+                       OpenPaneLength="380"
+                       Grid.Row="1">
+                <Frame x:Name="ContentFrame"/>
+                <SplitView.Pane>
+                    <local:UtilityPane/>
+                </SplitView.Pane>
+            </SplitView>
+        </Grid>
+    </Grid>
+</Page>

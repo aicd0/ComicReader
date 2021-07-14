@@ -1,0 +1,98 @@
+﻿<Page
+    x:Class="ComicReader.Views.BlankPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:ComicReader.Views"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:data="using:ComicReader.Data"
+    xmlns:converters="using:ComicReader.Converters"
+    xmlns:controls="using:Microsoft.Toolkit.Uwp.UI.Controls"
+    xmlns:controls_local="using:ComicReader.Controls"
+    xmlns:winui="using:Microsoft.UI.Xaml.Controls"
+    mc:Ignorable="d"
+    NavigationCacheMode="Enabled"
+    Background="#000000">
+
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Resources/Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            
+            <DataTemplate x:Key="FolderItemCommonTemplate" x:DataType="data:FolderData">
+                <controls_local:FolderItemDetailed Title="{x:Bind Folder}"
+                                                   Detail=""
+                                                   Glyph="&#xE8B7;"/>
+            </DataTemplate>
+            <DataTemplate x:Key="FolderItemAddNewTemplate" x:DataType="data:FolderData">
+                <controls_local:FolderItemDetailed Title="Add a folder"
+                                                   Detail="Include more folders in your collection"
+                                                   Glyph="&#xE8F4;"/>
+            </DataTemplate>
+            <converters:FolderDataTemplateSelector x:Key="FolderItemTemplateSelector"
+                                                   CommonTemplate="{StaticResource FolderItemCommonTemplate}"
+                                                   AddNewTemplate="{StaticResource FolderItemAddNewTemplate}"/>
+        </ResourceDictionary>
+    </Page.Resources>
+
+    <Grid>
+        <ScrollViewer Padding="10">
+            <StackPanel Orientation="Vertical">
+                <Grid Height="10"/>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock x:Uid="Library"
+                               Grid.Column="0"
+                               FontSize="24"
+                               Text="Library"
+                               Margin="10,0,0,0"/>
+                    <StackPanel Grid.Column="1" Spacing="5" Orientation="Horizontal">
+                        <HyperlinkButton Content="Show all" Click="ShowAll_Click"/>
+                        <HyperlinkButton Content="Show hiddens" Click="ShowHiddens_Click"/>
+                        <Grid Width="10"/>
+                    </StackPanel>
+                </Grid>
+                <Grid Height="10"/>
+                <controls:AdaptiveGridView Style="{StaticResource HomePageAdaptiveGridViewStyle}"
+                                           ItemsSource="{x:Bind ComicItemSource}"
+                                           OneRowModeEnabled="True"
+                                           ItemHeight="310"
+                                           DesiredWidth="160"
+                                           ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                           ScrollViewer.HorizontalScrollMode="Disabled"
+                                           StretchContentForSingleRow="False">
+                    <controls:AdaptiveGridView.ItemContainerStyle>
+                        <Style TargetType="GridViewItem">
+                            <Setter Property="Margin" Value="6"/>
+                        </Style>
+                    </controls:AdaptiveGridView.ItemContainerStyle>
+                    <controls:AdaptiveGridView.ItemTemplate>
+                        <DataTemplate x:DataType="data:SearchResultData">
+                            <controls_local:ComicItemVertical DataContext="{x:Bind}"/>
+                        </DataTemplate>
+                    </controls:AdaptiveGridView.ItemTemplate>
+                </controls:AdaptiveGridView>
+                <Grid Height="10"/>
+                <TextBlock x:Uid="Folders"
+                           FontSize="24"
+                           Padding="10,0,0,0"/>
+                <Grid Height="10"/>
+                <controls:AdaptiveGridView Style="{StaticResource HomePageAdaptiveGridViewStyle}"
+                                           ItemsSource="{x:Bind FolderDataSource}"
+                                           DesiredWidth="295"
+                                           ItemTemplateSelector="{StaticResource FolderItemTemplateSelector}"
+                                           StretchContentForSingleRow="False">
+                    <controls:AdaptiveGridView.ItemContainerStyle>
+                        <Style TargetType="GridViewItem">
+                            <Setter Property="Margin" Value="6"/>
+                        </Style>
+                    </controls:AdaptiveGridView.ItemContainerStyle>
+                </controls:AdaptiveGridView>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

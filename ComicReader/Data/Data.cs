@@ -1,0 +1,172 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using Windows.UI.Xaml;
+using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Input;
+using Windows.UI.Xaml.Media.Imaging;
+
+namespace ComicReader.Data
+{
+    public class SearchResultData : INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler PropertyChanged;
+        public PointerEventHandler OnItemPressed { get; set; }
+        public RoutedEventHandler OnHideClicked { get; set; }
+        public RoutedEventHandler OnUnhideClicked { get; set; }
+        public RoutedEventHandler OnAddToFavoritesClicked { get; set; }
+        public RoutedEventHandler OnRemoveFromFavoritesClicked { get; set; }
+
+        public SearchResultData()
+        {
+            Image = new BitmapImage();
+            Title = "";
+            Detail = "";
+            Id = "";
+            Rating = -1;
+            Progress = "";
+            m_IsFavorite = false;
+            m_IsImageLoaded = false;
+        }
+
+        public ComicData Comic;
+        public BitmapImage Image { get; set; }
+        public string Title { get; set; }
+        public string Detail { get; set; }
+        public string Id { get; set; }
+        public int Rating { get; set; }
+        public string Progress { get; set; }
+        public bool IsRatingVisible => Rating != -1;
+
+        // IsFavorite
+        private bool m_IsFavorite;
+        public bool IsFavorite
+        {
+            get => m_IsFavorite;
+            set { m_IsFavorite = value; }
+        }
+        public bool IsFavoriteN => !m_IsFavorite;
+
+        // IsHide
+        public bool IsHide => Comic.Hidden;
+        public bool IsHideN => !IsHide;
+
+        private bool m_IsImageLoaded;
+        public bool IsImageLoaded
+        {
+            get => m_IsImageLoaded;
+            set
+            {
+                m_IsImageLoaded = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsImageLoaded"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsImageLoadedN"));
+            }
+        }
+        public bool IsImageLoadedN => !m_IsImageLoaded;
+    };
+
+    public enum TreeItemType { Item, Filter };
+
+    public class FavoritesItem
+    {
+        public FavoritesItem(string name, TreeItemType type, FavoritesItem parent)
+        {
+            Name = name;
+            EditingName = name;
+            Parent = parent;
+            m_type = type;
+            Children = new ObservableCollection<FavoritesItem>();
+            IsRenaming = false;
+            IsExpanded = false;
+        }
+
+        private TreeItemType m_type;
+
+        public string Name { get; set; }
+        public string EditingName { get; set; }
+        public string Id { get; set; }
+        public bool IsRenaming { get; set; }
+        public bool IsExpanded { get; set; }
+        public ObservableCollection<FavoritesItem> Children { get; set; }
+        public FavoritesItem Parent { get; set; }
+        public TreeItemType Type
+        {
+            get { return m_type; }
+            set { m_type = value; }
+        }
+        public bool AllowDrop
+        {
+            get { return m_type == TreeItemType.Filter; }
+            set { m_type = value ? TreeItemType.Filter : TreeItemType.Item; }
+        }
+        public bool IsItem
+        {
+            get { return m_type == TreeItemType.Item; }
+            set { m_type = value ? TreeItemType.Item : TreeItemType.Filter; }
+        }
+    };
+
+    public class HistoryItem
+    {
+        public string Id { get; set; }
+        public string Time { get; set; }
+    }
+
+    public class HistoryItemGroup : ObservableCollection<HistoryItem>
+    {
+        public HistoryItemGroup(string key) : base()
+        {
+            Key = key;
+        }
+
+        public string Key { get; set; }
+    }
+
+    public class ReaderImageData
+    {
+        public Action<ReaderImageData> OnContainerSet;
+        public Grid Container;
+
+        public BitmapImage Image1 { get; set; }
+        public BitmapImage Image2 { get; set; }
+        public int Index { get; set; }
+    };
+
+    public class ReaderTagData
+    {
+        public ReaderTagData(string name)
+        {
+            Name = name;
+            Tags = new List<ReaderSingleTagData>();
+        }
+
+        public string Name { get; set; }
+        public List<ReaderSingleTagData> Tags { get; set; }
+    };
+
+    public class ReaderSingleTagData
+    {
+        public ReaderSingleTagData(string tag)
+        {
+            Tag = tag;
+        }
+
+        public string Tag { get; set; }
+    };
+
+    public class FolderData
+    {
+        public PointerEventHandler OnItemPressed { get; set; }
+        public RoutedEventHandler OnRemoveClicked { get; set; }
+
+        public string Folder { get; set; }
+        public bool IsAddNew { get; set; }
+        public bool IsAddNewN { get => !IsAddNew; }
+
+        public static Func<FolderData, FolderData, bool> ContentEquals = delegate (FolderData a, FolderData b)
+        {
+            return a.Folder == b.Folder && a.IsAddNew == b.IsAddNew;
+        };
+    }
+}

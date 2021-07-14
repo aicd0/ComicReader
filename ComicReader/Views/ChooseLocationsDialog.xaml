@@ -1,0 +1,69 @@
+﻿<ContentDialog
+    x:Class="ComicReader.Views.ChooseLocationsDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:ComicReader.Views"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:data="using:ComicReader.Data"
+    xmlns:converters="using:ComicReader.Converters"
+    mc:Ignorable="d"
+    Title="Build your comic collections from your local files"
+    PrimaryButtonText="Done"
+    PrimaryButtonClick="ContentDialog_PrimaryButtonClick">
+
+    <ContentDialog.Resources>
+        <DataTemplate x:Key="CommonTemplate" x:DataType="data:FolderData">
+            <Grid Background="Transparent"
+                  PointerPressed="RemoveFolderPointerPressed">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0"
+                           Text="{x:Bind Folder}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           TextWrapping="Wrap"/>
+                <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
+                          Glyph="&#xE894;"
+                          FontSize="14"
+                          Grid.Column="1"
+                          Margin="6,0,0,0"/>
+            </Grid>
+        </DataTemplate>
+
+        <DataTemplate x:Key="AddNewTemplate" x:DataType="data:FolderData">
+            <Grid Background="Transparent"
+                  PointerPressed="AddNewPointerPressed">
+                <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE710;"/>
+            </Grid>
+        </DataTemplate>
+
+        <converters:FolderDataTemplateSelector x:Key="FolderItemTemplateSelector"
+                                               CommonTemplate="{StaticResource CommonTemplate}"
+                                               AddNewTemplate="{StaticResource AddNewTemplate}"/>
+    </ContentDialog.Resources>
+
+    <Grid>
+        <StackPanel Orientation="Vertical">
+            <TextBlock Text="Right now, we're watching these folders:"/>
+            <Grid Height="10"/>
+            <ListView ItemTemplateSelector="{StaticResource FolderItemTemplateSelector}"
+                      Loaded="ListView_Loaded"
+                      ItemsSource="{x:Bind FolderDataSource}">
+                <ListView.ItemContainerStyle>
+                    <Style TargetType="ListViewItem">
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                        <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+                        <Setter Property="Margin" Value="0,5,0,0"/>
+                        <Setter Property="MinHeight" Value="70"/>
+                        <Setter Property="Width" Value="300"/>
+                        <Setter Property="Padding" Value="20,10"/>
+                        <Setter Property="Background" Value="{ThemeResource SystemAccentColor}"/>
+                    </Style>
+                </ListView.ItemContainerStyle>
+            </ListView>
+        </StackPanel>
+    </Grid>
+</ContentDialog>
