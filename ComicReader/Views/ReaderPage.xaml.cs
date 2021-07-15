@@ -1,4 +1,6 @@
-﻿using System;
+﻿//#define DEBUG_1
+
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -38,7 +40,11 @@ namespace ComicReader.Views
 
         private bool m_vertical;
         private bool m_one_page;
+        private bool m_use_absolute_value;
         private bool m_default_value_initialized;
+        private double m_margin_start_final;
+        private double m_margin_end_final;
+        private double m_default_parallel_ratio;
         private double m_default_horizontal_offset;
         private double m_default_vertical_offset;
         private float m_default_zoom_factor;
@@ -64,14 +70,31 @@ namespace ComicReader.Views
                 InitializeDefaultValue();
                 return m_default_zoom_factor;
             }
+            set
+            {
+                m_default_zoom_factor = value;
+            }
         }
         public double HorizontalOffset => ThisScrollViewer.HorizontalOffset;
         public double HorizontalOffsetFinal
         {
             get
             {
+                if (m_use_absolute_value || m_vertical)
+                {
+                    InitializeDefaultValue();
+                    return m_default_horizontal_offset;
+                }
+                else
+                {
+                    return ParallelOffsetFinal;
+                }
+            }
+            set
+            {
                 InitializeDefaultValue();
-                return m_default_horizontal_offset;
+                m_use_absolute_value = true;
+                m_default_horizontal_offset = value;
             }
         }
         public double VerticalOffset => ThisScrollViewer.VerticalOffset;
@@ -79,12 +102,61 @@ namespace ComicReader.Views
         {
             get
             {
+                if (m_use_absolute_value || !m_vertical)
+                {
+                    InitializeDefaultValue();
+                    return m_default_vertical_offset;
+                }
+                else
+                {
+                    return ParallelOffsetFinal;
+                }
+            }
+            set
+            {
                 InitializeDefaultValue();
-                return m_default_vertical_offset;
+                m_use_absolute_value = true;
+                m_default_vertical_offset = value;
+            }
+        }
+        public double ParallelRatioFinal
+        {
+            get
+            {
+                if (m_use_absolute_value)
+                {
+                    return (ParallelOffsetFinal + ViewportParallelLength * 0.5 - MarginStartFinal)
+                        / (ExtentParallelLengthFinal - MarginStartFinal - MarginEndFinal);
+                }
+                else
+                {
+                    InitializeDefaultValue();
+                    return m_default_parallel_ratio;
+                }
+            }
+            set
+            {
+                InitializeDefaultValue();
+                m_use_absolute_value = false;
+                m_default_parallel_ratio = value;
             }
         }
         public double ParallelOffset => m_vertical ? VerticalOffset : HorizontalOffset;
-        public double ParallelOffsetFinal => m_vertical ? VerticalOffsetFinal : HorizontalOffsetFinal;
+        public double ParallelOffsetFinal
+        {
+            get
+            {
+                if (m_use_absolute_value)
+                {
+                    return m_vertical ? VerticalOffsetFinal : HorizontalOffsetFinal;
+                }
+                else
+                {
+                    return ParallelRatioFinal * (ExtentParallelLengthFinal - MarginStartFinal - MarginEndFinal)
+                        + MarginStartFinal - ViewportParallelLength * 0.5;
+                }
+            }
+        }
         public double PerpendicularOffset => m_vertical ? ThisScrollViewer.HorizontalOffset : ThisScrollViewer.VerticalOffset;
         public double ViewportParallelLength => m_vertical ? ThisScrollViewer.ViewportHeight : ThisScrollViewer.ViewportWidth;
         public double ViewportPerpendicularLength => m_vertical ? ThisScrollViewer.ViewportWidth : ThisScrollViewer.ViewportHeight;
@@ -92,18 +164,34 @@ namespace ComicReader.Views
         public double ExtentParallelLengthFinal => FinalVal(ExtentParallelLength);
 
         // list view
-        public double MarginStart => m_vertical ? ThisListView.Margin.Top : ThisListView.Margin.Left;
-        public double MarginEnd => m_vertical ? ThisListView.Margin.Bottom : ThisListView.Margin.Right;
+        public double MarginStartFinal
+        {
+            get
+            {
+                InitializeDefaultValue();
+                return m_margin_start_final * ZoomFactorFinal;
+            }
+        }
+        public double MarginEndFinal
+        {
+            get
+            {
+                InitializeDefaultValue();
+                return m_margin_end_final * ZoomFactorFinal;
+            }
+        }
         public void SetMargin(double start, double end)
         {
-            Thickness old = ThisListView.Margin;
+            InitializeDefaultValue();
+            m_margin_start_final = start;
+            m_margin_end_final = end;
             if (m_vertical)
             {
-                ThisListView.Margin = new Thickness(old.Left, start, old.Right, end);
+                ThisListView.Margin = new Thickness(0.0, start, 0.0, end);
             }
             else
             {
-                ThisListView.Margin = new Thickness(start, old.Top, end, old.Bottom);
+                ThisListView.Margin = new Thickness(start, 0.0, end, 0.0);
             }
         }
 
@@ -180,47 +268,76 @@ namespace ComicReader.Views
                 }
             });
         }
-        public bool ChangeView(double? horizontal_offset, double? vertical_offset, float? zoom_factor, bool disable_animation)
+        public bool ChangeView(float? zoom_factor, double? horizontal_offset, double? vertical_offset, bool disable_animation)
         {
             if (!IsReady)
             {
                 return false;
             }
 
-            InitializeDefaultValue();
-
-            double _horizontal_offset = m_default_horizontal_offset;
-            double _vertical_offset = m_default_vertical_offset;
-            float _zoom_factor = m_default_zoom_factor;
+            if (horizontal_offset == null && vertical_offset == null && zoom_factor == null)
+            {
+                return true;
+            }
 
             if (horizontal_offset != null)
             {
-                _horizontal_offset = (double)horizontal_offset;
+                HorizontalOffsetFinal = (double)horizontal_offset;
             }
 
             if (vertical_offset != null)
             {
-                _vertical_offset = (double)vertical_offset;
+                VerticalOffsetFinal = (double)vertical_offset;
             }
 
             if (zoom_factor != null)
             {
-                _zoom_factor = (float)zoom_factor;
+                ZoomFactorFinal = (float)zoom_factor;
             }
 
             if (disable_animation)
             {
                 m_default_disable_animation = true;
             }
-
-            if (!ThisScrollViewer.ChangeView(_horizontal_offset, _vertical_offset, _zoom_factor, m_default_disable_animation))
+#if DEBUG_1
+            System.Diagnostics.Debug.Print("Commit:"
+                + " Z=" + ZoomFactorFinal.ToString()
+                + ",H=" + HorizontalOffsetFinal.ToString()
+                + ",V=" + VerticalOffsetFinal.ToString()
+                + ",D=" + m_default_disable_animation
+                + "\n");
+#endif
+            ThisScrollViewer.ChangeView(HorizontalOffsetFinal, VerticalOffsetFinal, ZoomFactorFinal, m_default_disable_animation);
+            return true;
+        }
+        public bool ChangeView(float? zoom_factor, double parallel_ratio, bool disable_animation)
+        {
+            if (!IsReady)
             {
                 return false;
             }
 
-            m_default_horizontal_offset = _horizontal_offset;
-            m_default_vertical_offset = _vertical_offset;
-            m_default_zoom_factor = _zoom_factor;
+            ParallelRatioFinal = parallel_ratio;
+
+            if (zoom_factor != null)
+            {
+                ZoomFactorFinal = (float)zoom_factor;
+            }
+
+            if (disable_animation)
+            {
+                m_default_disable_animation = true;
+            }
+#if DEBUG_1
+            System.Diagnostics.Debug.Print("Commit:"
+                + " P=" + ParallelRatioFinal.ToString()
+                + ",Z=" + ZoomFactorFinal.ToString()
+                + ",H=" + HorizontalOffsetFinal.ToString()
+                + ",V=" + VerticalOffsetFinal.ToString()
+                + ",D=" + m_default_disable_animation
+                + "\n");
+#endif
+            ThisScrollViewer.ChangeView(HorizontalOffsetFinal, VerticalOffsetFinal, ZoomFactorFinal, m_default_disable_animation);
             return true;
         }
         public void FinalValueExpired()
@@ -236,14 +353,24 @@ namespace ComicReader.Views
                 throw new Exception();
             }
 
-            if (!m_default_value_initialized)
+            if (m_default_value_initialized)
             {
-                m_default_value_initialized = true;
-                m_default_horizontal_offset = ThisScrollViewer.HorizontalOffset;
-                m_default_vertical_offset = ThisScrollViewer.VerticalOffset;
-                m_default_zoom_factor = ThisScrollViewer.ZoomFactor;
-                m_default_disable_animation = false;
+                return;
             }
+
+            m_margin_start_final = m_vertical ? ThisListView.Margin.Top : ThisListView.Margin.Left;
+            m_margin_end_final = m_vertical ? ThisListView.Margin.Bottom : ThisListView.Margin.Right;
+
+            double margin_start = m_margin_start_final * ZoomFactor;
+            double margin_end = m_margin_end_final * ZoomFactor;
+            m_default_parallel_ratio = (ParallelOffset + ViewportParallelLength * 0.5 - margin_start)
+                / (ExtentParallelLength - margin_start - margin_end);
+            m_default_horizontal_offset = HorizontalOffset;
+            m_default_vertical_offset = VerticalOffset;
+            m_default_zoom_factor = ZoomFactor;
+            m_default_disable_animation = false;
+
+            m_default_value_initialized = true;
         }
     }
 
@@ -415,7 +542,6 @@ namespace ComicReader.Views
         private const int max_zoom = 200;
         private const int min_zoom = 90;
         private double m_position;
-        private double m_last_position;
         PointerPoint m_drag_pointer;
 
         public ReaderPageShared Shared { get; set; }
@@ -431,7 +557,6 @@ namespace ComicReader.Views
             m_page = -1;
             m_zoom = 90;
             m_position = 0.0;
-            m_last_position = 0.0;
             m_drag_pointer = null;
 
             Shared = new ReaderPageShared();
@@ -807,7 +932,7 @@ namespace ComicReader.Views
                 return;
             }
 
-            double page_parallel_offset = control.MarginStart;
+            double page_parallel_offset = 0.0;
             int index_final = control.IndexFromPage((int)page);
 
             for (int i = 0; i <= index_final; ++i)
@@ -824,7 +949,8 @@ namespace ComicReader.Views
             }
 
             page_parallel_offset += control.GridParallelLength(index_final) * 0.5;
-            double parallel_offset = page_parallel_offset * control.ThisScrollViewer.ZoomFactor - control.ViewportParallelLength * 0.5;
+            double parallel_offset = page_parallel_offset * control.ThisScrollViewer.ZoomFactor
+                + control.MarginStartFinal - control.ViewportParallelLength * 0.5;
             control.SetOffset(ref horizontal_offset, ref vertical_offset, parallel_offset, null);
         }
 
@@ -854,12 +980,13 @@ namespace ComicReader.Views
             bool zoom_null = zoom == null;
             int zoom_cpy = zoom_null ? (int)(control.ZoomFactorFinal / zoom_coefficient) : (int)zoom;
 
-            if (zoom_cpy > max_zoom)
+            // an error less than one is acceptable
+            if (zoom_cpy - max_zoom > 1)
             {
                 zoom_sat = true;
                 zoom_cpy = max_zoom;
             }
-            else if (zoom_cpy < min_zoom)
+            else if (min_zoom - zoom_cpy > 1)
             {
                 zoom_sat = true;
                 zoom_cpy = min_zoom;
@@ -903,18 +1030,43 @@ namespace ComicReader.Views
                 vertical_offset = 0;
             }
         }
-        
-        private void SetScrollViewer(ReaderControl control, int? page, int? zoom, bool disable_animation,
-            double? horizontal_offset, double? vertical_offset)
+
+        private void _SetScrollViewer(ReaderControl control, int? zoom, bool disable_animation,
+            int? page, double? parallel_ratio, double? horizontal_offset, double? vertical_offset)
         {
             if (!control.IsReady)
             {
                 return;
             }
-
+#if DEBUG_1
+            System.Diagnostics.Debug.Print("ParamIn:"
+                + " Z=" + zoom.ToString()
+                + ",D=" + disable_animation.ToString()
+                + ",Pg=" + page.ToString()
+                + ",P=" + parallel_ratio.ToString()
+                + ",H=" + horizontal_offset.ToString()
+                + ",V=" + vertical_offset.ToString()
+                + "\n");
+#endif
             SetScrollViewerPage(control, page, ref horizontal_offset, ref vertical_offset);
             SetScrollViewerZoom(control, ref horizontal_offset, ref vertical_offset, ref zoom, out float? zoom_out);
-            control.ChangeView(horizontal_offset, vertical_offset, zoom_out, disable_animation);
+#if DEBUG_1
+            System.Diagnostics.Debug.Print("ParamOut:"
+                + " H=" + horizontal_offset.ToString()
+                + ",V=" + vertical_offset.ToString()
+                + ",Z=" + zoom.ToString()
+                + ",Zo=" + zoom_out.ToString()
+                + ",D=" + disable_animation.ToString()
+                + "\n");
+#endif
+            if (parallel_ratio != null)
+            {
+                control.ChangeView(zoom_out, (double)parallel_ratio, disable_animation);
+            }
+            else
+            {
+                control.ChangeView(zoom_out, horizontal_offset, vertical_offset, disable_animation);
+            }
 
             m_zoom = (int)zoom;
             ZoomTextBlock.Text = m_zoom.ToString() + "%";
@@ -924,24 +1076,43 @@ namespace ComicReader.Views
             CorrectParallelOffset(control);
         }
 
+        private void SetScrollViewer(ReaderControl control, int? zoom, bool disable_animation,
+            double? horizontal_offset, double? vertical_offset)
+        {
+            _SetScrollViewer(control, zoom, disable_animation, null, null, horizontal_offset, vertical_offset);
+        }
+
+        private void SetScrollViewer(ReaderControl control, int? page, bool disable_animation)
+        {
+            _SetScrollViewer(control, null, disable_animation, page, null, null, null);
+        }
+
+        private void SetScrollViewer(ReaderControl control, int? zoom, bool disable_animation, double parallel_ratio)
+        {
+            _SetScrollViewer(control, zoom, disable_animation, null, parallel_ratio, null, null);
+        }
+
         private bool CorrectParallelOffset(ReaderControl control)
         {
             if (control.ImageSource.Count == 0 || control.ImageSource[0].Container == null)
             {
                 return false;
             }
-
-            double margin_start = control.MarginStart * control.ZoomFactorFinal;
-            double space = margin_start - control.ParallelOffsetFinal;
+#if DEBUG_1
+            System.Diagnostics.Debug.Print("CorrectOffset\n");
+#endif
+            double space = control.MarginStartFinal - control.ParallelOffsetFinal;
             double screen_center_offset = control.ViewportParallelLength * 0.5 + control.ParallelOffsetFinal;
-            double image_center_offset = (control.MarginStart + control.GridParallelLength(0) * 0.5) * control.ZoomFactorFinal;
+            double image_center_offset = control.MarginStartFinal
+                + control.GridParallelLength(0) * 0.5 * control.ZoomFactorFinal;
             double image_center_to_screen_center = image_center_offset - screen_center_offset;
             double movement_forward = Math.Min(space, image_center_to_screen_center);
 
             if (movement_forward > 0)
             {
                 double parallel_offset = control.ParallelOffsetFinal + movement_forward;
-                return control.ChangeView(control.HorizontalVal(parallel_offset, null), control.VerticalVal(parallel_offset, null), null, false);
+                return control.ChangeView(null, control.HorizontalVal(parallel_offset, null),
+                    control.VerticalVal(parallel_offset, null), false);
             }
 
             if (control.ImageSource[control.ImageSource.Count - 1].Container == null)
@@ -949,17 +1120,18 @@ namespace ComicReader.Views
                 return false;
             }
 
-            double margin_end = control.MarginEnd * control.ZoomFactorFinal;
-            space = margin_end - (control.ExtentParallelLengthFinal - control.ParallelOffsetFinal - control.ViewportParallelLength);
-            image_center_offset = control.ExtentParallelLengthFinal - (control.MarginEnd +
-                control.GridParallelLength(control.ImageSource.Count - 1) * 0.5) * control.ZoomFactorFinal;
+            space = control.MarginEndFinal - (control.ExtentParallelLengthFinal
+                - control.ParallelOffsetFinal - control.ViewportParallelLength);
+            image_center_offset = control.ExtentParallelLengthFinal - control.MarginEndFinal
+                - control.GridParallelLength(control.ImageSource.Count - 1) * 0.5 * control.ZoomFactorFinal;
             image_center_to_screen_center = screen_center_offset - image_center_offset;
             double movement_backward = Math.Min(space, image_center_to_screen_center);
 
             if (movement_backward > 0)
             {
                 double parallel_offset = control.ParallelOffsetFinal - movement_backward;
-                return control.ChangeView(control.HorizontalVal(parallel_offset, null), control.VerticalVal(parallel_offset, null), null, false);
+                return control.ChangeView(null, control.HorizontalVal(parallel_offset, null),
+                    control.VerticalVal(parallel_offset, null), false);
             }
 
             return false;
@@ -985,7 +1157,9 @@ namespace ComicReader.Views
             {
                 return;
             }
-
+#if DEBUG_1
+            System.Diagnostics.Debug.Print("SizeChanged\n");
+#endif
             UpdateReaderControlMargin(control);
             int zoom = (int)(m_zoom / control.ViewportPerpendicularLength * control.LastViewportPerpendicularLength);
 
@@ -994,13 +1168,8 @@ namespace ComicReader.Views
                 zoom = 100;
             }
 
-            double margin_start = control.MarginStart * control.ThisScrollViewer.ZoomFactor;
-            double margin_end = control.MarginEnd * control.ThisScrollViewer.ZoomFactor;
-            double parallel_offset = m_position * (control.ExtentParallelLength - margin_start - margin_end)
-                - control.ViewportParallelLength * 0.5 + margin_start;
-            SetScrollViewer(control, null, zoom, true, control.HorizontalVal(parallel_offset, null), control.VerticalVal(parallel_offset, null));
+            SetScrollViewer(control, zoom, true, m_position);
             control.LastViewportPerpendicularLength = control.ViewportPerpendicularLength;
-            m_position = m_last_position;
         }
 
         private void ReaderControlViewChanged(ReaderControl control, ScrollViewerViewChangedEventArgs e)
@@ -1010,19 +1179,22 @@ namespace ComicReader.Views
                 return;
             }
 
-            double margin_start = control.MarginStart * control.ZoomFactor;
-            double margin_end = control.MarginEnd * control.ZoomFactor;
-            m_last_position = m_position;
-            m_position = (control.ParallelOffset - margin_start + control.ViewportParallelLength * 0.5) /
-                (control.ExtentParallelLength - margin_start - margin_end);
+            control.FinalValueExpired();
+            m_position = control.ParallelRatioFinal;
 
             if (e.IsIntermediate)
             {
                 return;
             }
-
-            control.FinalValueExpired();
-            SetScrollViewer(control, null, null, false, null, null);
+#if DEBUG_1
+            System.Diagnostics.Debug.Print("ViewChanged:"
+                + " H=" + control.HorizontalOffsetFinal.ToString()
+                + ",V=" + control.VerticalOffsetFinal.ToString()
+                + ",Z=" + control.ZoomFactorFinal.ToString()
+                + ",P=" + control.ParallelRatioFinal.ToString()
+                + "\n");
+#endif
+            SetScrollViewer(control, null, false, null, null);
             UpdatePageFromOffset(control);
             UpdateProgress();
         }
@@ -1038,7 +1210,9 @@ namespace ComicReader.Views
             {
                 return;
             }
-
+#if DEBUG_1
+            System.Diagnostics.Debug.Print("MarginUpdated\n");
+#endif
             double zoom_coefficient = GetZoomCoefficient(control);
             double zoom_factor = min_zoom * zoom_coefficient;
             double inner_length = control.ViewportParallelLength / zoom_factor;
@@ -1091,14 +1265,18 @@ namespace ComicReader.Views
 
                 if (ctx.Index == 0)
                 {
+#if DEBUG_1
+                    System.Diagnostics.Debug.Print("FirstContainerSet\n");
+#endif
                     await control.WaitForReady();
-                    SetScrollViewer(control, null, null, true, null, null);
+                    UpdateReaderControlMargin(control);
+                    SetScrollViewer(control, m_zoom, true, null, null);
                 }
 
                 if (all_loaded)
                 {
-                    await control.WaitForReady();
                     UpdateReaderControlMargin(control);
+                    SetScrollViewer(control, null, true, null, null);
                 }
             });
         }
@@ -1127,10 +1305,8 @@ namespace ComicReader.Views
                 return;
             }
 
-            double margin_start = control.MarginStart * control.ThisScrollViewer.ZoomFactor;
-            double margin_end = control.MarginEnd * control.ThisScrollViewer.ZoomFactor;
-            double offset = m_last_position * (control.ExtentParallelLength - margin_start - margin_end);
-            double current_offset = offset / control.ThisScrollViewer.ZoomFactor;
+            double current_offset = (control.ParallelOffsetFinal - control.MarginStartFinal
+                + control.ViewportParallelLength * 0.5) / control.ZoomFactorFinal;
             int page = 0;
 
             for (int i = 0; i < control.ImageSource.Count; ++i)
@@ -1159,7 +1335,7 @@ namespace ComicReader.Views
         {
             int zoom = m_zoom + 10 * level;
             ReaderControl control = GetCurrentReaderControl();
-            SetScrollViewer(control, null, zoom, false, null, null);
+            SetScrollViewer(control, zoom, false, null, null);
         }
 
         private void Zoom_PointerWheelChanged(object sender, PointerRoutedEventArgs e)
@@ -1177,24 +1353,20 @@ namespace ComicReader.Views
                 return;
             }
 
+            double position = m_position;
             Shared.IsOnePageMode = val;
             ReaderControl control = GetCurrentReaderControl();
 
             await control.WaitForReady();
             UpdateReaderControlMargin(control);
 
-            double margin_start = control.MarginStart * control.ZoomFactorFinal;
-            double margin_end = control.MarginEnd * control.ZoomFactorFinal;
-            double parallel_offset = m_position * (control.ExtentParallelLengthFinal - margin_start - margin_end)
-                + margin_start - control.ViewportParallelLength * 0.5;
-
-            int? zoom = null;
-            if (m_zoom > 100)
+            int zoom = m_zoom;
+            if (zoom > 100)
             {
                 zoom = 100;
             }
 
-            SetScrollViewer(control, null, zoom, true, control.HorizontalVal(parallel_offset, null), control.VerticalVal(parallel_offset, null));
+            SetScrollViewer(control, zoom, true, position);
         }
 
         private void BottomControl_PointerEntered(object sender, Windows.UI.Xaml.Input.PointerRoutedEventArgs e)
@@ -1234,7 +1406,8 @@ namespace ComicReader.Views
                 zoom = 100;
             }
 
-            SetScrollViewer(GetCurrentReaderControl(), new_page, zoom, false, null, null);
+            SetScrollViewer(control, new_page, false);
+            SetScrollViewer(control, zoom, false, null, null);
             OverwritePage(new_page);
         }
 
@@ -1349,7 +1522,7 @@ namespace ComicReader.Views
             double dx = m_drag_pointer.Position.X - pt.Position.X;
             double dy = m_drag_pointer.Position.Y - pt.Position.Y;
             ReaderControl control = GetCurrentReaderControl();
-            SetScrollViewer(control, null, null, false, control.HorizontalOffsetFinal + dx, control.VerticalOffsetFinal + dy);
+            SetScrollViewer(control, null, false, control.HorizontalOffsetFinal + dx, control.VerticalOffsetFinal + dy);
             m_drag_pointer = pt;
             e.Handled = true;
         }

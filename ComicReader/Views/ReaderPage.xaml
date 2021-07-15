@@ -247,8 +247,7 @@
                               HorizontalScrollMode="Enabled"
                               HorizontalScrollBarVisibility="Auto"
                               Loaded="OnePageVerticalScrollViewer_Loaded"
-                              ZoomMode="Enabled"
-                              Padding="0">
+                              ZoomMode="Enabled">
                     <Grid HorizontalAlignment="Center">
                         <ListView x:Name="OnePageImageListView"
                                   ItemsSource="{x:Bind OnePageReader.ImageSource, Mode=OneWay}"
@@ -264,8 +263,6 @@
                             <ListView.ItemContainerStyle>
                                 <Style TargetType="ListViewItem">
                                     <Setter Property="Padding" Value="0"/>
-                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                                    <Setter Property="VerticalContentAlignment" Value="Stretch"/>
                                 </Style>
                             </ListView.ItemContainerStyle>
                         </ListView>
