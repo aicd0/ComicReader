@@ -11,104 +11,109 @@
     xmlns:local="using:ComicReader.Views"
     xmlns:winui="using:Microsoft.UI.Xaml.Controls"
     xmlns:converters="using:ComicReader.Converters"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
+    Background="{ThemeResource ContentPageTopBackground}"
     NavigationCacheMode="Enabled">
-    
+
     <Page.Resources>
-        <Style x:Key="RatingControlStyle1" TargetType="RatingControl">
-            <Setter Property="Height" Value="32"/>
-            <Setter Property="Foreground" Value="{ThemeResource RatingControlCaptionForeground}"/>
-            <Setter Property="UseSystemFocusVisuals" Value="{StaticResource UseSystemFocusVisuals}"/>
-            <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
-            <Setter Property="ItemInfo" Value="{ThemeResource RatingControlDefaultFontInfo}"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="RatingControl">
-                        <Grid x:Name="LayoutRoot">
-                            <VisualStateManager.VisualStateGroups>
-                                <VisualStateGroup x:Name="CommonStates">
-                                    <VisualState x:Name="Disabled">
-                                        <VisualState.Setters>
-                                            <Setter Target="ForegroundContentPresenter.Foreground" Value="{ThemeResource RatingControlDisabledSelectedForeground}"/>
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="Placeholder">
-                                        <VisualState.Setters>
-                                            <Setter Target="ForegroundContentPresenter.Foreground" Value="{ThemeResource RatingControlPlaceholderForeground}"/>
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="PointerOverPlaceholder">
-                                        <VisualState.Setters>
-                                            <Setter Target="ForegroundContentPresenter.Foreground" Value="{ThemeResource RatingControlPointerOverPlaceholderForeground}"/>
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="PointerOverUnselected">
-                                        <VisualState.Setters>
-                                            <Setter Target="ForegroundContentPresenter.Foreground" Value="{ThemeResource RatingControlPointerOverUnselectedForeground}"/>
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="Set">
-                                        <VisualState.Setters>
-                                            <Setter Target="ForegroundContentPresenter.Foreground" Value="{ThemeResource RatingControlSelectedForeground}"/>
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="PointerOverSet">
-                                        <VisualState.Setters>
-                                            <Setter Target="ForegroundContentPresenter.Foreground" Value="{ThemeResource RatingControlSelectedForeground}"/>
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                </VisualStateGroup>
-                            </VisualStateManager.VisualStateGroups>
-                            <StackPanel Margin="-20,-20,-20,-20" Orientation="Horizontal" Grid.Row="0">
-                                <StackPanel x:Name="RatingBackgroundStackPanel" Background="Transparent" Margin="20,20,0,20" Orientation="Horizontal"/>
-                                <TextBlock x:Name="Caption" AutomationProperties.AccessibilityView="Raw" Height="32" IsHitTestVisible="False" Margin="4,9,20,0" AutomationProperties.Name="RatingCaption" Style="{ThemeResource CaptionTextBlockStyle}" TextLineBounds="TrimToBaseline" Text="{TemplateBinding Caption}" VerticalAlignment="Center"/>
-                            </StackPanel>
-                            <ContentPresenter x:Name="ForegroundContentPresenter" IsHitTestVisible="False" Grid.Row="0">
-                                <StackPanel Margin="-40,-40,-40,-40" Orientation="Horizontal">
-                                    <StackPanel x:Name="RatingForegroundStackPanel" IsHitTestVisible="False" Margin="40,40,40,40" Orientation="Horizontal"/>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Resources/Styles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <Style x:Key="RatingControlStyle1" TargetType="RatingControl">
+                <Setter Property="Height" Value="32"/>
+                <Setter Property="Foreground" Value="{ThemeResource RatingControlCaptionForeground}"/>
+                <Setter Property="UseSystemFocusVisuals" Value="{StaticResource UseSystemFocusVisuals}"/>
+                <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
+                <Setter Property="ItemInfo" Value="{ThemeResource RatingControlDefaultFontInfo}"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="RatingControl">
+                            <Grid x:Name="LayoutRoot">
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualState x:Name="Disabled">
+                                            <VisualState.Setters>
+                                                <Setter Target="ForegroundContentPresenter.Foreground" Value="{ThemeResource RatingControlDisabledSelectedForeground}"/>
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="Placeholder">
+                                            <VisualState.Setters>
+                                                <Setter Target="ForegroundContentPresenter.Foreground" Value="{ThemeResource RatingControlPlaceholderForeground}"/>
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="PointerOverPlaceholder">
+                                            <VisualState.Setters>
+                                                <Setter Target="ForegroundContentPresenter.Foreground" Value="{ThemeResource RatingControlPointerOverPlaceholderForeground}"/>
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="PointerOverUnselected">
+                                            <VisualState.Setters>
+                                                <Setter Target="ForegroundContentPresenter.Foreground" Value="{ThemeResource RatingControlPointerOverUnselectedForeground}"/>
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="Set">
+                                            <VisualState.Setters>
+                                                <Setter Target="ForegroundContentPresenter.Foreground" Value="{ThemeResource RatingControlSelectedForeground}"/>
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                        <VisualState x:Name="PointerOverSet">
+                                            <VisualState.Setters>
+                                                <Setter Target="ForegroundContentPresenter.Foreground" Value="{ThemeResource RatingControlSelectedForeground}"/>
+                                            </VisualState.Setters>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                                <StackPanel Margin="-20,-20,-20,-20" Orientation="Horizontal" Grid.Row="0">
+                                    <StackPanel x:Name="RatingBackgroundStackPanel" Background="Transparent" Margin="20,20,0,20" Orientation="Horizontal"/>
+                                    <TextBlock x:Name="Caption" AutomationProperties.AccessibilityView="Raw" Height="32" IsHitTestVisible="False" Margin="4,9,20,0" AutomationProperties.Name="RatingCaption" Style="{ThemeResource CaptionTextBlockStyle}" TextLineBounds="TrimToBaseline" Text="{TemplateBinding Caption}" VerticalAlignment="Center"/>
                                 </StackPanel>
-                            </ContentPresenter>
-                        </Grid>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-        <Style x:Key="ListViewStyle1" TargetType="ListView">
-            <Setter Property="IsTabStop" Value="False"/>
-            <Setter Property="TabNavigation" Value="Once"/>
-            <Setter Property="IsSwipeEnabled" Value="True"/>
-            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
-            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
-            <Setter Property="ScrollViewer.HorizontalScrollMode" Value="Disabled"/>
-            <Setter Property="ScrollViewer.IsHorizontalRailEnabled" Value="False"/>
-            <Setter Property="ScrollViewer.VerticalScrollMode" Value="Enabled"/>
-            <Setter Property="ScrollViewer.IsVerticalRailEnabled" Value="True"/>
-            <Setter Property="ScrollViewer.ZoomMode" Value="Disabled"/>
-            <Setter Property="ScrollViewer.IsDeferredScrollingEnabled" Value="False"/>
-            <Setter Property="ScrollViewer.BringIntoViewOnFocusChange" Value="True"/>
-            <Setter Property="UseSystemFocusVisuals" Value="{StaticResource UseSystemFocusVisuals}"/>
-            <Setter Property="ItemContainerTransitions">
-                <Setter.Value>
-                    <TransitionCollection>
-                        <AddDeleteThemeTransition/>
-                        <ContentThemeTransition/>
-                        <ReorderThemeTransition/>
-                        <EntranceThemeTransition IsStaggeringEnabled="False"/>
-                    </TransitionCollection>
-                </Setter.Value>
-            </Setter>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ListView">
-                        <Border Background="{TemplateBinding Background}" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="{TemplateBinding CornerRadius}">
-                            <ScrollViewer x:Name="ScrollViewer" AutomationProperties.AccessibilityView="Raw" BringIntoViewOnFocusChange="{TemplateBinding ScrollViewer.BringIntoViewOnFocusChange}" HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}" HorizontalScrollMode="{TemplateBinding ScrollViewer.HorizontalScrollMode}" IsDeferredScrollingEnabled="{TemplateBinding ScrollViewer.IsDeferredScrollingEnabled}" IsVerticalScrollChainingEnabled="{TemplateBinding ScrollViewer.IsVerticalScrollChainingEnabled}" IsHorizontalRailEnabled="{TemplateBinding ScrollViewer.IsHorizontalRailEnabled}" IsVerticalRailEnabled="{TemplateBinding ScrollViewer.IsVerticalRailEnabled}" IsHorizontalScrollChainingEnabled="{TemplateBinding ScrollViewer.IsHorizontalScrollChainingEnabled}" TabNavigation="{TemplateBinding TabNavigation}" VerticalScrollMode="{TemplateBinding ScrollViewer.VerticalScrollMode}" VerticalScrollBarVisibility="{TemplateBinding ScrollViewer.VerticalScrollBarVisibility}" ZoomMode="{TemplateBinding ScrollViewer.ZoomMode}">
-                                <ItemsPresenter Footer="{TemplateBinding Footer}" FooterTransitions="{TemplateBinding FooterTransitions}" FooterTemplate="{TemplateBinding FooterTemplate}" Header="{TemplateBinding Header}" HeaderTransitions="{TemplateBinding HeaderTransitions}" HeaderTemplate="{TemplateBinding HeaderTemplate}" Padding="{TemplateBinding Padding}"/>
-                            </ScrollViewer>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+                                <ContentPresenter x:Name="ForegroundContentPresenter" IsHitTestVisible="False" Grid.Row="0">
+                                    <StackPanel Margin="-40,-40,-40,-40" Orientation="Horizontal">
+                                        <StackPanel x:Name="RatingForegroundStackPanel" IsHitTestVisible="False" Margin="40,40,40,40" Orientation="Horizontal"/>
+                                    </StackPanel>
+                                </ContentPresenter>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+            <Style x:Key="ListViewStyle1" TargetType="ListView">
+                <Setter Property="IsTabStop" Value="False"/>
+                <Setter Property="TabNavigation" Value="Once"/>
+                <Setter Property="IsSwipeEnabled" Value="True"/>
+                <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+                <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+                <Setter Property="ScrollViewer.HorizontalScrollMode" Value="Disabled"/>
+                <Setter Property="ScrollViewer.IsHorizontalRailEnabled" Value="False"/>
+                <Setter Property="ScrollViewer.VerticalScrollMode" Value="Enabled"/>
+                <Setter Property="ScrollViewer.IsVerticalRailEnabled" Value="True"/>
+                <Setter Property="ScrollViewer.ZoomMode" Value="Disabled"/>
+                <Setter Property="ScrollViewer.IsDeferredScrollingEnabled" Value="False"/>
+                <Setter Property="ScrollViewer.BringIntoViewOnFocusChange" Value="True"/>
+                <Setter Property="UseSystemFocusVisuals" Value="{StaticResource UseSystemFocusVisuals}"/>
+                <Setter Property="ItemContainerTransitions">
+                    <Setter.Value>
+                        <TransitionCollection>
+                            <AddDeleteThemeTransition/>
+                            <ContentThemeTransition/>
+                            <ReorderThemeTransition/>
+                            <EntranceThemeTransition IsStaggeringEnabled="False"/>
+                        </TransitionCollection>
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ListView">
+                            <Border Background="{TemplateBinding Background}" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="{TemplateBinding CornerRadius}">
+                                <ScrollViewer x:Name="ScrollViewer" AutomationProperties.AccessibilityView="Raw" BringIntoViewOnFocusChange="{TemplateBinding ScrollViewer.BringIntoViewOnFocusChange}" HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}" HorizontalScrollMode="{TemplateBinding ScrollViewer.HorizontalScrollMode}" IsDeferredScrollingEnabled="{TemplateBinding ScrollViewer.IsDeferredScrollingEnabled}" IsVerticalScrollChainingEnabled="{TemplateBinding ScrollViewer.IsVerticalScrollChainingEnabled}" IsHorizontalRailEnabled="{TemplateBinding ScrollViewer.IsHorizontalRailEnabled}" IsVerticalRailEnabled="{TemplateBinding ScrollViewer.IsVerticalRailEnabled}" IsHorizontalScrollChainingEnabled="{TemplateBinding ScrollViewer.IsHorizontalScrollChainingEnabled}" TabNavigation="{TemplateBinding TabNavigation}" VerticalScrollMode="{TemplateBinding ScrollViewer.VerticalScrollMode}" VerticalScrollBarVisibility="{TemplateBinding ScrollViewer.VerticalScrollBarVisibility}" ZoomMode="{TemplateBinding ScrollViewer.ZoomMode}">
+                                    <ItemsPresenter Footer="{TemplateBinding Footer}" FooterTransitions="{TemplateBinding FooterTransitions}" FooterTemplate="{TemplateBinding FooterTemplate}" Header="{TemplateBinding Header}" HeaderTransitions="{TemplateBinding HeaderTransitions}" HeaderTemplate="{TemplateBinding HeaderTemplate}" Padding="{TemplateBinding Padding}"/>
+                                </ScrollViewer>
+                            </Border>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+        </ResourceDictionary>
     </Page.Resources>
 
     <Grid>
@@ -140,6 +145,12 @@
                                        IsTextSelectionEnabled="True"
                                        Text="{x:Bind Shared.ComicTitle2, Mode=OneWay}"
                                        Margin="0,6,0,0"/>
+                            <RatingControl Style="{StaticResource RatingControlStyle1}" HorizontalAlignment="Left"
+                                           VerticalAlignment="Center"
+                                           Margin="0,5,0,0"
+                                           Value="{x:Bind Shared.Rating, Mode=TwoWay}"
+                                           ValueChanged="RatingControl_ValueChanged"
+                                           IsEnabled="{x:Bind Shared.ContentPageShared.IsInLib, Mode=OneWay}"/>
                             <!-- Directory -->
                             <TextBlock IsTextSelectionEnabled="True"
                                        VerticalAlignment="Center"
@@ -227,10 +238,10 @@
                                             Label="Favorite"
                                             Margin="5,0,0,0"
                                             Width="68"
-                                            IsChecked="{x:Bind Shared.IsFavorite, Mode=OneWay}"
+                                            IsChecked="{x:Bind Shared.ContentPageShared.IsFavorite, Mode=OneWay}"
                                             Checked="FavoriteBt_Checked"
                                             Unchecked="FavoriteBt_Unchecked"
-                                            IsEnabled="{x:Bind Shared.IsInternal, Mode=OneWay}"/>
+                                            IsEnabled="{x:Bind Shared.ContentPageShared.IsInLib, Mode=OneWay}"/>
                     </StackPanel>
                 </Grid>
             </SplitView.Pane>
@@ -238,9 +249,10 @@
             <!-- Main Page -->
             <Grid>
                 <!-- Reader -->
-                <Grid x:Name="PanningReference"/>
+                <Grid Tapped="Reader_Tapped">
+                    <Grid x:Name="PanningReference"/>
 
-                <ScrollViewer x:Name="OnePageVerticalScrollViewer"
+                    <ScrollViewer x:Name="OnePageVerticalScrollViewer"
                               ViewChanged="OnePageVerticalScrollViewer_ViewChanged"
                               SizeChanged="OnePageVerticalScrollViewer_SizeChanged"
                               Visibility="{x:Bind Shared.IsOnePageMode, Mode=OneWay}"
@@ -248,31 +260,31 @@
                               HorizontalScrollBarVisibility="Auto"
                               Loaded="OnePageVerticalScrollViewer_Loaded"
                               ZoomMode="Enabled">
-                    <Grid HorizontalAlignment="Center">
-                        <ListView x:Name="OnePageImageListView"
+                        <Grid HorizontalAlignment="Center">
+                            <ListView x:Name="OnePageImageListView"
                                   ItemsSource="{x:Bind OnePageReader.ImageSource, Mode=OneWay}"
                                   Loaded="OnePageImageListView_Loaded"
                                   SelectionMode="None"
                                   ScrollViewer.VerticalScrollBarVisibility="Disabled"
                                   ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                            <ListView.ItemTemplate>
-                                <DataTemplate x:DataType="data:ReaderImageData">
-                                    <controls_local:ReaderImageItemVertical DataContext="{x:Bind}"/>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                            <ListView.ItemContainerStyle>
-                                <Style TargetType="ListViewItem">
-                                    <Setter Property="Padding" Value="0"/>
-                                </Style>
-                            </ListView.ItemContainerStyle>
-                        </ListView>
-                        <Grid Background="Transparent"
+                                <ListView.ItemTemplate>
+                                    <DataTemplate x:DataType="data:ReaderImageData">
+                                        <controls_local:ReaderImageItemVertical DataContext="{x:Bind}"/>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                                <ListView.ItemContainerStyle>
+                                    <Style TargetType="ListViewItem">
+                                        <Setter Property="Padding" Value="0"/>
+                                    </Style>
+                                </ListView.ItemContainerStyle>
+                            </ListView>
+                            <Grid Background="Transparent"
                               PointerPressed="ScrollViewer_PointerPressed"
                               PointerMoved="ScrollViewer_PointerMoved"/>
-                    </Grid>
-                </ScrollViewer>
+                        </Grid>
+                    </ScrollViewer>
 
-                <ScrollViewer x:Name="TwoPagesHorizontalScrollViewer"
+                    <ScrollViewer x:Name="TwoPagesHorizontalScrollViewer"
                               ViewChanged="TwoPagesHorizontalScrollViewer_ViewChanged"
                               SizeChanged="TwoPagesHorizontalScrollViewer_SizeChanged"
                               Visibility="{x:Bind Shared.IsTwoPagesMode, Mode=OneWay}"
@@ -282,120 +294,83 @@
                               HorizontalScrollMode="Enabled"
                               VerticalScrollBarVisibility="Hidden"
                               VerticalScrollMode="Disabled">
-                    <Grid VerticalAlignment="Center">
-                        <ListView x:Name="TwoPagesImageListView"
+                        <Grid VerticalAlignment="Center">
+                            <ListView x:Name="TwoPagesImageListView"
                                   ItemsSource="{x:Bind TwoPagesReader.ImageSource, Mode=OneWay}"
                                   Loaded="TwoPagesImageListView_Loaded"
                                   SelectionMode="None"
                                   ScrollViewer.VerticalScrollBarVisibility="Disabled"
                                   ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                            <ListView.ItemTemplate>
-                                <DataTemplate x:DataType="data:ReaderImageData">
-                                    <controls_local:ReaderImageItemHorizontal DataContext="{x:Bind}"/>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                            <ListView.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <ItemsStackPanel Orientation="Horizontal"/>
-                                </ItemsPanelTemplate>
-                            </ListView.ItemsPanel>
-                            <ListView.ItemContainerStyle>
-                                <Style TargetType="ListViewItem">
-                                    <Setter Property="Padding" Value="0"/>
-                                </Style>
-                            </ListView.ItemContainerStyle>
-                        </ListView>
-                        <Grid Background="Transparent"
+                                <ListView.ItemTemplate>
+                                    <DataTemplate x:DataType="data:ReaderImageData">
+                                        <controls_local:ReaderImageItemHorizontal DataContext="{x:Bind}"/>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                                <ListView.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <ItemsStackPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ListView.ItemsPanel>
+                                <ListView.ItemContainerStyle>
+                                    <Style TargetType="ListViewItem">
+                                        <Setter Property="Padding" Value="0"/>
+                                    </Style>
+                                </ListView.ItemContainerStyle>
+                            </ListView>
+                            <Grid Background="Transparent"
                               PointerPressed="ScrollViewer_PointerPressed"
                               PointerMoved="ScrollViewer_PointerMoved"/>
-                    </Grid>
-                </ScrollViewer>
-
-                <!-- Bottom Controls -->
-                <!-- Interactive Area -->
-                <Grid VerticalAlignment="Bottom"
-                      HorizontalAlignment="Right"
-                      PointerEntered="BottomControl_PointerEntered"
-                      PointerExited="BottomControl_PointerExited"
-                      Padding="60,60,50,30"
-                      Margin="0,0,150,0"
-                      Background="Transparent">
-                    <!-- UI -->
-                    <StackPanel x:Name="BottomControl"
-                                Orientation="Vertical"
-                                Spacing="10"
-                                VerticalAlignment="Bottom"
-                                HorizontalAlignment="Right"
-                                Opacity="0">
-                        <StackPanel.Resources>
-                            <Storyboard x:Name="BottomControlStoryboard2">
-                                <DoubleAnimation Storyboard.TargetName="BottomControl"
-                                                 Storyboard.TargetProperty="Opacity"
-                                                 Duration="0:0:0.2"/>
-                            </Storyboard>
-                        </StackPanel.Resources>
-                        <!-- Rating Section -->
-                        <Grid Padding="10,0,15,0"
-                              Background="{ThemeResource ComicImformationPaneBackground}"
-                              CornerRadius="6">
-                            <RatingControl Style="{StaticResource RatingControlStyle1}" HorizontalAlignment="Left"
-                                           VerticalAlignment="Center"
-                                           Margin="0,5,0,0"
-                                           Value="{x:Bind Shared.Rating, Mode=TwoWay}"
-                                           ValueChanged="RatingControl_ValueChanged"
-                                           IsEnabled="{x:Bind Shared.IsInternal, Mode=OneWay}"/>
-                            <TextBlock Text="{x:Bind Shared.Progress, Mode=OneWay}"
-                                       HorizontalAlignment="Right"
-                                       VerticalAlignment="Center"
-                                       Opacity="0.3"
-                                       FontWeight="Bold"
-                                       Margin="0,0,0,2"/>
                         </Grid>
-                        <StackPanel Spacing="10" Orientation="Horizontal">
-                            <!-- Page Controls -->
-                            <Grid Padding="10,0,10,0"
-                                  Background="{ThemeResource ComicImformationPaneBackground}"
-                                  PointerWheelChanged="Page_PointerWheelChanged"
-                                  CornerRadius="6">
-                                <TextBlock x:Name="PageIndicator"
-                                           VerticalAlignment="Center"
-                                           FontSize="28"
-                                           FontWeight="Light"
-                                           Margin="0,0,0,2"
-                                           Text="1/?"/>
-                            </Grid>
-                            <!-- Zoom Controls -->
-                            <Grid Padding="10,0,10,0"
-                                  Background="{ThemeResource ComicImformationPaneBackground}"
-                                  PointerWheelChanged="Zoom_PointerWheelChanged"
-                                  CornerRadius="6">
-                                <TextBlock x:Name="ZoomTextBlock"
-                                           VerticalAlignment="Center"
-                                           FontSize="28"
-                                           FontWeight="Light"
-                                           Margin="0,0,0,2"
-                                           HorizontalAlignment="Center" Text="86%"/>
-                            </Grid>
-                            <ToggleButton x:Name="FavoriteBt2"
-                                          Background="{ThemeResource ComicImformationPaneBackground}"
-                                          VerticalAlignment="Stretch"
-                                          HorizontalAlignment="Stretch"
-                                          CornerRadius="6"
-                                          IsChecked="{x:Bind Shared.IsFavorite, Mode=OneWay}"
-                                          Checked="FavoriteBt_Checked"
-                                          Unchecked="FavoriteBt_Unchecked"
-                                          IsEnabled="{x:Bind Shared.IsInternal, Mode=OneWay}">
-                                <FontIcon Glyph="&#xE734;" FontSize="20"/>
-                            </ToggleButton>
-                            <Button Background="{ThemeResource ComicImformationPaneBackground}"
-                                    VerticalAlignment="Stretch"
-                                    HorizontalAlignment="Stretch"
-                                    Click="OnInformationBtClicked"
-                                    CornerRadius="6">
-                                <FontIcon Glyph="&#xE712;" FontSize="20"/>
-                            </Button>
-                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+
+                <Grid x:Name="BottomGrid"
+                      VerticalAlignment="Bottom"
+                      Background="#FF303030"
+                      Height="52"
+                      PointerEntered="BottomGrid_PointerEntered"
+                      PointerExited="BottomGrid_PointerExited"
+                      Opacity="0">
+                    <Grid.Resources>
+                        <Storyboard x:Name="BottomGridStoryboard">
+                            <DoubleAnimation Storyboard.TargetName="BottomGrid"
+                                             Storyboard.TargetProperty="Opacity"
+                                             Duration="0:0:0.2"/>
+                        </Storyboard>
+                    </Grid.Resources>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+                        <Grid Width="5"/>
+                        <Button Background="Transparent"
+                                VerticalAlignment="Stretch"
+                                HorizontalAlignment="Stretch"
+                                CornerRadius="6"
+                                Padding="0"
+                                Height="40"
+                                Width="40"
+                                BorderThickness="0">
+                            <Button.Flyout>
+                                <MenuFlyout>
+                                    <MenuFlyoutItem Text="Comic Info"
+                                                    Click="OnInformationBtClicked">
+                                        <MenuFlyoutItem.Icon>
+                                            <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE946;"/>
+                                        </MenuFlyoutItem.Icon>
+                                    </MenuFlyoutItem>
+                                </MenuFlyout>
+                            </Button.Flyout>
+                            <FontIcon Glyph="&#xE712;" FontSize="20"/>
+                        </Button>
                     </StackPanel>
+                    <TextBlock x:Name="PageIndicator"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               FontWeight="Bold"
+                               Grid.Column="1"/>
                 </Grid>
             </Grid>
         </SplitView>

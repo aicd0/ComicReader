@@ -21,7 +21,7 @@
         </ResourceDictionary>
     </UserControl.Resources>
     
-    <Grid Background="#30FFFFFF"
+    <Grid Background="#15FFFFFF"
           CornerRadius="6"
           PointerPressed="{x:Bind Ctx.OnItemPressed}">
         <Grid.ContextFlyout>
@@ -45,19 +45,16 @@
                 <winui:ProgressRing Visibility="{x:Bind Ctx.IsImageLoadedN}"/>
                 <Grid Visibility="{x:Bind Ctx.IsImageLoaded}">
                     <Image Source="{x:Bind Ctx.Image}" Opacity="0"/>
-                    <Border CornerRadius="6">
-                        <Border.Background>
-                            <ImageBrush ImageSource="{x:Bind Ctx.Image}"
-                                        Stretch="Uniform"/>
-                        </Border.Background>
+                    <Border CornerRadius="0">
+                        <Image Source="{x:Bind Ctx.Image}"/>
                     </Border>
-                    <Border CornerRadius="5">
+                    <!--<Border CornerRadius="5">
                         <Border.Background>
                             <muxm:AcrylicBrush BackgroundSource="Backdrop"
                                                TintOpacity="0.0"
                                                TintLuminosityOpacity="0.0"/>
                         </Border.Background>
-                    </Border>
+                    </Border>-->
                     <FontIcon Glyph="&#xE735;"
                               FontSize="14"
                               Margin="0,0,10,10"

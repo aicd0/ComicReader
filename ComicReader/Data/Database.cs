@@ -85,6 +85,7 @@ namespace ComicReader.Data
     class HistoryData
     {
         public string Id;
+        public string Title;
         public DateTimeOffset DateTime;
     }
 

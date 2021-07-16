@@ -6,7 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    Background="{ThemeResource ContentPageTopBackground}">
     <Page.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -25,7 +25,7 @@
             <Grid x:Name="TopTile"
                   VerticalAlignment="Top"
                   Background="{ThemeResource ContentPageTopBackground}"
-                  Visibility="{x:Bind Shared.IsFullscreenN, Mode=OneWay}">
+                  Visibility="{x:Bind Shared.RootPageShared.IsFullscreenN, Mode=OneWay}">
                 <StackPanel Orientation="Vertical">
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -64,28 +64,30 @@
                         </StackPanel>
 
                         <!-- Search Box -->
-                        <AutoSuggestBox Style="{StaticResource AutoSuggestBoxStyle1}"
-                                x:Name="SearchBox"
-                                Grid.Column="1"
-                                TextChanged="SearchBox_TextChanged"
-                                QuerySubmitted="SearchBox_QuerySubmitted"
-                                PlaceholderText="Type here to search"
-                                QueryIcon="Find"
-                                VerticalAlignment="Center"
-                                Margin="15,0,15,0"
-                                HorizontalAlignment="Left"
-                                Width="300"/>
+                        <AutoSuggestBox Visibility="{x:Bind Shared.RootPageShared.IsReaderPageN}"
+                                        Grid.Column="1"
+                                        Margin="15,0,15,0"
+                                        CornerRadius="6"
+                                        VerticalAlignment="Center"
+                                        HorizontalAlignment="Left" Style="{StaticResource AutoSuggestBoxStyle1}"
+                                        TextBoxStyle="{StaticResource TextBoxStyle1}"
+                                        x:Name="SearchBox"
+                                        TextChanged="SearchBox_TextChanged"
+                                        QuerySubmitted="SearchBox_QuerySubmitted"
+                                        PlaceholderText="Type here to search"
+                                        QueryIcon="Find"
+                                        Width="300"/>
 
                         <!-- Top Right Buttons -->
                         <StackPanel Grid.Column="2"
                             Margin="0,1,0,1"
                             VerticalAlignment="Center"
                             Orientation="Horizontal">
-                            <StackPanel Orientation="Horizontal" Visibility="{x:Bind Shared.IsReaderPage, Mode=OneWay}">
+                            <StackPanel Orientation="Horizontal" Visibility="{x:Bind Shared.RootPageShared.IsReaderPage, Mode=OneWay}">
                                 <!-- Zoom -->
                                 <AppBarButton Style="{StaticResource ContentPageAppBarButtonStyle}"
                                   ToolTipService.ToolTip="Zoom In"
-                                  IsEnabled="{x:Bind Shared.SharedReaderPage.CanZoomIn, Mode=OneWay}"
+                                  IsEnabled="{x:Bind Shared.CanZoomIn, Mode=OneWay}"
                                   Click="ZoomIn_Click">
                                     <AppBarButton.Content>
                                         <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE8A3;"/>
@@ -93,7 +95,7 @@
                                 </AppBarButton>
                                 <AppBarButton Style="{StaticResource ContentPageAppBarButtonStyle}"
                                   ToolTipService.ToolTip="Zoom Out"
-                                  IsEnabled="{x:Bind Shared.SharedReaderPage.CanZoomOut, Mode=OneWay}"
+                                  IsEnabled="{x:Bind Shared.CanZoomOut, Mode=OneWay}"
                                   Click="ZoomOut_Click">
                                     <AppBarButton.Content>
                                         <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE71F;"/>
@@ -111,13 +113,13 @@
                                 <!-- Favorite -->
                                 <AppBarButton Style="{StaticResource ContentPageAppBarButtonStyle}"
                                               ToolTipService.ToolTip="Add this comic to favorites"
-                                              IsEnabled="{x:Bind Shared.SharedReaderPage.IsInternal, Mode=OneWay}"
+                                              IsEnabled="{x:Bind Shared.IsInLib, Mode=OneWay}"
                                               Click="AddToFavoriteBt_Click">
                                     <AppBarButton.Content>
                                         <Grid>
                                             <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE734;"/>
                                             <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE735;"
-                                                      Visibility="{x:Bind Shared.SharedReaderPage.IsFavorite, Mode=OneWay}"
+                                                      Visibility="{x:Bind Shared.IsFavorite, Mode=OneWay}"
                                                       Foreground="DeepSkyBlue"/>
                                         </Grid>
                                     </AppBarButton.Content>
@@ -143,12 +145,12 @@
                                     <MenuFlyout Placement="BottomEdgeAlignedRight">
                                         <MenuFlyoutItem Text="Comic Info"
                                                         Click="ComicInfoBt_Click"
-                                                        Visibility="{x:Bind Shared.IsReaderPage, Mode=OneWay}">
+                                                        Visibility="{x:Bind Shared.RootPageShared.IsReaderPage, Mode=OneWay}">
                                             <MenuFlyoutItem.Icon>
                                                 <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE946;"/>
                                             </MenuFlyoutItem.Icon>
                                         </MenuFlyoutItem>
-                                        <MenuFlyoutSeparator Visibility="{x:Bind Shared.IsReaderPage, Mode=OneWay}"/>
+                                        <MenuFlyoutSeparator Visibility="{x:Bind Shared.RootPageShared.IsReaderPage, Mode=OneWay}"/>
                                         <MenuFlyoutItem Text="Settings" Icon="Setting" Click="SettingBt_Click"/>
                                     </MenuFlyout>
                                 </AppBarButton.Flyout>
@@ -156,6 +158,7 @@
                         </StackPanel>
                     </Grid>
                 </StackPanel>
+                <Rectangle VerticalAlignment="Bottom" Height="1" Fill="Black"/>
             </Grid>
             <SplitView x:Name="_UtilityPane"
                        DisplayMode="Overlay"

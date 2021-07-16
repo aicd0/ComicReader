@@ -59,13 +59,13 @@
             <Grid Grid.Column="0">
                 <Image Source="{x:Bind Ctx.Image}"
                        Stretch="UniformToFill"/>
-                <Rectangle>
+                <!--<Rectangle>
                     <Rectangle.Fill>
                         <muxm:AcrylicBrush BackgroundSource="Backdrop"
                                                TintOpacity="0.0"
                                                TintLuminosityOpacity="0.0"/>
                     </Rectangle.Fill>
-                </Rectangle>
+                </Rectangle>-->
                 <winui:ProgressRing Visibility="{x:Bind Ctx.IsImageLoadedN}"/>
             </Grid>
             <Grid Grid.Column="1">

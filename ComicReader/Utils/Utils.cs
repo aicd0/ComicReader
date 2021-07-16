@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.AccessCache;
@@ -92,6 +93,16 @@ namespace ComicReader.Utils
             return null; // we don't have permissions
         }
 
-
+        public static async Task WaitFor(Func<bool> signal)
+        {
+            await Task.Run(delegate
+            {
+                SpinWait sw = new SpinWait();
+                while (!signal())
+                {
+                    sw.SpinOnce();
+                }
+            });
+        }
     }
 }

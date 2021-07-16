@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -22,17 +23,37 @@ using ComicReader.Data;
 
 namespace ComicReader.Views
 {
+    public class SettingsPageShared : INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        private RootPageShared m_RootPageShared;
+        public RootPageShared RootPageShared
+        {
+            get => m_RootPageShared;
+            set
+            {
+                m_RootPageShared = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("RootPageShared"));
+            }
+        }
+    }
+
     public sealed partial class SettingsPage : Page
     {
         public static SettingsPage Current;
-        TabId m_tab_id;
+        private bool m_page_initialized;
+        private TabId m_tab_id;
 
         private bool m_auto_save;
+
+        public SettingsPageShared Shared { get; set; }
 
         public SettingsPage()
         {
             Current = this;
             m_auto_save = false;
+            Shared = new SettingsPageShared();
             InitializeComponent();
         }
 
@@ -64,12 +85,16 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                if (m_tab_id == null)
+                if (!m_page_initialized)
                 {
-                    m_tab_id = (TabId)e.Parameter;
+                    m_page_initialized = true;
+                    NavigationParams p = (NavigationParams)e.Parameter;
+                    m_tab_id = p.TabId;
+                    Shared.RootPageShared = (RootPageShared)p.Shared;
                 }
 
                 UpdateTabId();
+                Shared.RootPageShared.CurrentPageType = PageType.Settings;
                 await UpdateSettings();
             });
         }

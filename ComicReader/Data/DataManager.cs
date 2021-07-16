@@ -319,6 +319,7 @@ namespace ComicReader.Data
                 data += "\n";
                 data += "\n1" + record.Id;
                 data += "\n2" + record.DateTime.ToString();
+                data += "\n3" + record.Title;
             }
 
             if (data.Length >= 2)
@@ -740,6 +741,9 @@ namespace ComicReader.Data
                                 break;
                             case '2':
                                 record.DateTime = DateTimeOffset.Parse(content);
+                                break;
+                            case '3':
+                                record.Title = content;
                                 break;
                             default:
                                 throw new Exception();
@@ -1664,7 +1668,7 @@ namespace ComicReader.Data
         }
 
         // history associated operations
-        public static async Task AddToHistory(string id, bool is_final)
+        public static async Task AddToHistory(string id, string title, bool is_final)
         {
             await WaitLock();
             try
@@ -1680,7 +1684,7 @@ namespace ComicReader.Data
                 HistoryData record = new HistoryData();
                 record.Id = id;
                 record.DateTime = datetime;
-
+                record.Title = title;
 
                 RemoveFromHistoryNoLock(id);
                 Database.History.Insert(0, record);

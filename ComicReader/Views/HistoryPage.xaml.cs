@@ -64,6 +64,7 @@ namespace ComicReader.Views
                 var item_out = new HistoryItem();
                 item_out.Id = item.Id;
                 item_out.Time = item.DateTime.ToString("g");
+                item_out.Title = item.Title;
                 current_group.Add(item_out);
             }
 

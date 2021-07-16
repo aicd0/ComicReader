@@ -1,4 +1,4 @@
-﻿//#define DEBUG_1
+﻿#define DEBUG_1
 
 using System;
 using System.Collections.Generic;
@@ -35,6 +35,8 @@ namespace ComicReader.Views
             ThisScrollViewer = scroll_viewer;
             ThisListView = list_view;
             LastViewportPerpendicularLength = display_info.ScreenWidthInRawPixels / display_info.RawPixelsPerViewPixel;
+            IsAllImagesLoaded = false;
+            IsScrollViewerInitialized = false;
             ImageSource = new ObservableCollection<ReaderImageData>();
         }
 
@@ -55,10 +57,12 @@ namespace ComicReader.Views
         public ListView ThisListView;
         public double LastViewportPerpendicularLength;
 
-        public bool IsReady => ThisScrollViewer != null
+        public bool IsLayoutReady => ThisScrollViewer != null
             && ThisListView != null
             && ImageSource.Count > 0
             && ImageSource[0].Container != null;
+        public bool IsAllImagesLoaded { get; set; }
+        public bool IsScrollViewerInitialized { get; set; }
         public ObservableCollection<ReaderImageData> ImageSource { get; set; }
 
         // scroll viewer
@@ -257,20 +261,9 @@ namespace ComicReader.Views
         {
             ImageSource.Clear();
         }
-        public async Task WaitForReady()
-        {
-            await Task.Run(delegate
-            {
-                SpinWait sw = new SpinWait();
-                while (!IsReady)
-                {
-                    sw.SpinOnce();
-                }
-            });
-        }
         public bool ChangeView(float? zoom_factor, double? horizontal_offset, double? vertical_offset, bool disable_animation)
         {
-            if (!IsReady)
+            if (!IsLayoutReady)
             {
                 return false;
             }
@@ -312,7 +305,7 @@ namespace ComicReader.Views
         }
         public bool ChangeView(float? zoom_factor, double parallel_ratio, bool disable_animation)
         {
-            if (!IsReady)
+            if (!IsLayoutReady)
             {
                 return false;
             }
@@ -348,9 +341,9 @@ namespace ComicReader.Views
         // internal
         private void InitializeDefaultValue()
         {
-            if (!IsReady)
+            if (!IsLayoutReady)
             {
-                throw new Exception();
+                return;
             }
 
             if (m_default_value_initialized)
@@ -377,6 +370,17 @@ namespace ComicReader.Views
     public class ReaderPageShared : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
+
+        private ContentPageShared m_ContentPageShared;
+        public ContentPageShared ContentPageShared
+        {
+            get => m_ContentPageShared;
+            set
+            {
+                m_ContentPageShared = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ContentPageShared"));
+            }
+        }
 
         // comic basic info
         private string m_ComicTitle1;
@@ -423,17 +427,6 @@ namespace ComicReader.Views
             }
         }
 
-        private bool m_IsInternal;
-        public bool IsInternal
-        {
-            get => m_IsInternal;
-            set
-            {
-                m_IsInternal = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsInternal"));
-            }
-        }
-
         private bool m_IsEditable;
         public bool IsEditable
         {
@@ -442,17 +435,6 @@ namespace ComicReader.Views
             {
                 m_IsEditable = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsEditable"));
-            }
-        }
-
-        private bool m_IsFavorite;
-        public bool IsFavorite
-        {
-            get => m_IsFavorite;
-            set
-            {
-                m_IsFavorite = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsFavorite"));
             }
         }
 
@@ -504,34 +486,13 @@ namespace ComicReader.Views
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsTwoPagesMode"));
             }
         }
-
-        private bool m_CanZoomIn;
-        public bool CanZoomIn
-        {
-            get => m_CanZoomIn;
-            set
-            {
-                m_CanZoomIn = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("CanZoomIn"));
-            }
-        }
-
-        private bool m_CanZoomOut;
-        public bool CanZoomOut
-        {
-            get => m_CanZoomOut;
-            set
-            {
-                m_CanZoomOut = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("CanZoomOut"));
-            }
-        }
     }
 
     public sealed partial class ReaderPage : Page
     {
         public static ReaderPage Current;
-        TabId m_tab_id;
+        private bool m_page_initialized = false;
+        private TabId m_tab_id;
 
         private ComicData m_comic;
         private ComicRecordData m_comic_record;
@@ -542,7 +503,9 @@ namespace ComicReader.Views
         private const int max_zoom = 200;
         private const int min_zoom = 90;
         private double m_position;
-        PointerPoint m_drag_pointer;
+        private PointerPoint m_drag_pointer;
+        private bool m_bottom_grid_showed;
+        private bool m_bottom_grid_pinned;
 
         public ReaderPageShared Shared { get; set; }
         private ReaderControl OnePageReader { get; set; }
@@ -558,13 +521,14 @@ namespace ComicReader.Views
             m_zoom = 90;
             m_position = 0.0;
             m_drag_pointer = null;
+            m_bottom_grid_showed = false;
+            m_bottom_grid_pinned = false;
 
             Shared = new ReaderPageShared();
             Shared.ComicTitle1 = "";
             Shared.ComicTitle2 = "";
             Shared.ComicPrimaryTitle = "";
             Shared.ComicDir = "";
-            Shared.IsInternal = false;
             Shared.IsEditable = false;
             Shared.IsOnePageMode = true;
             OnePageReader = new ReaderControl(true, true, OnePageVerticalScrollViewer, OnePageImageListView);
@@ -589,7 +553,7 @@ namespace ComicReader.Views
             }
 
             m_tab_id.Tab.Header = m_comic.Title;
-            m_tab_id.Tab.IconSource = new Microsoft.UI.Xaml.Controls.SymbolIconSource() { Symbol = Symbol.Document };
+            m_tab_id.Tab.IconSource = new muxc.SymbolIconSource() { Symbol = Symbol.Document };
             m_tab_id.UniqueString = GetPageUniqueString(m_comic);
             m_tab_id.Type = PageType.Reader;
         }
@@ -598,8 +562,19 @@ namespace ComicReader.Views
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
-            m_tab_id = (TabId)e.Parameter;
+
+            if (!m_page_initialized)
+            {
+                m_page_initialized = true;
+                NavigationParams p = (NavigationParams)e.Parameter;
+                m_tab_id = p.TabId;
+                Shared.ContentPageShared = (ContentPageShared)p.Shared;
+                Shared.ContentPageShared.OnFavoritesButtonClicked += OnFavoritesBtClicked;
+                Shared.ContentPageShared.RootPageShared.OnExitFullscreenMode += HideBottomGrid;
+            }
+
             UpdateTabId();
+            Shared.ContentPageShared.RootPageShared.CurrentPageType = PageType.Reader;
         }
 
         protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
@@ -631,7 +606,7 @@ namespace ComicReader.Views
                     Database.ComicRecords.Add(m_comic_record);
                 }
 
-                await DataManager.AddToHistory(m_comic.Id, true);
+                await DataManager.AddToHistory(m_comic.Id, m_comic.Title, true);
             }
 
             UpdateTabId();
@@ -734,7 +709,7 @@ namespace ComicReader.Views
             Shared.ComicTitle2 = m_comic.Title2;
             Shared.ComicPrimaryTitle = Shared.ComicTitle2.Length == 0 ? Shared.ComicTitle1 : Shared.ComicTitle2;
             Shared.ComicDir = m_comic.Directory;
-            Shared.IsInternal = !m_comic.IsExternal;
+            Shared.ContentPageShared.IsInLib = !m_comic.IsExternal;
             Shared.IsEditable = !(m_comic.IsExternal && m_comic.InfoFile == null);
             Shared.Progress = "";
             LoadComicTag();
@@ -796,7 +771,7 @@ namespace ComicReader.Views
                     InformationPaneMoreVersionGrid.Visibility = Visibility.Collapsed;
                 }
 
-                Shared.IsFavorite = await DataManager.GetFavoriteWithId(m_comic.Id) != null;
+                Shared.ContentPageShared.IsFavorite = await DataManager.GetFavoriteWithId(m_comic.Id) != null;
                 Shared.Rating = m_comic_record.Rating;
             }
             else
@@ -875,14 +850,22 @@ namespace ComicReader.Views
             });
         }
 
+        private void OnFavoritesBtClicked()
+        {
+            Utils.Methods.Run(async delegate
+            {
+                await SetIsFavorite(!Shared.ContentPageShared.IsFavorite);
+            });
+        }
+
         public async Task SetIsFavorite(bool is_favorite)
         {
-            if (Shared.IsFavorite == is_favorite)
+            if (Shared.ContentPageShared.IsFavorite == is_favorite)
             {
                 return;
             }
 
-            Shared.IsFavorite = is_favorite;
+            Shared.ContentPageShared.IsFavorite = is_favorite;
 
             if (is_favorite)
             {
@@ -1034,7 +1017,7 @@ namespace ComicReader.Views
         private void _SetScrollViewer(ReaderControl control, int? zoom, bool disable_animation,
             int? page, double? parallel_ratio, double? horizontal_offset, double? vertical_offset)
         {
-            if (!control.IsReady)
+            if (!control.IsLayoutReady)
             {
                 return;
             }
@@ -1069,9 +1052,9 @@ namespace ComicReader.Views
             }
 
             m_zoom = (int)zoom;
-            ZoomTextBlock.Text = m_zoom.ToString() + "%";
-            Shared.CanZoomIn = m_zoom < max_zoom;
-            Shared.CanZoomOut = m_zoom > min_zoom;
+            //ZoomTextBlock.Text = m_zoom.ToString() + "%";
+            Shared.ContentPageShared.CanZoomIn = m_zoom < max_zoom;
+            Shared.ContentPageShared.CanZoomOut = m_zoom > min_zoom;
 
             CorrectParallelOffset(control);
         }
@@ -1153,7 +1136,7 @@ namespace ComicReader.Views
 
         private void ReaderControlSizeChanged(ReaderControl control, SizeChangedEventArgs e)
         {
-            if (!control.IsReady)
+            if (!control.IsLayoutReady)
             {
                 return;
             }
@@ -1174,17 +1157,16 @@ namespace ComicReader.Views
 
         private void ReaderControlViewChanged(ReaderControl control, ScrollViewerViewChangedEventArgs e)
         {
-            if (!control.IsReady)
+            if (!control.IsScrollViewerInitialized || e.IsIntermediate)
             {
                 return;
             }
 
             control.FinalValueExpired();
-            m_position = control.ParallelRatioFinal;
 
-            if (e.IsIntermediate)
+            if (control.IsAllImagesLoaded)
             {
-                return;
+                m_position = control.ParallelRatioFinal;
             }
 #if DEBUG_1
             System.Diagnostics.Debug.Print("ViewChanged:"
@@ -1197,11 +1179,12 @@ namespace ComicReader.Views
             SetScrollViewer(control, null, false, null, null);
             UpdatePageFromOffset(control);
             UpdateProgress();
+            SetBottomGridPin(false);
         }
 
         private void UpdateReaderControlMargin(ReaderControl control)
         {
-            if (!control.IsReady)
+            if (!control.IsLayoutReady)
             {
                 return;
             }
@@ -1249,8 +1232,9 @@ namespace ComicReader.Views
             {
                 ReaderControl control = GetCurrentReaderControl();
                 bool all_loaded = false;
+                int idx_cnt = control.IndexFromPage(m_comic.ImageFiles.Count);
 
-                if (control.ImageSource.Count == m_comic.ImageFiles.Count)
+                if (control.ImageSource.Count - 1 == idx_cnt)
                 {
                     all_loaded = true;
                     foreach (ReaderImageData d in control.ImageSource)
@@ -1265,18 +1249,24 @@ namespace ComicReader.Views
 
                 if (ctx.Index == 0)
                 {
+                    await Utils.Methods.WaitFor(() => control.IsLayoutReady);
 #if DEBUG_1
                     System.Diagnostics.Debug.Print("FirstContainerSet\n");
 #endif
-                    await control.WaitForReady();
                     UpdateReaderControlMargin(control);
                     SetScrollViewer(control, m_zoom, true, null, null);
+                    control.IsScrollViewerInitialized = true;
                 }
 
                 if (all_loaded)
                 {
+                    await Utils.Methods.WaitFor(() => control.IsScrollViewerInitialized);
+#if DEBUG_1
+                    System.Diagnostics.Debug.Print("AllLoaded\n");
+#endif
                     UpdateReaderControlMargin(control);
                     SetScrollViewer(control, null, true, null, null);
+                    control.IsAllImagesLoaded = true;
                 }
             });
         }
@@ -1294,13 +1284,13 @@ namespace ComicReader.Views
                     image_count = m_comic.ImageFiles.Count.ToString();
                 }
 
-                PageIndicator.Text = m_page.ToString() + "/" + image_count;
+                PageIndicator.Text = m_page.ToString() + " of " + image_count;
             }
         }
 
         private void UpdatePageFromOffset(ReaderControl control)
         {
-            if (!control.IsReady)
+            if (!control.IsLayoutReady)
             {
                 return;
             }
@@ -1356,8 +1346,7 @@ namespace ComicReader.Views
             double position = m_position;
             Shared.IsOnePageMode = val;
             ReaderControl control = GetCurrentReaderControl();
-
-            await control.WaitForReady();
+            await Utils.Methods.WaitFor(() => control.IsAllImagesLoaded);
             UpdateReaderControlMargin(control);
 
             int zoom = m_zoom;
@@ -1367,18 +1356,6 @@ namespace ComicReader.Views
             }
 
             SetScrollViewer(control, zoom, true, position);
-        }
-
-        private void BottomControl_PointerEntered(object sender, Windows.UI.Xaml.Input.PointerRoutedEventArgs e)
-        {
-            BottomControlStoryboard2.Children[0].SetValue(DoubleAnimation.ToProperty, 1.0);
-            BottomControlStoryboard2.Begin();
-        }
-
-        private void BottomControl_PointerExited(object sender, Windows.UI.Xaml.Input.PointerRoutedEventArgs e)
-        {
-            BottomControlStoryboard2.Children[0].SetValue(DoubleAnimation.ToProperty, 0.0);
-            BottomControlStoryboard2.Begin();
         }
 
         private void Page_PointerWheelChanged(object sender, PointerRoutedEventArgs e)
@@ -1525,6 +1502,67 @@ namespace ComicReader.Views
             SetScrollViewer(control, null, false, control.HorizontalOffsetFinal + dx, control.VerticalOffsetFinal + dy);
             m_drag_pointer = pt;
             e.Handled = true;
+        }
+
+        private void ShowBottomGrid()
+        {
+            if (m_bottom_grid_showed)
+            {
+                return;
+            }
+
+            if (Shared.ContentPageShared.RootPageShared.IsFullscreenN)
+            {
+                return;
+            }
+
+            BottomGridStoryboard.Children[0].SetValue(DoubleAnimation.ToProperty, 1.0);
+            BottomGridStoryboard.Begin();
+            m_bottom_grid_showed = true;
+        }
+
+        private void HideBottomGrid()
+        {
+            if (!m_bottom_grid_showed)
+            {
+                return;
+            }
+
+            BottomGridStoryboard.Children[0].SetValue(DoubleAnimation.ToProperty, 0.0);
+            BottomGridStoryboard.Begin();
+            m_bottom_grid_showed = false;
+        }
+
+        private void SetBottomGridPin(bool pinned)
+        {
+            m_bottom_grid_pinned = pinned;
+            if (pinned)
+            {
+                ShowBottomGrid();
+            }
+            else
+            {
+                HideBottomGrid();
+            }
+        }
+
+        private void BottomGrid_PointerEntered(object sender, PointerRoutedEventArgs e)
+        {
+            ShowBottomGrid();
+        }
+
+        private void BottomGrid_PointerExited(object sender, PointerRoutedEventArgs e)
+        {
+            if (m_bottom_grid_pinned)
+            {
+                return;
+            }
+            HideBottomGrid();
+        }
+
+        private void Reader_Tapped(object sender, TappedRoutedEventArgs e)
+        {
+            SetBottomGridPin(!m_bottom_grid_pinned);
         }
     }
 }

@@ -17,9 +17,9 @@
                              IsSettingsVisible="False"
                              SelectionChanged="OnNavPaneSelectionChanged"
                              IsPaneToggleButtonVisible="False"
-                             Background="{ThemeResource ContentPageTopBackground}">
+                             Background="#404040">
 
-            <Frame x:Name="ContentFrame" Loaded="ContentFrame_Loaded" Background="#303030"/>
+            <Frame x:Name="ContentFrame" Loaded="ContentFrame_Loaded" Background="#454545"/>
             
             <muxc:NavigationView.MenuItems>
                 <muxc:NavigationViewItem Content="Favorites" IsSelected="True">

@@ -23,6 +23,17 @@ namespace ComicReader.Views
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
+        private ContentPageShared m_ContentPageShared;
+        public ContentPageShared ContentPageShared
+        {
+            get => m_ContentPageShared;
+            set
+            {
+                m_ContentPageShared = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ContentPageShared"));
+            }
+        }
+
         private string m_Title;
         public string Title
         {
@@ -52,6 +63,7 @@ namespace ComicReader.Views
     public sealed partial class SearchResultsPage : Page
     {
         public static SearchResultsPage Current;
+        private bool m_page_initialized;
         private TabId m_tab_id;
         private string m_tab_title;
 
@@ -101,10 +113,20 @@ namespace ComicReader.Views
         // navigation
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            base.OnNavigatedTo(e);
             Utils.Methods.Run(async delegate
             {
-                m_tab_id = (TabId)e.Parameter;
+                base.OnNavigatedTo(e);
+
+                if (!m_page_initialized)
+                {
+                    m_page_initialized = true;
+                    NavigationParams p = (NavigationParams)e.Parameter;
+                    m_tab_id = p.TabId;
+                    Shared.ContentPageShared = (ContentPageShared)p.Shared;
+                }
+
+                UpdateTabId();
+                Shared.ContentPageShared.RootPageShared.CurrentPageType = PageType.Search;
 
                 if (e.NavigationMode == NavigationMode.New)
                 {
@@ -127,8 +149,6 @@ namespace ComicReader.Views
                     }
                     await StartSearch();
                 }
-
-                UpdateTabId();
             });
         }
 

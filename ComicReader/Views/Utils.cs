@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using muxc = Microsoft.UI.Xaml.Controls;
 
 namespace ComicReader.Views
@@ -51,9 +52,15 @@ namespace ComicReader.Views
 
     public class TabId
     {
-        public muxc.TabViewItem Tab;
         public PageType Type;
+        public muxc.TabViewItem Tab;
         public string UniqueString;
         public Action OnTabSelected;
+    }
+
+    public class NavigationParams
+    {
+        public object Shared;
+        public TabId TabId;
     }
 }

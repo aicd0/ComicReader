@@ -20,6 +20,32 @@ namespace ComicReader.Views
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
+        public PageType CurrentPageType
+        {
+            set
+            {
+                IsReaderPage = value == PageType.Reader;
+                IsFullscreenButtonVisible = IsReaderPage;
+                if (!IsReaderPage && IsFullscreen)
+                {
+                    IsFullscreen = false;
+                }
+            }
+        }
+
+        private bool m_IsReaderPage;
+        public bool IsReaderPage
+        {
+            get => m_IsReaderPage;
+            set
+            {
+                m_IsReaderPage = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsReaderPage"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsReaderPageN"));
+            }
+        }
+        public bool IsReaderPageN => !IsReaderPage;
+
         private bool m_IsFullscreen;
         public bool IsFullscreen
         {
@@ -29,6 +55,11 @@ namespace ComicReader.Views
                 m_IsFullscreen = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsFullscreen"));
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsFullscreenN"));
+                
+                if (m_IsFullscreen == false)
+                {
+                    OnExitFullscreenMode?.Invoke();
+                }
             }
         }
         public bool IsFullscreenN => !m_IsFullscreen;
@@ -43,21 +74,21 @@ namespace ComicReader.Views
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsFullscreenButtonVisible"));
             }
         }
+
+        public Action OnExitFullscreenMode;
     }
 
     public sealed partial class RootPage : Page
     {
         public static RootPage Current = null;
-
-        List<TabId> m_all_tabs;
-        private Grid m_tab_container_grid;
-
         public RootPageShared Shared;
+
+        private List<TabId> m_all_tabs = new List<TabId>();
+        private Grid m_tab_container_grid;
 
         public RootPage()
         {
             Current = this;
-            m_all_tabs = new List<TabId>();
             Shared = new RootPageShared();
             Shared.IsFullscreen = false;
             Shared.IsFullscreenButtonVisible = false;
@@ -195,15 +226,20 @@ namespace ComicReader.Views
             {
                 tab = AddNewTab(type, args);
             }
-            
-            UpdateFullscreenMode(type);
+
+            NavigationParams nav_params = new NavigationParams
+            {
+                Shared = Shared,
+                TabId = tab
+            };
+
             Frame frame = (Frame)tab.Tab.Content;
 
             if (type == PageType.Reader || type == PageType.Blank || type == PageType.Search)
             {
                 if (frame.Content == null || frame.Content.GetType() != typeof(ContentPage))
                 {
-                    if (!frame.Navigate(typeof(ContentPage), tab))
+                    if (!frame.Navigate(typeof(ContentPage), nav_params))
                     {
                         return;
                     }
@@ -213,7 +249,7 @@ namespace ComicReader.Views
             }
             else
             {
-                frame.Navigate(PageUtils.GetPageType(type), tab);
+                frame.Navigate(PageUtils.GetPageType(type), nav_params);
             }
         }
 
@@ -351,16 +387,6 @@ namespace ComicReader.Views
             Shared.IsFullscreen = true;
             SetTabViewVisibility(false);
 
-            foreach (TabId tab in m_all_tabs)
-            {
-                Frame frame = tab.Tab.Content as Frame;
-                if (frame.Content is ContentPage)
-                {
-                    ContentPage page = frame.Content as ContentPage;
-                    page.Shared.IsFullscreen = true;
-                }
-            }
-
             return true;
         }
 
@@ -375,16 +401,6 @@ namespace ComicReader.Views
             view.ExitFullScreenMode();
             Shared.IsFullscreen = false;
             SetTabViewVisibility(true);
-
-            foreach (TabId tab in m_all_tabs)
-            {
-                Frame frame = tab.Tab.Content as Frame;
-                if (frame.Content is ContentPage)
-                {
-                    ContentPage page = frame.Content as ContentPage;
-                    page.Shared.IsFullscreen = false;
-                }
-            }
         }
 
         private void Fullscreen_Click(object sender, RoutedEventArgs e)

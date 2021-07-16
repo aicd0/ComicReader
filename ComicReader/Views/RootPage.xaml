@@ -102,7 +102,14 @@
                                 </Grid.ColumnDefinitions>
                                 <Border BorderThickness="1" BorderBrush="{ThemeResource TabViewBorderBrush}" Grid.ColumnSpan="2" Grid.Column="1" Height="1" VerticalAlignment="Bottom"/>
                                 <ContentPresenter x:Name="LeftContentPresenter" ContentTemplate="{TemplateBinding TabStripHeaderTemplate}" Content="{TemplateBinding TabStripHeader}" Grid.Column="0"/>
-                                <primitiveContract7Present:TabViewListView x:Name="TabListView" AllowDrop="{TemplateBinding AllowDropTabs}" CanReorderItems="{TemplateBinding CanReorderTabs}" Grid.Column="1" CanDragItems="{TemplateBinding CanDragTabs}" ItemTemplate="{TemplateBinding TabItemTemplate}" ItemsSource="{TemplateBinding TabItemsSource}" ItemTemplateSelector="{TemplateBinding TabItemTemplateSelector}" Padding="{TemplateBinding Padding}"/>
+                                <primitiveContract7Present:TabViewListView x:Name="TabListView" AllowDrop="{TemplateBinding AllowDropTabs}"
+                                                                           CanReorderItems="{TemplateBinding CanReorderTabs}" Grid.Column="1"
+                                                                           CanDragItems="{TemplateBinding CanDragTabs}"
+                                                                           ItemTemplate="{TemplateBinding TabItemTemplate}"
+                                                                           ItemsSource="{TemplateBinding TabItemsSource}"
+                                                                           ItemTemplateSelector="{TemplateBinding TabItemTemplateSelector}"
+                                                                           Padding="{TemplateBinding Padding}">
+                                </primitiveContract7Present:TabViewListView>
                                 <Border Grid.Column="2" Padding="{ThemeResource TabViewItemAddButtonContainerPadding}" VerticalAlignment="Bottom" Visibility="{Binding IsAddTabButtonVisible, RelativeSource={RelativeSource Mode=TemplatedParent}}">
                                     <Button x:Name="AddButton" Command="{TemplateBinding AddTabButtonCommand}" CommandParameter="{TemplateBinding AddTabButtonCommandParameter}" Content="&#xE710;" HighContrastAdjustment="None" HorizontalAlignment="Center" IsTextScaleFactorEnabled="False" Style="{ThemeResource TabViewButtonStyle}" VerticalAlignment="Center"/>
                                 </Border>

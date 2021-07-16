@@ -25,7 +25,7 @@
                     <MenuFlyout>
                         <MenuFlyoutItem Text="Open in new tab"
                                         Click="OpenInNewTabClick"
-                                        Visibility="{x:Bind IsItem}"/>
+                                        Visibility="{x:Bind IsItem, Mode=OneWay}"/>
                         <MenuFlyoutItem Text="Create new folder"
                                         Click="NewFolder_Click"/>
                         <MenuFlyoutItem Text="Sort by name"
@@ -38,7 +38,29 @@
                     </MenuFlyout>
                 </muxc:TreeViewItem.ContextFlyout>
                 <Grid>
-                    <TextBlock Text="{x:Bind Name}" VerticalAlignment="Center"/>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="8"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid Height="25" Grid.Column="0">
+                        <Grid Visibility="{x:Bind IsItemN, Mode=OneWay}">
+                            <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                        Glyph="&#xED41;" FontSize="18" Margin="0,4,0,0"
+                                        Visibility="{x:Bind IsExpandedN, Mode=OneWay}"/>
+                            <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                        Glyph="&#xED43;" FontSize="18" Margin="0,4,0,0"
+                                        Visibility="{x:Bind IsExpanded, Mode=OneWay}"/>
+                        </Grid>
+                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                      Glyph="&#xE768;" FontSize="18" Margin="0,2,0,0"
+                                      Visibility="{x:Bind IsItem, Mode=OneWay}"/>
+                    </Grid>
+                    <TextBlock Text="{x:Bind Name}"
+                               VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis"
+                               Grid.Column="2"
+                               ToolTipService.ToolTip="{x:Bind Name}"/>
                 </Grid>
             </muxc:TreeViewItem>
         </DataTemplate>

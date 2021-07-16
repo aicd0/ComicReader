@@ -23,40 +23,62 @@ namespace ComicReader.Views
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private ReaderPageShared m_SharedReaderPage;
-        public ReaderPageShared SharedReaderPage
+        private RootPageShared m_RootPageShared;
+        public RootPageShared RootPageShared
         {
-            get => m_SharedReaderPage;
+            get => m_RootPageShared;
             set
             {
-                m_SharedReaderPage = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("SharedReaderPage"));
+                m_RootPageShared = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("RootPageShared"));
             }
         }
 
-        private bool m_IsReaderPage;
-        public bool IsReaderPage
+        private bool m_CanZoomIn;
+        public bool CanZoomIn
         {
-            get => m_IsReaderPage;
+            get => m_CanZoomIn;
             set
             {
-                m_IsReaderPage = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsReaderPage"));
+                m_CanZoomIn = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("CanZoomIn"));
             }
         }
 
-        private bool m_IsFullscreen;
-        public bool IsFullscreen
+        private bool m_CanZoomOut;
+        public bool CanZoomOut
         {
-            get => m_IsFullscreen;
+            get => m_CanZoomOut;
             set
             {
-                m_IsFullscreen = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsFullscreen"));
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsFullscreenN"));
+                m_CanZoomOut = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("CanZoomOut"));
             }
         }
-        public bool IsFullscreenN => !IsFullscreen;
+
+        private bool m_IsInLib;
+        public bool IsInLib
+        {
+            get => m_IsInLib;
+            set
+            {
+                m_IsInLib = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsInLib"));
+            }
+        }
+
+        private bool m_IsFavorite;
+        public bool IsFavorite
+        {
+            get => m_IsFavorite;
+            set
+            {
+                m_IsFavorite = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsFavorite"));
+            }
+        }
+
+        public Action OnFavoritesButtonClicked;
     }
 
     public sealed partial class ContentPage : Page
@@ -64,18 +86,12 @@ namespace ComicReader.Views
         public static ContentPage Current;
         private TabId m_tab_id;
 
-        private object m_subpage;
-
         public ContentPageShared Shared { get; set; }
 
         public ContentPage()
         {
             Current = this;
-
             Shared = new ContentPageShared();
-            Shared.SharedReaderPage = new ReaderPageShared();
-            Shared.IsReaderPage = false;
-            Shared.IsFullscreen = false;
 
             InitializeComponent();
         }
@@ -84,7 +100,9 @@ namespace ComicReader.Views
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
-            m_tab_id = (TabId)e.Parameter;
+            NavigationParams p = (NavigationParams)e.Parameter;
+            m_tab_id = p.TabId;
+            Shared.RootPageShared = (RootPageShared)p.Shared;
         }
 
         private void SearchBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
@@ -113,28 +131,28 @@ namespace ComicReader.Views
                 return;
             }
 
-            Shared.IsReaderPage = page_type == PageType.Reader;
+            NavigationParams nav_params = new NavigationParams
+            {
+                Shared = Shared,
+                TabId = m_tab_id
+            };
+
+            _ = ContentFrame.Navigate(PageUtils.GetPageType(page_type), nav_params);
+            object subpage = ContentFrame.Content;
 
             switch (page_type)
             {
                 case PageType.Reader:
-                    _ = ContentFrame.Navigate(typeof(ReaderPage), m_tab_id);
-                    m_subpage = ContentFrame.Content;
-                    Shared.SharedReaderPage = ((ReaderPage)m_subpage).Shared;
-                    await ((ReaderPage)m_subpage).LoadComic((ComicData)param);
+                    await ((ReaderPage)subpage).LoadComic((ComicData)param);
                     break;
                 case PageType.Blank:
-                    _ = ContentFrame.Navigate(typeof(BlankPage), m_tab_id);
-                    m_subpage = ContentFrame.Content;
-                    await ((BlankPage)m_subpage).UpdateInfo();
+                    await ((BlankPage)subpage).UpdateInfo();
                     break;
                 case PageType.Search:
-                    _ = ContentFrame.Navigate(typeof(SearchResultsPage), m_tab_id);
-                    m_subpage = ContentFrame.Content;
-                    await ((SearchResultsPage)m_subpage).StartSearch((string)param);
+                    await ((SearchResultsPage)subpage).StartSearch((string)param);
                     break;
                 default:
-                    break;
+                    throw new Exception();
             }
         }
 
@@ -213,11 +231,7 @@ namespace ComicReader.Views
 
         private void AddToFavoriteBt_Click(object sender, RoutedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
-            {
-                ReaderPage page = m_subpage as ReaderPage;
-                await page.SetIsFavorite(!page.Shared.IsFavorite);
-            });
+            Shared.OnFavoritesButtonClicked?.Invoke();
         }
 
         private void ZoomIn_Click(object sender, RoutedEventArgs e)

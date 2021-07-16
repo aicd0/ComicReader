@@ -12,6 +12,7 @@ namespace ComicReader.Data
     public class SearchResultData : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
+
         public PointerEventHandler OnItemPressed { get; set; }
         public RoutedEventHandler OnHideClicked { get; set; }
         public RoutedEventHandler OnUnhideClicked { get; set; }
@@ -68,49 +69,60 @@ namespace ComicReader.Data
 
     public enum TreeItemType { Item, Filter };
 
-    public class FavoritesItem
+    public class FavoritesItem : INotifyPropertyChanged
     {
+        public event PropertyChangedEventHandler PropertyChanged;
+
         public FavoritesItem(string name, TreeItemType type, FavoritesItem parent)
         {
             Name = name;
             EditingName = name;
             Parent = parent;
-            m_type = type;
+            Type = type;
             Children = new ObservableCollection<FavoritesItem>();
             IsRenaming = false;
-            IsExpanded = false;
+            m_IsExpanded = false;
         }
-
-        private TreeItemType m_type;
 
         public string Name { get; set; }
         public string EditingName { get; set; }
         public string Id { get; set; }
         public bool IsRenaming { get; set; }
-        public bool IsExpanded { get; set; }
+
+        private bool m_IsExpanded;
+        public bool IsExpanded
+        {
+            get => m_IsExpanded;
+            set
+            {
+                m_IsExpanded = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsExpanded"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsExpandedN"));
+            }
+        }
+        public bool IsExpandedN => !IsExpanded;
+
         public ObservableCollection<FavoritesItem> Children { get; set; }
         public FavoritesItem Parent { get; set; }
-        public TreeItemType Type
-        {
-            get { return m_type; }
-            set { m_type = value; }
-        }
+        public TreeItemType Type { get; set; }
         public bool AllowDrop
         {
-            get { return m_type == TreeItemType.Filter; }
-            set { m_type = value ? TreeItemType.Filter : TreeItemType.Item; }
+            get => Type == TreeItemType.Filter;
+            set { Type = value ? TreeItemType.Filter : TreeItemType.Item; }
         }
         public bool IsItem
         {
-            get { return m_type == TreeItemType.Item; }
-            set { m_type = value ? TreeItemType.Item : TreeItemType.Filter; }
+            get => Type == TreeItemType.Item;
+            set { Type = value ? TreeItemType.Item : TreeItemType.Filter; }
         }
+        public bool IsItemN => !IsItem;
     };
 
     public class HistoryItem
     {
         public string Id { get; set; }
         public string Time { get; set; }
+        public string Title { get; set; }
     }
 
     public class HistoryItemGroup : ObservableCollection<HistoryItem>

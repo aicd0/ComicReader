@@ -10,7 +10,7 @@
     xmlns:controls_local="using:ComicReader.Controls"
     mc:Ignorable="d"
     NavigationCacheMode="Enabled"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    Background="Transparent">
 
     <Page.Resources>
         <ResourceDictionary>

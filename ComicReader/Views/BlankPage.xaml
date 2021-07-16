@@ -12,7 +12,7 @@
     xmlns:winui="using:Microsoft.UI.Xaml.Controls"
     mc:Ignorable="d"
     NavigationCacheMode="Enabled"
-    Background="#000000">
+    Background="Transparent">
 
     <Page.Resources>
         <ResourceDictionary>
@@ -37,8 +37,8 @@
     </Page.Resources>
 
     <Grid>
-        <ScrollViewer Padding="10">
-            <StackPanel Orientation="Vertical">
+        <ScrollViewer>
+            <StackPanel Margin="10" Orientation="Vertical">
                 <Grid Height="10"/>
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -64,12 +64,8 @@
                                            DesiredWidth="160"
                                            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                            ScrollViewer.HorizontalScrollMode="Disabled"
-                                           StretchContentForSingleRow="False">
-                    <controls:AdaptiveGridView.ItemContainerStyle>
-                        <Style TargetType="GridViewItem">
-                            <Setter Property="Margin" Value="6"/>
-                        </Style>
-                    </controls:AdaptiveGridView.ItemContainerStyle>
+                                           StretchContentForSingleRow="False"
+                                           ItemContainerStyle="{StaticResource HomePageAdaptiveGridViewItemStyle}">
                     <controls:AdaptiveGridView.ItemTemplate>
                         <DataTemplate x:DataType="data:SearchResultData">
                             <controls_local:ComicItemVertical DataContext="{x:Bind}"/>

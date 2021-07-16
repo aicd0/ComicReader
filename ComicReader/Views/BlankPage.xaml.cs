@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -20,10 +21,28 @@ using ComicReader.Data;
 
 namespace ComicReader.Views
 {
+    public class BlankPageShared : INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        private ContentPageShared m_ContentPageShared;
+        public ContentPageShared ContentPageShared
+        {
+            get => m_ContentPageShared;
+            set
+            {
+                m_ContentPageShared = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ContentPageShared"));
+            }
+        }
+    }
+
     public sealed partial class BlankPage : Page
     {
-        public static BlankPage Current = null;
-        TabId m_tab_id = null;
+        public static BlankPage Current;
+        public BlankPageShared Shared { get; set; }
+        private bool m_page_initialized = false;
+        private TabId m_tab_id;
 
         Utils.CancellationLock m_update_folder_lock;
         Utils.CancellationLock m_update_library_lock;
@@ -34,6 +53,7 @@ namespace ComicReader.Views
         public BlankPage()
         {
             Current = this;
+            Shared = new BlankPageShared();
             m_update_folder_lock = new Utils.CancellationLock();
             m_update_library_lock = new Utils.CancellationLock();
             ComicItemSource = new Utils.TrulyObservableCollection<SearchResultData>();
@@ -70,12 +90,16 @@ namespace ComicReader.Views
         {
             base.OnNavigatedTo(e);
 
-            if (m_tab_id == null)
+            if (!m_page_initialized)
             {
-                m_tab_id = (TabId)e.Parameter;
+                m_page_initialized = true;
+                NavigationParams p = (NavigationParams)e.Parameter;
+                m_tab_id = p.TabId;
+                Shared.ContentPageShared = (ContentPageShared)p.Shared;
             }
 
             UpdateTabId();
+            Shared.ContentPageShared.RootPageShared.CurrentPageType = PageType.Blank;
         }
 
         protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
