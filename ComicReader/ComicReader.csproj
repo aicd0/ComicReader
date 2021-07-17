@@ -129,29 +129,28 @@
     <Compile Include="Controls\FolderItemDetailed.xaml.cs">
       <DependentUpon>FolderItemDetailed.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Controls\ReaderImageItemVertical.xaml.cs">
-      <DependentUpon>ReaderImageItemVertical.xaml</DependentUpon>
+    <Compile Include="Controls\ReaderFrameVertical.xaml.cs">
+      <DependentUpon>ReaderFrameVertical.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Controls\ReaderImageItemHorizontal.xaml.cs">
-      <DependentUpon>ReaderImageItemHorizontal.xaml</DependentUpon>
+    <Compile Include="Controls\ReaderFrameHorizontal.xaml.cs">
+      <DependentUpon>ReaderFrameHorizontal.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Controls\StaggeredPanelX.cs" />
     <Compile Include="Controls\TagButton.xaml.cs">
       <DependentUpon>TagButton.xaml</DependentUpon>
     </Compile>
     <Compile Include="Converters\DataTemplateSelector.cs" />
-    <Compile Include="Data\Data.cs" />
+    <Compile Include="Data\ViewModels.cs" />
     <Compile Include="Data\Database.cs" />
     <Compile Include="Data\DataManager.cs" />
     <Compile Include="Utils\BackgroundTasks.cs" />
     <Compile Include="Utils\CancellationLock.cs" />
     <Compile Include="Utils\Heap.cs" />
-    <Compile Include="Utils\ComicFilter.cs" />
+    <Compile Include="Utils\Filter.cs" />
     <Compile Include="Utils\StringUtils.cs" />
     <Compile Include="Utils\TrulyObservableCollection.cs" />
-    <Compile Include="Utils\Utils.cs" />
-    <Compile Include="Views\BlankPage.xaml.cs">
-      <DependentUpon>BlankPage.xaml</DependentUpon>
+    <Compile Include="Utils\Methods.cs" />
+    <Compile Include="Views\HomePage.xaml.cs">
+      <DependentUpon>HomePage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\ChooseLocationsDialog.xaml.cs">
       <DependentUpon>ChooseLocationsDialog.xaml</DependentUpon>
@@ -175,8 +174,8 @@
       <DependentUpon>RootPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Views\SearchResultsPage.xaml.cs">
-      <DependentUpon>SearchResultsPage.xaml</DependentUpon>
+    <Compile Include="Views\SearchPage.xaml.cs">
+      <DependentUpon>SearchPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\SettingsPage.xaml.cs">
       <DependentUpon>SettingsPage.xaml</DependentUpon>
@@ -219,11 +218,11 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Controls\ReaderImageItemVertical.xaml">
+    <Page Include="Controls\ReaderFrameVertical.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="Controls\ReaderImageItemHorizontal.xaml">
+    <Page Include="Controls\ReaderFrameHorizontal.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -239,7 +238,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Views\BlankPage.xaml">
+    <Page Include="Views\HomePage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -271,7 +270,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="Views\SearchResultsPage.xaml">
+    <Page Include="Views\SearchPage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

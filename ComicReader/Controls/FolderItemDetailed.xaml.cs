@@ -14,13 +14,12 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 using ComicReader.Data;
-using ComicReader.Views;
 
 namespace ComicReader.Controls
 {
     public sealed partial class FolderItemDetailed : UserControl
     {
-        public FolderData Ctx { get => DataContext as FolderData; }
+        public FolderItemModel Ctx => DataContext as FolderItemModel;
         public string Title { get; set; }
         public string Detail { get; set; }
         public string Glyph { get; set; }

@@ -44,9 +44,9 @@ namespace ComicReader.Data
         public StorageFile InfoFile;
     };
 
-    class ComicRecordData
+    public class ReadRecordData
     {
-        public ComicRecordData()
+        public ReadRecordData()
         {
             Id = "";
             Rating = -1;
@@ -58,50 +58,38 @@ namespace ComicReader.Data
         public int Progress;
     }
 
-    class ComicCollectionData
-    {
-        public ComicCollectionData()
-        {
-            ComicIds = new List<string>();
-        }
-
-        public string Id;
-        public List<string> ComicIds;
-    };
-
-    class FavoritesNode
+    public class FavoritesNodeData
     {
         public string Type;
         public string Name;
         public string Id;
-        public List<FavoritesNode> Children;
+        public List<FavoritesNodeData> Children;
 
-        public FavoritesNode()
+        public FavoritesNodeData()
         {
-            Children = new List<FavoritesNode>();
+            Children = new List<FavoritesNodeData>();
         }
     };
 
-    class HistoryData
+    public class HistoryData
     {
         public string Id;
         public string Title;
         public DateTimeOffset DateTime;
     }
 
-    class AppSettingsData
+    public class SettingsData
     {
         public List<string> ComicFolders = new List<string>();
         public bool SaveHistory = true;
     };
 
-    class Database
+    public class Database
     {
         public static List<ComicData> Comics = new List<ComicData>();
-        public static List<ComicRecordData> ComicRecords = new List<ComicRecordData>();
-        public static List<ComicCollectionData> ComicCollections = new List<ComicCollectionData>();
-        public static List<FavoritesNode> Favorites = new List<FavoritesNode>();
+        public static List<ReadRecordData> ComicRecords = new List<ReadRecordData>();
+        public static List<FavoritesNodeData> Favorites = new List<FavoritesNodeData>();
         public static List<HistoryData> History = new List<HistoryData>();
-        public static AppSettingsData AppSettings = new AppSettingsData();
+        public static SettingsData AppSettings = new SettingsData();
     };
 }

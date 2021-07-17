@@ -78,6 +78,7 @@ namespace ComicReader.Views
             }
         }
 
+        // events
         public Action OnFavoritesButtonClicked;
     }
 
@@ -105,25 +106,7 @@ namespace ComicReader.Views
             Shared.RootPageShared = (RootPageShared)p.Shared;
         }
 
-        private void SearchBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
-        {
-
-        }
-
-        public void SetSearchBox(string keywords)
-        {
-            SearchBox.Focus(FocusState.Programmatic);
-            SearchBox.Text = keywords;
-        }
-
-        private void SearchBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
-        {
-            Utils.Methods.Run(async delegate
-            {
-                await RootPage.Current.LoadTab(m_tab_id, PageType.Search, args.QueryText);
-            });
-        }
-
+        // update
         public async Task LoadPage(PageType page_type, object param = null)
         {
             if (ContentFrame == null)
@@ -146,14 +129,34 @@ namespace ComicReader.Views
                     await ((ReaderPage)subpage).LoadComic((ComicData)param);
                     break;
                 case PageType.Blank:
-                    await ((BlankPage)subpage).UpdateInfo();
+                    await ((HomePage)subpage).UpdateInfo();
                     break;
                 case PageType.Search:
-                    await ((SearchResultsPage)subpage).StartSearch((string)param);
+                    await ((SearchPage)subpage).StartSearch((string)param);
                     break;
                 default:
                     throw new Exception();
             }
+        }
+
+        // events processing
+        private void SearchBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+        {
+
+        }
+
+        public void SetSearchBox(string keywords)
+        {
+            SearchBox.Focus(FocusState.Programmatic);
+            SearchBox.Text = keywords;
+        }
+
+        private void SearchBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
+        {
+            Utils.Methods.Run(async delegate
+            {
+                await RootPage.Current.LoadTab(m_tab_id, PageType.Search, args.QueryText);
+            });
         }
 
         private void SettingBt_Click(object sender, RoutedEventArgs e)
@@ -168,9 +171,9 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                _UtilityPane.IsPaneOpen = !_UtilityPane.IsPaneOpen;
+                ContentPageUtilityPane.IsPaneOpen = !ContentPageUtilityPane.IsPaneOpen;
 
-                if (_UtilityPane.IsPaneOpen)
+                if (ContentPageUtilityPane.IsPaneOpen)
                 {
                     if (FavoritesPage.Current != null)
                     {

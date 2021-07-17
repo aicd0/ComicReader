@@ -19,18 +19,17 @@ using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
-
 using ComicReader.Data;
 
 namespace ComicReader.Views
 {
     public sealed partial class ChooseLocationsDialog : ContentDialog
     {
-        public ObservableCollection<FolderData> FolderDataSource { get; set; }
+        public ObservableCollection<FolderItemModel> FolderItemDataSource { get; set; }
 
         public ChooseLocationsDialog()
         {
-            FolderDataSource = new ObservableCollection<FolderData>();
+            FolderItemDataSource = new ObservableCollection<FolderItemModel>();
             InitializeComponent();
         }
 
@@ -38,7 +37,7 @@ namespace ComicReader.Views
         // update
         private async Task UpdateFolders()
         {
-            FolderDataSource.Clear();
+            FolderItemDataSource.Clear();
 
             await DataManager.WaitLock();
 
@@ -69,7 +68,7 @@ namespace ComicReader.Views
 
             if (StorageApplicationPermissions.FutureAccessList.Entries.Count < StorageApplicationPermissions.FutureAccessList.MaximumItemsAllowed)
             {
-                FolderDataSource.Add(new FolderData
+                FolderItemDataSource.Add(new FolderItemModel
                 {
                     IsAddNew = true
                 });
@@ -77,12 +76,12 @@ namespace ComicReader.Views
 
             foreach (string folder in Database.AppSettings.ComicFolders)
             {
-                FolderData item = new FolderData
+                FolderItemModel item = new FolderItemModel
                 {
                     Folder = folder,
                     IsAddNew = false
                 };
-                FolderDataSource.Add(item);
+                FolderItemDataSource.Add(item);
             }
 
             DataManager.ReleaseLock();
@@ -139,7 +138,7 @@ namespace ComicReader.Views
                 }
                 IsPrimaryButtonEnabled = false;
 
-                FolderData item = (FolderData)((Grid)sender).DataContext;
+                FolderItemModel item = (FolderItemModel)((Grid)sender).DataContext;
                 await DataManager.UtilsRemoveFromFolders(item.Folder);
                 await UpdateFolders();
 

@@ -21,7 +21,7 @@ using ComicReader.Data;
 
 namespace ComicReader.Views
 {
-    public class BlankPageShared : INotifyPropertyChanged
+    public class HomePageShared : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -37,27 +37,27 @@ namespace ComicReader.Views
         }
     }
 
-    public sealed partial class BlankPage : Page
+    public sealed partial class HomePage : Page
     {
-        public static BlankPage Current;
-        public BlankPageShared Shared { get; set; }
+        public static HomePage Current;
+        public HomePageShared Shared { get; set; }
         private bool m_page_initialized = false;
         private TabId m_tab_id;
 
         Utils.CancellationLock m_update_folder_lock;
         Utils.CancellationLock m_update_library_lock;
 
-        public Utils.TrulyObservableCollection<SearchResultData> ComicItemSource { get; set; }
-        public ObservableCollection<FolderData> FolderDataSource { get; set; }
+        public Utils.TrulyObservableCollection<ComicItemModel> ComicItemSource { get; set; }
+        public ObservableCollection<FolderItemModel> FolderItemDataSource { get; set; }
 
-        public BlankPage()
+        public HomePage()
         {
             Current = this;
-            Shared = new BlankPageShared();
+            Shared = new HomePageShared();
             m_update_folder_lock = new Utils.CancellationLock();
             m_update_library_lock = new Utils.CancellationLock();
-            ComicItemSource = new Utils.TrulyObservableCollection<SearchResultData>();
-            FolderDataSource = new ObservableCollection<FolderData>();
+            ComicItemSource = new Utils.TrulyObservableCollection<ComicItemModel>();
+            FolderItemDataSource = new ObservableCollection<FolderItemModel>();
 
             InitializeComponent();
         }
@@ -121,7 +121,7 @@ namespace ComicReader.Views
             await m_update_library_lock.WaitAsync();
             try
             {
-                if (m_update_library_lock.CancellationRequested())
+                if (m_update_library_lock.CancellationRequested)
                 {
                     return;
                 }
@@ -148,7 +148,7 @@ namespace ComicReader.Views
                 ComicItemSource.Clear();
                 foreach (ComicData comic in min_heap)
                 {
-                    SearchResultData data = new SearchResultData
+                    ComicItemModel data = new ComicItemModel
                     {
                         OnItemPressed = Grid_PointerPressed,
                         OnHideClicked = Hide_Click,
@@ -158,18 +158,11 @@ namespace ComicReader.Views
                         IsFavorite = await DataManager.GetFavoriteWithId(comic.Id) != null
                     };
 
-                    ComicRecordData comic_record = await DataManager.GetComicRecordWithId(comic.Id);
+                    ReadRecordData comic_record = await DataManager.GetComicRecordWithId(comic.Id);
                     if (comic_record != null)
                     {
                         data.Rating = comic_record.Rating;
-                        if (comic_record.Progress >= 100)
-                        {
-                            data.Progress = "Finished";
-                        }
-                        else
-                        {
-                            data.Progress = comic_record.Progress.ToString() + "%";
-                        }
+                        data.Progress = comic_record.Progress >= 100 ? "Finished" : comic_record.Progress.ToString() + "%";
                     }
                     else
                     {
@@ -195,8 +188,8 @@ namespace ComicReader.Views
             try
             {
                 // add to folder item source
-                Collection<FolderData> new_folder_source = new Collection<FolderData>();
-                new_folder_source.Add(new FolderData
+                Collection<FolderItemModel> new_folder_source = new Collection<FolderItemModel>();
+                new_folder_source.Add(new FolderItemModel
                 {
                     OnItemPressed = FolderItem_Pressed,
                     IsAddNew = true
@@ -204,7 +197,7 @@ namespace ComicReader.Views
                 await DataManager.WaitLock();
                 foreach (string folder in Database.AppSettings.ComicFolders)
                 {
-                    FolderData item = new FolderData
+                    FolderItemModel item = new FolderItemModel
                     {
                         OnItemPressed = FolderItem_Pressed,
                         OnRemoveClicked = FolderItemRemove_Click,
@@ -214,7 +207,7 @@ namespace ComicReader.Views
                     new_folder_source.Add(item);
                 }
                 DataManager.ReleaseLock();
-                Utils.T1<FolderData>.UpdateCollection(FolderDataSource, new_folder_source, FolderData.ContentEquals);
+                Utils.Methods_1<FolderItemModel>.UpdateCollection(FolderItemDataSource, new_folder_source, FolderItemModel.ContentEquals);
             }
             finally
             {
@@ -242,7 +235,7 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                SearchResultData ctx = (SearchResultData)((Grid)sender).DataContext;
+                ComicItemModel ctx = (ComicItemModel)((Grid)sender).DataContext;
                 PointerPoint pt = e.GetCurrentPoint((UIElement)sender);
                 if (!pt.Properties.IsLeftButtonPressed)
                 {
@@ -256,7 +249,7 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                SearchResultData ctx = (SearchResultData)((MenuFlyoutItem)sender).DataContext;
+                ComicItemModel ctx = (ComicItemModel)((MenuFlyoutItem)sender).DataContext;
                 await DataManager.HideComic(ctx.Comic);
                 await UpdateLibrary();
             });
@@ -272,7 +265,7 @@ namespace ComicReader.Views
                     return;
                 }
 
-                FolderData ctx = (FolderData)((Grid)sender).DataContext;
+                FolderItemModel ctx = (FolderItemModel)((Grid)sender).DataContext;
                 if (ctx.IsAddNew)
                 {
                     if (!await DataManager.UtilsAddToComicFoldersUsingPicker())
@@ -292,7 +285,7 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                FolderData ctx = (FolderData)((MenuFlyoutItem)sender).DataContext;
+                FolderItemModel ctx = (FolderItemModel)((MenuFlyoutItem)sender).DataContext;
                 await DataManager.UtilsRemoveFromFolders(ctx.Folder);
                 await UpdateFolders();
             });

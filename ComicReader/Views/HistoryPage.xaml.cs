@@ -42,8 +42,8 @@ namespace ComicReader.Views
 
         public async Task UpdateHistory()
         {
-            var source = new ObservableCollection<HistoryItemGroup>();
-            HistoryItemGroup current_group = null;
+            var source = new ObservableCollection<HistoryItemGroupModel>();
+            HistoryItemGroupModel current_group = null;
             await DataManager.WaitLock();
 
             foreach (var item in Database.History)
@@ -58,10 +58,10 @@ namespace ComicReader.Views
 
                 if (current_group == null)
                 {
-                    current_group = new HistoryItemGroup(key);
+                    current_group = new HistoryItemGroupModel(key);
                 }
 
-                var item_out = new HistoryItem();
+                var item_out = new HistoryItemModel();
                 item_out.Id = item.Id;
                 item_out.Time = item.DateTime.ToString("g");
                 item_out.Title = item.Title;
@@ -78,7 +78,7 @@ namespace ComicReader.Views
             HistorySource.Source = source;
         }
 
-        private async Task OpenItem(HistoryItem item)
+        private async Task OpenItem(HistoryItemModel item)
         {
             ComicData comic = await DataManager.GetComicWithId(item.Id);
 
@@ -96,23 +96,23 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                HistoryItem item = (HistoryItem)((MenuFlyoutItem)sender).DataContext;
+                HistoryItemModel item = (HistoryItemModel)((MenuFlyoutItem)sender).DataContext;
                 await OpenItem(item);
             });
         }
 
-        private async Task DeleteItem(HistoryItem item)
+        private async Task DeleteItem(HistoryItemModel item)
         {
             await DataManager.RemoveFromHistory(item.Id, true);
-            ObservableCollection<HistoryItemGroup> source = (ObservableCollection<HistoryItemGroup>)HistorySource.Source;
+            ObservableCollection<HistoryItemGroupModel> source = (ObservableCollection<HistoryItemGroupModel>)HistorySource.Source;
 
             for (int i = 0; i < source.Count; ++i)
             {
-                HistoryItemGroup group = source[i];
+                HistoryItemGroupModel group = source[i];
 
                 for (int j = 0; j < group.Count; ++j)
                 {
-                    HistoryItem item2 = group[j];
+                    HistoryItemModel item2 = group[j];
 
                     if (item2.Id == item.Id)
                     {
@@ -133,7 +133,7 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                HistoryItem item = (HistoryItem)((MenuFlyoutItem)sender).DataContext;
+                HistoryItemModel item = (HistoryItemModel)((MenuFlyoutItem)sender).DataContext;
                 await DeleteItem(item);
             });
         }
@@ -150,7 +150,7 @@ namespace ComicReader.Views
 
                     if (ptrPt.Properties.IsLeftButtonPressed)
                     {
-                        HistoryItem item = (HistoryItem)((StackPanel)sender).DataContext;
+                        HistoryItemModel item = (HistoryItemModel)((StackPanel)sender).DataContext;
                         await OpenItem(item);
                         e.Handled = true;
                     }

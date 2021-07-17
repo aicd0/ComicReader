@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using System.Windows;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-
 using ComicReader.Data;
 
 namespace ComicReader.Converters
@@ -18,19 +17,19 @@ namespace ComicReader.Converters
 
         protected override DataTemplate SelectTemplateCore(object item)
         {
-            var favoriteItem = (FavoritesItem)item;
+            FavoritesItemModel favoriteItem = (FavoritesItemModel)item;
             return favoriteItem.IsRenaming ? RenamingTemplate : CommonTemplate;
         }
     };
 
-    public class FolderDataTemplateSelector : DataTemplateSelector
+    public class FolderItemModelTemplateSelector : DataTemplateSelector
     {
         public DataTemplate CommonTemplate { get; set; }
         public DataTemplate AddNewTemplate { get; set; }
 
         protected override DataTemplate SelectTemplateCore(object item)
         {
-            var folder_item = (FolderData)item;
+            FolderItemModel folder_item = (FolderItemModel)item;
             return folder_item.IsAddNew ? AddNewTemplate : CommonTemplate;
         }
     };

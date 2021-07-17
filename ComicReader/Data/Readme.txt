@@ -12,7 +12,7 @@ Comic
 	2			Tag 1/Tag 2/...
 6			Directory
 
-ComicRecord
+ReadRecord
 1			Id
 \n			(Property seperator)
 2			Rating
@@ -20,7 +20,7 @@ ComicRecord
 \n\n		(Item seperator)
 ...
 
-FavoritesData
+FavoritesNodeData
 \n0			(Start of a new item)
 \n1[f/i]	Type(Folder/Item)
 \n2			Content
@@ -28,7 +28,7 @@ FavoritesData
 \n8			Move down
 \n9			Move up
 
-AppSettingsData
+SettingsData
 Boolean		Save history
 Int16		Items to keep
 Int32		Comics folder string length

@@ -12,6 +12,8 @@ namespace ComicReader.Utils
         private int m_cancellation_requests;
         private SemaphoreSlim m_semaphore;
 
+        public bool CancellationRequested => m_cancellation_requests > 0;
+
         public CancellationLock()
         {
             m_cancellation_requests = 0;
@@ -28,11 +30,6 @@ namespace ComicReader.Utils
         public void Release()
         {
             _ = m_semaphore.Release();
-        }
-
-        public bool CancellationRequested()
-        {
-            return m_cancellation_requests > 0;
         }
     }
 }

@@ -18,11 +18,11 @@ namespace ComicReader.Controls
 {
     public sealed partial class ComicItemHorizontal : UserControl
     {
-        public SearchResultData Ctx { get => DataContext as SearchResultData; }
+        public ComicItemModel Ctx => DataContext as ComicItemModel;
 
         public ComicItemHorizontal()
         {
-            this.InitializeComponent();
+            InitializeComponent();
             DataContextChanged += (s, e) => Bindings.Update();
         }
     }

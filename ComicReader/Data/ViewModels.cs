@@ -9,17 +9,11 @@ using Windows.UI.Xaml.Media.Imaging;
 
 namespace ComicReader.Data
 {
-    public class SearchResultData : INotifyPropertyChanged
+    public class ComicItemModel : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public PointerEventHandler OnItemPressed { get; set; }
-        public RoutedEventHandler OnHideClicked { get; set; }
-        public RoutedEventHandler OnUnhideClicked { get; set; }
-        public RoutedEventHandler OnAddToFavoritesClicked { get; set; }
-        public RoutedEventHandler OnRemoveFromFavoritesClicked { get; set; }
-
-        public SearchResultData()
+        public ComicItemModel()
         {
             Image = new BitmapImage();
             Title = "";
@@ -40,7 +34,6 @@ namespace ComicReader.Data
         public string Progress { get; set; }
         public bool IsRatingVisible => Rating != -1;
 
-        // IsFavorite
         private bool m_IsFavorite;
         public bool IsFavorite
         {
@@ -49,7 +42,6 @@ namespace ComicReader.Data
         }
         public bool IsFavoriteN => !m_IsFavorite;
 
-        // IsHide
         public bool IsHide => Comic.Hidden;
         public bool IsHideN => !IsHide;
 
@@ -65,21 +57,28 @@ namespace ComicReader.Data
             }
         }
         public bool IsImageLoadedN => !m_IsImageLoaded;
+
+        // events
+        public PointerEventHandler OnItemPressed { get; set; }
+        public RoutedEventHandler OnHideClicked { get; set; }
+        public RoutedEventHandler OnUnhideClicked { get; set; }
+        public RoutedEventHandler OnAddToFavoritesClicked { get; set; }
+        public RoutedEventHandler OnRemoveFromFavoritesClicked { get; set; }
     };
 
     public enum TreeItemType { Item, Filter };
 
-    public class FavoritesItem : INotifyPropertyChanged
+    public class FavoritesItemModel : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public FavoritesItem(string name, TreeItemType type, FavoritesItem parent)
+        public FavoritesItemModel(string name, TreeItemType type, FavoritesItemModel parent)
         {
             Name = name;
             EditingName = name;
             Parent = parent;
             Type = type;
-            Children = new ObservableCollection<FavoritesItem>();
+            Children = new ObservableCollection<FavoritesItemModel>();
             IsRenaming = false;
             m_IsExpanded = false;
         }
@@ -102,8 +101,8 @@ namespace ComicReader.Data
         }
         public bool IsExpandedN => !IsExpanded;
 
-        public ObservableCollection<FavoritesItem> Children { get; set; }
-        public FavoritesItem Parent { get; set; }
+        public ObservableCollection<FavoritesItemModel> Children { get; set; }
+        public FavoritesItemModel Parent { get; set; }
         public TreeItemType Type { get; set; }
         public bool AllowDrop
         {
@@ -118,16 +117,16 @@ namespace ComicReader.Data
         public bool IsItemN => !IsItem;
     };
 
-    public class HistoryItem
+    public class HistoryItemModel
     {
         public string Id { get; set; }
         public string Time { get; set; }
         public string Title { get; set; }
     }
 
-    public class HistoryItemGroup : ObservableCollection<HistoryItem>
+    public class HistoryItemGroupModel : ObservableCollection<HistoryItemModel>
     {
-        public HistoryItemGroup(string key) : base()
+        public HistoryItemGroupModel(string key) : base()
         {
             Key = key;
         }
@@ -135,31 +134,33 @@ namespace ComicReader.Data
         public string Key { get; set; }
     }
 
-    public class ReaderImageData
+    public class ReaderFrameModel
     {
-        public Action<ReaderImageData> OnContainerSet;
         public Grid Container;
 
         public BitmapImage Image1 { get; set; }
         public BitmapImage Image2 { get; set; }
         public int Index { get; set; }
+
+        // events
+        public Action<ReaderFrameModel> OnContainerSet;
     };
 
-    public class ReaderTagData
+    public class TagsModel
     {
-        public ReaderTagData(string name)
+        public TagsModel(string name)
         {
             Name = name;
-            Tags = new List<ReaderSingleTagData>();
+            Tags = new List<TagModel>();
         }
 
         public string Name { get; set; }
-        public List<ReaderSingleTagData> Tags { get; set; }
+        public List<TagModel> Tags { get; set; }
     };
 
-    public class ReaderSingleTagData
+    public class TagModel
     {
-        public ReaderSingleTagData(string tag)
+        public TagModel(string tag)
         {
             Tag = tag;
         }
@@ -167,16 +168,18 @@ namespace ComicReader.Data
         public string Tag { get; set; }
     };
 
-    public class FolderData
+    public class FolderItemModel
     {
-        public PointerEventHandler OnItemPressed { get; set; }
-        public RoutedEventHandler OnRemoveClicked { get; set; }
-
         public string Folder { get; set; }
         public bool IsAddNew { get; set; }
         public bool IsAddNewN { get => !IsAddNew; }
 
-        public static Func<FolderData, FolderData, bool> ContentEquals = delegate (FolderData a, FolderData b)
+        // events
+        public PointerEventHandler OnItemPressed { get; set; }
+        public RoutedEventHandler OnRemoveClicked { get; set; }
+
+        // methods
+        public static Func<FolderItemModel, FolderItemModel, bool> ContentEquals = delegate (FolderItemModel a, FolderItemModel b)
         {
             return a.Folder == b.Folder && a.IsAddNew == b.IsAddNew;
         };

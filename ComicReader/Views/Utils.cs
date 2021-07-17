@@ -10,7 +10,7 @@ namespace ComicReader.Views
         Search,
         Reader,
         Settings,
-        Unknown
+        Unknown,
     }
 
     class PageUtils
@@ -20,9 +20,9 @@ namespace ComicReader.Views
             switch (type)
             {
                 case PageType.Blank:
-                    return typeof(BlankPage);
+                    return typeof(HomePage);
                 case PageType.Search:
-                    return typeof(SearchResultsPage);
+                    return typeof(SearchPage);
                 case PageType.Reader:
                     return typeof(ReaderPage);
                 case PageType.Settings:
@@ -37,9 +37,9 @@ namespace ComicReader.Views
             switch (type)
             {
                 case PageType.Blank:
-                    return BlankPage.GetPageUniqueString(args);
+                    return HomePage.GetPageUniqueString(args);
                 case PageType.Search:
-                    return SearchResultsPage.GetPageUniqueString(args);
+                    return SearchPage.GetPageUniqueString(args);
                 case PageType.Reader:
                     return ReaderPage.GetPageUniqueString(args);
                 case PageType.Settings:

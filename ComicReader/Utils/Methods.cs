@@ -10,9 +10,9 @@ using Windows.Storage.AccessCache;
 
 namespace ComicReader.Utils
 {
-    public interface _IT1<out T> { }
+    public interface IMethods_1<out T> { }
 
-    public class T1<T> : _IT1<T>
+    public class Methods_1<T> : IMethods_1<T>
     {
         public static void NotifyCollectionChanged(ObservableCollection<T> collection, T item)
         {
@@ -90,7 +90,7 @@ namespace ComicReader.Utils
                 }
             }
 
-            return null; // we don't have permissions
+            return null; // no permission
         }
 
         public static async Task WaitFor(Func<bool> signal)

@@ -18,7 +18,7 @@ namespace ComicReader.Controls
 {
     public sealed partial class TagButton : UserControl
     {
-        public ReaderSingleTagData Context { get => DataContext as ReaderSingleTagData; }
+        public TagModel Ctx => DataContext as TagModel;
 
         public TagButton()
         {

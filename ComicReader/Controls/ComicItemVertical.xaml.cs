@@ -14,13 +14,12 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 using ComicReader.Data;
-using ComicReader.Views;
 
 namespace ComicReader.Controls
 {
     public sealed partial class ComicItemVertical : UserControl
     {
-        public SearchResultData Ctx { get => DataContext as SearchResultData; }
+        public ComicItemModel Ctx => DataContext as ComicItemModel;
 
         public ComicItemVertical()
         {

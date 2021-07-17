@@ -8,111 +8,118 @@ using Windows.UI.Xaml.Controls;
 
 namespace ComicReader.Utils
 {
+    public enum BackgroundTaskExceptionType
+    {
+        Success,
+        Failure,
+        Cancellation,
+        FileNotExists,
+        ItemExists,
+        InvalidParameters,
+        NameCollision,
+        NoPermission,
+    }
+
+    public class BackgroundTaskResult
+    {
+        public BackgroundTaskResult(BackgroundTaskExceptionType type = BackgroundTaskExceptionType.Success,
+            bool fatal = false, string description = "No description provided")
+        {
+            ExceptionType = type;
+            IsFatal = fatal;
+            Description = description;
+        }
+
+        public BackgroundTaskExceptionType ExceptionType;
+        public bool IsFatal = false;
+        public string Description;
+    }
+
     public class BackgroundTaskQueue
     {
-        public Task<int> Queue;
+        public Task<BackgroundTaskResult> Queue;
     }
 
     public class BackgroundTasks
     {
-        private static BackgroundTaskQueue default_queue = EmptyQueue();
-        private static int next_token = 0;
-        private static SortedDictionary<int, string> messages = new SortedDictionary<int, string>();
+        private static BackgroundTaskQueue m_default_queue = EmptyQueue();
+        private static int m_next_token = 0;
+        private static SortedDictionary<int, string> m_task_prompts = new SortedDictionary<int, string>();
         private static SemaphoreSlim m_append_task_semaphore = new SemaphoreSlim(1);
 
         public static BackgroundTaskQueue EmptyQueue()
         {
             return new BackgroundTaskQueue
             {
-                Queue = Task.Factory.StartNew(() =>
-                {
-                    return 0;
-                })
+                Queue = Task.Factory.StartNew(() => new BackgroundTaskResult())
             };
         }
 
-        public static void AppendTask(Func<Task<int>, int> ope)
+        public static void AppendTask(Func<Task<BackgroundTaskResult>, BackgroundTaskResult> ope)
         {
             AppendTask(ope, "");
         }
 
-        public static void AppendTask(Func<Task<int>, int> ope, string des)
+        public static void AppendTask(Func<Task<BackgroundTaskResult>, BackgroundTaskResult> ope, string prompt)
         {
-            AppendTask(ope, des, default_queue);
+            AppendTask(ope, prompt, m_default_queue);
         }
 
-        public static void AppendTask(Func<Task<int>, int> ope, string des, BackgroundTaskQueue queue)
+        public static void AppendTask(Func<Task<BackgroundTaskResult>, BackgroundTaskResult> ope, string prompt, BackgroundTaskQueue queue)
         {
-            Func<Task<int>, int> update_tip_text =
-            delegate (Task<int> _t)
-            {
-                string text = "";
-                foreach (var m in messages)
-                {
-                    text = m.Value;
-                    break;
-                }
-                SetTipText(text).Wait();
-                return _t.Result;
-            };
-
             int token = 0;
 
             // enqueue
             queue.Queue = queue.Queue
-            .ContinueWith(delegate (Task<int> _t)
+            .ContinueWith(delegate (Task<BackgroundTaskResult> _t)
             {
                 m_append_task_semaphore.Wait();
-
-                // get token if description text is not null
-                if (des.Length != 0)
+                // get token if prompt text has value
+                if (prompt.Length != 0)
                 {
-                    if (messages.Count == 0)
+                    if (m_task_prompts.Count == 0)
                     {
-                        next_token = 0;
+                        m_next_token = 0;
                     }
 
-                    token = next_token--;
-                    messages.Add(token, des);
+                    token = m_next_token--;
+                    m_task_prompts.Add(token, prompt);
                 }
 
-                // update task description
+                // update task prompt
                 string text = "";
-                foreach (var m in messages)
+                foreach (KeyValuePair<int, string> p in m_task_prompts)
                 {
-                    text = m.Value;
+                    text = p.Value;
                     break;
                 }
-                SetTipText(text).Wait();
-
-                m_append_task_semaphore.Release();
+                SetPromptText(text).Wait();
+                _ = m_append_task_semaphore.Release();
                 return _t.Result;
             })
             .ContinueWith(ope)
             .ContinueWith(
-            delegate (Task<int> _t)
+            delegate (Task<BackgroundTaskResult> _t)
             {
                 m_append_task_semaphore.Wait();
-
-                // remove description
-                if (des.Length != 0)
+                // remove prompt
+                if (prompt.Length != 0)
                 {
-                    messages.Remove(token);
+                    m_task_prompts.Remove(token);
                 }
 
-                // update task description
+                // update task prompt
                 string text = "";
-                foreach (var m in messages)
+                foreach (KeyValuePair<int, string> p in m_task_prompts)
                 {
-                    text = m.Value;
+                    text = p.Value;
                     break;
                 }
-                SetTipText(text).Wait();
+                SetPromptText(text).Wait();
+                _ = m_append_task_semaphore.Release();
 
-                m_append_task_semaphore.Release();
-
-                // show error dialog if task is not completed successfully
-                if (_t.Result != 0 && _t.Result != 1)
+                // show error dialog if a fatal error is encountered
+                if (_t.Result.IsFatal)
                 {
                     Task task = null;
                     CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
@@ -120,28 +127,28 @@ namespace ComicReader.Utils
                     {
                         ContentDialog dialog = new ContentDialog()
                         {
-                            Title = "(Debug) Error encountered",
+                            Title = "Task failed",
                             Content =
-                            "Error code: " + _t.Result.ToString() + "\n" +
-                            "Description: " + des,
-                            CloseButtonText = "Exit"
+                            "We have encountered a fatal error and need to terminate this application. " +
+                            "You can send us the following information to help us locate the issues.\n\n" +
+                            "Type: " + _t.Result.ExceptionType.ToString() + "\n" +
+                            "Description: " + _t.Result.Description,
+                            CloseButtonText = "Continue"
                         };
-
                         task = dialog.ShowAsync().AsTask();
                     }).AsTask().Wait();
                     task.Wait();
                     CoreApplication.Exit();
                 }
-
                 return _t.Result;
             });
         }
 
-        private static async Task<int> SetTipText(string text)
+        private static async Task<BackgroundTaskResult> SetPromptText(string text)
         {
             if (Views.RootPage.Current == null)
             {
-                return 1;
+                return new BackgroundTaskResult(BackgroundTaskExceptionType.Failure);
             }
 
             await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
@@ -150,7 +157,7 @@ namespace ComicReader.Utils
                 Views.RootPage.Current.SetRootToolTip(text);
             });
 
-            return 0;
+            return new BackgroundTaskResult();
         }
     };
 }

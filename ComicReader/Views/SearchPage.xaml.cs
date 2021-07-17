@@ -19,7 +19,7 @@ using ComicReader.Data;
 
 namespace ComicReader.Views
 {
-    public class SearchResultsPageShared : INotifyPropertyChanged
+    public class SearchPageShared : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -60,29 +60,29 @@ namespace ComicReader.Views
         public bool FilterDetailsVisible => FilterDetails.Length > 0;
     }
 
-    public sealed partial class SearchResultsPage : Page
+    public sealed partial class SearchPage : Page
     {
-        public static SearchResultsPage Current;
+        public static SearchPage Current;
         private bool m_page_initialized;
         private TabId m_tab_id;
         private string m_tab_title;
 
-        private SearchResultsPageShared Shared { get; set; }
-        private Utils.TrulyObservableCollection<SearchResultData> SearchResults { get; set; }
+        private SearchPageShared Shared { get; set; }
+        private Utils.TrulyObservableCollection<ComicItemModel> SearchResultDataSource { get; set; }
         private List<string> m_keyword_list;
         private int m_keyword_index;
         private NavigationMode m_navigate_direction;
         private List<ComicData> m_all_results;
         private Utils.CancellationLock m_search_lock;
 
-        public SearchResultsPage()
+        public SearchPage()
         {
             Current = this;
             m_tab_title = "";
-            Shared = new SearchResultsPageShared();
+            Shared = new SearchPageShared();
             Shared.Title = "";
             Shared.FilterDetails = "";
-            SearchResults = new Utils.TrulyObservableCollection<SearchResultData>();
+            SearchResultDataSource = new Utils.TrulyObservableCollection<ComicItemModel>();
             m_keyword_list = new List<string>();
             m_all_results = new List<ComicData>();
             m_search_lock = new Utils.CancellationLock();
@@ -158,7 +158,7 @@ namespace ComicReader.Views
             m_navigate_direction = e.NavigationMode;
         }
 
-        // search
+        // update
         public async Task StartSearch(string keyword)
         {
             m_keyword_list[m_keyword_index] = keyword;
@@ -223,7 +223,7 @@ namespace ComicReader.Views
             // update UI
             Shared.Title = title_text;
             Shared.FilterDetails = filter_details;
-            SearchResults.Clear();
+            SearchResultDataSource.Clear();
             await LoadMoreResults(40);
         }
 
@@ -250,7 +250,7 @@ namespace ComicReader.Views
                 foreach (ComicData comic in Database.Comics)
                 {
                     // cancel the current session if the next search begins
-                    if (m_search_lock.CancellationRequested())
+                    if (m_search_lock.CancellationRequested)
                     {
                         return false;
                     }
@@ -301,7 +301,7 @@ namespace ComicReader.Views
             await m_search_lock.WaitAsync();
             try
             {
-                int items_loaded = SearchResults.Count;
+                int items_loaded = SearchResultDataSource.Count;
 
                 if (items_loaded + count > m_all_results.Count)
                 {
@@ -314,13 +314,13 @@ namespace ComicReader.Views
                 }
 
                 int end_i = items_loaded + count;
-                List<SearchResultData> results_tmp = new List<SearchResultData>();
+                List<ComicItemModel> results_tmp = new List<ComicItemModel>();
 
                 for (int i = items_loaded; i < end_i; ++i)
                 {
                     ComicData comic = m_all_results[i];
 
-                    SearchResultData result = new SearchResultData
+                    ComicItemModel result = new ComicItemModel
                     {
                         OnItemPressed = OnListViewPressed,
                         OnHideClicked = Hide_Click,
@@ -334,7 +334,7 @@ namespace ComicReader.Views
                         IsFavorite = await DataManager.GetFavoriteWithId(comic.Id) != null
                     };
 
-                    ComicRecordData comic_record = await DataManager.GetComicRecordWithId(comic.Id);
+                    ReadRecordData comic_record = await DataManager.GetComicRecordWithId(comic.Id);
                     if (comic_record != null)
                     {
                         result.Rating = comic_record.Rating;
@@ -352,14 +352,14 @@ namespace ComicReader.Views
                 }
 
                 // update UI
-                foreach (SearchResultData result in results_tmp)
+                foreach (ComicItemModel result in results_tmp)
                 {
-                    SearchResults.Add(result);
+                    SearchResultDataSource.Add(result);
                 }
 
                 // load images
                 double image_height = (double)Resources["ComicItemHorizontalImageHeight"];
-                await DataManager.UtilsLoadImages(SearchResults.Skip(items_loaded), double.PositiveInfinity, image_height, m_search_lock);
+                await DataManager.UtilsLoadImages(SearchResultDataSource.Skip(items_loaded), double.PositiveInfinity, image_height, m_search_lock);
             }
             finally
             {
@@ -367,7 +367,7 @@ namespace ComicReader.Views
             }
         }
 
-        // other logics
+        // events processing
         private void OnListViewPressed(object sender, PointerRoutedEventArgs e)
         {
             Utils.Methods.Run(async delegate
@@ -378,7 +378,7 @@ namespace ComicReader.Views
                     return;
                 }
 
-                SearchResultData item = (SearchResultData)((FrameworkElement)sender).DataContext;
+                ComicItemModel item = (ComicItemModel)((FrameworkElement)sender).DataContext;
                 ComicData comic = await DataManager.GetComicWithId(item.Id);
                 await RootPage.Current.LoadTab(null, PageType.Reader, comic);
             });
@@ -401,9 +401,9 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                SearchResultData result = (SearchResultData)((MenuFlyoutItem)sender).DataContext;
+                ComicItemModel result = (ComicItemModel)((MenuFlyoutItem)sender).DataContext;
                 result.IsFavorite = true;
-                Utils.T1<SearchResultData>.NotifyCollectionChanged(SearchResults, result);
+                Utils.Methods_1<ComicItemModel>.NotifyCollectionChanged(SearchResultDataSource, result);
                 await DataManager.AddToFavorites(result.Id, result.Title, true);
             });
         }
@@ -412,9 +412,9 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                SearchResultData result = (SearchResultData)((MenuFlyoutItem)sender).DataContext;
+                ComicItemModel result = (ComicItemModel)((MenuFlyoutItem)sender).DataContext;
                 result.IsFavorite = false;
-                Utils.T1<SearchResultData>.NotifyCollectionChanged(SearchResults, result);
+                Utils.Methods_1<ComicItemModel>.NotifyCollectionChanged(SearchResultDataSource, result);
                 await DataManager.RemoveFromFavoritesWithId(result.Id, true);
             });
         }
@@ -423,7 +423,7 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                SearchResultData ctx = (SearchResultData)((MenuFlyoutItem)sender).DataContext;
+                ComicItemModel ctx = (ComicItemModel)((MenuFlyoutItem)sender).DataContext;
                 await DataManager.UnhideComic(ctx.Comic);
                 await StartSearch();
             });
@@ -433,7 +433,7 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                SearchResultData ctx = (SearchResultData)((MenuFlyoutItem)sender).DataContext;
+                ComicItemModel ctx = (ComicItemModel)((MenuFlyoutItem)sender).DataContext;
                 await DataManager.HideComic(ctx.Comic);
                 await StartSearch();
             });

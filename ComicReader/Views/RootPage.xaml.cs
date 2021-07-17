@@ -103,13 +103,13 @@ namespace ComicReader.Views
         }
 
         // file activation
-        public Func<Task<int>, int> OnFileActivatedSealed(FileActivatedEventArgs args)
+        public Func<Task<Utils.BackgroundTaskResult>, Utils.BackgroundTaskResult> OnFileActivatedSealed(FileActivatedEventArgs args)
         {
-            return delegate (Task<int> _t)
+            return delegate (Task<Utils.BackgroundTaskResult> _t)
             {
                 Task task = OnFileActivatedAsync(args);
                 task.Wait();
-                return 0;
+                return new Utils.BackgroundTaskResult();
             };
         }
 

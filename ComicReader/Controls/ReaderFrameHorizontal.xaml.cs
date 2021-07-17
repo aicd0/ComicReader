@@ -18,11 +18,11 @@ using ComicReader.Data;
 
 namespace ComicReader.Controls
 {
-    public sealed partial class ReaderImageItemVertical : UserControl
+    public sealed partial class ReadeFrameHorizontal : UserControl
     {
-        public ReaderImageData Ctx { get => DataContext as ReaderImageData; }
+        public ReaderFrameModel Ctx => DataContext as ReaderFrameModel;
 
-        public ReaderImageItemVertical()
+        public ReadeFrameHorizontal()
         {
             Utils.Methods.Run(async delegate
             {
@@ -37,19 +37,12 @@ namespace ComicReader.Controls
 
         private async Task WriteContainer()
         {
-            await Task.Run(delegate
-            {
-                SpinWait sw = new SpinWait();
-                while (MainGrid == null)
-                {
-                    sw.SpinOnce();
-                }
-            });
-            Ctx.Container = MainGrid;
+            await Utils.Methods.WaitFor(() => ContainerGrid != null);
+            Ctx.Container = ContainerGrid;
             Ctx.OnContainerSet?.Invoke(Ctx);
         }
 
-        private void MainGrid_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
+        private void ContainerGrid_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
         {
             Utils.Methods.Run(async delegate
             {
