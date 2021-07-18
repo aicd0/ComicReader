@@ -18,11 +18,11 @@ using ComicReader.Data;
 
 namespace ComicReader.Controls
 {
-    public sealed partial class ReadeFrameVertical : UserControl
+    public sealed partial class ReadeFrame : UserControl
     {
         public ReaderFrameModel Ctx => DataContext as ReaderFrameModel;
 
-        public ReadeFrameVertical()
+        public ReadeFrame()
         {
             Utils.Methods.Run(async delegate
             {

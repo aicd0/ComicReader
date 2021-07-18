@@ -170,8 +170,11 @@
 
     <Grid>
         <ListView ItemsSource="{x:Bind HistorySource.View, Mode=OneWay}"
-                  SelectionMode="Extended"
-                  ItemContainerStyle="{StaticResource ListViewItemStyle1}">
+                  SelectionMode="None"
+                  ItemClick="MainListView_ItemClick"
+                  IsItemClickEnabled="True"
+                  ItemContainerStyle="{StaticResource ListViewItemStyle1}"
+                  x:Name="MainListView">
             <ListView.ItemsPanel>
                 <ItemsPanelTemplate>
                     <ItemsStackPanel AreStickyGroupHeadersEnabled="False" />
@@ -179,7 +182,7 @@
             </ListView.ItemsPanel>
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="data:HistoryItemModel">
-                    <Grid Margin="12,0,4,0">
+                    <Grid Padding="12,0,4,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
@@ -190,7 +193,6 @@
                                   FontSize="16"
                                   Margin="0" />
                         <StackPanel Orientation="Vertical"
-                                    PointerPressed="ItemPointerPressed"
                                     Grid.Column="1"
                                     Margin="8,0,0,0">
                             <StackPanel.ContextFlyout>

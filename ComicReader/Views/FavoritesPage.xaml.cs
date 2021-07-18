@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -14,35 +15,60 @@ using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
-
 using ComicReader.Data;
 
 namespace ComicReader.Views
 {
+    public class FavoritesPageShared : INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        private ContentPageShared m_ContentPageShared;
+        public ContentPageShared ContentPageShared
+        {
+            get => m_ContentPageShared;
+            set
+            {
+                m_ContentPageShared = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ContentPageShared"));
+            }
+        }
+    }
+
     public sealed partial class FavoritesPage : Page
     {
         public static FavoritesPage Current = null;
-        ObservableCollection<FavoritesItemModel> DataSource { get; set; }
+        private bool m_page_initialized = false;
+
+        public FavoritesPageShared Shared { get; set; }
+        private ObservableCollection<FavoritesItemModel> DataSource { get; set; }
 
         public FavoritesPage()
         {
             Current = this;
+            Shared = new FavoritesPageShared();
             DataSource = new ObservableCollection<FavoritesItemModel>();
-
             InitializeComponent();
         }
 
         // navigation
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            base.OnNavigatedTo(e);
-
             Utils.Methods.Run(async delegate
             {
+                base.OnNavigatedTo(e);
+
+                if (!m_page_initialized)
+                {
+                    m_page_initialized = true;
+                    Shared.ContentPageShared = ((ContentPage)e.Parameter).Shared;
+                }
+
                 await UpdateTreeExplorer();
             });
         }
 
+        // update
         public async Task UpdateTreeExplorer()
         {
             DataSource.Clear();
@@ -114,14 +140,14 @@ namespace ComicReader.Views
         }
 
         // 处理右键事件
-        private void Item_Pressed(object sender, Windows.UI.Xaml.Input.PointerRoutedEventArgs e)
+        private void Item_Pressed(object sender, PointerRoutedEventArgs e)
         {
             Utils.Methods.Run(async delegate
             {
                 var item = (Microsoft.UI.Xaml.Controls.TreeViewItem)sender;
-                var itemData = (FavoritesItemModel)item.DataContext;
+                var ctx = (FavoritesItemModel)item.DataContext;
 
-                if (itemData.IsRenaming)
+                if (ctx.IsRenaming)
                 {
                     return;
                 }

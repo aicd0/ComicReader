@@ -57,13 +57,29 @@ namespace ComicReader.Views
             InitializeComponent();
         }
 
-        // tab related
+        // navigation
+        protected override void OnNavigatedTo(NavigationEventArgs e)
+        {
+            if (!m_page_initialized)
+            {
+                m_page_initialized = true;
+                NavigationParams p = (NavigationParams)e.Parameter;
+                m_tab_id = p.TabId;
+                m_tab_id.OnTabSelected += OnPageEntered;
+                Shared.RootPageShared = (RootPageShared)p.Shared;
+            }
+
+            UpdateTabId();
+            OnPageEntered();
+            Shared.RootPageShared.CurrentPageType = PageType.Settings;
+        }
+
         public static string GetPageUniqueString(object args)
         {
             return "settings";
         }
 
-        private void OnTabSelected()
+        private void OnPageEntered()
         {
             Utils.Methods.Run(async delegate
             {
@@ -77,26 +93,6 @@ namespace ComicReader.Views
             m_tab_id.Tab.IconSource = new Microsoft.UI.Xaml.Controls.SymbolIconSource() { Symbol = Symbol.Setting };
             m_tab_id.UniqueString = GetPageUniqueString(null);
             m_tab_id.Type = PageType.Settings;
-            m_tab_id.OnTabSelected = OnTabSelected;
-        }
-
-        // navigation
-        protected override void OnNavigatedTo(NavigationEventArgs e)
-        {
-            Utils.Methods.Run(async delegate
-            {
-                if (!m_page_initialized)
-                {
-                    m_page_initialized = true;
-                    NavigationParams p = (NavigationParams)e.Parameter;
-                    m_tab_id = p.TabId;
-                    Shared.RootPageShared = (RootPageShared)p.Shared;
-                }
-
-                UpdateTabId();
-                Shared.RootPageShared.CurrentPageType = PageType.Settings;
-                await UpdateSettings();
-            });
         }
 
         // user-defined functions

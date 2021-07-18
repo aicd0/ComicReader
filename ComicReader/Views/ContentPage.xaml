@@ -1,12 +1,12 @@
 ﻿<Page x:Class="ComicReader.Views.ContentPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:local="using:ComicReader.Views"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:controls="using:ComicReader.Controls"
       mc:Ignorable="d"
       Background="{ThemeResource ContentPageTopBackground}">
-    
+
     <Page.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -81,60 +81,71 @@
                                         QueryIcon="Find"
                                         Width="300" />
 
+                        <!-- Reader Controls -->
+                        <StackPanel Grid.Column="1"
+                                    Orientation="Horizontal"
+                                    HorizontalAlignment="Center"
+                                    Visibility="{x:Bind Shared.RootPageShared.IsReaderPage, Mode=OneWay}">
+                            <!-- Zoom -->
+                            <AppBarButton Style="{StaticResource ContentPageAppBarButtonStyle}"
+                                          ToolTipService.ToolTip="Zoom In"
+                                          IsEnabled="{x:Bind Shared.CanZoomIn, Mode=OneWay}"
+                                          Click="ZoomIn_Click">
+                                <AppBarButton.Content>
+                                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                              Glyph="&#xE8A3;" />
+                                </AppBarButton.Content>
+                            </AppBarButton>
+                            <AppBarButton Style="{StaticResource ContentPageAppBarButtonStyle}"
+                                          ToolTipService.ToolTip="Zoom Out"
+                                          IsEnabled="{x:Bind Shared.CanZoomOut, Mode=OneWay}"
+                                          Click="ZoomOut_Click">
+                                <AppBarButton.Content>
+                                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                              Glyph="&#xE71F;" />
+                                </AppBarButton.Content>
+                            </AppBarButton>
+                            <!-- Favorite -->
+                            <AppBarButton Style="{StaticResource ContentPageAppBarButtonStyle}"
+                                          ToolTipService.ToolTip="Add this comic to favorites"
+                                          IsEnabled="{x:Bind Shared.IsInLib, Mode=OneWay}"
+                                          Click="AddToFavoriteBt_Click">
+                                <AppBarButton.Content>
+                                    <Grid>
+                                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                                  Glyph="&#xE734;" />
+                                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                                  Glyph="&#xE735;"
+                                                  Visibility="{x:Bind Shared.IsFavorite, Mode=OneWay}"
+                                                  Foreground="DeepSkyBlue" />
+                                    </Grid>
+                                </AppBarButton.Content>
+                            </AppBarButton>
+                            <!-- Two pages mode -->
+                            <AppBarToggleButton Style="{StaticResource ContentPageAppBarToggleButtonStyle}"
+                                                IsChecked="{x:Bind Shared.IsTwoPagesMode, Mode=TwoWay}"
+                                                ToolTipService.ToolTip="Two pages">
+                                <AppBarToggleButton.Content>
+                                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                              Glyph="&#xE89A;" />
+                                </AppBarToggleButton.Content>
+                            </AppBarToggleButton>
+                            <!-- Grid View -->
+                            <AppBarToggleButton Style="{StaticResource ContentPageAppBarToggleButtonStyle}"
+                                                ToolTipService.ToolTip="Grid View"
+                                                IsChecked="{x:Bind Shared.IsGridViewMode, Mode=TwoWay}">
+                                <AppBarToggleButton.Content>
+                                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                              Glyph="&#xF0E2;" />
+                                </AppBarToggleButton.Content>
+                            </AppBarToggleButton>
+                        </StackPanel>
+
                         <!-- Top Right Buttons -->
                         <StackPanel Grid.Column="2"
                                     Margin="0,1,0,1"
                                     VerticalAlignment="Center"
                                     Orientation="Horizontal">
-                            <StackPanel Orientation="Horizontal"
-                                        Visibility="{x:Bind Shared.RootPageShared.IsReaderPage, Mode=OneWay}">
-                                <!-- Zoom -->
-                                <AppBarButton Style="{StaticResource ContentPageAppBarButtonStyle}"
-                                              ToolTipService.ToolTip="Zoom In"
-                                              IsEnabled="{x:Bind Shared.CanZoomIn, Mode=OneWay}"
-                                              Click="ZoomIn_Click">
-                                    <AppBarButton.Content>
-                                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                                  Glyph="&#xE8A3;" />
-                                    </AppBarButton.Content>
-                                </AppBarButton>
-                                <AppBarButton Style="{StaticResource ContentPageAppBarButtonStyle}"
-                                              ToolTipService.ToolTip="Zoom Out"
-                                              IsEnabled="{x:Bind Shared.CanZoomOut, Mode=OneWay}"
-                                              Click="ZoomOut_Click">
-                                    <AppBarButton.Content>
-                                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                                  Glyph="&#xE71F;" />
-                                    </AppBarButton.Content>
-                                </AppBarButton>
-                                <!-- Two pages mode -->
-                                <AppBarToggleButton Style="{StaticResource ContentPageAppBarToggleButtonStyle}"
-                                                    Checked="TwoPagesModeBt_Changed"
-                                                    Unchecked="TwoPagesModeBt_Changed"
-                                                    ToolTipService.ToolTip="Two pages">
-                                    <AppBarToggleButton.Content>
-                                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                                  Glyph="&#xE89A;" />
-                                    </AppBarToggleButton.Content>
-                                </AppBarToggleButton>
-                                <!-- Favorite -->
-                                <AppBarButton Style="{StaticResource ContentPageAppBarButtonStyle}"
-                                              ToolTipService.ToolTip="Add this comic to favorites"
-                                              IsEnabled="{x:Bind Shared.IsInLib, Mode=OneWay}"
-                                              Click="AddToFavoriteBt_Click">
-                                    <AppBarButton.Content>
-                                        <Grid>
-                                            <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                                      Glyph="&#xE734;" />
-                                            <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                                      Glyph="&#xE735;"
-                                                      Visibility="{x:Bind Shared.IsFavorite, Mode=OneWay}"
-                                                      Foreground="DeepSkyBlue" />
-                                        </Grid>
-                                    </AppBarButton.Content>
-                                </AppBarButton>
-                                <AppBarSeparator />
-                            </StackPanel>
                             <!-- Expand favorites pane -->
                             <AppBarButton Click="FavoriteBt_Click"
                                           Style="{StaticResource ContentPageAppBarButtonStyle}"
@@ -180,10 +191,11 @@
                        DisplayMode="Overlay"
                        PanePlacement="Right"
                        OpenPaneLength="380"
-                       Grid.Row="1">
+                       Grid.Row="1"
+                       PaneOpened="ContentPageUtilityPane_PaneOpened">
                 <Frame x:Name="ContentFrame" />
                 <SplitView.Pane>
-                    <local:UtilityPane />
+                    <controls:UtilityPane DataContext="{x:Bind}" />
                 </SplitView.Pane>
             </SplitView>
         </Grid>

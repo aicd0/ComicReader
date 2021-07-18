@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -14,32 +15,58 @@ using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
-
 using ComicReader.Data;
 
 namespace ComicReader.Views
 {
+    public class HistoryPageShared : INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        private ContentPageShared m_ContentPageShared;
+        public ContentPageShared ContentPageShared
+        {
+            get => m_ContentPageShared;
+            set
+            {
+                m_ContentPageShared = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ContentPageShared"));
+            }
+        }
+    }
+
     public sealed partial class HistoryPage : Page
     {
         public static HistoryPage Current = null;
+        private bool m_page_initialized = false;
+
+        public HistoryPageShared Shared { get; set; }
 
         public HistoryPage()
         {
             Current = this;
+            Shared = new HistoryPageShared();
             InitializeComponent();
         }
 
         // navigation
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            base.OnNavigatedTo(e);
-
             Utils.Methods.Run(async delegate
             {
+                base.OnNavigatedTo(e);
+
+                if (!m_page_initialized)
+                {
+                    m_page_initialized = true;
+                    Shared.ContentPageShared = ((ContentPage)e.Parameter).Shared;
+                }
+
                 await UpdateHistory();
             });
         }
 
+        // update
         public async Task UpdateHistory()
         {
             var source = new ObservableCollection<HistoryItemGroupModel>();
@@ -76,6 +103,7 @@ namespace ComicReader.Views
             }
 
             HistorySource.Source = source;
+            MainListView.SelectedIndex = -1;
         }
 
         private async Task OpenItem(HistoryItemModel item)
@@ -138,23 +166,12 @@ namespace ComicReader.Views
             });
         }
 
-        private void ItemPointerPressed(object sender, PointerRoutedEventArgs e)
+        private void MainListView_ItemClick(object sender, ItemClickEventArgs e)
         {
             Utils.Methods.Run(async delegate
             {
-                Pointer ptr = e.Pointer;
-
-                if (ptr.PointerDeviceType == Windows.Devices.Input.PointerDeviceType.Mouse)
-                {
-                    Windows.UI.Input.PointerPoint ptrPt = e.GetCurrentPoint(null);
-
-                    if (ptrPt.Properties.IsLeftButtonPressed)
-                    {
-                        HistoryItemModel item = (HistoryItemModel)((StackPanel)sender).DataContext;
-                        await OpenItem(item);
-                        e.Handled = true;
-                    }
-                }
+                HistoryItemModel item = (HistoryItemModel)e.ClickedItem;
+                await OpenItem(item);
             });
         }
     }

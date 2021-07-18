@@ -90,26 +90,6 @@ namespace ComicReader.Views
             InitializeComponent();
         }
 
-        // tab related
-        public static string GetPageUniqueString(object args)
-        {
-            string keyword = (string)args;
-            return "Search/" + keyword;
-        }
-
-        private void UpdateTabId()
-        {
-            if (m_tab_title.Length == 0)
-            {
-                return;
-            }
-
-            m_tab_id.Tab.Header = m_tab_title;
-            m_tab_id.Tab.IconSource = new Microsoft.UI.Xaml.Controls.SymbolIconSource() { Symbol = Symbol.Find };
-            m_tab_id.UniqueString = GetPageUniqueString(m_keyword_list[m_keyword_index]);
-            m_tab_id.Type = PageType.Search;
-        }
-
         // navigation
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
@@ -156,6 +136,25 @@ namespace ComicReader.Views
         {
             base.OnNavigatingFrom(e);
             m_navigate_direction = e.NavigationMode;
+        }
+
+        public static string GetPageUniqueString(object args)
+        {
+            string keyword = (string)args;
+            return "Search/" + keyword;
+        }
+
+        private void UpdateTabId()
+        {
+            if (m_tab_title.Length == 0)
+            {
+                return;
+            }
+
+            m_tab_id.Tab.Header = m_tab_title;
+            m_tab_id.Tab.IconSource = new Microsoft.UI.Xaml.Controls.SymbolIconSource() { Symbol = Symbol.Find };
+            m_tab_id.UniqueString = GetPageUniqueString(m_keyword_list[m_keyword_index]);
+            m_tab_id.Type = PageType.Search;
         }
 
         // update
@@ -334,7 +333,7 @@ namespace ComicReader.Views
                         IsFavorite = await DataManager.GetFavoriteWithId(comic.Id) != null
                     };
 
-                    ReadRecordData comic_record = await DataManager.GetComicRecordWithId(comic.Id);
+                    ReadRecordData comic_record = await DataManager.GetReadRecordWithId(comic.Id);
                     if (comic_record != null)
                     {
                         result.Rating = comic_record.Rating;
@@ -359,7 +358,21 @@ namespace ComicReader.Views
 
                 // load images
                 double image_height = (double)Resources["ComicItemHorizontalImageHeight"];
-                await DataManager.UtilsLoadImages(SearchResultDataSource.Skip(items_loaded), double.PositiveInfinity, image_height, m_search_lock);
+                List<DataManager.ImageLoaderToken> image_loader_tokens = new List<DataManager.ImageLoaderToken>();
+                foreach (ComicItemModel item in SearchResultDataSource.Skip(items_loaded))
+                {
+                    image_loader_tokens.Add(new DataManager.ImageLoaderToken
+                    {
+                        Comic = item.Comic,
+                        Index = 0,
+                        Callback = (BitmapImage img) =>
+                        {
+                            item.Image = img;
+                            item.IsImageLoaded = true;
+                        }
+                    });
+                }
+                await DataManager.UtilsLoadImages(image_loader_tokens, double.PositiveInfinity, image_height, m_search_lock);
             }
             finally
             {

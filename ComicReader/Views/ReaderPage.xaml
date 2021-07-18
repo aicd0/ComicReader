@@ -15,6 +15,7 @@
     <Page.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Resources/Constants.xaml" />
                 <ResourceDictionary Source="../Resources/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
@@ -140,10 +141,11 @@
                 <Grid Tapped="Reader_Tapped">
                     <Grid x:Name="PanningReference" />
 
+                    <!-- One Page -->
                     <ScrollViewer x:Name="OnePageVerticalScrollViewer"
                                   ViewChanged="OnePageVerticalScrollViewer_ViewChanged"
                                   SizeChanged="OnePageVerticalScrollViewer_SizeChanged"
-                                  Visibility="{x:Bind Shared.IsOnePageMode, Mode=OneWay}"
+                                  Visibility="{x:Bind Shared.IsOnePageReaderVisible, Mode=OneWay}"
                                   HorizontalScrollMode="Enabled"
                                   HorizontalScrollBarVisibility="Auto"
                                   Loaded="OnePageVerticalScrollViewer_Loaded"
@@ -157,7 +159,7 @@
                                       ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                                 <ListView.ItemTemplate>
                                     <DataTemplate x:DataType="data:ReaderFrameModel">
-                                        <controls:ReadeFrameVertical DataContext="{x:Bind}" />
+                                        <controls:ReadeFrame DataContext="{x:Bind}" />
                                     </DataTemplate>
                                 </ListView.ItemTemplate>
                                 <ListView.ItemContainerStyle>
@@ -173,10 +175,11 @@
                         </Grid>
                     </ScrollViewer>
 
+                    <!-- Two Pages -->
                     <ScrollViewer x:Name="TwoPagesHorizontalScrollViewer"
                                   ViewChanged="TwoPagesHorizontalScrollViewer_ViewChanged"
                                   SizeChanged="TwoPagesHorizontalScrollViewer_SizeChanged"
-                                  Visibility="{x:Bind Shared.IsTwoPagesMode, Mode=OneWay}"
+                                  Visibility="{x:Bind Shared.IsTwoPagesReaderVisible, Mode=OneWay}"
                                   Loaded="TwoPagesHorizontalScrollViewer_Loaded"
                                   ZoomMode="Enabled"
                                   HorizontalScrollBarVisibility="Auto"
@@ -192,7 +195,7 @@
                                       ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                                 <ListView.ItemTemplate>
                                     <DataTemplate x:DataType="data:ReaderFrameModel">
-                                        <controls:ReadeFrameHorizontal DataContext="{x:Bind}" />
+                                        <controls:ReadeFrame DataContext="{x:Bind}" />
                                     </DataTemplate>
                                 </ListView.ItemTemplate>
                                 <ListView.ItemsPanel>
@@ -213,6 +216,27 @@
                         </Grid>
                     </ScrollViewer>
                 </Grid>
+
+                <ScrollViewer Visibility="{x:Bind Shared.IsGridViewVisible, Mode=OneWay}">
+                    <GridView ItemsSource="{x:Bind GridViewDataSource, Mode=OneWay}"
+                              Padding="10"
+                              HorizontalAlignment="Center"
+                              SelectionMode="Single"
+                              ItemClick="GridView_ItemClick"
+                              IsItemClickEnabled="True">
+                        <GridView.ItemContainerStyle>
+                            <Style TargetType="GridViewItem">
+                                <Setter Property="Margin"
+                                        Value="10" />
+                            </Style>
+                        </GridView.ItemContainerStyle>
+                        <GridView.ItemTemplate>
+                            <DataTemplate x:DataType="data:ReaderFrameModel">
+                                <controls:ReaderPreviewImage DataContext="{x:Bind}" />
+                            </DataTemplate>
+                        </GridView.ItemTemplate>
+                    </GridView>
+                </ScrollViewer>
 
                 <Grid x:Name="BottomGrid"
                       VerticalAlignment="Bottom"

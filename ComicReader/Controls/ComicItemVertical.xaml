@@ -48,8 +48,9 @@
                 <Grid Visibility="{x:Bind Ctx.IsImageLoaded}">
                     <Image Source="{x:Bind Ctx.Image}"
                            Opacity="0" />
-                    <Border CornerRadius="0">
-                        <Image Source="{x:Bind Ctx.Image}" />
+                    <Border CornerRadius="5">
+                        <Image Source="{x:Bind Ctx.Image}"
+                               Margin="-2"/>
                     </Border>
                     <!--<Border CornerRadius="5">
                         <Border.Background>

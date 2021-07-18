@@ -134,13 +134,23 @@ namespace ComicReader.Data
         public string Key { get; set; }
     }
 
-    public class ReaderFrameModel
+    public class ReaderFrameModel : INotifyPropertyChanged
     {
+        public event PropertyChangedEventHandler PropertyChanged;
+
         public Grid Container;
 
-        public BitmapImage Image1 { get; set; }
-        public BitmapImage Image2 { get; set; }
-        public int Index { get; set; }
+        public BitmapImage Image { get; set; }
+
+        private int m_Page;
+        public int Page {
+            get => m_Page;
+            set
+            {
+                m_Page = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Page"));
+            }
+        }
 
         // events
         public Action<ReaderFrameModel> OnContainerSet;

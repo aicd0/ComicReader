@@ -1,12 +1,16 @@
 ﻿using System;
 using Windows.UI.Xaml.Controls;
+using muxc = Microsoft.UI.Xaml.Controls;
+using ComicReader.Views;
 
-namespace ComicReader.Views
+namespace ComicReader.Controls
 {
     public sealed partial class UtilityPane : UserControl
     {
         public static UtilityPane Current = null;
-        private bool m_first_load = true;
+        private bool m_first_page_loaded = false;
+
+        public ContentPage Ctx => DataContext as ContentPage;
 
         public UtilityPane()
         {
@@ -16,25 +20,24 @@ namespace ComicReader.Views
 
         private void ContentFrame_Loaded(object sender, Windows.UI.Xaml.RoutedEventArgs e)
         {
-            if (m_first_load)
+            if (!m_first_page_loaded)
             {
                 ContentFrame.Navigate(typeof(FavoritesPage), null);
-                m_first_load = false;
+                m_first_page_loaded = true;
             }
         }
 
-        private void OnNavPaneSelectionChanged(Microsoft.UI.Xaml.Controls.NavigationView sender,
-            Microsoft.UI.Xaml.Controls.NavigationViewSelectionChangedEventArgs args)
+        private void OnNavPaneSelectionChanged(muxc.NavigationView sender, muxc.NavigationViewSelectionChangedEventArgs args)
         {
-            var item = (string)((Microsoft.UI.Xaml.Controls.NavigationViewItem)args.SelectedItem).Content;
+            string item = (string)((muxc.NavigationViewItem)args.SelectedItem).Content;
 
             if (item == "Favorites")
             {
-                ContentFrame.Navigate(typeof(FavoritesPage), null);
+                ContentFrame.Navigate(typeof(FavoritesPage), Ctx);
             }
             else if (item == "History")
             {
-                ContentFrame.Navigate(typeof(HistoryPage), null);
+                ContentFrame.Navigate(typeof(HistoryPage), Ctx);
             }
             else
             {

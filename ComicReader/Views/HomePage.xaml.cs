@@ -62,13 +62,28 @@ namespace ComicReader.Views
             InitializeComponent();
         }
 
-        // tab related
-        public static string GetPageUniqueString(object args)
+        // navigation
+        protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            return "blank";
+            base.OnNavigatedTo(e);
+
+            if (!m_page_initialized)
+            {
+                m_page_initialized = true;
+                NavigationParams p = (NavigationParams)e.Parameter;
+                m_tab_id = p.TabId;
+                m_tab_id.OnTabSelected += OnPageEntered;
+                Shared.ContentPageShared = (ContentPageShared)p.Shared;
+            }
+
+            OnPageEntered();
+            UpdateTabId();
+            Shared.ContentPageShared.RootPageShared.CurrentPageType = PageType.Blank;
         }
 
-        private void OnTabSelected()
+        public static string GetPageUniqueString(object args) => "blank";
+
+        private void OnPageEntered()
         {
             Utils.Methods.Run(async delegate
             {
@@ -82,29 +97,6 @@ namespace ComicReader.Views
             m_tab_id.Tab.IconSource = new Microsoft.UI.Xaml.Controls.SymbolIconSource() { Symbol = Symbol.Document };
             m_tab_id.UniqueString = GetPageUniqueString(null);
             m_tab_id.Type = PageType.Blank;
-            m_tab_id.OnTabSelected = OnTabSelected;
-        }
-
-        // navigation
-        protected override void OnNavigatedTo(NavigationEventArgs e)
-        {
-            base.OnNavigatedTo(e);
-
-            if (!m_page_initialized)
-            {
-                m_page_initialized = true;
-                NavigationParams p = (NavigationParams)e.Parameter;
-                m_tab_id = p.TabId;
-                Shared.ContentPageShared = (ContentPageShared)p.Shared;
-            }
-
-            UpdateTabId();
-            Shared.ContentPageShared.RootPageShared.CurrentPageType = PageType.Blank;
-        }
-
-        protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
-        {
-            base.OnNavigatingFrom(e);
         }
 
         // user-defined functions
@@ -129,10 +121,7 @@ namespace ComicReader.Views
                 await DataManager.WaitLock();
                 // get recent visited comics
                 const int result_count = 12;
-                Func<ComicData, ComicData, int> cmp_func = delegate (ComicData l, ComicData r)
-                {
-                    return (int)(l.LastVisit.Ticks - r.LastVisit.Ticks);
-                };
+                int cmp_func(ComicData x, ComicData y) => x.LastVisit > y.LastVisit ? 1 : -1;
                 Utils.MinHeap<ComicData> min_heap = new Utils.MinHeap<ComicData>(result_count, cmp_func);
                 foreach (ComicData comic in Database.Comics)
                 {
@@ -143,10 +132,11 @@ namespace ComicReader.Views
                     min_heap.Add(comic);
                 }
                 DataManager.ReleaseLock();
+                IEnumerable<ComicData> sorted = min_heap.OrderBy((ComicData x) => x.LastVisit).Reverse();
 
                 // add to comic item source
                 ComicItemSource.Clear();
-                foreach (ComicData comic in min_heap)
+                foreach (ComicData comic in sorted)
                 {
                     ComicItemModel data = new ComicItemModel
                     {
@@ -158,7 +148,7 @@ namespace ComicReader.Views
                         IsFavorite = await DataManager.GetFavoriteWithId(comic.Id) != null
                     };
 
-                    ReadRecordData comic_record = await DataManager.GetComicRecordWithId(comic.Id);
+                    ReadRecordData comic_record = await DataManager.GetReadRecordWithId(comic.Id);
                     if (comic_record != null)
                     {
                         data.Rating = comic_record.Rating;
@@ -173,7 +163,21 @@ namespace ComicReader.Views
                 }
 
                 // load images
-                await DataManager.UtilsLoadImages(ComicItemSource, 140.0, 140.0, m_update_library_lock);
+                List<DataManager.ImageLoaderToken> image_loader_tokens = new List<DataManager.ImageLoaderToken>();
+                foreach (ComicItemModel item in ComicItemSource)
+                {
+                    image_loader_tokens.Add(new DataManager.ImageLoaderToken
+                    {
+                        Comic = item.Comic,
+                        Index = 0,
+                        Callback = (BitmapImage img) =>
+                        {
+                            item.Image = img;
+                            item.IsImageLoaded = true;
+                        }
+                    });
+                }
+                await DataManager.UtilsLoadImages(image_loader_tokens, 140.0, 140.0, m_update_library_lock);
             }
             finally
             {

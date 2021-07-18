@@ -129,11 +129,11 @@
     <Compile Include="Controls\FolderItemDetailed.xaml.cs">
       <DependentUpon>FolderItemDetailed.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Controls\ReaderFrameVertical.xaml.cs">
-      <DependentUpon>ReaderFrameVertical.xaml</DependentUpon>
+    <Compile Include="Controls\ReaderFrame.xaml.cs">
+      <DependentUpon>ReaderFrame.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Controls\ReaderFrameHorizontal.xaml.cs">
-      <DependentUpon>ReaderFrameHorizontal.xaml</DependentUpon>
+    <Compile Include="Controls\ReaderPreviewImage.xaml.cs">
+      <DependentUpon>ReaderPreviewImage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Controls\TagButton.xaml.cs">
       <DependentUpon>TagButton.xaml</DependentUpon>
@@ -180,7 +180,7 @@
     <Compile Include="Views\SettingsPage.xaml.cs">
       <DependentUpon>SettingsPage.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\UtilityPane.xaml.cs">
+    <Compile Include="Controls\UtilityPane.xaml.cs">
       <DependentUpon>UtilityPane.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\Utils.cs" />
@@ -218,11 +218,11 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Controls\ReaderFrameVertical.xaml">
-      <Generator>MSBuild:Compile</Generator>
+    <Page Include="Controls\ReaderFrame.xaml">
       <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Controls\ReaderFrameHorizontal.xaml">
+    <Page Include="Controls\ReaderPreviewImage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -278,7 +278,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Views\UtilityPane.xaml">
+    <Page Include="Controls\UtilityPane.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

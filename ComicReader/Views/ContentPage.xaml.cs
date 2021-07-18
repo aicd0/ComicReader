@@ -34,6 +34,30 @@ namespace ComicReader.Views
             }
         }
 
+        private bool m_IsTwoPagesMode;
+        public bool IsTwoPagesMode
+        {
+            get => m_IsTwoPagesMode;
+            set
+            {
+                m_IsTwoPagesMode = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsTwoPagesMode"));
+                OnTwoPagesModeChanged?.Invoke();
+            }
+        }
+
+        private bool m_IsGridViewMode;
+        public bool IsGridViewMode
+        {
+            get => m_IsGridViewMode;
+            set
+            {
+                m_IsGridViewMode = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsGridViewMode"));
+                OnGridViewModeChanged?.Invoke();
+            }
+        }
+
         private bool m_CanZoomIn;
         public bool CanZoomIn
         {
@@ -80,11 +104,14 @@ namespace ComicReader.Views
 
         // events
         public Action OnFavoritesButtonClicked;
+        public Action OnTwoPagesModeChanged;
+        public Action OnGridViewModeChanged;
     }
 
     public sealed partial class ContentPage : Page
     {
         public static ContentPage Current;
+        private bool m_page_initialized = false;
         private TabId m_tab_id;
 
         public ContentPageShared Shared { get; set; }
@@ -101,9 +128,25 @@ namespace ComicReader.Views
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
-            NavigationParams p = (NavigationParams)e.Parameter;
-            m_tab_id = p.TabId;
-            Shared.RootPageShared = (RootPageShared)p.Shared;
+
+            if (!m_page_initialized)
+            {
+                m_page_initialized = true;
+                NavigationParams p = (NavigationParams)e.Parameter;
+                m_tab_id = p.TabId;
+                m_tab_id.OnTabSelected += OnPageEntered;
+                Shared.RootPageShared = (RootPageShared)p.Shared;
+            }
+
+            OnPageEntered();
+        }
+
+        private void OnPageEntered()
+        {
+            if (ContentPageUtilityPane != null)
+            {
+                ContentPageUtilityPane.IsPaneOpen = false;
+            }
         }
 
         // update
@@ -169,23 +212,12 @@ namespace ComicReader.Views
 
         private void FavoriteBt_Click(object sender, RoutedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
+            if (ContentPageUtilityPane == null)
             {
-                ContentPageUtilityPane.IsPaneOpen = !ContentPageUtilityPane.IsPaneOpen;
+                return;
+            }
 
-                if (ContentPageUtilityPane.IsPaneOpen)
-                {
-                    if (FavoritesPage.Current != null)
-                    {
-                        await FavoritesPage.Current.UpdateTreeExplorer();
-                    }
-
-                    if (HistoryPage.Current != null)
-                    {
-                        await HistoryPage.Current.UpdateHistory();
-                    }
-                }
-            });
+            ContentPageUtilityPane.IsPaneOpen = !ContentPageUtilityPane.IsPaneOpen;
         }
 
         private void HomeClick(object sender, RoutedEventArgs e)
@@ -212,26 +244,6 @@ namespace ComicReader.Views
             }
         }
 
-        private void TwoPagesModeBt_Changed(object sender, RoutedEventArgs e)
-        {
-            Utils.Methods.Run(async delegate
-            {
-                if (ReaderPage.Current == null)
-                {
-                    return;
-                }
-
-                bool? is_checked = ((AppBarToggleButton)sender).IsChecked;
-
-                if (is_checked == null)
-                {
-                    return;
-                }
-
-                await ReaderPage.Current.SetOnePageMode(!(bool)is_checked);
-            });
-        }
-
         private void AddToFavoriteBt_Click(object sender, RoutedEventArgs e)
         {
             Shared.OnFavoritesButtonClicked?.Invoke();
@@ -250,6 +262,22 @@ namespace ComicReader.Views
         private void ComicInfoBt_Click(object sender, RoutedEventArgs e)
         {
             ReaderPage.Current.ExpandInfoPane();
+        }
+
+        private void ContentPageUtilityPane_PaneOpened(SplitView sender, object args)
+        {
+            Utils.Methods.Run(async delegate
+            {
+                if (FavoritesPage.Current != null)
+                {
+                    await FavoritesPage.Current.UpdateTreeExplorer();
+                }
+
+                if (HistoryPage.Current != null)
+                {
+                    await HistoryPage.Current.UpdateHistory();
+                }
+            });
         }
     }
 }
