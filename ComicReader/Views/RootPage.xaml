@@ -72,7 +72,8 @@
         </Style>
     </Page.Resources>
 
-    <Grid SizeChanged="RootGrid_SizeChanged">
+    <Grid SizeChanged="RootGrid_SizeChanged"
+          KeyDown="E_RootPage_KeyDown">
         <muxc:TabView x:Name="RootTabView"
                       AddTabButtonClick="TabView_AddTabButtonClick"
                       TabCloseRequested="TabView_TabCloseRequested"

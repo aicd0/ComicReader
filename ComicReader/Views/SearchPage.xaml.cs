@@ -372,7 +372,11 @@ namespace ComicReader.Views
                         }
                     });
                 }
-                await DataManager.UtilsLoadImages(image_loader_tokens, double.PositiveInfinity, image_height, m_search_lock);
+
+                await Task.Run(delegate
+                {
+                    DataManager.UtilsLoadImages(image_loader_tokens, double.PositiveInfinity, image_height, m_search_lock).Wait();
+                });
             }
             finally
             {

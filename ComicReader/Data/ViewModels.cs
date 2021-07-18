@@ -152,6 +152,10 @@ namespace ComicReader.Data
             }
         }
 
+        public bool VerticalPadding { get; set; }
+        public bool LeftPadding { get; set; }
+        public bool RightPadding { get; set; }
+
         // events
         public Action<ReaderFrameModel> OnContainerSet;
     };

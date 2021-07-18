@@ -5,8 +5,10 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.Core;
 using Windows.Storage;
 using Windows.Storage.AccessCache;
+using Windows.UI.Core;
 
 namespace ComicReader.Utils
 {
@@ -54,6 +56,11 @@ namespace ComicReader.Utils
             {
                 throw e;
             }
+        }
+
+        public static async Task Sync(DispatchedHandler callback)
+        {
+            await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, callback);
         }
 
         public static async Task<StorageFolder> TryGetFolder(string path)

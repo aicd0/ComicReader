@@ -1609,7 +1609,10 @@ namespace ComicReader.Data
 
             if (!use_origin_size)
             {
-                raw_pixels_per_view_pixel = DisplayInformation.GetForCurrentView().RawPixelsPerViewPixel;
+                await Utils.Methods.Sync(delegate
+                {
+                    raw_pixels_per_view_pixel = DisplayInformation.GetForCurrentView().RawPixelsPerViewPixel;
+                });
                 frame_ratio = max_width / max_height;
             }
 
@@ -1633,29 +1636,41 @@ namespace ComicReader.Data
 
                 StorageFile image_file = comic.ImageFiles[item.Index];
                 IRandomAccessStream stream = await image_file.OpenAsync(FileAccessMode.Read);
-                BitmapImage image = new BitmapImage();
-                await image.SetSourceAsync(stream);
+                BitmapImage image = null;
+                Task task = null;
 
-                if (!use_origin_size)
+                await Utils.Methods.Sync(delegate
                 {
-                    double image_ratio = (double)image.PixelWidth / image.PixelHeight;
-                    double image_height;
-                    double image_width;
-                    if (image_ratio > frame_ratio)
-                    {
-                        image_width = max_width * raw_pixels_per_view_pixel;
-                        image_height = image_width / image_ratio;
-                    }
-                    else
-                    {
-                        image_height = max_height * raw_pixels_per_view_pixel;
-                        image_width = image_height * image_ratio;
-                    }
-                    image.DecodePixelHeight = (int)image_height;
-                    image.DecodePixelWidth = (int)image_width;
-                }
+                    image = new BitmapImage();
 
-                item.Callback?.Invoke(image);
+                    if (!use_origin_size)
+                    {
+                        double image_ratio = (double)image.PixelWidth / image.PixelHeight;
+                        double image_height;
+                        double image_width;
+                        if (image_ratio > frame_ratio)
+                        {
+                            image_width = max_width * raw_pixels_per_view_pixel;
+                            image_height = image_width / image_ratio;
+                        }
+                        else
+                        {
+                            image_height = max_height * raw_pixels_per_view_pixel;
+                            image_width = image_height * image_ratio;
+                        }
+                        image.DecodePixelHeight = (int)image_height;
+                        image.DecodePixelWidth = (int)image_width;
+                    }
+
+                    task = image.SetSourceAsync(stream).AsTask();
+                });
+
+                await task.AsAsyncAction();
+
+                await Utils.Methods.Sync(delegate
+                {
+                    item.Callback?.Invoke(image);
+                });
             }
         }
     }

@@ -10,8 +10,18 @@
 
     <Grid x:Name="ContainerGrid"
           DataContextChanged="ContainerGrid_DataContextChanged">
-        <Grid>
-            <Image Source="{x:Bind Ctx.Image}" />
-        </Grid>
+        <StackPanel Orientation="Vertical">
+            <Grid Height="10"
+                  Visibility="{x:Bind Ctx.VerticalPadding}" />
+            <StackPanel Orientation="Horizontal">
+                <Grid Width="200"
+                      Visibility="{x:Bind Ctx.LeftPadding}" />
+                <Image Source="{x:Bind Ctx.Image}" />
+                <Grid Width="200"
+                      Visibility="{x:Bind Ctx.RightPadding}" />
+            </StackPanel>
+            <Grid Height="10"
+                  Visibility="{x:Bind Ctx.VerticalPadding}" />
+        </StackPanel>
     </Grid>
 </UserControl>

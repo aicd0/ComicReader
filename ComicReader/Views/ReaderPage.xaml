@@ -24,8 +24,8 @@
     <Grid>
         <SplitView x:Name="InfoPane"
                    DisplayMode="Overlay"
-                   PaneBackground="{ThemeResource ComicImformationPaneBackground}"
-                   PanePlacement="Right">
+                   PanePlacement="Right"
+                   PaneBackground="{ThemeResource ContentPageTopBackground}">
 
             <!-- Information Page -->
             <SplitView.Pane>
@@ -138,7 +138,7 @@
             <!-- Main Page -->
             <Grid>
                 <!-- Reader -->
-                <Grid Tapped="Reader_Tapped">
+                <Grid Tapped="E_Reader_Tapped">
                     <Grid x:Name="PanningReference" />
 
                     <!-- One Page -->
@@ -185,7 +185,8 @@
                                   HorizontalScrollBarVisibility="Auto"
                                   HorizontalScrollMode="Enabled"
                                   VerticalScrollBarVisibility="Hidden"
-                                  VerticalScrollMode="Disabled">
+                                  VerticalScrollMode="Disabled"
+                                  FlowDirection="RightToLeft">
                         <Grid VerticalAlignment="Center">
                             <ListView x:Name="TwoPagesImageListView"
                                       ItemsSource="{x:Bind TwoPagesReader.ImageSource, Mode=OneWay}"
@@ -221,6 +222,7 @@
                     <GridView ItemsSource="{x:Bind GridViewDataSource, Mode=OneWay}"
                               Padding="10"
                               HorizontalAlignment="Center"
+                              VerticalAlignment="Center"
                               SelectionMode="Single"
                               ItemClick="GridView_ItemClick"
                               IsItemClickEnabled="True">
@@ -242,8 +244,8 @@
                       VerticalAlignment="Bottom"
                       Background="#FF303030"
                       Height="52"
-                      PointerEntered="BottomGrid_PointerEntered"
-                      PointerExited="BottomGrid_PointerExited"
+                      PointerEntered="E_BottomGrid_PointerEntered"
+                      PointerExited="E_BottomGrid_PointerExited"
                       Opacity="0">
                     <Grid.Resources>
                         <Storyboard x:Name="BottomGridStoryboard">
@@ -260,16 +262,15 @@
                     <StackPanel Grid.Column="0"
                                 Orientation="Horizontal"
                                 HorizontalAlignment="Left"
-                                VerticalAlignment="Center">
+                                VerticalAlignment="Center"
+                                Spacing="5">
                         <Grid Width="5" />
-                        <Button Background="Transparent"
-                                VerticalAlignment="Stretch"
-                                HorizontalAlignment="Stretch"
-                                CornerRadius="6"
-                                Padding="0"
-                                Height="40"
-                                Width="40"
-                                BorderThickness="0">
+                        <ToggleButton Style="{StaticResource ReaderPageBottomGridToggleButtonStyle}"
+                                      IsChecked="{x:Bind Shared.P_BottomGrid_Pinned, Mode=TwoWay}">
+                            <FontIcon Glyph="&#xE840;"
+                                      FontSize="20" />
+                        </ToggleButton>
+                        <Button Style="{StaticResource ReaderPageBottomGridButtonStyle}">
                             <Button.Flyout>
                                 <MenuFlyout>
                                     <MenuFlyoutItem Text="Comic Info"
@@ -283,6 +284,41 @@
                             </Button.Flyout>
                             <FontIcon Glyph="&#xE712;"
                                       FontSize="20" />
+                        </Button>
+                        <AppBarSeparator />
+                        <Button Style="{StaticResource ReaderPageBottomGridButtonStyle}"
+                                IsEnabled="{x:Bind Shared.ContentPageShared.CanZoomIn, Mode=OneWay}"
+                                Click="ZoomInButton_Click">
+                            <FontIcon Glyph="&#xE8A3;"
+                                      FontSize="20" />
+                        </Button>
+                        <Button Style="{StaticResource ReaderPageBottomGridButtonStyle}"
+                                IsEnabled="{x:Bind Shared.ContentPageShared.CanZoomOut, Mode=OneWay}"
+                                Click="ZoomOutButton_Click">
+                            <FontIcon Glyph="&#xE71F;"
+                                      FontSize="20" />
+                        </Button>
+                        <ToggleButton Style="{StaticResource ReaderPageBottomGridToggleButtonStyle}"
+                                      IsChecked="{x:Bind Shared.ContentPageShared.IsTwoPagesMode, Mode=TwoWay}">
+                            <FontIcon Glyph="&#xE89A;"
+                                      FontSize="20" />
+                        </ToggleButton>
+                        <ToggleButton Style="{StaticResource ReaderPageBottomGridToggleButtonStyle}"
+                                      IsChecked="{x:Bind Shared.ContentPageShared.IsGridViewMode, Mode=TwoWay}">
+                            <FontIcon Glyph="&#xF0E2;"
+                                      FontSize="20" />
+                        </ToggleButton>
+                        <Button Style="{StaticResource ReaderPageBottomGridButtonStyle}"
+                                IsEnabled="{x:Bind Shared.ContentPageShared.IsInLib, Mode=OneWay}"
+                                Click="FavoriteButton_Click">
+                            <Grid>
+                                <FontIcon Glyph="&#xE734;"
+                                          FontSize="20" />
+                                <FontIcon Glyph="&#xE735;"
+                                          FontSize="20"
+                                          Visibility="{x:Bind Shared.ContentPageShared.IsFavorite, Mode=OneWay}"
+                                          Foreground="DeepSkyBlue" />
+                            </Grid>
                         </Button>
                     </StackPanel>
                     <TextBlock x:Name="PageIndicator"

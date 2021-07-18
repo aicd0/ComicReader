@@ -11,6 +11,7 @@ using Windows.UI.Core;
 using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Input;
 using muxc = Microsoft.UI.Xaml.Controls;
 using ComicReader.Data;
 
@@ -416,6 +417,14 @@ namespace ComicReader.Views
         private void RootGrid_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             UpdateFullscreenMode(PageType.Unknown);
+        }
+
+        private void E_RootPage_KeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            if (e.Key == Windows.System.VirtualKey.Escape)
+            {
+                ExitFullscreen();
+            }
         }
     }
 }

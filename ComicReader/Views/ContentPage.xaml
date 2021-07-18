@@ -28,14 +28,8 @@
                   Visibility="{x:Bind Shared.RootPageShared.IsFullscreenN, Mode=OneWay}">
                 <StackPanel Orientation="Vertical">
                     <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-
                         <!-- Top Left Buttons -->
-                        <StackPanel Grid.Column="0"
+                        <StackPanel HorizontalAlignment="Left"
                                     Orientation="Horizontal"
                                     VerticalAlignment="Center">
                             <AppBarButton Icon="Back"
@@ -63,27 +57,24 @@
                                           LabelPosition="Collapsed"
                                           ToolTipService.ToolTip="Home"
                                           Click="HomeClick" />
+                            <!-- Search Box -->
+                            <AutoSuggestBox Visibility="{x:Bind Shared.RootPageShared.IsReaderPageN, Mode=OneWay}"
+                                            Grid.Column="1"
+                                            Margin="15,0,15,0"
+                                            CornerRadius="6"
+                                            VerticalAlignment="Center"
+                                            Style="{StaticResource AutoSuggestBoxStyle1}"
+                                            TextBoxStyle="{StaticResource TextBoxStyle1}"
+                                            x:Name="SearchBox"
+                                            TextChanged="SearchBox_TextChanged"
+                                            QuerySubmitted="SearchBox_QuerySubmitted"
+                                            PlaceholderText="Type here to search"
+                                            QueryIcon="Find"
+                                            Width="300" />
                         </StackPanel>
 
-                        <!-- Search Box -->
-                        <AutoSuggestBox Visibility="{x:Bind Shared.RootPageShared.IsReaderPageN}"
-                                        Grid.Column="1"
-                                        Margin="15,0,15,0"
-                                        CornerRadius="6"
-                                        VerticalAlignment="Center"
-                                        HorizontalAlignment="Left"
-                                        Style="{StaticResource AutoSuggestBoxStyle1}"
-                                        TextBoxStyle="{StaticResource TextBoxStyle1}"
-                                        x:Name="SearchBox"
-                                        TextChanged="SearchBox_TextChanged"
-                                        QuerySubmitted="SearchBox_QuerySubmitted"
-                                        PlaceholderText="Type here to search"
-                                        QueryIcon="Find"
-                                        Width="300" />
-
                         <!-- Reader Controls -->
-                        <StackPanel Grid.Column="1"
-                                    Orientation="Horizontal"
+                        <StackPanel Orientation="Horizontal"
                                     HorizontalAlignment="Center"
                                     Visibility="{x:Bind Shared.RootPageShared.IsReaderPage, Mode=OneWay}">
                             <!-- Zoom -->
@@ -92,8 +83,7 @@
                                           IsEnabled="{x:Bind Shared.CanZoomIn, Mode=OneWay}"
                                           Click="ZoomIn_Click">
                                 <AppBarButton.Content>
-                                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                              Glyph="&#xE8A3;" />
+                                    <FontIcon Glyph="&#xE8A3;" />
                                 </AppBarButton.Content>
                             </AppBarButton>
                             <AppBarButton Style="{StaticResource ContentPageAppBarButtonStyle}"
@@ -101,24 +91,7 @@
                                           IsEnabled="{x:Bind Shared.CanZoomOut, Mode=OneWay}"
                                           Click="ZoomOut_Click">
                                 <AppBarButton.Content>
-                                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                              Glyph="&#xE71F;" />
-                                </AppBarButton.Content>
-                            </AppBarButton>
-                            <!-- Favorite -->
-                            <AppBarButton Style="{StaticResource ContentPageAppBarButtonStyle}"
-                                          ToolTipService.ToolTip="Add this comic to favorites"
-                                          IsEnabled="{x:Bind Shared.IsInLib, Mode=OneWay}"
-                                          Click="AddToFavoriteBt_Click">
-                                <AppBarButton.Content>
-                                    <Grid>
-                                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                                  Glyph="&#xE734;" />
-                                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                                  Glyph="&#xE735;"
-                                                  Visibility="{x:Bind Shared.IsFavorite, Mode=OneWay}"
-                                                  Foreground="DeepSkyBlue" />
-                                    </Grid>
+                                    <FontIcon Glyph="&#xE71F;" />
                                 </AppBarButton.Content>
                             </AppBarButton>
                             <!-- Two pages mode -->
@@ -126,8 +99,7 @@
                                                 IsChecked="{x:Bind Shared.IsTwoPagesMode, Mode=TwoWay}"
                                                 ToolTipService.ToolTip="Two pages">
                                 <AppBarToggleButton.Content>
-                                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                              Glyph="&#xE89A;" />
+                                    <FontIcon Glyph="&#xE89A;" />
                                 </AppBarToggleButton.Content>
                             </AppBarToggleButton>
                             <!-- Grid View -->
@@ -135,14 +107,27 @@
                                                 ToolTipService.ToolTip="Grid View"
                                                 IsChecked="{x:Bind Shared.IsGridViewMode, Mode=TwoWay}">
                                 <AppBarToggleButton.Content>
-                                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                              Glyph="&#xF0E2;" />
+                                    <FontIcon Glyph="&#xF0E2;" />
                                 </AppBarToggleButton.Content>
                             </AppBarToggleButton>
+                            <!-- Favorite -->
+                            <AppBarButton Style="{StaticResource ContentPageAppBarButtonStyle}"
+                                          ToolTipService.ToolTip="Add this comic to favorites"
+                                          IsEnabled="{x:Bind Shared.IsInLib, Mode=OneWay}"
+                                          Click="AddToFavoriteBt_Click">
+                                <AppBarButton.Content>
+                                    <Grid>
+                                        <FontIcon Glyph="&#xE734;" />
+                                        <FontIcon Glyph="&#xE735;"
+                                                  Visibility="{x:Bind Shared.IsFavorite, Mode=OneWay}"
+                                                  Foreground="DeepSkyBlue" />
+                                    </Grid>
+                                </AppBarButton.Content>
+                            </AppBarButton>
                         </StackPanel>
 
                         <!-- Top Right Buttons -->
-                        <StackPanel Grid.Column="2"
+                        <StackPanel HorizontalAlignment="Right"
                                     Margin="0,1,0,1"
                                     VerticalAlignment="Center"
                                     Orientation="Horizontal">
@@ -151,8 +136,7 @@
                                           Style="{StaticResource ContentPageAppBarButtonStyle}"
                                           ToolTipService.ToolTip="Favorites">
                                 <AppBarButton.Content>
-                                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                              Glyph="&#xE728;" />
+                                    <FontIcon Glyph="&#xE728;" />
                                 </AppBarButton.Content>
                             </AppBarButton>
                             <!-- More -->
@@ -160,8 +144,7 @@
                                           Margin="1,0,0,0"
                                           ToolTipService.ToolTip="Settings and more">
                                 <AppBarButton.Content>
-                                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                              Glyph="&#xE712;" />
+                                    <FontIcon Glyph="&#xE712;" />
                                 </AppBarButton.Content>
                                 <AppBarButton.Flyout>
                                     <MenuFlyout Placement="BottomEdgeAlignedRight">
@@ -169,8 +152,7 @@
                                                         Click="ComicInfoBt_Click"
                                                         Visibility="{x:Bind Shared.RootPageShared.IsReaderPage, Mode=OneWay}">
                                             <MenuFlyoutItem.Icon>
-                                                <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                                          Glyph="&#xE946;" />
+                                                <FontIcon Glyph="&#xE946;" />
                                             </MenuFlyoutItem.Icon>
                                         </MenuFlyoutItem>
                                         <MenuFlyoutSeparator Visibility="{x:Bind Shared.RootPageShared.IsReaderPage, Mode=OneWay}" />

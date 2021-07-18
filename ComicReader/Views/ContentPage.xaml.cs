@@ -104,6 +104,8 @@ namespace ComicReader.Views
 
         // events
         public Action OnFavoritesButtonClicked;
+        public Action OnZoomInButtonClicked;
+        public Action OnZoomOutButtonClicked;
         public Action OnTwoPagesModeChanged;
         public Action OnGridViewModeChanged;
     }
@@ -251,12 +253,12 @@ namespace ComicReader.Views
 
         private void ZoomIn_Click(object sender, RoutedEventArgs e)
         {
-            ReaderPage.Current.SetZoom(1);
+            Shared.OnZoomInButtonClicked?.Invoke();
         }
 
         private void ZoomOut_Click(object sender, RoutedEventArgs e)
         {
-            ReaderPage.Current.SetZoom(-1);
+            Shared.OnZoomOutButtonClicked?.Invoke();
         }
 
         private void ComicInfoBt_Click(object sender, RoutedEventArgs e)
