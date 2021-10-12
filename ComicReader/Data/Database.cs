@@ -81,6 +81,7 @@ namespace ComicReader.Data
     public class SettingsData
     {
         public List<string> ComicFolders = new List<string>();
+        public bool LeftToRight = false;
         public bool SaveHistory = true;
     };
 

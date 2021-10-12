@@ -138,7 +138,7 @@ namespace ComicReader.Views
             m_navigate_direction = e.NavigationMode;
         }
 
-        public static string GetPageUniqueString(object args)
+        public static string C_PageUniqueString(object args)
         {
             string keyword = (string)args;
             return "Search/" + keyword;
@@ -153,7 +153,7 @@ namespace ComicReader.Views
 
             m_tab_id.Tab.Header = m_tab_title;
             m_tab_id.Tab.IconSource = new Microsoft.UI.Xaml.Controls.SymbolIconSource() { Symbol = Symbol.Find };
-            m_tab_id.UniqueString = GetPageUniqueString(m_keyword_list[m_keyword_index]);
+            m_tab_id.UniqueString = C_PageUniqueString(m_keyword_list[m_keyword_index]);
             m_tab_id.Type = PageType.Search;
         }
 
@@ -168,7 +168,7 @@ namespace ComicReader.Views
         {
             string keyword = m_keyword_list[m_keyword_index];
             ContentPage.Current.SetSearchBox(keyword);
-            m_tab_id.UniqueString = GetPageUniqueString(keyword);
+            UpdateTabId();
 
             // extract filters and keywords from string
             Utils.Search.Filter filter = Utils.Search.Filter.Parse(keyword, out List<string> remaining);
@@ -181,9 +181,9 @@ namespace ComicReader.Views
             {
                 return;
             }
-            if (!filter.ContainSubFilter("hidden"))
+            if (!filter.ContainFilter("hidden"))
             {
-                _ = filter.AddSubFilter("~hidden");
+                _ = filter.AddFilter("~hidden");
             }
 
             string title_text;

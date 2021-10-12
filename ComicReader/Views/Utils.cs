@@ -32,18 +32,18 @@ namespace ComicReader.Views
             }
         }
 
-        public static string GetPageUniqueString(PageType type, object args)
+        public static string C_PageUniqueString(PageType type, object args)
         {
             switch (type)
             {
                 case PageType.Blank:
-                    return HomePage.GetPageUniqueString(args);
+                    return HomePage.C_PageUniqueString(args);
                 case PageType.Search:
-                    return SearchPage.GetPageUniqueString(args);
+                    return SearchPage.C_PageUniqueString(args);
                 case PageType.Reader:
-                    return ReaderPage.GetPageUniqueString(args);
+                    return ReaderPage.C_PageUniqueString(args);
                 case PageType.Settings:
-                    return SettingsPage.GetPageUniqueString(args);
+                    return SettingsPage.C_PageUniqueString(args);
                 default:
                     throw new Exception();
             }

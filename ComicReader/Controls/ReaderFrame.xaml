@@ -12,16 +12,24 @@
           DataContextChanged="ContainerGrid_DataContextChanged">
         <StackPanel Orientation="Vertical">
             <Grid Height="10"
-                  Visibility="{x:Bind Ctx.VerticalPadding}" />
+                  Visibility="{x:Bind Ctx.TopPadding}" />
             <StackPanel Orientation="Horizontal">
                 <Grid Width="200"
                       Visibility="{x:Bind Ctx.LeftPadding}" />
-                <Image Source="{x:Bind Ctx.Image}" />
+                <Grid x:Name="ImageContainer"
+                      Width="{x:Bind Ctx.Width}"
+                      Height="{x:Bind Ctx.Height}">
+                    <Image x:Name="MainImage"
+                           Source="{x:Bind Ctx.Image, Mode=OneWay}"/>
+                    <Grid Background="#50000000" VerticalAlignment="Bottom" HorizontalAlignment="Left">
+                        <TextBlock Text="{x:Bind Ctx.Page}"/>
+                    </Grid>
+                </Grid>
                 <Grid Width="200"
                       Visibility="{x:Bind Ctx.RightPadding}" />
             </StackPanel>
             <Grid Height="10"
-                  Visibility="{x:Bind Ctx.VerticalPadding}" />
+                  Visibility="{x:Bind Ctx.BottomPadding}" />
         </StackPanel>
     </Grid>
 </UserControl>

@@ -306,6 +306,7 @@ namespace ComicReader.Data
             var dataWriter = new DataWriter(outputStream);
 
             WriteString(dataWriter, "1.0.0");
+            dataWriter.WriteBoolean(Database.AppSettings.LeftToRight);
             dataWriter.WriteBoolean(Database.AppSettings.SaveHistory);
 
             dataWriter.WriteInt32((Int32)Database.AppSettings.ComicFolders.Count);
@@ -687,6 +688,7 @@ namespace ComicReader.Data
                 await dataReader.LoadAsync((uint)size);
 
                 _ = ReadString(dataReader);
+                Database.AppSettings.LeftToRight = dataReader.ReadBoolean();
                 Database.AppSettings.SaveHistory = dataReader.ReadBoolean();
 
                 Database.AppSettings.ComicFolders.Clear();
@@ -952,14 +954,23 @@ namespace ComicReader.Data
                 List<StorageFolder> all_folders = new List<StorageFolder>();
                 foreach (string folder_path in root_folders)
                 {
-                    StorageFolder folder = await StorageApplicationPermissions.FutureAccessList.GetFolderAsync(
-                        Utils.StringUtils.TokenFromPath(folder_path)).AsTask();
-                    QueryOptions queryOptions = new QueryOptions
+                    StorageFolder folder = await Utils.Methods.TryGetFolder(folder_path);
+
+                    if (folder == null)
+                    {
+                        await WaitLock();
+                        Database.AppSettings.ComicFolders.Remove(folder_path);
+                        ReleaseLock();
+                        continue;
+                    }
+
+                    all_folders.Add(folder);
+
+                    var query = folder.CreateFolderQueryWithOptions(new QueryOptions
                     {
                         FolderDepth = FolderDepth.Deep,
                         IndexerOption = IndexerOption.UseIndexerWhenAvailable
-                    };
-                    var query = folder.CreateFolderQueryWithOptions(queryOptions);
+                    });
                     var folders = await query.GetFoldersAsync(); // 20 secs for 1000 folders
                     all_folders = all_folders.Concat(folders).ToList();
 
@@ -1594,28 +1605,53 @@ namespace ComicReader.Data
             public Action<BitmapImage> Callback;
         }
 
-        public static async Task UtilsLoadImages(IEnumerable<ImageLoaderToken> items,
-            double max_width, double max_height, Utils.CancellationLock cancellation_lock)
+        public enum ImageConstrainOption
         {
-            // check parameters
-            if (double.IsNaN(max_width) || double.IsNaN(max_height))
+            None,
+            SameAsFirstImage
+        }
+
+        public class ImageConstrain
+        {
+            public double Val;
+            public ImageConstrainOption Option;
+
+            public static implicit operator ImageConstrain(double val)
             {
-                throw new Exception("Invalid parameters");
+                if (double.IsNaN(val))
+                {
+                    throw new Exception("Invalid parameters");
+                }
+
+                return new ImageConstrain
+                {
+                    Val = val,
+                    Option = ImageConstrainOption.None
+                };
             }
 
-            bool use_origin_size = double.IsInfinity(max_width) && double.IsInfinity(max_height);
+            public static implicit operator ImageConstrain(ImageConstrainOption opt)
+            {
+                return new ImageConstrain
+                {
+                    Val = 0.0,
+                    Option = opt
+                };
+            }
+        }
+
+        public static async Task UtilsLoadImages(IEnumerable<ImageLoaderToken> items,
+            ImageConstrain max_width, ImageConstrain max_height, Utils.CancellationLock cancellation_lock)
+        {
+            bool use_origin_size =
+                max_width.Option == ImageConstrainOption.None &&
+                double.IsInfinity(max_width.Val) &&
+                max_height.Option == ImageConstrainOption.None &&
+                double.IsInfinity(max_height.Val);
             double raw_pixels_per_view_pixel = 0.0;
             double frame_ratio = 0.0;
 
-            if (!use_origin_size)
-            {
-                await Utils.Methods.Sync(delegate
-                {
-                    raw_pixels_per_view_pixel = DisplayInformation.GetForCurrentView().RawPixelsPerViewPixel;
-                });
-                frame_ratio = max_width / max_height;
-            }
-
+            bool is_first = true;
             foreach (ImageLoaderToken item in items)
             {
                 if (cancellation_lock.CancellationRequested)
@@ -1642,6 +1678,32 @@ namespace ComicReader.Data
                 await Utils.Methods.Sync(delegate
                 {
                     image = new BitmapImage();
+                    task = image.SetSourceAsync(stream).AsTask();
+                });
+
+                await task.AsAsyncAction();
+
+                stream.Dispose();
+
+                await Utils.Methods.Sync(delegate
+                {
+                    if (is_first)
+                    {
+                        is_first = false;
+
+                        if (max_width.Option == ImageConstrainOption.SameAsFirstImage)
+                        {
+                            max_width.Val = image.PixelWidth;
+                        }
+
+                        if (max_height.Option == ImageConstrainOption.SameAsFirstImage)
+                        {
+                            max_height.Val = image.PixelHeight;
+                        }
+
+                        raw_pixels_per_view_pixel = DisplayInformation.GetForCurrentView().RawPixelsPerViewPixel;
+                        frame_ratio = max_width.Val / max_height.Val;
+                    }
 
                     if (!use_origin_size)
                     {
@@ -1650,25 +1712,18 @@ namespace ComicReader.Data
                         double image_width;
                         if (image_ratio > frame_ratio)
                         {
-                            image_width = max_width * raw_pixels_per_view_pixel;
+                            image_width = max_width.Val * raw_pixels_per_view_pixel;
                             image_height = image_width / image_ratio;
                         }
                         else
                         {
-                            image_height = max_height * raw_pixels_per_view_pixel;
+                            image_height = max_height.Val * raw_pixels_per_view_pixel;
                             image_width = image_height * image_ratio;
                         }
                         image.DecodePixelHeight = (int)image_height;
                         image.DecodePixelWidth = (int)image_width;
                     }
 
-                    task = image.SetSourceAsync(stream).AsTask();
-                });
-
-                await task.AsAsyncAction();
-
-                await Utils.Methods.Sync(delegate
-                {
                     item.Callback?.Invoke(image);
                 });
             }

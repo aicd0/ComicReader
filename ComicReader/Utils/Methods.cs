@@ -71,8 +71,10 @@ namespace ComicReader.Utils
             }
 
             string token_form = StringUtils.TokenFromPath(path);
+            List<string> useless_tokens = new List<string>();
+            StorageFolder result = null;
 
-            foreach (var entry in StorageApplicationPermissions.FutureAccessList.Entries)
+            foreach (AccessListEntry entry in StorageApplicationPermissions.FutureAccessList.Entries)
             {
                 string token = entry.Token;
 
@@ -83,21 +85,34 @@ namespace ComicReader.Utils
 
                 if (token_form.Substring(0, token.Length).Equals(token))
                 {
-                    var permit_folder = await StorageApplicationPermissions.FutureAccessList.GetFolderAsync(token);
+                    StorageFolder permit_folder = await StorageApplicationPermissions.FutureAccessList.GetFolderAsync(token);
+                    if (!StringUtils.TokenFromPath(permit_folder.Path).Equals(token))
+                    {
+                        // remove the entry if folder path has changed
+                        useless_tokens.Add(token);
+                        continue;
+                    }
+
                     string permit_folder_path = permit_folder.Path.ToLower();
                     string rest_path = path.Substring(permit_folder_path.Length);
 
                     if (rest_path.Length <= 1)
                     {
-                        return permit_folder;
+                        result = permit_folder;
+                        break;
                     }
 
-                    StorageFolder folder = await permit_folder.GetFolderAsync(rest_path.Substring(1));
-                    return folder;
+                    result = await permit_folder.GetFolderAsync(rest_path.Substring(1));
+                    break;
                 }
             }
 
-            return null; // no permission
+            foreach (string token in useless_tokens)
+            {
+                StorageApplicationPermissions.FutureAccessList.Remove(token);
+            }
+
+            return result;
         }
 
         public static async Task WaitFor(Func<bool> signal)

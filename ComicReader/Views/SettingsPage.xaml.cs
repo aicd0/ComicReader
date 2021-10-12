@@ -37,97 +37,129 @@ namespace ComicReader.Views
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("RootPageShared"));
             }
         }
+
+        public Action E_SettingsChanged;
+
+        private bool m_Reader_LeftToRight;
+        public bool P_Reader_LeftToRight
+        {
+            get => m_Reader_LeftToRight;
+            set
+            {
+                m_Reader_LeftToRight = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("P_Reader_LeftToRight"));
+                E_SettingsChanged?.Invoke();
+            }
+        }
+
+        private bool m_Privacy_SaveBrowsingHistory;
+        public bool P_Privacy_SaveBrowsingHistory
+        {
+            get => m_Privacy_SaveBrowsingHistory;
+            set
+            {
+                m_Privacy_SaveBrowsingHistory = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("P_Privacy_SaveBrowsingHistory"));
+                E_SettingsChanged?.Invoke();
+            }
+        }
     }
 
     public sealed partial class SettingsPage : Page
     {
         public static SettingsPage Current;
-        private bool m_page_initialized;
-        private TabId m_tab_id;
-
-        private bool m_auto_save;
+        private bool m_PageInitialized;
+        private bool m_SaveEnabled;
+        private TabId m_Tab;
 
         public SettingsPageShared Shared { get; set; }
 
         public SettingsPage()
         {
             Current = this;
-            m_auto_save = false;
+            m_SaveEnabled = false;
             Shared = new SettingsPageShared();
+            Shared.E_SettingsChanged += E_SettingsChanged;
             InitializeComponent();
         }
 
         // navigation
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            if (!m_page_initialized)
+            base.OnNavigatedTo(e);
+
+            if (!m_PageInitialized)
             {
-                m_page_initialized = true;
+                m_PageInitialized = true;
                 NavigationParams p = (NavigationParams)e.Parameter;
-                m_tab_id = p.TabId;
-                m_tab_id.OnTabSelected += OnPageEntered;
+                m_Tab = p.TabId;
+                m_Tab.OnTabSelected += C_PageEntered;
                 Shared.RootPageShared = (RootPageShared)p.Shared;
             }
 
-            UpdateTabId();
-            OnPageEntered();
+            C_UpdateTab();
+            C_PageEntered();
             Shared.RootPageShared.CurrentPageType = PageType.Settings;
         }
 
-        public static string GetPageUniqueString(object args)
+        public static string C_PageUniqueString(object args)
         {
             return "settings";
         }
 
-        private void OnPageEntered()
+        private void C_PageEntered()
         {
             Utils.Methods.Run(async delegate
             {
-                await UpdateSettings();
+                await C_UpdateContent();
             });
         }
 
-        private void UpdateTabId()
+        private void C_UpdateTab()
         {
-            m_tab_id.Tab.Header = "Settings";
-            m_tab_id.Tab.IconSource = new Microsoft.UI.Xaml.Controls.SymbolIconSource() { Symbol = Symbol.Setting };
-            m_tab_id.UniqueString = GetPageUniqueString(null);
-            m_tab_id.Type = PageType.Settings;
+            m_Tab.Tab.Header = "Settings";
+            m_Tab.Tab.IconSource = new Microsoft.UI.Xaml.Controls.SymbolIconSource() { Symbol = Symbol.Setting };
+            m_Tab.UniqueString = C_PageUniqueString(null);
+            m_Tab.Type = PageType.Settings;
         }
 
         // user-defined functions
         // update
-        private async Task UpdateSettings()
+        private async Task C_UpdateContent()
         {
-            m_auto_save = false;
+            m_SaveEnabled = false;
             await DataManager.WaitLock();
 
-            SaveBrowsingHistoryToggleSwitch.IsOn = Database.AppSettings.SaveHistory;
+            Shared.P_Reader_LeftToRight = Database.AppSettings.LeftToRight;
+            Shared.P_Privacy_SaveBrowsingHistory = Database.AppSettings.SaveHistory;
             StatisticsTextBlock.Text = "Total collections: " + Database.Comics.Count.ToString("#,#0", CultureInfo.InvariantCulture);
 
             DataManager.ReleaseLock();
-            m_auto_save = true;
+            m_SaveEnabled = true;
         }
 
         // save
-        private async Task SaveSettings()
+        private async Task C_SaveSettings()
         {
-            bool save_history = SaveBrowsingHistoryToggleSwitch.IsOn;
+            if (!m_SaveEnabled)
+            {
+                return;
+            }
+
             await DataManager.WaitLock();
-            Database.AppSettings.SaveHistory = save_history;
+
+            Database.AppSettings.LeftToRight = Shared.P_Reader_LeftToRight;
+            Database.AppSettings.SaveHistory = Shared.P_Privacy_SaveBrowsingHistory;
+
             DataManager.ReleaseLock();
             Utils.BackgroundTasks.AppendTask(DataManager.SaveDatabaseSealed(DatabaseItem.Settings));
         }
 
-        // save browsing history toggle
-        void OnSaveBrowsingHistoryToggleSwitchToggled(object sender, RoutedEventArgs e)
+        private void E_SettingsChanged()
         {
             Utils.Methods.Run(async delegate
             {
-                if (m_auto_save)
-                {
-                    await SaveSettings();
-                }
+                await C_SaveSettings();
             });
         }
 

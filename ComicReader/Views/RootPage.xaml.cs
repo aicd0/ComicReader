@@ -204,7 +204,7 @@ namespace ComicReader.Views
             {
                 Tab = newTab,
                 Type = type,
-                UniqueString = PageUtils.GetPageUniqueString(type, args)
+                UniqueString = PageUtils.C_PageUniqueString(type, args)
             };
 
             m_all_tabs.Add(id);
@@ -214,7 +214,7 @@ namespace ComicReader.Views
         public async Task LoadTab(TabId tab, PageType type, object args = null)
         {
             // switch to an existed tab if possible
-            string unique_string = PageUtils.GetPageUniqueString(type, args);
+            string unique_string = PageUtils.C_PageUniqueString(type, args);
             if (type == PageType.Reader || type == PageType.Settings)
             {
                 if (TrySwitchToTab(unique_string))

@@ -27,7 +27,7 @@
               Margin="0,0,8,8"
               CornerRadius="5"
               Opacity="0.9">
-            <TextBlock Text="{x:Bind Ctx.Page, Mode=OneWay}"
+            <TextBlock Text="{x:Bind Ctx.Page}"
                        Foreground="Black"
                        FontWeight="Bold"/>
         </Grid>

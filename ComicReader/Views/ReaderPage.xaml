@@ -186,7 +186,7 @@
                                   HorizontalScrollMode="Enabled"
                                   VerticalScrollBarVisibility="Hidden"
                                   VerticalScrollMode="Disabled"
-                                  FlowDirection="RightToLeft">
+                                  FlowDirection="{x:Bind Shared.P_Reader_FlowDirection, Mode=OneWay}">
                         <Grid VerticalAlignment="Center">
                             <ListView x:Name="TwoPagesImageListView"
                                       ItemsSource="{x:Bind TwoPagesReader.ImageSource, Mode=OneWay}"
@@ -329,5 +329,6 @@
                 </Grid>
             </Grid>
         </SplitView>
+        <Button Content="GC" Click="DebugButton_Click" VerticalAlignment="Center"/>
     </Grid>
 </Page>

@@ -28,14 +28,19 @@
                 <Grid Height="8" />
                 <HyperlinkButton Content="Choose where we look for comics"
                                  Click="ChooseLocationsClick" />
-
                 <Grid Height="40" />
-                <TextBlock Text="History"
+                <TextBlock Text="Reader"
+                           Style="{StaticResource SubtitleTextBlockStyle}" />
+                <Grid Height="8" />
+                <TextBlock Text="Left to right" />
+                <ToggleSwitch IsOn="{x:Bind Shared.P_Reader_LeftToRight, Mode=TwoWay}"/>
+                
+                <Grid Height="40" />
+                <TextBlock Text="Privacy"
                            Style="{StaticResource SubtitleTextBlockStyle}" />
                 <Grid Height="8" />
                 <TextBlock Text="Save browsing history" />
-                <ToggleSwitch x:Name="SaveBrowsingHistoryToggleSwitch"
-                              Toggled="OnSaveBrowsingHistoryToggleSwitchToggled" />
+                <ToggleSwitch IsOn="{x:Bind Shared.P_Privacy_SaveBrowsingHistory, Mode=TwoWay}" />
 
                 <Grid Height="40" />
                 <TextBlock Text="Statistics"

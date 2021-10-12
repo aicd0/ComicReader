@@ -138,23 +138,25 @@ namespace ComicReader.Data
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public Grid Container;
+        public int Page { get; set; }
+        public bool TopPadding { get; set; }
+        public bool BottomPadding { get; set; }
+        public bool LeftPadding { get; set; }
+        public bool RightPadding { get; set; }
+        public double Width { get; set; }
+        public double Height { get; set; }
 
-        public BitmapImage Image { get; set; }
-
-        private int m_Page;
-        public int Page {
-            get => m_Page;
+        private BitmapImage m_Image;
+        public BitmapImage Image {
+            get => m_Image;
             set
             {
-                m_Page = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Page"));
+                m_Image = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Image"));
             }
         }
 
-        public bool VerticalPadding { get; set; }
-        public bool LeftPadding { get; set; }
-        public bool RightPadding { get; set; }
+        public Grid Container;
 
         // events
         public Action<ReaderFrameModel> OnContainerSet;
@@ -174,12 +176,8 @@ namespace ComicReader.Data
 
     public class TagModel
     {
-        public TagModel(string tag)
-        {
-            Tag = tag;
-        }
-
         public string Tag { get; set; }
+        public RoutedEventHandler E_Clicked { get; set; }
     };
 
     public class FolderItemModel

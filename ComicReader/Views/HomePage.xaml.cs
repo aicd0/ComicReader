@@ -81,7 +81,7 @@ namespace ComicReader.Views
             Shared.ContentPageShared.RootPageShared.CurrentPageType = PageType.Blank;
         }
 
-        public static string GetPageUniqueString(object args) => "blank";
+        public static string C_PageUniqueString(object args) => "blank";
 
         private void OnPageEntered()
         {
@@ -95,7 +95,7 @@ namespace ComicReader.Views
         {
             m_tab_id.Tab.Header = "New tab";
             m_tab_id.Tab.IconSource = new Microsoft.UI.Xaml.Controls.SymbolIconSource() { Symbol = Symbol.Document };
-            m_tab_id.UniqueString = GetPageUniqueString(null);
+            m_tab_id.UniqueString = C_PageUniqueString(null);
             m_tab_id.Type = PageType.Blank;
         }
 
@@ -178,9 +178,11 @@ namespace ComicReader.Views
                     });
                 }
 
+                double image_height = (double)Resources["ComicItemVerticalImageHeight"];
+
                 await Task.Run(delegate
                 {
-                    DataManager.UtilsLoadImages(image_loader_tokens, 140.0, 140.0, m_update_library_lock).Wait();
+                    DataManager.UtilsLoadImages(image_loader_tokens, image_height * 1.4, image_height * 1.4, m_update_library_lock).Wait();
                 });
             }
             finally
