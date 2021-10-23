@@ -272,19 +272,24 @@ namespace ComicReader.Views
             Utils.Methods.Run(async delegate
             {
                 PointerPoint pt = e.GetCurrentPoint((UIElement)sender);
+
                 if (!pt.Properties.IsLeftButtonPressed)
                 {
                     return;
                 }
 
                 FolderItemModel ctx = (FolderItemModel)((Grid)sender).DataContext;
+
                 if (ctx.IsAddNew)
                 {
                     if (!await DataManager.UtilsAddToComicFoldersUsingPicker())
                     {
                         return;
                     }
+
                     await UpdateFolders();
+                    Utils.BackgroundTasks.AppendTask(DataManager.UpdateComicDataSealed(), "",
+                        Utils.BackgroundTasks.EmptyQueue());
                 }
                 else
                 {
@@ -298,8 +303,10 @@ namespace ComicReader.Views
             Utils.Methods.Run(async delegate
             {
                 FolderItemModel ctx = (FolderItemModel)((MenuFlyoutItem)sender).DataContext;
-                await DataManager.UtilsRemoveFromFolders(ctx.Folder);
+                await DataManager.RemoveFromComicFolders(ctx.Folder, final: true);
                 await UpdateFolders();
+                Utils.BackgroundTasks.AppendTask(DataManager.UpdateComicDataSealed(),
+                    "", Utils.BackgroundTasks.EmptyQueue());
             });
         }
     }

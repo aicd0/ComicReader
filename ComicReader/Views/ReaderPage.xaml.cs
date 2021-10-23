@@ -1081,16 +1081,19 @@ namespace ComicReader.Views
                 Utils.BackgroundTasks.AppendTask(DataManager.CompleteComicImagesSealed(m_comic), "Retriving images...", m_load_image_queue);
             }
 
-            Utils.BackgroundTasks.AppendTask(LoadImagesAsyncSealed(), "Loading images...", m_load_image_queue);
-        }
+            Utils.BackgroundTasks.AppendTask(delegate (Task<Utils.BackgroundTaskResult> _t) {
+                Utils.BackgroundTaskResult result = _t.Result;
 
-        private Func<Task<Utils.BackgroundTaskResult>, Utils.BackgroundTaskResult> LoadImagesAsyncSealed()
-        {
-            return delegate (Task<Utils.BackgroundTaskResult> _t) {
-                var task = LoadImagesAsync();
+                // stop the loading progress if failed to retrieve image folder
+                if (result.ExceptionType != Utils.BackgroundTaskExceptionType.Success)
+                {
+                    return result;
+                }
+
+                Task<Utils.BackgroundTaskResult> task = LoadImagesAsync();
                 task.Wait();
                 return task.Result;
-            };
+            }, "Loading images...", m_load_image_queue);
         }
 
         private async Task<Utils.BackgroundTaskResult> LoadImagesAsync()
@@ -1757,9 +1760,9 @@ namespace ComicReader.Views
             });
         }
 
-        private void DebugButton_Click(object sender, RoutedEventArgs e)
-        {
-            GC.Collect();
-        }
+        //private void DebugButton_Click(object sender, RoutedEventArgs e)
+        //{
+        //    GC.Collect();
+        //}
     }
 }

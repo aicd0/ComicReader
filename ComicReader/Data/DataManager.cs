@@ -242,7 +242,7 @@ namespace ComicReader.Data
             m_is_database_ready = true;
 
             // this should only be called asynchronously after app settings were loaded
-            Utils.BackgroundTasks.AppendTask(UpdateComicItemDataSealed(), "", Utils.BackgroundTasks.EmptyQueue());
+            Utils.BackgroundTasks.AppendTask(UpdateComicDataSealed(), "", Utils.BackgroundTasks.EmptyQueue());
             return new Utils.BackgroundTaskResult();
         }
 
@@ -698,7 +698,7 @@ namespace ComicReader.Data
 
         private static Utils.CancellationLock update_comic_data_lock = new Utils.CancellationLock();
 
-        public static Func<Task<Utils.BackgroundTaskResult>, Utils.BackgroundTaskResult> UpdateComicItemDataSealed()
+        public static Func<Task<Utils.BackgroundTaskResult>, Utils.BackgroundTaskResult> UpdateComicDataSealed()
         {
             return delegate (Task<Utils.BackgroundTaskResult> _t) {
                 return UpdateComicItemData().Result;
@@ -725,6 +725,7 @@ namespace ComicReader.Data
                 {
                     StorageFolder folder = await Utils.Methods.TryGetFolder(folder_path);
 
+                    // remove unreachable folders from database
                     if (folder == null)
                     {
                         await WaitLock();
@@ -998,7 +999,7 @@ namespace ComicReader.Data
             {
                 if (comic == null)
                 {
-                    throw new Exception();
+                    return new Utils.BackgroundTaskResult(Utils.BackgroundTaskExceptionType.InvalidParameters, fatal: true);
                 }
 
                 if (comic.ImageFiles.Count != 0)
@@ -1010,7 +1011,7 @@ namespace ComicReader.Data
 
                 if (res.ExceptionType != Utils.BackgroundTaskExceptionType.Success)
                 {
-                    throw new Exception();
+                    return new Utils.BackgroundTaskResult(Utils.BackgroundTaskExceptionType.NoPermission);
                 }
             }
             finally
@@ -1031,7 +1032,8 @@ namespace ComicReader.Data
             await WaitLock();
             // sort by display name
             comic.ImageFiles = img_files.OrderBy(x => x.DisplayName, new Utils.StringUtils.FileNameComparer()).ToList();
-            ReleaseLock(); 
+            ReleaseLock();
+
             return new Utils.BackgroundTaskResult();
         }
 
@@ -1130,13 +1132,13 @@ namespace ComicReader.Data
             return null;
         }
 
-        public static async Task<bool> RemoveFromFavoritesWithId(string id, bool is_final)
+        public static async Task<bool> RemoveFromFavoritesWithId(string id, bool final)
         {
             await WaitLock();
             bool res = RemoveFromFavoritesWithIdHelper(id, Database.Favorites.RootNodes);
             ReleaseLock();
 
-            if (is_final)
+            if (final)
             {
                 await UpdateFavorites();
             }
@@ -1173,7 +1175,7 @@ namespace ComicReader.Data
             return false;
         }
 
-        public static async Task AddToFavorites(string id, string title, bool is_final)
+        public static async Task AddToFavorites(string id, string title, bool final)
         {
             await WaitLock();
             try
@@ -1197,7 +1199,7 @@ namespace ComicReader.Data
                 ReleaseLock();
             }
 
-            if (is_final)
+            if (final)
             {
                 await UpdateFavorites();
             }
@@ -1214,7 +1216,7 @@ namespace ComicReader.Data
         }
 
         // history associated operations
-        public static async Task AddToHistory(string id, string title, bool is_final)
+        public static async Task AddToHistory(string id, string title, bool final)
         {
             await WaitLock();
             try
@@ -1240,7 +1242,7 @@ namespace ComicReader.Data
                 ReleaseLock();
             }
 
-            if (is_final)
+            if (final)
             {
                 Utils.BackgroundTasks.AppendTask(SaveDatabaseSealed(DatabaseItem.History));
 
@@ -1251,13 +1253,13 @@ namespace ComicReader.Data
             }
         }
 
-        public static async Task RemoveFromHistory(string id, bool is_final)
+        public static async Task RemoveFromHistory(string id, bool final)
         {
             await WaitLock();
             RemoveFromHistoryNoLock(id);
             ReleaseLock();
 
-            if (is_final)
+            if (final)
             {
                 Utils.BackgroundTasks.AppendTask(SaveDatabaseSealed(DatabaseItem.History));
             }
@@ -1280,7 +1282,8 @@ namespace ComicReader.Data
         }
 
         // settings associated operations
-        public static async Task<Utils.BackgroundTaskResult> AddToComicFolders(string new_folder, bool is_final)
+        public static async Task<Utils.BackgroundTaskResult> AddToComicFolders(
+            string new_folder, bool final)
         {
             await WaitLock();
             try
@@ -1324,12 +1327,27 @@ namespace ComicReader.Data
                 ReleaseLock();
             }
 
-            if (is_final)
+            if (final)
             {
-                Utils.BackgroundTasks.AppendTask(SaveDatabaseSealed(DatabaseItem.Settings));
+                Utils.BackgroundTasks.AppendTask(SaveDatabaseSealed(
+                    DatabaseItem.Settings));
             }
 
             return new Utils.BackgroundTaskResult();
+        }
+
+        public static async Task RemoveFromComicFolders(string folder,
+            bool final = false)
+        {
+            await WaitLock();
+            _ = Database.AppSettings.ComicFolders.Remove(folder);
+            ReleaseLock();
+
+            if (final)
+            {
+                Utils.BackgroundTasks.AppendTask(SaveDatabaseSealed(
+                    DatabaseItem.Settings));
+            }
         }
 
         // utilities
@@ -1344,30 +1362,17 @@ namespace ComicReader.Data
                 return false;
             }
 
-            StorageApplicationPermissions.FutureAccessList.AddOrReplace(
-                Utils.StringUtils.TokenFromPath(folder.Path), folder);
-            Utils.BackgroundTaskResult res = await AddToComicFolders(folder.Path, true);
+            Utils.BackgroundTaskResult res =
+                await AddToComicFolders(folder.Path, true);
+            
             if (res.ExceptionType != Utils.BackgroundTaskExceptionType.Success)
             {
                 return false;
             }
-            Utils.BackgroundTasks.AppendTask(UpdateComicItemDataSealed(), "", Utils.BackgroundTasks.EmptyQueue());
+
+            StorageApplicationPermissions.FutureAccessList.AddOrReplace(
+                Utils.StringUtils.TokenFromPath(folder.Path), folder);
             return true;
-        }
-
-        public static async Task UtilsRemoveFromFolders(string folder)
-        {
-            await WaitLock();
-            _ = Database.AppSettings.ComicFolders.Remove(folder);
-            ReleaseLock();
-            Utils.BackgroundTasks.AppendTask(SaveDatabaseSealed(DatabaseItem.Settings));
-            Utils.BackgroundTasks.AppendTask(UpdateComicItemDataSealed(), "", Utils.BackgroundTasks.EmptyQueue());
-
-            string token = Utils.StringUtils.TokenFromPath(Utils.StringUtils.TokenFromPath(folder));
-            if (StorageApplicationPermissions.FutureAccessList.ContainsItem(token))
-            {
-                StorageApplicationPermissions.FutureAccessList.Remove(token);
-            }
         }
 
         public class ImageLoaderToken
@@ -1412,9 +1417,10 @@ namespace ComicReader.Data
             }
         }
 
-        public static async Task UtilsLoadImages(IEnumerable<ImageLoaderToken> items,
+        public static async Task UtilsLoadImages(IEnumerable<ImageLoaderToken> tokens,
             ImageConstrain max_width, ImageConstrain max_height, Utils.CancellationLock cancellation_lock)
         {
+            List<ImageLoaderToken> _tokens = new List<ImageLoaderToken>(tokens);
             bool use_origin_size =
                 max_width.Option == ImageConstrainOption.None &&
                 double.IsInfinity(max_width.Val) &&
@@ -1422,28 +1428,53 @@ namespace ComicReader.Data
                 double.IsInfinity(max_height.Val);
             double raw_pixels_per_view_pixel = 0.0;
             double frame_ratio = 0.0;
+            bool first = true;
+            bool file_not_found_err = false;
 
-            bool is_first = true;
-            foreach (ImageLoaderToken item in items)
+            for (; _tokens.Count > 0; )
             {
+                ImageLoaderToken t = _tokens.First();
+                _tokens.RemoveAt(0);
+
                 if (cancellation_lock.CancellationRequested)
                 {
                     return;
                 }
 
-                ComicItemData comic = item.Comic;
+                ComicItemData comic = t.Comic;
 
                 if (comic.ImageFiles.Count == 0)
                 {
                     Utils.BackgroundTaskResult res = await CompleteComicImages(comic);
-                    if (res.ExceptionType != Utils.BackgroundTaskExceptionType.Success || comic.ImageFiles.Count <= item.Index)
+
+                    // skip the tokens whose comic folder cannot be reached
+                    if (res.ExceptionType != Utils.BackgroundTaskExceptionType.Success)
                     {
+                        _tokens.RemoveAll(x => x.Comic == comic);
+                        file_not_found_err = true;
                         continue;
                     }
                 }
 
-                StorageFile image_file = comic.ImageFiles[item.Index];
-                IRandomAccessStream stream = await image_file.OpenAsync(FileAccessMode.Read);
+                if (comic.ImageFiles.Count <= t.Index)
+                {
+                    file_not_found_err = true;
+                    continue;
+                }
+
+                StorageFile image_file = comic.ImageFiles[t.Index];
+                IRandomAccessStream stream;
+
+                try
+                {
+                    stream = await image_file.OpenAsync(FileAccessMode.Read);
+                }
+                catch (FileNotFoundException)
+                {
+                    file_not_found_err = true;
+                    continue;
+                }
+
                 BitmapImage image = null;
                 Task task = null;
 
@@ -1454,14 +1485,13 @@ namespace ComicReader.Data
                 });
 
                 await task.AsAsyncAction();
-
                 stream.Dispose();
 
                 await Utils.Methods.Sync(delegate
                 {
-                    if (is_first)
+                    if (first)
                     {
-                        is_first = false;
+                        first = false;
 
                         if (max_width.Option == ImageConstrainOption.SameAsFirstImage)
                         {
@@ -1496,8 +1526,17 @@ namespace ComicReader.Data
                         image.DecodePixelWidth = (int)image_width;
                     }
 
-                    item.Callback?.Invoke(image);
+                    t.Callback?.Invoke(image);
                 });
+            }
+
+            // Not all the images are successfully loaded, most likely that some of the
+            // files or directories has been moved or deleted. This triggers a
+            // DataManager.ComicDataUpdate() in the background.
+            if (file_not_found_err)
+            {
+                Utils.BackgroundTasks.AppendTask(UpdateComicDataSealed(),
+                    "", Utils.BackgroundTasks.EmptyQueue());
             }
         }
     }

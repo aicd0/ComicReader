@@ -46,8 +46,7 @@
             <Grid HorizontalAlignment="Center"
                   VerticalAlignment="Center"
                   Height="{StaticResource ComicItemVerticalImageHeight}">
-                <muxc:ProgressRing Visibility="{x:Bind Ctx.IsImageLoadedN}" />
-                <Grid Visibility="{x:Bind Ctx.IsImageLoaded}">
+                <Grid Visibility="{x:Bind Ctx.IsImageLoaded, Mode=OneWay}">
                     <Image Source="{x:Bind Ctx.Image}"
                            Opacity="0" />
                     <Border CornerRadius="5">
@@ -68,6 +67,7 @@
                               HorizontalAlignment="Right"
                               Visibility="{x:Bind Ctx.IsFavorite}" />
                 </Grid>
+                <muxc:ProgressRing Visibility="{x:Bind Ctx.IsImageLoadedN, Mode=OneWay}" />
             </Grid>
         </Grid>
         <Grid Grid.Row="2"

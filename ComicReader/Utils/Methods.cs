@@ -83,28 +83,33 @@ namespace ComicReader.Utils
                     continue;
                 }
 
-                if (token_form.Substring(0, token.Length).Equals(token))
+                if (!token_form.Substring(0, token.Length).Equals(token))
                 {
-                    StorageFolder permit_folder = await StorageApplicationPermissions.FutureAccessList.GetFolderAsync(token);
-                    if (!StringUtils.TokenFromPath(permit_folder.Path).Equals(token))
-                    {
-                        // remove the entry if folder path has changed
-                        useless_tokens.Add(token);
-                        continue;
-                    }
+                    continue;
+                }
 
-                    string permit_folder_path = permit_folder.Path.ToLower();
-                    string rest_path = path.Substring(permit_folder_path.Length);
+                StorageFolder permit_folder = await
+                    StorageApplicationPermissions.FutureAccessList.GetFolderAsync(
+                        token);
 
-                    if (rest_path.Length <= 1)
-                    {
-                        result = permit_folder;
-                        break;
-                    }
+                if (!StringUtils.TokenFromPath(permit_folder.Path).Equals(token))
+                {
+                    // remove the entry if folder path has changed
+                    useless_tokens.Add(token);
+                    continue;
+                }
 
-                    result = await permit_folder.GetFolderAsync(rest_path.Substring(1));
+                string permit_folder_path = permit_folder.Path.ToLower();
+                string rest_path = path.Substring(permit_folder_path.Length);
+
+                if (rest_path.Length <= 1)
+                {
+                    result = permit_folder;
                     break;
                 }
+
+                result = await permit_folder.GetFolderAsync(rest_path.Substring(1));
+                break;
             }
 
             foreach (string token in useless_tokens)

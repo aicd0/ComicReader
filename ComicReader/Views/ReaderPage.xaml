@@ -329,6 +329,6 @@
                 </Grid>
             </Grid>
         </SplitView>
-        <Button Content="GC" Click="DebugButton_Click" VerticalAlignment="Center"/>
+        <!--<Button Content="Debug" Click="DebugButton_Click" VerticalAlignment="Center"/>-->
     </Grid>
 </Page>
