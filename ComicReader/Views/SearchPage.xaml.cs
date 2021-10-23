@@ -114,19 +114,24 @@ namespace ComicReader.Views
                     {
                         m_keyword_list.RemoveRange(m_keyword_index + 1, m_keyword_list.Count - m_keyword_index - 1);
                     }
+
                     m_keyword_list.Add("");
                     m_keyword_index = m_keyword_list.Count - 1;
                 }
-                else if (e.NavigationMode == m_navigate_direction)
+                else
                 {
-                    if (e.NavigationMode == NavigationMode.Back)
+                    if (e.NavigationMode == m_navigate_direction)
                     {
-                        m_keyword_index--;
+                        if (e.NavigationMode == NavigationMode.Back)
+                        {
+                            m_keyword_index--;
+                        }
+                        else if (e.NavigationMode == NavigationMode.Forward)
+                        {
+                            m_keyword_index++;
+                        }
                     }
-                    else if (e.NavigationMode == NavigationMode.Forward)
-                    {
-                        m_keyword_index++;
-                    }
+
                     await StartSearch();
                 }
             });
@@ -173,23 +178,27 @@ namespace ComicReader.Views
             // extract filters and keywords from string
             Utils.Search.Filter filter = Utils.Search.Filter.Parse(keyword, out List<string> remaining);
             List<string> keywords = new List<string>();
+
             foreach (string text in remaining)
             {
                 keywords = keywords.Concat(text.Split(' ', StringSplitOptions.RemoveEmptyEntries)).ToList();
             }
+
             if (filter.IsEmpty() && keywords.Count == 0)
             {
                 return;
             }
-            if (!filter.ContainFilter("hidden"))
+
+            if (!filter.ContainsFilter("hidden"))
             {
                 _ = filter.AddFilter("~hidden");
             }
 
             string title_text;
             string tab_title;
-            string filter_brief = filter.DescriptionBrief;
-            string filter_details = filter.DescriptionDetailed;
+            string filter_brief = filter.DescriptionBrief();
+            string filter_details = filter.DescriptionDetailed();
+
             if (keywords.Count != 0)
             {
                 string keyword_combined = Utils.StringUtils.Join(" ", keywords);
@@ -234,7 +243,6 @@ namespace ComicReader.Views
 
         private async Task<bool> SearchMain(List<string> keywords, Utils.Search.Filter filter)
         {
-            SearchPaneProgressBar.Visibility = Visibility.Visible;
             await m_search_lock.WaitAsync();
             SearchPaneProgressBar.Visibility = Visibility.Visible;
             try

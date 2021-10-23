@@ -79,6 +79,8 @@ namespace ComicReader.Views
             OnPageEntered();
             UpdateTabId();
             Shared.ContentPageShared.RootPageShared.CurrentPageType = PageType.Blank;
+
+            ContentPage.Current.SetSearchBox("");
         }
 
         public static string C_PageUniqueString(object args) => "blank";
