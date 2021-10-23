@@ -76,7 +76,7 @@ namespace ComicReader.Views
         public bool IsAllImagesLoaded { get; set; }
 
         // common properties
-        public ComicData Comic { get; set; }
+        public ComicItemData Comic { get; set; }
         public ObservableCollection<ReaderFrameModel> ImageSource { get; set; }
         public int Pages => Comic.ImageFiles.Count;
         public int Page => m_page;
@@ -925,7 +925,7 @@ namespace ComicReader.Views
         private bool m_PageInitialized = false;
         private TabId m_Tab;
 
-        private ComicData m_comic;
+        private ComicItemData m_comic;
         private ReadRecordData m_comic_record;
 
         private Utils.BackgroundTaskQueue m_load_image_queue = Utils.BackgroundTasks.EmptyQueue();
@@ -1008,7 +1008,7 @@ namespace ComicReader.Views
 
         public static string C_PageUniqueString(object args)
         {
-            ComicData comic = (ComicData)args;
+            ComicItemData comic = (ComicItemData)args;
             return "Reader/" + comic.Directory;
         }
 
@@ -1034,7 +1034,7 @@ namespace ComicReader.Views
 
         // user-defined functions
         // load comic
-        public async Task LoadComic(ComicData comic)
+        public async Task LoadComic(ComicItemData comic)
         {
             if (comic == null)
             {
@@ -1056,7 +1056,7 @@ namespace ComicReader.Views
                     {
                         Id = m_comic.Id
                     };
-                    Database.ComicRecords.Add(m_comic_record);
+                    Database.ComicRecords.Items.Add(m_comic_record);
                 }
 
                 // add to history
@@ -1258,7 +1258,7 @@ namespace ComicReader.Views
                 MenuFlyoutItem item = (MenuFlyoutItem)sender;
                 if (item.Text != m_comic.Id)
                 {
-                    ComicData comic = await DataManager.GetComicWithId(item.Text);
+                    ComicItemData comic = await DataManager.GetComicWithId(item.Text);
                     await RootPage.Current.LoadTab(null, PageType.Reader, comic);
                 }
             });

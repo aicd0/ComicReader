@@ -132,7 +132,7 @@ namespace ComicReader.Views
 
             Shared.P_Reader_LeftToRight = Database.AppSettings.LeftToRight;
             Shared.P_Privacy_SaveBrowsingHistory = Database.AppSettings.SaveHistory;
-            StatisticsTextBlock.Text = "Total collections: " + Database.Comics.Count.ToString("#,#0", CultureInfo.InvariantCulture);
+            StatisticsTextBlock.Text = "Total collections: " + Database.Comics.Items.Count.ToString("#,#0", CultureInfo.InvariantCulture);
 
             DataManager.ReleaseLock();
             m_SaveEnabled = true;

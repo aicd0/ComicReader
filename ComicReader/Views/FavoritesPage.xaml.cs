@@ -73,7 +73,7 @@ namespace ComicReader.Views
         {
             DataSource.Clear();
             await DataManager.WaitLock();
-            UpdateTreeExplorerHelper(Database.Favorites, DataSource, null);
+            UpdateTreeExplorerHelper(Database.Favorites.RootNodes, DataSource, null);
             DataManager.ReleaseLock();
         }
 
@@ -99,8 +99,8 @@ namespace ComicReader.Views
         public async Task SaveTreeExplorer()
         {
             await DataManager.WaitLock();
-            Database.Favorites.Clear();
-            SaveTreeExplorerHelper(Database.Favorites, DataSource);
+            Database.Favorites.RootNodes.Clear();
+            SaveTreeExplorerHelper(Database.Favorites.RootNodes, DataSource);
             DataManager.ReleaseLock();
             Utils.BackgroundTasks.AppendTask(DataManager.SaveDatabaseSealed(DatabaseItem.Favorites));
         }
@@ -173,7 +173,7 @@ namespace ComicReader.Views
 
                 if (item.Type == TreeItemType.Item)
                 {
-                    ComicData comic = await DataManager.GetComicWithId(item.Id);
+                    ComicItemData comic = await DataManager.GetComicWithId(item.Id);
 
                     if (comic == null)
                     {
@@ -373,7 +373,7 @@ namespace ComicReader.Views
             Utils.Methods.Run(async delegate
             {
                 FavoritesItemModel item = (FavoritesItemModel)((MenuFlyoutItem)sender).DataContext;
-                ComicData comic = await DataManager.GetComicWithId(item.Id);
+                ComicItemData comic = await DataManager.GetComicWithId(item.Id);
                 await RootPage.Current.LoadTab(null, PageType.Reader, comic);
             });
         }

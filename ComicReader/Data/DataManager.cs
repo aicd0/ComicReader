@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 using Windows.Globalization;
 using Windows.Graphics.Display;
 using Windows.Security.Cryptography;
@@ -81,18 +83,21 @@ namespace ComicReader.Data
             return GetStringFromBuffer(buffer);
         }
 
-        private static void WriteString(DataWriter data_writer, string data)
+        private static async Task<object> TryGetFile(StorageFolder folder, string name)
         {
-            var buf = GetBufferFromString(data);
-            data_writer.WriteInt32((Int32)buf.Length);
-            data_writer.WriteBuffer(buf);
-        }
+            IStorageItem item = await folder.TryGetItemAsync(name);
 
-        private static string ReadString(DataReader data_reader)
-        {
-            var bufLen = (uint)data_reader.ReadInt32();
-            var buf = data_reader.ReadBuffer(bufLen);
-            return GetStringFromBuffer(buf);
+            if (item == null)
+            {
+                return null;
+            }
+
+            if (!item.IsOfType(StorageItemTypes.File))
+            {
+                return null;
+            }
+
+            return (StorageFile)item;
         }
 
         // lock
@@ -134,7 +139,7 @@ namespace ComicReader.Data
                     await SaveFavoritesData(folder);
                     break;
                 case DatabaseItem.History:
-                    await SaveHistoryData(folder);
+                    await SaveHistoryItemData(folder);
                     break;
                 case DatabaseItem.Settings:
                     await SaveSettingsData(folder);
@@ -148,179 +153,70 @@ namespace ComicReader.Data
         private static async Task SaveComicData(StorageFolder userFolder)
         {
             await WaitLock();
-
             StorageFile file = await userFolder.CreateFileAsync(COMIC_DATA_FILE_NAME, CreationCollisionOption.ReplaceExisting);
-            string data = "";
+            IRandomAccessStream stream = await file.OpenAsync(FileAccessMode.ReadWrite);
 
-            for (int i = 0; i < Database.Comics.Count; ++i)
-            {
-                var comic = Database.Comics[i];
+            Database.Comics.Pack();
+            XmlSerializer serializer = new XmlSerializer(typeof(ComicData));
+            serializer.Serialize(stream.AsStream(), Database.Comics);
 
-                if (i != 0)
-                {
-                    data += "\n0";
-                }
-
-                data += "1" + comic.Id;
-
-                if (comic.ComicCollectionId != null)
-                {
-                    data += "\n12" + comic.ComicCollectionId;
-                }
-
-                if (comic.Title != null)
-                {
-                    data += "\n13" + comic.Title;
-                }
-
-                if (comic.Title2 != null)
-                {
-                    data += "\n14" + comic.Title2;
-                }
-
-                if (comic.Tags.Count != 0)
-                {
-                    data += "\n15";
-
-                    for (int j = 0; j < comic.Tags.Count; ++j)
-                    {
-                        TagData tagdata = comic.Tags[j];
-
-                        if (j != 0)
-                        {
-                            data += "\n2";
-                        }
-
-                        data += "1" + tagdata.Name;
-
-                        if (tagdata.Tags.Count != 0)
-                        {
-                            data += "\n32" + Utils.StringUtils.Join("/", tagdata.Tags);
-                        }
-                    }
-                }
-
-                data += "\n16" + comic.Directory;
-                data += "\n17" + comic.LastVisit.ToString();
-                data += "\n18" + comic.Hidden.ToString();
-            }
-
-            IBuffer buffer = GetBufferFromString(data);
-            await FileIO.WriteBufferAsync(file, buffer);
-
+            stream.Dispose();
             ReleaseLock();
         }
 
         private static async Task SaveReadRecordData(StorageFolder userFolder)
         {
             await WaitLock();
-
             StorageFile file = await userFolder.CreateFileAsync(READ_RECORD_DATA_FILE_NAME, CreationCollisionOption.ReplaceExisting);
-            string data = "";
+            IRandomAccessStream stream = await file.OpenAsync(FileAccessMode.ReadWrite);
 
-            foreach (var record in Database.ComicRecords)
-            {
-                data += "\n";
-                data += "\n1" + record.Id;
-                data += "\n2" + record.Rating.ToString();
-                data += "\n3" + record.Progress.ToString();
-            }
+            Database.ComicRecords.Pack();
+            XmlSerializer serializer = new XmlSerializer(typeof(ReadRecordsData));
+            serializer.Serialize(stream.AsStream(), Database.ComicRecords);
 
-            if (data.Length >= 2)
-            {
-                data = data.Substring(2);
-            }
-
-            IBuffer buffer = GetBufferFromString(data);
-            await FileIO.WriteBufferAsync(file, buffer);
-
+            stream.Dispose();
             ReleaseLock();
         }
 
         private static async Task SaveFavoritesData(StorageFolder userFolder)
         {
             await WaitLock();
-
             StorageFile file = await userFolder.CreateFileAsync(FAVORITES_DATA_FILE_NAME, CreationCollisionOption.ReplaceExisting);
+            IRandomAccessStream stream = await file.OpenAsync(FileAccessMode.ReadWrite);
 
-            string data = "";
-            SaveFavoritesDataHelper(Database.Favorites, ref data);
+            Database.Favorites.Pack();
+            XmlSerializer serializer = new XmlSerializer(typeof(FavoritesData));
+            serializer.Serialize(stream.AsStream(), Database.Favorites);
 
-            IBuffer buffer = GetBufferFromString(data);
-            await FileIO.WriteBufferAsync(file, buffer);
-
+            stream.Dispose();
             ReleaseLock();
         }
 
-        private static void SaveFavoritesDataHelper(List<FavoritesNodeData> folder, ref string str)
-        {
-            foreach (FavoritesNodeData node in folder)
-            {
-                str += "\n0";
-                str += "\n1" + node.Type;
-                str += "\n2" + node.Name;
-                str += "\n3" + node.Id;
-                if (node.Children.Count > 0)
-                {
-                    str += "\n8";
-                    SaveFavoritesDataHelper(node.Children, ref str);
-                }
-            }
-            str += "\n9";
-        }
-
-        private static async Task SaveHistoryData(StorageFolder userFolder)
+        private static async Task SaveHistoryItemData(StorageFolder userFolder)
         {
             await WaitLock();
-
             StorageFile file = await userFolder.CreateFileAsync(HISTORY_DATA_FILE_NAME, CreationCollisionOption.ReplaceExisting);
-            string data = "";
+            IRandomAccessStream stream = await file.OpenAsync(FileAccessMode.ReadWrite);
 
-            foreach (var record in Database.History)
-            {
-                data += "\n";
-                data += "\n1" + record.Id;
-                data += "\n2" + record.DateTime.ToString();
-                data += "\n3" + record.Title;
-            }
+            Database.History.Pack();
+            XmlSerializer serializer = new XmlSerializer(typeof(HistoryData));
+            serializer.Serialize(stream.AsStream(), Database.History);
 
-            if (data.Length >= 2)
-            {
-                data = data.Substring(2);
-            }
-
-            IBuffer buffer = GetBufferFromString(data);
-            await FileIO.WriteBufferAsync(file, buffer);
-
+            stream.Dispose();
             ReleaseLock();
         }
 
         private static async Task SaveSettingsData(StorageFolder userFolder)
         {
             await WaitLock();
-
             StorageFile file = await userFolder.CreateFileAsync(SETTINGS_DATA_FILE_NAME, CreationCollisionOption.ReplaceExisting);
+            IRandomAccessStream stream = await file.OpenAsync(FileAccessMode.ReadWrite);
 
-            var stream = await file.OpenAsync(FileAccessMode.ReadWrite);
-            var outputStream = stream.GetOutputStreamAt(0);
-            var dataWriter = new DataWriter(outputStream);
+            Database.AppSettings.Pack();
+            XmlSerializer serializer = new XmlSerializer(typeof(SettingsData));
+            serializer.Serialize(stream.AsStream(), Database.AppSettings);
 
-            WriteString(dataWriter, "1.0.0");
-            dataWriter.WriteBoolean(Database.AppSettings.LeftToRight);
-            dataWriter.WriteBoolean(Database.AppSettings.SaveHistory);
-
-            dataWriter.WriteInt32((Int32)Database.AppSettings.ComicFolders.Count);
-            foreach (string folder in Database.AppSettings.ComicFolders)
-            {
-                WriteString(dataWriter, folder);
-            }
-
-            await dataWriter.StoreAsync();
-            await outputStream.FlushAsync();
             stream.Dispose();
-            outputStream.Dispose();
-            dataWriter.Dispose();
-
             ReleaseLock();
         }
 
@@ -342,11 +238,11 @@ namespace ComicReader.Data
             _ = await LoadComicData(folder);
             _ = await LoadReadRecordData(folder);
             _ = await LoadFavoritesData(folder);
-            _ = await LoadHistoryData(folder);
+            _ = await LoadHistoryItemData(folder);
             m_is_database_ready = true;
 
             // this should only be called asynchronously after app settings were loaded
-            Utils.BackgroundTasks.AppendTask(UpdateComicDataSealed(), "", Utils.BackgroundTasks.EmptyQueue());
+            Utils.BackgroundTasks.AppendTask(UpdateComicItemDataSealed(), "", Utils.BackgroundTasks.EmptyQueue());
             return new Utils.BackgroundTaskResult();
         }
 
@@ -355,94 +251,23 @@ namespace ComicReader.Data
             await WaitLock();
             try
             {
-                object data = await GetStringFromFile(userFolder, COMIC_DATA_FILE_NAME);
+                object file = await TryGetFile(userFolder, COMIC_DATA_FILE_NAME);
 
-                if (data == null)
+                if (file == null)
                 {
-                    return new Utils.BackgroundTaskResult(Utils.BackgroundTaskExceptionType.FileNotExists);
+                    return new Utils.BackgroundTaskResult(
+                        Utils.BackgroundTaskExceptionType.FileNotExists);
                 }
 
-                string data_s = (string)data;
-                Database.Comics.Clear();
+                IRandomAccessStream stream =
+                    await ((StorageFile)file).OpenAsync(FileAccessMode.Read);
 
-                if (data_s == "")
-                {
-                    return new Utils.BackgroundTaskResult();
-                }
+                XmlSerializer serializer = new XmlSerializer(typeof(ComicData));
+                Database.Comics =
+                    (ComicData)serializer.Deserialize(stream.AsStream());
+                Database.Comics.Unpack();
 
-                string[] comics_str = data_s.Split("\n0");
-
-                foreach (string comic_str in comics_str)
-                {
-                    string[] comic_properties = comic_str.Split("\n1");
-                    var comic = new ComicData();
-
-                    foreach (string comic_property in comic_properties)
-                    {
-                        char mark = comic_property[0];
-                        string content = comic_property.Substring(1);
-                        switch (mark)
-                        {
-                        case '1':
-                            comic.Id = content;
-                            break;
-                        case '2':
-                            comic.ComicCollectionId = content;
-                            break;
-                        case '3':
-                            comic.Title = content;
-                            break;
-                        case '4':
-                            comic.Title2 = content;
-                            break;
-                        case '5':
-                            string[] tags_str = content.Split("\n2");
-                            var tags = new List<TagData>();
-
-                            foreach (string tag_str in tags_str)
-                            {
-                                string[] tag_properties = tag_str.Split("\n3");
-                                var tag = new TagData();
-
-                                foreach (string tag_property in tag_properties)
-                                {
-                                    mark = tag_property[0];
-                                    content = tag_property.Substring(1);
-                                    switch (mark)
-                                    {
-                                    case '1':
-                                        tag.Name = content;
-                                        break;
-                                    case '2':
-                                        tag.Tags = content.Split("/").ToHashSet();
-                                        break;
-                                    default:
-                                        throw new Exception();
-                                    }
-                                }
-
-                                tags.Add(tag);
-                            }
-
-                            comic.Tags = tags;
-                            break;
-                        case '6':
-                            comic.Directory = content;
-                            break;
-                        case '7':
-                            comic.LastVisit = DateTimeOffset.Parse(content);
-                            break;
-                        case '8':
-                            comic.Hidden = bool.Parse(content);
-                            break;
-                        default:
-                            throw new Exception();
-                        }
-                    }
-
-                    Database.Comics.Add(comic);
-                }
-
+                stream.Dispose();
                 return new Utils.BackgroundTaskResult();
             }
             finally
@@ -456,52 +281,23 @@ namespace ComicReader.Data
             await WaitLock();
             try
             {
-                object data = await GetStringFromFile(userFolder, READ_RECORD_DATA_FILE_NAME);
+                object file = await TryGetFile(userFolder, READ_RECORD_DATA_FILE_NAME);
 
-                if (data == null)
+                if (file == null)
                 {
-                    return new Utils.BackgroundTaskResult(Utils.BackgroundTaskExceptionType.FileNotExists);
+                    return new Utils.BackgroundTaskResult(
+                        Utils.BackgroundTaskExceptionType.FileNotExists);
                 }
 
-                string data_s = (string)data;
-                Database.ComicRecords.Clear();
+                IRandomAccessStream stream =
+                    await ((StorageFile)file).OpenAsync(FileAccessMode.Read);
 
-                if (data_s == "")
-                {
-                    return new Utils.BackgroundTaskResult();
-                }
+                XmlSerializer serializer = new XmlSerializer(typeof(ReadRecordsData));
+                Database.ComicRecords =
+                    (ReadRecordsData)serializer.Deserialize(stream.AsStream());
+                Database.ComicRecords.Unpack();
 
-                string[] comic_records = data_s.Split("\n\n");
-
-                foreach (string str in comic_records)
-                {
-                    string[] properties = str.Split("\n");
-
-                    var comic_record = new ReadRecordData();
-
-                    foreach (string property in properties)
-                    {
-                        char mark = property[0];
-                        string content = property.Substring(1);
-                        switch (mark)
-                        {
-                            case '1':
-                                comic_record.Id = content;
-                                break;
-                            case '2':
-                                comic_record.Rating = int.Parse(content);
-                                break;
-                            case '3':
-                                comic_record.Progress = int.Parse(content);
-                                break;
-                            default:
-                                throw new Exception();
-                        }
-                    }
-
-                    Database.ComicRecords.Add(comic_record);
-                }
-
+                stream.Dispose();
                 return new Utils.BackgroundTaskResult();
             }
             finally
@@ -515,18 +311,23 @@ namespace ComicReader.Data
             await WaitLock();
             try
             {
-                object data = await GetStringFromFile(userFolder, FAVORITES_DATA_FILE_NAME);
-                if (data == null)
+                object file = await TryGetFile(userFolder, FAVORITES_DATA_FILE_NAME);
+
+                if (file == null)
                 {
-                    return new Utils.BackgroundTaskResult(Utils.BackgroundTaskExceptionType.FileNotExists);
+                    return new Utils.BackgroundTaskResult(
+                        Utils.BackgroundTaskExceptionType.FileNotExists);
                 }
-                string data_s = (string)data;
 
-                Database.Favorites.Clear();
+                IRandomAccessStream stream =
+                    await ((StorageFile)file).OpenAsync(FileAccessMode.Read);
 
-                int ps = 0;
-                LoadFavoritesDataHelper(Database.Favorites, ref data_s, ref ps);
+                XmlSerializer serializer = new XmlSerializer(typeof(FavoritesData));
+                Database.Favorites =
+                    (FavoritesData)serializer.Deserialize(stream.AsStream());
+                Database.Favorites.Unpack();
 
+                stream.Dispose();
                 return new Utils.BackgroundTaskResult();
             }
             finally
@@ -608,57 +409,29 @@ namespace ComicReader.Data
             }
         }
 
-        private static async Task<Utils.BackgroundTaskResult> LoadHistoryData(StorageFolder userFolder)
+        private static async Task<Utils.BackgroundTaskResult> LoadHistoryItemData(
+            StorageFolder userFolder)
         {
             await WaitLock();
             try
             {
-                object data = await GetStringFromFile(userFolder, HISTORY_DATA_FILE_NAME);
+                object file = await TryGetFile(userFolder, HISTORY_DATA_FILE_NAME);
 
-                if (data == null)
+                if (file == null)
                 {
-                    return new Utils.BackgroundTaskResult(Utils.BackgroundTaskExceptionType.FileNotExists);
+                    return new Utils.BackgroundTaskResult(
+                        Utils.BackgroundTaskExceptionType.FileNotExists);
                 }
 
-                string data_s = (string)data;
-                Database.History.Clear();
+                IRandomAccessStream stream =
+                    await ((StorageFile)file).OpenAsync(FileAccessMode.Read);
 
-                if (data_s == "")
-                {
-                    return new Utils.BackgroundTaskResult();
-                }
+                XmlSerializer serializer = new XmlSerializer(typeof(HistoryData));
+                Database.History =
+                    (HistoryData)serializer.Deserialize(stream.AsStream());
+                Database.History.Unpack();
 
-                string[] all_records = data_s.Split("\n\n");
-
-                foreach (string str in all_records)
-                {
-                    string[] properties = str.Split("\n");
-
-                    var record = new HistoryData();
-
-                    foreach (string property in properties)
-                    {
-                        char mark = property[0];
-                        string content = property.Substring(1);
-                        switch (mark)
-                        {
-                            case '1':
-                                record.Id = content;
-                                break;
-                            case '2':
-                                record.DateTime = DateTimeOffset.Parse(content);
-                                break;
-                            case '3':
-                                record.Title = content;
-                                break;
-                            default:
-                                throw new Exception();
-                        }
-                    }
-
-                    Database.History.Add(record);
-                }
-
+                stream.Dispose();
                 return new Utils.BackgroundTaskResult();
             }
             finally
@@ -667,37 +440,33 @@ namespace ComicReader.Data
             }
         }
 
-        private static async Task<Utils.BackgroundTaskResult> LoadSettingsData(StorageFolder userFolder)
+        private static async Task<Utils.BackgroundTaskResult> LoadSettingsData(
+            StorageFolder userFolder)
         {
             await WaitLock();
             try
             {
-                IStorageItem item = await userFolder.TryGetItemAsync(SETTINGS_DATA_FILE_NAME);
+                object file = await TryGetFile(userFolder, SETTINGS_DATA_FILE_NAME);
 
-                if (item == null || !item.IsOfType(StorageItemTypes.File))
+                if (file == null)
                 {
-                    return new Utils.BackgroundTaskResult(Utils.BackgroundTaskExceptionType.FileNotExists);
+                    return new Utils.BackgroundTaskResult(
+                        Utils.BackgroundTaskExceptionType.FileNotExists);
                 }
 
-                var file = (StorageFile)item;
+                IRandomAccessStream stream =
+                    await ((StorageFile)file).OpenAsync(FileAccessMode.Read);
 
-                var stream = await file.OpenAsync(FileAccessMode.Read);
-                var size = stream.Size;
-                var inputStream = stream.GetInputStreamAt(0);
-                var dataReader = new DataReader(inputStream);
-                await dataReader.LoadAsync((uint)size);
+                XmlSerializer serializer = new XmlSerializer(typeof(SettingsData));
+                //serializer.UnknownNode += new
+                //XmlNodeEventHandler(serializer_UnknownNode);
+                //serializer.UnknownAttribute += new
+                //XmlAttributeEventHandler(serializer_UnknownAttribute);
+                Database.AppSettings =
+                    (SettingsData)serializer.Deserialize(stream.AsStream());
+                Database.AppSettings.Unpack();
 
-                _ = ReadString(dataReader);
-                Database.AppSettings.LeftToRight = dataReader.ReadBoolean();
-                Database.AppSettings.SaveHistory = dataReader.ReadBoolean();
-
-                Database.AppSettings.ComicFolders.Clear();
-                var folder_count = dataReader.ReadInt32();
-                for (int i = 0; i < folder_count; ++i)
-                {
-                    Database.AppSettings.ComicFolders.Add(ReadString(dataReader));
-                }
-
+                stream.Dispose();
                 return new Utils.BackgroundTaskResult();
             }
             finally
@@ -707,7 +476,7 @@ namespace ComicReader.Data
         }
 
         // util functions (database related)
-        public static async Task<string> GenerateComicInfoString(ComicData comic)
+        public static async Task<string> GenerateComicInfoString(ComicItemData comic)
         {
             await WaitLock();
             try
@@ -720,7 +489,7 @@ namespace ComicReader.Data
             }
         }
 
-        private static string GenerateComicInfoStringNoLock(ComicData comic)
+        private static string GenerateComicInfoStringNoLock(ComicItemData comic)
         {
             string text = "";
             text += "Title: " + comic.Title;
@@ -763,14 +532,14 @@ namespace ComicReader.Data
             return tag_data.Tags.Count == 0 ? null : tag_data;
         }
 
-        public static async Task IntepretComicInfoString(string text, ComicData comic)
+        public static async Task IntepretComicInfoString(string text, ComicItemData comic)
         {
             await WaitLock();
             IntepretComicInfoStringNoLock(text, comic);
             ReleaseLock();
         }
 
-        private static void IntepretComicInfoStringNoLock(string text, ComicData comic)
+        private static void IntepretComicInfoStringNoLock(string text, ComicItemData comic)
         {
             comic.Title = "";
             comic.Title2 = "";
@@ -820,7 +589,7 @@ namespace ComicReader.Data
             }
         }
 
-        private static async Task<Utils.BackgroundTaskResult> CompleteComicInfoFileNoLock(ComicData comic, bool create_if_not_exists)
+        private static async Task<Utils.BackgroundTaskResult> CompleteComicInfoFileNoLock(ComicItemData comic, bool create_if_not_exists)
         {
             if (comic.InfoFile != null)
             {
@@ -863,7 +632,7 @@ namespace ComicReader.Data
             return new Utils.BackgroundTaskResult();
         }
 
-        public static Func<Task<Utils.BackgroundTaskResult>, Utils.BackgroundTaskResult> SaveComicInfoFileSealed(ComicData comic)
+        public static Func<Task<Utils.BackgroundTaskResult>, Utils.BackgroundTaskResult> SaveComicInfoFileSealed(ComicItemData comic)
         {
             return delegate (Task<Utils.BackgroundTaskResult> _t) {
                 var task = SaveComicInfoFile(comic);
@@ -872,7 +641,7 @@ namespace ComicReader.Data
             };
         }
 
-        private static async Task<Utils.BackgroundTaskResult> SaveComicInfoFile(ComicData comic)
+        private static async Task<Utils.BackgroundTaskResult> SaveComicInfoFile(ComicItemData comic)
         {
             await WaitLock();
             try
@@ -885,7 +654,7 @@ namespace ComicReader.Data
             }
         }
 
-        private static async Task<Utils.BackgroundTaskResult> SaveComicInfoFileNoLock(ComicData comic)
+        private static async Task<Utils.BackgroundTaskResult> SaveComicInfoFileNoLock(ComicItemData comic)
         {
             Utils.BackgroundTaskResult res = await CompleteComicInfoFileNoLock(comic, true);
 
@@ -900,7 +669,7 @@ namespace ComicReader.Data
             return new Utils.BackgroundTaskResult();
         }
 
-        public static async Task<Utils.BackgroundTaskResult> UpdateComicInfo(ComicData comic)
+        public static async Task<Utils.BackgroundTaskResult> UpdateComicInfo(ComicItemData comic)
         {
             await WaitLock();
             try
@@ -913,7 +682,7 @@ namespace ComicReader.Data
             }
         }
 
-        public static async Task<Utils.BackgroundTaskResult> UpdateComicInfoNoLock(ComicData comic)
+        public static async Task<Utils.BackgroundTaskResult> UpdateComicInfoNoLock(ComicItemData comic)
         {
             Utils.BackgroundTaskResult res = await CompleteComicInfoFileNoLock(comic, false);
 
@@ -929,14 +698,14 @@ namespace ComicReader.Data
 
         private static Utils.CancellationLock update_comic_data_lock = new Utils.CancellationLock();
 
-        public static Func<Task<Utils.BackgroundTaskResult>, Utils.BackgroundTaskResult> UpdateComicDataSealed()
+        public static Func<Task<Utils.BackgroundTaskResult>, Utils.BackgroundTaskResult> UpdateComicItemDataSealed()
         {
             return delegate (Task<Utils.BackgroundTaskResult> _t) {
-                return UpdateComicData().Result;
+                return UpdateComicItemData().Result;
             };
         }
 
-        private static async Task<Utils.BackgroundTaskResult> UpdateComicData()
+        private static async Task<Utils.BackgroundTaskResult> UpdateComicItemData()
         {
             await update_comic_data_lock.WaitAsync();
             try
@@ -996,8 +765,8 @@ namespace ComicReader.Data
 
                 await WaitLock();
                 // get all folder paths in database
-                List<string> all_dir_in_lib = new List<string>(Database.Comics.Count);
-                foreach (ComicData comic in Database.Comics)
+                List<string> all_dir_in_lib = new List<string>(Database.Comics.Items.Count);
+                foreach (ComicItemData comic in Database.Comics.Items)
                 {
                     all_dir_in_lib.Add(comic.Directory);
                 }
@@ -1047,7 +816,7 @@ namespace ComicReader.Data
                     }
 
                     await WaitLock ();
-                    ComicData comic = AddNewComicNoLock();
+                    ComicItemData comic = AddNewComicNoLock();
                     comic.Directory = dir;
                     comic.Folder = folder;
 
@@ -1081,7 +850,7 @@ namespace ComicReader.Data
         }
 
         // comic associated operations
-        public static async Task<ComicData> GetComicWithId(string _id)
+        public static async Task<ComicItemData> GetComicWithId(string _id)
         {
             await WaitLock();
             try
@@ -1094,14 +863,14 @@ namespace ComicReader.Data
             }
         }
 
-        private static ComicData GetComicWithIdNoLock(string _id)
+        private static ComicItemData GetComicWithIdNoLock(string _id)
         {
             if (_id.Length == 0)
             {
                 return null;
             }
 
-            foreach (ComicData comic in Database.Comics)
+            foreach (ComicItemData comic in Database.Comics.Items)
             {
                 if (comic.Id == _id)
                 {
@@ -1112,14 +881,14 @@ namespace ComicReader.Data
             return null;
         }
 
-        public static async Task<ComicData> GetComicWithDirectory(string dir)
+        public static async Task<ComicItemData> GetComicWithDirectory(string dir)
         {
             await WaitLock();
             try
             {
                 string dir_lower = dir.ToLower();
 
-                foreach (ComicData comic in Database.Comics)
+                foreach (ComicItemData comic in Database.Comics.Items)
                 {
                     if (comic.Directory.ToLower().Equals(dir_lower))
                     {
@@ -1135,14 +904,14 @@ namespace ComicReader.Data
             }
         }
 
-        private static ComicData AddNewComicNoLock()
+        private static ComicItemData AddNewComicNoLock()
         {
-            ComicData comic = new ComicData();
+            ComicItemData comic = new ComicItemData();
             string id;
 
-            if (Database.Comics.Count != 0)
+            if (Database.Comics.Items.Count != 0)
             {
-                id = (int.Parse(Database.Comics[Database.Comics.Count - 1].Id) + 1).ToString();
+                id = (int.Parse(Database.Comics.Items[Database.Comics.Items.Count - 1].Id) + 1).ToString();
             }
             else
             {
@@ -1151,7 +920,7 @@ namespace ComicReader.Data
 
             comic.Id = id;
             comic.LastVisit = DateTimeOffset.Now;
-            Database.Comics.Add(comic);
+            Database.Comics.Items.Add(comic);
             return comic;
         }
 
@@ -1159,9 +928,9 @@ namespace ComicReader.Data
         {
             dir = dir.ToLower();
 
-            for (int i = 0; i < Database.Comics.Count; ++i)
+            for (int i = 0; i < Database.Comics.Items.Count; ++i)
             {
-                var comic = Database.Comics[i];
+                var comic = Database.Comics.Items[i];
                 var current_dir = comic.Directory.ToLower();
 
                 if (current_dir.Length < dir.Length)
@@ -1171,13 +940,13 @@ namespace ComicReader.Data
 
                 if (current_dir.Substring(0, dir.Length).Equals(dir))
                 {
-                    Database.Comics.RemoveAt(i);
+                    Database.Comics.Items.RemoveAt(i);
                     --i;
                 }
             }
         }
 
-        private static async Task<Utils.BackgroundTaskResult> CompleteComicFolder(ComicData comic)
+        private static async Task<Utils.BackgroundTaskResult> CompleteComicFolder(ComicItemData comic)
         {
             await WaitLock();
             try
@@ -1190,7 +959,7 @@ namespace ComicReader.Data
             }
         }
 
-        private static async Task<Utils.BackgroundTaskResult> CompleteComicFolderNoLock(ComicData comic)
+        private static async Task<Utils.BackgroundTaskResult> CompleteComicFolderNoLock(ComicItemData comic)
         {
             if (comic.Folder != null)
             {
@@ -1213,7 +982,7 @@ namespace ComicReader.Data
             return new Utils.BackgroundTaskResult();
         }
 
-        public static Func<Task<Utils.BackgroundTaskResult>, Utils.BackgroundTaskResult> CompleteComicImagesSealed(ComicData comic)
+        public static Func<Task<Utils.BackgroundTaskResult>, Utils.BackgroundTaskResult> CompleteComicImagesSealed(ComicItemData comic)
         {
             return delegate (Task<Utils.BackgroundTaskResult> _t) {
                 var task = CompleteComicImages(comic);
@@ -1222,7 +991,7 @@ namespace ComicReader.Data
             };
         }
 
-        public static async Task<Utils.BackgroundTaskResult> CompleteComicImages(ComicData comic)
+        public static async Task<Utils.BackgroundTaskResult> CompleteComicImages(ComicItemData comic)
         {
             await WaitLock();
             try
@@ -1266,7 +1035,7 @@ namespace ComicReader.Data
             return new Utils.BackgroundTaskResult();
         }
 
-        public static async Task HideComic(ComicData comic)
+        public static async Task HideComic(ComicItemData comic)
         {
             await WaitLock();
             comic.Hidden = true;
@@ -1274,7 +1043,7 @@ namespace ComicReader.Data
             Utils.BackgroundTasks.AppendTask(SaveDatabaseSealed(DatabaseItem.Comics), "Saving...");
         }
 
-        public static async Task UnhideComic(ComicData comic)
+        public static async Task UnhideComic(ComicItemData comic)
         {
             await WaitLock();
             comic.Hidden = false;
@@ -1303,7 +1072,7 @@ namespace ComicReader.Data
                 return null;
             }
 
-            foreach (ReadRecordData record in Database.ComicRecords)
+            foreach (ReadRecordData record in Database.ComicRecords.Items)
             {
                 if (record.Id == _id)
                 {
@@ -1330,7 +1099,7 @@ namespace ComicReader.Data
 
         private static FavoritesNodeData GetFavoriteWithIdNoLock(string id)
         {
-            return GetFavoriteWithIdHelper(id, Database.Favorites);
+            return GetFavoriteWithIdHelper(id, Database.Favorites.RootNodes);
         }
 
         private static FavoritesNodeData GetFavoriteWithIdHelper(string id, List<FavoritesNodeData> e)
@@ -1364,7 +1133,7 @@ namespace ComicReader.Data
         public static async Task<bool> RemoveFromFavoritesWithId(string id, bool is_final)
         {
             await WaitLock();
-            bool res = RemoveFromFavoritesWithIdHelper(id, Database.Favorites);
+            bool res = RemoveFromFavoritesWithIdHelper(id, Database.Favorites.RootNodes);
             ReleaseLock();
 
             if (is_final)
@@ -1420,7 +1189,8 @@ namespace ComicReader.Data
                     Name = title,
                     Id = id
                 };
-                Database.Favorites.Add(node);
+
+                Database.Favorites.RootNodes.Add(node);
             }
             finally
             {
@@ -1457,13 +1227,13 @@ namespace ComicReader.Data
                 Calendar calendar = new Calendar();
                 var datetime = calendar.GetDateTime();
 
-                HistoryData record = new HistoryData();
+                HistoryItemData record = new HistoryItemData();
                 record.Id = id;
                 record.DateTime = datetime;
                 record.Title = title;
 
                 RemoveFromHistoryNoLock(id);
-                Database.History.Insert(0, record);
+                Database.History.Items.Insert(0, record);
             }
             finally
             {
@@ -1495,13 +1265,15 @@ namespace ComicReader.Data
 
         private static void RemoveFromHistoryNoLock(string id)
         {
-            for (int i = 0; i < Database.History.Count; ++i)
+            List<HistoryItemData> items = Database.History.Items;
+
+            for (int i = 0; i < items.Count; ++i)
             {
-                HistoryData record = Database.History[i];
+                HistoryItemData record = items[i];
 
                 if (record.Id.Equals(id))
                 {
-                    Database.History.RemoveAt(i);
+                    items.RemoveAt(i);
                     --i;
                 }
             }
@@ -1579,7 +1351,7 @@ namespace ComicReader.Data
             {
                 return false;
             }
-            Utils.BackgroundTasks.AppendTask(UpdateComicDataSealed(), "", Utils.BackgroundTasks.EmptyQueue());
+            Utils.BackgroundTasks.AppendTask(UpdateComicItemDataSealed(), "", Utils.BackgroundTasks.EmptyQueue());
             return true;
         }
 
@@ -1589,7 +1361,7 @@ namespace ComicReader.Data
             _ = Database.AppSettings.ComicFolders.Remove(folder);
             ReleaseLock();
             Utils.BackgroundTasks.AppendTask(SaveDatabaseSealed(DatabaseItem.Settings));
-            Utils.BackgroundTasks.AppendTask(UpdateComicDataSealed(), "", Utils.BackgroundTasks.EmptyQueue());
+            Utils.BackgroundTasks.AppendTask(UpdateComicItemDataSealed(), "", Utils.BackgroundTasks.EmptyQueue());
 
             string token = Utils.StringUtils.TokenFromPath(Utils.StringUtils.TokenFromPath(folder));
             if (StorageApplicationPermissions.FutureAccessList.ContainsItem(token))
@@ -1600,7 +1372,7 @@ namespace ComicReader.Data
 
         public class ImageLoaderToken
         {
-            public ComicData Comic;
+            public ComicItemData Comic;
             public int Index;
             public Action<BitmapImage> Callback;
         }
@@ -1659,7 +1431,7 @@ namespace ComicReader.Data
                     return;
                 }
 
-                ComicData comic = item.Comic;
+                ComicItemData comic = item.Comic;
 
                 if (comic.ImageFiles.Count == 0)
                 {

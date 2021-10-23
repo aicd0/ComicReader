@@ -72,7 +72,7 @@ namespace ComicReader.Views
         private List<string> m_keyword_list;
         private int m_keyword_index;
         private NavigationMode m_navigate_direction;
-        private List<ComicData> m_all_results;
+        private List<ComicItemData> m_all_results;
         private Utils.CancellationLock m_search_lock;
 
         public SearchPage()
@@ -84,7 +84,7 @@ namespace ComicReader.Views
             Shared.FilterDetails = "";
             SearchResultDataSource = new Utils.TrulyObservableCollection<ComicItemModel>();
             m_keyword_list = new List<string>();
-            m_all_results = new List<ComicData>();
+            m_all_results = new List<ComicItemData>();
             m_search_lock = new Utils.CancellationLock();
 
             InitializeComponent();
@@ -237,7 +237,7 @@ namespace ComicReader.Views
 
         private class Match
         {
-            public ComicData Comic;
+            public ComicItemData Comic;
             public int Similarity = 0;
         }
 
@@ -254,7 +254,7 @@ namespace ComicReader.Views
 
                 await DataManager.WaitLock();
                 List<Match> matches = new List<Match>();
-                foreach (ComicData comic in Database.Comics)
+                foreach (ComicItemData comic in Database.Comics.Items)
                 {
                     // cancel the current session if the next search begins
                     if (m_search_lock.CancellationRequested)
@@ -325,7 +325,7 @@ namespace ComicReader.Views
 
                 for (int i = items_loaded; i < end_i; ++i)
                 {
-                    ComicData comic = m_all_results[i];
+                    ComicItemData comic = m_all_results[i];
 
                     ComicItemModel result = new ComicItemModel
                     {
@@ -404,7 +404,7 @@ namespace ComicReader.Views
                 }
 
                 ComicItemModel item = (ComicItemModel)((FrameworkElement)sender).DataContext;
-                ComicData comic = await DataManager.GetComicWithId(item.Id);
+                ComicItemData comic = await DataManager.GetComicWithId(item.Id);
                 await RootPage.Current.LoadTab(null, PageType.Reader, comic);
             });
         }

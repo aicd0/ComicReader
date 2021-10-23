@@ -8,9 +8,9 @@ namespace ComicReader.Views
 {
     public sealed partial class EditComicInfoDialog : ContentDialog
     {
-        private ComicData m_comic;
+        private ComicItemData m_comic;
 
-        public EditComicInfoDialog(ComicData comic)
+        public EditComicInfoDialog(ComicItemData comic)
         {
             m_comic = comic;
             InitializeComponent();

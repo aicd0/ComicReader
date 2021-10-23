@@ -171,7 +171,7 @@ namespace ComicReader.Views
             switch (page_type)
             {
                 case PageType.Reader:
-                    await ((ReaderPage)subpage).LoadComic((ComicData)param);
+                    await ((ReaderPage)subpage).LoadComic((ComicItemData)param);
                     break;
                 case PageType.Blank:
                     await ((HomePage)subpage).UpdateInfo();

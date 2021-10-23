@@ -123,9 +123,9 @@ namespace ComicReader.Views
                 await DataManager.WaitLock();
                 // get recent visited comics
                 const int result_count = 12;
-                int cmp_func(ComicData x, ComicData y) => x.LastVisit > y.LastVisit ? 1 : -1;
-                Utils.MinHeap<ComicData> min_heap = new Utils.MinHeap<ComicData>(result_count, cmp_func);
-                foreach (ComicData comic in Database.Comics)
+                int cmp_func(ComicItemData x, ComicItemData y) => x.LastVisit > y.LastVisit ? 1 : -1;
+                Utils.MinHeap<ComicItemData> min_heap = new Utils.MinHeap<ComicItemData>(result_count, cmp_func);
+                foreach (ComicItemData comic in Database.Comics.Items)
                 {
                     if (comic.Hidden)
                     {
@@ -134,11 +134,11 @@ namespace ComicReader.Views
                     min_heap.Add(comic);
                 }
                 DataManager.ReleaseLock();
-                IEnumerable<ComicData> sorted = min_heap.OrderBy((ComicData x) => x.LastVisit).Reverse();
+                IEnumerable<ComicItemData> sorted = min_heap.OrderBy((ComicItemData x) => x.LastVisit).Reverse();
 
                 // add to comic item source
                 ComicItemSource.Clear();
-                foreach (ComicData comic in sorted)
+                foreach (ComicItemData comic in sorted)
                 {
                     ComicItemModel data = new ComicItemModel
                     {

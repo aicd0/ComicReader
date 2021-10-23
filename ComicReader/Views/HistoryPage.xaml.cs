@@ -73,7 +73,7 @@ namespace ComicReader.Views
             HistoryItemGroupModel current_group = null;
             await DataManager.WaitLock();
 
-            foreach (var item in Database.History)
+            foreach (var item in Database.History.Items)
             {
                 string key = item.DateTime.ToString("D");
 
@@ -108,7 +108,7 @@ namespace ComicReader.Views
 
         private async Task OpenItem(HistoryItemModel item)
         {
-            ComicData comic = await DataManager.GetComicWithId(item.Id);
+            ComicItemData comic = await DataManager.GetComicWithId(item.Id);
 
             if (comic == null)
             {

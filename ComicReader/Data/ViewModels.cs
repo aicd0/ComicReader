@@ -25,7 +25,7 @@ namespace ComicReader.Data
             m_IsImageLoaded = false;
         }
 
-        public ComicData Comic;
+        public ComicItemData Comic;
         public BitmapImage Image { get; set; }
         public string Title { get; set; }
         public string Detail { get; set; }
