@@ -7,7 +7,6 @@ using Windows.ApplicationModel.Activation;
 using Windows.ApplicationModel.Core;
 using Windows.Storage;
 using Windows.Storage.Search;
-using Windows.UI.Core;
 using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -31,6 +30,7 @@ namespace ComicReader.Views
             {
                 IsReaderPage = value == PageType.Reader;
                 IsFullscreenButtonVisible = IsReaderPage;
+
                 if (!IsReaderPage && IsFullscreen)
                 {
                     IsFullscreen = false;
@@ -93,7 +93,7 @@ namespace ComicReader.Views
         public static RootPage Current = null;
         public RootPageShared Shared;
 
-        private List<TabId> m_all_tabs = new List<TabId>();
+        private List<TabIdentifier> m_all_tabs = new List<TabIdentifier>();
         private Grid m_tab_container_grid;
 
         public RootPage()
@@ -182,17 +182,18 @@ namespace ComicReader.Views
                     new Utils.StringUtils.FileNameComparer());
             }
 
-            await Utils.Methods.Sync(
-            async delegate
+            await Utils.Methods.Sync(delegate
             {
-                await LoadTab(null, PageType.Reader, comic);
+                LoadTab(null, PageType.Reader, comic);
             });
         }
 
         // new tab
-        private bool TrySwitchToTab(string unique_string)
+        private bool TrySwitchToTab(PageType type, object args)
         {
-            foreach (TabId tab in m_all_tabs)
+            string unique_string = PageUtils.GetPageUniqueString(type, args);
+
+            foreach (TabIdentifier tab in m_all_tabs)
             {
                 if (unique_string == tab.UniqueString)
                 {
@@ -204,67 +205,83 @@ namespace ComicReader.Views
             return false;
         }
 
-        private TabId AddNewTab(PageType type, object args)
+        private TabIdentifier AddNewTab(PageType type, object args = null)
         {
             ExitFullscreen();
-            muxc.TabViewItem newTab = new muxc.TabViewItem();
-            newTab.Header = "Loading...";
-            newTab.Content = new Frame();
-            RootTabView.TabItems.Add(newTab);
-            RootTabView.SelectedItem = newTab;
 
-            TabId id = new TabId
+            // create a new tab and switch to it.
+            muxc.TabViewItem new_tab = new muxc.TabViewItem();
+            new_tab.Header = "Loading...";
+            new_tab.Content = new Frame();
+            RootTabView.TabItems.Add(new_tab);
+            RootTabView.SelectedItem = new_tab;
+
+            TabIdentifier id = new TabIdentifier
             {
-                Tab = newTab,
+                Tab = new_tab,
                 Type = type,
-                UniqueString = PageUtils.C_PageUniqueString(type, args)
+                RequestArgs = args,
             };
 
             m_all_tabs.Add(id);
+
+            // remember tab content are not loaded at this moment, further process
+            // is required.
             return id;
         }
 
-        public async Task LoadTab(TabId tab, PageType type, object args = null)
+        public void LoadTab(TabIdentifier tab_id, PageType type, object args = null,
+            bool try_reuse = true)
         {
-            // switch to an existed tab if possible
-            string unique_string = PageUtils.C_PageUniqueString(type, args);
-            if (type == PageType.Reader || type == PageType.Settings)
+            if ((type == PageType.Reader || type == PageType.Settings) && try_reuse)
             {
-                if (TrySwitchToTab(unique_string))
+                // switch to an existed tab if possible
+                if (TrySwitchToTab(type, args))
                 {
                     return;
                 }
             }
 
-            if (tab == null)
+            if (tab_id == null)
             {
-                tab = AddNewTab(type, args);
+                // if no tab id provided, create one.
+                tab_id = AddNewTab(type, args);
+            }
+            else
+            {
+                tab_id.Type = type;
+                tab_id.RequestArgs = args;
+                tab_id.OnTabSelected = null;
             }
 
             NavigationParams nav_params = new NavigationParams
             {
                 Shared = Shared,
-                TabId = tab
+                TabId = tab_id
             };
 
-            Frame frame = (Frame)tab.Tab.Content;
+            Frame frame = (Frame)tab_id.Tab.Content;
 
-            if (type == PageType.Reader || type == PageType.Blank ||
+            // use different loading strategies based on page type.
+            if (type == PageType.Reader || type == PageType.Home ||
                 type == PageType.Search)
             {
-                if (frame.Content == null ||
-                    frame.Content.GetType() != typeof(ContentPage))
+                // these pages are based on ContentPage.
+                if (frame.Content == null || frame.Content.GetType() != typeof(ContentPage))
                 {
+                    // navigate to ContentPage first.
                     if (!frame.Navigate(typeof(ContentPage), nav_params))
                     {
                         return;
                     }
                 }
-                ContentPage page = (ContentPage)frame.Content;
-                await page.LoadPage(type, args);
+
+                ContentPage content_page = (ContentPage)frame.Content;
+                content_page.Update();
             }
             else
             {
+                // these pages are based on RootPage.
                 frame.Navigate(PageUtils.GetPageType(type), nav_params);
             }
         }
@@ -272,15 +289,12 @@ namespace ComicReader.Views
         // tabview
         private void TabView_AddTabButtonClick(muxc.TabView sender, object args)
         {
-            Utils.Methods.Run(async delegate
-            {
-                await LoadTab(null, PageType.Blank);
-            });
+            LoadTab(null, PageType.Home);
         }
 
-        private TabId GetTabId(muxc.TabViewItem tab)
+        private TabIdentifier GetTabIdentifier(muxc.TabViewItem tab)
         {
-            foreach (TabId id in m_all_tabs)
+            foreach (TabIdentifier id in m_all_tabs)
             {
                 if (id.Tab == tab)
                 {
@@ -296,7 +310,7 @@ namespace ComicReader.Views
         {
             for (int i = 0; i < m_all_tabs.Count; ++i)
             {
-                TabId tab_id = m_all_tabs[i];
+                TabIdentifier tab_id = m_all_tabs[i];
 
                 if (tab_id.Tab == args.Tab)
                 {
@@ -315,10 +329,7 @@ namespace ComicReader.Views
 
         private void TabView_Loaded(object sender, RoutedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
-            {
-                await LoadTab(null, PageType.Blank);
-            });
+            LoadTab(null, PageType.Home);
         }
 
         // background tasks indication
@@ -345,7 +356,7 @@ namespace ComicReader.Views
         {
             foreach (muxc.TabViewItem tab in e.AddedItems)
             {
-                TabId id = GetTabId(tab);
+                TabIdentifier id = GetTabIdentifier(tab);
 
                 if (id == null)
                 {

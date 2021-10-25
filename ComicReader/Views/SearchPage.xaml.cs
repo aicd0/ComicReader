@@ -15,6 +15,7 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
+using muxc = Microsoft.UI.Xaml.Controls;
 using ComicReader.Data;
 
 namespace ComicReader.Views
@@ -63,27 +64,24 @@ namespace ComicReader.Views
     public sealed partial class SearchPage : Page
     {
         public static SearchPage Current;
-        private bool m_page_initialized;
-        private TabId m_tab_id;
-        private string m_tab_title;
-
         private SearchPageShared Shared { get; set; }
         private Utils.TrulyObservableCollection<ComicItemModel> SearchResultDataSource { get; set; }
-        private List<string> m_keyword_list;
-        private int m_keyword_index;
-        private NavigationMode m_navigate_direction;
+
+        private TabManager m_tab_manager;
         private List<ComicItemData> m_all_results;
         private Utils.CancellationLock m_search_lock;
 
         public SearchPage()
         {
             Current = this;
-            m_tab_title = "";
             Shared = new SearchPageShared();
             Shared.Title = "";
             Shared.FilterDetails = "";
             SearchResultDataSource = new Utils.TrulyObservableCollection<ComicItemModel>();
-            m_keyword_list = new List<string>();
+            
+            m_tab_manager = new TabManager();
+            m_tab_manager.OnSetShared = OnSetShared;
+            m_tab_manager.OnUpdate = OnUpdate;
             m_all_results = new List<ComicItemData>();
             m_search_lock = new Utils.CancellationLock();
 
@@ -93,87 +91,41 @@ namespace ComicReader.Views
         // navigation
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            Utils.Methods.Run(async delegate
-            {
-                base.OnNavigatedTo(e);
-
-                if (!m_page_initialized)
-                {
-                    m_page_initialized = true;
-                    NavigationParams p = (NavigationParams)e.Parameter;
-                    m_tab_id = p.TabId;
-                    Shared.ContentPageShared = (ContentPageShared)p.Shared;
-                }
-
-                UpdateTabId();
-                Shared.ContentPageShared.RootPageShared.CurrentPageType = PageType.Search;
-
-                if (e.NavigationMode == NavigationMode.New)
-                {
-                    if (m_keyword_list.Count != 0 && m_keyword_index < m_keyword_list.Count - 1)
-                    {
-                        m_keyword_list.RemoveRange(m_keyword_index + 1, m_keyword_list.Count - m_keyword_index - 1);
-                    }
-
-                    m_keyword_list.Add("");
-                    m_keyword_index = m_keyword_list.Count - 1;
-                }
-                else
-                {
-                    if (e.NavigationMode == m_navigate_direction)
-                    {
-                        if (e.NavigationMode == NavigationMode.Back)
-                        {
-                            m_keyword_index--;
-                        }
-                        else if (e.NavigationMode == NavigationMode.Forward)
-                        {
-                            m_keyword_index++;
-                        }
-                    }
-
-                    await StartSearch();
-                }
-            });
+            base.OnNavigatedTo(e);
+            m_tab_manager.OnNavigatedTo(e);
         }
 
         protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
         {
             base.OnNavigatingFrom(e);
-            m_navigate_direction = e.NavigationMode;
+            m_tab_manager.OnNavigatedFrom(e);
         }
 
-        public static string C_PageUniqueString(object args)
+        private void OnSetShared(object shared)
+        {
+            Shared.ContentPageShared = (ContentPageShared)shared;
+
+        }
+        private void OnUpdate(TabIdentifier tab_id)
+        {
+            Utils.Methods.Run(async delegate
+            {
+                Shared.ContentPageShared.RootPageShared.CurrentPageType = PageType.Search;
+                ContentPage.Current.SetSearchBox((string)tab_id.RequestArgs);
+                await StartSearch();
+            });
+        }
+
+        public static string GetPageUniqueString(object args)
         {
             string keyword = (string)args;
             return "Search/" + keyword;
         }
 
-        private void UpdateTabId()
-        {
-            if (m_tab_title.Length == 0)
-            {
-                return;
-            }
-
-            m_tab_id.Tab.Header = m_tab_title;
-            m_tab_id.Tab.IconSource = new Microsoft.UI.Xaml.Controls.SymbolIconSource() { Symbol = Symbol.Find };
-            m_tab_id.UniqueString = C_PageUniqueString(m_keyword_list[m_keyword_index]);
-            m_tab_id.Type = PageType.Search;
-        }
-
         // update
-        public async Task StartSearch(string keyword)
-        {
-            m_keyword_list[m_keyword_index] = keyword;
-            await StartSearch();
-        }
-
         private async Task StartSearch()
         {
-            string keyword = m_keyword_list[m_keyword_index];
-            ContentPage.Current.SetSearchBox(keyword);
-            UpdateTabId();
+            string keyword = (string)m_tab_manager.TabId.RequestArgs;
 
             // extract filters and keywords from string
             Utils.Search.Filter filter = Utils.Search.Filter.Parse(keyword, out List<string> remaining);
@@ -218,9 +170,8 @@ namespace ComicReader.Views
             }
 
             // update tab header
-            m_tab_title = tab_title;
-            m_tab_id.Tab.Header = m_tab_title;
-            m_tab_id.Tab.IconSource = new Microsoft.UI.Xaml.Controls.SymbolIconSource() { Symbol = Symbol.Find };
+            m_tab_manager.TabId.Tab.Header = tab_title;
+            m_tab_manager.TabId.Tab.IconSource = new muxc.SymbolIconSource() { Symbol = Symbol.Find };
 
             // start searching
             if (!await SearchMain(keywords, filter))
@@ -405,7 +356,7 @@ namespace ComicReader.Views
 
                 ComicItemModel item = (ComicItemModel)((FrameworkElement)sender).DataContext;
                 ComicItemData comic = await DataManager.GetComicWithId(item.Id);
-                await RootPage.Current.LoadTab(null, PageType.Reader, comic);
+                RootPage.Current.LoadTab(null, PageType.Reader, comic);
             });
         }
 

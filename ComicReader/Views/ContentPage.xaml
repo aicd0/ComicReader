@@ -56,6 +56,14 @@
                                       LabelPosition="Collapsed"
                                       ToolTipService.ToolTip="Home"
                                       Click="HomeClick" />
+                        <AppBarButton Icon="Refresh"
+                                      Style="{StaticResource AppBarButtonRevealStyle}"
+                                      Width="40"
+                                      Height="40"
+                                      Margin="1,0,0,0"
+                                      LabelPosition="Collapsed"
+                                      ToolTipService.ToolTip="Refresh"
+                                      Click="RefreshClick" />
                         <!-- Search Box -->
                         <AutoSuggestBox Visibility="{x:Bind Shared.RootPageShared.IsReaderPageN, Mode=OneWay}"
                                         Grid.Column="1"

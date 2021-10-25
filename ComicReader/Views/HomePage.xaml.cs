@@ -17,10 +17,13 @@ using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
+using muxc = Microsoft.UI.Xaml.Controls;
 using ComicReader.Data;
 
 namespace ComicReader.Views
 {
+    using RawTask = Task<Utils.TaskQueue.TaskResult>;
+
     public class HomePageShared : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
@@ -41,23 +44,26 @@ namespace ComicReader.Views
     {
         public static HomePage Current;
         public HomePageShared Shared { get; set; }
-        private bool m_page_initialized = false;
-        private TabId m_tab_id;
-
-        Utils.CancellationLock m_update_folder_lock;
-        Utils.CancellationLock m_update_library_lock;
-
         public Utils.TrulyObservableCollection<ComicItemModel> ComicItemSource { get; set; }
         public ObservableCollection<FolderItemModel> FolderItemDataSource { get; set; }
+
+        private TabManager m_tab_manager;
+        private Utils.CancellationLock m_update_folder_lock;
+        private Utils.CancellationLock m_update_library_lock;
 
         public HomePage()
         {
             Current = this;
             Shared = new HomePageShared();
-            m_update_folder_lock = new Utils.CancellationLock();
-            m_update_library_lock = new Utils.CancellationLock();
             ComicItemSource = new Utils.TrulyObservableCollection<ComicItemModel>();
             FolderItemDataSource = new ObservableCollection<FolderItemModel>();
+
+            m_tab_manager = new TabManager();
+            m_tab_manager.OnSetShared = OnSetShared;
+            m_tab_manager.OnPageEntered = OnPageEntered;
+            m_tab_manager.OnUpdate = OnUpdate;
+            m_update_folder_lock = new Utils.CancellationLock();
+            m_update_library_lock = new Utils.CancellationLock();
 
             InitializeComponent();
         }
@@ -66,24 +72,19 @@ namespace ComicReader.Views
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
-
-            if (!m_page_initialized)
-            {
-                m_page_initialized = true;
-                NavigationParams p = (NavigationParams)e.Parameter;
-                m_tab_id = p.TabId;
-                m_tab_id.OnTabSelected += OnPageEntered;
-                Shared.ContentPageShared = (ContentPageShared)p.Shared;
-            }
-
-            OnPageEntered();
-            UpdateTabId();
-            Shared.ContentPageShared.RootPageShared.CurrentPageType = PageType.Blank;
-
-            ContentPage.Current.SetSearchBox("");
+            m_tab_manager.OnNavigatedTo(e);
         }
 
-        public static string C_PageUniqueString(object args) => "blank";
+        protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
+        {
+            base.OnNavigatingFrom(e);
+            m_tab_manager.OnNavigatedFrom(e);
+        }
+
+        private void OnSetShared(object shared)
+        {
+            Shared.ContentPageShared = (ContentPageShared)shared;
+        }
 
         private void OnPageEntered()
         {
@@ -93,26 +94,30 @@ namespace ComicReader.Views
             });
         }
 
-        private void UpdateTabId()
+        private void OnUpdate(TabIdentifier tab_id)
         {
-            m_tab_id.Tab.Header = "New tab";
-            m_tab_id.Tab.IconSource = new Microsoft.UI.Xaml.Controls.SymbolIconSource() { Symbol = Symbol.Document };
-            m_tab_id.UniqueString = C_PageUniqueString(null);
-            m_tab_id.Type = PageType.Blank;
+            Shared.ContentPageShared.RootPageShared.CurrentPageType = PageType.Home;
+            tab_id.Tab.Header = "New tab";
+            tab_id.Tab.IconSource =
+                new muxc.SymbolIconSource() { Symbol = Symbol.Document };
+            ContentPage.Current.SetSearchBox("");
         }
+
+        public static string GetPageUniqueString(object args) => "blank";
 
         // user-defined functions
         // update
         public async Task UpdateInfo()
         {
-            await UpdateLibrary();
             await UpdateFolders();
+            await UpdateLibrary();
         }
 
         public async Task UpdateLibrary()
         {
             await DataManager.WaitForDatabaseReady();
             await m_update_library_lock.WaitAsync();
+
             try
             {
                 if (m_update_library_lock.CancellationRequested)
@@ -120,11 +125,12 @@ namespace ComicReader.Views
                     return;
                 }
 
-                await DataManager.WaitLock();
                 // get recent visited comics
+                await DataManager.WaitLock();
                 const int result_count = 12;
                 int cmp_func(ComicItemData x, ComicItemData y) => x.LastVisit > y.LastVisit ? 1 : -1;
                 Utils.MinHeap<ComicItemData> min_heap = new Utils.MinHeap<ComicItemData>(result_count, cmp_func);
+
                 foreach (ComicItemData comic in Database.Comics.Items)
                 {
                     if (comic.Hidden)
@@ -133,11 +139,13 @@ namespace ComicReader.Views
                     }
                     min_heap.Add(comic);
                 }
+
                 DataManager.ReleaseLock();
                 IEnumerable<ComicItemData> sorted = min_heap.OrderBy((ComicItemData x) => x.LastVisit).Reverse();
 
                 // add to comic item source
                 ComicItemSource.Clear();
+
                 foreach (ComicItemData comic in sorted)
                 {
                     ComicItemModel data = new ComicItemModel
@@ -151,6 +159,7 @@ namespace ComicReader.Views
                     };
 
                     ReadRecordData comic_record = await DataManager.GetReadRecordWithId(comic.Id);
+
                     if (comic_record != null)
                     {
                         data.Rating = comic_record.Rating;
@@ -166,6 +175,7 @@ namespace ComicReader.Views
 
                 // load images
                 List<DataManager.ImageLoaderToken> image_loader_tokens = new List<DataManager.ImageLoaderToken>();
+
                 foreach (ComicItemModel item in ComicItemSource)
                 {
                     image_loader_tokens.Add(new DataManager.ImageLoaderToken
@@ -197,16 +207,20 @@ namespace ComicReader.Views
         {
             await DataManager.WaitForDatabaseReady();
             await m_update_folder_lock.WaitAsync();
+
             try
             {
                 // add to folder item source
                 Collection<FolderItemModel> new_folder_source = new Collection<FolderItemModel>();
+
                 new_folder_source.Add(new FolderItemModel
                 {
                     OnItemPressed = FolderItem_Pressed,
                     IsAddNew = true
                 });
+
                 await DataManager.WaitLock();
+
                 foreach (string folder in Database.AppSettings.ComicFolders)
                 {
                     FolderItemModel item = new FolderItemModel
@@ -216,8 +230,10 @@ namespace ComicReader.Views
                         Folder = folder,
                         IsAddNew = false
                     };
+
                     new_folder_source.Add(item);
                 }
+
                 DataManager.ReleaseLock();
                 Utils.Methods_1<FolderItemModel>.UpdateCollection(FolderItemDataSource, new_folder_source, FolderItemModel.ContentEquals);
             }
@@ -229,32 +245,25 @@ namespace ComicReader.Views
 
         private void ShowAll_Click(object sender, RoutedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
-            {
-                await RootPage.Current.LoadTab(m_tab_id, PageType.Search, "<all>");
-            });
+            RootPage.Current.LoadTab(m_tab_manager.TabId, PageType.Search, "<all>");
         }
 
         private void ShowHiddens_Click(object sender, RoutedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
-            {
-                await RootPage.Current.LoadTab(m_tab_id, PageType.Search, "<hidden>");
-            });
+            RootPage.Current.LoadTab(m_tab_manager.TabId, PageType.Search, "<hidden>");
         }
 
         private void Grid_PointerPressed(object sender, PointerRoutedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
+            ComicItemModel ctx = (ComicItemModel)((Grid)sender).DataContext;
+            PointerPoint pt = e.GetCurrentPoint((UIElement)sender);
+
+            if (!pt.Properties.IsLeftButtonPressed)
             {
-                ComicItemModel ctx = (ComicItemModel)((Grid)sender).DataContext;
-                PointerPoint pt = e.GetCurrentPoint((UIElement)sender);
-                if (!pt.Properties.IsLeftButtonPressed)
-                {
-                    return;
-                }
-                await RootPage.Current.LoadTab(m_tab_id, PageType.Reader, ctx.Comic);
-            });
+                return;
+            }
+                
+            RootPage.Current.LoadTab(m_tab_manager.TabId, PageType.Reader, ctx.Comic);
         }
 
         private void Hide_Click(object sender, RoutedEventArgs e)
@@ -288,12 +297,20 @@ namespace ComicReader.Views
                     }
 
                     await UpdateFolders();
-                    Utils.TaskQueue.TaskQueueManager.AppendTask(DataManager.UpdateComicDataSealed(), "",
-                        Utils.TaskQueue.TaskQueueManager.EmptyQueue());
+
+                    Utils.TaskQueue.TaskQueue update_queue = Utils.TaskQueue.TaskQueueManager.EmptyQueue();
+                    Utils.TaskQueue.TaskQueueManager.AppendTask(DataManager.UpdateComicDataSealed(), "", update_queue);
+                    Utils.TaskQueue.TaskQueueManager.AppendTask(delegate (RawTask _t) {
+                        _ = Utils.Methods.Sync(async delegate
+                        {
+                            await UpdateInfo();
+                        });
+                        return new Utils.TaskQueue.TaskResult();
+                    }, "", update_queue);
                 }
                 else
                 {
-                    await RootPage.Current.LoadTab(m_tab_id, PageType.Search, "<dir:" + ctx.Folder + ">");
+                    RootPage.Current.LoadTab(m_tab_manager.TabId, PageType.Search, "<dir:" + ctx.Folder + ">");
                 }
             });
         }

@@ -116,7 +116,7 @@ namespace ComicReader.Views
             }
             else
             {
-                await RootPage.Current.LoadTab(null, PageType.Reader, comic);
+                RootPage.Current.LoadTab(null, PageType.Reader, comic);
             }
         }
 

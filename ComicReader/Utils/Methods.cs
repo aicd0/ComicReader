@@ -21,25 +21,26 @@ namespace ComicReader.Utils
             collection[collection.IndexOf(item)] = item;
         }
 
-        public static void UpdateCollection(ObservableCollection<T> source, Collection<T> new_collection, Func<T, T, bool> equal_func)
+        public static void UpdateCollection(ObservableCollection<T> old_collection,
+            Collection<T> new_collection, Func<T, T, bool> equal_func)
         {
-            for (int i = 0; i < new_collection.Count; ++i)
+            for (int i = 0; i < Math.Min(old_collection.Count, new_collection.Count); ++i)
             {
-                if (i >= source.Count)
+                if (!equal_func(new_collection[i], old_collection[i]))
                 {
-                    break;
-                }
-
-                if (!equal_func(new_collection[i], source[i]))
-                {
-                    source.RemoveAt(0);
+                    old_collection.RemoveAt(i);
                     --i;
                 }
             }
 
-            for (int i = source.Count; i < new_collection.Count; ++i)
+            for (int i = old_collection.Count; i < new_collection.Count; ++i)
             {
-                source.Add(new_collection[i]);
+                old_collection.Add(new_collection[i]);
+            }
+
+            for (int i = new_collection.Count; i < old_collection.Count; )
+            {
+                old_collection.RemoveAt(i);
             }
         }
     }

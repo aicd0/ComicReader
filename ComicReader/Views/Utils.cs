@@ -6,7 +6,7 @@ namespace ComicReader.Views
 {
     public enum PageType
     {
-        Blank,
+        Home,
         Search,
         Reader,
         Settings,
@@ -19,7 +19,7 @@ namespace ComicReader.Views
         {
             switch (type)
             {
-                case PageType.Blank:
+                case PageType.Home:
                     return typeof(HomePage);
                 case PageType.Search:
                     return typeof(SearchPage);
@@ -32,35 +32,37 @@ namespace ComicReader.Views
             }
         }
 
-        public static string C_PageUniqueString(PageType type, object args)
+        public static string GetPageUniqueString(PageType type, object args)
         {
             switch (type)
             {
-                case PageType.Blank:
-                    return HomePage.C_PageUniqueString(args);
+                case PageType.Home:
+                    return HomePage.GetPageUniqueString(args);
                 case PageType.Search:
-                    return SearchPage.C_PageUniqueString(args);
+                    return SearchPage.GetPageUniqueString(args);
                 case PageType.Reader:
-                    return ReaderPage.C_PageUniqueString(args);
+                    return ReaderPage.GetPageUniqueString(args);
                 case PageType.Settings:
-                    return SettingsPage.C_PageUniqueString(args);
+                    return SettingsPage.GetPageUniqueString(args);
                 default:
                     throw new Exception();
             }
         }
     }
 
-    public class TabId
+    public class TabIdentifier
     {
         public PageType Type;
         public muxc.TabViewItem Tab;
-        public string UniqueString;
+        public object RequestArgs;
         public Action OnTabSelected;
+
+        public string UniqueString => PageUtils.GetPageUniqueString(Type, RequestArgs);
     }
 
     public class NavigationParams
     {
         public object Shared;
-        public TabId TabId;
+        public TabIdentifier TabId;
     }
 }

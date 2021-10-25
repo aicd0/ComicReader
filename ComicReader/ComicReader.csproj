@@ -139,6 +139,7 @@
       <DependentUpon>TagButton.xaml</DependentUpon>
     </Compile>
     <Compile Include="Converters\DataTemplateSelector.cs" />
+    <Compile Include="Utils\NavigationManager.cs" />
     <Compile Include="Data\ViewModels.cs" />
     <Compile Include="Data\Database.cs" />
     <Compile Include="Data\DataManager.cs" />

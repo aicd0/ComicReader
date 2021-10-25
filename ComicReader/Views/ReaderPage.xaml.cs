@@ -924,14 +924,18 @@ namespace ComicReader.Views
     public sealed partial class ReaderPage : Page
     {
         public static ReaderPage Current;
-        private bool m_PageInitialized = false;
-        private TabId m_Tab;
+        public ReaderPageShared Shared { get; set; }
+        private ReaderControl OnePageReader { get; set; }
+        private ReaderControl TwoPagesReader { get; set; }
+        private ObservableCollection<ReaderFrameModel> GridViewDataSource { get; set; }
+        private ObservableCollection<TagsModel> ComicTagSource { get; set; }
+
+        private TabManager m_tab_manager;
 
         private ComicItemData m_comic;
         private ReadRecordData m_comic_record;
 
-        private Utils.TaskQueue.TaskQueue m_load_image_queue =
-            Utils.TaskQueue.TaskQueueManager.EmptyQueue();
+        private Utils.TaskQueue.TaskQueue m_load_image_queue = Utils.TaskQueue.TaskQueueManager.EmptyQueue();
         private double m_position;
         private PointerPoint m_drag_pointer;
 
@@ -941,29 +945,14 @@ namespace ComicReader.Views
         private bool m_BottomGrid_pointer_in;
         private int m_BottomGrid_exit_requests;
 
-        private Utils.CancellationLock m_reader_h_img_loader_lock =
-            new Utils.CancellationLock();
-        private Utils.CancellationLock m_reader_v_img_loader_lock =
-            new Utils.CancellationLock();
-        private Utils.CancellationLock m_preview_img_loader_lock =
-            new Utils.CancellationLock();
-
-        public ReaderPageShared Shared { get; set; }
-        private ReaderControl OnePageReader { get; set; }
-        private ReaderControl TwoPagesReader { get; set; }
-        private ObservableCollection<ReaderFrameModel> GridViewDataSource { get; set; }
-        private ObservableCollection<TagsModel> ComicTagSource { get; set; }
+        private Utils.CancellationLock m_reader_h_img_loader_lock = new Utils.CancellationLock();
+        private Utils.CancellationLock m_reader_v_img_loader_lock = new Utils.CancellationLock();
+        private Utils.CancellationLock m_preview_img_loader_lock = new Utils.CancellationLock();
 
         public ReaderPage()
         {
             Current = this;
-            m_comic = null;
-            m_comic_record = null;
-            m_position = -1.0;
-            m_drag_pointer = null;
-
             Shared = new ReaderPageShared();
-
             Shared.ComicTitle1 = "";
             Shared.ComicTitle2 = "";
             Shared.ComicPrimaryTitle = "";
@@ -973,6 +962,16 @@ namespace ComicReader.Views
             TwoPagesReader = new ReaderControl(false, TwoPagesHorizontalScrollViewer, TwoPagesImageListView, Shared);
             GridViewDataSource = new ObservableCollection<ReaderFrameModel>();
             ComicTagSource = new ObservableCollection<TagsModel>();
+
+            m_tab_manager = new TabManager();
+            m_tab_manager.OnPageEntered = OnPageEntered;
+            m_tab_manager.OnSetShared = OnSetShared;
+            m_tab_manager.OnUpdate = OnUpdate;
+
+            m_comic = null;
+            m_comic_record = null;
+            m_position = -1.0;
+            m_drag_pointer = null;
 
             // BottomGrid
             m_BottomGrid_showed = false;
@@ -989,53 +988,59 @@ namespace ComicReader.Views
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
+            m_tab_manager.OnNavigatedTo(e);
+        }
 
-            if (!m_PageInitialized)
-            {
-                m_PageInitialized = true;
-                NavigationParams p = (NavigationParams)e.Parameter;
-                m_Tab = p.TabId;
-                m_Tab.OnTabSelected += C_PageEntered;
-                Shared.ContentPageShared = (ContentPageShared)p.Shared;
-                Shared.ContentPageShared.OnFavoritesButtonClicked += OnFavoritesBtClicked;
-                Shared.ContentPageShared.RootPageShared.OnExitFullscreenMode += C_BottomGrid_ForceHide;
-                Shared.ContentPageShared.OnZoomInButtonClicked += OnZoomInClick;
-                Shared.ContentPageShared.OnZoomOutButtonClicked += OnZoomOutClick;
-                Shared.ContentPageShared.OnTwoPagesModeChanged += Shared.UpdateReaderVisibility;
-                Shared.ContentPageShared.OnTwoPagesModeChanged += OnTwoPagesModeChanged;
-                Shared.ContentPageShared.OnGridViewModeChanged += Shared.UpdateReaderVisibility;
-            }
+        protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
+        {
+            base.OnNavigatingFrom(e);
+            m_tab_manager.OnNavigatedFrom(e);
+        }
 
-            C_UpdateTab();
-            C_PageEntered();
+        private void OnSetShared(object shared)
+        {
+            Shared.ContentPageShared = (ContentPageShared)shared;
+            Shared.ContentPageShared.OnFavoritesButtonClicked += OnFavoritesBtClicked;
+            Shared.ContentPageShared.RootPageShared.OnExitFullscreenMode += C_BottomGrid_ForceHide;
+            Shared.ContentPageShared.OnZoomInButtonClicked += OnZoomInClick;
+            Shared.ContentPageShared.OnZoomOutButtonClicked += OnZoomOutClick;
+            Shared.ContentPageShared.OnTwoPagesModeChanged += OnTwoPagesModeChanged;
+            Shared.ContentPageShared.OnTwoPagesModeChanged += Shared.UpdateReaderVisibility;
+            Shared.ContentPageShared.OnGridViewModeChanged += Shared.UpdateReaderVisibility;
+            
             Shared.ContentPageShared.IsGridViewMode = false;
             Shared.ContentPageShared.IsTwoPagesMode = false;
         }
 
-        public static string C_PageUniqueString(object args)
+        private void OnPageEntered()
         {
-            ComicItemData comic = (ComicItemData)args;
-            return "Reader/" + comic.Directory;
-        }
-
-        private void C_PageEntered()
-        {
-            Shared.ContentPageShared.RootPageShared.CurrentPageType = PageType.Reader;
             Shared.P_Reader_FlowDirection = Database.AppSettings.LeftToRight ?
                 FlowDirection.LeftToRight : FlowDirection.RightToLeft;
         }
 
-        private void C_UpdateTab()
+        private void OnUpdate(TabIdentifier tab_id)
         {
-            if (m_comic == null)
+            Utils.Methods.Run(async delegate
             {
-                return;
-            }
+                Shared.ContentPageShared.RootPageShared.CurrentPageType = PageType.Reader;
+                tab_id.Type = PageType.Reader;
 
-            m_Tab.Tab.Header = m_comic.Title;
-            m_Tab.Tab.IconSource = new muxc.SymbolIconSource() { Symbol = Symbol.Document };
-            m_Tab.UniqueString = C_PageUniqueString(m_comic);
-            m_Tab.Type = PageType.Reader;
+                if (m_comic != null)
+                {
+                    tab_id.Tab.Header = m_comic.Title;
+                    tab_id.Tab.IconSource = new muxc.SymbolIconSource { Symbol = Symbol.Document };
+                }
+                else
+                {
+                    await LoadComic((ComicItemData)tab_id.RequestArgs);
+                }
+            });
+        }
+
+        public static string GetPageUniqueString(object args)
+        {
+            ComicItemData comic = (ComicItemData)args;
+            return "Reader/" + comic.Directory;
         }
 
         // user-defined functions
@@ -1076,7 +1081,6 @@ namespace ComicReader.Views
                     DataManager.SaveDatabaseSealed(DatabaseItem.Comics));
             }
 
-            C_UpdateTab();
             LoadImages();
             await LoadComicInformation();
         }
@@ -1270,7 +1274,7 @@ namespace ComicReader.Views
                 if (item.Text != m_comic.Id)
                 {
                     ComicItemData comic = await DataManager.GetComicWithId(item.Text);
-                    await RootPage.Current.LoadTab(null, PageType.Reader, comic);
+                    RootPage.Current.LoadTab(null, PageType.Reader, comic);
                 }
             });
         }
@@ -1761,11 +1765,8 @@ namespace ComicReader.Views
 
         private void E_InfoPane_TagClicked(object sender, RoutedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
-            {
-                TagModel ctx = (TagModel)((Button)sender).DataContext;
-                await RootPage.Current.LoadTab(null, PageType.Search, "<tag:" + ctx.Tag + ">");
-            });
+            TagModel ctx = (TagModel)((Button)sender).DataContext;
+            RootPage.Current.LoadTab(null, PageType.Search, "<tag:" + ctx.Tag + ">");
         }
 
         //private void DebugButton_Click(object sender, RoutedEventArgs e)

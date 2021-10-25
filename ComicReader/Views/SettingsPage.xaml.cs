@@ -18,7 +18,7 @@ using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
-
+using muxc = Microsoft.UI.Xaml.Controls;
 using ComicReader.Data;
 
 namespace ComicReader.Views
@@ -68,18 +68,23 @@ namespace ComicReader.Views
     public sealed partial class SettingsPage : Page
     {
         public static SettingsPage Current;
-        private bool m_PageInitialized;
-        private bool m_SaveEnabled;
-        private TabId m_Tab;
-
         public SettingsPageShared Shared { get; set; }
+
+        private TabManager m_tab_manager;
+        private bool m_save_enabled;
 
         public SettingsPage()
         {
             Current = this;
-            m_SaveEnabled = false;
             Shared = new SettingsPageShared();
             Shared.E_SettingsChanged += E_SettingsChanged;
+
+            m_tab_manager = new TabManager();
+            m_tab_manager.OnPageEntered = OnPageEntered;
+            m_tab_manager.OnSetShared = OnSetShared;
+            m_tab_manager.OnUpdate = OnUpdate;
+            m_save_enabled = false;
+
             InitializeComponent();
         }
 
@@ -87,27 +92,21 @@ namespace ComicReader.Views
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
-
-            if (!m_PageInitialized)
-            {
-                m_PageInitialized = true;
-                NavigationParams p = (NavigationParams)e.Parameter;
-                m_Tab = p.TabId;
-                m_Tab.OnTabSelected += C_PageEntered;
-                Shared.RootPageShared = (RootPageShared)p.Shared;
-            }
-
-            C_UpdateTab();
-            C_PageEntered();
-            Shared.RootPageShared.CurrentPageType = PageType.Settings;
+            m_tab_manager.OnNavigatedTo(e);
         }
 
-        public static string C_PageUniqueString(object args)
+        protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
         {
-            return "settings";
+            base.OnNavigatingFrom(e);
+            m_tab_manager.OnNavigatedFrom(e);
         }
 
-        private void C_PageEntered()
+        private void OnSetShared(object shared)
+        {
+            Shared.RootPageShared = (RootPageShared)shared;
+        }
+
+        private void OnPageEntered()
         {
             Utils.Methods.Run(async delegate
             {
@@ -115,19 +114,24 @@ namespace ComicReader.Views
             });
         }
 
-        private void C_UpdateTab()
+        private void OnUpdate(TabIdentifier tab_id)
         {
-            m_Tab.Tab.Header = "Settings";
-            m_Tab.Tab.IconSource = new Microsoft.UI.Xaml.Controls.SymbolIconSource() { Symbol = Symbol.Setting };
-            m_Tab.UniqueString = C_PageUniqueString(null);
-            m_Tab.Type = PageType.Settings;
+            m_tab_manager.TabId.Tab.Header = "Settings";
+            m_tab_manager.TabId.Tab.IconSource =
+                new muxc.SymbolIconSource() { Symbol = Symbol.Setting };
+            Shared.RootPageShared.CurrentPageType = PageType.Settings;
+        }
+
+        public static string GetPageUniqueString(object args)
+        {
+            return "settings";
         }
 
         // user-defined functions
         // update
         private async Task C_UpdateContent()
         {
-            m_SaveEnabled = false;
+            m_save_enabled = false;
             await DataManager.WaitLock();
 
             Shared.P_Reader_LeftToRight = Database.AppSettings.LeftToRight;
@@ -135,13 +139,13 @@ namespace ComicReader.Views
             StatisticsTextBlock.Text = "Total collections: " + Database.Comics.Items.Count.ToString("#,#0", CultureInfo.InvariantCulture);
 
             DataManager.ReleaseLock();
-            m_SaveEnabled = true;
+            m_save_enabled = true;
         }
 
         // save
         private async Task C_SaveSettings()
         {
-            if (!m_SaveEnabled)
+            if (!m_save_enabled)
             {
                 return;
             }

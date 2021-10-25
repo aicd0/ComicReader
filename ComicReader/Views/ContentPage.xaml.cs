@@ -113,15 +113,18 @@ namespace ComicReader.Views
     public sealed partial class ContentPage : Page
     {
         public static ContentPage Current;
-        private bool m_page_initialized = false;
-        private TabId m_tab_id;
-
         public ContentPageShared Shared { get; set; }
+
+        private TabManager m_tab_manager;
 
         public ContentPage()
         {
             Current = this;
             Shared = new ContentPageShared();
+
+            m_tab_manager = new TabManager();
+            m_tab_manager.OnSetShared = OnSetShared;
+            m_tab_manager.OnPageEntered = OnPageEntered;
 
             InitializeComponent();
         }
@@ -130,17 +133,18 @@ namespace ComicReader.Views
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
+            m_tab_manager.OnNavigatedTo(e);
+        }
 
-            if (!m_page_initialized)
-            {
-                m_page_initialized = true;
-                NavigationParams p = (NavigationParams)e.Parameter;
-                m_tab_id = p.TabId;
-                m_tab_id.OnTabSelected += OnPageEntered;
-                Shared.RootPageShared = (RootPageShared)p.Shared;
-            }
+        protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
+        {
+            base.OnNavigatingFrom(e);
+            m_tab_manager.OnNavigatedFrom(e);
+        }
 
-            OnPageEntered();
+        private void OnSetShared(object shared)
+        {
+            Shared.RootPageShared = (RootPageShared)shared;
         }
 
         private void OnPageEntered()
@@ -152,36 +156,22 @@ namespace ComicReader.Views
         }
 
         // update
-        public async Task LoadPage(PageType page_type, object param = null)
+        public void Update()
         {
             if (ContentFrame == null)
             {
                 return;
             }
 
+            // directly passes tab id to the sub page.
             NavigationParams nav_params = new NavigationParams
             {
                 Shared = Shared,
-                TabId = m_tab_id
+                TabId = m_tab_manager.TabId
             };
 
-            _ = ContentFrame.Navigate(PageUtils.GetPageType(page_type), nav_params);
-            object subpage = ContentFrame.Content;
-
-            switch (page_type)
-            {
-                case PageType.Reader:
-                    await ((ReaderPage)subpage).LoadComic((ComicItemData)param);
-                    break;
-                case PageType.Blank:
-                    await ((HomePage)subpage).UpdateInfo();
-                    break;
-                case PageType.Search:
-                    await ((SearchPage)subpage).StartSearch((string)param);
-                    break;
-                default:
-                    throw new Exception();
-            }
+            _ = ContentFrame.Navigate(
+                PageUtils.GetPageType(m_tab_manager.TabId.Type), nav_params);
         }
 
         // events processing
@@ -198,18 +188,13 @@ namespace ComicReader.Views
 
         private void SearchBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
         {
-            Utils.Methods.Run(async delegate
-            {
-                await RootPage.Current.LoadTab(m_tab_id, PageType.Search, args.QueryText);
-            });
+            RootPage.Current.LoadTab(m_tab_manager.TabId,
+                PageType.Search, args.QueryText);
         }
 
         private void SettingBt_Click(object sender, RoutedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
-            {
-                await RootPage.Current.LoadTab(null, PageType.Settings);
-            });
+            RootPage.Current.LoadTab(null, PageType.Settings);
         }
 
         private void FavoriteBt_Click(object sender, RoutedEventArgs e)
@@ -224,10 +209,14 @@ namespace ComicReader.Views
 
         private void HomeClick(object sender, RoutedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
-            {
-                await RootPage.Current.LoadTab(m_tab_id, PageType.Blank);
-            });
+            RootPage.Current.LoadTab(m_tab_manager.TabId, PageType.Home);
+        }
+
+        private void RefreshClick(object sender, RoutedEventArgs e)
+        {
+            RootPage.Current.LoadTab(m_tab_manager.TabId,
+                m_tab_manager.TabId.Type,
+                m_tab_manager.TabId.RequestArgs, try_reuse: false);
         }
 
         private void GoBackClick(object sender, RoutedEventArgs e)

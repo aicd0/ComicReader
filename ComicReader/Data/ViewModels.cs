@@ -193,7 +193,17 @@ namespace ComicReader.Data
         // methods
         public static Func<FolderItemModel, FolderItemModel, bool> ContentEquals = delegate (FolderItemModel a, FolderItemModel b)
         {
-            return a.Folder == b.Folder && a.IsAddNew == b.IsAddNew;
+            if (a.IsAddNew != b.IsAddNew)
+            {
+                return false;
+            }
+
+            if (a.IsAddNew)
+            {
+                return true;
+            }
+
+            return a.Folder == b.Folder;
         };
     }
 }

@@ -181,7 +181,7 @@ namespace ComicReader.Views
                     }
                     else
                     {
-                        await RootPage.Current.LoadTab(null, PageType.Reader, comic);
+                        RootPage.Current.LoadTab(null, PageType.Reader, comic);
                     }
                 }
             });
@@ -374,7 +374,7 @@ namespace ComicReader.Views
             {
                 FavoritesItemModel item = (FavoritesItemModel)((MenuFlyoutItem)sender).DataContext;
                 ComicItemData comic = await DataManager.GetComicWithId(item.Id);
-                await RootPage.Current.LoadTab(null, PageType.Reader, comic);
+                RootPage.Current.LoadTab(null, PageType.Reader, comic);
             });
         }
 
