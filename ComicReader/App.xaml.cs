@@ -47,7 +47,7 @@ namespace ComicReader
             if (rootFrame.Content == null)
             {
                 rootFrame.Navigate(typeof(Views.RootPage));
-                Utils.BackgroundTasks.AppendTask(DataManager.LoadDatabaseSealed(), "Loading...");
+                Utils.TaskQueue.TaskQueueManager.AppendTask(DataManager.LoadDatabaseSealed(), "Loading...");
             }
 
             if (prelaunch_activated)
@@ -106,7 +106,7 @@ namespace ComicReader
         {
             base.OnFileActivated(args);
             Startup(false, args.PreviousExecutionState);
-            Utils.BackgroundTasks.AppendTask(Views.RootPage.Current.OnFileActivatedSealed(args));
+            Utils.TaskQueue.TaskQueueManager.AppendTask(Views.RootPage.Current.OnFileActivatedSealed(args));
         }
     }
 }

@@ -288,8 +288,8 @@ namespace ComicReader.Views
                     }
 
                     await UpdateFolders();
-                    Utils.BackgroundTasks.AppendTask(DataManager.UpdateComicDataSealed(), "",
-                        Utils.BackgroundTasks.EmptyQueue());
+                    Utils.TaskQueue.TaskQueueManager.AppendTask(DataManager.UpdateComicDataSealed(), "",
+                        Utils.TaskQueue.TaskQueueManager.EmptyQueue());
                 }
                 else
                 {
@@ -305,8 +305,8 @@ namespace ComicReader.Views
                 FolderItemModel ctx = (FolderItemModel)((MenuFlyoutItem)sender).DataContext;
                 await DataManager.RemoveFromComicFolders(ctx.Folder, final: true);
                 await UpdateFolders();
-                Utils.BackgroundTasks.AppendTask(DataManager.UpdateComicDataSealed(),
-                    "", Utils.BackgroundTasks.EmptyQueue());
+                Utils.TaskQueue.TaskQueueManager.AppendTask(DataManager.UpdateComicDataSealed(),
+                    "", Utils.TaskQueue.TaskQueueManager.EmptyQueue());
             });
         }
     }

@@ -23,11 +23,11 @@ namespace ComicReader.Views
             {
                 MainEditBox.TextDocument.GetText(Windows.UI.Text.TextGetOptions.None, out string text);
                 await DataManager.IntepretComicInfoString(text, m_comic);
-                Utils.BackgroundTasks.AppendTask(DataManager.SaveComicInfoFileSealed(m_comic), "Saving...");
+                Utils.TaskQueue.TaskQueueManager.AppendTask(DataManager.SaveComicInfoFileSealed(m_comic), "Saving...");
 
                 if (!m_comic.IsExternal)
                 {
-                    Utils.BackgroundTasks.AppendTask(DataManager.SaveDatabaseSealed(DatabaseItem.Comics), "Saving...");
+                    Utils.TaskQueue.TaskQueueManager.AppendTask(DataManager.SaveDatabaseSealed(DatabaseItem.Comics), "Saving...");
                 }
             });
         }

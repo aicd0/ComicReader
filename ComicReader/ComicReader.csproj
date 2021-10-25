@@ -142,7 +142,7 @@
     <Compile Include="Data\ViewModels.cs" />
     <Compile Include="Data\Database.cs" />
     <Compile Include="Data\DataManager.cs" />
-    <Compile Include="Utils\BackgroundTasks.cs" />
+    <Compile Include="Utils\TaskQueue.cs" />
     <Compile Include="Utils\CancellationLock.cs" />
     <Compile Include="Utils\Heap.cs" />
     <Compile Include="Utils\Filter.cs" />

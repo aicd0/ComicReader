@@ -7,8 +7,6 @@ using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Graphics.Display;
-using Windows.Storage;
-using Windows.Storage.Streams;
 using Windows.UI.Core;
 using Windows.UI.Input;
 using Windows.UI.Xaml;
@@ -27,7 +25,8 @@ namespace ComicReader.Views
         private const int max_zoom = 250;
         private const int min_zoom = 90;
 
-        public ReaderControl(bool vertical, ScrollViewer scroll_viewer, ListView list_view, ReaderPageShared shared)
+        public ReaderControl(bool vertical, ScrollViewer scroll_viewer,
+            ListView list_view, ReaderPageShared shared)
         {
             DisplayInformation display_info = DisplayInformation.GetForCurrentView();
 
@@ -38,7 +37,8 @@ namespace ComicReader.Views
             ThisScrollViewer = scroll_viewer;
             ThisListView = list_view;
             Shared = shared;
-            LastViewportPerpendicularLength = display_info.ScreenWidthInRawPixels / display_info.RawPixelsPerViewPixel;
+            LastViewportPerpendicularLength = display_info.ScreenWidthInRawPixels /
+                display_info.RawPixelsPerViewPixel;
             IsAllImagesLoaded = false;
             IsScrollViewerInitialized = false;
             ImageSource = new ObservableCollection<ReaderFrameModel>();
@@ -56,14 +56,16 @@ namespace ComicReader.Views
         private bool m_default_disable_animation;
         private int m_zoom;
         private int m_page;
-        private Utils.CancellationLock m_update_img_lock = new Utils.CancellationLock();
+        private Utils.CancellationLock m_update_img_lock =
+            new Utils.CancellationLock();
 
         public ReaderPageShared Shared;
         public ScrollViewer ThisScrollViewer;
         public ListView ThisListView;
         public double LastViewportPerpendicularLength;
 
-        // TRUE if ScrollViewer and ListView were set, and the first container was loaded
+        // TRUE if ScrollViewer and ListView were set, and the first container was
+        // loaded
         public bool IsLayoutReady => ThisScrollViewer != null
             && ThisListView != null
             && ImageSource.Count > 0
@@ -928,7 +930,8 @@ namespace ComicReader.Views
         private ComicItemData m_comic;
         private ReadRecordData m_comic_record;
 
-        private Utils.BackgroundTaskQueue m_load_image_queue = Utils.BackgroundTasks.EmptyQueue();
+        private Utils.TaskQueue.TaskQueue m_load_image_queue =
+            Utils.TaskQueue.TaskQueueManager.EmptyQueue();
         private double m_position;
         private PointerPoint m_drag_pointer;
 
@@ -938,9 +941,12 @@ namespace ComicReader.Views
         private bool m_BottomGrid_pointer_in;
         private int m_BottomGrid_exit_requests;
 
-        private Utils.CancellationLock m_reader_h_img_loader_lock = new Utils.CancellationLock();
-        private Utils.CancellationLock m_reader_v_img_loader_lock = new Utils.CancellationLock();
-        private Utils.CancellationLock m_preview_img_loader_lock = new Utils.CancellationLock();
+        private Utils.CancellationLock m_reader_h_img_loader_lock =
+            new Utils.CancellationLock();
+        private Utils.CancellationLock m_reader_v_img_loader_lock =
+            new Utils.CancellationLock();
+        private Utils.CancellationLock m_preview_img_loader_lock =
+            new Utils.CancellationLock();
 
         public ReaderPageShared Shared { get; set; }
         private ReaderControl OnePageReader { get; set; }
@@ -1066,7 +1072,8 @@ namespace ComicReader.Views
                 await DataManager.WaitLock();
                 m_comic.LastVisit = DateTimeOffset.Now;
                 DataManager.ReleaseLock();
-                Utils.BackgroundTasks.AppendTask(DataManager.SaveDatabaseSealed(DatabaseItem.Comics));
+                Utils.TaskQueue.TaskQueueManager.AppendTask(
+                    DataManager.SaveDatabaseSealed(DatabaseItem.Comics));
             }
 
             C_UpdateTab();
@@ -1078,25 +1085,26 @@ namespace ComicReader.Views
         {
             if (!m_comic.IsExternal)
             {
-                Utils.BackgroundTasks.AppendTask(DataManager.CompleteComicImagesSealed(m_comic), "Retriving images...", m_load_image_queue);
+                Utils.TaskQueue.TaskQueueManager.AppendTask(
+                    DataManager.CompleteComicImagesSealed(m_comic), "Retriving images...", m_load_image_queue);
             }
 
-            Utils.BackgroundTasks.AppendTask(delegate (Task<Utils.BackgroundTaskResult> _t) {
-                Utils.BackgroundTaskResult result = _t.Result;
+            Utils.TaskQueue.TaskQueueManager.AppendTask(delegate (Task<Utils.TaskQueue.TaskResult> _t) {
+                Utils.TaskQueue.TaskResult result = _t.Result;
 
                 // stop the loading progress if failed to retrieve image folder
-                if (result.ExceptionType != Utils.BackgroundTaskExceptionType.Success)
+                if (result.ExceptionType != Utils.TaskQueue.TaskException.Success)
                 {
                     return result;
                 }
 
-                Task<Utils.BackgroundTaskResult> task = LoadImagesAsync();
+                Task<Utils.TaskQueue.TaskResult> task = LoadImagesAsync();
                 task.Wait();
                 return task.Result;
             }, "Loading images...", m_load_image_queue);
         }
 
-        private async Task<Utils.BackgroundTaskResult> LoadImagesAsync()
+        private async Task<Utils.TaskQueue.TaskResult> LoadImagesAsync()
         {
             double preview_width = 0.0;
             double preview_height = 0.0;
@@ -1187,7 +1195,7 @@ namespace ComicReader.Views
             await reader_v_loader_task.AsAsyncAction();
             await reader_h_loader_task.AsAsyncAction();
             await preview_loader_task.AsAsyncAction();
-            return new Utils.BackgroundTaskResult();
+            return new Utils.TaskQueue.TaskResult();
         }
 
         private async Task LoadComicInformation()
@@ -1549,14 +1557,14 @@ namespace ComicReader.Views
             if (m_comic_record != null)
             {
                 m_comic_record.Progress = progress;
-                Utils.BackgroundTasks.AppendTask(DataManager.SaveDatabaseSealed(DatabaseItem.ReadRecords));
+                Utils.TaskQueue.TaskQueueManager.AppendTask(DataManager.SaveDatabaseSealed(DatabaseItem.ReadRecords));
             }
         }
 
         private void RatingControl_ValueChanged(RatingControl sender, object args)
         {
             m_comic_record.Rating = (int)sender.Value;
-            Utils.BackgroundTasks.AppendTask(DataManager.SaveDatabaseSealed(Data.DatabaseItem.ReadRecords));
+            Utils.TaskQueue.TaskQueueManager.AppendTask(DataManager.SaveDatabaseSealed(Data.DatabaseItem.ReadRecords));
         }
 
         private void OnePageVerticalScrollViewer_Loaded(object sender, RoutedEventArgs e)

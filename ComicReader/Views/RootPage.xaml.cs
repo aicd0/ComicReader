@@ -12,11 +12,15 @@ using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
+
 using muxc = Microsoft.UI.Xaml.Controls;
 using ComicReader.Data;
 
 namespace ComicReader.Views
 {
+    using SealedTask =
+        Func<Task<Utils.TaskQueue.TaskResult>, Utils.TaskQueue.TaskResult>;
+
     public class RootPageShared : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
@@ -41,8 +45,10 @@ namespace ComicReader.Views
             set
             {
                 m_IsReaderPage = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsReaderPage"));
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsReaderPageN"));
+                PropertyChanged?.Invoke(this,
+                    new PropertyChangedEventArgs("IsReaderPage"));
+                PropertyChanged?.Invoke(this,
+                    new PropertyChangedEventArgs("IsReaderPageN"));
             }
         }
         public bool IsReaderPageN => !IsReaderPage;
@@ -54,8 +60,10 @@ namespace ComicReader.Views
             set
             {
                 m_IsFullscreen = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsFullscreen"));
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsFullscreenN"));
+                PropertyChanged?.Invoke(this,
+                    new PropertyChangedEventArgs("IsFullscreen"));
+                PropertyChanged?.Invoke(this,
+                    new PropertyChangedEventArgs("IsFullscreenN"));
                 
                 if (m_IsFullscreen == false)
                 {
@@ -72,7 +80,8 @@ namespace ComicReader.Views
             set
             {
                 m_IsFullscreenButtonVisible = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsFullscreenButtonVisible"));
+                PropertyChanged?.Invoke(this,
+                    new PropertyChangedEventArgs("IsFullscreenButtonVisible"));
             }
         }
 
@@ -98,19 +107,20 @@ namespace ComicReader.Views
 
             Window.Current.SetTitleBar(TitleBarArea);
             CoreApplication.GetCurrentView().TitleBar.ExtendViewIntoTitleBar = true;
-            ApplicationViewTitleBar title_bar = ApplicationView.GetForCurrentView().TitleBar;
+            ApplicationViewTitleBar title_bar =
+                ApplicationView.GetForCurrentView().TitleBar;
             title_bar.BackgroundColor = Windows.UI.Colors.Transparent;
             title_bar.ButtonBackgroundColor = Windows.UI.Colors.Transparent;
         }
 
         // file activation
-        public Func<Task<Utils.BackgroundTaskResult>, Utils.BackgroundTaskResult> OnFileActivatedSealed(FileActivatedEventArgs args)
+        public SealedTask OnFileActivatedSealed(FileActivatedEventArgs args)
         {
-            return delegate (Task<Utils.BackgroundTaskResult> _t)
+            return delegate (Task<Utils.TaskQueue.TaskResult> _t)
             {
                 Task task = OnFileActivatedAsync(args);
                 task.Wait();
-                return new Utils.BackgroundTaskResult();
+                return new Utils.TaskQueue.TaskResult();
             };
         }
 
@@ -135,7 +145,8 @@ namespace ComicReader.Views
                 comic.IsExternal = true;
                 comic.Directory = dir;
                 List<StorageFile> all_files = new List<StorageFile>();
-                StorageFileQueryResult neighboring_file_query = args.NeighboringFilesQuery;
+                StorageFileQueryResult neighboring_file_query =
+                    args.NeighboringFilesQuery;
 
                 if (neighboring_file_query != null)
                 {
@@ -160,16 +171,18 @@ namespace ComicReader.Views
                         comic.InfoFile = file;
                         await DataManager.UpdateComicInfo(comic);
                     }
-                    else if (file.FileType == ".jpg" || file.FileType == ".jpeg" || file.FileType == ".png" || file.FileType == ".bmp")
+                    else if (file.FileType == ".jpg" || file.FileType == ".jpeg" ||
+                        file.FileType == ".png" || file.FileType == ".bmp")
                     {
                         comic.ImageFiles.Add(file);
                     }
                 }
 
-                all_files.OrderBy(x => x.DisplayName, new Utils.StringUtils.FileNameComparer());
+                all_files.OrderBy(x => x.DisplayName,
+                    new Utils.StringUtils.FileNameComparer());
             }
 
-            await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
+            await Utils.Methods.Sync(
             async delegate
             {
                 await LoadTab(null, PageType.Reader, comic);
@@ -236,9 +249,11 @@ namespace ComicReader.Views
 
             Frame frame = (Frame)tab.Tab.Content;
 
-            if (type == PageType.Reader || type == PageType.Blank || type == PageType.Search)
+            if (type == PageType.Reader || type == PageType.Blank ||
+                type == PageType.Search)
             {
-                if (frame.Content == null || frame.Content.GetType() != typeof(ContentPage))
+                if (frame.Content == null ||
+                    frame.Content.GetType() != typeof(ContentPage))
                 {
                     if (!frame.Navigate(typeof(ContentPage), nav_params))
                     {
@@ -276,7 +291,8 @@ namespace ComicReader.Views
             return null;
         }
 
-        private void TabView_TabCloseRequested(muxc.TabView sender, muxc.TabViewTabCloseRequestedEventArgs args)
+        private void TabView_TabCloseRequested(muxc.TabView sender,
+            muxc.TabViewTabCloseRequestedEventArgs args)
         {
             for (int i = 0; i < m_all_tabs.Count; ++i)
             {
@@ -324,7 +340,8 @@ namespace ComicReader.Views
             }
         }
 
-        private void TabView_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void TabView_SelectionChanged(object sender,
+            SelectionChangedEventArgs e)
         {
             foreach (muxc.TabViewItem tab in e.AddedItems)
             {
@@ -346,7 +363,8 @@ namespace ComicReader.Views
             {
                 return;
             }
-            m_tab_container_grid.Visibility = visibility ? Visibility.Visible : Visibility.Collapsed;
+            m_tab_container_grid.Visibility = visibility ?
+                Visibility.Visible : Visibility.Collapsed;
         }
 
         private void TabContainerGrid_Loaded(object sender, RoutedEventArgs e)
@@ -365,7 +383,8 @@ namespace ComicReader.Views
 
             if (Shared.IsFullscreen)
             {
-                if (!Shared.IsFullscreenButtonVisible || !ApplicationView.GetForCurrentView().IsFullScreenMode)
+                if (!Shared.IsFullscreenButtonVisible ||
+                    !ApplicationView.GetForCurrentView().IsFullScreenMode)
                 {
                     ExitFullscreen();
                 }

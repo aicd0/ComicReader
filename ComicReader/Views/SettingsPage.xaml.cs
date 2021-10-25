@@ -152,7 +152,7 @@ namespace ComicReader.Views
             Database.AppSettings.SaveHistory = Shared.P_Privacy_SaveBrowsingHistory;
 
             DataManager.ReleaseLock();
-            Utils.BackgroundTasks.AppendTask(DataManager.SaveDatabaseSealed(DatabaseItem.Settings));
+            Utils.TaskQueue.TaskQueueManager.AppendTask(DataManager.SaveDatabaseSealed(DatabaseItem.Settings));
         }
 
         private void E_SettingsChanged()

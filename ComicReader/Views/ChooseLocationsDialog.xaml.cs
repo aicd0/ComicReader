@@ -65,8 +65,9 @@ namespace ComicReader.Views
         // comfirm changes
         private void ContentDialog_PrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
         {
-            Utils.BackgroundTasks.AppendTask(DataManager.UpdateComicDataSealed(),
-                "", Utils.BackgroundTasks.EmptyQueue());
+            Utils.TaskQueue.TaskQueueManager.AppendTask(
+                DataManager.UpdateComicDataSealed(), "",
+                Utils.TaskQueue.TaskQueueManager.EmptyQueue());
         }
 
         private void ListView_Loaded(object sender, RoutedEventArgs e)

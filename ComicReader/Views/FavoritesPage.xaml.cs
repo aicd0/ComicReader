@@ -102,7 +102,7 @@ namespace ComicReader.Views
             Database.Favorites.RootNodes.Clear();
             SaveTreeExplorerHelper(Database.Favorites.RootNodes, DataSource);
             DataManager.ReleaseLock();
-            Utils.BackgroundTasks.AppendTask(DataManager.SaveDatabaseSealed(DatabaseItem.Favorites));
+            Utils.TaskQueue.TaskQueueManager.AppendTask(DataManager.SaveDatabaseSealed(DatabaseItem.Favorites));
         }
 
         private void SaveTreeExplorerHelper(List<FavoritesNodeData> it, ObservableCollection<FavoritesItemModel> et)
