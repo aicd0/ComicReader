@@ -139,10 +139,14 @@
       <DependentUpon>TagButton.xaml</DependentUpon>
     </Compile>
     <Compile Include="Converters\DataTemplateSelector.cs" />
+    <Compile Include="Data\AppSettingsData.cs" />
+    <Compile Include="Data\ComicData.cs" />
+    <Compile Include="Data\FavoritesData.cs" />
+    <Compile Include="Data\HistoryData.cs" />
+    <Compile Include="Data\RecentReadData.cs" />
     <Compile Include="Utils\NavigationManager.cs" />
     <Compile Include="Data\ViewModels.cs" />
     <Compile Include="Data\Database.cs" />
-    <Compile Include="Data\DataManager.cs" />
     <Compile Include="Utils\TaskQueue.cs" />
     <Compile Include="Utils\CancellationLock.cs" />
     <Compile Include="Utils\Heap.cs" />

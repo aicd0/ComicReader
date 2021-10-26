@@ -71,7 +71,7 @@ namespace ComicReader.Views
         {
             var source = new ObservableCollection<HistoryItemGroupModel>();
             HistoryItemGroupModel current_group = null;
-            await DataManager.WaitLock();
+            await DatabaseManager.WaitLock();
 
             foreach (var item in Database.History.Items)
             {
@@ -95,7 +95,7 @@ namespace ComicReader.Views
                 current_group.Add(item_out);
             }
 
-            DataManager.ReleaseLock();
+            DatabaseManager.ReleaseLock();
 
             if (current_group != null)
             {
@@ -108,7 +108,7 @@ namespace ComicReader.Views
 
         private async Task OpenItem(HistoryItemModel item)
         {
-            ComicItemData comic = await DataManager.GetComicWithId(item.Id);
+            ComicItemData comic = await ComicDataManager.FromId(item.Id);
 
             if (comic == null)
             {
@@ -131,7 +131,7 @@ namespace ComicReader.Views
 
         private async Task DeleteItem(HistoryItemModel item)
         {
-            await DataManager.RemoveFromHistory(item.Id, true);
+            await HistoryDataManager.Remove(item.Id, true);
             ObservableCollection<HistoryItemGroupModel> source = (ObservableCollection<HistoryItemGroupModel>)HistorySource.Source;
 
             for (int i = 0; i < source.Count; ++i)

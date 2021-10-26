@@ -10,184 +10,112 @@ using Windows.Storage.AccessCache;
 
 namespace ComicReader.Data
 {
-    public class TagData
+    using RawTask = Task<Utils.TaskQueue.TaskResult>;
+    using SealedTask = Func<Task<Utils.TaskQueue.TaskResult>, Utils.TaskQueue.TaskResult>;
+    using TaskResult = Utils.TaskQueue.TaskResult;
+    using TaskException = Utils.TaskQueue.TaskException;
+
+    public enum DatabaseItem
     {
-        [XmlAttribute]
-        public string Name;
-        public HashSet<string> Tags = new HashSet<string>();
-    };
-
-    public class ComicData
-    {
-        public List<ComicItemData> Items = new List<ComicItemData>();
-
-        public void Pack()
-        {
-            foreach (ComicItemData i in Items)
-            {
-                i.Pack();
-            }
-        }
-
-        public void Unpack()
-        {
-            foreach (ComicItemData i in Items)
-            {
-                i.Unpack();
-            }
-        }
+        Comics,
+        ReadRecords,
+        Favorites,
+        History,
+        Settings
     }
-
-    public class ComicItemData
-    {
-        private const string default_title = "Untitled Collection";
-        [XmlAttribute]
-        public string m_title = default_title;
-        [XmlAttribute]
-        public string m_title2 = "";
-
-        [XmlAttribute]
-        public string Id;
-        [XmlAttribute]
-        public string ComicCollectionId;
-        public List<TagData> Tags = new List<TagData>();
-        [XmlAttribute]
-        public string Directory;
-        [XmlIgnore]
-        public DateTimeOffset LastVisit = DateTimeOffset.MinValue;
-        [XmlAttribute]
-        public string LastVisitStr;
-        [XmlAttribute]
-        public bool Hidden = false;
-
-        [XmlIgnore]
-        public string Title
-        {
-            get => m_title;
-            set { m_title = value.Length == 0 ? default_title : value; }
-        }
-        [XmlIgnore]
-        public string Title2
-        {
-            get => m_title2;
-            set { m_title2 = value; }
-        }
-        [XmlIgnore]
-        public bool IsExternal = false;
-        [XmlIgnore]
-        public StorageFolder Folder;
-        [XmlIgnore]
-        public List<StorageFile> ImageFiles = new List<StorageFile>();
-        [XmlIgnore]
-        public StorageFile InfoFile;
-
-        public void Pack()
-        {
-            LastVisitStr = LastVisit.ToString();
-        }
-
-        public void Unpack()
-        {
-            LastVisit = DateTimeOffset.Parse(LastVisitStr);
-        }
-    };
-
-    public class ReadRecordsData
-    {
-        public List<ReadRecordData> Items = new List<ReadRecordData>();
-
-        public void Pack() { }
-
-        public void Unpack() { }
-    }
-
-    public class ReadRecordData
-    {
-        public string Id = "";
-        public int Rating = -1;
-        public int Progress = 0;
-    }
-
-    public class FavoritesData
-    {
-        public List<FavoritesNodeData> RootNodes = new List<FavoritesNodeData>();
-
-        public void Pack() { }
-
-        public void Unpack() { }
-    }
-
-    public class FavoritesNodeData
-    {
-        [XmlAttribute]
-        public string Type;
-        [XmlAttribute]
-        public string Name;
-        [XmlAttribute]
-        public string Id;
-        public List<FavoritesNodeData> Children = new List<FavoritesNodeData>();
-    };
-
-    public class HistoryData
-    {
-        public List<HistoryItemData> Items = new List<HistoryItemData>();
-
-        public void Pack()
-        {
-            foreach (HistoryItemData i in Items)
-            {
-                i.Pack();
-            }
-        }
-
-        public void Unpack()
-        {
-            foreach (HistoryItemData i in Items)
-            {
-                i.Unpack();
-            }
-        }
-    }
-
-    public class HistoryItemData
-    {
-        [XmlAttribute]
-        public string Id;
-        [XmlAttribute]
-        public string Title;
-        [XmlIgnore]
-        public DateTimeOffset DateTime;
-        [XmlAttribute]
-        public string DateTimePack;
-
-        public void Pack()
-        {
-            DateTimePack = DateTime.ToString();
-        }
-
-        public void Unpack()
-        {
-            DateTime = DateTimeOffset.Parse(DateTimePack);
-        }
-    }
-
-    public class SettingsData
-    {
-        public List<string> ComicFolders = new List<string>();
-        public bool LeftToRight = false;
-        public bool SaveHistory = true;
-
-        public void Pack() { }
-
-        public void Unpack() { }
-    };
 
     public class Database
     {
         public static ComicData Comics = new ComicData();
-        public static ReadRecordsData ComicRecords = new ReadRecordsData();
+        public static RecentReadData RecentRead = new RecentReadData();
         public static FavoritesData Favorites = new FavoritesData();
         public static HistoryData History = new HistoryData();
-        public static SettingsData AppSettings = new SettingsData();
+        public static AppSettingsData AppSettings = new AppSettingsData();
     };
+
+    public class DatabaseManager
+    {
+        private static bool m_database_ready = false;
+        private static SemaphoreSlim m_database_semaphore = new SemaphoreSlim(1);
+
+        public static async Task WaitLock()
+        {
+            await Utils.Methods.WaitFor(() => m_database_ready);
+            await m_database_semaphore.WaitAsync();
+        }
+
+        public static void ReleaseLock()
+        {
+            m_database_semaphore.Release();
+        }
+
+        public static SealedTask SaveSealed(DatabaseItem item) => (RawTask _) => Save(item).Result;
+
+        private static async RawTask Save(DatabaseItem item)
+        {
+            StorageFolder folder = ApplicationData.Current.LocalFolder;
+
+            switch (item)
+            {
+                case DatabaseItem.Comics:
+                    await ComicDataManager.Save(folder);
+                    break;
+                case DatabaseItem.ReadRecords:
+                    await RecentReadDataManager.Save(folder);
+                    break;
+                case DatabaseItem.Favorites:
+                    await FavoritesDataManager.Save(folder);
+                    break;
+                case DatabaseItem.History:
+                    await HistoryDataManager.Save(folder);
+                    break;
+                case DatabaseItem.Settings:
+                    await AppSettingsDataManager.Save(folder);
+                    break;
+                default:
+                    return new TaskResult(TaskException.InvalidParameters, fatal: true);
+            }
+
+            return new TaskResult();
+        }
+
+        public static SealedTask LoadSealed() => (RawTask _) => LoadDatabase().Result;
+
+        private static async RawTask LoadDatabase()
+        {
+            StorageFolder folder = ApplicationData.Current.LocalFolder;
+
+            _ = await AppSettingsDataManager.Load(folder);
+            _ = await ComicDataManager.Load(folder);
+            _ = await RecentReadDataManager.Load(folder);
+            _ = await FavoritesDataManager.Load(folder);
+            _ = await HistoryDataManager.Load(folder);
+            m_database_ready = true;
+
+            // this should only be called asynchronously after app settings were
+            // loaded
+            Utils.TaskQueue.TaskQueueManager.AppendTask(ComicDataManager.UpdateSealed(), "",
+                Utils.TaskQueue.TaskQueueManager.EmptyQueue());
+            return new TaskResult();
+        }
+
+
+        public static async Task<object> TryGetFile(StorageFolder folder, string name)
+        {
+            IStorageItem item = await folder.TryGetItemAsync(name);
+
+            if (item == null)
+            {
+                return null;
+            }
+
+            if (!item.IsOfType(StorageItemTypes.File))
+            {
+                return null;
+            }
+
+            return (StorageFile)item;
+        }
+
+    }
 }

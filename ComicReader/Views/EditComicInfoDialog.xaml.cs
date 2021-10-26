@@ -22,12 +22,13 @@ namespace ComicReader.Views
             Utils.Methods.Run(async delegate
             {
                 MainEditBox.TextDocument.GetText(Windows.UI.Text.TextGetOptions.None, out string text);
-                await DataManager.IntepretComicInfoString(text, m_comic);
-                Utils.TaskQueue.TaskQueueManager.AppendTask(DataManager.SaveComicInfoFileSealed(m_comic), "Saving...");
+                await ComicDataManager.ParseInfo(text, m_comic);
+                Utils.TaskQueue.TaskQueueManager.AppendTask(
+                    ComicDataManager.SaveInfoFileSealed(m_comic), "Saving...");
 
                 if (!m_comic.IsExternal)
                 {
-                    Utils.TaskQueue.TaskQueueManager.AppendTask(DataManager.SaveDatabaseSealed(DatabaseItem.Comics), "Saving...");
+                    Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(DatabaseItem.Comics), "Saving...");
                 }
             });
         }
@@ -41,7 +42,7 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                string text = await DataManager.GenerateComicInfoString(m_comic);
+                string text = await ComicDataManager.InfoString(m_comic);
                 MainEditBox.TextDocument.SetText(Windows.UI.Text.TextSetOptions.None, text);
             });
         }

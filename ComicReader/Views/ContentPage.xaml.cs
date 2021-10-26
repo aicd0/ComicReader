@@ -188,8 +188,12 @@ namespace ComicReader.Views
 
         private void SearchBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
         {
-            RootPage.Current.LoadTab(m_tab_manager.TabId,
-                Utils.Tab.PageType.Search, args.QueryText);
+            if (args.QueryText.Trim().Length == 0)
+            {
+                return;
+            }
+
+            RootPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Search, args.QueryText);
         }
 
         private void SettingBt_Click(object sender, RoutedEventArgs e)

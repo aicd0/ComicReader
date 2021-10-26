@@ -678,11 +678,11 @@ namespace ComicReader.Views
             {
                 int page_begin = Math.Max(Page - 5, 1);
                 int page_end = Math.Min(Page + 10, Pages);
-
                 await m_update_img_lock.WaitAsync();
+
                 try
                 {
-                    List<DataManager.ImageLoaderToken> img_loader_tokens = new List<DataManager.ImageLoaderToken>();
+                    List<ImageLoaderToken> img_loader_tokens = new List<ImageLoaderToken>();
 
                     if (!IsActive)
                     {
@@ -708,7 +708,7 @@ namespace ComicReader.Views
                             continue;
                         }
 
-                        img_loader_tokens.Add(new DataManager.ImageLoaderToken
+                        img_loader_tokens.Add(new ImageLoaderToken
                         {
                             Index = i,
                             Comic = Comic,
@@ -719,7 +719,7 @@ namespace ComicReader.Views
                         });
                     }
 
-                    await DataManager.UtilsLoadImages(img_loader_tokens, double.PositiveInfinity, double.PositiveInfinity, m_update_img_lock);
+                    await ComicDataManager.LoadImages(img_loader_tokens, double.PositiveInfinity, double.PositiveInfinity, m_update_img_lock);
                 }
                 finally
                 {
@@ -933,7 +933,7 @@ namespace ComicReader.Views
         private Utils.Tab.TabManager m_tab_manager;
 
         private ComicItemData m_comic;
-        private ReadRecordData m_comic_record;
+        private RecentReadItemData m_comic_record;
 
         private Utils.TaskQueue.TaskQueue m_load_image_queue = Utils.TaskQueue.TaskQueueManager.EmptyQueue();
         private double m_position;
@@ -1025,14 +1025,12 @@ namespace ComicReader.Views
                 Shared.ContentPageShared.RootPageShared.CurrentPageType = Utils.Tab.PageType.Reader;
                 tab_id.Type = Utils.Tab.PageType.Reader;
 
-                if (m_comic != null)
+                if (m_comic != tab_id.RequestArgs)
                 {
-                    tab_id.Tab.Header = m_comic.Title;
+                    ComicItemData comic = (ComicItemData)tab_id.RequestArgs;
+                    tab_id.Tab.Header = comic.Title;
                     tab_id.Tab.IconSource = new muxc.SymbolIconSource { Symbol = Symbol.Document };
-                }
-                else
-                {
-                    await LoadComic((ComicItemData)tab_id.RequestArgs);
+                    await LoadComic(comic);
                 }
             });
         }
@@ -1059,26 +1057,18 @@ namespace ComicReader.Views
             // additional procedures for internal comics
             if (!m_comic.IsExternal)
             {
-                // fetch the read record. Create one if not exists
-                m_comic_record = await DataManager.GetReadRecordWithId(m_comic.Id);
-                if (m_comic_record == null)
-                {
-                    m_comic_record = new ReadRecordData
-                    {
-                        Id = m_comic.Id
-                    };
-                    Database.ComicRecords.Items.Add(m_comic_record);
-                }
+                // fetch the read record. create one if not exists.
+                m_comic_record = await RecentReadDataManager.FromId(m_comic.Id, create_if_not_exists: true);
 
                 // add to history
-                await DataManager.AddToHistory(m_comic.Id, m_comic.Title, true);
+                await HistoryDataManager.Add(m_comic.Id, m_comic.Title, true);
 
                 // update "last visit"
-                await DataManager.WaitLock();
+                await DatabaseManager.WaitLock();
                 m_comic.LastVisit = DateTimeOffset.Now;
-                DataManager.ReleaseLock();
+                DatabaseManager.ReleaseLock();
                 Utils.TaskQueue.TaskQueueManager.AppendTask(
-                    DataManager.SaveDatabaseSealed(DatabaseItem.Comics));
+                    DatabaseManager.SaveSealed(DatabaseItem.Comics));
             }
 
             LoadImages();
@@ -1090,7 +1080,7 @@ namespace ComicReader.Views
             if (!m_comic.IsExternal)
             {
                 Utils.TaskQueue.TaskQueueManager.AppendTask(
-                    DataManager.CompleteComicImagesSealed(m_comic), "Retriving images...", m_load_image_queue);
+                    ComicDataManager.CompleteImagesSealed(m_comic), "Retriving images...", m_load_image_queue);
             }
 
             Utils.TaskQueue.TaskQueueManager.AppendTask(delegate (Task<Utils.TaskQueue.TaskResult> _t) {
@@ -1123,16 +1113,16 @@ namespace ComicReader.Views
                 GridViewDataSource.Clear();
             });
 
-            List<DataManager.ImageLoaderToken> reader_h_img_loader_tokens = new List<DataManager.ImageLoaderToken>();
-            List<DataManager.ImageLoaderToken> reader_v_img_loader_tokens = new List<DataManager.ImageLoaderToken>();
-            List<DataManager.ImageLoaderToken> preview_img_loader_tokens = new List<DataManager.ImageLoaderToken>();
+            List<ImageLoaderToken> reader_h_img_loader_tokens = new List<ImageLoaderToken>();
+            List<ImageLoaderToken> reader_v_img_loader_tokens = new List<ImageLoaderToken>();
+            List<ImageLoaderToken> preview_img_loader_tokens = new List<ImageLoaderToken>();
 
             for (int i = 0; i < m_comic.ImageFiles.Count; ++i)
             {
                 int page = i + 1;
                 bool is_last_page = page == m_comic.ImageFiles.Count;
 
-                reader_v_img_loader_tokens.Add(new DataManager.ImageLoaderToken
+                reader_v_img_loader_tokens.Add(new ImageLoaderToken
                 {
                     Comic = m_comic,
                     Index = i,
@@ -1153,7 +1143,7 @@ namespace ComicReader.Views
                     }
                 });
 
-                reader_h_img_loader_tokens.Add(new DataManager.ImageLoaderToken
+                reader_h_img_loader_tokens.Add(new ImageLoaderToken
                 {
                     Comic = m_comic,
                     Index = i,
@@ -1174,7 +1164,7 @@ namespace ComicReader.Views
                     }
                 });
 
-                preview_img_loader_tokens.Add(new DataManager.ImageLoaderToken
+                preview_img_loader_tokens.Add(new ImageLoaderToken
                 {
                     Comic = m_comic,
                     Index = i,
@@ -1189,11 +1179,11 @@ namespace ComicReader.Views
                 });
             }
 
-            Task reader_v_loader_task = DataManager.UtilsLoadImages(reader_v_img_loader_tokens,
+            Task reader_v_loader_task = ComicDataManager.LoadImages(reader_v_img_loader_tokens,
                 double.PositiveInfinity, double.PositiveInfinity, m_reader_v_img_loader_lock);
-            Task reader_h_loader_task = DataManager.UtilsLoadImages(reader_h_img_loader_tokens,
+            Task reader_h_loader_task = ComicDataManager.LoadImages(reader_h_img_loader_tokens,
                 double.PositiveInfinity, double.PositiveInfinity, m_reader_h_img_loader_lock);
-            Task preview_loader_task = DataManager.UtilsLoadImages(preview_img_loader_tokens,
+            Task preview_loader_task = ComicDataManager.LoadImages(preview_img_loader_tokens,
                 preview_width, preview_height, m_preview_img_loader_lock);
 
             await reader_v_loader_task.AsAsyncAction();
@@ -1220,7 +1210,7 @@ namespace ComicReader.Views
 
             if (!m_comic.IsExternal)
             {
-                Shared.ContentPageShared.IsFavorite = await DataManager.GetFavoriteWithId(m_comic.Id) != null;
+                Shared.ContentPageShared.IsFavorite = await FavoritesDataManager.FromId(m_comic.Id) != null;
                 Shared.Rating = m_comic_record.Rating;
             }
         }
@@ -1273,7 +1263,7 @@ namespace ComicReader.Views
                 MenuFlyoutItem item = (MenuFlyoutItem)sender;
                 if (item.Text != m_comic.Id)
                 {
-                    ComicItemData comic = await DataManager.GetComicWithId(item.Text);
+                    ComicItemData comic = await ComicDataManager.FromId(item.Text);
                     RootPage.Current.LoadTab(null, Utils.Tab.PageType.Reader, comic);
                 }
             });
@@ -1317,15 +1307,15 @@ namespace ComicReader.Views
 
             if (is_favorite)
             {
-                await DataManager.AddToFavorites(m_comic.Id, m_comic.Title, true);
+                await FavoritesDataManager.Add(m_comic.Id, m_comic.Title, final: true);
             }
             else
             {
-                await DataManager.RemoveFromFavoritesWithId(m_comic.Id, true);
+                await FavoritesDataManager.RemoveWithId(m_comic.Id, final: true);
             }
         }
 
-        private void FavoriteBt_Checked(object sender, Windows.UI.Xaml.RoutedEventArgs e)
+        private void FavoriteBt_Checked(object sender, RoutedEventArgs e)
         {
             Utils.Methods.Run(async delegate
             {
@@ -1561,14 +1551,14 @@ namespace ComicReader.Views
             if (m_comic_record != null)
             {
                 m_comic_record.Progress = progress;
-                Utils.TaskQueue.TaskQueueManager.AppendTask(DataManager.SaveDatabaseSealed(DatabaseItem.ReadRecords));
+                Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(DatabaseItem.ReadRecords));
             }
         }
 
         private void RatingControl_ValueChanged(RatingControl sender, object args)
         {
             m_comic_record.Rating = (int)sender.Value;
-            Utils.TaskQueue.TaskQueueManager.AppendTask(DataManager.SaveDatabaseSealed(Data.DatabaseItem.ReadRecords));
+            Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(Data.DatabaseItem.ReadRecords));
         }
 
         private void OnePageVerticalScrollViewer_Loaded(object sender, RoutedEventArgs e)

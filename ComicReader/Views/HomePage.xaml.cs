@@ -115,7 +115,6 @@ namespace ComicReader.Views
 
         public async Task UpdateLibrary()
         {
-            await DataManager.WaitForDatabaseReady();
             await m_update_library_lock.WaitAsync();
 
             try
@@ -126,7 +125,7 @@ namespace ComicReader.Views
                 }
 
                 // get recent visited comics
-                await DataManager.WaitLock();
+                await DatabaseManager.WaitLock();
                 const int result_count = 12;
                 int cmp_func(ComicItemData x, ComicItemData y) => x.LastVisit > y.LastVisit ? 1 : -1;
                 Utils.MinHeap<ComicItemData> min_heap = new Utils.MinHeap<ComicItemData>(result_count, cmp_func);
@@ -140,7 +139,7 @@ namespace ComicReader.Views
                     min_heap.Add(comic);
                 }
 
-                DataManager.ReleaseLock();
+                DatabaseManager.ReleaseLock();
                 IEnumerable<ComicItemData> sorted = min_heap.OrderBy((ComicItemData x) => x.LastVisit).Reverse();
 
                 // add to comic item source
@@ -155,10 +154,10 @@ namespace ComicReader.Views
                         Comic = comic,
                         Title = comic.Title2.Length == 0 ? comic.Title : comic.Title2 + "-" + comic.Title,
                         Id = comic.Id,
-                        IsFavorite = await DataManager.GetFavoriteWithId(comic.Id) != null
+                        IsFavorite = await FavoritesDataManager.FromId(comic.Id) != null
                     };
 
-                    ReadRecordData comic_record = await DataManager.GetReadRecordWithId(comic.Id);
+                    RecentReadItemData comic_record = await RecentReadDataManager.FromId(comic.Id);
 
                     if (comic_record != null)
                     {
@@ -174,11 +173,11 @@ namespace ComicReader.Views
                 }
 
                 // load images
-                List<DataManager.ImageLoaderToken> image_loader_tokens = new List<DataManager.ImageLoaderToken>();
+                List<ImageLoaderToken> image_loader_tokens = new List<ImageLoaderToken>();
 
                 foreach (ComicItemModel item in ComicItemSource)
                 {
-                    image_loader_tokens.Add(new DataManager.ImageLoaderToken
+                    image_loader_tokens.Add(new ImageLoaderToken
                     {
                         Comic = item.Comic,
                         Index = 0,
@@ -194,7 +193,7 @@ namespace ComicReader.Views
 
                 await Task.Run(delegate
                 {
-                    DataManager.UtilsLoadImages(image_loader_tokens, image_height * 1.4, image_height * 1.4, m_update_library_lock).Wait();
+                    ComicDataManager.LoadImages(image_loader_tokens, image_height * 1.4, image_height * 1.4, m_update_library_lock).Wait();
                 });
             }
             finally
@@ -205,7 +204,6 @@ namespace ComicReader.Views
 
         public async Task UpdateFolders()
         {
-            await DataManager.WaitForDatabaseReady();
             await m_update_folder_lock.WaitAsync();
 
             try
@@ -219,7 +217,7 @@ namespace ComicReader.Views
                     IsAddNew = true
                 });
 
-                await DataManager.WaitLock();
+                await DatabaseManager.WaitLock();
 
                 foreach (string folder in Database.AppSettings.ComicFolders)
                 {
@@ -234,8 +232,8 @@ namespace ComicReader.Views
                     new_folder_source.Add(item);
                 }
 
-                DataManager.ReleaseLock();
-                Utils.Methods_1<FolderItemModel>.UpdateCollection(FolderItemDataSource, new_folder_source, FolderItemModel.ContentEquals);
+                DatabaseManager.ReleaseLock();
+                Utils.Methods1<FolderItemModel>.UpdateCollection(FolderItemDataSource, new_folder_source, FolderItemModel.ContentEquals);
             }
             finally
             {
@@ -271,7 +269,7 @@ namespace ComicReader.Views
             Utils.Methods.Run(async delegate
             {
                 ComicItemModel ctx = (ComicItemModel)((MenuFlyoutItem)sender).DataContext;
-                await DataManager.HideComic(ctx.Comic);
+                await ComicDataManager.Hide(ctx.Comic);
                 await UpdateLibrary();
             });
         }
@@ -291,7 +289,7 @@ namespace ComicReader.Views
 
                 if (ctx.IsAddNew)
                 {
-                    if (!await DataManager.UtilsAddToComicFoldersUsingPicker())
+                    if (!await AppSettingsDataManager.AddComicFolderUsingPicker())
                     {
                         return;
                     }
@@ -299,7 +297,7 @@ namespace ComicReader.Views
                     await UpdateFolders();
 
                     Utils.TaskQueue.TaskQueue update_queue = Utils.TaskQueue.TaskQueueManager.EmptyQueue();
-                    Utils.TaskQueue.TaskQueueManager.AppendTask(DataManager.UpdateComicDataSealed(), "", update_queue);
+                    Utils.TaskQueue.TaskQueueManager.AppendTask(ComicDataManager.UpdateSealed(), "", update_queue);
                     Utils.TaskQueue.TaskQueueManager.AppendTask(delegate (RawTask _t) {
                         _ = Utils.Methods.Sync(async delegate
                         {
@@ -320,9 +318,9 @@ namespace ComicReader.Views
             Utils.Methods.Run(async delegate
             {
                 FolderItemModel ctx = (FolderItemModel)((MenuFlyoutItem)sender).DataContext;
-                await DataManager.RemoveFromComicFolders(ctx.Folder, final: true);
+                await AppSettingsDataManager.RemoveComicFolder(ctx.Folder, final: true);
                 await UpdateFolders();
-                Utils.TaskQueue.TaskQueueManager.AppendTask(DataManager.UpdateComicDataSealed(),
+                Utils.TaskQueue.TaskQueueManager.AppendTask(ComicDataManager.UpdateSealed(),
                     "", Utils.TaskQueue.TaskQueueManager.EmptyQueue());
             });
         }

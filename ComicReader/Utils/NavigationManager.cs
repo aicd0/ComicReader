@@ -83,6 +83,10 @@ namespace ComicReader.Utils.Tab
 
                 m_info_index = m_info.Count - 1;
             }
+            else if (e.NavigationMode == NavigationMode.Refresh)
+            {
+                // do nothing.
+            }
             else
             {
                 if (e.NavigationMode == m_navigation_mode)

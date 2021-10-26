@@ -136,11 +136,6 @@ namespace ComicReader.Views
                 keywords = keywords.Concat(text.Split(' ', StringSplitOptions.RemoveEmptyEntries)).ToList();
             }
 
-            if (filter.IsEmpty() && keywords.Count == 0)
-            {
-                return;
-            }
-
             if (!filter.ContainsFilter("hidden"))
             {
                 _ = filter.AddFilter("~hidden");
@@ -203,7 +198,7 @@ namespace ComicReader.Views
                     keywords[i] = keywords[i].ToLower();
                 }
 
-                await DataManager.WaitLock();
+                await DatabaseManager.WaitLock();
                 List<Match> matches = new List<Match>();
                 foreach (ComicItemData comic in Database.Comics.Items)
                 {
@@ -237,7 +232,7 @@ namespace ComicReader.Views
                     };
                     matches.Add(match);
                 }
-                DataManager.ReleaseLock();
+                DatabaseManager.ReleaseLock();
 
                 matches = matches.OrderByDescending(x => x.Similarity).ToList();
                 m_all_results.Clear();
@@ -289,10 +284,11 @@ namespace ComicReader.Views
                         Title = comic.Title2.Length == 0 ? comic.Title : comic.Title2 + "-" + comic.Title,
                         Detail = "#" + comic.Id,
                         Id = comic.Id,
-                        IsFavorite = await DataManager.GetFavoriteWithId(comic.Id) != null
+                        IsFavorite = await FavoritesDataManager.FromId(comic.Id) != null
                     };
 
-                    ReadRecordData comic_record = await DataManager.GetReadRecordWithId(comic.Id);
+                    RecentReadItemData comic_record = await RecentReadDataManager.FromId(comic.Id);
+                    
                     if (comic_record != null)
                     {
                         result.Rating = comic_record.Rating;
@@ -317,10 +313,11 @@ namespace ComicReader.Views
 
                 // load images
                 double image_height = (double)Resources["ComicItemHorizontalImageHeight"];
-                List<DataManager.ImageLoaderToken> image_loader_tokens = new List<DataManager.ImageLoaderToken>();
+                List<ImageLoaderToken> image_loader_tokens = new List<ImageLoaderToken>();
+                
                 foreach (ComicItemModel item in SearchResultDataSource.Skip(items_loaded))
                 {
-                    image_loader_tokens.Add(new DataManager.ImageLoaderToken
+                    image_loader_tokens.Add(new ImageLoaderToken
                     {
                         Comic = item.Comic,
                         Index = 0,
@@ -334,7 +331,7 @@ namespace ComicReader.Views
 
                 await Task.Run(delegate
                 {
-                    DataManager.UtilsLoadImages(image_loader_tokens, double.PositiveInfinity, image_height, m_search_lock).Wait();
+                    ComicDataManager.LoadImages(image_loader_tokens, double.PositiveInfinity, image_height, m_search_lock).Wait();
                 });
             }
             finally
@@ -355,7 +352,7 @@ namespace ComicReader.Views
                 }
 
                 ComicItemModel item = (ComicItemModel)((FrameworkElement)sender).DataContext;
-                ComicItemData comic = await DataManager.GetComicWithId(item.Id);
+                ComicItemData comic = await ComicDataManager.FromId(item.Id);
                 RootPage.Current.LoadTab(null, Utils.Tab.PageType.Reader, comic);
             });
         }
@@ -379,8 +376,8 @@ namespace ComicReader.Views
             {
                 ComicItemModel result = (ComicItemModel)((MenuFlyoutItem)sender).DataContext;
                 result.IsFavorite = true;
-                Utils.Methods_1<ComicItemModel>.NotifyCollectionChanged(SearchResultDataSource, result);
-                await DataManager.AddToFavorites(result.Id, result.Title, true);
+                Utils.Methods1<ComicItemModel>.NotifyCollectionChanged(SearchResultDataSource, result);
+                await FavoritesDataManager.Add(result.Id, result.Title, true);
             });
         }
 
@@ -390,8 +387,8 @@ namespace ComicReader.Views
             {
                 ComicItemModel result = (ComicItemModel)((MenuFlyoutItem)sender).DataContext;
                 result.IsFavorite = false;
-                Utils.Methods_1<ComicItemModel>.NotifyCollectionChanged(SearchResultDataSource, result);
-                await DataManager.RemoveFromFavoritesWithId(result.Id, true);
+                Utils.Methods1<ComicItemModel>.NotifyCollectionChanged(SearchResultDataSource, result);
+                await FavoritesDataManager.RemoveWithId(result.Id, true);
             });
         }
 
@@ -400,7 +397,7 @@ namespace ComicReader.Views
             Utils.Methods.Run(async delegate
             {
                 ComicItemModel ctx = (ComicItemModel)((MenuFlyoutItem)sender).DataContext;
-                await DataManager.UnhideComic(ctx.Comic);
+                await ComicDataManager.Unhide(ctx.Comic);
                 await StartSearch();
             });
         }
@@ -410,7 +407,7 @@ namespace ComicReader.Views
             Utils.Methods.Run(async delegate
             {
                 ComicItemModel ctx = (ComicItemModel)((MenuFlyoutItem)sender).DataContext;
-                await DataManager.HideComic(ctx.Comic);
+                await ComicDataManager.Hide(ctx.Comic);
                 await StartSearch();
             });
         }

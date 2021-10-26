@@ -132,13 +132,13 @@ namespace ComicReader.Views
         private async Task C_UpdateContent()
         {
             m_save_enabled = false;
-            await DataManager.WaitLock();
+            await DatabaseManager.WaitLock();
 
             Shared.P_Reader_LeftToRight = Database.AppSettings.LeftToRight;
             Shared.P_Privacy_SaveBrowsingHistory = Database.AppSettings.SaveHistory;
             StatisticsTextBlock.Text = "Total collections: " + Database.Comics.Items.Count.ToString("#,#0", CultureInfo.InvariantCulture);
 
-            DataManager.ReleaseLock();
+            DatabaseManager.ReleaseLock();
             m_save_enabled = true;
         }
 
@@ -150,13 +150,13 @@ namespace ComicReader.Views
                 return;
             }
 
-            await DataManager.WaitLock();
+            await DatabaseManager.WaitLock();
 
             Database.AppSettings.LeftToRight = Shared.P_Reader_LeftToRight;
             Database.AppSettings.SaveHistory = Shared.P_Privacy_SaveBrowsingHistory;
 
-            DataManager.ReleaseLock();
-            Utils.TaskQueue.TaskQueueManager.AppendTask(DataManager.SaveDatabaseSealed(DatabaseItem.Settings));
+            DatabaseManager.ReleaseLock();
+            Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(DatabaseItem.Settings));
         }
 
         private void E_SettingsChanged()

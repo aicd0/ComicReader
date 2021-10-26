@@ -72,9 +72,9 @@ namespace ComicReader.Views
         public async Task UpdateTreeExplorer()
         {
             DataSource.Clear();
-            await DataManager.WaitLock();
+            await DatabaseManager.WaitLock();
             UpdateTreeExplorerHelper(Database.Favorites.RootNodes, DataSource, null);
-            DataManager.ReleaseLock();
+            DatabaseManager.ReleaseLock();
         }
 
         private void UpdateTreeExplorerHelper(List<FavoritesNodeData> it, ObservableCollection<FavoritesItemModel> et, FavoritesItemModel parent)
@@ -98,11 +98,11 @@ namespace ComicReader.Views
 
         public async Task SaveTreeExplorer()
         {
-            await DataManager.WaitLock();
+            await DatabaseManager.WaitLock();
             Database.Favorites.RootNodes.Clear();
             SaveTreeExplorerHelper(Database.Favorites.RootNodes, DataSource);
-            DataManager.ReleaseLock();
-            Utils.TaskQueue.TaskQueueManager.AppendTask(DataManager.SaveDatabaseSealed(DatabaseItem.Favorites));
+            DatabaseManager.ReleaseLock();
+            Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(DatabaseItem.Favorites));
         }
 
         private void SaveTreeExplorerHelper(List<FavoritesNodeData> it, ObservableCollection<FavoritesItemModel> et)
@@ -173,7 +173,7 @@ namespace ComicReader.Views
 
                 if (item.Type == TreeItemType.Item)
                 {
-                    ComicItemData comic = await DataManager.GetComicWithId(item.Id);
+                    ComicItemData comic = await ComicDataManager.FromId(item.Id);
 
                     if (comic == null)
                     {
@@ -214,7 +214,7 @@ namespace ComicReader.Views
         {
             var item = (FavoritesItemModel)((MenuFlyoutItem)sender).DataContext;
             item.IsRenaming = true;
-            Utils.Methods_1<FavoritesItemModel>.NotifyCollectionChanged(item.Parent != null ? item.Parent.Children : DataSource, item);
+            Utils.Methods1<FavoritesItemModel>.NotifyCollectionChanged(item.Parent != null ? item.Parent.Children : DataSource, item);
         }
 
         public async Task ResetItemStatus()
@@ -239,7 +239,7 @@ namespace ComicReader.Views
 
                     item.IsRenaming = false;
 
-                    Utils.Methods_1<FavoritesItemModel>.NotifyCollectionChanged(item.Parent != null ? item.Parent.Children : DataSource, item);
+                    Utils.Methods1<FavoritesItemModel>.NotifyCollectionChanged(item.Parent != null ? item.Parent.Children : DataSource, item);
 
                     await SaveTreeExplorer();
 
@@ -322,7 +322,7 @@ namespace ComicReader.Views
                     if (!item.IsExpanded)
                     {
                         item.IsExpanded = true;
-                        Utils.Methods_1<FavoritesItemModel>.NotifyCollectionChanged(item.Parent != null ? item.Parent.Children : DataSource, item);
+                        Utils.Methods1<FavoritesItemModel>.NotifyCollectionChanged(item.Parent != null ? item.Parent.Children : DataSource, item);
                     }
 
                     CreateNewFolder(item.Children, item);
@@ -373,7 +373,7 @@ namespace ComicReader.Views
             Utils.Methods.Run(async delegate
             {
                 FavoritesItemModel item = (FavoritesItemModel)((MenuFlyoutItem)sender).DataContext;
-                ComicItemData comic = await DataManager.GetComicWithId(item.Id);
+                ComicItemData comic = await ComicDataManager.FromId(item.Id);
                 RootPage.Current.LoadTab(null, Utils.Tab.PageType.Reader, comic);
             });
         }

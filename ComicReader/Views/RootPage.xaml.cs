@@ -137,7 +137,7 @@ namespace ComicReader.Views
                 }
             }
 
-            ComicItemData comic = await DataManager.GetComicWithDirectory(dir);
+            ComicItemData comic = await ComicDataManager.FromDirectory(dir);
 
             if (comic == null)
             {
@@ -169,7 +169,7 @@ namespace ComicReader.Views
                     if (file.Name.ToLower().Equals("info.txt"))
                     {
                         comic.InfoFile = file;
-                        await DataManager.UpdateComicInfo(comic);
+                        await ComicDataManager.UpdateInfo(comic);
                     }
                     else if (file.FileType == ".jpg" || file.FileType == ".jpeg" ||
                         file.FileType == ".png" || file.FileType == ".bmp")
