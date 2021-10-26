@@ -4,9 +4,35 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Windows.UI.Xaml.Navigation;
+using muxc = Microsoft.UI.Xaml.Controls;
 
-namespace ComicReader.Views
+namespace ComicReader.Utils.Tab
 {
+    public enum PageType
+    {
+        Home,
+        Search,
+        Reader,
+        Settings,
+        Unknown,
+    }
+
+    public class TabIdentifier
+    {
+        public PageType Type;
+        public muxc.TabViewItem Tab;
+        public object RequestArgs;
+        public Action OnTabSelected;
+
+        public string UniqueString => TabManager.PageUniqueString(Type, RequestArgs);
+    }
+
+    public class NavigationParams
+    {
+        public object Shared;
+        public TabIdentifier TabId;
+    }
+
     class TabManager
     {
         private struct TabIdInfo
@@ -79,6 +105,40 @@ namespace ComicReader.Views
 
             OnPageEntered?.Invoke();
             OnUpdate?.Invoke(TabId);
+        }
+
+        public static Type TypeFromPageTypeEnum(Utils.Tab.PageType type)
+        {
+            switch (type)
+            {
+                case PageType.Home:
+                    return typeof(Views.HomePage);
+                case PageType.Search:
+                    return typeof(Views.SearchPage);
+                case PageType.Reader:
+                    return typeof(Views.ReaderPage);
+                case PageType.Settings:
+                    return typeof(Views.SettingsPage);
+                default:
+                    throw new Exception();
+            }
+        }
+
+        public static string PageUniqueString(Utils.Tab.PageType type, object args)
+        {
+            switch (type)
+            {
+                case PageType.Home:
+                    return Views.HomePage.PageUniqueString(args);
+                case PageType.Search:
+                    return Views.SearchPage.PageUniqueString(args);
+                case PageType.Reader:
+                    return Views.ReaderPage.PageUniqueString(args);
+                case PageType.Settings:
+                    return Views.SettingsPage.PageUniqueString(args);
+                default:
+                    throw new Exception();
+            }
         }
     }
 }

@@ -631,6 +631,7 @@ namespace ComicReader.Data
 
                 // get all folders and subfolders
                 List<StorageFolder> all_folders = new List<StorageFolder>();
+
                 foreach (string folder_path in root_folders)
                 {
                     StorageFolder folder = await Utils.Methods.TryGetFolder(folder_path);
@@ -651,6 +652,7 @@ namespace ComicReader.Data
                         FolderDepth = FolderDepth.Deep,
                         IndexerOption = IndexerOption.UseIndexerWhenAvailable
                     });
+
                     var folders = await query.GetFoldersAsync(); // 20 secs for 1000 folders
                     all_folders = all_folders.Concat(folders).ToList();
 
@@ -661,6 +663,8 @@ namespace ComicReader.Data
                     }
                 }
 
+                Utils.TaskQueue.TaskQueueManager.AppendTask(SaveDatabaseSealed(DatabaseItem.Settings));
+
                 // extracts StorageFolder.Path into a new string list
                 List<string> all_dir = new List<string>(all_folders.Count);
                 for (int i = 0; i < all_folders.Count; ++i)
@@ -668,14 +672,8 @@ namespace ComicReader.Data
                     all_dir.Add(all_folders[i].Path);
                 }
 
-                // cancel this task if more requests came in
-                if (update_comic_data_lock.CancellationRequested)
-                {
-                    return new TaskResult(TaskException.Cancellation);
-                }
-
-                await WaitLock();
                 // get all folder paths in database
+                await WaitLock();
                 List<string> all_dir_in_lib = new List<string>(Database.Comics.Items.Count);
                 foreach (ComicItemData comic in Database.Comics.Items)
                 {
@@ -715,6 +713,7 @@ namespace ComicReader.Data
 
                     var query = folder.CreateFileQueryWithOptions(queryOptions);
                     uint file_count = await query.GetItemCountAsync();
+
                     if (file_count == 0)
                     {
                         continue;

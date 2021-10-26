@@ -115,14 +115,14 @@ namespace ComicReader.Views
         public static ContentPage Current;
         public ContentPageShared Shared { get; set; }
 
-        private TabManager m_tab_manager;
+        private Utils.Tab.TabManager m_tab_manager;
 
         public ContentPage()
         {
             Current = this;
             Shared = new ContentPageShared();
 
-            m_tab_manager = new TabManager();
+            m_tab_manager = new Utils.Tab.TabManager();
             m_tab_manager.OnSetShared = OnSetShared;
             m_tab_manager.OnPageEntered = OnPageEntered;
 
@@ -164,14 +164,14 @@ namespace ComicReader.Views
             }
 
             // directly passes tab id to the sub page.
-            NavigationParams nav_params = new NavigationParams
+            Utils.Tab.NavigationParams nav_params = new Utils.Tab.NavigationParams
             {
                 Shared = Shared,
                 TabId = m_tab_manager.TabId
             };
 
             _ = ContentFrame.Navigate(
-                PageUtils.GetPageType(m_tab_manager.TabId.Type), nav_params);
+                Utils.Tab.TabManager.TypeFromPageTypeEnum(m_tab_manager.TabId.Type), nav_params);
         }
 
         // events processing
@@ -189,12 +189,12 @@ namespace ComicReader.Views
         private void SearchBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
         {
             RootPage.Current.LoadTab(m_tab_manager.TabId,
-                PageType.Search, args.QueryText);
+                Utils.Tab.PageType.Search, args.QueryText);
         }
 
         private void SettingBt_Click(object sender, RoutedEventArgs e)
         {
-            RootPage.Current.LoadTab(null, PageType.Settings);
+            RootPage.Current.LoadTab(null, Utils.Tab.PageType.Settings);
         }
 
         private void FavoriteBt_Click(object sender, RoutedEventArgs e)
@@ -209,7 +209,7 @@ namespace ComicReader.Views
 
         private void HomeClick(object sender, RoutedEventArgs e)
         {
-            RootPage.Current.LoadTab(m_tab_manager.TabId, PageType.Home);
+            RootPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Home);
         }
 
         private void RefreshClick(object sender, RoutedEventArgs e)

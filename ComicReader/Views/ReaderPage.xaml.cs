@@ -930,7 +930,7 @@ namespace ComicReader.Views
         private ObservableCollection<ReaderFrameModel> GridViewDataSource { get; set; }
         private ObservableCollection<TagsModel> ComicTagSource { get; set; }
 
-        private TabManager m_tab_manager;
+        private Utils.Tab.TabManager m_tab_manager;
 
         private ComicItemData m_comic;
         private ReadRecordData m_comic_record;
@@ -963,7 +963,7 @@ namespace ComicReader.Views
             GridViewDataSource = new ObservableCollection<ReaderFrameModel>();
             ComicTagSource = new ObservableCollection<TagsModel>();
 
-            m_tab_manager = new TabManager();
+            m_tab_manager = new Utils.Tab.TabManager();
             m_tab_manager.OnPageEntered = OnPageEntered;
             m_tab_manager.OnSetShared = OnSetShared;
             m_tab_manager.OnUpdate = OnUpdate;
@@ -1018,12 +1018,12 @@ namespace ComicReader.Views
                 FlowDirection.LeftToRight : FlowDirection.RightToLeft;
         }
 
-        private void OnUpdate(TabIdentifier tab_id)
+        private void OnUpdate(Utils.Tab.TabIdentifier tab_id)
         {
             Utils.Methods.Run(async delegate
             {
-                Shared.ContentPageShared.RootPageShared.CurrentPageType = PageType.Reader;
-                tab_id.Type = PageType.Reader;
+                Shared.ContentPageShared.RootPageShared.CurrentPageType = Utils.Tab.PageType.Reader;
+                tab_id.Type = Utils.Tab.PageType.Reader;
 
                 if (m_comic != null)
                 {
@@ -1037,7 +1037,7 @@ namespace ComicReader.Views
             });
         }
 
-        public static string GetPageUniqueString(object args)
+        public static string PageUniqueString(object args)
         {
             ComicItemData comic = (ComicItemData)args;
             return "Reader/" + comic.Directory;
@@ -1274,7 +1274,7 @@ namespace ComicReader.Views
                 if (item.Text != m_comic.Id)
                 {
                     ComicItemData comic = await DataManager.GetComicWithId(item.Text);
-                    RootPage.Current.LoadTab(null, PageType.Reader, comic);
+                    RootPage.Current.LoadTab(null, Utils.Tab.PageType.Reader, comic);
                 }
             });
         }
@@ -1766,7 +1766,7 @@ namespace ComicReader.Views
         private void E_InfoPane_TagClicked(object sender, RoutedEventArgs e)
         {
             TagModel ctx = (TagModel)((Button)sender).DataContext;
-            RootPage.Current.LoadTab(null, PageType.Search, "<tag:" + ctx.Tag + ">");
+            RootPage.Current.LoadTab(null, Utils.Tab.PageType.Search, "<tag:" + ctx.Tag + ">");
         }
 
         //private void DebugButton_Click(object sender, RoutedEventArgs e)

@@ -67,7 +67,7 @@ namespace ComicReader.Views
         private SearchPageShared Shared { get; set; }
         private Utils.TrulyObservableCollection<ComicItemModel> SearchResultDataSource { get; set; }
 
-        private TabManager m_tab_manager;
+        private Utils.Tab.TabManager m_tab_manager;
         private List<ComicItemData> m_all_results;
         private Utils.CancellationLock m_search_lock;
 
@@ -79,7 +79,7 @@ namespace ComicReader.Views
             Shared.FilterDetails = "";
             SearchResultDataSource = new Utils.TrulyObservableCollection<ComicItemModel>();
             
-            m_tab_manager = new TabManager();
+            m_tab_manager = new Utils.Tab.TabManager();
             m_tab_manager.OnSetShared = OnSetShared;
             m_tab_manager.OnUpdate = OnUpdate;
             m_all_results = new List<ComicItemData>();
@@ -106,17 +106,17 @@ namespace ComicReader.Views
             Shared.ContentPageShared = (ContentPageShared)shared;
 
         }
-        private void OnUpdate(TabIdentifier tab_id)
+        private void OnUpdate(Utils.Tab.TabIdentifier tab_id)
         {
             Utils.Methods.Run(async delegate
             {
-                Shared.ContentPageShared.RootPageShared.CurrentPageType = PageType.Search;
+                Shared.ContentPageShared.RootPageShared.CurrentPageType = Utils.Tab.PageType.Search;
                 ContentPage.Current.SetSearchBox((string)tab_id.RequestArgs);
                 await StartSearch();
             });
         }
 
-        public static string GetPageUniqueString(object args)
+        public static string PageUniqueString(object args)
         {
             string keyword = (string)args;
             return "Search/" + keyword;
@@ -356,7 +356,7 @@ namespace ComicReader.Views
 
                 ComicItemModel item = (ComicItemModel)((FrameworkElement)sender).DataContext;
                 ComicItemData comic = await DataManager.GetComicWithId(item.Id);
-                RootPage.Current.LoadTab(null, PageType.Reader, comic);
+                RootPage.Current.LoadTab(null, Utils.Tab.PageType.Reader, comic);
             });
         }
 

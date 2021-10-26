@@ -47,7 +47,7 @@ namespace ComicReader.Views
         public Utils.TrulyObservableCollection<ComicItemModel> ComicItemSource { get; set; }
         public ObservableCollection<FolderItemModel> FolderItemDataSource { get; set; }
 
-        private TabManager m_tab_manager;
+        private Utils.Tab.TabManager m_tab_manager;
         private Utils.CancellationLock m_update_folder_lock;
         private Utils.CancellationLock m_update_library_lock;
 
@@ -58,7 +58,7 @@ namespace ComicReader.Views
             ComicItemSource = new Utils.TrulyObservableCollection<ComicItemModel>();
             FolderItemDataSource = new ObservableCollection<FolderItemModel>();
 
-            m_tab_manager = new TabManager();
+            m_tab_manager = new Utils.Tab.TabManager();
             m_tab_manager.OnSetShared = OnSetShared;
             m_tab_manager.OnPageEntered = OnPageEntered;
             m_tab_manager.OnUpdate = OnUpdate;
@@ -94,16 +94,16 @@ namespace ComicReader.Views
             });
         }
 
-        private void OnUpdate(TabIdentifier tab_id)
+        private void OnUpdate(Utils.Tab.TabIdentifier tab_id)
         {
-            Shared.ContentPageShared.RootPageShared.CurrentPageType = PageType.Home;
+            Shared.ContentPageShared.RootPageShared.CurrentPageType = Utils.Tab.PageType.Home;
             tab_id.Tab.Header = "New tab";
             tab_id.Tab.IconSource =
                 new muxc.SymbolIconSource() { Symbol = Symbol.Document };
             ContentPage.Current.SetSearchBox("");
         }
 
-        public static string GetPageUniqueString(object args) => "blank";
+        public static string PageUniqueString(object args) => "blank";
 
         // user-defined functions
         // update
@@ -245,12 +245,12 @@ namespace ComicReader.Views
 
         private void ShowAll_Click(object sender, RoutedEventArgs e)
         {
-            RootPage.Current.LoadTab(m_tab_manager.TabId, PageType.Search, "<all>");
+            RootPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Search, "<all>");
         }
 
         private void ShowHiddens_Click(object sender, RoutedEventArgs e)
         {
-            RootPage.Current.LoadTab(m_tab_manager.TabId, PageType.Search, "<hidden>");
+            RootPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Search, "<hidden>");
         }
 
         private void Grid_PointerPressed(object sender, PointerRoutedEventArgs e)
@@ -263,7 +263,7 @@ namespace ComicReader.Views
                 return;
             }
                 
-            RootPage.Current.LoadTab(m_tab_manager.TabId, PageType.Reader, ctx.Comic);
+            RootPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Reader, ctx.Comic);
         }
 
         private void Hide_Click(object sender, RoutedEventArgs e)
@@ -310,7 +310,7 @@ namespace ComicReader.Views
                 }
                 else
                 {
-                    RootPage.Current.LoadTab(m_tab_manager.TabId, PageType.Search, "<dir:" + ctx.Folder + ">");
+                    RootPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Search, "<dir:" + ctx.Folder + ">");
                 }
             });
         }

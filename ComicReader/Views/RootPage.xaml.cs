@@ -24,11 +24,11 @@ namespace ComicReader.Views
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public PageType CurrentPageType
+        public Utils.Tab.PageType CurrentPageType
         {
             set
             {
-                IsReaderPage = value == PageType.Reader;
+                IsReaderPage = value == Utils.Tab.PageType.Reader;
                 IsFullscreenButtonVisible = IsReaderPage;
 
                 if (!IsReaderPage && IsFullscreen)
@@ -93,7 +93,7 @@ namespace ComicReader.Views
         public static RootPage Current = null;
         public RootPageShared Shared;
 
-        private List<TabIdentifier> m_all_tabs = new List<TabIdentifier>();
+        private List<Utils.Tab.TabIdentifier> m_all_tabs = new List<Utils.Tab.TabIdentifier>();
         private Grid m_tab_container_grid;
 
         public RootPage()
@@ -184,16 +184,16 @@ namespace ComicReader.Views
 
             await Utils.Methods.Sync(delegate
             {
-                LoadTab(null, PageType.Reader, comic);
+                LoadTab(null, Utils.Tab.PageType.Reader, comic);
             });
         }
 
         // new tab
-        private bool TrySwitchToTab(PageType type, object args)
+        private bool TrySwitchToTab(Utils.Tab.PageType type, object args)
         {
-            string unique_string = PageUtils.GetPageUniqueString(type, args);
+            string unique_string = Utils.Tab.TabManager.PageUniqueString(type, args);
 
-            foreach (TabIdentifier tab in m_all_tabs)
+            foreach (Utils.Tab.TabIdentifier tab in m_all_tabs)
             {
                 if (unique_string == tab.UniqueString)
                 {
@@ -205,7 +205,7 @@ namespace ComicReader.Views
             return false;
         }
 
-        private TabIdentifier AddNewTab(PageType type, object args = null)
+        private Utils.Tab.TabIdentifier AddNewTab(Utils.Tab.PageType type, object args = null)
         {
             ExitFullscreen();
 
@@ -216,7 +216,7 @@ namespace ComicReader.Views
             RootTabView.TabItems.Add(new_tab);
             RootTabView.SelectedItem = new_tab;
 
-            TabIdentifier id = new TabIdentifier
+            Utils.Tab.TabIdentifier id = new Utils.Tab.TabIdentifier
             {
                 Tab = new_tab,
                 Type = type,
@@ -230,10 +230,10 @@ namespace ComicReader.Views
             return id;
         }
 
-        public void LoadTab(TabIdentifier tab_id, PageType type, object args = null,
+        public void LoadTab(Utils.Tab.TabIdentifier tab_id, Utils.Tab.PageType type, object args = null,
             bool try_reuse = true)
         {
-            if ((type == PageType.Reader || type == PageType.Settings) && try_reuse)
+            if ((type == Utils.Tab.PageType.Reader || type == Utils.Tab.PageType.Settings) && try_reuse)
             {
                 // switch to an existed tab if possible
                 if (TrySwitchToTab(type, args))
@@ -254,7 +254,7 @@ namespace ComicReader.Views
                 tab_id.OnTabSelected = null;
             }
 
-            NavigationParams nav_params = new NavigationParams
+            Utils.Tab.NavigationParams nav_params = new Utils.Tab.NavigationParams
             {
                 Shared = Shared,
                 TabId = tab_id
@@ -263,8 +263,8 @@ namespace ComicReader.Views
             Frame frame = (Frame)tab_id.Tab.Content;
 
             // use different loading strategies based on page type.
-            if (type == PageType.Reader || type == PageType.Home ||
-                type == PageType.Search)
+            if (type == Utils.Tab.PageType.Reader || type == Utils.Tab.PageType.Home ||
+                type == Utils.Tab.PageType.Search)
             {
                 // these pages are based on ContentPage.
                 if (frame.Content == null || frame.Content.GetType() != typeof(ContentPage))
@@ -282,19 +282,19 @@ namespace ComicReader.Views
             else
             {
                 // these pages are based on RootPage.
-                frame.Navigate(PageUtils.GetPageType(type), nav_params);
+                frame.Navigate(Utils.Tab.TabManager.TypeFromPageTypeEnum(type), nav_params);
             }
         }
 
         // tabview
         private void TabView_AddTabButtonClick(muxc.TabView sender, object args)
         {
-            LoadTab(null, PageType.Home);
+            LoadTab(null, Utils.Tab.PageType.Home);
         }
 
-        private TabIdentifier GetTabIdentifier(muxc.TabViewItem tab)
+        private Utils.Tab.TabIdentifier GetTabId(muxc.TabViewItem tab)
         {
-            foreach (TabIdentifier id in m_all_tabs)
+            foreach (Utils.Tab.TabIdentifier id in m_all_tabs)
             {
                 if (id.Tab == tab)
                 {
@@ -310,7 +310,7 @@ namespace ComicReader.Views
         {
             for (int i = 0; i < m_all_tabs.Count; ++i)
             {
-                TabIdentifier tab_id = m_all_tabs[i];
+                Utils.Tab.TabIdentifier tab_id = m_all_tabs[i];
 
                 if (tab_id.Tab == args.Tab)
                 {
@@ -329,7 +329,7 @@ namespace ComicReader.Views
 
         private void TabView_Loaded(object sender, RoutedEventArgs e)
         {
-            LoadTab(null, PageType.Home);
+            LoadTab(null, Utils.Tab.PageType.Home);
         }
 
         // background tasks indication
@@ -356,7 +356,7 @@ namespace ComicReader.Views
         {
             foreach (muxc.TabViewItem tab in e.AddedItems)
             {
-                TabIdentifier id = GetTabIdentifier(tab);
+                Utils.Tab.TabIdentifier id = GetTabId(tab);
 
                 if (id == null)
                 {
@@ -384,12 +384,12 @@ namespace ComicReader.Views
         }
 
         // fullscreen
-        public void UpdateFullscreenMode(PageType type)
+        public void UpdateFullscreenMode(Utils.Tab.PageType type)
         {
             // exit fullscreen mode if necessary
-            if (type != PageType.Unknown)
+            if (type != Utils.Tab.PageType.Unknown)
             {
-                Shared.IsFullscreenButtonVisible = type == PageType.Reader;
+                Shared.IsFullscreenButtonVisible = type == Utils.Tab.PageType.Reader;
             }
 
             if (Shared.IsFullscreen)
@@ -446,7 +446,7 @@ namespace ComicReader.Views
 
         private void RootGrid_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            UpdateFullscreenMode(PageType.Unknown);
+            UpdateFullscreenMode(Utils.Tab.PageType.Unknown);
         }
 
         private void E_RootPage_KeyDown(object sender, KeyRoutedEventArgs e)

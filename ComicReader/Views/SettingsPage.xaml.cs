@@ -70,7 +70,7 @@ namespace ComicReader.Views
         public static SettingsPage Current;
         public SettingsPageShared Shared { get; set; }
 
-        private TabManager m_tab_manager;
+        private Utils.Tab.TabManager m_tab_manager;
         private bool m_save_enabled;
 
         public SettingsPage()
@@ -79,7 +79,7 @@ namespace ComicReader.Views
             Shared = new SettingsPageShared();
             Shared.E_SettingsChanged += E_SettingsChanged;
 
-            m_tab_manager = new TabManager();
+            m_tab_manager = new Utils.Tab.TabManager();
             m_tab_manager.OnPageEntered = OnPageEntered;
             m_tab_manager.OnSetShared = OnSetShared;
             m_tab_manager.OnUpdate = OnUpdate;
@@ -114,15 +114,15 @@ namespace ComicReader.Views
             });
         }
 
-        private void OnUpdate(TabIdentifier tab_id)
+        private void OnUpdate(Utils.Tab.TabIdentifier tab_id)
         {
             m_tab_manager.TabId.Tab.Header = "Settings";
             m_tab_manager.TabId.Tab.IconSource =
                 new muxc.SymbolIconSource() { Symbol = Symbol.Setting };
-            Shared.RootPageShared.CurrentPageType = PageType.Settings;
+            Shared.RootPageShared.CurrentPageType = Utils.Tab.PageType.Settings;
         }
 
-        public static string GetPageUniqueString(object args)
+        public static string PageUniqueString(object args)
         {
             return "settings";
         }
