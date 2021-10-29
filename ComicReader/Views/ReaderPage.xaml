@@ -15,6 +15,7 @@
     <Page.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Resources/Style/Button.xaml" />
                 <ResourceDictionary Source="../Resources/Constants.xaml" />
                 <ResourceDictionary Source="../Resources/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
@@ -38,11 +39,13 @@
                     <!-- Information Section -->
                     <ScrollViewer Grid.Row="0">
                         <StackPanel Orientation="Vertical">
+
                             <!-- Main Title -->
                             <TextBlock FontWeight="Bold"
                                        IsTextSelectionEnabled="True"
                                        Text="{x:Bind Shared.ComicTitle1, Mode=OneWay}"
                                        TextWrapping="Wrap" />
+
                             <!-- Sub Title -->
                             <TextBlock TextWrapping="Wrap"
                                        FontWeight="Bold"
@@ -56,6 +59,7 @@
                                            Value="{x:Bind Shared.Rating, Mode=TwoWay}"
                                            ValueChanged="RatingControl_ValueChanged"
                                            IsEnabled="{x:Bind Shared.ContentPageShared.IsInLib, Mode=OneWay}" />
+
                             <!-- Directory -->
                             <TextBlock IsTextSelectionEnabled="True"
                                        VerticalAlignment="Center"
@@ -63,6 +67,7 @@
                                        TextWrapping="Wrap"
                                        Text="{x:Bind Shared.ComicDir, Mode=OneWay}"
                                        Foreground="#E0E0E0" />
+
                             <!-- Tags -->
                             <ListView ItemsSource="{x:Bind ComicTagSource}"
                                       SelectionMode="None"
@@ -137,6 +142,7 @@
 
             <!-- Main Page -->
             <Grid>
+
                 <!-- Reader -->
                 <Grid Tapped="E_Reader_Tapped">
                     <Grid x:Name="PanningReference" />
@@ -218,6 +224,7 @@
                     </ScrollViewer>
                 </Grid>
 
+                <!-- Preview -->
                 <ScrollViewer Visibility="{x:Bind Shared.IsGridViewVisible, Mode=OneWay}">
                     <GridView ItemsSource="{x:Bind GridViewDataSource, Mode=OneWay}"
                               Padding="10"
@@ -240,6 +247,7 @@
                     </GridView>
                 </ScrollViewer>
 
+                <!-- Bottom Tile -->
                 <Grid x:Name="BottomGrid"
                       VerticalAlignment="Bottom"
                       Background="#FF303030"
@@ -326,6 +334,27 @@
                                VerticalAlignment="Center"
                                FontWeight="Bold"
                                Grid.Column="1" />
+                </Grid>
+
+                <!-- Fullscreen -->
+                <Grid VerticalAlignment="Bottom"
+                      HorizontalAlignment="Right">
+                    <Button Style="{StaticResource ReaderPageFullscreenButtonStyle}"
+                            Click="Fullscreen_Click"
+                            Visibility="{x:Bind Shared.ContentPageShared.RootPageShared.IsFullscreenN, Mode=OneWay}">
+                        <Button.Content>
+                            <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                      Glyph="&#xE740;" />
+                        </Button.Content>
+                    </Button>
+                    <Button Style="{StaticResource ReaderPageFullscreenButtonStyle}"
+                            Click="BackToWindow_Click"
+                            Visibility="{x:Bind Shared.ContentPageShared.RootPageShared.IsFullscreen, Mode=OneWay}">
+                        <Button.Content>
+                            <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                      Glyph="&#xE73F;" />
+                        </Button.Content>
+                    </Button>
                 </Grid>
             </Grid>
         </SplitView>

@@ -1759,6 +1759,16 @@ namespace ComicReader.Views
             RootPage.Current.LoadTab(null, Utils.Tab.PageType.Search, "<tag:" + ctx.Tag + ">");
         }
 
+        private void Fullscreen_Click(object sender, RoutedEventArgs e)
+        {
+            RootPage.Current.EnterFullscreen();
+        }
+
+        private void BackToWindow_Click(object sender, RoutedEventArgs e)
+        {
+            RootPage.Current.ExitFullscreen();
+        }
+
         //private void DebugButton_Click(object sender, RoutedEventArgs e)
         //{
         //    GC.Collect();

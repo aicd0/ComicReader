@@ -30,7 +30,6 @@ namespace ComicReader.Views
             {
                 IsHomePage = value == Utils.Tab.PageType.Home;
                 IsReaderPage = value == Utils.Tab.PageType.Reader;
-                IsFullscreenButtonVisible = IsReaderPage;
 
                 if (!IsReaderPage && IsFullscreen)
                 {
@@ -72,10 +71,8 @@ namespace ComicReader.Views
             set
             {
                 m_IsFullscreen = value;
-                PropertyChanged?.Invoke(this,
-                    new PropertyChangedEventArgs("IsFullscreen"));
-                PropertyChanged?.Invoke(this,
-                    new PropertyChangedEventArgs("IsFullscreenN"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsFullscreen"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsFullscreenN"));
                 
                 if (m_IsFullscreen == false)
                 {
@@ -84,18 +81,6 @@ namespace ComicReader.Views
             }
         }
         public bool IsFullscreenN => !m_IsFullscreen;
-
-        private bool m_IsFullscreenButtonVisible;
-        public bool IsFullscreenButtonVisible
-        {
-            get => m_IsFullscreenButtonVisible;
-            set
-            {
-                m_IsFullscreenButtonVisible = value;
-                PropertyChanged?.Invoke(this,
-                    new PropertyChangedEventArgs("IsFullscreenButtonVisible"));
-            }
-        }
 
         public Action OnExitFullscreenMode;
     }
@@ -113,7 +98,6 @@ namespace ComicReader.Views
             Current = this;
             Shared = new RootPageShared();
             Shared.IsFullscreen = false;
-            Shared.IsFullscreenButtonVisible = false;
 
             InitializeComponent();
 
@@ -363,21 +347,23 @@ namespace ComicReader.Views
             }
         }
 
-        private void TabView_SelectionChanged(object sender,
-            SelectionChangedEventArgs e)
+        private void TabView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            foreach (muxc.TabViewItem tab in e.AddedItems)
+            if (e.AddedItems.Count == 0)
             {
-                Utils.Tab.TabIdentifier id = GetTabId(tab);
-
-                if (id == null)
-                {
-                    continue;
-                }
-
-                UpdateFullscreenMode(id.Type);
-                id.OnTabSelected?.Invoke();
+                return;
             }
+
+            muxc.TabViewItem tab = (muxc.TabViewItem)e.AddedItems[0];
+            Utils.Tab.TabIdentifier id = GetTabId(tab);
+
+            if (id == null)
+            {
+                return;
+            }
+
+            UpdateFullscreenMode();
+            id.OnTabSelected?.Invoke();
         }
 
         private void SetTabViewVisibility(bool visibility)
@@ -386,6 +372,7 @@ namespace ComicReader.Views
             {
                 return;
             }
+
             m_tab_container_grid.Visibility = visibility ?
                 Visibility.Visible : Visibility.Collapsed;
         }
@@ -396,21 +383,12 @@ namespace ComicReader.Views
         }
 
         // fullscreen
-        public void UpdateFullscreenMode(Utils.Tab.PageType type)
+        public void UpdateFullscreenMode()
         {
-            // exit fullscreen mode if necessary
-            if (type != Utils.Tab.PageType.Unknown)
+            // make IsFullscreen consistent with the actual state.
+            if (!ApplicationView.GetForCurrentView().IsFullScreenMode)
             {
-                Shared.IsFullscreenButtonVisible = type == Utils.Tab.PageType.Reader;
-            }
-
-            if (Shared.IsFullscreen)
-            {
-                if (!Shared.IsFullscreenButtonVisible ||
-                    !ApplicationView.GetForCurrentView().IsFullScreenMode)
-                {
-                    ExitFullscreen();
-                }
+                ExitFullscreen();
             }
         }
 
@@ -421,44 +399,31 @@ namespace ComicReader.Views
                 return true;
             }
 
-            ApplicationView view = ApplicationView.GetForCurrentView();
-            if (!view.TryEnterFullScreenMode())
+            if (!ApplicationView.GetForCurrentView().TryEnterFullScreenMode())
             {
                 return false;
             }
 
             Shared.IsFullscreen = true;
             SetTabViewVisibility(false);
-
             return true;
         }
 
         public void ExitFullscreen()
         {
-            if (Shared.IsFullscreenN)
+            if (!Shared.IsFullscreen)
             {
                 return;
             }
 
-            ApplicationView view = ApplicationView.GetForCurrentView();
-            view.ExitFullScreenMode();
+            ApplicationView.GetForCurrentView().ExitFullScreenMode();
             Shared.IsFullscreen = false;
             SetTabViewVisibility(true);
         }
 
-        private void Fullscreen_Click(object sender, RoutedEventArgs e)
-        {
-            EnterFullscreen();
-        }
-
-        private void BackToWindow_Click(object sender, RoutedEventArgs e)
-        {
-            ExitFullscreen();
-        }
-
         private void RootGrid_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            UpdateFullscreenMode(Utils.Tab.PageType.Unknown);
+            UpdateFullscreenMode();
         }
 
         private void E_RootPage_KeyDown(object sender, KeyRoutedEventArgs e)

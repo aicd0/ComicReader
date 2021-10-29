@@ -63,13 +63,6 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        <Style x:Key="FullscreenButtonStyle" TargetType="Button">
-            <Setter Property="Width" Value="50"/>
-            <Setter Property="Height" Value="50"/>
-            <Setter Property="CornerRadius" Value="0"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-        </Style>
     </Page.Resources>
 
     <Grid SizeChanged="RootGrid_SizeChanged"
@@ -122,29 +115,6 @@
                 </ControlTemplate>
             </muxc:TabView.Template>
         </muxc:TabView>
-
-        <!-- Fullscreen -->
-        <Grid VerticalAlignment="Bottom"
-              HorizontalAlignment="Right"
-              Visibility="{x:Bind Shared.IsFullscreenButtonVisible, Mode=OneWay}">
-            <Button Style="{StaticResource FullscreenButtonStyle}"
-                Click="Fullscreen_Click"
-                Visibility="{x:Bind Shared.IsFullscreenN, Mode=OneWay}">
-                <Button.Content>
-                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                          Glyph="&#xE740;"/>
-                </Button.Content>
-            </Button>
-            <Button Style="{StaticResource FullscreenButtonStyle}"
-                Click="BackToWindow_Click"
-                Visibility="{x:Bind Shared.IsFullscreen, Mode=OneWay}">
-                <Button.Content>
-                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                          Glyph="&#xE73F;"/>
-                </Button.Content>
-            </Button>
-        </Grid>
-
         <ToolTip x:Name="RootToolTip" Visibility="Collapsed" HorizontalAlignment="Left" VerticalAlignment="Bottom"/>
     </Grid>
 </Page>
