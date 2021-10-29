@@ -28,6 +28,7 @@ namespace ComicReader.Views
         {
             set
             {
+                IsHomePage = value == Utils.Tab.PageType.Home;
                 IsReaderPage = value == Utils.Tab.PageType.Reader;
                 IsFullscreenButtonVisible = IsReaderPage;
 
@@ -38,6 +39,19 @@ namespace ComicReader.Views
             }
         }
 
+        private bool m_IsHomePage;
+        public bool IsHomePage
+        {
+            get => m_IsHomePage;
+            set
+            {
+                m_IsHomePage = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsHomePage"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsHomePageN"));
+            }
+        }
+        public bool IsHomePageN => !IsHomePage;
+
         private bool m_IsReaderPage;
         public bool IsReaderPage
         {
@@ -45,10 +59,8 @@ namespace ComicReader.Views
             set
             {
                 m_IsReaderPage = value;
-                PropertyChanged?.Invoke(this,
-                    new PropertyChangedEventArgs("IsReaderPage"));
-                PropertyChanged?.Invoke(this,
-                    new PropertyChangedEventArgs("IsReaderPageN"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsReaderPage"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsReaderPageN"));
             }
         }
         public bool IsReaderPageN => !IsReaderPage;

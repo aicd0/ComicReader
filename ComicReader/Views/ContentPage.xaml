@@ -29,8 +29,8 @@
               Visibility="{x:Bind Shared.RootPageShared.IsFullscreenN, Mode=OneWay}">
             <StackPanel Orientation="Vertical">
                 <Grid>
-                    
-                    <!-- Top Left Buttons -->
+
+                    <!-- Left Buttons -->
                     <StackPanel HorizontalAlignment="Left"
                                 Orientation="Horizontal"
                                 VerticalAlignment="Center">
@@ -47,12 +47,14 @@
                         <AppBarButton Icon="Home"
                                       Style="{StaticResource ContentPageTopTileAppBarButton}"
                                       ToolTipService.ToolTip="Home"
-                                      Click="HomeClick" />
+                                      Click="HomeClick"
+                                      Visibility="{x:Bind Shared.RootPageShared.IsHomePageN, Mode=OneWay}" />
                         <AppBarButton Icon="Refresh"
                                       Style="{StaticResource ContentPageTopTileAppBarButton}"
                                       ToolTipService.ToolTip="Refresh"
-                                      Click="RefreshClick" />
-                        
+                                      Click="RefreshClick"
+                                      Visibility="{x:Bind Shared.RootPageShared.IsHomePage, Mode=OneWay}" />
+
                         <!-- Search Box -->
                         <AutoSuggestBox Visibility="{x:Bind Shared.RootPageShared.IsReaderPageN, Mode=OneWay}"
                                         Grid.Column="1"
@@ -73,7 +75,7 @@
                     <StackPanel Orientation="Horizontal"
                                 HorizontalAlignment="Center"
                                 Visibility="{x:Bind Shared.RootPageShared.IsReaderPage, Mode=OneWay}">
-                        
+
                         <!-- Zoom -->
                         <AppBarButton Style="{StaticResource ContentPageTopTileAppBarButton}"
                                       ToolTipService.ToolTip="Zoom In"
@@ -91,7 +93,7 @@
                                 <FontIcon Glyph="&#xE71F;" />
                             </AppBarButton.Content>
                         </AppBarButton>
-                        
+
                         <!-- Two pages mode -->
                         <AppBarToggleButton Style="{StaticResource ContentPageTopTileAppBarToggleButton}"
                                             IsChecked="{x:Bind Shared.IsTwoPagesMode, Mode=TwoWay}"
@@ -100,7 +102,7 @@
                                 <FontIcon Glyph="&#xE89A;" />
                             </AppBarToggleButton.Content>
                         </AppBarToggleButton>
-                        
+
                         <!-- Grid View -->
                         <AppBarToggleButton Style="{StaticResource ContentPageTopTileAppBarToggleButton}"
                                             ToolTipService.ToolTip="Grid View"
@@ -109,7 +111,7 @@
                                 <FontIcon Glyph="&#xF0E2;" />
                             </AppBarToggleButton.Content>
                         </AppBarToggleButton>
-                        
+
                         <!-- Favorite -->
                         <AppBarButton Style="{StaticResource ContentPageTopTileAppBarButton}"
                                       ToolTipService.ToolTip="Add this comic to favorites"
@@ -131,7 +133,7 @@
                                 Margin="0,1,0,1"
                                 VerticalAlignment="Center"
                                 Orientation="Horizontal">
-                        
+
                         <!-- Expand favorites pane -->
                         <AppBarButton Click="FavoriteBt_Click"
                                       Style="{StaticResource ContentPageTopTileAppBarButton}"
@@ -140,7 +142,7 @@
                                 <FontIcon Glyph="&#xE728;" />
                             </AppBarButton.Content>
                         </AppBarButton>
-                        
+
                         <!-- More -->
                         <AppBarButton Style="{StaticResource ContentPageTopTileAppBarButton}"
                                       ToolTipService.ToolTip="Settings and more">
