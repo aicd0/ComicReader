@@ -52,20 +52,24 @@
                     <Border CornerRadius="5">
                         <Image Source="{x:Bind Ctx.Image}" />
                     </Border>
-                    <!--<Border CornerRadius="5">
-                        <Border.Background>
-                            <muxm:AcrylicBrush BackgroundSource="Backdrop"
-                                               TintOpacity="0.0"
-                                               TintLuminosityOpacity="0.0"/>
-                        </Border.Background>
-                    </Border>-->
-                    <FontIcon Glyph="&#xE735;"
-                              FontSize="14"
-                              Margin="0,0,10,10"
-                              Foreground="SkyBlue"
-                              VerticalAlignment="Bottom"
-                              HorizontalAlignment="Right"
-                              Visibility="{x:Bind Ctx.IsFavorite}" />
+                    <Grid Width="24"
+                          Height="24"
+                          VerticalAlignment="Bottom"
+                          HorizontalAlignment="Right"
+                          Margin="5"
+                          Visibility="Visible" >
+                        <Border CornerRadius="5">
+                            <Border.Background>
+                                <muxm:AcrylicBrush BackgroundSource="Backdrop"
+                                                   TintColor="Black"
+                                                   TintOpacity="0.0"
+                                                   TintLuminosityOpacity="0.3" />
+                            </Border.Background>
+                        </Border>
+                        <FontIcon Glyph="&#xE735;"
+                                  FontSize="14"
+                                  Foreground="SkyBlue"/>
+                    </Grid>
                 </Grid>
                 <muxc:ProgressRing Visibility="{x:Bind Ctx.IsImageLoadedN, Mode=OneWay}" />
             </Grid>

@@ -17,7 +17,6 @@
                 <ResourceDictionary Source="../Resources/Constants.xaml" />
                 <ResourceDictionary Source="../Resources/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
-
             <DataTemplate x:Key="FolderItemCommonTemplate"
                           x:DataType="data:FolderItemModel">
                 <controls:FolderItemDetailed Title="{x:Bind Folder}"
@@ -38,7 +37,7 @@
 
     <Grid>
         <ScrollViewer>
-            <StackPanel Margin="10"
+            <StackPanel Margin="35,10"
                         Orientation="Vertical">
                 <Grid Height="10" />
                 <Grid>
@@ -48,17 +47,19 @@
                     </Grid.ColumnDefinitions>
                     <TextBlock x:Uid="Library"
                                Grid.Column="0"
-                               FontSize="24"
-                               Text="Library"
-                               Margin="10,0,0,0" />
+                               FontSize="22"
+                               FontWeight="SemiBold"
+                               Margin="6,0,0,0"
+                               Text="Library" />
                     <StackPanel Grid.Column="1"
                                 Spacing="5"
-                                Orientation="Horizontal">
-                        <HyperlinkButton Content="Show all"
+                                Orientation="Horizontal"
+                                Margin="0,0,10,0"
+                                VerticalAlignment="Bottom">
+                        <HyperlinkButton Content="See all"
                                          Click="ShowAll_Click" />
-                        <HyperlinkButton Content="Show hiddens"
+                        <HyperlinkButton Content="See hiddens"
                                          Click="ShowHiddens_Click" />
-                        <Grid Width="10" />
                     </StackPanel>
                 </Grid>
                 <Grid Height="10" />
@@ -77,10 +78,11 @@
                         </DataTemplate>
                     </mtuuc:AdaptiveGridView.ItemTemplate>
                 </mtuuc:AdaptiveGridView>
-                <Grid Height="10" />
+                <Grid Height="50" />
                 <TextBlock x:Uid="Folders"
-                           FontSize="24"
-                           Padding="10,0,0,0" />
+                           FontSize="22"
+                           FontWeight="SemiBold"
+                           Margin="6,0,0,0"/>
                 <Grid Height="10" />
                 <mtuuc:AdaptiveGridView Style="{StaticResource HomePageAdaptiveGridViewStyle}"
                                         ItemsSource="{x:Bind FolderItemDataSource}"

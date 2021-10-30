@@ -6,47 +6,81 @@
       mc:Ignorable="d"
       Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-    <Grid>
+    <Page.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Resources/Style/TextBlock.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Page.Resources>
+
+    <Grid Margin="0,30,0,0">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <TextBlock Text="Settings"
-                   Style="{StaticResource TitleTextBlockStyle}"
-                   Grid.Row="0"
-                   Margin="25,40,0,20" />
+        <StackPanel Orientation="Horizontal"
+                    Grid.Row="0">
+            <FontIcon FontFamily="Segoe MDL2 Assets"
+                      Glyph="&#xE713;"
+                      Margin="25,6,15,0" />
+            <TextBlock Text="Settings"
+                       FontSize="32"
+                       FontWeight="Light" />
+        </StackPanel>
         <ScrollViewer VerticalScrollBarVisibility="Auto"
                       VerticalScrollMode="Auto"
                       Padding="25,0,25,0"
-                      Grid.Row="1"
-                      MaxWidth="500"
-                      HorizontalAlignment="Left">
+                      Grid.Row="1">
             <StackPanel Orientation="Vertical">
+                <TextBlock Text="Images on this PC"
+                           Style="{StaticResource SettingsPageSubTitleTextBlock}" />
+                <Grid Height="4" />
+                <Button Content="Choose where we look for images"
+                        Click="ChooseLocationsClick" />
 
-                <TextBlock Text="Comics on this PC"
-                           Style="{StaticResource SubtitleTextBlockStyle}" />
-                <Grid Height="8" />
-                <HyperlinkButton Content="Choose where we look for comics"
-                                 Click="ChooseLocationsClick" />
-                <Grid Height="40" />
+                <!-- Reader -->
                 <TextBlock Text="Reader"
-                           Style="{StaticResource SubtitleTextBlockStyle}" />
-                <Grid Height="8" />
+                           Style="{StaticResource SettingsPageSubTitleTextBlock}" />
                 <TextBlock Text="Left to right" />
-                <ToggleSwitch IsOn="{x:Bind Shared.P_Reader_LeftToRight, Mode=TwoWay}"/>
-                
-                <Grid Height="40" />
-                <TextBlock Text="Privacy"
-                           Style="{StaticResource SubtitleTextBlockStyle}" />
-                <Grid Height="8" />
+                <ToggleSwitch IsOn="{x:Bind Shared.P_Reader_LeftToRight, Mode=TwoWay}" />
+
+                <!-- History -->
+                <TextBlock Text="History"
+                           Style="{StaticResource SettingsPageSubTitleTextBlock}" />
                 <TextBlock Text="Save browsing history" />
                 <ToggleSwitch IsOn="{x:Bind Shared.P_Privacy_SaveBrowsingHistory, Mode=TwoWay}" />
 
-                <Grid Height="40" />
+                <!-- Statistics -->
                 <TextBlock Text="Statistics"
-                           Style="{StaticResource SubtitleTextBlockStyle}" />
-                <Grid Height="8" />
-                <TextBlock x:Name="StatisticsTextBlock" />
+                           Style="{StaticResource SettingsPageSubTitleTextBlock}" />
+                <TextBlock x:Name="StatisticsTextBlock" Text="No information collected." />
+
+                <!-- About -->
+                <TextBlock Text="About"
+                           Style="{StaticResource SettingsPageSubTitleTextBlock}" />
+                <TextBlock Text="Nothing remarkable." />
+
+                <TextBlock Text="Placeholder"
+                           Style="{StaticResource SettingsPageSubTitleTextBlock}" />
+                <TextBlock Text="placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder" />
+                <TextBlock Text="placeholder" />
+                <TextBlock Text="placeholder" />
+                <TextBlock Text="placeholder" />
+                <TextBlock Text="placeholder" />
+                <TextBlock Text="placeholder" />
+                <TextBlock Text="placeholder" />
+                <TextBlock Text="placeholder" />
+                <TextBlock Text="placeholder" />
+                <TextBlock Text="placeholder" />
+                <TextBlock Text="placeholder" />
+                <TextBlock Text="placeholder" />
+                <TextBlock Text="placeholder" />
+                <TextBlock Text="placeholder" />
+                <TextBlock Text="placeholder" />
+                <TextBlock Text="placeholder" />
+                <TextBlock Text="placeholder" />
+                <TextBlock Text="placeholder" />
             </StackPanel>
         </ScrollViewer>
     </Grid>
