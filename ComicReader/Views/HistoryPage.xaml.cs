@@ -1,19 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
-using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 using ComicReader.Data;
 
@@ -80,14 +69,14 @@ namespace ComicReader.Views
             });
         }
 
-        // update
+        // utilities
         public async Task Update()
         {
             var source = new ObservableCollection<HistoryItemGroupModel>();
             HistoryItemGroupModel current_group = null;
             await DatabaseManager.WaitLock();
 
-            foreach (var item in Database.History.Items)
+            foreach (HistoryItemData item in Database.History.Items)
             {
                 string key = item.DateTime.ToString("D");
 
@@ -102,10 +91,13 @@ namespace ComicReader.Views
                     current_group = new HistoryItemGroupModel(key);
                 }
 
-                var item_out = new HistoryItemModel();
-                item_out.Id = item.Id;
-                item_out.Time = item.DateTime.ToString("g");
-                item_out.Title = item.Title;
+                HistoryItemModel item_out = new HistoryItemModel
+                {
+                    Id = item.Id,
+                    Time = item.DateTime.ToString("g"),
+                    Title = item.Title
+                };
+
                 current_group.Add(item_out);
             }
 
@@ -135,15 +127,6 @@ namespace ComicReader.Views
             }
         }
 
-        private void OpenInNewTabClick(object sender, RoutedEventArgs e)
-        {
-            Utils.Methods.Run(async delegate
-            {
-                HistoryItemModel item = (HistoryItemModel)((MenuFlyoutItem)sender).DataContext;
-                await OpenItem(item, true);
-            });
-        }
-
         private async Task DeleteItem(HistoryItemModel item)
         {
             await HistoryDataManager.Remove(item.Id, true);
@@ -170,6 +153,16 @@ namespace ComicReader.Views
                     --i;
                 }
             }
+        }
+
+        // events
+        private void OpenInNewTabClick(object sender, RoutedEventArgs e)
+        {
+            Utils.Methods.Run(async delegate
+            {
+                HistoryItemModel item = (HistoryItemModel)((MenuFlyoutItem)sender).DataContext;
+                await OpenItem(item, true);
+            });
         }
 
         private void DeleteClick(object sender, RoutedEventArgs e)

@@ -11,6 +11,8 @@
       NavigationCacheMode="Enabled">
 
     <Page.Resources>
+
+        <!-- common template -->
         <DataTemplate x:Key="CommonTemplate"
                       x:DataType="data:FavoritesItemModel">
             <muxc:TreeViewItem AutomationProperties.Name="{x:Bind Name}"
@@ -19,21 +21,21 @@
                                IsExpanded="{x:Bind Expanded, Mode=TwoWay}"
                                VerticalContentAlignment="Stretch"
                                HorizontalContentAlignment="Stretch"
-                               PointerPressed="Item_Pressed">
+                               PointerPressed="MainTreeViewItemPressed">
                 <muxc:TreeViewItem.ContextFlyout>
                     <MenuFlyout>
                         <MenuFlyoutItem Text="Open in new tab"
                                         Click="OpenInNewTabClick"
                                         Visibility="{x:Bind IsItem, Mode=OneWay}" />
                         <MenuFlyoutItem Text="Create new folder"
-                                        Click="NewFolder_Click" />
+                                        Click="NewFolderClick" />
                         <MenuFlyoutItem Text="Sort by name"
                                         Click="SortByNameClick" />
                         <MenuFlyoutItem Text="Rename"
-                                        Click="Rename_Click" />
+                                        Click="RenameClick" />
                         <MenuFlyoutSeparator />
                         <MenuFlyoutItem Text="Delete"
-                                        Click="Delete_Click" />
+                                        Click="DeleteClick" />
                     </MenuFlyout>
                 </muxc:TreeViewItem.ContextFlyout>
                 <Grid>
@@ -71,6 +73,7 @@
             </muxc:TreeViewItem>
         </DataTemplate>
 
+        <!-- renaming template -->
         <DataTemplate x:Key="RenamingTemplate"
                       x:DataType="data:FavoritesItemModel">
             <muxc:TreeViewItem AutomationProperties.Name="{x:Bind Name}"
@@ -82,34 +85,34 @@
                 <Grid Height="25"
                       Margin="0,2,10,0">
                     <TextBox Text="{x:Bind EditingName}"
-                             KeyDown="RenameTextBox_KeyDown"
+                             KeyDown="RenameTextBoxKeyDown"
                              VerticalAlignment="Center"
-                             TextChanged="RenameTextBox_TextChanged"
+                             TextChanged="RenameTextBoxTextChanged"
                              HorizontalAlignment="Left"
-                             DataContextChanged="TextBox_DataContextChanged"/>
+                             DataContextChanged="RenameTextBoxDataContextChanged" />
                 </Grid>
             </muxc:TreeViewItem>
         </DataTemplate>
 
+        <!-- template selector -->
         <converters:FavoritesItemDataTemplateSelector x:Key="FavoritesItemTemplateSelector"
                                                       CommonTemplate="{StaticResource CommonTemplate}"
                                                       RenamingTemplate="{StaticResource RenamingTemplate}" />
     </Page.Resources>
 
     <Grid>
-        <muxc:TreeView x:Name="TreeExplorer"
-                       Loaded="TreeExplorer_Loaded"
-                       ItemInvoked="Item_Invoked"
-                       PointerPressed="TreeViewBackground_Pressed"
+        <muxc:TreeView x:Name="MainTreeView"
+                       ItemInvoked="MainTreeViewItemInvoked"
+                       PointerPressed="MainTreeViewBackgroundPressed"
                        ItemsSource="{x:Bind DataSource}"
                        ItemTemplateSelector="{StaticResource FavoritesItemTemplateSelector}"
-                       DragItemsCompleted="TreeExplorer_DragItemsCompleted">
+                       DragItemsCompleted="MainTreeViewDragItemsCompleted">
             <muxc:TreeView.ContextFlyout>
                 <MenuFlyout>
                     <MenuFlyoutItem Text="Create new folder"
-                                    Click="NewFolder_Click2" />
+                                    Click="RootNewFolderClick" />
                     <MenuFlyoutItem Text="Sort by name"
-                                    Click="SortByNameClick2" />
+                                    Click="RootSortByNameClick" />
                 </MenuFlyout>
             </muxc:TreeView.ContextFlyout>
         </muxc:TreeView>

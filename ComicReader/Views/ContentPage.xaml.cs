@@ -277,7 +277,7 @@ namespace ComicReader.Views
             {
                 if (FavoritesPage.Current != null)
                 {
-                    await FavoritesPage.Current.UpdateTreeExplorer();
+                    await FavoritesPage.Current.Update();
                 }
 
                 if (HistoryPage.Current != null)

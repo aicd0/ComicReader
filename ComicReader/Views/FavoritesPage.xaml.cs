@@ -78,129 +78,64 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                await UpdateTreeExplorer();
+                await Update();
             });
         }
 
-        // update
-        public async Task UpdateTreeExplorer()
+        // utilities
+        public async Task Update()
         {
-            await DatabaseManager.WaitLock();
-            DataSource.Clear();
-            UpdateTreeExplorerHelper(Database.Favorites.RootNodes, DataSource, null);
-            DatabaseManager.ReleaseLock();
-        }
-
-        private void UpdateTreeExplorerHelper(List<FavoritesNodeData> it, ObservableCollection<FavoritesItemModel> et, FavoritesItemModel parent)
-        {
-            foreach (FavoritesNodeData inode in it)
+            void helper(List<FavoritesNodeData> it, ObservableCollection<FavoritesItemModel> et, FavoritesItemModel parent)
             {
-                TreeItemType type = inode.Type == "i" ? TreeItemType.Item : TreeItemType.Filter;
-                FavoritesItemModel enode = new FavoritesItemModel(inode.Name, type, parent);
-
-                if (type == TreeItemType.Filter)
+                foreach (FavoritesNodeData inode in it)
                 {
-                    UpdateTreeExplorerHelper(inode.Children, enode.Children, enode);
-                }
-                else
-                {
-                    enode.Id = inode.Id;
-                }
+                    TreeItemType type = inode.Type == "i" ? TreeItemType.Item : TreeItemType.Filter;
+                    FavoritesItemModel enode = new FavoritesItemModel(inode.Name, type, parent);
 
-                et.Add(enode);
-            }
-        }
-
-        public async Task SaveTreeExplorer()
-        {
-            await DatabaseManager.WaitLock();
-            Database.Favorites.RootNodes.Clear();
-            SaveTreeExplorerHelper(Database.Favorites.RootNodes, DataSource);
-            DatabaseManager.ReleaseLock();
-            Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(DatabaseItem.Favorites));
-        }
-
-        private void SaveTreeExplorerHelper(List<FavoritesNodeData> it, ObservableCollection<FavoritesItemModel> et)
-        {
-            foreach (FavoritesItemModel enode in et)
-            {
-                FavoritesNodeData inode = new FavoritesNodeData();
-                inode.Type = enode.Type == TreeItemType.Filter ? "f" : "i";
-                inode.Name = enode.Name;
-                inode.Id = enode.Id;
-
-                if (enode.Children.Count > 0)
-                {
-                    SaveTreeExplorerHelper(inode.Children, enode.Children);
-                }
-
-                it.Add(inode);
-            }
-        }
-
-        private void TreeExplorer_Loaded(object sender, RoutedEventArgs e)
-        {
-            Utils.Methods.Run(async delegate
-            {
-                await UpdateTreeExplorer();
-            });
-        }
-
-        private void TreeViewBackground_Pressed(object sender, PointerRoutedEventArgs e)
-        {
-            Utils.Methods.Run(async delegate
-            {
-                await ResetItems();
-            });
-        }
-
-        // 处理右键事件
-        private void Item_Pressed(object sender, PointerRoutedEventArgs e)
-        {
-            Utils.Methods.Run(async delegate
-            {
-                var item = (Microsoft.UI.Xaml.Controls.TreeViewItem)sender;
-                var ctx = (FavoritesItemModel)item.DataContext;
-
-                if (ctx.IsRenaming)
-                {
-                    return;
-                }
-
-                await ResetItems();
-                e.Handled = true;
-            });
-        }
-
-        // 处理左键事件
-        private void Item_Invoked(Microsoft.UI.Xaml.Controls.TreeView sender, Microsoft.UI.Xaml.Controls.TreeViewItemInvokedEventArgs e)
-        {
-            Utils.Methods.Run(async delegate
-            {
-                FavoritesItemModel item = (FavoritesItemModel)e.InvokedItem;
-
-                if (item.IsRenaming)
-                {
-                    return;
-                }
-
-                await ResetItems();
-
-                if (item.Type == TreeItemType.Item)
-                {
-                    ComicItemData comic = await ComicDataManager.FromId(item.Id);
-
-                    if (comic == null)
+                    if (type == TreeItemType.Filter)
                     {
-                        await DeleteItem(item);
+                        helper(inode.Children, enode.Children, enode);
                     }
                     else
                     {
-                        RootPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Reader, comic);
-                        Shared.ContentPageShared.PaneOpen = false;
+                        enode.Id = inode.Id;
                     }
+
+                    et.Add(enode);
                 }
-            });
+            }
+
+            await DatabaseManager.WaitLock();
+            DataSource.Clear();
+            helper(Database.Favorites.RootNodes, DataSource, null);
+            DatabaseManager.ReleaseLock();
+        }
+
+        public async Task Save()
+        {
+            void helper(List<FavoritesNodeData> it, ObservableCollection<FavoritesItemModel> et)
+            {
+                foreach (FavoritesItemModel enode in et)
+                {
+                    FavoritesNodeData inode = new FavoritesNodeData();
+                    inode.Type = enode.Type == TreeItemType.Filter ? "f" : "i";
+                    inode.Name = enode.Name;
+                    inode.Id = enode.Id;
+
+                    if (enode.Children.Count > 0)
+                    {
+                        helper(inode.Children, enode.Children);
+                    }
+
+                    it.Add(inode);
+                }
+            }
+
+            await DatabaseManager.WaitLock();
+            Database.Favorites.RootNodes.Clear();
+            helper(Database.Favorites.RootNodes, DataSource);
+            DatabaseManager.ReleaseLock();
+            Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(DatabaseItem.Favorites));
         }
 
         private async Task DeleteItem(FavoritesItemModel item)
@@ -214,24 +149,7 @@ namespace ComicReader.Views
                 _ = DataSource.Remove(item);
             }
 
-            await SaveTreeExplorer();
-        }
-
-        private void Delete_Click(object sender, RoutedEventArgs e)
-        {
-            Utils.Methods.Run(async delegate
-            {
-                FavoritesItemModel item = (FavoritesItemModel)((MenuFlyoutItem)sender).DataContext;
-                await DeleteItem(item);
-            });
-        }
-
-        private void Rename_Click(object sender, RoutedEventArgs e)
-        {
-            FavoritesItemModel item = (FavoritesItemModel)((MenuFlyoutItem)sender).DataContext;
-            item.IsRenaming = true;
-            ObservableCollection<FavoritesItemModel> parent = item.Parent != null ? item.Parent.Children : DataSource;
-            Utils.Methods1<FavoritesItemModel>.NotifyCollectionChanged(parent, item);
+            await Save();
         }
 
         private async Task ResetItems()
@@ -254,7 +172,7 @@ namespace ComicReader.Views
                         item.IsRenaming = false;
                         ObservableCollection<FavoritesItemModel> parent = item.Parent != null ? item.Parent.Children : DataSource;
                         Utils.Methods1<FavoritesItemModel>.NotifyCollectionChanged(parent, item);
-                        await SaveTreeExplorer();
+                        await Save();
                         return true;
                     }
 
@@ -271,26 +189,6 @@ namespace ComicReader.Views
             }
 
             await helper(DataSource);
-        }
-
-        private void RenameTextBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            var textBox = (TextBox)sender;
-            var item = (FavoritesItemModel)textBox.DataContext;
-
-            item.EditingName = textBox.Text;
-        }
-
-        private void RenameTextBox_KeyDown(object sender, KeyRoutedEventArgs e)
-        {
-            Utils.Methods.Run(async delegate
-            {
-                if (e.Key == Windows.System.VirtualKey.Enter)
-                {
-                    await ResetItems();
-                    e.Handled = true;
-                }
-            });
         }
 
         private void CreateNewFolder(ObservableCollection<FavoritesItemModel> folder, FavoritesItemModel parent)
@@ -320,15 +218,147 @@ namespace ComicReader.Views
 
                 if (!isDuplicated)
                 {
-                    var newFolder = new FavoritesItemModel(folderName, TreeItemType.Filter, parent);
-                    newFolder.IsRenaming = true;
+                    var newFolder = new FavoritesItemModel(folderName, TreeItemType.Filter, parent)
+                    {
+                        IsRenaming = true
+                    };
+
                     folder.Add(newFolder);
                     break;
                 }
             }
         }
 
-        private void NewFolder_Click(object sender, RoutedEventArgs e)
+        private void SortFavorites(ObservableCollection<FavoritesItemModel> source)
+        {
+            Utils.Methods.Run(async delegate
+            {
+                var ordered = source.OrderBy(x => x.Name, new Utils.StringUtils.OrdinalComparer()).ToList();
+
+                for (int i = 0; i < ordered.Count; ++i)
+                {
+                    var item = ordered[i];
+
+                    if (source.IndexOf(item) == i)
+                    {
+                        continue;
+                    }
+
+                    source.Remove(item);
+                    source.Insert(i, item);
+                }
+
+                await Save();
+            });
+        }
+
+        // events
+        private void MainTreeViewBackgroundPressed(object sender, PointerRoutedEventArgs e)
+        {
+            Utils.Methods.Run(async delegate
+            {
+                await ResetItems();
+            });
+        }
+
+        private void MainTreeViewItemPressed(object sender, PointerRoutedEventArgs e)
+        {
+            // right-click
+            Utils.Methods.Run(async delegate
+            {
+                var item = (Microsoft.UI.Xaml.Controls.TreeViewItem)sender;
+                var ctx = (FavoritesItemModel)item.DataContext;
+
+                if (ctx.IsRenaming)
+                {
+                    return;
+                }
+
+                await ResetItems();
+                e.Handled = true;
+            });
+        }
+
+        private void MainTreeViewItemInvoked(Microsoft.UI.Xaml.Controls.TreeView sender, Microsoft.UI.Xaml.Controls.TreeViewItemInvokedEventArgs e)
+        {
+            // left-click
+            Utils.Methods.Run(async delegate
+            {
+                FavoritesItemModel item = (FavoritesItemModel)e.InvokedItem;
+
+                if (item.IsRenaming)
+                {
+                    return;
+                }
+
+                await ResetItems();
+
+                if (item.Type == TreeItemType.Item)
+                {
+                    ComicItemData comic = await ComicDataManager.FromId(item.Id);
+
+                    if (comic == null)
+                    {
+                        await DeleteItem(item);
+                    }
+                    else
+                    {
+                        RootPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Reader, comic);
+                        Shared.ContentPageShared.PaneOpen = false;
+                    }
+                }
+            });
+        }
+
+        private void DeleteClick(object sender, RoutedEventArgs e)
+        {
+            Utils.Methods.Run(async delegate
+            {
+                FavoritesItemModel item = (FavoritesItemModel)((MenuFlyoutItem)sender).DataContext;
+                await DeleteItem(item);
+            });
+        }
+
+        private void RenameClick(object sender, RoutedEventArgs e)
+        {
+            FavoritesItemModel item = (FavoritesItemModel)((MenuFlyoutItem)sender).DataContext;
+            item.IsRenaming = true;
+            ObservableCollection<FavoritesItemModel> parent = item.Parent != null ? item.Parent.Children : DataSource;
+            Utils.Methods1<FavoritesItemModel>.NotifyCollectionChanged(parent, item);
+        }
+
+        private void RenameTextBoxTextChanged(object sender, TextChangedEventArgs e)
+        {
+            var textBox = (TextBox)sender;
+            var item = (FavoritesItemModel)textBox.DataContext;
+            item.EditingName = textBox.Text;
+        }
+
+        private void RenameTextBoxKeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            Utils.Methods.Run(async delegate
+            {
+                if (e.Key == Windows.System.VirtualKey.Enter)
+                {
+                    await ResetItems();
+                    e.Handled = true;
+                }
+            });
+        }
+
+        private void RenameTextBoxDataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
+        {
+            FavoritesItemModel ctx = (FavoritesItemModel)args.NewValue;
+
+            if (ctx.IsRenaming)
+            {
+                TextBox textbox = (TextBox)sender;
+                textbox.Focus(FocusState.Programmatic);
+                textbox.SelectAll();
+            }
+        }
+
+        private void NewFolderClick(object sender, RoutedEventArgs e)
         {
             Utils.Methods.Run(async delegate
             {
@@ -356,20 +386,20 @@ namespace ComicReader.Views
                     }
                 }
 
-                await SaveTreeExplorer();
+                await Save();
             });
         }
 
-        private void NewFolder_Click2(object sender, RoutedEventArgs e)
+        private void RootNewFolderClick(object sender, RoutedEventArgs e)
         {
             Utils.Methods.Run(async delegate
             {
                 CreateNewFolder(DataSource, null);
-                await SaveTreeExplorer();
+                await Save();
             });
         }
 
-        private void TreeExplorer_DragItemsCompleted(Microsoft.UI.Xaml.Controls.TreeView sender,
+        private void MainTreeViewDragItemsCompleted(Microsoft.UI.Xaml.Controls.TreeView sender,
             Microsoft.UI.Xaml.Controls.TreeViewDragItemsCompletedEventArgs args)
         {
             Utils.Methods.Run(async delegate
@@ -381,7 +411,7 @@ namespace ComicReader.Views
                     item.Parent = parent;
                 }
 
-                await SaveTreeExplorer();
+                await Save();
             });
         }
 
@@ -402,44 +432,9 @@ namespace ComicReader.Views
             SortFavorites(parent);
         }
 
-        private void SortByNameClick2(object sender, RoutedEventArgs e)
+        private void RootSortByNameClick(object sender, RoutedEventArgs e)
         {
             SortFavorites(DataSource);
-        }
-
-        private void SortFavorites(ObservableCollection<FavoritesItemModel> source)
-        {
-            Utils.Methods.Run(async delegate
-            {
-                var ordered = source.OrderBy(x => x.Name, new Utils.StringUtils.OrdinalComparer()).ToList();
-
-                for (int i = 0; i < ordered.Count; ++i)
-                {
-                    var item = ordered[i];
-
-                    if (source.IndexOf(item) == i)
-                    {
-                        continue;
-                    }
-
-                    source.Remove(item);
-                    source.Insert(i, item);
-                }
-
-                await SaveTreeExplorer();
-            });
-        }
-
-        private void TextBox_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
-        {
-            FavoritesItemModel ctx = (FavoritesItemModel)args.NewValue;
-
-            if (ctx.IsRenaming)
-            {
-                TextBox textbox = (TextBox)sender;
-                textbox.Focus(FocusState.Programmatic);
-                textbox.SelectAll();
-            }
         }
     }
 }

@@ -9,163 +9,14 @@
       NavigationCacheMode="Enabled">
 
     <Page.Resources>
-        <CollectionViewSource x:Name="HistorySource"
-                              IsSourceGrouped="True" />
-        <Style x:Key="ListViewHeaderItemStyle1"
-               TargetType="ListViewHeaderItem">
-            <Setter Property="FontFamily"
-                    Value="{ThemeResource ContentControlThemeFontFamily}" />
-            <Setter Property="FontSize"
-                    Value="{ThemeResource ListViewHeaderItemThemeFontSize}" />
-            <Setter Property="Background"
-                    Value="{ThemeResource ListViewHeaderItemBackground}" />
-            <Setter Property="Margin"
-                    Value="0" />
-            <Setter Property="HorizontalContentAlignment"
-                    Value="Stretch" />
-            <Setter Property="VerticalContentAlignment"
-                    Value="Stretch" />
-            <Setter Property="MinHeight"
-                    Value="0" />
-            <Setter Property="UseSystemFocusVisuals"
-                    Value="{StaticResource UseSystemFocusVisuals}" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ListViewHeaderItem">
-                        <ContentPresenter x:Name="ContentPresenter"
-                                          ContentTemplate="{TemplateBinding ContentTemplate}"
-                                          Content="{TemplateBinding Content}"
-                                          ContentTransitions="{TemplateBinding ContentTransitions}"
-                                          HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                          Margin="0"
-                                          VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-        <Style x:Key="ListViewItemStyle1"
-               TargetType="ListViewItem">
-            <Setter Property="FontFamily"
-                    Value="{ThemeResource ContentControlThemeFontFamily}" />
-            <Setter Property="FontSize"
-                    Value="{ThemeResource ControlContentThemeFontSize}" />
-            <Setter Property="Background"
-                    Value="{ThemeResource ListViewItemBackground}" />
-            <Setter Property="Foreground"
-                    Value="{ThemeResource ListViewItemForeground}" />
-            <Setter Property="TabNavigation"
-                    Value="Local" />
-            <Setter Property="IsHoldingEnabled"
-                    Value="True" />
-            <Setter Property="Padding"
-                    Value="0" />
-            <Setter Property="HorizontalContentAlignment"
-                    Value="Left" />
-            <Setter Property="VerticalContentAlignment"
-                    Value="Center" />
-            <Setter Property="MinWidth"
-                    Value="{ThemeResource ListViewItemMinWidth}" />
-            <Setter Property="MinHeight"
-                    Value="{ThemeResource ListViewItemMinHeight}" />
-            <Setter Property="AllowDrop"
-                    Value="False" />
-            <Setter Property="UseSystemFocusVisuals"
-                    Value="{StaticResource UseSystemFocusVisuals}" />
-            <Setter Property="FocusVisualMargin"
-                    Value="0" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ListViewItem">
-                        <ListViewItemPresenter x:Name="Root"
-                                               CheckBrush="{ThemeResource ListViewItemCheckBrush}"
-                                               ContentMargin="{TemplateBinding Padding}"
-                                               CheckBoxBrush="{ThemeResource ListViewItemCheckBoxBrush}"
-                                               ContentTransitions="{TemplateBinding ContentTransitions}"
-                                               CheckMode="{ThemeResource ListViewItemCheckMode}"
-                                               DragOpacity="{ThemeResource ListViewItemDragThemeOpacity}"
-                                               DisabledOpacity="{ThemeResource ListViewItemDisabledThemeOpacity}"
-                                               DragBackground="{ThemeResource ListViewItemDragBackground}"
-                                               DragForeground="{ThemeResource ListViewItemDragForeground}"
-                                               FocusBorderBrush="{ThemeResource ListViewItemFocusBorderBrush}"
-                                               FocusVisualMargin="{TemplateBinding FocusVisualMargin}"
-                                               FocusSecondaryBorderBrush="{ThemeResource ListViewItemFocusSecondaryBorderBrush}"
-                                               HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                               Control.IsTemplateFocusTarget="True"
-                                               PressedBackground="{ThemeResource ListViewItemBackgroundPressed}"
-                                               PlaceholderBackground="{ThemeResource ListViewItemPlaceholderBackground}"
-                                               PointerOverForeground="{ThemeResource ListViewItemForegroundPointerOver}"
-                                               PointerOverBackground="{ThemeResource ListViewItemBackgroundPointerOver}"
-                                               RevealBorderThickness="0"
-                                               ReorderHintOffset="{ThemeResource ListViewItemReorderHintThemeOffset}"
-                                               RevealBorderBrush="{ThemeResource ListViewItemRevealBorderBrush}"
-                                               RevealBackground="{ThemeResource ListViewItemRevealBackground}"
-                                               SelectedForeground="{ThemeResource ListViewItemForegroundSelected}"
-                                               SelectionCheckMarkVisualEnabled="{ThemeResource ListViewItemSelectionCheckMarkVisualEnabled}"
-                                               SelectedBackground="{ThemeResource ListViewItemBackgroundSelected}"
-                                               SelectedPressedBackground="{ThemeResource ListViewItemBackgroundSelectedPressed}"
-                                               SelectedPointerOverBackground="{ThemeResource ListViewItemBackgroundSelectedPointerOver}"
-                                               VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
-                                               CornerRadius="6">
-                            <VisualStateManager.VisualStateGroups>
-                                <VisualStateGroup x:Name="CommonStates">
-                                    <VisualState x:Name="Normal" />
-                                    <VisualState x:Name="Selected" />
-                                    <VisualState x:Name="PointerOver">
-                                        <VisualState.Setters>
-                                            <Setter Target="Root.(RevealBrush.State)"
-                                                    Value="PointerOver" />
-                                            <Setter Target="Root.RevealBorderBrush"
-                                                    Value="{ThemeResource ListViewItemRevealBorderBrushPointerOver}" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="PointerOverSelected">
-                                        <VisualState.Setters>
-                                            <Setter Target="Root.(RevealBrush.State)"
-                                                    Value="PointerOver" />
-                                            <Setter Target="Root.RevealBorderBrush"
-                                                    Value="{ThemeResource ListViewItemRevealBorderBrushPointerOver}" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="PointerOverPressed">
-                                        <VisualState.Setters>
-                                            <Setter Target="Root.(RevealBrush.State)"
-                                                    Value="Pressed" />
-                                            <Setter Target="Root.RevealBorderBrush"
-                                                    Value="{ThemeResource ListViewItemRevealBorderBrushPressed}" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="Pressed">
-                                        <VisualState.Setters>
-                                            <Setter Target="Root.(RevealBrush.State)"
-                                                    Value="Pressed" />
-                                            <Setter Target="Root.RevealBorderBrush"
-                                                    Value="{ThemeResource ListViewItemRevealBorderBrushPressed}" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="PressedSelected">
-                                        <VisualState.Setters>
-                                            <Setter Target="Root.(RevealBrush.State)"
-                                                    Value="Pressed" />
-                                            <Setter Target="Root.RevealBorderBrush"
-                                                    Value="{ThemeResource ListViewItemRevealBorderBrushPressed}" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                </VisualStateGroup>
-                                <VisualStateGroup x:Name="DisabledStates">
-                                    <VisualState x:Name="Enabled" />
-                                    <VisualState x:Name="Disabled">
-                                        <VisualState.Setters>
-                                            <Setter Target="Root.RevealBorderThickness"
-                                                    Value="0" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                </VisualStateGroup>
-                            </VisualStateManager.VisualStateGroups>
-                        </ListViewItemPresenter>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Resources/Style/ListViewHeaderItem.xaml" />
+                <ResourceDictionary Source="../Resources/Style/ListViewItem.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <CollectionViewSource x:Name="HistorySource"
+                                  IsSourceGrouped="True" />
+        </ResourceDictionary>
     </Page.Resources>
 
     <Grid>
@@ -173,7 +24,7 @@
                   SelectionMode="None"
                   ItemClick="MainListViewItemClick"
                   IsItemClickEnabled="True"
-                  ItemContainerStyle="{StaticResource ListViewItemStyle1}"
+                  ItemContainerStyle="{StaticResource HistoryPageItem}"
                   x:Name="MainListView"
                   Margin="0,-10,0,0">
             <ListView.ItemsPanel>
@@ -218,7 +69,7 @@
                 </DataTemplate>
             </ListView.ItemTemplate>
             <ListView.GroupStyle>
-                <GroupStyle HeaderContainerStyle="{StaticResource ListViewHeaderItemStyle1}">
+                <GroupStyle HeaderContainerStyle="{StaticResource HistoryPageHeader}">
                     <GroupStyle.HeaderTemplate>
                         <DataTemplate x:DataType="data:HistoryItemGroupModel">
                             <Grid Background="Transparent"

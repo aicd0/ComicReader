@@ -203,7 +203,7 @@ namespace ComicReader.Data
 
             if (Views.FavoritesPage.Current != null)
             {
-                await Views.FavoritesPage.Current.UpdateTreeExplorer();
+                await Views.FavoritesPage.Current.Update();
             }
         }
     }
