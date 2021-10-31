@@ -8,12 +8,12 @@
                Title="Collection information"
                PrimaryButtonText="Done"
                SecondaryButtonText="Cancel"
-               PrimaryButtonClick="ContentDialog_PrimaryButtonClick"
-               SecondaryButtonClick="ContentDialog_SecondaryButtonClick">
+               PrimaryButtonClick="ContentDialogPrimaryButtonClick"
+               SecondaryButtonClick="ContentDialogSecondaryButtonClick">
 
     <Grid>
         <RichEditBox x:Name="MainEditBox"
-                     Loaded="MainEditBox_Loaded"
+                     Loaded="MainEditBoxLoaded"
                      Width="500"
                      IsSpellCheckEnabled="False"
                      IsColorFontEnabled="False" />

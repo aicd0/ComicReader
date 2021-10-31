@@ -15,12 +15,12 @@ namespace ComicReader.Views
         public ChooseLocationsDialog()
         {
             FolderItemDataSource = new ObservableCollection<FolderItemModel>();
+
             InitializeComponent();
         }
 
-        // user-defined functions
-        // update
-        private async Task UpdateFolders()
+        // utilities
+        private async Task Update()
         {
             FolderItemDataSource.Clear();
 
@@ -47,25 +47,26 @@ namespace ComicReader.Views
             DatabaseManager.ReleaseLock();
         }
 
-        // comfirm changes
-        private void ContentDialog_PrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
+        // events
+        private void ContentDialogPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
         {
+            // comfirm changes
             Utils.TaskQueue.TaskQueueManager.AppendTask(
                 ComicDataManager.UpdateSealed(), "",
                 Utils.TaskQueue.TaskQueueManager.EmptyQueue());
         }
 
-        private void ListView_Loaded(object sender, RoutedEventArgs e)
+        private void ListViewLoaded(object sender, RoutedEventArgs e)
         {
             Utils.Methods.Run(async delegate
             {
-                await UpdateFolders();
+                await Update();
             });
         }
 
-        // add a folder
         private void AddNewPointerPressed(object sender, PointerRoutedEventArgs e)
         {
+            // add a folder
             Utils.Methods.Run(async delegate
             {
                 if (!IsPrimaryButtonEnabled)
@@ -82,7 +83,7 @@ namespace ComicReader.Views
                         return;
                     }
 
-                    await UpdateFolders();
+                    await Update();
                 }
                 finally
                 {
@@ -91,9 +92,9 @@ namespace ComicReader.Views
             });
         }
 
-        // remove a folder
         private void RemoveFolderPointerPressed(object sender, PointerRoutedEventArgs e)
         {
+            // remove a folder
             Utils.Methods.Run(async delegate
             {
                 if (!IsPrimaryButtonEnabled)
@@ -104,7 +105,7 @@ namespace ComicReader.Views
                 IsPrimaryButtonEnabled = false;
                 FolderItemModel item = (FolderItemModel)((Grid)sender).DataContext;
                 await AppSettingsDataManager.RemoveComicFolder(item.Folder);
-                await UpdateFolders();
+                await Update();
                 IsPrimaryButtonEnabled = true;
             });
         }

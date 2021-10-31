@@ -57,9 +57,9 @@
                                 Margin="0,0,10,0"
                                 VerticalAlignment="Bottom">
                         <HyperlinkButton Content="See all"
-                                         Click="ShowAll_Click" />
+                                         Click="ShowAllClick" />
                         <HyperlinkButton Content="See hiddens"
-                                         Click="ShowHiddens_Click" />
+                                         Click="ShowHiddensClick" />
                     </StackPanel>
                 </Grid>
                 <Grid Height="10" />

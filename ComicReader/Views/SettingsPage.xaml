@@ -43,44 +43,24 @@
                 <TextBlock Text="Reader"
                            Style="{StaticResource SettingsPageSubTitleTextBlock}" />
                 <TextBlock Text="Left to right" />
-                <ToggleSwitch IsOn="{x:Bind Shared.P_Reader_LeftToRight, Mode=TwoWay}" />
+                <ToggleSwitch IsOn="{x:Bind Shared.ReaderLeftToRight, Mode=TwoWay}" />
 
                 <!-- History -->
                 <TextBlock Text="History"
                            Style="{StaticResource SettingsPageSubTitleTextBlock}" />
                 <TextBlock Text="Save browsing history" />
-                <ToggleSwitch IsOn="{x:Bind Shared.P_Privacy_SaveBrowsingHistory, Mode=TwoWay}" />
+                <ToggleSwitch IsOn="{x:Bind Shared.HistorySaveBrowsingHistory, Mode=TwoWay}" />
 
                 <!-- Statistics -->
                 <TextBlock Text="Statistics"
                            Style="{StaticResource SettingsPageSubTitleTextBlock}" />
-                <TextBlock x:Name="StatisticsTextBlock" Text="No information collected." />
+                <TextBlock x:Name="StatisticsTextBlock"
+                           Text="No information collected." />
 
                 <!-- About -->
                 <TextBlock Text="About"
                            Style="{StaticResource SettingsPageSubTitleTextBlock}" />
                 <TextBlock Text="Nothing remarkable." />
-
-                <TextBlock Text="Placeholder"
-                           Style="{StaticResource SettingsPageSubTitleTextBlock}" />
-                <TextBlock Text="placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder placeholder" />
-                <TextBlock Text="placeholder" />
-                <TextBlock Text="placeholder" />
-                <TextBlock Text="placeholder" />
-                <TextBlock Text="placeholder" />
-                <TextBlock Text="placeholder" />
-                <TextBlock Text="placeholder" />
-                <TextBlock Text="placeholder" />
-                <TextBlock Text="placeholder" />
-                <TextBlock Text="placeholder" />
-                <TextBlock Text="placeholder" />
-                <TextBlock Text="placeholder" />
-                <TextBlock Text="placeholder" />
-                <TextBlock Text="placeholder" />
-                <TextBlock Text="placeholder" />
-                <TextBlock Text="placeholder" />
-                <TextBlock Text="placeholder" />
-                <TextBlock Text="placeholder" />
             </StackPanel>
         </ScrollViewer>
     </Grid>

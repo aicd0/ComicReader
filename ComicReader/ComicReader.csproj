@@ -185,8 +185,8 @@
     <Compile Include="Views\SettingsPage.xaml.cs">
       <DependentUpon>SettingsPage.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Controls\UtilityPane.xaml.cs">
-      <DependentUpon>UtilityPane.xaml</DependentUpon>
+    <Compile Include="Controls\SidePane.xaml.cs">
+      <DependentUpon>SidePane.xaml</DependentUpon>
     </Compile>
   </ItemGroup>
   <ItemGroup>
@@ -313,7 +313,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Controls\UtilityPane.xaml">
+    <Page Include="Controls\SidePane.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

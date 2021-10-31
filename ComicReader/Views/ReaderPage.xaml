@@ -58,7 +58,7 @@
                                            Margin="0,5,0,0"
                                            Value="{x:Bind Shared.Rating, Mode=TwoWay}"
                                            ValueChanged="RatingControl_ValueChanged"
-                                           IsEnabled="{x:Bind Shared.ContentPageShared.IsInLib, Mode=OneWay}" />
+                                           IsEnabled="{x:Bind Shared.ContentPageShared.NotExternal, Mode=OneWay}" />
 
                             <!-- Directory -->
                             <TextBlock IsTextSelectionEnabled="True"
@@ -133,9 +133,9 @@
                                             Margin="5,0,0,0"
                                             Width="68"
                                             IsChecked="{x:Bind Shared.ContentPageShared.IsFavorite, Mode=OneWay}"
-                                            Checked="FavoriteBt_Checked"
-                                            Unchecked="FavoriteBt_Unchecked"
-                                            IsEnabled="{x:Bind Shared.ContentPageShared.IsInLib, Mode=OneWay}" />
+                                            Checked="FavoriteBtChecked"
+                                            Unchecked="FavoriteBtUnchecked"
+                                            IsEnabled="{x:Bind Shared.ContentPageShared.NotExternal, Mode=OneWay}" />
                     </StackPanel>
                 </Grid>
             </SplitView.Pane>
@@ -176,7 +176,7 @@
                                 </ListView.ItemContainerStyle>
                             </ListView>
                             <Grid Background="Transparent"
-                                  PointerPressed="ScrollViewer_PointerPressed"
+                                  PointerPressed="ScrollViewerPointerPressed"
                                   PointerMoved="ScrollViewer_PointerMoved" />
                         </Grid>
                     </ScrollViewer>
@@ -218,7 +218,7 @@
                                 </ListView.ItemContainerStyle>
                             </ListView>
                             <Grid Background="Transparent"
-                                  PointerPressed="ScrollViewer_PointerPressed"
+                                  PointerPressed="ScrollViewerPointerPressed"
                                   PointerMoved="ScrollViewer_PointerMoved" />
                         </Grid>
                     </ScrollViewer>
@@ -274,7 +274,7 @@
                                 Spacing="5">
                         <Grid Width="5" />
                         <ToggleButton Style="{StaticResource ReaderPageBottomGridToggleButtonStyle}"
-                                      IsChecked="{x:Bind Shared.P_BottomGrid_Pinned, Mode=TwoWay}">
+                                      IsChecked="{x:Bind Shared.BottomGridPinned, Mode=TwoWay}">
                             <FontIcon Glyph="&#xE840;"
                                       FontSize="20" />
                         </ToggleButton>
@@ -282,7 +282,7 @@
                             <Button.Flyout>
                                 <MenuFlyout>
                                     <MenuFlyoutItem Text="Comic Info"
-                                                    Click="OnInformationBtClicked">
+                                                    Click="ComicInfoClick">
                                         <MenuFlyoutItem.Icon>
                                             <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
                                                       Glyph="&#xE946;" />
@@ -295,30 +295,30 @@
                         </Button>
                         <AppBarSeparator />
                         <Button Style="{StaticResource ReaderPageBottomGridButtonStyle}"
-                                IsEnabled="{x:Bind Shared.ContentPageShared.CanZoomIn, Mode=OneWay}"
-                                Click="ZoomInButton_Click">
+                                IsEnabled="{x:Bind Shared.ContentPageShared.ZoomInEnabled, Mode=OneWay}"
+                                Click="ZoomInButtonClick">
                             <FontIcon Glyph="&#xE8A3;"
                                       FontSize="20" />
                         </Button>
                         <Button Style="{StaticResource ReaderPageBottomGridButtonStyle}"
-                                IsEnabled="{x:Bind Shared.ContentPageShared.CanZoomOut, Mode=OneWay}"
-                                Click="ZoomOutButton_Click">
+                                IsEnabled="{x:Bind Shared.ContentPageShared.ZoomOutEnabled, Mode=OneWay}"
+                                Click="ZoomOutButtonClick">
                             <FontIcon Glyph="&#xE71F;"
                                       FontSize="20" />
                         </Button>
                         <ToggleButton Style="{StaticResource ReaderPageBottomGridToggleButtonStyle}"
-                                      IsChecked="{x:Bind Shared.ContentPageShared.IsTwoPagesMode, Mode=TwoWay}">
+                                      IsChecked="{x:Bind Shared.ContentPageShared.TwoPagesMode, Mode=TwoWay}">
                             <FontIcon Glyph="&#xE89A;"
                                       FontSize="20" />
                         </ToggleButton>
                         <ToggleButton Style="{StaticResource ReaderPageBottomGridToggleButtonStyle}"
-                                      IsChecked="{x:Bind Shared.ContentPageShared.IsGridViewMode, Mode=TwoWay}">
+                                      IsChecked="{x:Bind Shared.ContentPageShared.PreviewMode, Mode=TwoWay}">
                             <FontIcon Glyph="&#xF0E2;"
                                       FontSize="20" />
                         </ToggleButton>
                         <Button Style="{StaticResource ReaderPageBottomGridButtonStyle}"
-                                IsEnabled="{x:Bind Shared.ContentPageShared.IsInLib, Mode=OneWay}"
-                                Click="FavoriteButton_Click">
+                                IsEnabled="{x:Bind Shared.ContentPageShared.NotExternal, Mode=OneWay}"
+                                Click="FavoriteButtonClick">
                             <Grid>
                                 <FontIcon Glyph="&#xE734;"
                                           FontSize="20" />
@@ -340,7 +340,7 @@
                 <Grid VerticalAlignment="Bottom"
                       HorizontalAlignment="Right">
                     <Button Style="{StaticResource ReaderPageFullscreenButtonStyle}"
-                            Click="Fullscreen_Click"
+                            Click="FullscreenClick"
                             Visibility="{x:Bind Shared.ContentPageShared.RootPageShared.IsFullscreenN, Mode=OneWay}">
                         <Button.Content>
                             <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
@@ -348,7 +348,7 @@
                         </Button.Content>
                     </Button>
                     <Button Style="{StaticResource ReaderPageFullscreenButtonStyle}"
-                            Click="BackToWindow_Click"
+                            Click="BackToWindowClick"
                             Visibility="{x:Bind Shared.ContentPageShared.RootPageShared.IsFullscreen, Mode=OneWay}">
                         <Button.Content>
                             <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
@@ -358,6 +358,6 @@
                 </Grid>
             </Grid>
         </SplitView>
-        <!--<Button Content="Debug" Click="DebugButton_Click" VerticalAlignment="Center"/>-->
+        <!--<Button Content="Debug" Click="DebugButtonClick" VerticalAlignment="Center"/>-->
     </Grid>
 </Page>

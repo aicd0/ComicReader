@@ -8,9 +8,11 @@
                mc:Ignorable="d"
                Title="Build your comic collections from your local files"
                PrimaryButtonText="Done"
-               PrimaryButtonClick="ContentDialog_PrimaryButtonClick">
+               PrimaryButtonClick="ContentDialogPrimaryButtonClick">
 
     <ContentDialog.Resources>
+
+        <!-- common template -->
         <DataTemplate x:Key="CommonTemplate"
                       x:DataType="data:FolderItemModel">
             <Grid Background="Transparent"
@@ -32,6 +34,7 @@
             </Grid>
         </DataTemplate>
 
+        <!-- add a new folder template -->
         <DataTemplate x:Key="AddNewTemplate"
                       x:DataType="data:FolderItemModel">
             <Grid Background="Transparent"
@@ -41,6 +44,7 @@
             </Grid>
         </DataTemplate>
 
+        <!-- template selector -->
         <converters:FolderItemModelTemplateSelector x:Key="FolderItemTemplateSelector"
                                                     CommonTemplate="{StaticResource CommonTemplate}"
                                                     AddNewTemplate="{StaticResource AddNewTemplate}" />
@@ -51,7 +55,7 @@
             <TextBlock Text="Right now, we're watching these folders:" />
             <Grid Height="10" />
             <ListView ItemTemplateSelector="{StaticResource FolderItemTemplateSelector}"
-                      Loaded="ListView_Loaded"
+                      Loaded="ListViewLoaded"
                       ItemsSource="{x:Bind FolderItemDataSource}">
                 <ListView.ItemContainerStyle>
                     <Style TargetType="ListViewItem">

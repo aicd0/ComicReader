@@ -1,21 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using System.Threading.Tasks;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
-using Windows.UI.Input;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
-using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Navigation;
-using ComicReader.Data;
 
 namespace ComicReader.Views
 {
@@ -45,60 +32,60 @@ namespace ComicReader.Views
             }
         }
 
-        private bool m_IsTwoPagesMode;
-        public bool IsTwoPagesMode
+        private bool m_TwoPagesMode;
+        public bool TwoPagesMode
         {
-            get => m_IsTwoPagesMode;
+            get => m_TwoPagesMode;
             set
             {
-                m_IsTwoPagesMode = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsTwoPagesMode"));
+                m_TwoPagesMode = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("TwoPagesMode"));
                 OnTwoPagesModeChanged?.Invoke();
             }
         }
 
-        private bool m_IsGridViewMode;
-        public bool IsGridViewMode
+        private bool m_PreviewMode;
+        public bool PreviewMode
         {
-            get => m_IsGridViewMode;
+            get => m_PreviewMode;
             set
             {
-                m_IsGridViewMode = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsGridViewMode"));
+                m_PreviewMode = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("PreviewMode"));
                 OnGridViewModeChanged?.Invoke();
             }
         }
 
-        private bool m_CanZoomIn;
-        public bool CanZoomIn
+        private bool m_ZoomInEnabled;
+        public bool ZoomInEnabled
         {
-            get => m_CanZoomIn;
+            get => m_ZoomInEnabled;
             set
             {
-                m_CanZoomIn = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("CanZoomIn"));
+                m_ZoomInEnabled = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ZoomInEnabled"));
             }
         }
 
-        private bool m_CanZoomOut;
-        public bool CanZoomOut
+        private bool m_ZoomOutEnabled;
+        public bool ZoomOutEnabled
         {
-            get => m_CanZoomOut;
+            get => m_ZoomOutEnabled;
             set
             {
-                m_CanZoomOut = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("CanZoomOut"));
+                m_ZoomOutEnabled = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ZoomOutEnabled"));
             }
         }
 
-        private bool m_IsInLib;
-        public bool IsInLib
+        private bool m_NotExternal;
+        public bool NotExternal
         {
-            get => m_IsInLib;
+            get => m_NotExternal;
             set
             {
-                m_IsInLib = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsInLib"));
+                m_NotExternal = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("NotExternal"));
             }
         }
 
@@ -113,8 +100,7 @@ namespace ComicReader.Views
             }
         }
 
-        // events
-        public Action OnFavoritesButtonClicked;
+        public Action OnFavoritesClicked;
         public Action OnZoomInButtonClicked;
         public Action OnZoomOutButtonClicked;
         public Action OnTwoPagesModeChanged;
@@ -127,7 +113,7 @@ namespace ComicReader.Views
         public ContentPageShared Shared { get; set; }
         public Utils.Tab.TabIdentifier TabId => m_tab_manager.TabId;
 
-        private Utils.Tab.TabManager m_tab_manager;
+        private readonly Utils.Tab.TabManager m_tab_manager;
 
         public ContentPage()
         {
@@ -161,13 +147,13 @@ namespace ComicReader.Views
 
         private void OnPageEntered()
         {
-            if (ContentPageUtilityPane != null)
+            if (ContentPageSidePane != null)
             {
-                ContentPageUtilityPane.IsPaneOpen = false;
+                ContentPageSidePane.IsPaneOpen = false;
             }
         }
 
-        // update
+        // utilities
         public void Update()
         {
             if (ContentFrame == null)
@@ -186,19 +172,16 @@ namespace ComicReader.Views
                 Utils.Tab.TabManager.TypeFromPageTypeEnum(m_tab_manager.TabId.Type), nav_params);
         }
 
-        // events processing
-        private void SearchBox_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
-        {
-
-        }
-
         public void SetSearchBox(string keywords)
         {
             SearchBox.Focus(FocusState.Programmatic);
             SearchBox.Text = keywords;
         }
 
-        private void SearchBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
+        // events
+        private void SearchBoxTextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args) { }
+
+        private void SearchBoxQuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
         {
             if (args.QueryText.Trim().Length == 0)
             {
@@ -208,19 +191,19 @@ namespace ComicReader.Views
             RootPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Search, args.QueryText);
         }
 
-        private void SettingBt_Click(object sender, RoutedEventArgs e)
+        private void SettingsClick(object sender, RoutedEventArgs e)
         {
             RootPage.Current.LoadTab(null, Utils.Tab.PageType.Settings);
         }
 
-        private void FavoriteBt_Click(object sender, RoutedEventArgs e)
+        private void FavoritesClick(object sender, RoutedEventArgs e)
         {
-            if (ContentPageUtilityPane == null)
+            if (ContentPageSidePane == null)
             {
                 return;
             }
 
-            ContentPageUtilityPane.IsPaneOpen = !ContentPageUtilityPane.IsPaneOpen;
+            ContentPageSidePane.IsPaneOpen = !ContentPageSidePane.IsPaneOpen;
         }
 
         private void HomeClick(object sender, RoutedEventArgs e)
@@ -251,27 +234,27 @@ namespace ComicReader.Views
             }
         }
 
-        private void AddToFavoriteBt_Click(object sender, RoutedEventArgs e)
+        private void AddToFavoritesClick(object sender, RoutedEventArgs e)
         {
-            Shared.OnFavoritesButtonClicked?.Invoke();
+            Shared.OnFavoritesClicked?.Invoke();
         }
 
-        private void ZoomIn_Click(object sender, RoutedEventArgs e)
+        private void ZoomInClick(object sender, RoutedEventArgs e)
         {
             Shared.OnZoomInButtonClicked?.Invoke();
         }
 
-        private void ZoomOut_Click(object sender, RoutedEventArgs e)
+        private void ZoomOutClick(object sender, RoutedEventArgs e)
         {
             Shared.OnZoomOutButtonClicked?.Invoke();
         }
 
-        private void ComicInfoBt_Click(object sender, RoutedEventArgs e)
+        private void ComicInfoClick(object sender, RoutedEventArgs e)
         {
             ReaderPage.Current.ExpandInfoPane();
         }
 
-        private void ContentPageUtilityPane_PaneOpened(SplitView sender, object args)
+        private void SidePaneOpened(SplitView sender, object args)
         {
             Utils.Methods.Run(async delegate
             {

@@ -1,7 +1,5 @@
-﻿using System.Threading.Tasks;
-using Windows.UI.Xaml;
+﻿using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-
 using ComicReader.Data;
 
 namespace ComicReader.Views
@@ -13,12 +11,14 @@ namespace ComicReader.Views
         public EditComicInfoDialog(ComicItemData comic)
         {
             m_comic = comic;
+
             InitializeComponent();
         }
 
-        // done
-        private void ContentDialog_PrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
+        // events
+        private void ContentDialogPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
         {
+            // done
             Utils.Methods.Run(async delegate
             {
                 MainEditBox.TextDocument.GetText(Windows.UI.Text.TextGetOptions.None, out string text);
@@ -33,12 +33,12 @@ namespace ComicReader.Views
             });
         }
 
-        // cancel
-        private void ContentDialog_SecondaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
+        private void ContentDialogSecondaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
         {
+            // cancel
         }
 
-        private void MainEditBox_Loaded(object sender, RoutedEventArgs e)
+        private void MainEditBoxLoaded(object sender, RoutedEventArgs e)
         {
             Utils.Methods.Run(async delegate
             {

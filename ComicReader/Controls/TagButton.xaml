@@ -18,6 +18,6 @@
             VerticalAlignment="Center"
             FontSize="13"
             FontWeight="Bold"
-            Click="{x:Bind Ctx.E_Clicked}">
+            Click="{x:Bind Ctx.EClicked}">
     </Button>
 </UserControl>

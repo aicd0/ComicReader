@@ -1,22 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
-using Windows.ApplicationModel.Core;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
-using Windows.Storage;
-using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
-using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 using muxc = Microsoft.UI.Xaml.Controls;
 using ComicReader.Data;
@@ -38,29 +25,29 @@ namespace ComicReader.Views
             }
         }
 
-        public Action E_SettingsChanged;
+        public Action OnSettingsChanged;
 
-        private bool m_Reader_LeftToRight;
-        public bool P_Reader_LeftToRight
+        private bool m_ReaderLeftToRight;
+        public bool ReaderLeftToRight
         {
-            get => m_Reader_LeftToRight;
+            get => m_ReaderLeftToRight;
             set
             {
-                m_Reader_LeftToRight = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("P_Reader_LeftToRight"));
-                E_SettingsChanged?.Invoke();
+                m_ReaderLeftToRight = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ReaderLeftToRight"));
+                OnSettingsChanged?.Invoke();
             }
         }
 
-        private bool m_Privacy_SaveBrowsingHistory;
-        public bool P_Privacy_SaveBrowsingHistory
+        private bool m_HistorySaveBrowsingHistory;
+        public bool HistorySaveBrowsingHistory
         {
-            get => m_Privacy_SaveBrowsingHistory;
+            get => m_HistorySaveBrowsingHistory;
             set
             {
-                m_Privacy_SaveBrowsingHistory = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("P_Privacy_SaveBrowsingHistory"));
-                E_SettingsChanged?.Invoke();
+                m_HistorySaveBrowsingHistory = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("HistorySaveBrowsingHistory"));
+                OnSettingsChanged?.Invoke();
             }
         }
     }
@@ -70,20 +57,19 @@ namespace ComicReader.Views
         public static SettingsPage Current;
         public SettingsPageShared Shared { get; set; }
 
-        private Utils.Tab.TabManager m_tab_manager;
-        private bool m_save_enabled;
+        private readonly Utils.Tab.TabManager m_tab_manager;
+        private bool m_updating = false;
 
         public SettingsPage()
         {
             Current = this;
             Shared = new SettingsPageShared();
-            Shared.E_SettingsChanged += E_SettingsChanged;
+            Shared.OnSettingsChanged = OnSettingsChanged;
 
             m_tab_manager = new Utils.Tab.TabManager();
             m_tab_manager.OnSetShared = OnSetShared;
             m_tab_manager.OnPageEntered = OnPageEntered;
             m_tab_manager.OnUpdate = OnUpdate;
-            m_save_enabled = false;
 
             InitializeComponent();
         }
@@ -110,7 +96,7 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                await C_UpdateContent();
+                await Update();
             });
         }
 
@@ -122,52 +108,46 @@ namespace ComicReader.Views
             Shared.RootPageShared.CurrentPageType = Utils.Tab.PageType.Settings;
         }
 
-        public static string PageUniqueString(object args)
-        {
-            return "settings";
-        }
+        public static string PageUniqueString(object _) => "settings";
 
-        // user-defined functions
-        // update
-        private async Task C_UpdateContent()
+        // utilities
+        private async Task Update()
         {
-            m_save_enabled = false;
+            m_updating = false;
             await DatabaseManager.WaitLock();
 
-            Shared.P_Reader_LeftToRight = Database.AppSettings.LeftToRight;
-            Shared.P_Privacy_SaveBrowsingHistory = Database.AppSettings.SaveHistory;
+            Shared.ReaderLeftToRight = Database.AppSettings.LeftToRight;
+            Shared.HistorySaveBrowsingHistory = Database.AppSettings.SaveHistory;
             StatisticsTextBlock.Text = "Total collections: " + Database.Comics.Items.Count.ToString("#,#0", CultureInfo.InvariantCulture);
 
             DatabaseManager.ReleaseLock();
-            m_save_enabled = true;
+            m_updating = true;
         }
 
-        // save
-        private async Task C_SaveSettings()
+        private async Task Save()
         {
-            if (!m_save_enabled)
+            if (!m_updating)
             {
                 return;
             }
 
             await DatabaseManager.WaitLock();
-
-            Database.AppSettings.LeftToRight = Shared.P_Reader_LeftToRight;
-            Database.AppSettings.SaveHistory = Shared.P_Privacy_SaveBrowsingHistory;
+            Database.AppSettings.LeftToRight = Shared.ReaderLeftToRight;
+            Database.AppSettings.SaveHistory = Shared.HistorySaveBrowsingHistory;
 
             DatabaseManager.ReleaseLock();
             Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(DatabaseItem.Settings));
         }
 
-        private void E_SettingsChanged()
+        private void OnSettingsChanged()
         {
             Utils.Methods.Run(async delegate
             {
-                await C_SaveSettings();
+                await Save();
             });
         }
 
-        // choose locations button
+        // events
         private void ChooseLocationsClick(object sender, RoutedEventArgs e)
         {
             Utils.Methods.Run(async delegate

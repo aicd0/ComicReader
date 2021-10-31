@@ -276,8 +276,8 @@ namespace ComicReader.Views
                     ComicItemModel result = new ComicItemModel
                     {
                         OnItemPressed = OnListViewPressed,
-                        OnHideClicked = Hide_Click,
-                        OnUnhideClicked = Unhide_Click,
+                        OnHideClicked = HideClick,
+                        OnUnhideClicked = UnhideClick,
                         OnAddToFavoritesClicked = AddToFavoritesBtClick,
                         OnRemoveFromFavoritesClicked = RemoveFromFavoritesBtClick,
                         Comic = comic,
@@ -392,7 +392,7 @@ namespace ComicReader.Views
             });
         }
 
-        private void Unhide_Click(object sender, RoutedEventArgs e)
+        private void UnhideClick(object sender, RoutedEventArgs e)
         {
             Utils.Methods.Run(async delegate
             {
@@ -402,7 +402,7 @@ namespace ComicReader.Views
             });
         }
 
-        private void Hide_Click(object sender, RoutedEventArgs e)
+        private void HideClick(object sender, RoutedEventArgs e)
         {
             Utils.Methods.Run(async delegate
             {

@@ -5,12 +5,12 @@ using ComicReader.Views;
 
 namespace ComicReader.Controls
 {
-    public sealed partial class UtilityPane : UserControl
+    public sealed partial class SidePane : UserControl
     {
-        public static UtilityPane Current = null;
+        public static SidePane Current = null;
         public ContentPage Ctx => DataContext as ContentPage;
 
-        public UtilityPane()
+        public SidePane()
         {
             Current = this;
 

@@ -47,7 +47,7 @@ namespace ComicReader.Views
         public Utils.TrulyObservableCollection<ComicItemModel> ComicItemSource { get; set; }
         public ObservableCollection<FolderItemModel> FolderItemDataSource { get; set; }
 
-        private Utils.Tab.TabManager m_tab_manager;
+        private readonly Utils.Tab.TabManager m_tab_manager;
         private Utils.CancellationLock m_update_folder_lock;
         private Utils.CancellationLock m_update_library_lock;
 
@@ -90,7 +90,7 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                await UpdateInfo();
+                await Update();
             });
         }
 
@@ -105,9 +105,8 @@ namespace ComicReader.Views
 
         public static string PageUniqueString(object args) => "blank";
 
-        // user-defined functions
-        // update
-        public async Task UpdateInfo()
+        // utilities
+        public async Task Update()
         {
             await UpdateFolders();
             await UpdateLibrary();
@@ -136,6 +135,7 @@ namespace ComicReader.Views
                     {
                         continue;
                     }
+
                     min_heap.Add(comic);
                 }
 
@@ -149,8 +149,8 @@ namespace ComicReader.Views
                 {
                     ComicItemModel data = new ComicItemModel
                     {
-                        OnItemPressed = Grid_PointerPressed,
-                        OnHideClicked = Hide_Click,
+                        OnItemPressed = GridPointerPressed,
+                        OnHideClicked = HideClick,
                         Comic = comic,
                         Title = comic.Title2.Length == 0 ? comic.Title : comic.Title2 + "-" + comic.Title,
                         Id = comic.Id,
@@ -213,7 +213,7 @@ namespace ComicReader.Views
 
                 new_folder_source.Add(new FolderItemModel
                 {
-                    OnItemPressed = FolderItem_Pressed,
+                    OnItemPressed = FolderItemPressed,
                     IsAddNew = true
                 });
 
@@ -223,8 +223,8 @@ namespace ComicReader.Views
                 {
                     FolderItemModel item = new FolderItemModel
                     {
-                        OnItemPressed = FolderItem_Pressed,
-                        OnRemoveClicked = FolderItemRemove_Click,
+                        OnItemPressed = FolderItemPressed,
+                        OnRemoveClicked = FolderItemRemoveClick,
                         Folder = folder,
                         IsAddNew = false
                     };
@@ -241,17 +241,18 @@ namespace ComicReader.Views
             }
         }
 
-        private void ShowAll_Click(object sender, RoutedEventArgs e)
+        // events
+        private void ShowAllClick(object sender, RoutedEventArgs e)
         {
             RootPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Search, "<all>");
         }
 
-        private void ShowHiddens_Click(object sender, RoutedEventArgs e)
+        private void ShowHiddensClick(object sender, RoutedEventArgs e)
         {
             RootPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Search, "<hidden>");
         }
 
-        private void Grid_PointerPressed(object sender, PointerRoutedEventArgs e)
+        private void GridPointerPressed(object sender, PointerRoutedEventArgs e)
         {
             ComicItemModel ctx = (ComicItemModel)((Grid)sender).DataContext;
             PointerPoint pt = e.GetCurrentPoint((UIElement)sender);
@@ -264,7 +265,7 @@ namespace ComicReader.Views
             RootPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Reader, ctx.Comic);
         }
 
-        private void Hide_Click(object sender, RoutedEventArgs e)
+        private void HideClick(object sender, RoutedEventArgs e)
         {
             Utils.Methods.Run(async delegate
             {
@@ -274,7 +275,7 @@ namespace ComicReader.Views
             });
         }
 
-        private void FolderItem_Pressed(object sender, PointerRoutedEventArgs e)
+        private void FolderItemPressed(object sender, PointerRoutedEventArgs e)
         {
             Utils.Methods.Run(async delegate
             {
@@ -301,7 +302,7 @@ namespace ComicReader.Views
                     Utils.TaskQueue.TaskQueueManager.AppendTask(delegate (RawTask _t) {
                         _ = Utils.Methods.Sync(async delegate
                         {
-                            await UpdateInfo();
+                            await Update();
                         });
                         return new Utils.TaskQueue.TaskResult();
                     }, "", update_queue);
@@ -313,7 +314,7 @@ namespace ComicReader.Views
             });
         }
 
-        private void FolderItemRemove_Click(object sender, RoutedEventArgs e)
+        private void FolderItemRemoveClick(object sender, RoutedEventArgs e)
         {
             Utils.Methods.Run(async delegate
             {
