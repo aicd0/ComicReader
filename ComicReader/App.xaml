@@ -12,7 +12,7 @@
                 <ResourceDictionary>
                     <ResourceDictionary.ThemeDictionaries>
                         <ResourceDictionary x:Key="Default">
-                            <SolidColorBrush x:Key="ContentPageTopBackground"
+                            <SolidColorBrush x:Key="TabSelectedBackground"
                                              Color="#FF282828" />
                             <muxm:AcrylicBrush x:Key="SplitPanesPageBackground"
                                                BackgroundSource="HostBackdrop"
@@ -31,7 +31,7 @@
                                                TintOpacity="0.3" />
                         </ResourceDictionary>
                         <ResourceDictionary x:Key="Light">
-                            <SolidColorBrush x:Key="ContentPageTopBackground"
+                            <SolidColorBrush x:Key="TabSelectedBackground"
                                              Color="#FF282828" />
                             <muxm:AcrylicBrush x:Key="SplitPanesPageBackground"
                                                BackgroundSource="HostBackdrop"
@@ -50,7 +50,7 @@
                                                TintOpacity="0.3" />
                         </ResourceDictionary>
                         <ResourceDictionary x:Key="HighContrast">
-                            <SolidColorBrush x:Key="ContentPageTopBackground"
+                            <SolidColorBrush x:Key="TabSelectedBackground"
                                              Color="#FF282828" />
                             <SolidColorBrush x:Key="SplitPanesPageBackground"
                                              Color="{ThemeResource SystemColorWindowColor}" />

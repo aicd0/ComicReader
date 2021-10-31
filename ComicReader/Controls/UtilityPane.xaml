@@ -9,18 +9,15 @@
              d:DesignWidth="400">
 
     <Grid>
-        <muxc:NavigationView PaneDisplayMode="Left"
-                             IsPaneOpen="False"
+        <muxc:NavigationView IsPaneOpen="False"
                              IsBackButtonVisible="Collapsed"
-                             IsSettingsVisible="False"
-                             SelectionChanged="OnNavPaneSelectionChanged"
                              IsPaneToggleButtonVisible="False"
-                             Background="#404040">
-
+                             IsSettingsVisible="False"
+                             PaneDisplayMode="LeftCompact"
+                             SelectionChanged="OnNavPaneSelectionChanged">
             <Frame x:Name="ContentFrame"
                    Loaded="ContentFrame_Loaded"
-                   Background="#454545" />
-
+                   Background="#01FFFFFF"/>
             <muxc:NavigationView.MenuItems>
                 <muxc:NavigationViewItem Content="Favorites"
                                          IsSelected="True">
@@ -37,5 +34,10 @@
                 </muxc:NavigationViewItem>
             </muxc:NavigationView.MenuItems>
         </muxc:NavigationView>
+        
+        <!-- Border -->
+        <Rectangle Fill="Black"
+                   HorizontalAlignment="Left"
+                   Width="1"/>
     </Grid>
 </UserControl>

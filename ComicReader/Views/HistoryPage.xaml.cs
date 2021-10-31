@@ -38,30 +38,44 @@ namespace ComicReader.Views
     public sealed partial class HistoryPage : Page
     {
         public static HistoryPage Current = null;
-        private bool m_page_initialized = false;
-
         public HistoryPageShared Shared { get; set; }
+
+        private Utils.Tab.TabManager m_tab_manager;
 
         public HistoryPage()
         {
             Current = this;
             Shared = new HistoryPageShared();
+
+            m_tab_manager = new Utils.Tab.TabManager();
+            m_tab_manager.OnSetShared = OnSetShared;
+            m_tab_manager.OnPageEntered = OnPageEntered;
+
             InitializeComponent();
         }
 
         // navigation
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
+            base.OnNavigatedTo(e);
+            m_tab_manager.OnNavigatedTo(e);
+        }
+
+        protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
+        {
+            base.OnNavigatingFrom(e);
+            m_tab_manager.OnNavigatedFrom(e);
+        }
+
+        private void OnSetShared(object shared)
+        {
+            Shared.ContentPageShared = (ContentPageShared)shared;
+        }
+
+        private void OnPageEntered()
+        {
             Utils.Methods.Run(async delegate
             {
-                base.OnNavigatedTo(e);
-
-                if (!m_page_initialized)
-                {
-                    m_page_initialized = true;
-                    Shared.ContentPageShared = ((ContentPage)e.Parameter).Shared;
-                }
-
                 await UpdateHistory();
             });
         }

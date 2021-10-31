@@ -9,7 +9,7 @@
       xmlns:converters="using:ComicReader.Converters"
       xmlns:data="using:ComicReader.Data"
       mc:Ignorable="d"
-      Background="{ThemeResource ContentPageTopBackground}"
+      Background="{ThemeResource TabSelectedBackground}"
       NavigationCacheMode="Enabled">
 
     <Page.Resources>
@@ -26,7 +26,7 @@
         <SplitView x:Name="InfoPane"
                    DisplayMode="Overlay"
                    PanePlacement="Right"
-                   PaneBackground="{ThemeResource ContentPageTopBackground}">
+                   PaneBackground="{ThemeResource TabSelectedBackground}">
 
             <!-- Information Page -->
             <SplitView.Pane>

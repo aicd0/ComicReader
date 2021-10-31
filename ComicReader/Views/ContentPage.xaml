@@ -5,7 +5,7 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:controls="using:ComicReader.Controls"
       mc:Ignorable="d"
-      Background="{ThemeResource ContentPageTopBackground}">
+      Background="{ThemeResource TabSelectedBackground}">
 
     <Page.Resources>
         <ResourceDictionary>
@@ -25,7 +25,7 @@
         </Grid.RowDefinitions>
         <Grid x:Name="TopTile"
               VerticalAlignment="Top"
-              Background="{ThemeResource ContentPageTopBackground}"
+              Background="{ThemeResource TabSelectedBackground}"
               Visibility="{x:Bind Shared.RootPageShared.IsFullscreenN, Mode=OneWay}">
             <StackPanel Orientation="Vertical">
                 <Grid>
@@ -182,6 +182,12 @@
             <SplitView.Pane>
                 <controls:UtilityPane DataContext="{x:Bind}" />
             </SplitView.Pane>
+            <SplitView.PaneBackground>
+                <AcrylicBrush BackgroundSource="Backdrop"
+                              TintColor="MidnightBlue"
+                              TintOpacity="0.0"
+                              TintLuminosityOpacity="0.85" />
+            </SplitView.PaneBackground>
         </SplitView>
     </Grid>
 </Page>

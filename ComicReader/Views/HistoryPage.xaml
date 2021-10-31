@@ -174,7 +174,8 @@
                   ItemClick="MainListView_ItemClick"
                   IsItemClickEnabled="True"
                   ItemContainerStyle="{StaticResource ListViewItemStyle1}"
-                  x:Name="MainListView">
+                  x:Name="MainListView"
+                  Margin="0,-10,0,0">
             <ListView.ItemsPanel>
                 <ItemsPanelTemplate>
                     <ItemsStackPanel AreStickyGroupHeadersEnabled="False" />
@@ -182,7 +183,7 @@
             </ListView.ItemsPanel>
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="data:HistoryItemModel">
-                    <Grid Padding="12,0,4,0">
+                    <Grid Padding="16,0,4,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
@@ -194,7 +195,7 @@
                                   Margin="0" />
                         <StackPanel Orientation="Vertical"
                                     Grid.Column="1"
-                                    Margin="8,0,0,0">
+                                    Margin="6,3,0,5">
                             <StackPanel.ContextFlyout>
                                 <MenuFlyout>
                                     <MenuFlyoutItem Text="Open in new tab"
@@ -206,13 +207,12 @@
                                                     Click="DeleteClick" />
                                 </MenuFlyout>
                             </StackPanel.ContextFlyout>
-                            <Grid Height="3" />
                             <TextBlock Text="{x:Bind Title}"
+                                       FontWeight="SemiLight"
                                        TextTrimming="CharacterEllipsis" />
                             <TextBlock Text="{x:Bind Time}"
                                        FontSize="13"
-                                       Opacity="0.6" />
-                            <Grid Height="5" />
+                                       Foreground="#999999" />
                         </StackPanel>
                     </Grid>
                 </DataTemplate>
@@ -221,12 +221,15 @@
                 <GroupStyle HeaderContainerStyle="{StaticResource ListViewHeaderItemStyle1}">
                     <GroupStyle.HeaderTemplate>
                         <DataTemplate x:DataType="data:HistoryItemGroupModel">
-                            <Grid Background="#30000000"
-                                  Margin="0,5,0,1">
+                            <Grid Background="Transparent"
+                                  Margin="0,22,0,1">
                                 <TextBlock Text="{x:Bind Key}"
-                                           FontSize="14"
-                                           FontWeight="Bold"
-                                           Margin="15,2,5,6" />
+                                           FontSize="18"
+                                           FontWeight="SemiBold"
+                                           Margin="15,0,0,6" />
+                                <Rectangle Fill="#404040"
+                                           Height="1"
+                                           VerticalAlignment="Bottom" />
                             </Grid>
                         </DataTemplate>
                     </GroupStyle.HeaderTemplate>

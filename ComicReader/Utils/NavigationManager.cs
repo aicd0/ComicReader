@@ -41,6 +41,7 @@ namespace ComicReader.Utils.Tab
             public object RequestArgs;
         };
 
+        private bool m_initialized = false;
         private List<TabIdInfo> m_info = new List<TabIdInfo>();
         private int m_info_index = -1;
         private NavigationMode m_navigation_mode = NavigationMode.New;
@@ -60,8 +61,9 @@ namespace ComicReader.Utils.Tab
 
         public void OnNavigatedTo(NavigationEventArgs e)
         {
-            if (TabId == null)
+            if (!m_initialized)
             {
+                m_initialized = true;
                 NavigationParams nav_params = (NavigationParams)e.Parameter;
                 TabId = nav_params.TabId;
                 OnSetShared?.Invoke(nav_params.Shared);
@@ -75,12 +77,15 @@ namespace ComicReader.Utils.Tab
                         m_info.Count - m_info_index - 1);
                 }
 
-                m_info.Add(new TabIdInfo
-                {
-                    Type = TabId.Type,
-                    RequestArgs = TabId.RequestArgs,
-                });
+                TabIdInfo new_info = new TabIdInfo();
 
+                if (TabId != null)
+                {
+                    new_info.Type = TabId.Type;
+                    new_info.RequestArgs = TabId.RequestArgs;
+                }
+
+                m_info.Add(new_info);
                 m_info_index = m_info.Count - 1;
             }
             else if (e.NavigationMode == NavigationMode.Refresh)
@@ -102,10 +107,13 @@ namespace ComicReader.Utils.Tab
                 }
             }
 
-            TabIdInfo info = m_info[m_info_index];
-            TabId.Type = info.Type;
-            TabId.RequestArgs = info.RequestArgs;
-            TabId.OnTabSelected += OnPageEntered;
+            if (TabId != null)
+            {
+                TabIdInfo info = m_info[m_info_index];
+                TabId.Type = info.Type;
+                TabId.RequestArgs = info.RequestArgs;
+                TabId.OnTabSelected += OnPageEntered;
+            }
 
             OnPageEntered?.Invoke();
             OnUpdate?.Invoke(TabId);

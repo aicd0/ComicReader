@@ -4,7 +4,7 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       mc:Ignorable="d"
-      Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+      Background="{ThemeResource TabSelectedBackground}">
 
     <Page.Resources>
         <ResourceDictionary>
@@ -14,7 +14,7 @@
         </ResourceDictionary>
     </Page.Resources>
 
-    <Grid Margin="0,30,0,0">
+    <Grid Margin="0,20,0,0">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
@@ -23,14 +23,14 @@
                     Grid.Row="0">
             <FontIcon FontFamily="Segoe MDL2 Assets"
                       Glyph="&#xE713;"
-                      Margin="25,6,15,0" />
+                      Margin="25,6,10,0" />
             <TextBlock Text="Settings"
                        FontSize="32"
                        FontWeight="Light" />
         </StackPanel>
         <ScrollViewer VerticalScrollBarVisibility="Auto"
                       VerticalScrollMode="Auto"
-                      Padding="25,0,25,0"
+                      Padding="30,0,25,0"
                       Grid.Row="1">
             <StackPanel Orientation="Vertical">
                 <TextBlock Text="Images on this PC"

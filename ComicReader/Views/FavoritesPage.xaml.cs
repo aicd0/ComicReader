@@ -38,32 +38,46 @@ namespace ComicReader.Views
     public sealed partial class FavoritesPage : Page
     {
         public static FavoritesPage Current = null;
-        private bool m_page_initialized = false;
-
         public FavoritesPageShared Shared { get; set; }
         private ObservableCollection<FavoritesItemModel> DataSource { get; set; }
+
+        private Utils.Tab.TabManager m_tab_manager;
 
         public FavoritesPage()
         {
             Current = this;
             Shared = new FavoritesPageShared();
             DataSource = new ObservableCollection<FavoritesItemModel>();
+
+            m_tab_manager = new Utils.Tab.TabManager();
+            m_tab_manager.OnSetShared = OnSetShared;
+            m_tab_manager.OnPageEntered = OnPageEntered;
+
             InitializeComponent();
         }
 
         // navigation
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
+            base.OnNavigatedTo(e);
+            m_tab_manager.OnNavigatedTo(e);
+        }
+
+        protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
+        {
+            base.OnNavigatingFrom(e);
+            m_tab_manager.OnNavigatedFrom(e);
+        }
+
+        private void OnSetShared(object shared)
+        {
+            Shared.ContentPageShared = (ContentPageShared)shared;
+        }
+
+        private void OnPageEntered()
+        {
             Utils.Methods.Run(async delegate
             {
-                base.OnNavigatedTo(e);
-
-                if (!m_page_initialized)
-                {
-                    m_page_initialized = true;
-                    Shared.ContentPageShared = ((ContentPage)e.Parameter).Shared;
-                }
-
                 await UpdateTreeExplorer();
             });
         }
@@ -71,17 +85,18 @@ namespace ComicReader.Views
         // update
         public async Task UpdateTreeExplorer()
         {
-            DataSource.Clear();
             await DatabaseManager.WaitLock();
+            DataSource.Clear();
             UpdateTreeExplorerHelper(Database.Favorites.RootNodes, DataSource, null);
             DatabaseManager.ReleaseLock();
         }
 
         private void UpdateTreeExplorerHelper(List<FavoritesNodeData> it, ObservableCollection<FavoritesItemModel> et, FavoritesItemModel parent)
         {
-            foreach (var inode in it) {
+            foreach (FavoritesNodeData inode in it)
+            {
                 TreeItemType type = inode.Type == "i" ? TreeItemType.Item : TreeItemType.Filter;
-                var enode = new FavoritesItemModel(inode.Name, type, parent);
+                FavoritesItemModel enode = new FavoritesItemModel(inode.Name, type, parent);
 
                 if (type == TreeItemType.Filter)
                 {

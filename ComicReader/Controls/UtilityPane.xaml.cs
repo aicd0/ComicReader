@@ -22,7 +22,7 @@ namespace ComicReader.Controls
         {
             if (!m_first_page_loaded)
             {
-                ContentFrame.Navigate(typeof(FavoritesPage), null);
+                //ContentFrame.Navigate(typeof(FavoritesPage), null);
                 m_first_page_loaded = true;
             }
         }
@@ -30,14 +30,20 @@ namespace ComicReader.Controls
         private void OnNavPaneSelectionChanged(muxc.NavigationView sender, muxc.NavigationViewSelectionChangedEventArgs args)
         {
             string item = (string)((muxc.NavigationViewItem)args.SelectedItem).Content;
+            
+            Utils.Tab.NavigationParams nav_params = new Utils.Tab.NavigationParams
+            {
+                TabId = null,
+                Shared = Ctx.Shared,
+            };
 
             if (item == "Favorites")
             {
-                ContentFrame.Navigate(typeof(FavoritesPage), Ctx);
+                _ = ContentFrame.Navigate(typeof(FavoritesPage), nav_params);
             }
             else if (item == "History")
             {
-                ContentFrame.Navigate(typeof(HistoryPage), Ctx);
+                _ = ContentFrame.Navigate(typeof(HistoryPage), nav_params);
             }
             else
             {

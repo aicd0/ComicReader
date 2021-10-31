@@ -57,12 +57,12 @@
                                       Visibility="{x:Bind IsExpanded, Mode=OneWay}" />
                         </Grid>
                         <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                  Glyph="&#xE768;"
-                                  FontSize="18"
-                                  Margin="0,2,0,0"
+                                  Glyph="&#xE7C3;"
+                                  FontSize="17"
                                   Visibility="{x:Bind IsItem, Mode=OneWay}" />
                     </Grid>
                     <TextBlock Text="{x:Bind Name}"
+                               FontWeight="SemiLight"
                                VerticalAlignment="Center"
                                TextTrimming="CharacterEllipsis"
                                Grid.Column="2"
@@ -80,7 +80,7 @@
                                HorizontalContentAlignment="Stretch"
                                AllowDrop="False">
                 <Grid Height="25"
-                      Margin="0,0,10,0">
+                      Margin="0,2,10,0">
                     <TextBox Text="{x:Bind EditingName}"
                              KeyDown="RenameTextBox_KeyDown"
                              VerticalAlignment="Center"

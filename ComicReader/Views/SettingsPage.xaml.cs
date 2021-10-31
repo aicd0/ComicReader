@@ -80,8 +80,8 @@ namespace ComicReader.Views
             Shared.E_SettingsChanged += E_SettingsChanged;
 
             m_tab_manager = new Utils.Tab.TabManager();
-            m_tab_manager.OnPageEntered = OnPageEntered;
             m_tab_manager.OnSetShared = OnSetShared;
+            m_tab_manager.OnPageEntered = OnPageEntered;
             m_tab_manager.OnUpdate = OnUpdate;
             m_save_enabled = false;
 
