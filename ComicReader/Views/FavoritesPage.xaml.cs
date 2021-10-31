@@ -122,7 +122,7 @@ namespace ComicReader.Views
 
         private void SaveTreeExplorerHelper(List<FavoritesNodeData> it, ObservableCollection<FavoritesItemModel> et)
         {
-            foreach (var enode in et)
+            foreach (FavoritesItemModel enode in et)
             {
                 FavoritesNodeData inode = new FavoritesNodeData();
                 inode.Type = enode.Type == TreeItemType.Filter ? "f" : "i";
@@ -138,7 +138,7 @@ namespace ComicReader.Views
             }
         }
 
-        private void TreeExplorer_Loaded(object sender, Windows.UI.Xaml.RoutedEventArgs e)
+        private void TreeExplorer_Loaded(object sender, RoutedEventArgs e)
         {
             Utils.Methods.Run(async delegate
             {
@@ -146,11 +146,11 @@ namespace ComicReader.Views
             });
         }
 
-        private void TreeViewBackground_Pressed(object sender, Windows.UI.Xaml.Input.PointerRoutedEventArgs e)
+        private void TreeViewBackground_Pressed(object sender, PointerRoutedEventArgs e)
         {
             Utils.Methods.Run(async delegate
             {
-                await ResetItemStatus();
+                await ResetItems();
             });
         }
 
@@ -167,7 +167,7 @@ namespace ComicReader.Views
                     return;
                 }
 
-                await ResetItemStatus();
+                await ResetItems();
                 e.Handled = true;
             });
         }
@@ -184,7 +184,7 @@ namespace ComicReader.Views
                     return;
                 }
 
-                await ResetItemStatus();
+                await ResetItems();
 
                 if (item.Type == TreeItemType.Item)
                 {
@@ -196,7 +196,8 @@ namespace ComicReader.Views
                     }
                     else
                     {
-                        RootPage.Current.LoadTab(null, Utils.Tab.PageType.Reader, comic);
+                        RootPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Reader, comic);
+                        Shared.ContentPageShared.PaneOpen = false;
                     }
                 }
             });
@@ -227,48 +228,49 @@ namespace ComicReader.Views
 
         private void Rename_Click(object sender, RoutedEventArgs e)
         {
-            var item = (FavoritesItemModel)((MenuFlyoutItem)sender).DataContext;
+            FavoritesItemModel item = (FavoritesItemModel)((MenuFlyoutItem)sender).DataContext;
             item.IsRenaming = true;
-            Utils.Methods1<FavoritesItemModel>.NotifyCollectionChanged(item.Parent != null ? item.Parent.Children : DataSource, item);
+            ObservableCollection<FavoritesItemModel> parent = item.Parent != null ? item.Parent.Children : DataSource;
+            Utils.Methods1<FavoritesItemModel>.NotifyCollectionChanged(parent, item);
         }
 
-        public async Task ResetItemStatus()
+        private async Task ResetItems()
         {
-            await ResetItemStatusHelper(DataSource);
-        }
-
-        private async Task<bool> ResetItemStatusHelper(ObservableCollection<FavoritesItemModel> root)
-        {
-            foreach (var item in root)
+            async Task<bool> helper(ObservableCollection<FavoritesItemModel> root)
             {
-                if (item.IsRenaming)
+                foreach (var item in root)
                 {
-                    if (item.EditingName.Length == 0)
+                    if (item.IsRenaming)
                     {
-                        item.EditingName = item.Name;
-                    }
-                    else
-                    {
-                        item.Name = item.EditingName;
-                    }
+                        if (item.EditingName.Length == 0)
+                        {
+                            item.EditingName = item.Name;
+                        }
+                        else
+                        {
+                            item.Name = item.EditingName;
+                        }
 
-                    item.IsRenaming = false;
-
-                    Utils.Methods1<FavoritesItemModel>.NotifyCollectionChanged(item.Parent != null ? item.Parent.Children : DataSource, item);
-
-                    await SaveTreeExplorer();
-
-                    return true;
-                }
-                if (item.IsExpanded && item.Type == TreeItemType.Filter)
-                {
-                    if (await ResetItemStatusHelper(item.Children))
-                    {
+                        item.IsRenaming = false;
+                        ObservableCollection<FavoritesItemModel> parent = item.Parent != null ? item.Parent.Children : DataSource;
+                        Utils.Methods1<FavoritesItemModel>.NotifyCollectionChanged(parent, item);
+                        await SaveTreeExplorer();
                         return true;
                     }
+
+                    if (item.Expanded && item.Type == TreeItemType.Filter)
+                    {
+                        if (await helper(item.Children))
+                        {
+                            return true;
+                        }
+                    }
                 }
+
+                return false;
             }
-            return false;
+
+            await helper(DataSource);
         }
 
         private void RenameTextBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -285,7 +287,7 @@ namespace ComicReader.Views
             {
                 if (e.Key == Windows.System.VirtualKey.Enter)
                 {
-                    await ResetItemStatus();
+                    await ResetItems();
                     e.Handled = true;
                 }
             });
@@ -334,9 +336,9 @@ namespace ComicReader.Views
 
                 if (item.Type == TreeItemType.Filter)
                 {
-                    if (!item.IsExpanded)
+                    if (!item.Expanded)
                     {
-                        item.IsExpanded = true;
+                        item.Expanded = true;
                         Utils.Methods1<FavoritesItemModel>.NotifyCollectionChanged(item.Parent != null ? item.Parent.Children : DataSource, item);
                     }
 
@@ -426,6 +428,18 @@ namespace ComicReader.Views
 
                 await SaveTreeExplorer();
             });
+        }
+
+        private void TextBox_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
+        {
+            FavoritesItemModel ctx = (FavoritesItemModel)args.NewValue;
+
+            if (ctx.IsRenaming)
+            {
+                TextBox textbox = (TextBox)sender;
+                textbox.Focus(FocusState.Programmatic);
+                textbox.SelectAll();
+            }
         }
     }
 }

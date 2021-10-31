@@ -94,7 +94,7 @@
                             </AppBarButton.Content>
                         </AppBarButton>
 
-                        <!-- Two pages mode -->
+                        <!-- Two Pages Mode -->
                         <AppBarToggleButton Style="{StaticResource ContentPageTopTileAppBarToggleButton}"
                                             IsChecked="{x:Bind Shared.IsTwoPagesMode, Mode=TwoWay}"
                                             ToolTipService.ToolTip="Two pages">
@@ -103,7 +103,7 @@
                             </AppBarToggleButton.Content>
                         </AppBarToggleButton>
 
-                        <!-- Grid View -->
+                        <!-- Preview -->
                         <AppBarToggleButton Style="{StaticResource ContentPageTopTileAppBarToggleButton}"
                                             ToolTipService.ToolTip="Grid View"
                                             IsChecked="{x:Bind Shared.IsGridViewMode, Mode=TwoWay}">
@@ -177,7 +177,8 @@
                    PanePlacement="Right"
                    OpenPaneLength="380"
                    Grid.Row="1"
-                   PaneOpened="ContentPageUtilityPane_PaneOpened">
+                   PaneOpened="ContentPageUtilityPane_PaneOpened"
+                   IsPaneOpen="{x:Bind Shared.PaneOpen, Mode=TwoWay}">
             <Frame x:Name="ContentFrame" />
             <SplitView.Pane>
                 <controls:UtilityPane DataContext="{x:Bind}" />

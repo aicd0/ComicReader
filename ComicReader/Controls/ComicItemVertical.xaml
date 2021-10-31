@@ -57,7 +57,7 @@
                           VerticalAlignment="Bottom"
                           HorizontalAlignment="Right"
                           Margin="5"
-                          Visibility="Visible" >
+                          Visibility="{x:Bind Ctx.IsFavorite}" >
                         <Border CornerRadius="5">
                             <Border.Background>
                                 <muxm:AcrylicBrush BackgroundSource="Backdrop"

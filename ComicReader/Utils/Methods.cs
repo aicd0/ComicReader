@@ -123,7 +123,9 @@ namespace ComicReader.Utils
     {
         public static void NotifyCollectionChanged(ObservableCollection<T> collection, T item)
         {
-            collection[collection.IndexOf(item)] = item;
+            int idx = collection.IndexOf(item);
+            collection.Insert(idx + 1, item);
+            collection.RemoveAt(idx);
         }
 
         public static void UpdateCollection(ObservableCollection<T> old_collection,

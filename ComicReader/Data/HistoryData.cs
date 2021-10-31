@@ -133,7 +133,7 @@ namespace ComicReader.Data
 
                 if (Views.HistoryPage.Current != null)
                 {
-                    await Views.HistoryPage.Current.UpdateHistory();
+                    await Views.HistoryPage.Current.Update();
                 }
             }
         }

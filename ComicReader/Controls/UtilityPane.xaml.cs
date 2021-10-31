@@ -8,23 +8,18 @@ namespace ComicReader.Controls
     public sealed partial class UtilityPane : UserControl
     {
         public static UtilityPane Current = null;
-        private bool m_first_page_loaded = false;
-
         public ContentPage Ctx => DataContext as ContentPage;
 
         public UtilityPane()
         {
             Current = this;
+
             InitializeComponent();
         }
 
         private void ContentFrame_Loaded(object sender, Windows.UI.Xaml.RoutedEventArgs e)
         {
-            if (!m_first_page_loaded)
-            {
-                //ContentFrame.Navigate(typeof(FavoritesPage), null);
-                m_first_page_loaded = true;
-            }
+            //ContentFrame.Navigate(typeof(FavoritesPage), null);
         }
 
         private void OnNavPaneSelectionChanged(muxc.NavigationView sender, muxc.NavigationViewSelectionChangedEventArgs args)
@@ -33,22 +28,25 @@ namespace ComicReader.Controls
             
             Utils.Tab.NavigationParams nav_params = new Utils.Tab.NavigationParams
             {
-                TabId = null,
+                TabId = Ctx.TabId,
                 Shared = Ctx.Shared,
             };
 
-            if (item == "Favorites")
+            Type page_type;
+
+            switch (item)
             {
-                _ = ContentFrame.Navigate(typeof(FavoritesPage), nav_params);
+                case "Favorites":
+                    page_type = typeof(FavoritesPage);
+                    break;
+                case "History":
+                    page_type = typeof(HistoryPage);
+                    break;
+                default:
+                    throw new Exception();
             }
-            else if (item == "History")
-            {
-                _ = ContentFrame.Navigate(typeof(HistoryPage), nav_params);
-            }
-            else
-            {
-                throw new Exception();
-            }
+
+            _ = ContentFrame.Navigate(page_type, nav_params);
         }
     }
 }

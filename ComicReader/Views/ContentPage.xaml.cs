@@ -34,6 +34,17 @@ namespace ComicReader.Views
             }
         }
 
+        private bool m_PaneOpen;
+        public bool PaneOpen
+        {
+            get => m_PaneOpen;
+            set
+            {
+                m_PaneOpen = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("PaneOpen"));
+            }
+        }
+
         private bool m_IsTwoPagesMode;
         public bool IsTwoPagesMode
         {
@@ -114,6 +125,7 @@ namespace ComicReader.Views
     {
         public static ContentPage Current;
         public ContentPageShared Shared { get; set; }
+        public Utils.Tab.TabIdentifier TabId => m_tab_manager.TabId;
 
         private Utils.Tab.TabManager m_tab_manager;
 
@@ -270,7 +282,7 @@ namespace ComicReader.Views
 
                 if (HistoryPage.Current != null)
                 {
-                    await HistoryPage.Current.UpdateHistory();
+                    await HistoryPage.Current.Update();
                 }
             });
         }

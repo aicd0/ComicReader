@@ -171,7 +171,7 @@
     <Grid>
         <ListView ItemsSource="{x:Bind HistorySource.View, Mode=OneWay}"
                   SelectionMode="None"
-                  ItemClick="MainListView_ItemClick"
+                  ItemClick="MainListViewItemClick"
                   IsItemClickEnabled="True"
                   ItemContainerStyle="{StaticResource ListViewItemStyle1}"
                   x:Name="MainListView"

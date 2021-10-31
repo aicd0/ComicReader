@@ -16,7 +16,7 @@
             <muxc:TreeViewItem AutomationProperties.Name="{x:Bind Name}"
                                ItemsSource="{x:Bind Children}"
                                AllowDrop="{x:Bind AllowDrop}"
-                               IsExpanded="{x:Bind IsExpanded, Mode=TwoWay}"
+                               IsExpanded="{x:Bind Expanded, Mode=TwoWay}"
                                VerticalContentAlignment="Stretch"
                                HorizontalContentAlignment="Stretch"
                                PointerPressed="Item_Pressed">
@@ -49,16 +49,16 @@
                                       Glyph="&#xED41;"
                                       FontSize="18"
                                       Margin="0,4,0,0"
-                                      Visibility="{x:Bind IsExpandedN, Mode=OneWay}" />
+                                      Visibility="{x:Bind ExpandedN, Mode=OneWay}" />
                             <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
                                       Glyph="&#xED43;"
                                       FontSize="18"
                                       Margin="0,4,0,0"
-                                      Visibility="{x:Bind IsExpanded, Mode=OneWay}" />
+                                      Visibility="{x:Bind Expanded, Mode=OneWay}" />
                         </Grid>
                         <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                  Glyph="&#xE7C3;"
-                                  FontSize="17"
+                                  Glyph="&#xE729;"
+                                  FontSize="18"
                                   Visibility="{x:Bind IsItem, Mode=OneWay}" />
                     </Grid>
                     <TextBlock Text="{x:Bind Name}"
@@ -75,7 +75,7 @@
                       x:DataType="data:FavoritesItemModel">
             <muxc:TreeViewItem AutomationProperties.Name="{x:Bind Name}"
                                ItemsSource="{x:Bind Children}"
-                               IsExpanded="{x:Bind IsExpanded, Mode=TwoWay}"
+                               IsExpanded="{x:Bind Expanded, Mode=TwoWay}"
                                VerticalContentAlignment="Stretch"
                                HorizontalContentAlignment="Stretch"
                                AllowDrop="False">
@@ -85,7 +85,8 @@
                              KeyDown="RenameTextBox_KeyDown"
                              VerticalAlignment="Center"
                              TextChanged="RenameTextBox_TextChanged"
-                             HorizontalAlignment="Left" />
+                             HorizontalAlignment="Left"
+                             DataContextChanged="TextBox_DataContextChanged"/>
                 </Grid>
             </muxc:TreeViewItem>
         </DataTemplate>

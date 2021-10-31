@@ -76,12 +76,12 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                await UpdateHistory();
+                await Update();
             });
         }
 
         // update
-        public async Task UpdateHistory()
+        public async Task Update()
         {
             var source = new ObservableCollection<HistoryItemGroupModel>();
             HistoryItemGroupModel current_group = null;
@@ -120,7 +120,7 @@ namespace ComicReader.Views
             MainListView.SelectedIndex = -1;
         }
 
-        private async Task OpenItem(HistoryItemModel item)
+        private async Task OpenItem(HistoryItemModel item, bool new_tab)
         {
             ComicItemData comic = await ComicDataManager.FromId(item.Id);
 
@@ -130,7 +130,8 @@ namespace ComicReader.Views
             }
             else
             {
-                RootPage.Current.LoadTab(null, Utils.Tab.PageType.Reader, comic);
+                RootPage.Current.LoadTab(new_tab ? null : m_tab_manager.TabId, Utils.Tab.PageType.Reader, comic);
+                Shared.ContentPageShared.PaneOpen = false;
             }
         }
 
@@ -139,7 +140,7 @@ namespace ComicReader.Views
             Utils.Methods.Run(async delegate
             {
                 HistoryItemModel item = (HistoryItemModel)((MenuFlyoutItem)sender).DataContext;
-                await OpenItem(item);
+                await OpenItem(item, true);
             });
         }
 
@@ -180,12 +181,12 @@ namespace ComicReader.Views
             });
         }
 
-        private void MainListView_ItemClick(object sender, ItemClickEventArgs e)
+        private void MainListViewItemClick(object sender, ItemClickEventArgs e)
         {
             Utils.Methods.Run(async delegate
             {
                 HistoryItemModel item = (HistoryItemModel)e.ClickedItem;
-                await OpenItem(item);
+                await OpenItem(item, false);
             });
         }
     }

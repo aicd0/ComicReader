@@ -21,7 +21,7 @@ namespace ComicReader.Data
             Id = "";
             Rating = -1;
             Progress = "";
-            m_IsFavorite = false;
+            IsFavorite = false;
             m_IsImageLoaded = false;
         }
 
@@ -33,15 +33,8 @@ namespace ComicReader.Data
         public int Rating { get; set; }
         public string Progress { get; set; }
         public bool IsRatingVisible => Rating != -1;
-
-        private bool m_IsFavorite;
-        public bool IsFavorite
-        {
-            get => m_IsFavorite;
-            set { m_IsFavorite = value; }
-        }
-        public bool IsFavoriteN => !m_IsFavorite;
-
+        public bool IsFavorite { get; set; }
+        public bool IsFavoriteN => !IsFavorite;
         public bool IsHide => Comic.Hidden;
         public bool IsHideN => !IsHide;
 
@@ -80,7 +73,7 @@ namespace ComicReader.Data
             Type = type;
             Children = new ObservableCollection<FavoritesItemModel>();
             IsRenaming = false;
-            m_IsExpanded = false;
+            m_Expanded = false;
         }
 
         public string Name { get; set; }
@@ -88,18 +81,18 @@ namespace ComicReader.Data
         public string Id { get; set; }
         public bool IsRenaming { get; set; }
 
-        private bool m_IsExpanded;
-        public bool IsExpanded
+        private bool m_Expanded;
+        public bool Expanded
         {
-            get => m_IsExpanded;
+            get => m_Expanded;
             set
             {
-                m_IsExpanded = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsExpanded"));
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsExpandedN"));
+                m_Expanded = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Expanded"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ExpandedN"));
             }
         }
-        public bool IsExpandedN => !IsExpanded;
+        public bool ExpandedN => !Expanded;
 
         public ObservableCollection<FavoritesItemModel> Children { get; set; }
         public FavoritesItemModel Parent { get; set; }
