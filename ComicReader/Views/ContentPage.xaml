@@ -178,17 +178,12 @@
                    OpenPaneLength="380"
                    Grid.Row="1"
                    PaneOpened="SidePaneOpened"
-                   IsPaneOpen="{x:Bind Shared.PaneOpen, Mode=TwoWay}">
+                   IsPaneOpen="{x:Bind Shared.PaneOpen, Mode=TwoWay}"
+                   PaneBackground="{ThemeResource SidePaneBackground}">
             <Frame x:Name="ContentFrame" />
             <SplitView.Pane>
                 <controls:SidePane DataContext="{x:Bind}" />
             </SplitView.Pane>
-            <SplitView.PaneBackground>
-                <AcrylicBrush BackgroundSource="Backdrop"
-                              TintColor="MidnightBlue"
-                              TintOpacity="0.0"
-                              TintLuminosityOpacity="0.85" />
-            </SplitView.PaneBackground>
         </SplitView>
     </Grid>
 </Page>

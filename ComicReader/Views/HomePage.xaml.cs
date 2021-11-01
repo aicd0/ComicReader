@@ -23,6 +23,8 @@ using ComicReader.Data;
 namespace ComicReader.Views
 {
     using RawTask = Task<Utils.TaskQueue.TaskResult>;
+    using SealedTask = Func<Task<Utils.TaskQueue.TaskResult>, Utils.TaskQueue.TaskResult>;
+    using TaskResult = Utils.TaskQueue.TaskResult;
 
     public class HomePageShared : INotifyPropertyChanged
     {
@@ -50,6 +52,7 @@ namespace ComicReader.Views
         private readonly Utils.Tab.TabManager m_tab_manager;
         private Utils.CancellationLock m_update_folder_lock;
         private Utils.CancellationLock m_update_library_lock;
+        private Utils.TaskQueue.TaskQueue m_update_queue;
 
         public HomePage()
         {
@@ -64,6 +67,7 @@ namespace ComicReader.Views
             m_tab_manager.OnUpdate = OnUpdate;
             m_update_folder_lock = new Utils.CancellationLock();
             m_update_library_lock = new Utils.CancellationLock();
+            m_update_queue = Utils.TaskQueue.TaskQueueManager.EmptyQueue();
 
             InitializeComponent();
         }
@@ -111,6 +115,19 @@ namespace ComicReader.Views
             await UpdateFolders();
             await UpdateLibrary();
         }
+
+        public SealedTask UpdateSealed() => delegate (RawTask _)
+        {
+            Task update_task = null;
+
+            Utils.Methods.Sync(delegate
+            {
+                update_task = Update();
+            }).Wait();
+
+            update_task.Wait();
+            return new TaskResult();
+        };
 
         public async Task UpdateLibrary()
         {
@@ -261,7 +278,7 @@ namespace ComicReader.Views
             {
                 return;
             }
-                
+
             RootPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Reader, ctx.Comic);
         }
 
@@ -296,16 +313,8 @@ namespace ComicReader.Views
                     }
 
                     await UpdateFolders();
-
-                    Utils.TaskQueue.TaskQueue update_queue = Utils.TaskQueue.TaskQueueManager.EmptyQueue();
-                    Utils.TaskQueue.TaskQueueManager.AppendTask(ComicDataManager.UpdateSealed(), "", update_queue);
-                    Utils.TaskQueue.TaskQueueManager.AppendTask(delegate (RawTask _t) {
-                        _ = Utils.Methods.Sync(async delegate
-                        {
-                            await Update();
-                        });
-                        return new Utils.TaskQueue.TaskResult();
-                    }, "", update_queue);
+                    Utils.TaskQueue.TaskQueueManager.AppendTask(ComicDataManager.UpdateSealed(), "", m_update_queue);
+                    Utils.TaskQueue.TaskQueueManager.AppendTask(UpdateSealed(), "", m_update_queue);
                 }
                 else
                 {
@@ -321,8 +330,8 @@ namespace ComicReader.Views
                 FolderItemModel ctx = (FolderItemModel)((MenuFlyoutItem)sender).DataContext;
                 await AppSettingsDataManager.RemoveComicFolder(ctx.Folder, final: true);
                 await UpdateFolders();
-                Utils.TaskQueue.TaskQueueManager.AppendTask(ComicDataManager.UpdateSealed(),
-                    "", Utils.TaskQueue.TaskQueueManager.EmptyQueue());
+                Utils.TaskQueue.TaskQueueManager.AppendTask(ComicDataManager.UpdateSealed(), "", m_update_queue);
+                Utils.TaskQueue.TaskQueueManager.AppendTask(UpdateSealed(), "", m_update_queue);
             });
         }
     }

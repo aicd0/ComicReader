@@ -29,6 +29,11 @@
                                                FallbackColor="Transparent"
                                                TintColor="{ThemeResource SystemChromeLowColor}"
                                                TintOpacity="0.3" />
+                            <muxm:AcrylicBrush x:Key="SidePaneBackground"
+                                               BackgroundSource="Backdrop"
+                                               TintColor="MidnightBlue"
+                                               TintOpacity="0.0"
+                                               TintLuminosityOpacity="0.85" />
                         </ResourceDictionary>
                         <ResourceDictionary x:Key="Light">
                             <SolidColorBrush x:Key="TabSelectedBackground"

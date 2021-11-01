@@ -18,6 +18,19 @@ namespace ComicReader.Utils
 {
     class StringUtils
     {
+        public class DefaultEqualityComparer : EqualityComparer<string>
+        {
+            public override bool Equals(string x, string y)
+            {
+                return x.Equals(y);
+            }
+
+            public override int GetHashCode(string obj)
+            {
+                return obj.GetHashCode();
+            }
+        }
+
         public class FileNameComparer : IComparer<string>
         {
             public int Compare(string x, string y)
@@ -106,5 +119,7 @@ namespace ComicReader.Utils
         {
             return path.ToLower().Replace('\\', '%');
         }
+
+        public static string UniquePath(string path) => path.ToLower();
     }
 }

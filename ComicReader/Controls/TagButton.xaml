@@ -8,7 +8,9 @@
              d:DesignHeight="100"
              d:DesignWidth="100">
 
-    <Button Background="CornflowerBlue"
+    <Button Style="{StaticResource ButtonRevealStyle}"
+            Background="#505050"
+            BorderThickness="1.5"
             CornerRadius="13"
             Height="26"
             MinWidth="26"

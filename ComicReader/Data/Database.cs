@@ -79,9 +79,9 @@ namespace ComicReader.Data
             return new TaskResult();
         }
 
-        public static SealedTask LoadSealed() => (RawTask _) => LoadDatabase().Result;
+        public static SealedTask LoadSealed() => (RawTask _) => Load().Result;
 
-        private static async RawTask LoadDatabase()
+        private static async RawTask Load()
         {
             StorageFolder folder = ApplicationData.Current.LocalFolder;
 
@@ -92,9 +92,8 @@ namespace ComicReader.Data
             _ = await HistoryDataManager.Load(folder);
             m_database_ready = true;
 
-            // this should only be called asynchronously after app settings were
-            // loaded
-            Utils.TaskQueue.TaskQueueManager.AppendTask(ComicDataManager.UpdateSealed(), "",
+            // this should only be called after AppSettings loaded
+            Utils.TaskQueue.TaskQueueManager.AppendTask(ComicDataManager.UpdateSealed(lazy_load: false), "",
                 Utils.TaskQueue.TaskQueueManager.EmptyQueue());
             return new TaskResult();
         }

@@ -247,24 +247,30 @@ namespace ComicReader.Data
         public static async Task<ComicItemData> FromDirectory(string dir)
         {
             await DatabaseManager.WaitLock();
+
             try
             {
-                string dir_lower = dir.ToLower();
-
-                foreach (ComicItemData comic in Database.Comics.Items)
-                {
-                    if (comic.Directory.ToLower().Equals(dir_lower))
-                    {
-                        return comic;
-                    }
-                }
-
-                return null;
+                return FromDirectoryNoLock(dir);
             }
             finally
             {
                 DatabaseManager.ReleaseLock();
             }
+        }
+
+        private static ComicItemData FromDirectoryNoLock(string dir)
+        {
+            string dir_lower = dir.ToLower();
+
+            foreach (ComicItemData comic in Database.Comics.Items)
+            {
+                if (comic.Directory.ToLower().Equals(dir_lower))
+                {
+                    return comic;
+                }
+            }
+
+            return null;
         }
 
         private static ComicItemData NewNoLock()
@@ -309,23 +315,25 @@ namespace ComicReader.Data
             }
         }
 
-        public static SealedTask UpdateSealed() => (RawTask _) => Update().Result;
+        public static SealedTask UpdateSealed(bool lazy_load = true) => (RawTask _) => Update(lazy_load).Result;
 
-        private static async RawTask Update()
+        private static async RawTask Update(bool lazy_load)
         {
             await m_update_comic_data_lock.WaitAsync();
+
             try
             {
-                await DatabaseManager.WaitLock();
                 // get root folders
+                await DatabaseManager.WaitLock();
                 List<string> root_folders = new List<string>(Database.AppSettings.ComicFolders.Count);
+
                 foreach (string folder_path in Database.AppSettings.ComicFolders)
                 {
                     root_folders.Add(folder_path);
                 }
-                DatabaseManager.ReleaseLock();
 
                 // get all folders and subfolders
+                DatabaseManager.ReleaseLock();
                 List<StorageFolder> all_folders = new List<StorageFolder>();
 
                 foreach (string folder_path in root_folders)
@@ -343,13 +351,13 @@ namespace ComicReader.Data
 
                     all_folders.Add(folder);
 
-                    var query = folder.CreateFolderQueryWithOptions(new QueryOptions
+                    StorageFolderQueryResult query = folder.CreateFolderQueryWithOptions(new QueryOptions
                     {
                         FolderDepth = FolderDepth.Deep,
                         IndexerOption = IndexerOption.UseIndexerWhenAvailable
                     });
 
-                    var folders = await query.GetFoldersAsync(); // 20 secs for 1000 folders
+                    IReadOnlyList<StorageFolder> folders = await query.GetFoldersAsync(); // 20s per 1k folders
                     all_folders = all_folders.Concat(folders).ToList();
 
                     // cancel this task if more requests came in
@@ -359,11 +367,11 @@ namespace ComicReader.Data
                     }
                 }
 
-                Utils.TaskQueue.TaskQueueManager.AppendTask(
-                    DatabaseManager.SaveSealed(DatabaseItem.Settings));
+                Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(DatabaseItem.Settings));
 
                 // extracts StorageFolder.Path into a new string list
                 List<string> all_dir = new List<string>(all_folders.Count);
+
                 for (int i = 0; i < all_folders.Count; ++i)
                 {
                     all_dir.Add(all_folders[i].Path);
@@ -372,29 +380,32 @@ namespace ComicReader.Data
                 // get all folder paths in database
                 await DatabaseManager.WaitLock();
                 List<string> all_dir_in_lib = new List<string>(Database.Comics.Items.Count);
+
                 foreach (ComicItemData comic in Database.Comics.Items)
                 {
                     all_dir_in_lib.Add(comic.Directory);
                 }
 
-                // get folders added and removed
-                List<string> dir_added = all_dir.Except(all_dir_in_lib).ToList();
-                List<string> dir_removed = all_dir_in_lib.Except(all_dir).ToList();
+                // get all folders added or removed.
+                List<string> dir_added = Utils.Methods3<string, string, string>.Except(all_dir, all_dir_in_lib,
+                    Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
+                    new Utils.StringUtils.DefaultEqualityComparer()).ToList();
+                List<string> dir_removed = Utils.Methods3<string, string, string>.Except(all_dir_in_lib, all_dir,
+                    Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
+                    new Utils.StringUtils.DefaultEqualityComparer()).ToList();
 
-                // remove from database
+                // remove items from database.
                 foreach (var dir in dir_removed)
                 {
                     RemoveWithDirectoryNoLock(dir);
                 }
+
                 DatabaseManager.ReleaseLock();
 
-                // add to database
-                DateTimeOffset last_date_time = DateTimeOffset.Now;
-                for (int i = 0; i < dir_added.Count; ++i)
+                // define a local method which will be used later to add or update dir.
+                async Task add_or_update_dir(string dir, bool update)
                 {
-                    string dir = dir_added[i];
-
-                    // exclude folders which do not directly contain images // 120 secs for 1000 folders
+                    // exclude folders which do not directly contain images (120s per 1k folders)
                     QueryOptions queryOptions = new QueryOptions
                     {
                         FolderDepth = FolderDepth.Shallow,
@@ -406,16 +417,84 @@ namespace ComicReader.Data
 
                     if (folder == null)
                     {
-                        continue;
+                        return;
                     }
 
-                    var query = folder.CreateFileQueryWithOptions(queryOptions);
+                    StorageFileQueryResult query = folder.CreateFileQueryWithOptions(queryOptions);
                     uint file_count = await query.GetItemCountAsync();
 
                     if (file_count == 0)
                     {
-                        continue;
+                        if (update)
+                        {
+                            await DatabaseManager.WaitLock();
+                            ComicItemData comic = FromDirectoryNoLock(dir);
+                            Database.Comics.Items.Remove(comic);
+                            DatabaseManager.ReleaseLock();
+                        }
+
+                        return;
                     }
+
+                    // write database.
+                    await DatabaseManager.WaitLock();
+
+                    try
+                    {
+                        ComicItemData comic = update ? FromDirectoryNoLock(dir) : NewNoLock();
+
+                        if (comic == null)
+                        {
+                            return;
+                        }
+
+                        comic.Directory = dir;
+                        comic.Folder = folder;
+
+                        if ((await UpdateInfoNoLock(comic)).ExceptionType != TaskException.Success)
+                        {
+                            TagData default_tag = new TagData
+                            {
+                                Name = "Default",
+                                Tags = dir.Split("\\").ToHashSet()
+                            };
+
+                            comic.Tags.Add(default_tag);
+                        }
+                    }
+                    finally
+                    {
+                        DatabaseManager.ReleaseLock();
+                    }
+                }
+
+                // generate a task queue.
+                List<KeyValuePair<string, bool>> queue = new List<KeyValuePair<string, bool>>();
+
+                foreach (string dir in dir_added)
+                {
+                    // "false" means the dir will be directly added to the database instead of updating an existing one.
+                    queue.Add(new KeyValuePair<string, bool>(dir, false));
+                }
+
+                if (!lazy_load)
+                {
+                    List<string> dir_kept = Utils.Methods3<string, string, string>.Intersect(all_dir, all_dir_in_lib,
+                        Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
+                        new Utils.StringUtils.DefaultEqualityComparer()).ToList();
+
+                    foreach (string dir in dir_kept)
+                    {
+                        // "true" means the item with the same dir in the database will be updated. no new items will be added.
+                        queue.Add(new KeyValuePair<string, bool>(dir, true));
+                    }
+                }
+
+                DateTimeOffset last_date_time = DateTimeOffset.Now;
+
+                foreach (KeyValuePair<string, bool> p in queue)
+                {
+                    await add_or_update_dir(p.Key, p.Value);
 
                     // cancel this task if more requests came in
                     if (m_update_comic_data_lock.CancellationRequested)
@@ -423,22 +502,7 @@ namespace ComicReader.Data
                         return new TaskResult(TaskException.Cancellation);
                     }
 
-                    await DatabaseManager.WaitLock();
-                    ComicItemData comic = NewNoLock();
-                    comic.Directory = dir;
-                    comic.Folder = folder;
-
-                    TagData default_tag = new TagData
-                    {
-                        Name = "Default",
-                        Tags = dir.Split("\\").ToHashSet()
-                    };
-
-                    comic.Tags.Add(default_tag);
-                    await UpdateInfoNoLock(comic);
-                    DatabaseManager.ReleaseLock();
-
-                    // save for each 5 secs
+                    // save for each 5s
                     if ((DateTimeOffset.Now - last_date_time).Seconds > 5.0)
                     {
                         Utils.TaskQueue.TaskQueueManager.AppendTask(
@@ -448,8 +512,7 @@ namespace ComicReader.Data
                 }
 
                 // save
-                Utils.TaskQueue.TaskQueueManager.AppendTask(
-                    DatabaseManager.SaveSealed(DatabaseItem.Comics));
+                Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(DatabaseItem.Comics));
                 return new TaskResult();
             }
             finally
@@ -657,7 +720,7 @@ namespace ComicReader.Data
 
             if (res.ExceptionType != TaskException.Success)
             {
-                return new TaskResult();
+                return res;
             }
 
             string content = await FileIO.ReadTextAsync(comic.InfoFile);

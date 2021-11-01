@@ -16,6 +16,7 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="../Resources/Style/Button.xaml" />
+                <ResourceDictionary Source="../Resources/Style/RatingControl.xaml" />
                 <ResourceDictionary Source="../Resources/Constants.xaml" />
                 <ResourceDictionary Source="../Resources/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
@@ -26,52 +27,58 @@
         <SplitView x:Name="InfoPane"
                    DisplayMode="Overlay"
                    PanePlacement="Right"
-                   PaneBackground="{ThemeResource TabSelectedBackground}">
+                   PaneBackground="{ThemeResource SidePaneBackground}">
 
             <!-- Information Page -->
             <SplitView.Pane>
-                <Grid Padding="20,34,20,20">
+                <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
                     <!-- Information Section -->
-                    <ScrollViewer Grid.Row="0">
+                    <ScrollViewer Grid.Row="0" Padding="15,0,15,0">
                         <StackPanel Orientation="Vertical">
+                            <Grid Height="34" />
 
                             <!-- Main Title -->
-                            <TextBlock FontWeight="Bold"
+                            <TextBlock FontSize="20"
+                                       FontWeight="Light"
                                        IsTextSelectionEnabled="True"
                                        Text="{x:Bind Shared.ComicTitle1, Mode=OneWay}"
                                        TextWrapping="Wrap" />
 
                             <!-- Sub Title -->
                             <TextBlock TextWrapping="Wrap"
-                                       FontWeight="Bold"
+                                       FontSize="20"
+                                       FontWeight="Light"
                                        IsTextSelectionEnabled="True"
                                        Text="{x:Bind Shared.ComicTitle2, Mode=OneWay}"
-                                       Margin="0,6,0,0" />
-                            <RatingControl Style="{StaticResource ReaderPageRatingControlStyle}"
-                                           HorizontalAlignment="Left"
-                                           VerticalAlignment="Center"
-                                           Margin="0,5,0,0"
-                                           Value="{x:Bind Shared.Rating, Mode=TwoWay}"
-                                           ValueChanged="RatingControl_ValueChanged"
-                                           IsEnabled="{x:Bind Shared.ContentPageShared.NotExternal, Mode=OneWay}" />
+                                       Margin="0,10,0,0" />
 
                             <!-- Directory -->
                             <TextBlock IsTextSelectionEnabled="True"
                                        VerticalAlignment="Center"
                                        Margin="0,10,0,0"
                                        TextWrapping="Wrap"
-                                       Text="{x:Bind Shared.ComicDir, Mode=OneWay}"
-                                       Foreground="#E0E0E0" />
+                                       FontWeight="Light"
+                                       Text="{x:Bind Shared.ComicDir, Mode=OneWay}" />
+
+                            <!-- rating control -->
+                            <muxc:RatingControl HorizontalAlignment="Left"
+                                               Margin="0,10,0,0"
+                                               Value="{x:Bind Shared.Rating, Mode=TwoWay}"
+                                               ValueChanged="RatingControl_ValueChanged"
+                                               IsEnabled="{x:Bind Shared.ContentPageShared.NotExternal, Mode=OneWay}" />
 
                             <!-- Tags -->
+                            <Rectangle Fill="#606060"
+                                       Height="1"
+                                       Margin="0,10" />
                             <ListView ItemsSource="{x:Bind ComicTagSource}"
                                       SelectionMode="None"
-                                      Margin="0,15,0,0">
+                                      Margin="0,10,0,0">
                                 <ListView.ItemContainerStyle>
                                     <Style TargetType="ListViewItem">
                                         <Setter Property="HorizontalContentAlignment"
@@ -85,19 +92,18 @@
                                 <ListView.ItemTemplate>
                                     <DataTemplate x:DataType="data:TagsModel">
                                         <StackPanel Orientation="Vertical"
-                                                    Margin="0,0,0,20">
+                                                    Margin="0,0,0,10">
                                             <StackPanel Orientation="Horizontal"
                                                         Margin="5,0,0,2">
-                                                <TextBlock Text="{x:Bind Name}"
-                                                           VerticalAlignment="Center"
-                                                           Margin="0,0,0,5"
-                                                           FontSize="13"
-                                                           FontWeight="Light" />
                                                 <FontIcon FontFamily="Segoe MDL2 Assets"
                                                           Glyph="&#xE8EC;"
                                                           VerticalAlignment="Center"
                                                           FontSize="12"
-                                                          Margin="3,0,0,0" />
+                                                          Margin="0,0,5,0" />
+                                                <TextBlock Text="{x:Bind Name}"
+                                                           VerticalAlignment="Center"
+                                                           Margin="0,0,0,4"
+                                                           FontSize="12" />
                                             </StackPanel>
                                             <muxc:ItemsRepeater ItemsSource="{x:Bind Tags}">
                                                 <muxc:ItemsRepeater.ItemTemplate>
@@ -121,17 +127,17 @@
                     <StackPanel Grid.Row="1"
                                 Orientation="Horizontal"
                                 HorizontalAlignment="Right"
-                                Margin="0,10,0,0">
+                                Margin="15,5,15,3">
                         <AppBarButton Click="OnSplitViewEditBtClicked"
                                       Icon="Edit"
                                       Label="Edit"
-                                      Width="68"
+                                      Width="60"
                                       IsEnabled="{x:Bind Shared.IsEditable, Mode=OneWay}" />
                         <AppBarToggleButton x:Name="FavoriteBt"
                                             Icon="Favorite"
                                             Label="Favorite"
                                             Margin="5,0,0,0"
-                                            Width="68"
+                                            Width="60"
                                             IsChecked="{x:Bind Shared.ContentPageShared.IsFavorite, Mode=OneWay}"
                                             Checked="FavoriteBtChecked"
                                             Unchecked="FavoriteBtUnchecked"

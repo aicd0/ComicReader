@@ -1552,7 +1552,7 @@ namespace ComicReader.Views
             }
         }
 
-        private void RatingControl_ValueChanged(RatingControl sender, object args)
+        private void RatingControl_ValueChanged(muxc.RatingControl sender, object args)
         {
             m_comic_record.Rating = (int)sender.Value;
             Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(Data.DatabaseItem.ReadRecords));

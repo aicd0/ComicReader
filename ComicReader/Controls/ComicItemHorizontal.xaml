@@ -14,7 +14,7 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="../Resources/Constants.xaml" />
-                <ResourceDictionary Source="../Resources/Styles.xaml" />
+                <ResourceDictionary Source="../Resources/Style/RatingControl.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>
@@ -60,13 +60,6 @@
             <Grid Grid.Column="0">
                 <Image Source="{x:Bind Ctx.Image}"
                        Stretch="UniformToFill" />
-                <!--<Rectangle>
-                    <Rectangle.Fill>
-                        <muxm:AcrylicBrush BackgroundSource="Backdrop"
-                                               TintOpacity="0.0"
-                                               TintLuminosityOpacity="0.0"/>
-                    </Rectangle.Fill>
-                </Rectangle>-->
                 <muxc:ProgressRing Visibility="{x:Bind Ctx.IsImageLoadedN}" />
             </Grid>
             <Grid Grid.Column="1">
@@ -92,7 +85,7 @@
                                      Height="20">
                                 <RatingControl Margin="0,0,-13,0"
                                                PlaceholderValue="{x:Bind Ctx.Rating}"
-                                               Style="{StaticResource RatingControlStyleReadOnly}"
+                                               Style="{StaticResource RatingControlReadOnly}"
                                                Visibility="{x:Bind Ctx.IsRatingVisible}" />
                             </Viewbox>
                             <TextBlock Text="{x:Bind Ctx.Progress}"

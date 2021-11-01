@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Core;
@@ -118,7 +119,6 @@ namespace ComicReader.Utils
     }
 
     public interface IMethods1<out T> { }
-
     public class Methods1<T> : IMethods1<T>
     {
         public static void NotifyCollectionChanged(ObservableCollection<T> collection, T item)
@@ -149,6 +149,86 @@ namespace ComicReader.Utils
             {
                 old_collection.RemoveAt(i);
             }
+        }
+
+
+    }
+
+    public interface IMethods3<out T, out U, out V> { }
+    public class Methods3<T, U, V> : IMethods3<T, U, V>
+    {
+        private class KeyEqualityComparer : EqualityComparer<KeyValuePair<V, object>>
+        {
+            IEqualityComparer<V> m_comparer;
+
+            public KeyEqualityComparer(IEqualityComparer<V> comparer)
+            {
+                m_comparer = comparer;
+            }
+
+            public override bool Equals(KeyValuePair<V, object> x, KeyValuePair<V, object> y)
+            {
+                return m_comparer.Equals(x.Key, y.Key);
+            }
+
+            public override int GetHashCode(KeyValuePair<V, object> obj)
+            {
+                return m_comparer.GetHashCode(obj.Key);
+            }
+        }
+
+        public static IEnumerable<T> Except(IEnumerable<T> first, IEnumerable<U> second,
+            Func<T, V> key_first, Func<U, V> key_second, IEqualityComparer<V> comparer)
+        {
+            List<KeyValuePair<V, object>> pairs_1 = new List<KeyValuePair<V, object>>();
+            List<KeyValuePair<V, object>> pairs_2 = new List<KeyValuePair<V, object>>();
+
+            foreach (T val in first)
+            {
+                pairs_1.Add(new KeyValuePair<V, object>(key_first(val), val));
+            }
+
+            foreach (U val in second)
+            {
+                pairs_2.Add(new KeyValuePair<V, object>(key_second(val), val));
+            }
+
+            IEnumerable<KeyValuePair<V, object>> processed = pairs_1.Except(pairs_2, new KeyEqualityComparer(comparer));
+            List<T> output = new List<T>();
+
+            foreach (KeyValuePair<V, object> val in processed)
+            {
+                output.Add((T)val.Value);
+            }
+
+            return output;
+        }
+
+        public static IEnumerable<T> Intersect(IEnumerable<T> first, IEnumerable<U> second,
+            Func<T, V> key_first, Func<U, V> key_second, IEqualityComparer<V> comparer)
+        {
+            List<KeyValuePair<V, object>> pairs_1 = new List<KeyValuePair<V, object>>();
+            List<KeyValuePair<V, object>> pairs_2 = new List<KeyValuePair<V, object>>();
+
+            foreach (T val in first)
+            {
+                pairs_1.Add(new KeyValuePair<V, object>(key_first(val), val));
+            }
+
+            foreach (U val in second)
+            {
+                pairs_2.Add(new KeyValuePair<V, object>(key_second(val), val));
+            }
+
+            IEnumerable<KeyValuePair<V, object>> processed = pairs_1.Intersect(pairs_2, new KeyEqualityComparer(comparer));
+            List<T> output = new List<T>();
+
+            foreach (KeyValuePair<V, object> val in processed)
+            {
+                output.Add((T)val.Value);
+            }
+
+            return output;
         }
     }
 }
