@@ -38,7 +38,8 @@
                     </Grid.RowDefinitions>
 
                     <!-- Information Section -->
-                    <ScrollViewer Grid.Row="0" Padding="15,0,15,0">
+                    <ScrollViewer Grid.Row="0"
+                                  Padding="15,0,15,0">
                         <StackPanel Orientation="Vertical">
                             <Grid Height="34" />
 
@@ -55,7 +56,8 @@
                                        FontWeight="Light"
                                        IsTextSelectionEnabled="True"
                                        Text="{x:Bind Shared.ComicTitle2, Mode=OneWay}"
-                                       Margin="0,10,0,0" />
+                                       Margin="0,10,0,0"
+                                       Visibility="{x:Bind Shared.ComicTitle2Visible, Mode=OneWay}" />
 
                             <!-- Directory -->
                             <TextBlock IsTextSelectionEnabled="True"
@@ -67,16 +69,17 @@
 
                             <!-- rating control -->
                             <muxc:RatingControl HorizontalAlignment="Left"
-                                               Margin="0,10,0,0"
-                                               Value="{x:Bind Shared.Rating, Mode=TwoWay}"
-                                               ValueChanged="RatingControl_ValueChanged"
-                                               IsEnabled="{x:Bind Shared.ContentPageShared.NotExternal, Mode=OneWay}" />
+                                                Margin="0,10,0,0"
+                                                Value="{x:Bind Shared.Rating, Mode=TwoWay}"
+                                                ValueChanged="RatingControl_ValueChanged"
+                                                IsEnabled="{x:Bind Shared.ContentPageShared.NotExternal, Mode=OneWay}" />
 
                             <!-- Tags -->
                             <Rectangle Fill="#606060"
                                        Height="1"
-                                       Margin="0,10" />
-                            <ListView ItemsSource="{x:Bind ComicTagSource}"
+                                       Margin="0,10"
+                                       Visibility="{x:Bind Shared.ComicTagsVisible, Mode=OneWay}" />
+                            <ListView ItemsSource="{x:Bind Shared.ComicTags, Mode=OneWay}"
                                       SelectionMode="None"
                                       Margin="0,10,0,0">
                                 <ListView.ItemContainerStyle>

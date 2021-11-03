@@ -9,13 +9,14 @@
                PrimaryButtonText="Done"
                SecondaryButtonText="Cancel"
                PrimaryButtonClick="ContentDialogPrimaryButtonClick"
-               SecondaryButtonClick="ContentDialogSecondaryButtonClick">
+               SecondaryButtonClick="ContentDialogSecondaryButtonClick"
+               DefaultButton="Primary">
 
     <Grid>
-        <RichEditBox x:Name="MainEditBox"
-                     Loaded="MainEditBoxLoaded"
-                     Width="500"
-                     IsSpellCheckEnabled="False"
-                     IsColorFontEnabled="False" />
+        <TextBox x:Name="MainEditBox"
+                 Loaded="MainEditBoxLoaded"
+                 AcceptsReturn="True"
+                 Width="500"
+                 MinHeight="200" />
     </Grid>
 </ContentDialog>

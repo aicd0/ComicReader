@@ -21,7 +21,7 @@ namespace ComicReader.Views
             // done
             Utils.Methods.Run(async delegate
             {
-                MainEditBox.TextDocument.GetText(Windows.UI.Text.TextGetOptions.None, out string text);
+                string text = MainEditBox.Text;
                 await ComicDataManager.ParseInfo(text, m_comic);
                 Utils.TaskQueue.TaskQueueManager.AppendTask(
                     ComicDataManager.SaveInfoFileSealed(m_comic), "Saving...");
@@ -42,8 +42,7 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                string text = await ComicDataManager.InfoString(m_comic);
-                MainEditBox.TextDocument.SetText(Windows.UI.Text.TextSetOptions.None, text);
+                MainEditBox.Text = await ComicDataManager.InfoString(m_comic);
             });
         }
     }

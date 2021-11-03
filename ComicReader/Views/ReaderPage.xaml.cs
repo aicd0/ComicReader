@@ -801,19 +801,11 @@ namespace ComicReader.Views
             {
                 m_ComicTitle2 = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ComicTitle2"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ComicTitle2Visible"));
             }
         }
 
-        private string m_ComicPrimaryTitle;
-        public string ComicPrimaryTitle
-        {
-            get => m_ComicPrimaryTitle;
-            set
-            {
-                m_ComicPrimaryTitle = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ComicPrimaryTitle"));
-            }
-        }
+        public bool ComicTitle2Visible => ComicTitle2.Length > 0;
 
         private string m_ComicDir;
         public string ComicDir
@@ -825,6 +817,20 @@ namespace ComicReader.Views
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ComicDir"));
             }
         }
+
+        private ObservableCollection<TagsModel> m_ComicTags;
+        public ObservableCollection<TagsModel> ComicTags
+        {
+            get => m_ComicTags;
+            set
+            {
+                m_ComicTags = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ComicTags"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ComicTagsVisible"));
+            }
+        }
+
+        public bool ComicTagsVisible => ComicTags != null && ComicTags.Count > 0;
 
         private bool m_IsEditable;
         public bool IsEditable
@@ -926,7 +932,6 @@ namespace ComicReader.Views
         private ReaderControl OnePageReader { get; set; }
         private ReaderControl TwoPagesReader { get; set; }
         private ObservableCollection<ReaderFrameModel> GridViewDataSource { get; set; }
-        private ObservableCollection<TagsModel> ComicTagSource { get; set; }
 
         private Utils.Tab.TabManager m_tab_manager;
 
@@ -953,15 +958,14 @@ namespace ComicReader.Views
             Shared = new ReaderPageShared();
             Shared.ComicTitle1 = "";
             Shared.ComicTitle2 = "";
-            Shared.ComicPrimaryTitle = "";
             Shared.ComicDir = "";
+            Shared.ComicTags = new ObservableCollection<TagsModel>();
             Shared.IsEditable = false;
             Shared.BottomGridPinned = false;
             Shared.BottomGridPinnedChanged = OnBottomGridPinnedChanged;
             OnePageReader = new ReaderControl(true, OnePageVerticalScrollViewer, OnePageImageListView, Shared);
             TwoPagesReader = new ReaderControl(false, TwoPagesHorizontalScrollViewer, TwoPagesImageListView, Shared);
             GridViewDataSource = new ObservableCollection<ReaderFrameModel>();
-            ComicTagSource = new ObservableCollection<TagsModel>();
 
             m_tab_manager = new Utils.Tab.TabManager();
             m_tab_manager.OnPageEntered = OnPageEntered;
@@ -1199,7 +1203,6 @@ namespace ComicReader.Views
             Shared.ContentPageShared.NotExternal = !m_comic.IsExternal;
             Shared.ComicTitle1 = m_comic.Title;
             Shared.ComicTitle2 = m_comic.Title2;
-            Shared.ComicPrimaryTitle = Shared.ComicTitle2.Length == 0 ? Shared.ComicTitle1 : Shared.ComicTitle2;
             Shared.ComicDir = m_comic.Directory;
             Shared.IsEditable = !(m_comic.IsExternal && m_comic.InfoFile == null);
             Shared.Progress = "";
@@ -1219,7 +1222,8 @@ namespace ComicReader.Views
                 return;
             }
 
-            ComicTagSource.Clear();
+            ObservableCollection<TagsModel> new_collection = new ObservableCollection<TagsModel>();
+
             for (int i = 0; i < m_comic.Tags.Count; ++i)
             {
                 TagData tags = m_comic.Tags[i];
@@ -1232,11 +1236,14 @@ namespace ComicReader.Views
                         Tag = tag,
                         EClicked = E_InfoPane_TagClicked
                     };
+
                     tags_model.Tags.Add(tag_model);
                 }
 
-                ComicTagSource.Add(tags_model);
+                new_collection.Add(tags_model);
             }
+
+            Shared.ComicTags = new_collection;
         }
 
         public void ExpandInfoPane()
