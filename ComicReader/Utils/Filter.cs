@@ -167,7 +167,8 @@ namespace ComicReader.Utils.Search
             remaining = new List<string>();
             List<SubFilter> filters = new List<SubFilter>();
             int bracket_cnt = 0;
-            int i_start = 0;
+            int bracket_start = 0;
+            int keyword_start = 0;
 
             for (int i = 0; i < desc.Length; ++i)
             {
@@ -175,32 +176,45 @@ namespace ComicReader.Utils.Search
 
                 if (c == '>')
                 {
-                    if (bracket_cnt == 1)
-                    {
-                        string sub_desc = desc.Substring(i_start, i - i_start);
-                        i_start = i + 1;
-                        SubFilter filter = ParseFilter(sub_desc);
-                        if (filter != null) filters.Add(filter);
-                    }
                     bracket_cnt--;
+
+                    if (bracket_cnt == 0)
+                    {
+                        string sub_desc = desc.Substring(bracket_start + 1, i - bracket_start - 1);
+                        SubFilter filter = ParseFilter(sub_desc);
+
+                        if (filter != null)
+                        {
+                            filters.Add(filter);
+
+                            if (bracket_start != keyword_start)
+                            {
+                                remaining.Add(desc.Substring(keyword_start, bracket_start - keyword_start));
+                            }
+
+                            keyword_start = i + 1;
+                        }
+                    }
+
+                    if (bracket_cnt < 0)
+                    {
+                        bracket_cnt = 0;
+                    }
                 }
                 else if (c == '<')
                 {
                     if (bracket_cnt == 0)
                     {
-                        if (i != i_start)
-                        {
-                            remaining.Add(desc.Substring(i_start, i - i_start));
-                        }
-                        i_start = i + 1;
+                        bracket_start = i;
                     }
+
                     bracket_cnt++;
                 }
             }
 
-            if (desc.Length != i_start)
+            if (desc.Length != keyword_start)
             {
-                remaining.Add(desc.Substring(i_start, desc.Length - i_start));
+                remaining.Add(desc.Substring(keyword_start, desc.Length - keyword_start));
             }
 
             return filters;
