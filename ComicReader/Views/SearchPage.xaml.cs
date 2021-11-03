@@ -35,6 +35,22 @@ namespace ComicReader.Views
             }
         }
 
+        public bool SearchResultEmpty => SearchResults.Count == 0;
+
+        // UI elements
+        private bool m_Loading;
+        public bool Loading
+        {
+            get => m_Loading;
+            set
+            {
+                m_Loading = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Loading"));
+                SearchResultGridVisible = !Loading && !SearchResultEmpty;
+                NoResultPromptVisible = !Loading && SearchResultEmpty;
+            }
+        }
+
         private string m_Title;
         public string Title
         {
@@ -57,15 +73,48 @@ namespace ComicReader.Views
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("FilterDetailsVisible"));
             }
         }
-
         public bool FilterDetailsVisible => FilterDetails.Length > 0;
+
+        public Utils.TrulyObservableCollection<ComicItemModel> SearchResults;
+
+        private bool m_SearchResultGridVisible;
+        public bool SearchResultGridVisible
+        {
+            get => m_SearchResultGridVisible;
+            set
+            {
+                m_SearchResultGridVisible = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("SearchResultGridVisible"));
+            }
+        }
+
+        private string m_NoResultPrompt;
+        public string NoResultPrompt
+        {
+            get => m_NoResultPrompt;
+            set
+            {
+                m_NoResultPrompt = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("NoResultPrompt"));
+            }
+        }
+
+        private bool m_NoResultPromptVisible;
+        public bool NoResultPromptVisible
+        {
+            get => m_NoResultPromptVisible;
+            set
+            {
+                m_NoResultPromptVisible = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("NoResultPromptVisible"));
+            }
+        }
     }
 
     public sealed partial class SearchPage : Page
     {
         public static SearchPage Current;
         private SearchPageShared Shared { get; set; }
-        private Utils.TrulyObservableCollection<ComicItemModel> SearchResultDataSource { get; set; }
 
         private Utils.Tab.TabManager m_tab_manager;
         private List<ComicItemData> m_all_results;
@@ -77,7 +126,7 @@ namespace ComicReader.Views
             Shared = new SearchPageShared();
             Shared.Title = "";
             Shared.FilterDetails = "";
-            SearchResultDataSource = new Utils.TrulyObservableCollection<ComicItemModel>();
+            Shared.SearchResults = new Utils.TrulyObservableCollection<ComicItemModel>();
             
             m_tab_manager = new Utils.Tab.TabManager();
             m_tab_manager.OnSetShared = OnSetShared;
@@ -169,6 +218,8 @@ namespace ComicReader.Views
             m_tab_manager.TabId.Tab.IconSource = new muxc.SymbolIconSource() { Symbol = Symbol.Find };
 
             // start searching
+            Shared.Loading = true;
+
             if (!await SearchMain(keywords, filter))
             {
                 return;
@@ -177,8 +228,10 @@ namespace ComicReader.Views
             // update UI
             Shared.Title = title_text;
             Shared.FilterDetails = filter_details;
-            SearchResultDataSource.Clear();
+            Shared.NoResultPrompt = "No results for \"" + keyword + "\"";
+            Shared.SearchResults.Clear();
             await LoadMoreResults(40);
+            Shared.Loading = false;
         }
 
         private class Match
@@ -190,7 +243,7 @@ namespace ComicReader.Views
         private async Task<bool> SearchMain(List<string> keywords, Utils.Search.Filter filter)
         {
             await m_search_lock.WaitAsync();
-            SearchPaneProgressBar.Visibility = Visibility.Visible;
+
             try
             {
                 for (int i = 0; i < keywords.Count; ++i)
@@ -200,6 +253,7 @@ namespace ComicReader.Views
 
                 await DatabaseManager.WaitLock();
                 List<Match> matches = new List<Match>();
+
                 foreach (ComicItemData comic in Database.Comics.Items)
                 {
                     // cancel the current session if the next search begins
@@ -230,12 +284,14 @@ namespace ComicReader.Views
                         Comic = comic,
                         Similarity = similarity
                     };
+
                     matches.Add(match);
                 }
-                DatabaseManager.ReleaseLock();
 
+                DatabaseManager.ReleaseLock();
                 matches = matches.OrderByDescending(x => x.Similarity).ToList();
                 m_all_results.Clear();
+
                 foreach (Match match in matches)
                 {
                     m_all_results.Add(match.Comic);
@@ -243,18 +299,19 @@ namespace ComicReader.Views
             }
             finally
             {
-                SearchPaneProgressBar.Visibility = Visibility.Collapsed;
                 m_search_lock.Release();
             }
+
             return true;
         }
 
         private async Task LoadMoreResults(int count)
         {
             await m_search_lock.WaitAsync();
+
             try
             {
-                int items_loaded = SearchResultDataSource.Count;
+                int items_loaded = Shared.SearchResults.Count;
 
                 if (items_loaded + count > m_all_results.Count)
                 {
@@ -308,14 +365,14 @@ namespace ComicReader.Views
                 // update UI
                 foreach (ComicItemModel result in results_tmp)
                 {
-                    SearchResultDataSource.Add(result);
+                    Shared.SearchResults.Add(result);
                 }
 
                 // load images
                 double image_height = (double)Resources["ComicItemHorizontalImageHeight"];
                 List<ImageLoaderToken> image_loader_tokens = new List<ImageLoaderToken>();
                 
-                foreach (ComicItemModel item in SearchResultDataSource.Skip(items_loaded))
+                foreach (ComicItemModel item in Shared.SearchResults.Skip(items_loaded))
                 {
                     image_loader_tokens.Add(new ImageLoaderToken
                     {
@@ -376,7 +433,7 @@ namespace ComicReader.Views
             {
                 ComicItemModel result = (ComicItemModel)((MenuFlyoutItem)sender).DataContext;
                 result.IsFavorite = true;
-                Utils.Methods1<ComicItemModel>.NotifyCollectionChanged(SearchResultDataSource, result);
+                Utils.Methods1<ComicItemModel>.NotifyCollectionChanged(Shared.SearchResults, result);
                 await FavoritesDataManager.Add(result.Id, result.Title, true);
             });
         }
@@ -387,7 +444,7 @@ namespace ComicReader.Views
             {
                 ComicItemModel result = (ComicItemModel)((MenuFlyoutItem)sender).DataContext;
                 result.IsFavorite = false;
-                Utils.Methods1<ComicItemModel>.NotifyCollectionChanged(SearchResultDataSource, result);
+                Utils.Methods1<ComicItemModel>.NotifyCollectionChanged(Shared.SearchResults, result);
                 await FavoritesDataManager.RemoveWithId(result.Id, true);
             });
         }

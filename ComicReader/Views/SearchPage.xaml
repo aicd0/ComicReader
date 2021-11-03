@@ -20,12 +20,15 @@
     </Page.Resources>
 
     <Grid>
-        <ProgressBar x:Name="SearchPaneProgressBar"
-                     VerticalAlignment="Top"
-                     Visibility="Collapsed"
-                     IsIndeterminate="True" />
-        <!-- Search Results -->
-        <ScrollViewer ViewChanged="ScrollViewer_ViewChanged">
+        <muxc:ProgressRing x:Name="SearchProgressRing"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Center"
+                           Visibility="{x:Bind Shared.Loading, Mode=OneWay}"
+                           IsIndeterminate="True" />
+        
+        <!-- search results -->
+        <ScrollViewer ViewChanged="ScrollViewer_ViewChanged"
+                      Visibility="{x:Bind Shared.SearchResultGridVisible, Mode=OneWay}">
             <StackPanel Orientation="Vertical"
                         Margin="15,0,15,0"
                         HorizontalAlignment="Center">
@@ -42,7 +45,7 @@
                                Margin="0,2,0,0" />
                 </StackPanel>
                 <Grid Height="15" />
-                <GridView ItemsSource="{x:Bind SearchResultDataSource}">
+                <GridView ItemsSource="{x:Bind Shared.SearchResults}">
                     <GridView.ItemContainerStyle>
                         <Style TargetType="GridViewItem">
                             <Setter Property="Margin"
@@ -57,5 +60,20 @@
                 </GridView>
             </StackPanel>
         </ScrollViewer>
+        
+        <!-- no results -->
+        <StackPanel Orientation="Vertical"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    Visibility="{x:Bind Shared.NoResultPromptVisible, Mode=OneWay}">
+            <TextBlock Text="{x:Bind Shared.NoResultPrompt, Mode=OneWay}"
+                       FontSize="28"
+                       FontWeight="SemiBold"
+                       HorizontalAlignment="Center"/>
+            <TextBlock Text="Try searching with different keywords"
+                       FontSize="18"
+                       HorizontalAlignment="Center"
+                       Margin="0,15,0,0"/>
+        </StackPanel>
     </Grid>
 </Page>
