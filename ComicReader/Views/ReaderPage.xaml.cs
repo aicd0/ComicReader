@@ -1029,7 +1029,7 @@ namespace ComicReader.Views
                 if (m_comic != tab_id.RequestArgs)
                 {
                     ComicItemData comic = (ComicItemData)tab_id.RequestArgs;
-                    tab_id.Tab.Header = comic.Title;
+                    tab_id.Tab.Header = comic.Title1;
                     tab_id.Tab.IconSource = new muxc.SymbolIconSource { Symbol = Symbol.Document };
                     await LoadComic(comic);
                 }
@@ -1062,7 +1062,7 @@ namespace ComicReader.Views
                 m_comic_record = await RecentReadDataManager.FromId(m_comic.Id, create_if_not_exists: true);
 
                 // add to history
-                await HistoryDataManager.Add(m_comic.Id, m_comic.Title, true);
+                await HistoryDataManager.Add(m_comic.Id, m_comic.Title1, true);
 
                 // update "last visit"
                 await DatabaseManager.WaitLock();
@@ -1201,7 +1201,7 @@ namespace ComicReader.Views
             }
 
             Shared.ContentPageShared.NotExternal = !m_comic.IsExternal;
-            Shared.ComicTitle1 = m_comic.Title;
+            Shared.ComicTitle1 = m_comic.Title1;
             Shared.ComicTitle2 = m_comic.Title2;
             Shared.ComicDir = m_comic.Directory;
             Shared.IsEditable = !(m_comic.IsExternal && m_comic.InfoFile == null);
@@ -1265,7 +1265,7 @@ namespace ComicReader.Views
 
             if (is_favorite)
             {
-                await FavoritesDataManager.Add(m_comic.Id, m_comic.Title, final: true);
+                await FavoritesDataManager.Add(m_comic.Id, m_comic.Title1, final: true);
             }
             else
             {

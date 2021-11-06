@@ -270,7 +270,7 @@ namespace ComicReader.Views
                     int similarity = 0;
                     if (keywords.Count != 0)
                     {
-                        string match_text = comic.Title + " " + comic.Title2;
+                        string match_text = comic.Title1 + " " + comic.Title2;
                         similarity = Utils.StringUtils.QuickMatch(keywords, match_text);
 
                         if (similarity < 1)
@@ -338,7 +338,7 @@ namespace ComicReader.Views
                         OnAddToFavoritesClicked = AddToFavoritesBtClick,
                         OnRemoveFromFavoritesClicked = RemoveFromFavoritesBtClick,
                         Comic = comic,
-                        Title = comic.Title2.Length == 0 ? comic.Title : comic.Title2 + "-" + comic.Title,
+                        Title = comic.Title,
                         Detail = "#" + comic.Id,
                         Id = comic.Id,
                         IsFavorite = await FavoritesDataManager.FromId(comic.Id) != null

@@ -78,7 +78,7 @@ namespace ComicReader.Data
     {
         private const string default_title = "Untitled Collection";
         [XmlAttribute]
-        public string m_title = default_title;
+        public string m_title1 = default_title;
         [XmlAttribute]
         public string m_title2 = "";
 
@@ -97,10 +97,10 @@ namespace ComicReader.Data
         public bool Hidden = false;
 
         [XmlIgnore]
-        public string Title
+        public string Title1
         {
-            get => m_title;
-            set { m_title = value.Length == 0 ? default_title : value; }
+            get => m_title1;
+            set { m_title1 = value.Length == 0 ? default_title : value; }
         }
         [XmlIgnore]
         public string Title2
@@ -108,6 +108,8 @@ namespace ComicReader.Data
             get => m_title2;
             set { m_title2 = value; }
         }
+        [XmlIgnore]
+        public string Title => Title1 + (Title2.Length == 0 ? "" : "-" + Title2);
         [XmlIgnore]
         public bool IsExternal = false;
         [XmlIgnore]
@@ -557,7 +559,7 @@ namespace ComicReader.Data
         private static string InfoStringNoLock(ComicItemData comic)
         {
             string text = "";
-            text += "Title: " + comic.Title;
+            text += "Title1: " + comic.Title1;
             text += "\nTitle2: " + comic.Title2;
 
             foreach (TagData tag in comic.Tags)
@@ -609,7 +611,7 @@ namespace ComicReader.Data
 
         private static void ParseInfoNoLock(string text, ComicItemData comic)
         {
-            comic.Title = "";
+            comic.Title1 = "";
             comic.Title2 = "";
             comic.Tags.Clear();
             text = text.Replace('\r', '\n');
@@ -626,9 +628,9 @@ namespace ComicReader.Data
 
                 string name = tag_data.Name.ToLower();
 
-                if (name == "title" || name == "t1" || name == "to")
+                if (name == "title1" || name == "title" || name == "t1" || name == "to")
                 {
-                    comic.Title = Utils.StringUtils.Join("/", tag_data.Tags);
+                    comic.Title1 = Utils.StringUtils.Join("/", tag_data.Tags);
                 }
                 else if (name == "title2" || name == "t2")
                 {

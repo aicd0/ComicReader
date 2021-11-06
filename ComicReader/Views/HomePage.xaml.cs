@@ -169,7 +169,7 @@ namespace ComicReader.Views
                         OnItemPressed = GridPointerPressed,
                         OnHideClicked = HideClick,
                         Comic = comic,
-                        Title = comic.Title2.Length == 0 ? comic.Title : comic.Title2 + "-" + comic.Title,
+                        Title = comic.Title,
                         Id = comic.Id,
                         IsFavorite = await FavoritesDataManager.FromId(comic.Id) != null
                     };
