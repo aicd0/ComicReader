@@ -13,7 +13,7 @@
                         <ResourceDictionary x:Key="Default">
                             <SolidColorBrush x:Key="ComicTileBackground"
                                              Color="#3A3A3A" />
-                            <SolidColorBrush x:Key="ContentPageTopTileBorderBrush"
+                            <SolidColorBrush x:Key="NavigationPageTopTileBorderBrush"
                                              Color="#000000" />
                             <SolidColorBrush x:Key="FolderItemBorderBrush"
                                              Color="#444444" />
@@ -38,7 +38,7 @@
                         <ResourceDictionary x:Key="Light">
                             <SolidColorBrush x:Key="ComicTileBackground"
                                              Color="#FEFDFE" />
-                            <SolidColorBrush x:Key="ContentPageTopTileBorderBrush"
+                            <SolidColorBrush x:Key="NavigationPageTopTileBorderBrush"
                                              Color="#E6E3EA" />
                             <SolidColorBrush x:Key="FolderItemBorderBrush"
                                              Color="#EBE9ED" />
@@ -63,7 +63,7 @@
                         <ResourceDictionary x:Key="HighContrast">
                             <SolidColorBrush x:Key="ComicTileBackground"
                                              Color="#FEFDFE" />
-                            <SolidColorBrush x:Key="ContentPageTopTileBorderBrush"
+                            <SolidColorBrush x:Key="NavigationPageTopTileBorderBrush"
                                              Color="#E6E3EA" />
                             <SolidColorBrush x:Key="FolderItemBorderBrush"
                                              Color="#EBE9ED" />

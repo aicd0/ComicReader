@@ -45,7 +45,7 @@
         </DataTemplate>
 
         <!-- template selector -->
-        <converters:FolderItemModelTemplateSelector x:Key="FolderItemTemplateSelector"
+        <converters:FolderItemTemplateSelector x:Key="FolderItemTemplateSelector"
                                                     CommonTemplate="{StaticResource CommonTemplate}"
                                                     AddNewTemplate="{StaticResource AddNewTemplate}" />
     </ContentDialog.Resources>

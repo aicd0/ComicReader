@@ -24,14 +24,14 @@ namespace ComicReader.Views
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private ContentPageShared m_ContentPageShared;
-        public ContentPageShared ContentPageShared
+        private NavigationPageShared m_NavigationPageShared;
+        public NavigationPageShared NavigationPageShared
         {
-            get => m_ContentPageShared;
+            get => m_NavigationPageShared;
             set
             {
-                m_ContentPageShared = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ContentPageShared"));
+                m_NavigationPageShared = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("NavigationPageShared"));
             }
         }
 
@@ -152,15 +152,15 @@ namespace ComicReader.Views
 
         private void OnSetShared(object shared)
         {
-            Shared.ContentPageShared = (ContentPageShared)shared;
+            Shared.NavigationPageShared = (NavigationPageShared)shared;
 
         }
         private void OnUpdate(Utils.Tab.TabIdentifier tab_id)
         {
             Utils.Methods.Run(async delegate
             {
-                Shared.ContentPageShared.RootPageShared.CurrentPageType = Utils.Tab.PageType.Search;
-                ContentPage.Current.SetSearchBox((string)tab_id.RequestArgs);
+                Shared.NavigationPageShared.CurrentPageType = Utils.Tab.PageType.Search;
+                NavigationPage.Current.SetSearchBox((string)tab_id.RequestArgs);
                 await StartSearch();
             });
         }
@@ -410,7 +410,7 @@ namespace ComicReader.Views
 
                 ComicItemModel item = (ComicItemModel)((FrameworkElement)sender).DataContext;
                 ComicItemData comic = await ComicDataManager.FromId(item.Id);
-                RootPage.Current.LoadTab(null, Utils.Tab.PageType.Reader, comic);
+                MainPage.Current.LoadTab(null, Utils.Tab.PageType.Reader, comic);
             });
         }
 

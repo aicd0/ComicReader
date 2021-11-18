@@ -94,9 +94,9 @@
         </DataTemplate>
 
         <!-- template selector -->
-        <converters:FavoritesItemDataTemplateSelector x:Key="FavoritesItemTemplateSelector"
-                                                      CommonTemplate="{StaticResource CommonTemplate}"
-                                                      RenamingTemplate="{StaticResource RenamingTemplate}" />
+        <converters:FavoritesItemTemplateSelector x:Key="FavoritesItemTemplateSelector"
+                                                  CommonTemplate="{StaticResource CommonTemplate}"
+                                                  RenamingTemplate="{StaticResource RenamingTemplate}" />
     </Page.Resources>
 
     <Grid>

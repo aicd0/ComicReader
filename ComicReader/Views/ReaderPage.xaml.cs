@@ -298,8 +298,8 @@ namespace ComicReader.Views
 
             m_zoom = (int)zoom;
             //ZoomTextBlock.Text = m_zoom.ToString() + "%";
-            Shared.ContentPageShared.ZoomInEnabled = m_zoom < max_zoom;
-            Shared.ContentPageShared.ZoomOutEnabled = m_zoom > min_zoom;
+            Shared.NavigationPageShared.ZoomInEnabled = m_zoom < max_zoom;
+            Shared.NavigationPageShared.ZoomOutEnabled = m_zoom > min_zoom;
 
             CorrectParallelOffset();
         }
@@ -759,14 +759,14 @@ namespace ComicReader.Views
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private ContentPageShared m_ContentPageShared;
-        public ContentPageShared ContentPageShared
+        private NavigationPageShared m_NavigationPageShared;
+        public NavigationPageShared NavigationPageShared
         {
-            get => m_ContentPageShared;
+            get => m_NavigationPageShared;
             set
             {
-                m_ContentPageShared = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ContentPageShared"));
+                m_NavigationPageShared = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("NavigationPageShared"));
             }
         }
 
@@ -905,9 +905,9 @@ namespace ComicReader.Views
 
         public void UpdateReaderVisibility()
         {
-            IsGridViewVisible = ContentPageShared.PreviewMode;
-            IsOnePageReaderVisible = !ContentPageShared.PreviewMode && !ContentPageShared.TwoPagesMode;
-            IsTwoPagesReaderVisible = !ContentPageShared.PreviewMode && ContentPageShared.TwoPagesMode;
+            IsGridViewVisible = NavigationPageShared.PreviewMode;
+            IsOnePageReaderVisible = !NavigationPageShared.PreviewMode && !NavigationPageShared.TwoPagesMode;
+            IsTwoPagesReaderVisible = !NavigationPageShared.PreviewMode && NavigationPageShared.TwoPagesMode;
         }
 
         private bool m_bottom_grid_Pinned;
@@ -1000,17 +1000,17 @@ namespace ComicReader.Views
 
         private void OnSetShared(object shared)
         {
-            Shared.ContentPageShared = (ContentPageShared)shared;
-            Shared.ContentPageShared.OnFavoritesClicked += OnFavoritesBtClicked;
-            Shared.ContentPageShared.RootPageShared.OnExitFullscreenMode += BottomGridForceHide;
-            Shared.ContentPageShared.OnZoomInButtonClicked += OnZoomInClick;
-            Shared.ContentPageShared.OnZoomOutButtonClicked += OnZoomOutClick;
-            Shared.ContentPageShared.OnTwoPagesModeChanged += OnTwoPagesModeChanged;
-            Shared.ContentPageShared.OnTwoPagesModeChanged += Shared.UpdateReaderVisibility;
-            Shared.ContentPageShared.OnGridViewModeChanged += Shared.UpdateReaderVisibility;
+            Shared.NavigationPageShared = (NavigationPageShared)shared;
+            Shared.NavigationPageShared.OnFavoritesClicked += OnFavoritesBtClicked;
+            Shared.NavigationPageShared.MainPageShared.OnExitFullscreenMode += BottomGridForceHide;
+            Shared.NavigationPageShared.OnZoomInButtonClicked += OnZoomInClick;
+            Shared.NavigationPageShared.OnZoomOutButtonClicked += OnZoomOutClick;
+            Shared.NavigationPageShared.OnTwoPagesModeChanged += OnTwoPagesModeChanged;
+            Shared.NavigationPageShared.OnTwoPagesModeChanged += Shared.UpdateReaderVisibility;
+            Shared.NavigationPageShared.OnGridViewModeChanged += Shared.UpdateReaderVisibility;
             
-            Shared.ContentPageShared.PreviewMode = false;
-            Shared.ContentPageShared.TwoPagesMode = false;
+            Shared.NavigationPageShared.PreviewMode = false;
+            Shared.NavigationPageShared.TwoPagesMode = false;
         }
 
         private void OnPageEntered()
@@ -1023,7 +1023,7 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                Shared.ContentPageShared.RootPageShared.CurrentPageType = Utils.Tab.PageType.Reader;
+                Shared.NavigationPageShared.CurrentPageType = Utils.Tab.PageType.Reader;
                 tab_id.Type = Utils.Tab.PageType.Reader;
 
                 if (m_comic != tab_id.RequestArgs)
@@ -1200,7 +1200,7 @@ namespace ComicReader.Views
                 throw new Exception();
             }
 
-            Shared.ContentPageShared.NotExternal = !m_comic.IsExternal;
+            Shared.NavigationPageShared.NotExternal = !m_comic.IsExternal;
             Shared.ComicTitle1 = m_comic.Title1;
             Shared.ComicTitle2 = m_comic.Title2;
             Shared.ComicDir = m_comic.Directory;
@@ -1210,7 +1210,7 @@ namespace ComicReader.Views
 
             if (!m_comic.IsExternal)
             {
-                Shared.ContentPageShared.IsFavorite = await FavoritesDataManager.FromId(m_comic.Id) != null;
+                Shared.NavigationPageShared.IsFavorite = await FavoritesDataManager.FromId(m_comic.Id) != null;
                 Shared.Rating = m_comic_record.Rating;
             }
         }
@@ -1256,12 +1256,12 @@ namespace ComicReader.Views
 
         public async Task SetIsFavorite(bool is_favorite)
         {
-            if (Shared.ContentPageShared.IsFavorite == is_favorite)
+            if (Shared.NavigationPageShared.IsFavorite == is_favorite)
             {
                 return;
             }
 
-            Shared.ContentPageShared.IsFavorite = is_favorite;
+            Shared.NavigationPageShared.IsFavorite = is_favorite;
 
             if (is_favorite)
             {
@@ -1275,7 +1275,7 @@ namespace ComicReader.Views
 
         private ReaderControl GetCurrentReaderControl()
         {
-            if (Shared.ContentPageShared.TwoPagesMode)
+            if (Shared.NavigationPageShared.TwoPagesMode)
             {
                 return TwoPagesReader;
             }
@@ -1299,7 +1299,7 @@ namespace ComicReader.Views
                 if (item.Text != m_comic.Id)
                 {
                     ComicItemData comic = await ComicDataManager.FromId(item.Text);
-                    RootPage.Current.LoadTab(null, Utils.Tab.PageType.Reader, comic);
+                    MainPage.Current.LoadTab(null, Utils.Tab.PageType.Reader, comic);
                 }
             });
         }
@@ -1327,7 +1327,7 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                await SetIsFavorite(!Shared.ContentPageShared.IsFavorite);
+                await SetIsFavorite(!Shared.NavigationPageShared.IsFavorite);
             });
         }
 
@@ -1448,7 +1448,7 @@ namespace ComicReader.Views
             {
                 int last_zoom = 0;
 
-                if (Shared.ContentPageShared.TwoPagesMode)
+                if (Shared.NavigationPageShared.TwoPagesMode)
                 {
                     OnePageReader.IsActive = false;
                     TwoPagesReader.IsActive = true;
@@ -1631,7 +1631,7 @@ namespace ComicReader.Views
         // BottomGrid
         private void C_BottomGrid_Show()
         {
-            if (m_bottom_grid_showed || Shared.ContentPageShared.RootPageShared.IsFullscreenN)
+            if (m_bottom_grid_showed || !Shared.NavigationPageShared.MainPageShared.IsFullscreen)
             {
                 return;
             }
@@ -1725,7 +1725,7 @@ namespace ComicReader.Views
             Utils.Methods.Run(async delegate
             {
                 ReaderFrameModel ctx = (ReaderFrameModel)e.ClickedItem;
-                Shared.ContentPageShared.PreviewMode = false;
+                Shared.NavigationPageShared.PreviewMode = false;
                 ReaderControl control = GetCurrentReaderControl();
                 await Utils.Methods.WaitFor(() => control.IsScrollViewerInitialized);
                 control.SetScrollViewer(ctx.Page, true);
@@ -1760,17 +1760,17 @@ namespace ComicReader.Views
         private void E_InfoPane_TagClicked(object sender, RoutedEventArgs e)
         {
             TagModel ctx = (TagModel)((Button)sender).DataContext;
-            RootPage.Current.LoadTab(null, Utils.Tab.PageType.Search, "<tag:" + ctx.Tag + ">");
+            MainPage.Current.LoadTab(null, Utils.Tab.PageType.Search, "<tag:" + ctx.Tag + ">");
         }
 
         private void FullscreenClick(object sender, RoutedEventArgs e)
         {
-            RootPage.Current.EnterFullscreen();
+            MainPage.Current.EnterFullscreen();
         }
 
         private void BackToWindowClick(object sender, RoutedEventArgs e)
         {
-            RootPage.Current.ExitFullscreen();
+            MainPage.Current.ExitFullscreen();
         }
 
         //private void DebugButtonClick(object sender, RoutedEventArgs e)

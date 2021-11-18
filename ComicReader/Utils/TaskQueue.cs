@@ -162,7 +162,7 @@ namespace ComicReader.Utils
 
             private static async Task<TaskResult> SetPromptText(string text)
             {
-                if (Views.RootPage.Current == null)
+                if (Views.MainPage.Current == null)
                 {
                     return new TaskResult(TaskException.Failure);
                 }
@@ -170,7 +170,7 @@ namespace ComicReader.Utils
                 await Methods.Sync(
                 delegate
                 {
-                    Views.RootPage.Current.SetRootToolTip(text);
+                    Views.MainPage.Current.SetRootToolTip(text);
                 });
 
                 return new TaskResult();

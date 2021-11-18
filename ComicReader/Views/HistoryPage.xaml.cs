@@ -12,14 +12,14 @@ namespace ComicReader.Views
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private ContentPageShared m_ContentPageShared;
-        public ContentPageShared ContentPageShared
+        private NavigationPageShared m_NavigationPageShared;
+        public NavigationPageShared NavigationPageShared
         {
-            get => m_ContentPageShared;
+            get => m_NavigationPageShared;
             set
             {
-                m_ContentPageShared = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ContentPageShared"));
+                m_NavigationPageShared = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("NavigationPageShared"));
             }
         }
     }
@@ -58,7 +58,7 @@ namespace ComicReader.Views
 
         private void OnSetShared(object shared)
         {
-            Shared.ContentPageShared = (ContentPageShared)shared;
+            Shared.NavigationPageShared = (NavigationPageShared)shared;
         }
 
         private void OnPageEntered()
@@ -122,8 +122,8 @@ namespace ComicReader.Views
             }
             else
             {
-                RootPage.Current.LoadTab(new_tab ? null : m_tab_manager.TabId, Utils.Tab.PageType.Reader, comic);
-                Shared.ContentPageShared.PaneOpen = false;
+                MainPage.Current.LoadTab(new_tab ? null : m_tab_manager.TabId, Utils.Tab.PageType.Reader, comic);
+                Shared.NavigationPageShared.PaneOpen = false;
             }
         }
 

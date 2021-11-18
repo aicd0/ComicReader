@@ -34,7 +34,7 @@
                                              Glyph="&#xE8F4;" />
             </DataTemplate>
             
-            <converters:FolderItemModelTemplateSelector x:Key="FolderItemTemplateSelector"
+            <converters:FolderItemTemplateSelector x:Key="FolderItemTemplateSelector"
                                                         CommonTemplate="{StaticResource FolderItemCommonTemplate}"
                                                         AddNewTemplate="{StaticResource FolderItemAddNewTemplate}" />
 

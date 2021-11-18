@@ -8,7 +8,7 @@ namespace ComicReader.Controls
     public sealed partial class SidePane : UserControl
     {
         public static SidePane Current = null;
-        public ContentPage Ctx => DataContext as ContentPage;
+        public NavigationPage Ctx => DataContext as NavigationPage;
 
         public SidePane()
         {

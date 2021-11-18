@@ -1,4 +1,4 @@
-﻿<Page x:Class="ComicReader.Views.RootPage"
+﻿<Page x:Class="ComicReader.Views.MainPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -145,7 +145,7 @@
                 </Setter.Value>
             </Setter>
         </Style>
-        <Style x:Key="RootPageTabViewStyle" TargetType="muxc:TabView">
+        <Style x:Key="MainPageTabViewStyle" TargetType="muxc:TabView">
             <Setter Property="VerticalAlignment" Value="Top"/>
             <Setter Property="Padding" Value="{ThemeResource TabViewHeaderPadding}"/>
             <Setter Property="IsTabStop" Value="False"/>
@@ -182,8 +182,8 @@
     </Page.Resources>
 
     <Grid SizeChanged="RootGrid_SizeChanged"
-          KeyDown="E_RootPage_KeyDown">
-        <muxc:TabView Style="{StaticResource RootPageTabViewStyle}" x:Name="RootTabView"
+          KeyDown="E_MainPage_KeyDown">
+        <muxc:TabView Style="{StaticResource MainPageTabViewStyle}" x:Name="RootTabView"
                       AddTabButtonClick="TabView_AddTabButtonClick"
                       TabCloseRequested="TabView_TabCloseRequested"
                       SelectionChanged="TabView_SelectionChanged"

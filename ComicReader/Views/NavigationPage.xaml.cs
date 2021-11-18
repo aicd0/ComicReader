@@ -6,18 +6,54 @@ using Windows.UI.Xaml.Navigation;
 
 namespace ComicReader.Views
 {
-    public class ContentPageShared : INotifyPropertyChanged
+    public class NavigationPageShared : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private RootPageShared m_RootPageShared;
-        public RootPageShared RootPageShared
+        private MainPageShared m_MainPageShared;
+        public MainPageShared MainPageShared
         {
-            get => m_RootPageShared;
+            get => m_MainPageShared;
             set
             {
-                m_RootPageShared = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("RootPageShared"));
+                m_MainPageShared = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("MainPageShared"));
+            }
+        }
+
+        public Utils.Tab.PageType CurrentPageType
+        {
+            set
+            {
+                IsHomePage = value == Utils.Tab.PageType.Home;
+                IsReaderPage = value == Utils.Tab.PageType.Reader;
+
+                if (!IsReaderPage && MainPageShared.IsFullscreen)
+                {
+                    MainPageShared.IsFullscreen = false;
+                }
+            }
+        }
+
+        private bool m_IsHomePage;
+        public bool IsHomePage
+        {
+            get => m_IsHomePage;
+            set
+            {
+                m_IsHomePage = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsHomePage"));
+            }
+        }
+
+        private bool m_IsReaderPage;
+        public bool IsReaderPage
+        {
+            get => m_IsReaderPage;
+            set
+            {
+                m_IsReaderPage = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsReaderPage"));
             }
         }
 
@@ -107,18 +143,18 @@ namespace ComicReader.Views
         public Action OnGridViewModeChanged;
     }
 
-    public sealed partial class ContentPage : Page
+    public sealed partial class NavigationPage : Page
     {
-        public static ContentPage Current;
-        public ContentPageShared Shared { get; set; }
+        public static NavigationPage Current;
+        public NavigationPageShared Shared { get; set; }
         public Utils.Tab.TabIdentifier TabId => m_tab_manager.TabId;
 
         private readonly Utils.Tab.TabManager m_tab_manager;
 
-        public ContentPage()
+        public NavigationPage()
         {
             Current = this;
-            Shared = new ContentPageShared();
+            Shared = new NavigationPageShared();
 
             m_tab_manager = new Utils.Tab.TabManager();
             m_tab_manager.OnSetShared = OnSetShared;
@@ -142,14 +178,14 @@ namespace ComicReader.Views
 
         private void OnSetShared(object shared)
         {
-            Shared.RootPageShared = (RootPageShared)shared;
+            Shared.MainPageShared = (MainPageShared)shared;
         }
 
         private void OnPageEntered()
         {
-            if (ContentPageSidePane != null)
+            if (NavigationPageSidePane != null)
             {
-                ContentPageSidePane.IsPaneOpen = false;
+                NavigationPageSidePane.IsPaneOpen = false;
             }
         }
 
@@ -188,32 +224,32 @@ namespace ComicReader.Views
                 return;
             }
 
-            RootPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Search, args.QueryText);
+            MainPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Search, args.QueryText);
         }
 
         private void SettingsClick(object sender, RoutedEventArgs e)
         {
-            RootPage.Current.LoadTab(null, Utils.Tab.PageType.Settings);
+            MainPage.Current.LoadTab(null, Utils.Tab.PageType.Settings);
         }
 
         private void FavoritesClick(object sender, RoutedEventArgs e)
         {
-            if (ContentPageSidePane == null)
+            if (NavigationPageSidePane == null)
             {
                 return;
             }
 
-            ContentPageSidePane.IsPaneOpen = !ContentPageSidePane.IsPaneOpen;
+            NavigationPageSidePane.IsPaneOpen = !NavigationPageSidePane.IsPaneOpen;
         }
 
         private void HomeClick(object sender, RoutedEventArgs e)
         {
-            RootPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Home);
+            MainPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Home);
         }
 
         private void RefreshClick(object sender, RoutedEventArgs e)
         {
-            RootPage.Current.LoadTab(m_tab_manager.TabId,
+            MainPage.Current.LoadTab(m_tab_manager.TabId,
                 m_tab_manager.TabId.Type,
                 m_tab_manager.TabId.RequestArgs, try_reuse: false);
         }

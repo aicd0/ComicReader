@@ -138,7 +138,10 @@
     <Compile Include="Controls\TagButton.xaml.cs">
       <DependentUpon>TagButton.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Converters\DataTemplateSelector.cs" />
+    <Compile Include="Converters\BooleanNegationConverter.cs" />
+    <Compile Include="Converters\BooleanToVisibilityConverter.cs" />
+    <Compile Include="Converters\FavoritesItemTemplateSelector.cs" />
+    <Compile Include="Converters\FolderItemTemplateSelector.cs" />
     <Compile Include="Data\AppSettingsData.cs" />
     <Compile Include="Data\ComicData.cs" />
     <Compile Include="Data\FavoritesData.cs" />
@@ -160,8 +163,8 @@
     <Compile Include="Views\ChooseLocationsDialog.xaml.cs">
       <DependentUpon>ChooseLocationsDialog.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\ContentPage.xaml.cs">
-      <DependentUpon>ContentPage.xaml</DependentUpon>
+    <Compile Include="Views\NavigationPage.xaml.cs">
+      <DependentUpon>NavigationPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\EditComicInfoDialog.xaml.cs">
       <DependentUpon>EditComicInfoDialog.xaml</DependentUpon>
@@ -175,8 +178,8 @@
     <Compile Include="Views\ReaderPage.xaml.cs">
       <DependentUpon>ReaderPage.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\RootPage.xaml.cs">
-      <DependentUpon>RootPage.xaml</DependentUpon>
+    <Compile Include="Views\MainPage.xaml.cs">
+      <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Views\SearchPage.xaml.cs">
@@ -288,7 +291,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Views\ContentPage.xaml">
+    <Page Include="Views\NavigationPage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -308,7 +311,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Views\RootPage.xaml">
+    <Page Include="Views\MainPage.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

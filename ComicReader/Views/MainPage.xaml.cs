@@ -11,58 +11,16 @@ using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
-
 using muxc = Microsoft.UI.Xaml.Controls;
 using ComicReader.Data;
 
 namespace ComicReader.Views
 {
-    using SealedTask =
-        Func<Task<Utils.TaskQueue.TaskResult>, Utils.TaskQueue.TaskResult>;
+    using SealedTask = Func<Task<Utils.TaskQueue.TaskResult>, Utils.TaskQueue.TaskResult>;
 
-    public class RootPageShared : INotifyPropertyChanged
+    public class MainPageShared : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
-
-        public Utils.Tab.PageType CurrentPageType
-        {
-            set
-            {
-                IsHomePage = value == Utils.Tab.PageType.Home;
-                IsReaderPage = value == Utils.Tab.PageType.Reader;
-
-                if (!IsReaderPage && IsFullscreen)
-                {
-                    IsFullscreen = false;
-                }
-            }
-        }
-
-        private bool m_IsHomePage;
-        public bool IsHomePage
-        {
-            get => m_IsHomePage;
-            set
-            {
-                m_IsHomePage = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsHomePage"));
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsHomePageN"));
-            }
-        }
-        public bool IsHomePageN => !IsHomePage;
-
-        private bool m_IsReaderPage;
-        public bool IsReaderPage
-        {
-            get => m_IsReaderPage;
-            set
-            {
-                m_IsReaderPage = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsReaderPage"));
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsReaderPageN"));
-            }
-        }
-        public bool IsReaderPageN => !IsReaderPage;
 
         private bool m_IsFullscreen;
         public bool IsFullscreen
@@ -72,7 +30,6 @@ namespace ComicReader.Views
             {
                 m_IsFullscreen = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsFullscreen"));
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsFullscreenN"));
                 
                 if (m_IsFullscreen == false)
                 {
@@ -80,23 +37,22 @@ namespace ComicReader.Views
                 }
             }
         }
-        public bool IsFullscreenN => !m_IsFullscreen;
 
         public Action OnExitFullscreenMode;
     }
 
-    public sealed partial class RootPage : Page
+    public sealed partial class MainPage : Page
     {
-        public static RootPage Current = null;
-        public RootPageShared Shared;
+        public static MainPage Current = null;
+        public MainPageShared Shared;
 
         private List<Utils.Tab.TabIdentifier> m_all_tabs = new List<Utils.Tab.TabIdentifier>();
         private Grid m_tab_container_grid;
 
-        public RootPage()
+        public MainPage()
         {
             Current = this;
-            Shared = new RootPageShared();
+            Shared = new MainPageShared();
             Shared.IsFullscreen = false;
 
             InitializeComponent();
@@ -255,22 +211,22 @@ namespace ComicReader.Views
             if (type == Utils.Tab.PageType.Reader || type == Utils.Tab.PageType.Home ||
                 type == Utils.Tab.PageType.Search)
             {
-                // these pages are based on ContentPage.
-                if (frame.Content == null || frame.Content.GetType() != typeof(ContentPage))
+                // these pages are based on NavigationPage.
+                if (frame.Content == null || frame.Content.GetType() != typeof(NavigationPage))
                 {
-                    // navigate to ContentPage first.
-                    if (!frame.Navigate(typeof(ContentPage), nav_params))
+                    // navigate to NavigationPage first.
+                    if (!frame.Navigate(typeof(NavigationPage), nav_params))
                     {
                         return;
                     }
                 }
 
-                ContentPage content_page = (ContentPage)frame.Content;
+                NavigationPage content_page = (NavigationPage)frame.Content;
                 content_page.Update();
             }
             else
             {
-                // these pages are based on RootPage.
+                // these pages are based on MainPage.
                 frame.Navigate(Utils.Tab.TabManager.TypeFromPageTypeEnum(type), nav_params);
             }
         }
@@ -419,7 +375,7 @@ namespace ComicReader.Views
             UpdateFullscreenMode();
         }
 
-        private void E_RootPage_KeyDown(object sender, KeyRoutedEventArgs e)
+        private void E_MainPage_KeyDown(object sender, KeyRoutedEventArgs e)
         {
             if (e.Key == Windows.System.VirtualKey.Escape)
             {

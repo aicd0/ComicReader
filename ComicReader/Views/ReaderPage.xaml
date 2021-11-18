@@ -20,6 +20,8 @@
                 <ResourceDictionary Source="../Resources/Constants.xaml" />
                 <ResourceDictionary Source="../Resources/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
         </ResourceDictionary>
     </Page.Resources>
 
@@ -72,7 +74,7 @@
                                                 Margin="0,10,0,0"
                                                 Value="{x:Bind Shared.Rating, Mode=TwoWay}"
                                                 ValueChanged="RatingControl_ValueChanged"
-                                                IsEnabled="{x:Bind Shared.ContentPageShared.NotExternal, Mode=OneWay}" />
+                                                IsEnabled="{x:Bind Shared.NavigationPageShared.NotExternal, Mode=OneWay}" />
 
                             <!-- tags -->
                             <Rectangle Fill="#606060"
@@ -141,10 +143,10 @@
                                             Label="Favorite"
                                             Margin="5,0,0,0"
                                             Width="60"
-                                            IsChecked="{x:Bind Shared.ContentPageShared.IsFavorite, Mode=OneWay}"
+                                            IsChecked="{x:Bind Shared.NavigationPageShared.IsFavorite, Mode=OneWay}"
                                             Checked="FavoriteBtChecked"
                                             Unchecked="FavoriteBtUnchecked"
-                                            IsEnabled="{x:Bind Shared.ContentPageShared.NotExternal, Mode=OneWay}" />
+                                            IsEnabled="{x:Bind Shared.NavigationPageShared.NotExternal, Mode=OneWay}" />
                     </StackPanel>
                 </Grid>
             </SplitView.Pane>
@@ -308,36 +310,36 @@
                             </Button>
                             <AppBarSeparator />
                             <Button Style="{StaticResource ReaderPageBottomGridButtonStyle}"
-                                    IsEnabled="{x:Bind Shared.ContentPageShared.ZoomInEnabled, Mode=OneWay}"
+                                    IsEnabled="{x:Bind Shared.NavigationPageShared.ZoomInEnabled, Mode=OneWay}"
                                     Click="ZoomInButtonClick">
                                 <FontIcon Glyph="&#xE8A3;"
                                           FontSize="20" />
                             </Button>
                             <Button Style="{StaticResource ReaderPageBottomGridButtonStyle}"
-                                    IsEnabled="{x:Bind Shared.ContentPageShared.ZoomOutEnabled, Mode=OneWay}"
+                                    IsEnabled="{x:Bind Shared.NavigationPageShared.ZoomOutEnabled, Mode=OneWay}"
                                     Click="ZoomOutButtonClick">
                                 <FontIcon Glyph="&#xE71F;"
                                           FontSize="20" />
                             </Button>
                             <ToggleButton Style="{StaticResource ReaderPageBottomGridToggleButtonStyle}"
-                                          IsChecked="{x:Bind Shared.ContentPageShared.TwoPagesMode, Mode=TwoWay}">
+                                          IsChecked="{x:Bind Shared.NavigationPageShared.TwoPagesMode, Mode=TwoWay}">
                                 <FontIcon Glyph="&#xE89A;"
                                           FontSize="20" />
                             </ToggleButton>
                             <ToggleButton Style="{StaticResource ReaderPageBottomGridToggleButtonStyle}"
-                                          IsChecked="{x:Bind Shared.ContentPageShared.PreviewMode, Mode=TwoWay}">
+                                          IsChecked="{x:Bind Shared.NavigationPageShared.PreviewMode, Mode=TwoWay}">
                                 <FontIcon Glyph="&#xF0E2;"
                                           FontSize="20" />
                             </ToggleButton>
                             <Button Style="{StaticResource ReaderPageBottomGridButtonStyle}"
-                                    IsEnabled="{x:Bind Shared.ContentPageShared.NotExternal, Mode=OneWay}"
+                                    IsEnabled="{x:Bind Shared.NavigationPageShared.NotExternal, Mode=OneWay}"
                                     Click="FavoriteButtonClick">
                                 <Grid>
                                     <FontIcon Glyph="&#xE734;"
                                               FontSize="20" />
                                     <FontIcon Glyph="&#xE735;"
                                               FontSize="20"
-                                              Visibility="{x:Bind Shared.ContentPageShared.IsFavorite, Mode=OneWay}"
+                                              Visibility="{x:Bind Shared.NavigationPageShared.IsFavorite, Mode=OneWay}"
                                               Foreground="DeepSkyBlue" />
                                 </Grid>
                             </Button>
@@ -355,7 +357,7 @@
                       HorizontalAlignment="Right">
                     <Button Style="{StaticResource ReaderPageFullscreenButtonStyle}"
                             Click="FullscreenClick"
-                            Visibility="{x:Bind Shared.ContentPageShared.RootPageShared.IsFullscreenN, Mode=OneWay}">
+                            Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}">
                         <Button.Content>
                             <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
                                       Glyph="&#xE740;" />
@@ -363,7 +365,7 @@
                     </Button>
                     <Button Style="{StaticResource ReaderPageFullscreenButtonStyle}"
                             Click="BackToWindowClick"
-                            Visibility="{x:Bind Shared.ContentPageShared.RootPageShared.IsFullscreen, Mode=OneWay}">
+                            Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}">
                         <Button.Content>
                             <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
                                       Glyph="&#xE73F;" />

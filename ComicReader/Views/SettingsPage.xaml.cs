@@ -23,14 +23,14 @@ namespace ComicReader.Views
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private RootPageShared m_RootPageShared;
-        public RootPageShared RootPageShared
+        private MainPageShared m_MainPageShared;
+        public MainPageShared MainPageShared
         {
-            get => m_RootPageShared;
+            get => m_MainPageShared;
             set
             {
-                m_RootPageShared = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("RootPageShared"));
+                m_MainPageShared = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("MainPageShared"));
             }
         }
 
@@ -198,7 +198,7 @@ namespace ComicReader.Views
 
         private void OnSetShared(object shared)
         {
-            Shared.RootPageShared = (RootPageShared)shared;
+            Shared.MainPageShared = (MainPageShared)shared;
         }
 
         private void OnPageEntered()
@@ -214,7 +214,6 @@ namespace ComicReader.Views
             m_tab_manager.TabId.Tab.Header = "Settings";
             m_tab_manager.TabId.Tab.IconSource =
                 new muxc.SymbolIconSource() { Symbol = Symbol.Setting };
-            Shared.RootPageShared.CurrentPageType = Utils.Tab.PageType.Settings;
         }
 
         public static string PageUniqueString(object _) => "settings";
