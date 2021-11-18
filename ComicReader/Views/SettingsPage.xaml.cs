@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using System.Globalization;
 using System.Threading.Tasks;
+using Windows.Storage;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
@@ -10,6 +11,14 @@ using ComicReader.Data;
 
 namespace ComicReader.Views
 {
+    public enum AppearanceSetting
+    {
+        Light,
+        Dark,
+        UseSystemSetting,
+        None
+    }
+
     public class SettingsPageShared : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
@@ -50,10 +59,110 @@ namespace ComicReader.Views
                 OnSettingsChanged?.Invoke();
             }
         }
+
+        public AppearanceSetting CurrentAppearance { get; set; }
+
+        private AppearanceSetting m_Appearance = AppearanceSetting.None;
+        public AppearanceSetting Appearance
+        {
+            get => m_Appearance;
+            set
+            {
+                if (m_Appearance == value)
+                {
+                    return;
+                }
+
+                m_Appearance = value;
+                AppearanceLightChecked = m_Appearance == AppearanceSetting.Light;
+                AppearanceDarkChecked = m_Appearance == AppearanceSetting.Dark;
+                AppearanceUseSystemSettingChecked = m_Appearance == AppearanceSetting.UseSystemSetting;
+                AppearanceChanged = m_Appearance != CurrentAppearance;
+                OnSettingsChanged?.Invoke();
+            }
+        }
+
+        private bool m_AppearanceLightChecked = false;
+        public bool AppearanceLightChecked
+        {
+            get => m_AppearanceLightChecked;
+            set
+            {
+                if (value == m_AppearanceLightChecked)
+                {
+                    return;
+                }
+
+                m_AppearanceLightChecked = value;
+
+                if (value)
+                {
+                    Appearance = AppearanceSetting.Light;
+                }
+
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("AppearanceLightChecked"));
+            }
+        }
+
+        private bool m_AppearanceDarkChecked = false;
+        public bool AppearanceDarkChecked
+        {
+            get => m_AppearanceDarkChecked;
+            set
+            {
+                if (value == m_AppearanceDarkChecked)
+                {
+                    return;
+                }
+
+                m_AppearanceDarkChecked = value;
+
+                if (value)
+                {
+                    Appearance = AppearanceSetting.Dark;
+                }
+
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("AppearanceDarkChecked"));
+            }
+        }
+
+        private bool m_AppearanceUseSystemSettingChecked = false;
+        public bool AppearanceUseSystemSettingChecked
+        {
+            get => m_AppearanceUseSystemSettingChecked;
+            set
+            {
+                if (value == m_AppearanceUseSystemSettingChecked)
+                {
+                    return;
+                }
+
+                m_AppearanceUseSystemSettingChecked = value;
+
+                if (value)
+                {
+                    Appearance = AppearanceSetting.UseSystemSetting;
+                }
+
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("AppearanceUseSystemSettingChecked"));
+            }
+        }
+
+        private bool m_AppearanceChanged;
+        public bool AppearanceChanged
+        {
+            get => m_AppearanceChanged;
+            set
+            {
+                m_AppearanceChanged = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("AppearanceChanged"));
+            }
+        }
     }
 
     public sealed partial class SettingsPage : Page
     {
+        public const string AppearanceKey = "Appearance";
         public static SettingsPage Current;
         public SettingsPageShared Shared { get; set; }
 
@@ -113,25 +222,60 @@ namespace ComicReader.Views
         // utilities
         private async Task Update()
         {
-            m_updating = false;
+            // from local settings
+            object appearance_setting = ApplicationData.Current.LocalSettings.Values[AppearanceKey];
+
+            if (appearance_setting == null)
+            {
+                Shared.CurrentAppearance = AppearanceSetting.UseSystemSetting;
+            }
+            else if ((ApplicationTheme)(int)appearance_setting == ApplicationTheme.Light)
+            {
+                Shared.CurrentAppearance = AppearanceSetting.Light;
+            }
+            else if ((ApplicationTheme)(int)appearance_setting == ApplicationTheme.Dark)
+            {
+                Shared.CurrentAppearance = AppearanceSetting.Dark;
+            }
+
+            Shared.Appearance = Shared.CurrentAppearance;
+
+            // from database
             await DatabaseManager.WaitLock();
+            m_updating = true;
 
             Shared.ReaderLeftToRight = Database.AppSettings.LeftToRight;
             Shared.HistorySaveBrowsingHistory = Database.AppSettings.SaveHistory;
             StatisticsTextBlock.Text = "Total collections: " + Database.Comics.Items.Count.ToString("#,#0", CultureInfo.InvariantCulture);
 
+            m_updating = false;
             DatabaseManager.ReleaseLock();
-            m_updating = true;
         }
 
         private async Task Save()
         {
-            if (!m_updating)
+            if (m_updating)
             {
                 return;
             }
 
+            // to local settings
+            if (Shared.Appearance == AppearanceSetting.Light)
+            {
+                ApplicationData.Current.LocalSettings.Values[AppearanceKey] = (int)ApplicationTheme.Light;
+            }
+            else if (Shared.Appearance == AppearanceSetting.Dark)
+            {
+                ApplicationData.Current.LocalSettings.Values[AppearanceKey] = (int)ApplicationTheme.Dark;
+            }
+            else if (Shared.Appearance == AppearanceSetting.UseSystemSetting)
+            {
+                ApplicationData.Current.LocalSettings.Values.Remove(AppearanceKey);
+            }
+
+            // to database
             await DatabaseManager.WaitLock();
+
             Database.AppSettings.LeftToRight = Shared.ReaderLeftToRight;
             Database.AppSettings.SaveHistory = Shared.HistorySaveBrowsingHistory;
 

@@ -34,13 +34,17 @@
                         HorizontalAlignment="Center">
                 <Grid Height="15" />
                 <StackPanel Orientation="Vertical"
-                            Margin="15,0,0,0">
+                            Margin="15,0,0,0"
+                            MinHeight="60">
                     <TextBlock Text="{x:Bind Shared.Title, Mode=OneWay}"
-                               Style="{StaticResource TitleTextBlockStyle}"
+                               FontSize="28"
+                               FontWeight="SemiBold"
+                               FontStyle="Italic"
                                TextWrapping="NoWrap" />
                     <TextBlock Text="{x:Bind Shared.FilterDetails, Mode=OneWay}"
-                               Foreground="Yellow"
+                               Foreground="#85FFFFFF"
                                FontSize="14"
+                               FontWeight="Normal"
                                Visibility="{x:Bind Shared.FilterDetailsVisible, Mode=OneWay}"
                                Margin="0,2,0,0" />
                 </StackPanel>

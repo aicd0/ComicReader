@@ -3,7 +3,9 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:mtuu="using:Microsoft.Toolkit.Uwp.UI"
       xmlns:mtuuc="using:Microsoft.Toolkit.Uwp.UI.Controls"
+      xmlns:mtuum="using:Microsoft.Toolkit.Uwp.UI.Media"
       xmlns:controls="using:ComicReader.Controls"
       xmlns:converters="using:ComicReader.Converters"
       xmlns:data="using:ComicReader.Data"
@@ -17,21 +19,28 @@
                 <ResourceDictionary Source="../Resources/Constants.xaml" />
                 <ResourceDictionary Source="../Resources/Styles.xaml" />
             </ResourceDictionary.MergedDictionaries>
+            
             <DataTemplate x:Key="FolderItemCommonTemplate"
                           x:DataType="data:FolderItemModel">
                 <controls:FolderItemDetailed Title="{x:Bind Folder}"
                                              Detail=""
                                              Glyph="&#xE8B7;" />
             </DataTemplate>
+            
             <DataTemplate x:Key="FolderItemAddNewTemplate"
                           x:DataType="data:FolderItemModel">
                 <controls:FolderItemDetailed Title="Add a folder"
                                              Detail="Include more folders in your collection"
                                              Glyph="&#xE8F4;" />
             </DataTemplate>
+            
             <converters:FolderItemModelTemplateSelector x:Key="FolderItemTemplateSelector"
                                                         CommonTemplate="{StaticResource FolderItemCommonTemplate}"
                                                         AddNewTemplate="{StaticResource FolderItemAddNewTemplate}" />
+
+            <mtuum:AttachedCardShadow x:Key="CommonShadow"
+                                      Offset="0"
+                                      Opacity="0.1" />
         </ResourceDictionary>
     </Page.Resources>
 
@@ -71,7 +80,7 @@
                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                         ScrollViewer.HorizontalScrollMode="Disabled"
                                         StretchContentForSingleRow="False"
-                                        ItemContainerStyle="{StaticResource HomePageAdaptiveGridViewItemStyle}">
+                                        ItemContainerStyle="{StaticResource VerticalComicItemContainerStyle}">
                     <mtuuc:AdaptiveGridView.ItemTemplate>
                         <DataTemplate x:DataType="data:ComicItemModel">
                             <controls:ComicItemVertical DataContext="{x:Bind}" />
@@ -93,6 +102,8 @@
                         <Style TargetType="GridViewItem">
                             <Setter Property="Margin"
                                     Value="6" />
+                            <Setter Property="mtuu:Effects.Shadow"
+                                    Value="{StaticResource CommonShadow}" />
                         </Style>
                     </mtuuc:AdaptiveGridView.ItemContainerStyle>
                 </mtuuc:AdaptiveGridView>

@@ -36,7 +36,7 @@
         </muxc:NavigationView>
         
         <!-- Border -->
-        <Rectangle Fill="Black"
+        <Rectangle Fill="{ThemeResource SidePaneBorderBrush}"
                    HorizontalAlignment="Left"
                    Width="1"/>
     </Grid>

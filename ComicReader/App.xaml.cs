@@ -17,7 +17,6 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 using Windows.UI.ViewManagement;
-
 using ComicReader.Data;
 
 namespace ComicReader
@@ -28,6 +27,14 @@ namespace ComicReader
 
         public App()
         {
+            // get and apply the appearance setting.
+            object appearance_setting = ApplicationData.Current.LocalSettings.Values[Views.SettingsPage.AppearanceKey];
+
+            if (appearance_setting != null)
+            {
+                Current.RequestedTheme = (ApplicationTheme)(int)appearance_setting;
+            }
+
             InitializeComponent();
             Suspending += OnSuspending;
             CoreApplication.EnablePrelaunch(true);

@@ -100,13 +100,6 @@ namespace ComicReader.Views
             Shared.IsFullscreen = false;
 
             InitializeComponent();
-
-            Window.Current.SetTitleBar(TitleBarArea);
-            CoreApplication.GetCurrentView().TitleBar.ExtendViewIntoTitleBar = true;
-            ApplicationViewTitleBar title_bar =
-                ApplicationView.GetForCurrentView().TitleBar;
-            title_bar.BackgroundColor = Windows.UI.Colors.Transparent;
-            title_bar.ButtonBackgroundColor = Windows.UI.Colors.Transparent;
         }
 
         // file activation

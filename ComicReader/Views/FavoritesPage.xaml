@@ -64,7 +64,6 @@
                                   Visibility="{x:Bind IsItem, Mode=OneWay}" />
                     </Grid>
                     <TextBlock Text="{x:Bind Name}"
-                               FontWeight="SemiLight"
                                VerticalAlignment="Center"
                                TextTrimming="CharacterEllipsis"
                                Grid.Column="2"

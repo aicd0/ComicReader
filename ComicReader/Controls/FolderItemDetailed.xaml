@@ -3,40 +3,70 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:controls="using:ComicReader.Controls"
              mc:Ignorable="d"
-             d:DesignHeight="300"
-             d:DesignWidth="400">
+             d:DesignHeight="130"
+             d:DesignWidth="300">
 
-    <Grid Background="#2F2F2F"
-          Height="130"
+    <Grid Height="130"
           PointerPressed="{x:Bind Ctx.OnItemPressed}">
-        <Rectangle Fill="{ThemeResource SystemAccentColor}"
-                   Visibility="{x:Bind Ctx.IsAddNew}" />
-        <Grid VerticalAlignment="Bottom"
-              Height="50"
-              Background="#09FFFFFF"
-              Padding="10,5">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <StackPanel Orientation="Vertical"
-                        Grid.Column="0">
-                <TextBlock Text="{x:Bind Title}"
-                           VerticalAlignment="Top"
-                           TextTrimming="CharacterEllipsis" />
-                <Grid Height="3" />
-                <TextBlock Text="{x:Bind Detail}"
-                           FontSize="12"
-                           TextTrimming="CharacterEllipsis" />
-            </StackPanel>
-            <FontIcon Grid.Column="1"
-                      FontFamily="Segoe MDL2 Assets"
-                      Glyph="{x:Bind Glyph}"
-                      VerticalAlignment="Center"
-                      FontSize="23"
-                      Margin="0,0,2,0" />
+        <Grid Visibility="{x:Bind Ctx.IsAddNew}"
+              Background="{ThemeResource SystemAccentColor}">
+            <Grid VerticalAlignment="Bottom"
+                  Height="50"
+                  Padding="10,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Vertical"
+                            Grid.Column="0">
+                    <TextBlock Text="{x:Bind Title}"
+                               TextTrimming="CharacterEllipsis"
+                               FontWeight="SemiBold"
+                               Foreground="White"/>
+                    <Grid Height="3" />
+                    <TextBlock Text="{x:Bind Detail}"
+                               FontSize="12"
+                               TextTrimming="CharacterEllipsis"
+                               Foreground="White" />
+                </StackPanel>
+                <FontIcon Grid.Column="1"
+                          FontFamily="{StaticResource SymbolThemeFontFamily}"
+                          Glyph="{x:Bind Glyph}"
+                          VerticalAlignment="Center"
+                          Foreground="White"
+                          FontSize="23"
+                          Margin="0,0,2,0" />
+            </Grid>
+        </Grid>
+        <Grid Visibility="{x:Bind Ctx.IsAddNewN}"
+              Background="{ThemeResource FolderTileBackground}"
+              BorderBrush="{ThemeResource FolderItemBorderBrush}"
+              BorderThickness="1">
+            <Grid VerticalAlignment="Bottom"
+                  Height="50"
+                  Padding="10,5"
+                  Background="{ThemeResource FolderTileCoverBackground}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Orientation="Vertical"
+                            Grid.Column="0">
+                    <TextBlock Text="{x:Bind Title}"
+                               TextTrimming="CharacterEllipsis" />
+                    <Grid Height="3" />
+                    <TextBlock Text="{x:Bind Detail}"
+                               FontSize="12"
+                               TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+                <FontIcon Grid.Column="1"
+                          FontFamily="{StaticResource SymbolThemeFontFamily}"
+                          Glyph="{x:Bind Glyph}"
+                          VerticalAlignment="Center"
+                          FontSize="23"
+                          Margin="0,0,2,0" />
+            </Grid>
         </Grid>
         <Grid Background="Transparent"
               Visibility="{x:Bind Ctx.IsAddNewN}">

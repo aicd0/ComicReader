@@ -41,12 +41,12 @@
                         </Grid.ColumnDefinitions>
                         <FontIcon Grid.Column="0"
                                   FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                  Glyph="&#xE7C3;"
-                                  FontSize="16"
+                                  Glyph="&#xE729;"
+                                  FontSize="20"
                                   Margin="0" />
                         <StackPanel Orientation="Vertical"
                                     Grid.Column="1"
-                                    Margin="6,3,0,5">
+                                    Margin="4,2,0,4">
                             <StackPanel.ContextFlyout>
                                 <MenuFlyout>
                                     <MenuFlyoutItem Text="Open in new tab"
@@ -59,11 +59,11 @@
                                 </MenuFlyout>
                             </StackPanel.ContextFlyout>
                             <TextBlock Text="{x:Bind Title}"
-                                       FontWeight="SemiLight"
                                        TextTrimming="CharacterEllipsis" />
                             <TextBlock Text="{x:Bind Time}"
                                        FontSize="13"
-                                       Foreground="#999999" />
+                                       Foreground="#999999"
+                                       Margin="0,-3,0,0"/>
                         </StackPanel>
                     </Grid>
                 </DataTemplate>
@@ -73,14 +73,11 @@
                     <GroupStyle.HeaderTemplate>
                         <DataTemplate x:DataType="data:HistoryItemGroupModel">
                             <Grid Background="Transparent"
-                                  Margin="0,22,0,1">
+                                  Margin="0,18,0,1">
                                 <TextBlock Text="{x:Bind Key}"
-                                           FontSize="18"
-                                           FontWeight="SemiBold"
-                                           Margin="15,0,0,6" />
-                                <Rectangle Fill="#404040"
-                                           Height="1"
-                                           VerticalAlignment="Bottom" />
+                                           FontSize="15"
+                                           FontWeight="Bold"
+                                           Margin="10,0,0,2" />
                             </Grid>
                         </DataTemplate>
                     </GroupStyle.HeaderTemplate>

@@ -3,8 +3,9 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
       mc:Ignorable="d"
-      Background="{ThemeResource TabSelectedBackground}">
+      Background="{ThemeResource TabViewItemHeaderBackgroundSelected}">
 
     <Page.Resources>
         <ResourceDictionary>
@@ -50,6 +51,20 @@
                            Style="{StaticResource SettingsPageSubTitleTextBlock}" />
                 <TextBlock Text="Save browsing history" />
                 <ToggleSwitch IsOn="{x:Bind Shared.HistorySaveBrowsingHistory, Mode=TwoWay}" />
+
+                <!-- Appearance -->
+                <TextBlock Text="Appearance"
+                           Style="{StaticResource SettingsPageSubTitleTextBlock}" />
+                <TextBlock Text="You'll see your change the next time you start the app"
+                           Visibility="{x:Bind Shared.AppearanceChanged, Mode=OneWay}" />
+                <muxc:RadioButtons>
+                    <RadioButton Content="Light"
+                                 IsChecked="{x:Bind Shared.AppearanceLightChecked, Mode=TwoWay}" />
+                    <RadioButton Content="Dark"
+                                 IsChecked="{x:Bind Shared.AppearanceDarkChecked, Mode=TwoWay}" />
+                    <RadioButton Content="Use system setting"
+                                 IsChecked="{x:Bind Shared.AppearanceUseSystemSettingChecked, Mode=TwoWay}" />
+                </muxc:RadioButtons>
 
                 <!-- Statistics -->
                 <TextBlock Text="Statistics"
