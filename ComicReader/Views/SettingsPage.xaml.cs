@@ -176,9 +176,11 @@ namespace ComicReader.Views
             Shared.OnSettingsChanged = OnSettingsChanged;
 
             m_tab_manager = new Utils.Tab.TabManager();
-            m_tab_manager.OnSetShared = OnSetShared;
+            m_tab_manager.OnRegister = OnRegister;
+            m_tab_manager.OnUnregister = OnUnregister;
             m_tab_manager.OnPageEntered = OnPageEntered;
             m_tab_manager.OnUpdate = OnUpdate;
+            Unloaded += m_tab_manager.OnUnloaded;
 
             InitializeComponent();
         }
@@ -196,10 +198,12 @@ namespace ComicReader.Views
             m_tab_manager.OnNavigatedFrom(e);
         }
 
-        private void OnSetShared(object shared)
+        private void OnRegister(object shared)
         {
             Shared.MainPageShared = (MainPageShared)shared;
         }
+
+        private void OnUnregister() { }
 
         private void OnPageEntered()
         {

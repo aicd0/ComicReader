@@ -6,15 +6,15 @@
       xmlns:controls="using:ComicReader.Controls"
       xmlns:converters="using:ComicReader.Converters"
       mc:Ignorable="d"
-      Background="{ThemeResource TabViewItemHeaderBackgroundSelected}">
+      Background="{ThemeResource NavigationPageBackground}">
 
     <Page.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="../Resources/Style/AppBarButton.xaml" />
-                <ResourceDictionary Source="../Resources/Style/AppBarToggleButton.xaml" />
-                <ResourceDictionary Source="../Resources/Style/AutoSuggestBox.xaml" />
-                <ResourceDictionary Source="../Resources/Style/TextBox.xaml" />
+                <ResourceDictionary Source="../Resources/Styles/AppBarButton.xaml" />
+                <ResourceDictionary Source="../Resources/Styles/AppBarToggleButton.xaml" />
+                <ResourceDictionary Source="../Resources/Styles/AutoSuggestBox.xaml" />
+                <ResourceDictionary Source="../Resources/Styles/TextBox.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
@@ -64,8 +64,8 @@
                                         Margin="15,0,15,0"
                                         CornerRadius="6"
                                         VerticalAlignment="Center"
-                                        Style="{StaticResource NavigationPageSearchBox}"
-                                        TextBoxStyle="{StaticResource NavigationPageSearchBoxTextBox}"
+                                        Style="{StaticResource NavigationPageSearchBoxStyle}"
+                                        TextBoxStyle="{StaticResource NavigationPageSearchBoxTextBoxStyle}"
                                         x:Name="SearchBox"
                                         TextChanged="SearchBoxTextChanged"
                                         QuerySubmitted="SearchBoxQuerySubmitted"
@@ -75,7 +75,7 @@
                                         Visibility="{x:Bind Shared.IsReaderPage, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
                     </StackPanel>
 
-                    <!-- middle buttons -->
+                    <!-- center buttons -->
                     <StackPanel Orientation="Horizontal"
                                 HorizontalAlignment="Center"
                                 Visibility="{x:Bind Shared.IsReaderPage, Mode=OneWay}">
@@ -123,7 +123,8 @@
                                       Click="AddToFavoritesClick">
                             <AppBarButton.Content>
                                 <Grid>
-                                    <FontIcon Glyph="&#xE734;" />
+                                    <FontIcon Glyph="&#xE734;"
+                                              Visibility="{x:Bind Shared.IsFavorite, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}"/>
                                     <FontIcon Glyph="&#xE735;"
                                               Visibility="{x:Bind Shared.IsFavorite, Mode=OneWay}"
                                               Foreground="DeepSkyBlue" />

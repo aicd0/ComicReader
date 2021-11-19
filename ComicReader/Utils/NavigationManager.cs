@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Windows.UI.Xaml;
 using Windows.UI.Xaml.Navigation;
 using muxc = Microsoft.UI.Xaml.Controls;
 
@@ -42,20 +40,40 @@ namespace ComicReader.Utils.Tab
         };
 
         private bool m_initialized = false;
+        private bool m_registered = false;
         private List<TabIdInfo> m_info = new List<TabIdInfo>();
         private int m_info_index = -1;
         private NavigationMode m_navigation_mode = NavigationMode.New;
 
         public TabIdentifier TabId { get; private set; }
 
-        public Action<object> OnSetShared { get; set; }
+        private object Shared { get; set; }
+
+        public Action<object> OnRegister { get; set; }
+
+        public Action OnUnregister { get; set; }
 
         public Action OnPageEntered { get; set; }
 
         public Action<TabIdentifier> OnUpdate { get; set; }
 
+        public void OnUnloaded(object sender, RoutedEventArgs e)
+        {
+            _Unregister();
+        }
+
+        private void _Unregister()
+        {
+            if (m_registered)
+            {
+                OnUnregister?.Invoke();
+                m_registered = false;
+            }
+        }
+
         public void OnNavigatedFrom(NavigatingCancelEventArgs e)
         {
+            _Unregister();
             m_navigation_mode = e.NavigationMode;
         }
 
@@ -63,10 +81,16 @@ namespace ComicReader.Utils.Tab
         {
             if (!m_initialized)
             {
-                m_initialized = true;
                 NavigationParams nav_params = (NavigationParams)e.Parameter;
                 TabId = nav_params.TabId;
-                OnSetShared?.Invoke(nav_params.Shared);
+                Shared = nav_params.Shared;
+                m_initialized = true;
+            }
+
+            if (!m_registered)
+            {
+                OnRegister?.Invoke(Shared);
+                m_registered = true;
             }
 
             if (e.NavigationMode == NavigationMode.New)

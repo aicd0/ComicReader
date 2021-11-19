@@ -11,8 +11,8 @@
     <Page.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="../Resources/Style/ListViewHeaderItem.xaml" />
-                <ResourceDictionary Source="../Resources/Style/ListViewItem.xaml" />
+                <ResourceDictionary Source="../Resources/Styles/ListViewHeaderItem.xaml" />
+                <ResourceDictionary Source="../Resources/Styles/ListViewItem.xaml" />
             </ResourceDictionary.MergedDictionaries>
             <CollectionViewSource x:Name="HistorySource"
                                   IsSourceGrouped="True" />

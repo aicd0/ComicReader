@@ -129,8 +129,10 @@ namespace ComicReader.Views
             Shared.SearchResults = new Utils.TrulyObservableCollection<ComicItemModel>();
             
             m_tab_manager = new Utils.Tab.TabManager();
-            m_tab_manager.OnSetShared = OnSetShared;
+            m_tab_manager.OnRegister = OnRegister;
+            m_tab_manager.OnUnregister = OnUnregister;
             m_tab_manager.OnUpdate = OnUpdate;
+            Unloaded += m_tab_manager.OnUnloaded;
             m_all_results = new List<ComicItemData>();
             m_search_lock = new Utils.CancellationLock();
 
@@ -150,11 +152,14 @@ namespace ComicReader.Views
             m_tab_manager.OnNavigatedFrom(e);
         }
 
-        private void OnSetShared(object shared)
+        private void OnRegister(object shared)
         {
             Shared.NavigationPageShared = (NavigationPageShared)shared;
 
         }
+
+        private void OnUnregister() { }
+
         private void OnUpdate(Utils.Tab.TabIdentifier tab_id)
         {
             Utils.Methods.Run(async delegate
@@ -369,7 +374,7 @@ namespace ComicReader.Views
                 }
 
                 // load images
-                double image_height = (double)Resources["ComicItemHorizontalImageHeight"];
+                double image_height = (double)Application.Current.Resources["ComicItemHorizontalImageHeight"];
                 List<ImageLoaderToken> image_loader_tokens = new List<ImageLoaderToken>();
                 
                 foreach (ComicItemModel item in Shared.SearchResults.Skip(items_loaded))

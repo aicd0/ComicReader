@@ -13,8 +13,7 @@
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="../Resources/Constants.xaml" />
-                <ResourceDictionary Source="../Resources/Style/RatingControl.xaml" />
+                <ResourceDictionary Source="../Resources/Styles/RatingControl.xaml" />
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </UserControl.Resources>

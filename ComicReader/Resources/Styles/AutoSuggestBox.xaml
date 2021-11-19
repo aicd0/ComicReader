@@ -2,14 +2,12 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <Style x:Key="NavigationPageSearchBox"
+    <Style x:Key="NavigationPageSearchBoxStyle"
            TargetType="AutoSuggestBox">
         <Setter Property="VerticalAlignment"
                 Value="Top" />
         <Setter Property="IsTabStop"
                 Value="False" />
-        <Setter Property="TextBoxStyle"
-                Value="{StaticResource AutoSuggestBoxTextBoxStyle}" />
         <Setter Property="UseSystemFocusVisuals"
                 Value="{ThemeResource IsApplicationFocusVisualKindReveal}" />
         <Setter Property="Template">

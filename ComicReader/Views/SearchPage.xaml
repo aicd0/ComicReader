@@ -10,15 +10,6 @@
       NavigationCacheMode="Enabled"
       Background="Transparent">
 
-    <Page.Resources>
-        <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="../Resources/Styles.xaml" />
-                <ResourceDictionary Source="../Resources/Constants.xaml" />
-            </ResourceDictionary.MergedDictionaries>
-        </ResourceDictionary>
-    </Page.Resources>
-
     <Grid>
         <muxc:ProgressRing x:Name="SearchProgressRing"
                            VerticalAlignment="Center"

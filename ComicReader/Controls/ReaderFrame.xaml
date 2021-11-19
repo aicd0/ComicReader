@@ -20,10 +20,7 @@
                       Width="{x:Bind Ctx.Width}"
                       Height="{x:Bind Ctx.Height}">
                     <Image x:Name="MainImage"
-                           Source="{x:Bind Ctx.Image, Mode=OneWay}"/>
-                    <!--<Grid Background="#50000000" VerticalAlignment="Bottom" HorizontalAlignment="Left">
-                        <TextBlock Text="{x:Bind Ctx.Page}"/>
-                    </Grid>-->
+                           Source="{x:Bind Ctx.Image, Mode=OneWay}" />
                 </Grid>
                 <Grid Width="200"
                       Visibility="{x:Bind Ctx.RightPadding}" />

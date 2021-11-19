@@ -4,22 +4,26 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
+      xmlns:mtuu="using:Microsoft.Toolkit.Uwp.UI"
       xmlns:mtuuc="using:Microsoft.Toolkit.Uwp.UI.Controls"
+      xmlns:mtuum="using:Microsoft.Toolkit.Uwp.UI.Media"
       xmlns:controls="using:ComicReader.Controls"
       xmlns:converters="using:ComicReader.Converters"
       xmlns:data="using:ComicReader.Data"
       mc:Ignorable="d"
-      Background="{ThemeResource TabViewItemHeaderBackgroundSelected}"
       NavigationCacheMode="Enabled">
 
     <Page.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="../Resources/Style/Button.xaml" />
-                <ResourceDictionary Source="../Resources/Style/RatingControl.xaml" />
-                <ResourceDictionary Source="../Resources/Constants.xaml" />
-                <ResourceDictionary Source="../Resources/Styles.xaml" />
+                <ResourceDictionary Source="../Resources/Styles/Button.xaml" />
+                <ResourceDictionary Source="../Resources/Styles/RatingControl.xaml" />
+                <ResourceDictionary Source="../Resources/Styles/ToggleButton.xaml" />
             </ResourceDictionary.MergedDictionaries>
+
+            <mtuum:AttachedCardShadow x:Key="CommonShadow"
+                                      Offset="0"
+                                      Opacity="0.1" />
 
             <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
         </ResourceDictionary>
@@ -59,7 +63,7 @@
                                        IsTextSelectionEnabled="True"
                                        Text="{x:Bind Shared.ComicTitle2, Mode=OneWay}"
                                        Margin="0,10,0,0"
-                                       Visibility="{x:Bind Shared.ComicTitle2Visible, Mode=OneWay}" />
+                                       Visibility="{x:Bind Shared.IsComicTitle2Visible, Mode=OneWay}" />
 
                             <!-- directory -->
                             <TextBlock IsTextSelectionEnabled="True"
@@ -80,7 +84,7 @@
                             <Rectangle Fill="#606060"
                                        Height="1"
                                        Margin="0,10"
-                                       Visibility="{x:Bind Shared.ComicTagsVisible, Mode=OneWay}" />
+                                       Visibility="{x:Bind Shared.IsComicTagsVisible, Mode=OneWay}" />
                             <ListView ItemsSource="{x:Bind Shared.ComicTags, Mode=OneWay}"
                                       SelectionMode="None"
                                       Margin="0,10,0,0">
@@ -203,7 +207,7 @@
                                   HorizontalScrollMode="Enabled"
                                   VerticalScrollBarVisibility="Hidden"
                                   VerticalScrollMode="Disabled"
-                                  FlowDirection="{x:Bind Shared.P_Reader_FlowDirection, Mode=OneWay}">
+                                  FlowDirection="{x:Bind Shared.ReaderFlowDirection, Mode=OneWay}">
                         <Grid VerticalAlignment="Center">
                             <ListView x:Name="TwoPagesImageListView"
                                       ItemsSource="{x:Bind TwoPagesReader.ImageSource, Mode=OneWay}"
@@ -248,6 +252,8 @@
                             <Style TargetType="GridViewItem">
                                 <Setter Property="Margin"
                                         Value="10" />
+                                <Setter Property="mtuu:Effects.Shadow"
+                                        Value="{StaticResource CommonShadow}" />
                             </Style>
                         </GridView.ItemContainerStyle>
                         <GridView.ItemTemplate>
@@ -267,8 +273,8 @@
                       PointerExited="E_BottomGrid_PointerExited"
                       Opacity="0">
                     <Rectangle Height="1"
-                               Fill="#C0C0C0"
-                                VerticalAlignment="Top" />
+                               Fill="{ThemeResource ReaderBottomTileBorderBrush}"
+                               VerticalAlignment="Top" />
                     <Grid>
                         <Grid.Resources>
                             <Storyboard x:Name="BottomGridStoryboard">
@@ -288,12 +294,12 @@
                                     VerticalAlignment="Center"
                                     Spacing="5">
                             <Grid Width="5" />
-                            <ToggleButton Style="{StaticResource ReaderPageBottomGridToggleButtonStyle}"
+                            <ToggleButton Style="{StaticResource ReaderBottomTileToggleButtonStyle}"
                                           IsChecked="{x:Bind Shared.BottomGridPinned, Mode=TwoWay}">
                                 <FontIcon Glyph="&#xE840;"
                                           FontSize="20" />
                             </ToggleButton>
-                            <Button Style="{StaticResource ReaderPageBottomGridButtonStyle}">
+                            <Button Style="{StaticResource ReaderBottomTileButtonStyle}">
                                 <Button.Flyout>
                                     <MenuFlyout>
                                         <MenuFlyoutItem Text="Comic Info"
@@ -309,34 +315,35 @@
                                           FontSize="20" />
                             </Button>
                             <AppBarSeparator />
-                            <Button Style="{StaticResource ReaderPageBottomGridButtonStyle}"
+                            <Button Style="{StaticResource ReaderBottomTileButtonStyle}"
                                     IsEnabled="{x:Bind Shared.NavigationPageShared.ZoomInEnabled, Mode=OneWay}"
                                     Click="ZoomInButtonClick">
                                 <FontIcon Glyph="&#xE8A3;"
                                           FontSize="20" />
                             </Button>
-                            <Button Style="{StaticResource ReaderPageBottomGridButtonStyle}"
+                            <Button Style="{StaticResource ReaderBottomTileButtonStyle}"
                                     IsEnabled="{x:Bind Shared.NavigationPageShared.ZoomOutEnabled, Mode=OneWay}"
                                     Click="ZoomOutButtonClick">
                                 <FontIcon Glyph="&#xE71F;"
                                           FontSize="20" />
                             </Button>
-                            <ToggleButton Style="{StaticResource ReaderPageBottomGridToggleButtonStyle}"
+                            <ToggleButton Style="{StaticResource ReaderBottomTileToggleButtonStyle}"
                                           IsChecked="{x:Bind Shared.NavigationPageShared.TwoPagesMode, Mode=TwoWay}">
                                 <FontIcon Glyph="&#xE89A;"
                                           FontSize="20" />
                             </ToggleButton>
-                            <ToggleButton Style="{StaticResource ReaderPageBottomGridToggleButtonStyle}"
+                            <ToggleButton Style="{StaticResource ReaderBottomTileToggleButtonStyle}"
                                           IsChecked="{x:Bind Shared.NavigationPageShared.PreviewMode, Mode=TwoWay}">
                                 <FontIcon Glyph="&#xF0E2;"
                                           FontSize="20" />
                             </ToggleButton>
-                            <Button Style="{StaticResource ReaderPageBottomGridButtonStyle}"
+                            <Button Style="{StaticResource ReaderBottomTileButtonStyle}"
                                     IsEnabled="{x:Bind Shared.NavigationPageShared.NotExternal, Mode=OneWay}"
                                     Click="FavoriteButtonClick">
                                 <Grid>
                                     <FontIcon Glyph="&#xE734;"
-                                              FontSize="20" />
+                                              FontSize="20"
+                                              Visibility="{x:Bind Shared.NavigationPageShared.IsFavorite, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
                                     <FontIcon Glyph="&#xE735;"
                                               FontSize="20"
                                               Visibility="{x:Bind Shared.NavigationPageShared.IsFavorite, Mode=OneWay}"
@@ -355,7 +362,7 @@
                 <!-- fullscreen button -->
                 <Grid VerticalAlignment="Bottom"
                       HorizontalAlignment="Right">
-                    <Button Style="{StaticResource ReaderPageFullscreenButtonStyle}"
+                    <Button Style="{StaticResource ReaderFullscreenButtonStyle}"
                             Click="FullscreenClick"
                             Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}">
                         <Button.Content>
@@ -363,7 +370,7 @@
                                       Glyph="&#xE740;" />
                         </Button.Content>
                     </Button>
-                    <Button Style="{StaticResource ReaderPageFullscreenButtonStyle}"
+                    <Button Style="{StaticResource ReaderFullscreenButtonStyle}"
                             Click="BackToWindowClick"
                             Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}">
                         <Button.Content>

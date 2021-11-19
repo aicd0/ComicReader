@@ -16,31 +16,114 @@
     <Page.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="../Resources/Constants.xaml" />
-                <ResourceDictionary Source="../Resources/Styles.xaml" />
+                <ResourceDictionary Source="../Resources/Styles/AdaptiveGridView.xaml" />
             </ResourceDictionary.MergedDictionaries>
-            
+
+            <mtuum:AttachedCardShadow x:Key="CommonShadow"
+                                      Offset="0"
+                                      Opacity="0.1" />
+
+            <Style x:Key="ComicItemContainerStyle"
+                   TargetType="GridViewItem">
+                <Setter Property="mtuu:Effects.Shadow"
+                        Value="{StaticResource CommonShadow}" />
+                <Setter Property="FontFamily"
+                        Value="{ThemeResource ContentControlThemeFontFamily}" />
+                <Setter Property="FontSize"
+                        Value="{ThemeResource ControlContentThemeFontSize}" />
+                <Setter Property="Background"
+                        Value="{ThemeResource ComicItemBackground}" />
+                <Setter Property="Foreground"
+                        Value="{ThemeResource GridViewItemForeground}" />
+                <Setter Property="TabNavigation"
+                        Value="Local" />
+                <Setter Property="IsHoldingEnabled"
+                        Value="True" />
+                <Setter Property="HorizontalContentAlignment"
+                        Value="Center" />
+                <Setter Property="VerticalContentAlignment"
+                        Value="Center" />
+                <Setter Property="MinWidth"
+                        Value="{ThemeResource GridViewItemMinWidth}" />
+                <Setter Property="MinHeight"
+                        Value="{ThemeResource GridViewItemMinHeight}" />
+                <Setter Property="Margin"
+                        Value="6" />
+                <Setter Property="AllowDrop"
+                        Value="False" />
+                <Setter Property="UseSystemFocusVisuals"
+                        Value="{StaticResource UseSystemFocusVisuals}" />
+                <Setter Property="FocusVisualMargin"
+                        Value="-2" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="GridViewItem">
+                            <ListViewItemPresenter x:Name="Root"
+                                                   CheckBrush="{ThemeResource GridViewItemCheckBrush}"
+                                                   ContentMargin="{TemplateBinding Padding}"
+                                                   CheckBoxBrush="{ThemeResource GridViewItemCheckBoxBrush}"
+                                                   ContentTransitions="{TemplateBinding ContentTransitions}"
+                                                   CheckMode="{ThemeResource GridViewItemCheckMode}"
+                                                   DragOpacity="{ThemeResource ListViewItemDragThemeOpacity}"
+                                                   DisabledOpacity="{ThemeResource ListViewItemDisabledThemeOpacity}"
+                                                   DragBackground="{ThemeResource GridViewItemDragBackground}"
+                                                   DragForeground="{ThemeResource GridViewItemDragForeground}"
+                                                   FocusBorderBrush="{ThemeResource GridViewItemFocusBorderBrush}"
+                                                   FocusVisualMargin="{TemplateBinding FocusVisualMargin}"
+                                                   FocusSecondaryBorderBrush="{ThemeResource GridViewItemFocusSecondaryBorderBrush}"
+                                                   HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                   Control.IsTemplateFocusTarget="True"
+                                                   PressedBackground="{ThemeResource GridViewItemBackgroundPressed}"
+                                                   PointerOverBackground="{ThemeResource GridViewItemBackgroundPointerOver}"
+                                                   PlaceholderBackground="{ThemeResource GridViewItemPlaceholderBackground}"
+                                                   RevealBorderThickness="0"
+                                                   ReorderHintOffset="{ThemeResource GridViewItemReorderHintThemeOffset}"
+                                                   SelectedForeground="{ThemeResource GridViewItemForegroundSelected}"
+                                                   SelectionCheckMarkVisualEnabled="{ThemeResource GridViewItemSelectionCheckMarkVisualEnabled}"
+                                                   SelectedBackground="{ThemeResource GridViewItemBackgroundSelected}"
+                                                   SelectedPressedBackground="{ThemeResource GridViewItemBackgroundSelectedPressed}"
+                                                   SelectedPointerOverBackground="{ThemeResource GridViewItemBackgroundSelectedPointerOver}"
+                                                   VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                   CornerRadius="6">
+
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualState x:Name="Normal" />
+                                        <VisualState x:Name="Selected" />
+                                        <VisualState x:Name="PointerOver" />
+                                        <VisualState x:Name="PointerOverSelected" />
+                                        <VisualState x:Name="PointerOverPressed" />
+                                        <VisualState x:Name="Pressed" />
+                                        <VisualState x:Name="PressedSelected" />
+                                    </VisualStateGroup>
+                                    <VisualStateGroup x:Name="DisabledStates">
+                                        <VisualState x:Name="Enabled" />
+                                        <VisualState x:Name="Disabled" />
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                            </ListViewItemPresenter>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
             <DataTemplate x:Key="FolderItemCommonTemplate"
                           x:DataType="data:FolderItemModel">
                 <controls:FolderItemDetailed Title="{x:Bind Folder}"
                                              Detail=""
                                              Glyph="&#xE8B7;" />
             </DataTemplate>
-            
+
             <DataTemplate x:Key="FolderItemAddNewTemplate"
                           x:DataType="data:FolderItemModel">
                 <controls:FolderItemDetailed Title="Add a folder"
                                              Detail="Include more folders in your collection"
                                              Glyph="&#xE8F4;" />
             </DataTemplate>
-            
-            <converters:FolderItemTemplateSelector x:Key="FolderItemTemplateSelector"
-                                                        CommonTemplate="{StaticResource FolderItemCommonTemplate}"
-                                                        AddNewTemplate="{StaticResource FolderItemAddNewTemplate}" />
 
-            <mtuum:AttachedCardShadow x:Key="CommonShadow"
-                                      Offset="0"
-                                      Opacity="0.1" />
+            <converters:FolderItemTemplateSelector x:Key="FolderItemTemplateSelector"
+                                                   CommonTemplate="{StaticResource FolderItemCommonTemplate}"
+                                                   AddNewTemplate="{StaticResource FolderItemAddNewTemplate}" />
         </ResourceDictionary>
     </Page.Resources>
 
@@ -80,7 +163,7 @@
                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                         ScrollViewer.HorizontalScrollMode="Disabled"
                                         StretchContentForSingleRow="False"
-                                        ItemContainerStyle="{StaticResource VerticalComicItemContainerStyle}">
+                                        ItemContainerStyle="{StaticResource ComicItemContainerStyle}">
                     <mtuuc:AdaptiveGridView.ItemTemplate>
                         <DataTemplate x:DataType="data:ComicItemModel">
                             <controls:ComicItemVertical DataContext="{x:Bind}" />
@@ -91,7 +174,7 @@
                 <TextBlock x:Uid="Folders"
                            FontSize="22"
                            FontWeight="SemiBold"
-                           Margin="6,0,0,0"/>
+                           Margin="6,0,0,0" />
                 <Grid Height="10" />
                 <mtuuc:AdaptiveGridView Style="{StaticResource HomePageAdaptiveGridViewStyle}"
                                         ItemsSource="{x:Bind FolderItemDataSource}"

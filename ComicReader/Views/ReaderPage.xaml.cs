@@ -20,6 +20,176 @@ using ComicReader.Data;
 
 namespace ComicReader.Views
 {
+    public class ReaderPageShared : INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        private NavigationPageShared m_NavigationPageShared;
+        public NavigationPageShared NavigationPageShared
+        {
+            get => m_NavigationPageShared;
+            set
+            {
+                m_NavigationPageShared = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("NavigationPageShared"));
+            }
+        }
+
+        private FlowDirection m_ReaderFlowDirection;
+        public FlowDirection ReaderFlowDirection
+        {
+            get => m_ReaderFlowDirection;
+            set
+            {
+                m_ReaderFlowDirection = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ReaderFlowDirection"));
+            }
+        }
+
+        // comic info
+        private string m_ComicTitle1;
+        public string ComicTitle1
+        {
+            get => m_ComicTitle1;
+            set
+            {
+                m_ComicTitle1 = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ComicTitle1"));
+            }
+        }
+
+        private string m_ComicTitle2;
+        public string ComicTitle2
+        {
+            get => m_ComicTitle2;
+            set
+            {
+                m_ComicTitle2 = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ComicTitle2"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsComicTitle2Visible"));
+            }
+        }
+
+        public bool IsComicTitle2Visible => ComicTitle2.Length > 0;
+
+        private string m_ComicDir;
+        public string ComicDir
+        {
+            get => m_ComicDir;
+            set
+            {
+                m_ComicDir = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ComicDir"));
+            }
+        }
+
+        private ObservableCollection<TagsModel> m_ComicTags;
+        public ObservableCollection<TagsModel> ComicTags
+        {
+            get => m_ComicTags;
+            set
+            {
+                m_ComicTags = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ComicTags"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsComicTagsVisible"));
+            }
+        }
+
+        public bool IsComicTagsVisible => ComicTags != null && ComicTags.Count > 0;
+
+        private bool m_IsEditable;
+        public bool IsEditable
+        {
+            get => m_IsEditable;
+            set
+            {
+                m_IsEditable = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsEditable"));
+            }
+        }
+
+        // read record
+        private double m_Rating;
+        public double Rating
+        {
+            get => m_Rating;
+            set
+            {
+                m_Rating = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Rating"));
+            }
+        }
+
+        private string m_Progress;
+        public string Progress
+        {
+            get => m_Progress;
+            set
+            {
+                m_Progress = value;
+                if (PropertyChanged != null)
+                {
+                    PropertyChanged(this, new PropertyChangedEventArgs("Progress"));
+                }
+            }
+        }
+
+        // reader
+        private bool m_IsOnePageReaderVisible;
+        public bool IsOnePageReaderVisible
+        {
+            get => m_IsOnePageReaderVisible;
+            set
+            {
+                m_IsOnePageReaderVisible = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsOnePageReaderVisible"));
+            }
+        }
+
+        private bool m_IsTwoPagesReaderVisible;
+        public bool IsTwoPagesReaderVisible
+        {
+            get => m_IsTwoPagesReaderVisible;
+            set
+            {
+                m_IsTwoPagesReaderVisible = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsTwoPagesReaderVisible"));
+            }
+        }
+
+        private bool m_IsGridViewVisible;
+        public bool IsGridViewVisible
+        {
+            get => m_IsGridViewVisible;
+            set
+            {
+                m_IsGridViewVisible = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsGridViewVisible"));
+            }
+        }
+
+        public void UpdateReaderVisibility()
+        {
+            IsGridViewVisible = NavigationPageShared.PreviewMode;
+            IsOnePageReaderVisible = !NavigationPageShared.PreviewMode && !NavigationPageShared.TwoPagesMode;
+            IsTwoPagesReaderVisible = !NavigationPageShared.PreviewMode && NavigationPageShared.TwoPagesMode;
+        }
+
+        private bool m_bottom_grid_Pinned;
+        public bool BottomGridPinned
+        {
+            get => m_bottom_grid_Pinned;
+            set
+            {
+                m_bottom_grid_Pinned = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("BottomGridPinned"));
+                BottomGridPinnedChanged?.Invoke();
+            }
+        }
+
+        public Action BottomGridPinnedChanged;
+    }
+
     public class ReaderControl
     {
         private const int max_zoom = 250;
@@ -755,176 +925,6 @@ namespace ComicReader.Views
         }
     }
 
-    public class ReaderPageShared : INotifyPropertyChanged
-    {
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        private NavigationPageShared m_NavigationPageShared;
-        public NavigationPageShared NavigationPageShared
-        {
-            get => m_NavigationPageShared;
-            set
-            {
-                m_NavigationPageShared = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("NavigationPageShared"));
-            }
-        }
-
-        private FlowDirection m_Reader_FlowDirection;
-        public FlowDirection P_Reader_FlowDirection
-        {
-            get => m_Reader_FlowDirection;
-            set
-            {
-                m_Reader_FlowDirection = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("P_Reader_FlowDirection"));
-            }
-        }
-
-        // comic basic info
-        private string m_ComicTitle1;
-        public string ComicTitle1
-        {
-            get => m_ComicTitle1;
-            set
-            {
-                m_ComicTitle1 = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ComicTitle1"));
-            }
-        }
-
-        private string m_ComicTitle2;
-        public string ComicTitle2
-        {
-            get => m_ComicTitle2;
-            set
-            {
-                m_ComicTitle2 = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ComicTitle2"));
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ComicTitle2Visible"));
-            }
-        }
-
-        public bool ComicTitle2Visible => ComicTitle2.Length > 0;
-
-        private string m_ComicDir;
-        public string ComicDir
-        {
-            get => m_ComicDir;
-            set
-            {
-                m_ComicDir = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ComicDir"));
-            }
-        }
-
-        private ObservableCollection<TagsModel> m_ComicTags;
-        public ObservableCollection<TagsModel> ComicTags
-        {
-            get => m_ComicTags;
-            set
-            {
-                m_ComicTags = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ComicTags"));
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ComicTagsVisible"));
-            }
-        }
-
-        public bool ComicTagsVisible => ComicTags != null && ComicTags.Count > 0;
-
-        private bool m_IsEditable;
-        public bool IsEditable
-        {
-            get => m_IsEditable;
-            set
-            {
-                m_IsEditable = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsEditable"));
-            }
-        }
-
-        // read record
-        private double m_Rating;
-        public double Rating
-        {
-            get => m_Rating;
-            set
-            {
-                m_Rating = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Rating"));
-            }
-        }
-
-        private string m_Progress;
-        public string Progress
-        {
-            get => m_Progress;
-            set
-            {
-                m_Progress = value;
-                if (PropertyChanged != null)
-                {
-                    PropertyChanged(this, new PropertyChangedEventArgs("Progress"));
-                }
-            }
-        }
-
-        // reader properties
-        private bool m_IsOnePageReaderVisible;
-        public bool IsOnePageReaderVisible
-        {
-            get => m_IsOnePageReaderVisible;
-            set
-            {
-                m_IsOnePageReaderVisible = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsOnePageReaderVisible"));
-            }
-        }
-
-        private bool m_IsTwoPagesReaderVisible;
-        public bool IsTwoPagesReaderVisible
-        {
-            get => m_IsTwoPagesReaderVisible;
-            set
-            {
-                m_IsTwoPagesReaderVisible = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsTwoPagesReaderVisible"));
-            }
-        }
-
-        private bool m_IsGridViewVisible;
-        public bool IsGridViewVisible
-        {
-            get => m_IsGridViewVisible;
-            set
-            {
-                m_IsGridViewVisible = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsGridViewVisible"));
-            }
-        }
-
-        public void UpdateReaderVisibility()
-        {
-            IsGridViewVisible = NavigationPageShared.PreviewMode;
-            IsOnePageReaderVisible = !NavigationPageShared.PreviewMode && !NavigationPageShared.TwoPagesMode;
-            IsTwoPagesReaderVisible = !NavigationPageShared.PreviewMode && NavigationPageShared.TwoPagesMode;
-        }
-
-        private bool m_bottom_grid_Pinned;
-        public bool BottomGridPinned
-        {
-            get => m_bottom_grid_Pinned;
-            set
-            {
-                m_bottom_grid_Pinned = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("BottomGridPinned"));
-                BottomGridPinnedChanged?.Invoke();
-            }
-        }
-
-        public Action BottomGridPinnedChanged;
-    }
-
     public sealed partial class ReaderPage : Page
     {
         public static ReaderPage Current;
@@ -969,8 +969,10 @@ namespace ComicReader.Views
 
             m_tab_manager = new Utils.Tab.TabManager();
             m_tab_manager.OnPageEntered = OnPageEntered;
-            m_tab_manager.OnSetShared = OnSetShared;
+            m_tab_manager.OnRegister = OnRegister;
+            m_tab_manager.OnUnregister = OnUnregister;
             m_tab_manager.OnUpdate = OnUpdate;
+            Unloaded += m_tab_manager.OnUnloaded;
 
             m_comic = null;
             m_comic_record = null;
@@ -998,9 +1000,10 @@ namespace ComicReader.Views
             m_tab_manager.OnNavigatedFrom(e);
         }
 
-        private void OnSetShared(object shared)
+        private void OnRegister(object shared)
         {
             Shared.NavigationPageShared = (NavigationPageShared)shared;
+
             Shared.NavigationPageShared.OnFavoritesClicked += OnFavoritesBtClicked;
             Shared.NavigationPageShared.MainPageShared.OnExitFullscreenMode += BottomGridForceHide;
             Shared.NavigationPageShared.OnZoomInButtonClicked += OnZoomInClick;
@@ -1008,14 +1011,24 @@ namespace ComicReader.Views
             Shared.NavigationPageShared.OnTwoPagesModeChanged += OnTwoPagesModeChanged;
             Shared.NavigationPageShared.OnTwoPagesModeChanged += Shared.UpdateReaderVisibility;
             Shared.NavigationPageShared.OnGridViewModeChanged += Shared.UpdateReaderVisibility;
-            
             Shared.NavigationPageShared.PreviewMode = false;
             Shared.NavigationPageShared.TwoPagesMode = false;
         }
 
+        private void OnUnregister()
+        {
+            Shared.NavigationPageShared.OnFavoritesClicked -= OnFavoritesBtClicked;
+            Shared.NavigationPageShared.MainPageShared.OnExitFullscreenMode -= BottomGridForceHide;
+            Shared.NavigationPageShared.OnZoomInButtonClicked -= OnZoomInClick;
+            Shared.NavigationPageShared.OnZoomOutButtonClicked -= OnZoomOutClick;
+            Shared.NavigationPageShared.OnTwoPagesModeChanged -= OnTwoPagesModeChanged;
+            Shared.NavigationPageShared.OnTwoPagesModeChanged -= Shared.UpdateReaderVisibility;
+            Shared.NavigationPageShared.OnGridViewModeChanged -= Shared.UpdateReaderVisibility;
+        }
+
         private void OnPageEntered()
         {
-            Shared.P_Reader_FlowDirection = Database.AppSettings.LeftToRight ?
+            Shared.ReaderFlowDirection = Database.AppSettings.LeftToRight ?
                 FlowDirection.LeftToRight : FlowDirection.RightToLeft;
         }
 
@@ -1107,8 +1120,8 @@ namespace ComicReader.Views
             await Windows.ApplicationModel.Core.CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
             delegate
             {
-                preview_width = (double)Resources["ReaderPreviewImageWidth"];
-                preview_height = (double)Resources["ReaderPreviewImageHeight"];
+                preview_width = (double)Application.Current.Resources["ReaderPreviewImageWidth"];
+                preview_height = (double)Application.Current.Resources["ReaderPreviewImageHeight"];
                 OnePageReader.Clear();
                 TwoPagesReader.Clear();
                 GridViewDataSource.Clear();
@@ -1617,7 +1630,7 @@ namespace ComicReader.Views
             double dx = m_drag_pointer.Position.X - pt.Position.X;
             double dy = m_drag_pointer.Position.Y - pt.Position.Y;
 
-            if (Shared.P_Reader_FlowDirection == FlowDirection.RightToLeft)
+            if (Shared.ReaderFlowDirection == FlowDirection.RightToLeft)
             {
                 dx = -dx;
             }

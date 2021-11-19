@@ -16,9 +16,7 @@
     <UserControl.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="../Resources/Constants.xaml" />
-                <ResourceDictionary Source="../Resources/Style/RatingControl.xaml" />
-                <ResourceDictionary Source="../Resources/Styles.xaml" />
+                <ResourceDictionary Source="../Resources/Styles/RatingControl.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <mtuum:AttachedCardShadow x:Key="CommonShadow"
@@ -27,9 +25,8 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <Grid Background="{ThemeResource ComicTileBackground}"
-          CornerRadius="6"
-          PointerPressed="{x:Bind Ctx.OnItemPressed}">
+    <Grid PointerPressed="{x:Bind Ctx.OnItemPressed}"
+          Background="Transparent">
         <Grid.ContextFlyout>
             <MenuFlyout>
                 <MenuFlyoutItem Text="Hide"
@@ -41,73 +38,76 @@
                 </MenuFlyoutItem>
             </MenuFlyout>
         </Grid.ContextFlyout>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="0" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-        <Grid Grid.Row="1"
-              Padding="20,35">
-            <Grid HorizontalAlignment="Center"
-                  VerticalAlignment="Center"
-                  Height="{StaticResource ComicItemVerticalImageHeight}">
-                <Grid Visibility="{x:Bind Ctx.IsImageLoaded, Mode=OneWay}">
-                    <Grid mtuu:Effects.Shadow="{StaticResource CommonShadow}">
-                        <Image Source="{x:Bind Ctx.Image}"
-                               Opacity="0"/>
-                    </Grid>
-                    <Border CornerRadius="5">
-                        <Image Source="{x:Bind Ctx.Image}" />
-                    </Border>
-                    <Grid Width="24"
-                          Height="24"
-                          VerticalAlignment="Bottom"
-                          HorizontalAlignment="Right"
-                          Margin="5"
-                          Visibility="{x:Bind Ctx.IsFavorite}">
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="0" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid Grid.Row="1"
+                  Padding="20,35">
+                <Grid HorizontalAlignment="Center"
+                      VerticalAlignment="Center"
+                      Height="{StaticResource ComicItemVerticalImageHeight}">
+                    <Grid Visibility="{x:Bind Ctx.IsImageLoaded, Mode=OneWay}">
+                        <Grid mtuu:Effects.Shadow="{StaticResource CommonShadow}">
+                            <Image Source="{x:Bind Ctx.Image}"
+                                   Opacity="0" />
+                        </Grid>
                         <Border CornerRadius="5">
-                            <Border.Background>
-                                <muxm:AcrylicBrush BackgroundSource="Backdrop"
-                                                   TintColor="Black"
-                                                   TintOpacity="0.0"
-                                                   TintLuminosityOpacity="0.3" />
-                            </Border.Background>
+                            <Image Source="{x:Bind Ctx.Image}" />
                         </Border>
-                        <FontIcon Glyph="&#xE735;"
-                                  FontSize="14"
-                                  Foreground="SkyBlue" />
+                        <Grid Width="24"
+                              Height="24"
+                              VerticalAlignment="Bottom"
+                              HorizontalAlignment="Right"
+                              Margin="5"
+                              Visibility="{x:Bind Ctx.IsFavorite}">
+                            <Border CornerRadius="5">
+                                <Border.Background>
+                                    <muxm:AcrylicBrush BackgroundSource="Backdrop"
+                                                       TintColor="Black"
+                                                       TintOpacity="0.0"
+                                                       TintLuminosityOpacity="0.3" />
+                                </Border.Background>
+                            </Border>
+                            <FontIcon Glyph="&#xE735;"
+                                      FontSize="14"
+                                      Foreground="SkyBlue" />
+                        </Grid>
                     </Grid>
+                    <muxc:ProgressRing Visibility="{x:Bind Ctx.IsImageLoadedN, Mode=OneWay}" />
                 </Grid>
-                <muxc:ProgressRing Visibility="{x:Bind Ctx.IsImageLoadedN, Mode=OneWay}" />
             </Grid>
-        </Grid>
-        <Grid Grid.Row="2"
-              Padding="10">
-            <StackPanel Grid.Row="0"
-                        Orientation="Vertical"
-                        Spacing="3">
-                <TextBlock FontFamily="Segoe UI"
-                           FontSize="14"
-                           FontWeight="SemiBold"
-                           MaxLines="2"
-                           Text="{x:Bind Ctx.Title}"
-                           TextTrimming="CharacterEllipsis"
-                           TextWrapping="Wrap" />
-                <StackPanel Orientation="Horizontal"
-                            Margin="0,5,0,0">
-                    <Viewbox HorizontalAlignment="Left"
-                             VerticalAlignment="Center"
-                             Height="20">
-                        <RatingControl Margin="0,0,-13,0"
-                                       PlaceholderValue="{x:Bind Ctx.Rating}"
-                                       Style="{StaticResource RatingControlReadOnly}"
-                                       Visibility="{x:Bind Ctx.IsRatingVisible}" />
-                    </Viewbox>
-                    <TextBlock Text="{x:Bind Ctx.Progress}"
-                               FontSize="12"
-                               Opacity="0.6" />
+            <Grid Grid.Row="2"
+                  Padding="10">
+                <StackPanel Grid.Row="0"
+                            Orientation="Vertical"
+                            Spacing="3">
+                    <TextBlock FontFamily="Segoe UI"
+                               FontSize="14"
+                               FontWeight="SemiBold"
+                               MaxLines="2"
+                               Text="{x:Bind Ctx.Title}"
+                               TextTrimming="CharacterEllipsis"
+                               TextWrapping="Wrap" />
+                    <StackPanel Orientation="Horizontal"
+                                Margin="0,5,0,0">
+                        <Viewbox HorizontalAlignment="Left"
+                                 VerticalAlignment="Center"
+                                 Height="20">
+                            <RatingControl Margin="0,0,-13,0"
+                                           PlaceholderValue="{x:Bind Ctx.Rating}"
+                                           Style="{StaticResource RatingControlReadOnly}"
+                                           Visibility="{x:Bind Ctx.IsRatingVisible}" />
+                        </Viewbox>
+                        <TextBlock Text="{x:Bind Ctx.Progress}"
+                                   FontSize="12"
+                                   Opacity="0.6" />
+                    </StackPanel>
                 </StackPanel>
-            </StackPanel>
+            </Grid>
         </Grid>
     </Grid>
 </UserControl>
