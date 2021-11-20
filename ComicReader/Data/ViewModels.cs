@@ -131,15 +131,7 @@ namespace ComicReader.Data
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public int Page { get; set; }
-        public bool TopPadding { get; set; }
-        public bool BottomPadding { get; set; }
-        public bool LeftPadding { get; set; }
-        public bool RightPadding { get; set; }
-        public double Width { get; set; }
-        public double Height { get; set; }
-
-        private BitmapImage m_Image;
+        private BitmapImage m_Image = null;
         public BitmapImage Image {
             get => m_Image;
             set
@@ -149,10 +141,36 @@ namespace ComicReader.Data
             }
         }
 
-        public Grid Container;
+        public int Page { get; set; } = -1;
+        public bool TopPadding { get; set; } = false;
+        public bool BottomPadding { get; set; } = false;
+        public bool LeftPadding { get; set; } = false;
+        public bool RightPadding { get; set; } = false;
+        public double ImageWidth { get; set; } = -1;
+        public double ImageHeight { get; set; } = -1;
+
+        private Thickness? m_Margin = null;
+        public Thickness Margin
+        {
+            get
+            {
+                if (m_Margin == null)
+                {
+                    m_Margin = new Thickness(
+                        LeftPadding ? 200 : 0,
+                        TopPadding ? 10 : 0,
+                        RightPadding ? 200 : 0,
+                        BottomPadding ? 10 : 0);
+                }
+
+                return m_Margin.Value;
+            }
+        }
+
+        public Grid Container = null;
 
         // events
-        public Action<ReaderFrameModel> OnContainerSet;
+        public Action<ReaderFrameModel> OnContainerSet = null;
     };
 
     public class TagsModel

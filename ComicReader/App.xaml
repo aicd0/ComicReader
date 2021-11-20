@@ -13,6 +13,8 @@
                         <ResourceDictionary x:Key="Default">
                             <SolidColorBrush x:Key="ComicItemBackground"
                                              Color="#3A3A3A" />
+                            <SolidColorBrush x:Key="ComicItemBorderBrush"
+                                             Color="#3A3A3A" />
                             <SolidColorBrush x:Key="FolderItemBorderBrush"
                                              Color="#444444" />
                             <SolidColorBrush x:Key="FolderTileBackground"
@@ -40,6 +42,8 @@
                         <ResourceDictionary x:Key="Light">
                             <SolidColorBrush x:Key="ComicItemBackground"
                                              Color="#FEFDFE" />
+                            <SolidColorBrush x:Key="ComicItemBorderBrush"
+                                             Color="#FDE8ED" />
                             <SolidColorBrush x:Key="FolderItemBorderBrush"
                                              Color="#EBE9ED" />
                             <SolidColorBrush x:Key="FolderTileBackground"
@@ -67,6 +71,8 @@
                         <ResourceDictionary x:Key="HighContrast">
                             <SolidColorBrush x:Key="ComicItemBackground"
                                              Color="#FEFDFE" />
+                            <SolidColorBrush x:Key="ComicItemBorderBrush"
+                                             Color="#FDE8ED" />
                             <SolidColorBrush x:Key="FolderItemBorderBrush"
                                              Color="#EBE9ED" />
                             <SolidColorBrush x:Key="FolderTileBackground"

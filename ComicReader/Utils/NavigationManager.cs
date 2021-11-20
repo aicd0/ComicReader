@@ -57,11 +57,6 @@ namespace ComicReader.Utils.Tab
 
         public Action<TabIdentifier> OnUpdate { get; set; }
 
-        public void OnUnloaded(object sender, RoutedEventArgs e)
-        {
-            _Unregister();
-        }
-
         private void _Unregister()
         {
             if (m_registered)
@@ -69,6 +64,11 @@ namespace ComicReader.Utils.Tab
                 OnUnregister?.Invoke();
                 m_registered = false;
             }
+        }
+
+        public void OnUnloaded(object sender, RoutedEventArgs e)
+        {
+            _Unregister();
         }
 
         public void OnNavigatedFrom(NavigatingCancelEventArgs e)

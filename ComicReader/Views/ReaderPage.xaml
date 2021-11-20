@@ -137,7 +137,7 @@
                                 Orientation="Horizontal"
                                 HorizontalAlignment="Right"
                                 Margin="15,5,15,3">
-                        <AppBarButton Click="OnSplitViewEditBtClicked"
+                        <AppBarButton Click="OnEditBtClicked"
                                       Icon="Edit"
                                       Label="Edit"
                                       Width="60"
@@ -208,7 +208,8 @@
                                   VerticalScrollBarVisibility="Hidden"
                                   VerticalScrollMode="Disabled"
                                   FlowDirection="{x:Bind Shared.ReaderFlowDirection, Mode=OneWay}">
-                        <Grid VerticalAlignment="Center">
+                        <Grid VerticalAlignment="Center"
+                              PointerWheelChanged="Page_PointerWheelChanged">
                             <ListView x:Name="TwoPagesImageListView"
                                       ItemsSource="{x:Bind TwoPagesReader.ImageSource, Mode=OneWay}"
                                       Loaded="TwoPagesImageListView_Loaded"
