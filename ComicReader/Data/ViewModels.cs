@@ -188,7 +188,7 @@ namespace ComicReader.Data
     public class TagModel
     {
         public string Tag { get; set; }
-        public RoutedEventHandler EClicked { get; set; }
+        public RoutedEventHandler OnClicked { get; set; }
     };
 
     public class FolderItemModel

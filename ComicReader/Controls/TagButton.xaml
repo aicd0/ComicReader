@@ -9,7 +9,7 @@
              d:DesignWidth="100">
 
     <Button Style="{StaticResource ButtonRevealStyle}"
-            Background="#505050"
+            Background="{ThemeResource TagButtonBackground}"
             BorderThickness="1.5"
             CornerRadius="13"
             Height="26"
@@ -20,6 +20,6 @@
             VerticalAlignment="Center"
             FontSize="13"
             FontWeight="Bold"
-            Click="{x:Bind Ctx.EClicked}">
+            Click="{x:Bind Ctx.OnClicked}">
     </Button>
 </UserControl>

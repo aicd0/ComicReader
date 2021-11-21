@@ -38,6 +38,8 @@
                                              Color="#000000" />
                             <SolidColorBrush x:Key="TabViewItemHeaderBackgroundSelected"
                                              Color="#282828" />
+                            <SolidColorBrush x:Key="TagButtonBackground"
+                                             Color="#505050" />
                         </ResourceDictionary>
                         <ResourceDictionary x:Key="Light">
                             <SolidColorBrush x:Key="ComicItemBackground"
@@ -67,6 +69,8 @@
                                              Color="#E6E3EA" />
                             <SolidColorBrush x:Key="TabViewItemHeaderBackgroundSelected"
                                              Color="#FAF8FC" />
+                            <SolidColorBrush x:Key="TagButtonBackground"
+                                             Color="#DADADA" />
                         </ResourceDictionary>
                         <ResourceDictionary x:Key="HighContrast">
                             <SolidColorBrush x:Key="ComicItemBackground"
@@ -96,6 +100,8 @@
                                              Color="#E6E3EA" />
                             <SolidColorBrush x:Key="TabViewItemHeaderBackgroundSelected"
                                              Color="#F4F1F9" />
+                            <SolidColorBrush x:Key="TagButtonBackground"
+                                             Color="#F0F0F0" />
                         </ResourceDictionary>
                     </ResourceDictionary.ThemeDictionaries>
                     

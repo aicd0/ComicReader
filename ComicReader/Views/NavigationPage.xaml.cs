@@ -136,9 +136,9 @@ namespace ComicReader.Views
             }
         }
 
-        public Action OnFavoritesClicked;
-        public Action OnZoomInButtonClicked;
-        public Action OnZoomOutButtonClicked;
+        public Action OnSwitchFavorites;
+        public Action OnZoomIn;
+        public Action OnZoomOut;
         public Action OnTwoPagesModeChanged;
         public Action OnGridViewModeChanged;
     }
@@ -276,17 +276,17 @@ namespace ComicReader.Views
 
         private void AddToFavoritesClick(object sender, RoutedEventArgs e)
         {
-            Shared.OnFavoritesClicked?.Invoke();
+            Shared.OnSwitchFavorites?.Invoke();
         }
 
         private void ZoomInClick(object sender, RoutedEventArgs e)
         {
-            Shared.OnZoomInButtonClicked?.Invoke();
+            Shared.OnZoomIn?.Invoke();
         }
 
         private void ZoomOutClick(object sender, RoutedEventArgs e)
         {
-            Shared.OnZoomOutButtonClicked?.Invoke();
+            Shared.OnZoomOut?.Invoke();
         }
 
         private void ComicInfoClick(object sender, RoutedEventArgs e)
