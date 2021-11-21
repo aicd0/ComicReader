@@ -70,6 +70,24 @@ namespace ComicReader.Data
             return new TaskResult();
         }
 
+        public static async Task Update()
+        {
+            await DatabaseManager.WaitLock();
+
+            for (int i = Database.RecentRead.Items.Count - 1; i >= 0; i--)
+            {
+                RecentReadItemData item = Database.RecentRead.Items[i];
+                ComicItemData comic = ComicDataManager.FromIdNoLock(item.Id);
+
+                if (comic == null)
+                {
+                    Database.RecentRead.Items.RemoveAt(i);
+                }
+            }
+
+            DatabaseManager.ReleaseLock();
+        }
+
         public static async Task<RecentReadItemData> FromId(string id, bool create_if_not_exists = false)
         {
             await DatabaseManager.WaitLock();

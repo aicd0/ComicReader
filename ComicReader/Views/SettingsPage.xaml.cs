@@ -36,14 +36,14 @@ namespace ComicReader.Views
 
         public Action OnSettingsChanged;
 
-        private bool m_ReaderLeftToRight;
-        public bool ReaderLeftToRight
+        private bool m_ReaderRightToLeft;
+        public bool ReaderRightToLeft
         {
-            get => m_ReaderLeftToRight;
+            get => m_ReaderRightToLeft;
             set
             {
-                m_ReaderLeftToRight = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ReaderLeftToRight"));
+                m_ReaderRightToLeft = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ReaderRightToLeft"));
                 OnSettingsChanged?.Invoke();
             }
         }
@@ -167,7 +167,10 @@ namespace ComicReader.Views
         public SettingsPageShared Shared { get; set; }
 
         private readonly Utils.Tab.TabManager m_tab_manager;
-        private bool m_updating = false;
+
+        // Set the initial value of m_updating to TRUE to avoid copying values
+        // from controls (See Save()) while the page is launching.
+        private bool m_updating = true;
 
         public SettingsPage()
         {
@@ -247,7 +250,7 @@ namespace ComicReader.Views
             await DatabaseManager.WaitLock();
             m_updating = true;
 
-            Shared.ReaderLeftToRight = Database.AppSettings.LeftToRight;
+            Shared.ReaderRightToLeft = Database.AppSettings.RightToLeft;
             Shared.HistorySaveBrowsingHistory = Database.AppSettings.SaveHistory;
             StatisticsTextBlock.Text = "Total collections: " + Database.Comics.Items.Count.ToString("#,#0", CultureInfo.InvariantCulture);
 
@@ -279,7 +282,7 @@ namespace ComicReader.Views
             // to database
             await DatabaseManager.WaitLock();
 
-            Database.AppSettings.LeftToRight = Shared.ReaderLeftToRight;
+            Database.AppSettings.RightToLeft = Shared.ReaderRightToLeft;
             Database.AppSettings.SaveHistory = Shared.HistorySaveBrowsingHistory;
 
             DatabaseManager.ReleaseLock();

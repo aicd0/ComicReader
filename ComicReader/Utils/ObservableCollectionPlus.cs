@@ -9,16 +9,16 @@ using System.Threading.Tasks;
 
 namespace ComicReader.Utils
 {
-    public sealed class TrulyObservableCollection<T> : ObservableCollection<T> where T : INotifyPropertyChanged
+    public sealed class ObservableCollectionPlus<T> : ObservableCollection<T> where T : INotifyPropertyChanged
     {
         //public event PropertyChangedEventHandler CollectionItemChanged;
 
-        public TrulyObservableCollection()
+        public ObservableCollectionPlus()
         {
             CollectionChanged += FullObservableCollectionCollectionChanged;
         }
 
-        public TrulyObservableCollection(IEnumerable<T> pItems) : this()
+        public ObservableCollectionPlus(IEnumerable<T> pItems) : this()
         {
             foreach (T item in pItems)
             {

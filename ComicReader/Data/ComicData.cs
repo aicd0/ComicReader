@@ -228,7 +228,7 @@ namespace ComicReader.Data
             }
         }
 
-        private static ComicItemData FromIdNoLock(string _id)
+        public static ComicItemData FromIdNoLock(string _id)
         {
             if (_id.Length == 0)
             {
@@ -317,9 +317,7 @@ namespace ComicReader.Data
             }
         }
 
-        public static SealedTask UpdateSealed(bool lazy_load = true) => (RawTask _) => Update(lazy_load).Result;
-
-        private static async RawTask Update(bool lazy_load)
+        public static async RawTask Update(bool lazy_load)
         {
             await m_update_comic_data_lock.WaitAsync();
 
@@ -930,11 +928,11 @@ namespace ComicReader.Data
             }
 
             // Not all the images are successfully loaded, most likely that some of the
-            // files or directories has been moved or deleted. This triggers a
-            // DataManager.ComicDataUpdate() in the background.
+            // files or directories has been renamed, moved or deleted. We trigger a
+            // DatabaseManager.Update() here to sync the changes.
             if (trig_update)
             {
-                Utils.TaskQueue.TaskQueueManager.AppendTask(UpdateSealed(), "",
+                Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.UpdateSealed(), "",
                     Utils.TaskQueue.TaskQueueManager.EmptyQueue());
             }
         }

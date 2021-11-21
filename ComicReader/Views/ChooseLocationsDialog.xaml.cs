@@ -52,7 +52,7 @@ namespace ComicReader.Views
         {
             // comfirm changes
             Utils.TaskQueue.TaskQueueManager.AppendTask(
-                ComicDataManager.UpdateSealed(lazy_load: false), "",
+                DatabaseManager.UpdateSealed(lazy_load: false), "",
                 Utils.TaskQueue.TaskQueueManager.EmptyQueue());
         }
 

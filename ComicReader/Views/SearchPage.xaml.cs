@@ -75,7 +75,7 @@ namespace ComicReader.Views
         }
         public bool FilterDetailsVisible => FilterDetails.Length > 0;
 
-        public Utils.TrulyObservableCollection<ComicItemModel> SearchResults;
+        public Utils.ObservableCollectionPlus<ComicItemModel> SearchResults;
 
         private bool m_SearchResultGridVisible;
         public bool SearchResultGridVisible
@@ -126,7 +126,7 @@ namespace ComicReader.Views
             Shared = new SearchPageShared();
             Shared.Title = "";
             Shared.FilterDetails = "";
-            Shared.SearchResults = new Utils.TrulyObservableCollection<ComicItemModel>();
+            Shared.SearchResults = new Utils.ObservableCollectionPlus<ComicItemModel>();
             
             m_tab_manager = new Utils.Tab.TabManager();
             m_tab_manager.OnRegister = OnRegister;

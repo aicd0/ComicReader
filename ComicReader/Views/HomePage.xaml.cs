@@ -40,13 +40,26 @@ namespace ComicReader.Views
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("NavigationPageShared"));
             }
         }
+
+        private Utils.ObservableCollectionPlus<ComicItemModel> m_ComicItemSource = new Utils.ObservableCollectionPlus<ComicItemModel>();
+        public Utils.ObservableCollectionPlus<ComicItemModel> ComicItemSource
+        {
+            get => m_ComicItemSource;
+            set
+            {
+                m_ComicItemSource = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ComicItemSource"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsLibraryEmpty"));
+            }
+        }
+
+        public bool IsLibraryEmpty => ComicItemSource.Count == 0;
     }
 
     public sealed partial class HomePage : Page
     {
         public static HomePage Current;
         public HomePageShared Shared { get; set; }
-        public Utils.TrulyObservableCollection<ComicItemModel> ComicItemSource { get; set; }
         public ObservableCollection<FolderItemModel> FolderItemDataSource { get; set; }
 
         private readonly Utils.Tab.TabManager m_tab_manager;
@@ -58,7 +71,6 @@ namespace ComicReader.Views
         {
             Current = this;
             Shared = new HomePageShared();
-            ComicItemSource = new Utils.TrulyObservableCollection<ComicItemModel>();
             FolderItemDataSource = new ObservableCollection<FolderItemModel>();
 
             m_tab_manager = new Utils.Tab.TabManager();
@@ -67,6 +79,7 @@ namespace ComicReader.Views
             m_tab_manager.OnPageEntered = OnPageEntered;
             m_tab_manager.OnUpdate = OnUpdate;
             Unloaded += m_tab_manager.OnUnloaded;
+
             m_update_folder_lock = new Utils.CancellationLock();
             m_update_library_lock = new Utils.CancellationLock();
             m_update_queue = Utils.TaskQueue.TaskQueueManager.EmptyQueue();
@@ -164,7 +177,7 @@ namespace ComicReader.Views
                 IEnumerable<ComicItemData> sorted = min_heap.OrderBy((ComicItemData x) => x.LastVisit).Reverse();
 
                 // add to comic item source
-                ComicItemSource.Clear();
+                Utils.ObservableCollectionPlus<ComicItemModel> comic_items = new Utils.ObservableCollectionPlus<ComicItemModel>();
 
                 foreach (ComicItemData comic in sorted)
                 {
@@ -190,13 +203,15 @@ namespace ComicReader.Views
                         data.Progress = "Unread";
                     }
 
-                    ComicItemSource.Add(data);
+                    comic_items.Add(data);
                 }
+
+                Shared.ComicItemSource = comic_items;
 
                 // load images
                 List<ImageLoaderToken> image_loader_tokens = new List<ImageLoaderToken>();
 
-                foreach (ComicItemModel item in ComicItemSource)
+                foreach (ComicItemModel item in Shared.ComicItemSource)
                 {
                     image_loader_tokens.Add(new ImageLoaderToken
                     {
@@ -263,12 +278,12 @@ namespace ComicReader.Views
         }
 
         // events
-        private void ShowAllClick(object sender, RoutedEventArgs e)
+        private void OnSeeAllBtClicked(object sender, RoutedEventArgs e)
         {
             MainPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Search, "<all>");
         }
 
-        private void ShowHiddensClick(object sender, RoutedEventArgs e)
+        private void OnSeeHiddenBtClick(object sender, RoutedEventArgs e)
         {
             MainPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Search, "<hidden>");
         }
@@ -296,35 +311,40 @@ namespace ComicReader.Views
             });
         }
 
-        private void FolderItemPressed(object sender, PointerRoutedEventArgs e)
+        private void AddNewFolder()
         {
             Utils.Methods.Run(async delegate
             {
-                PointerPoint pt = e.GetCurrentPoint((UIElement)sender);
-
-                if (!pt.Properties.IsLeftButtonPressed)
+                if (!await AppSettingsDataManager.AddComicFolderUsingPicker())
                 {
                     return;
                 }
 
-                FolderItemModel ctx = (FolderItemModel)((Grid)sender).DataContext;
-
-                if (ctx.IsAddNew)
-                {
-                    if (!await AppSettingsDataManager.AddComicFolderUsingPicker())
-                    {
-                        return;
-                    }
-
-                    await UpdateFolders();
-                    Utils.TaskQueue.TaskQueueManager.AppendTask(ComicDataManager.UpdateSealed(), "", m_update_queue);
-                    Utils.TaskQueue.TaskQueueManager.AppendTask(UpdateSealed(), "", m_update_queue);
-                }
-                else
-                {
-                    MainPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Search, "<dir:" + ctx.Folder + ">");
-                }
+                await UpdateFolders();
+                Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.UpdateSealed(), "", m_update_queue);
+                Utils.TaskQueue.TaskQueueManager.AppendTask(UpdateSealed(), "", m_update_queue);
             });
+        }
+
+        private void FolderItemPressed(object sender, PointerRoutedEventArgs e)
+        {
+            PointerPoint pt = e.GetCurrentPoint((UIElement)sender);
+
+            if (!pt.Properties.IsLeftButtonPressed)
+            {
+                return;
+            }
+
+            FolderItemModel ctx = (FolderItemModel)((Grid)sender).DataContext;
+
+            if (ctx.IsAddNew)
+            {
+                AddNewFolder();
+            }
+            else
+            {
+                MainPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Search, "<dir:" + ctx.Folder + ">");
+            }
         }
 
         private void FolderItemRemoveClick(object sender, RoutedEventArgs e)
@@ -334,9 +354,14 @@ namespace ComicReader.Views
                 FolderItemModel ctx = (FolderItemModel)((MenuFlyoutItem)sender).DataContext;
                 await AppSettingsDataManager.RemoveComicFolder(ctx.Folder, final: true);
                 await UpdateFolders();
-                Utils.TaskQueue.TaskQueueManager.AppendTask(ComicDataManager.UpdateSealed(), "", m_update_queue);
+                Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.UpdateSealed(), "", m_update_queue);
                 Utils.TaskQueue.TaskQueueManager.AppendTask(UpdateSealed(), "", m_update_queue);
             });
+        }
+
+        private void TryAddFolderBtClicked(object sender, RoutedEventArgs e)
+        {
+            AddNewFolder();
         }
     }
 }

@@ -155,7 +155,7 @@
     <Compile Include="Utils\Heap.cs" />
     <Compile Include="Utils\Filter.cs" />
     <Compile Include="Utils\StringUtils.cs" />
-    <Compile Include="Utils\TrulyObservableCollection.cs" />
+    <Compile Include="Utils\ObservableCollectionPlus.cs" />
     <Compile Include="Utils\Methods.cs" />
     <Compile Include="Views\HomePage.xaml.cs">
       <DependentUpon>HomePage.xaml</DependentUpon>

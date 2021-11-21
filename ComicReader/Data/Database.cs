@@ -93,11 +93,19 @@ namespace ComicReader.Data
             m_database_ready = true;
 
             // this should only be called after AppSettings loaded
-            Utils.TaskQueue.TaskQueueManager.AppendTask(ComicDataManager.UpdateSealed(lazy_load: false), "",
+            Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.UpdateSealed(lazy_load: false), "",
                 Utils.TaskQueue.TaskQueueManager.EmptyQueue());
             return new TaskResult();
         }
 
+        public static SealedTask UpdateSealed(bool lazy_load = true) => (RawTask _) => Update(lazy_load).Result;
+
+        private static async RawTask Update(bool lazy_load)
+        {
+            TaskResult res = await ComicDataManager.Update(lazy_load);
+            await RecentReadDataManager.Update();
+            return res;
+        }
 
         public static async Task<object> TryGetFile(StorageFolder folder, string name)
         {

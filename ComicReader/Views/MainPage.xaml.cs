@@ -232,7 +232,7 @@ namespace ComicReader.Views
         }
 
         // tabview
-        private void TabView_AddTabButtonClick(muxc.TabView sender, object args)
+        private void OnAddTabButtonClicked(muxc.TabView sender, object args)
         {
             LoadTab(null, Utils.Tab.PageType.Home);
         }
@@ -250,7 +250,7 @@ namespace ComicReader.Views
             return null;
         }
 
-        private void TabView_TabCloseRequested(muxc.TabView sender,
+        private void OnTabCloseRequested(muxc.TabView sender,
             muxc.TabViewTabCloseRequestedEventArgs args)
         {
             for (int i = 0; i < m_all_tabs.Count; ++i)
@@ -272,7 +272,7 @@ namespace ComicReader.Views
             }
         }
 
-        private void TabView_Loaded(object sender, RoutedEventArgs e)
+        private void OnTabViewLoaded(object sender, RoutedEventArgs e)
         {
             LoadTab(null, Utils.Tab.PageType.Home);
         }
@@ -296,7 +296,7 @@ namespace ComicReader.Views
             }
         }
 
-        private void TabView_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void OnTabViewSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (e.AddedItems.Count == 0)
             {
@@ -326,7 +326,7 @@ namespace ComicReader.Views
                 Visibility.Visible : Visibility.Collapsed;
         }
 
-        private void TabContainerGrid_Loaded(object sender, RoutedEventArgs e)
+        private void OnTabContainerGridLoaded(object sender, RoutedEventArgs e)
         {
             m_tab_container_grid = sender as Grid;
         }
@@ -370,12 +370,12 @@ namespace ComicReader.Views
             SetTabViewVisibility(true);
         }
 
-        private void RootGrid_SizeChanged(object sender, SizeChangedEventArgs e)
+        private void OnRootGridSizeChanged(object sender, SizeChangedEventArgs e)
         {
             UpdateFullscreenMode();
         }
 
-        private void E_MainPage_KeyDown(object sender, KeyRoutedEventArgs e)
+        private void OnMainPageKeyDown(object sender, KeyRoutedEventArgs e)
         {
             if (e.Key == Windows.System.VirtualKey.Escape)
             {

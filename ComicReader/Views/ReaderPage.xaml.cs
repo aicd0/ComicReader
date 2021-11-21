@@ -476,8 +476,8 @@ namespace ComicReader.Views
                 real_offset += (next_page.Center - real_offset) * page_dec;
             }
 
-            return real_offset * ThisScrollViewer.ZoomFactor
-                + MarginStartFinal - ViewportParallelLength * 0.5;
+            return real_offset * ZoomFactorFinal +
+                MarginStartFinal - ViewportParallelLength * 0.5;
         }
 
         public void IncreasePage(int increment, bool disable_animation)
@@ -1163,8 +1163,8 @@ namespace ComicReader.Views
 
         private void OnPageEntered()
         {
-            Shared.ReaderFlowDirection = Database.AppSettings.LeftToRight ?
-                FlowDirection.LeftToRight : FlowDirection.RightToLeft;
+            Shared.ReaderFlowDirection = Database.AppSettings.RightToLeft ?
+                FlowDirection.RightToLeft : FlowDirection.LeftToRight;
             Shared.BottomGridPinned = false;
         }
 

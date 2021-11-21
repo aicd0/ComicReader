@@ -29,6 +29,8 @@
                         Value="6" />
                 <Setter Property="mtuu:Effects.Shadow"
                         Value="{StaticResource CommonShadow}" />
+                <Setter Property="Background"
+                        Value="{StaticResource ComicItemBackground}" />
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="GridViewItem">
@@ -186,6 +188,9 @@
             <converters:FolderItemTemplateSelector x:Key="FolderItemTemplateSelector"
                                                    CommonTemplate="{StaticResource FolderItemCommonTemplate}"
                                                    AddNewTemplate="{StaticResource FolderItemAddNewTemplate}" />
+
+            <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
+            <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
         </ResourceDictionary>
     </Page.Resources>
 
@@ -211,20 +216,26 @@
                                 Margin="0,0,10,0"
                                 VerticalAlignment="Bottom">
                         <HyperlinkButton Content="See all"
-                                         Click="ShowAllClick" />
+                                         Click="OnSeeAllBtClicked"
+                                         IsEnabled="{x:Bind Shared.IsLibraryEmpty, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}"/>
                         <HyperlinkButton Content="See hiddens"
-                                         Click="ShowHiddensClick" />
+                                         Click="OnSeeHiddenBtClick"
+                                         IsEnabled="{x:Bind Shared.IsLibraryEmpty, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}" />
                     </StackPanel>
                 </Grid>
                 <Grid Height="10" />
+                <!--
+                DO NOT attach Visibility property to mtuuc:AdaptiveGridView as
+                it will result in a layout error. (Probably a bug from the API)
+                -->
                 <mtuuc:AdaptiveGridView Style="{StaticResource HomePageAdaptiveGridViewStyle}"
-                                        ItemsSource="{x:Bind ComicItemSource}"
+                                        ItemsSource="{x:Bind Shared.ComicItemSource, Mode=OneWay}"
                                         OneRowModeEnabled="True"
                                         ItemHeight="310"
                                         DesiredWidth="160"
                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                         ScrollViewer.HorizontalScrollMode="Disabled"
-                                        StretchContentForSingleRow="False"
+                                        StretchContentForSingleRow="True"
                                         ItemContainerStyle="{StaticResource ComicItemContainerStyle}">
                     <mtuuc:AdaptiveGridView.ItemTemplate>
                         <DataTemplate x:DataType="data:ComicItemModel">
@@ -232,6 +243,15 @@
                         </DataTemplate>
                     </mtuuc:AdaptiveGridView.ItemTemplate>
                 </mtuuc:AdaptiveGridView>
+                <StackPanel Visibility="{x:Bind Shared.IsLibraryEmpty, Mode=OneWay}"
+                            Orientation="Horizontal"
+                            Spacing="10"
+                            Margin="10,0,0,0">
+                    <TextBlock Text="Seems that your library is empty."
+                               VerticalAlignment="Center"/>
+                    <HyperlinkButton Content="Try add a folder"
+                                     Click="TryAddFolderBtClicked"/>
+                </StackPanel>
                 <Grid Height="50" />
                 <TextBlock x:Uid="Folders"
                            FontSize="22"

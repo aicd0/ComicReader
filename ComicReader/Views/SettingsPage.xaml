@@ -43,8 +43,8 @@
                 <!-- Reader -->
                 <TextBlock Text="Reader"
                            Style="{StaticResource SettingsPageSubTitleTextBlock}" />
-                <TextBlock Text="Left to right" />
-                <ToggleSwitch IsOn="{x:Bind Shared.ReaderLeftToRight, Mode=TwoWay}" />
+                <TextBlock Text="Right to left" />
+                <ToggleSwitch IsOn="{x:Bind Shared.ReaderRightToLeft, Mode=TwoWay}" />
 
                 <!-- History -->
                 <TextBlock Text="History"

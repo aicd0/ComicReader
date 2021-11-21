@@ -20,7 +20,7 @@ namespace ComicReader.Data
     public class AppSettingsData
     {
         public List<string> ComicFolders = new List<string>();
-        public bool LeftToRight = false;
+        public bool RightToLeft = false;
         public bool SaveHistory = true;
 
         public void Pack() { }

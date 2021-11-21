@@ -25,12 +25,14 @@
                            Text="{x:Bind Folder}"
                            HorizontalAlignment="Center"
                            VerticalAlignment="Center"
-                           TextWrapping="Wrap" />
+                           TextWrapping="Wrap"
+                           Foreground="White"/>
                 <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
                           Glyph="&#xE894;"
                           FontSize="14"
                           Grid.Column="1"
-                          Margin="6,0,0,0" />
+                          Margin="6,0,0,0"
+                          Foreground="White"/>
             </Grid>
         </DataTemplate>
 
@@ -40,7 +42,8 @@
             <Grid Background="Transparent"
                   PointerPressed="AddNewPointerPressed">
                 <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                          Glyph="&#xE710;" />
+                          Glyph="&#xE710;"
+                          Foreground="White" />
             </Grid>
         </DataTemplate>
 
