@@ -15,6 +15,8 @@
                                              Color="#3A3A3A" />
                             <SolidColorBrush x:Key="ComicItemBorderBrush"
                                              Color="#3A3A3A" />
+                            <SolidColorBrush x:Key="FilterTextForeground"
+                                             Color="#858585" />
                             <SolidColorBrush x:Key="FolderItemBorderBrush"
                                              Color="#444444" />
                             <SolidColorBrush x:Key="FolderTileBackground"
@@ -46,6 +48,8 @@
                                              Color="#FEFDFE" />
                             <SolidColorBrush x:Key="ComicItemBorderBrush"
                                              Color="#FDE8ED" />
+                            <SolidColorBrush x:Key="FilterTextForeground"
+                                             Color="#858585" />
                             <SolidColorBrush x:Key="FolderItemBorderBrush"
                                              Color="#EBE9ED" />
                             <SolidColorBrush x:Key="FolderTileBackground"
@@ -77,6 +81,8 @@
                                              Color="#FEFDFE" />
                             <SolidColorBrush x:Key="ComicItemBorderBrush"
                                              Color="#FDE8ED" />
+                            <SolidColorBrush x:Key="FilterTextForeground"
+                                             Color="#858585" />
                             <SolidColorBrush x:Key="FolderItemBorderBrush"
                                              Color="#EBE9ED" />
                             <SolidColorBrush x:Key="FolderTileBackground"
@@ -106,7 +112,7 @@
                     </ResourceDictionary.ThemeDictionaries>
                     
                     <x:Double x:Key="AppMinWindowHeight">500</x:Double>
-                    <x:Double x:Key="AppMinWindowWidth">320</x:Double>
+                    <x:Double x:Key="AppMinWindowWidth">480</x:Double>
                     <x:Double x:Key="ComicItemVerticalImageHeight">150</x:Double>
                     <x:Double x:Key="ComicItemHorizontalImageHeight">120</x:Double>
                     <x:Double x:Key="ReaderPreviewImageWidth">140</x:Double>

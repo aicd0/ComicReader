@@ -330,6 +330,8 @@ namespace ComicReader.Utils.Search
                     return new SubFilterDirectory(args);
                 case "hidden":
                     return new SubFilterHidden();
+                case "tag":
+                    return new SubFilterTag(args);
                 default:
                     return null;
             }
@@ -503,7 +505,7 @@ namespace ComicReader.Utils.Search
     // <dir>
     public class SubFilterDirectory : SubFilter
     {
-        private string m_directory;
+        private readonly string m_directory;
         public string Directory => m_directory;
 
         public override string UniqueString => "dir: " + m_directory;
@@ -528,6 +530,35 @@ namespace ComicReader.Utils.Search
         public override bool Pass(ComicItemData comic)
         {
             return comic.Hidden;
+        }
+    }
+
+    // <tag>
+    public class SubFilterTag : SubFilter
+    {
+        private readonly string m_tag;
+
+        public override string UniqueString => "tag: " + m_tag;
+
+        public SubFilterTag(string tag)
+        {
+            m_tag = tag.ToLower();
+        }
+
+        public override bool Pass(ComicItemData comic)
+        {
+            foreach (TagData tag_data in comic.Tags)
+            {
+                foreach (string tag in tag_data.Tags)
+                {
+                    if (tag.ToLower().Equals(m_tag))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
     }
 }

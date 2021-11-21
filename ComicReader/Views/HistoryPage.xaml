@@ -59,7 +59,8 @@
                                 </MenuFlyout>
                             </StackPanel.ContextFlyout>
                             <TextBlock Text="{x:Bind Title}"
-                                       TextTrimming="CharacterEllipsis" />
+                                       TextTrimming="CharacterEllipsis"
+                                       ToolTipService.ToolTip="{x:Bind Title}" />
                             <TextBlock Text="{x:Bind Time}"
                                        FontSize="13"
                                        Foreground="#999999"

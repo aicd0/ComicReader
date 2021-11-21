@@ -151,7 +151,7 @@
                                FontStyle="Italic"
                                TextWrapping="NoWrap" />
                     <TextBlock Text="{x:Bind Shared.FilterDetails, Mode=OneWay}"
-                               Foreground="#85FFFFFF"
+                               Foreground="{ThemeResource FilterTextForeground}"
                                FontSize="14"
                                FontWeight="Normal"
                                Visibility="{x:Bind Shared.FilterDetailsVisible, Mode=OneWay}"

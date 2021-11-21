@@ -34,9 +34,7 @@ namespace ComicReader.Data
         public string Progress { get; set; }
         public bool IsRatingVisible => Rating != -1;
         public bool IsFavorite { get; set; }
-        public bool IsFavoriteN => !IsFavorite;
         public bool IsHide => Comic.Hidden;
-        public bool IsHideN => !IsHide;
 
         private bool m_IsImageLoaded;
         public bool IsImageLoaded
@@ -46,10 +44,8 @@ namespace ComicReader.Data
             {
                 m_IsImageLoaded = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsImageLoaded"));
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsImageLoadedN"));
             }
         }
-        public bool IsImageLoadedN => !m_IsImageLoaded;
 
         // events
         public PointerEventHandler OnItemPressed { get; set; }
@@ -89,10 +85,8 @@ namespace ComicReader.Data
             {
                 m_Expanded = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Expanded"));
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ExpandedN"));
             }
         }
-        public bool ExpandedN => !Expanded;
 
         public ObservableCollection<FavoritesItemModel> Children { get; set; }
         public FavoritesItemModel Parent { get; set; }
@@ -107,7 +101,6 @@ namespace ComicReader.Data
             get => Type == TreeItemType.Item;
             set { Type = value ? TreeItemType.Item : TreeItemType.Filter; }
         }
-        public bool IsItemN => !IsItem;
     };
 
     public class HistoryItemModel
@@ -195,7 +188,6 @@ namespace ComicReader.Data
     {
         public string Folder { get; set; }
         public bool IsAddNew { get; set; }
-        public bool IsAddNewN { get => !IsAddNew; }
 
         // events
         public PointerEventHandler OnItemPressed { get; set; }

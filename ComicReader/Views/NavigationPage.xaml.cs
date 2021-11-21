@@ -133,6 +133,15 @@ namespace ComicReader.Views
             {
                 m_IsFavorite = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsFavorite"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("FavoriteButtonToolTip"));
+            }
+        }
+
+        public string FavoriteButtonToolTip
+        {
+            get
+            {
+                return IsFavorite ? "Remove from favorites" : "Add to favorites";
             }
         }
 

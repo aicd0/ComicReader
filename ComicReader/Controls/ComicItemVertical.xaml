@@ -7,6 +7,7 @@
              xmlns:mtuum="using:Microsoft.Toolkit.Uwp.UI.Media"
              xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
              xmlns:muxm="using:Microsoft.UI.Xaml.Media"
+             xmlns:converters="using:ComicReader.Converters"
              xmlns:data="using:ComicReader.Data"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=data:ComicItemModel}"
@@ -22,6 +23,8 @@
             <mtuum:AttachedCardShadow x:Key="CommonShadow"
                                       Offset="0"
                                       Opacity="0.1"/>
+
+            <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
         </ResourceDictionary>
     </UserControl.Resources>
 
@@ -77,7 +80,7 @@
                                       Foreground="SkyBlue" />
                         </Grid>
                     </Grid>
-                    <muxc:ProgressRing Visibility="{x:Bind Ctx.IsImageLoadedN, Mode=OneWay}" />
+                    <muxc:ProgressRing Visibility="{x:Bind Ctx.IsImageLoaded, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
                 </Grid>
             </Grid>
             <Grid Grid.Row="2"
@@ -91,7 +94,8 @@
                                MaxLines="2"
                                Text="{x:Bind Ctx.Title}"
                                TextTrimming="CharacterEllipsis"
-                               TextWrapping="Wrap" />
+                               TextWrapping="Wrap"
+                               ToolTipService.ToolTip="{x:Bind Ctx.Title}" />
                     <StackPanel Orientation="Horizontal"
                                 Margin="0,5,0,0">
                         <Viewbox HorizontalAlignment="Left"

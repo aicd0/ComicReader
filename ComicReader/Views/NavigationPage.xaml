@@ -82,7 +82,7 @@
 
                         <!-- zoom in/out -->
                         <AppBarButton Style="{StaticResource NavigationPageTopTileAppBarButton}"
-                                      ToolTipService.ToolTip="Zoom In"
+                                      ToolTipService.ToolTip="Zoom in"
                                       IsEnabled="{x:Bind Shared.ZoomInEnabled, Mode=OneWay}"
                                       Click="ZoomInClick">
                             <AppBarButton.Content>
@@ -90,7 +90,7 @@
                             </AppBarButton.Content>
                         </AppBarButton>
                         <AppBarButton Style="{StaticResource NavigationPageTopTileAppBarButton}"
-                                      ToolTipService.ToolTip="Zoom Out"
+                                      ToolTipService.ToolTip="Zoom out"
                                       IsEnabled="{x:Bind Shared.ZoomOutEnabled, Mode=OneWay}"
                                       Click="ZoomOutClick">
                             <AppBarButton.Content>
@@ -118,7 +118,7 @@
 
                         <!-- add to favorites -->
                         <AppBarButton Style="{StaticResource NavigationPageTopTileAppBarButton}"
-                                      ToolTipService.ToolTip="Add this comic to favorites"
+                                      ToolTipService.ToolTip="{x:Bind Shared.FavoriteButtonToolTip, Mode=OneWay}"
                                       IsEnabled="{x:Bind Shared.NotExternal, Mode=OneWay}"
                                       Click="AddToFavoritesClick">
                             <AppBarButton.Content>
@@ -142,7 +142,7 @@
                         <!-- expand favorites pane button -->
                         <AppBarButton Click="FavoritesClick"
                                       Style="{StaticResource NavigationPageTopTileAppBarButton}"
-                                      ToolTipService.ToolTip="Favorites">
+                                      ToolTipService.ToolTip="Favorites and history">
                             <AppBarButton.Content>
                                 <FontIcon Glyph="&#xE728;" />
                             </AppBarButton.Content>

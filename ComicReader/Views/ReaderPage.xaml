@@ -296,11 +296,13 @@
                                     Spacing="5">
                             <Grid Width="5" />
                             <ToggleButton Style="{StaticResource ReaderBottomTileToggleButtonStyle}"
-                                          IsChecked="{x:Bind Shared.BottomGridPinned, Mode=TwoWay}">
+                                          IsChecked="{x:Bind Shared.BottomGridPinned, Mode=TwoWay}"
+                                          ToolTipService.ToolTip="{x:Bind Shared.PinButtonToolTip, Mode=OneWay}">
                                 <FontIcon Glyph="&#xE840;"
                                           FontSize="20" />
                             </ToggleButton>
-                            <Button Style="{StaticResource ReaderBottomTileButtonStyle}">
+                            <Button Style="{StaticResource ReaderBottomTileButtonStyle}"
+                                    ToolTipService.ToolTip="More">
                                 <Button.Flyout>
                                     <MenuFlyout>
                                         <MenuFlyoutItem Text="Comic Info"
@@ -318,28 +320,33 @@
                             <AppBarSeparator />
                             <Button Style="{StaticResource ReaderBottomTileButtonStyle}"
                                     IsEnabled="{x:Bind Shared.NavigationPageShared.ZoomInEnabled, Mode=OneWay}"
+                                    ToolTipService.ToolTip="Zoom in"
                                     Click="OnZoomInBtClicked">
                                 <FontIcon Glyph="&#xE8A3;"
                                           FontSize="20" />
                             </Button>
                             <Button Style="{StaticResource ReaderBottomTileButtonStyle}"
                                     IsEnabled="{x:Bind Shared.NavigationPageShared.ZoomOutEnabled, Mode=OneWay}"
+                                    ToolTipService.ToolTip="Zoom out"
                                     Click="OnZoomOutBtClicked">
                                 <FontIcon Glyph="&#xE71F;"
                                           FontSize="20" />
                             </Button>
                             <ToggleButton Style="{StaticResource ReaderBottomTileToggleButtonStyle}"
-                                          IsChecked="{x:Bind Shared.NavigationPageShared.TwoPagesMode, Mode=TwoWay}">
+                                          IsChecked="{x:Bind Shared.NavigationPageShared.TwoPagesMode, Mode=TwoWay}"
+                                          ToolTipService.ToolTip="Two pages">
                                 <FontIcon Glyph="&#xE89A;"
                                           FontSize="20" />
                             </ToggleButton>
                             <ToggleButton Style="{StaticResource ReaderBottomTileToggleButtonStyle}"
-                                          IsChecked="{x:Bind Shared.NavigationPageShared.PreviewMode, Mode=TwoWay}">
+                                          IsChecked="{x:Bind Shared.NavigationPageShared.PreviewMode, Mode=TwoWay}"
+                                          ToolTipService.ToolTip="Preview">
                                 <FontIcon Glyph="&#xF0E2;"
                                           FontSize="20" />
                             </ToggleButton>
                             <Button Style="{StaticResource ReaderBottomTileButtonStyle}"
                                     IsEnabled="{x:Bind Shared.NavigationPageShared.NotExternal, Mode=OneWay}"
+                                    ToolTipService.ToolTip="{x:Bind Shared.NavigationPageShared.FavoriteButtonToolTip, Mode=OneWay}"
                                     Click="OnFavoritesBtClicked">
                                 <Grid>
                                     <FontIcon Glyph="&#xE734;"

@@ -184,7 +184,16 @@ namespace ComicReader.Views
             {
                 m_BottomGridPinned = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("BottomGridPinned"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("PinButtonToolTip"));
                 BottomGridPinnedChanged?.Invoke();
+            }
+        }
+
+        public string PinButtonToolTip
+        {
+            get
+            {
+                return BottomGridPinned ? "Unpin" : "Pin";
             }
         }
 
