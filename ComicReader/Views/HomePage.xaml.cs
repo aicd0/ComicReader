@@ -359,9 +359,14 @@ namespace ComicReader.Views
             });
         }
 
-        private void TryAddFolderBtClicked(object sender, RoutedEventArgs e)
+        private void OnTryAddFolderBtClicked(object sender, RoutedEventArgs e)
         {
             AddNewFolder();
+        }
+
+        private void OnRefreshBtClicked(object sender, RoutedEventArgs e)
+        {
+            Shared.NavigationPageShared.RefreshPage();
         }
     }
 }

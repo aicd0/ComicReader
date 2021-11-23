@@ -12,6 +12,7 @@ namespace ComicReader.Utils.Tab
         Search,
         Reader,
         Settings,
+        Help,
         Unknown,
     }
 
@@ -155,6 +156,8 @@ namespace ComicReader.Utils.Tab
                     return typeof(Views.ReaderPage);
                 case PageType.Settings:
                     return typeof(Views.SettingsPage);
+                case PageType.Help:
+                    return typeof(Views.HelpPage);
                 default:
                     throw new Exception();
             }
@@ -172,6 +175,8 @@ namespace ComicReader.Utils.Tab
                     return Views.ReaderPage.PageUniqueString(args);
                 case PageType.Settings:
                     return Views.SettingsPage.PageUniqueString(args);
+                case PageType.Help:
+                    return Views.HelpPage.PageUniqueString(args);
                 default:
                     throw new Exception();
             }

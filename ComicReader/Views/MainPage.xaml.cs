@@ -136,6 +136,13 @@ namespace ComicReader.Views
         // new tab
         private bool TrySwitchToTab(Utils.Tab.PageType type, object args)
         {
+            if (type != Utils.Tab.PageType.Reader &&
+                type != Utils.Tab.PageType.Settings &&
+                type != Utils.Tab.PageType.Help)
+            {
+                return false;
+            }
+
             string unique_string = Utils.Tab.TabManager.PageUniqueString(type, args);
 
             foreach (Utils.Tab.TabIdentifier tab in m_all_tabs)
@@ -178,7 +185,7 @@ namespace ComicReader.Views
         public void LoadTab(Utils.Tab.TabIdentifier tab_id, Utils.Tab.PageType type, object args = null,
             bool try_reuse = true)
         {
-            if ((type == Utils.Tab.PageType.Reader || type == Utils.Tab.PageType.Settings) && try_reuse)
+            if (try_reuse)
             {
                 // switch to an existed tab if possible
                 if (TrySwitchToTab(type, args))

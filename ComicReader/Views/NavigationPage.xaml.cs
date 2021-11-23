@@ -10,6 +10,8 @@ namespace ComicReader.Views
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
+        public Action RefreshPage;
+
         private MainPageShared m_MainPageShared;
         public MainPageShared MainPageShared
         {
@@ -190,6 +192,7 @@ namespace ComicReader.Views
         private void OnRegister(object shared)
         {
             Shared.MainPageShared = (MainPageShared)shared;
+            Shared.RefreshPage = RefreshPage;
         }
 
         private void OnUnregister() { }
@@ -240,9 +243,14 @@ namespace ComicReader.Views
             MainPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Search, args.QueryText);
         }
 
-        private void SettingsClick(object sender, RoutedEventArgs e)
+        private void OnMenuItemSettingsClicked(object sender, RoutedEventArgs e)
         {
             MainPage.Current.LoadTab(null, Utils.Tab.PageType.Settings);
+        }
+
+        private void OnMenuItemHelpClicked(object sender, RoutedEventArgs e)
+        {
+            MainPage.Current.LoadTab(null, Utils.Tab.PageType.Help);
         }
 
         private void FavoritesClick(object sender, RoutedEventArgs e)
@@ -260,11 +268,16 @@ namespace ComicReader.Views
             MainPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Home);
         }
 
-        private void RefreshClick(object sender, RoutedEventArgs e)
+        private void RefreshPage()
         {
             MainPage.Current.LoadTab(m_tab_manager.TabId,
                 m_tab_manager.TabId.Type,
                 m_tab_manager.TabId.RequestArgs, try_reuse: false);
+        }
+
+        private void OnRefreshBtClicked(object sender, RoutedEventArgs e)
+        {
+            RefreshPage();
         }
 
         private void GoBackClick(object sender, RoutedEventArgs e)

@@ -56,7 +56,7 @@
                         <AppBarButton Icon="Refresh"
                                       Style="{StaticResource NavigationPageTopTileAppBarButton}"
                                       ToolTipService.ToolTip="Refresh"
-                                      Click="RefreshClick"
+                                      Click="OnRefreshBtClicked"
                                       Visibility="{x:Bind Shared.IsHomePage, Mode=OneWay}" />
 
                         <!-- search box -->
@@ -166,7 +166,10 @@
                                     <MenuFlyoutSeparator Visibility="{x:Bind Shared.IsReaderPage, Mode=OneWay}" />
                                     <MenuFlyoutItem Text="Settings"
                                                     Icon="Setting"
-                                                    Click="SettingsClick" />
+                                                    Click="OnMenuItemSettingsClicked" />
+                                    <MenuFlyoutItem Text="Help"
+                                                    Icon="Help"
+                                                    Click="OnMenuItemHelpClicked" />
                                 </MenuFlyout>
                             </AppBarButton.Flyout>
                         </AppBarButton>

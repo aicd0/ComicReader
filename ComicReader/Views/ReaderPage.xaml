@@ -409,7 +409,7 @@
 
                 <!-- reader -->
                 <Grid Tapped="OnReaderTapped">
-                    <Grid x:Name="PanningReference" />
+                    <Grid x:Name="ManipulationReference" />
 
                     <!-- one-page -->
                     <ScrollViewer x:Name="OnePageVerticalScrollViewer"
@@ -441,7 +441,8 @@
                             </ListView>
                             <Grid Background="Transparent"
                                   PointerPressed="OnScrollViewerPointerPressed"
-                                  PointerMoved="OnScrollViewerPointerMoved" />
+                                  PointerMoved="OnScrollViewerPointerMoved"
+                                  PointerReleased="OnScrollViewerPointerReleased" />
                         </Grid>
                     </ScrollViewer>
 
@@ -484,7 +485,8 @@
                             </ListView>
                             <Grid Background="Transparent"
                                   PointerPressed="OnScrollViewerPointerPressed"
-                                  PointerMoved="OnScrollViewerPointerMoved" />
+                                  PointerMoved="OnScrollViewerPointerMoved"
+                                  PointerReleased="OnScrollViewerPointerReleased" />
                         </Grid>
                     </ScrollViewer>
                 </Grid>

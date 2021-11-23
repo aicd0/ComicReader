@@ -147,7 +147,7 @@
     <Compile Include="Data\FavoritesData.cs" />
     <Compile Include="Data\HistoryData.cs" />
     <Compile Include="Data\RecentReadData.cs" />
-    <Compile Include="Utils\NavigationManager.cs" />
+    <Compile Include="Utils\TabManager.cs" />
     <Compile Include="Data\ViewModels.cs" />
     <Compile Include="Data\Database.cs" />
     <Compile Include="Utils\TaskQueue.cs" />
@@ -157,6 +157,9 @@
     <Compile Include="Utils\StringUtils.cs" />
     <Compile Include="Utils\ObservableCollectionPlus.cs" />
     <Compile Include="Utils\Methods.cs" />
+    <Compile Include="Views\HelpPage.xaml.cs">
+      <DependentUpon>HelpPage.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\HomePage.xaml.cs">
       <DependentUpon>HomePage.xaml</DependentUpon>
     </Compile>
@@ -280,6 +283,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Resources\Styles\ToggleButton.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\HelpPage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

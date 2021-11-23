@@ -247,10 +247,14 @@
                             Orientation="Horizontal"
                             Spacing="10"
                             Margin="10,0,0,0">
-                    <TextBlock Text="Seems that your library is empty."
+                    <TextBlock Text="Seems that your library is empty. Try"
                                VerticalAlignment="Center"/>
-                    <HyperlinkButton Content="Try add a folder"
-                                     Click="TryAddFolderBtClicked"/>
+                    <HyperlinkButton Content="Add a folder"
+                                     Click="OnTryAddFolderBtClicked" />
+                    <TextBlock Text="or"
+                               VerticalAlignment="Center" />
+                    <HyperlinkButton Content="Refresh"
+                                     Click="OnRefreshBtClicked" />
                 </StackPanel>
                 <Grid Height="50" />
                 <TextBlock x:Uid="Folders"

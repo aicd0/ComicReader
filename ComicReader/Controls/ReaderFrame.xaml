@@ -8,10 +8,9 @@
              d:DesignHeight="300"
              d:DesignWidth="400">
 
-    <Grid x:Name="ContainerGrid"
-          DataContextChanged="ContainerGrid_DataContextChanged">
-        <Image x:Name="MainImage"
-               Source="{x:Bind Ctx.Image, Mode=OneWay}"
+    <Grid Loaded="OnFrameLoaded"
+          DataContextChanged="OnFrameDataContextChanged">
+        <Image Source="{x:Bind Ctx.Image, Mode=OneWay}"
                Width="{x:Bind Ctx.ImageWidth}"
                Height="{x:Bind Ctx.ImageHeight}"
                Margin="{x:Bind Ctx.Margin}" />

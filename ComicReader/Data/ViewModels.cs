@@ -160,10 +160,10 @@ namespace ComicReader.Data
             }
         }
 
+        public double Width => Container.ActualWidth;
+        public double Height => Container.ActualHeight;
         public Grid Container = null;
-
-        // events
-        public Action<ReaderFrameModel> OnContainerSet = null;
+        public Action<ReaderFrameModel> OnContainerLoaded;
     };
 
     public class TagsModel

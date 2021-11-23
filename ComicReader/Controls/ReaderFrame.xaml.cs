@@ -1,19 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using System.Threading;
-using System.Threading.Tasks;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
-using Windows.UI.Xaml;
+﻿using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
-using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
-using Windows.UI.Xaml.Navigation;
 using ComicReader.Data;
 
 namespace ComicReader.Controls
@@ -24,35 +10,19 @@ namespace ComicReader.Controls
 
         public ReadeFrame()
         {
-            Utils.Methods.Run(async delegate
-            {
-                InitializeComponent();
-
-                if (Ctx != null)
-                {
-                    await WriteContainer();
-                }
-            });
+            InitializeComponent();
         }
 
-        private async Task WriteContainer()
+        private void OnFrameDataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
         {
-            await Utils.Methods.WaitFor(() => ContainerGrid != null);
-            Ctx.Container = ContainerGrid;
-            Ctx.OnContainerSet?.Invoke(Ctx);
+            // Notify binding changes.
+            Bindings.Update();
         }
 
-        private void ContainerGrid_DataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
+        private void OnFrameLoaded(object sender, RoutedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
-            {
-                Bindings.Update();
-
-                if (Ctx != null)
-                {
-                    await WriteContainer();
-                }
-            });
+            Ctx.Container = sender as Grid;
+            Ctx.OnContainerLoaded?.Invoke(Ctx);
         }
     }
 }

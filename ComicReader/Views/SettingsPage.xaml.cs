@@ -163,7 +163,6 @@ namespace ComicReader.Views
     public sealed partial class SettingsPage : Page
     {
         public const string AppearanceKey = "Appearance";
-        public static SettingsPage Current;
         public SettingsPageShared Shared { get; set; }
 
         private readonly Utils.Tab.TabManager m_tab_manager;
@@ -174,7 +173,6 @@ namespace ComicReader.Views
 
         public SettingsPage()
         {
-            Current = this;
             Shared = new SettingsPageShared();
             Shared.OnSettingsChanged = OnSettingsChanged;
 
