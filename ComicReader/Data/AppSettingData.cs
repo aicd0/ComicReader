@@ -17,58 +17,25 @@ namespace ComicReader.Data
     using TaskResult = Utils.TaskQueue.TaskResult;
     using TaskException = Utils.TaskQueue.TaskException;
 
-    public class AppSettingsData
+    public class AppSettingData : AppData
     {
+        public override string FileName => "Settings";
+
         public List<string> ComicFolders = new List<string>();
         public bool RightToLeft = false;
         public bool SaveHistory = true;
 
-        public void Pack() { }
+        public override void Pack() { }
 
-        public void Unpack() { }
-    };
+        public override void Unpack() { }
 
-    class AppSettingsDataManager
+        public override void Set(object obj)
+        {
+            Database.AppSettings = obj as AppSettingData;
+        }
+    }
+    class AppSettingDataManager
     {
-        private const string SETTINGS_DATA_FILE_NAME = "set";
-
-        public static async Task Save(StorageFolder user_folder)
-        {
-            await DatabaseManager.WaitLock();
-            StorageFile file = await user_folder.CreateFileAsync(
-                SETTINGS_DATA_FILE_NAME, CreationCollisionOption.ReplaceExisting);
-            IRandomAccessStream stream = await file.OpenAsync(
-                FileAccessMode.ReadWrite);
-
-            Database.AppSettings.Pack();
-            XmlSerializer serializer = new XmlSerializer(typeof(AppSettingsData));
-            serializer.Serialize(stream.AsStream(), Database.AppSettings);
-
-            stream.Dispose();
-            DatabaseManager.ReleaseLock();
-        }
-
-        public static async RawTask Load(StorageFolder user_folder)
-        {
-            object file = await DatabaseManager.TryGetFile(user_folder, SETTINGS_DATA_FILE_NAME);
-
-            if (file == null)
-            {
-                return new TaskResult(TaskException.FileNotExists);
-            }
-
-            IRandomAccessStream stream =
-                await ((StorageFile)file).OpenAsync(FileAccessMode.Read);
-
-            XmlSerializer serializer = new XmlSerializer(typeof(AppSettingsData));
-            Database.AppSettings =
-                (AppSettingsData)serializer.Deserialize(stream.AsStream());
-            Database.AppSettings.Unpack();
-
-            stream.Dispose();
-            return new TaskResult();
-        }
-
         public static async RawTask AddComicFolder(string folder, bool final)
         {
             await DatabaseManager.WaitLock();
@@ -117,7 +84,7 @@ namespace ComicReader.Data
             if (final)
             {
                 Utils.TaskQueue.TaskQueueManager.AppendTask(
-                    DatabaseManager.SaveSealed(DatabaseItem.Settings));
+                    DatabaseManager.SaveSealed(DatabaseItem.AppSettings));
             }
 
             return new TaskResult();
@@ -132,7 +99,7 @@ namespace ComicReader.Data
             if (final)
             {
                 Utils.TaskQueue.TaskQueueManager.AppendTask(
-                    DatabaseManager.SaveSealed(DatabaseItem.Settings));
+                    DatabaseManager.SaveSealed(DatabaseItem.AppSettings));
             }
         }
 

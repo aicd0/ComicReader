@@ -259,7 +259,7 @@ namespace ComicReader.Views
                 await DatabaseManager.WaitLock();
                 List<Match> matches = new List<Match>();
 
-                foreach (ComicItemData comic in Database.Comics.Items)
+                foreach (ComicItemData comic in Database.Comic.Items)
                 {
                     // cancel the current session if the next search begins
                     if (m_search_lock.CancellationRequested)
@@ -346,10 +346,10 @@ namespace ComicReader.Views
                         Title = comic.Title,
                         Detail = "#" + comic.Id,
                         Id = comic.Id,
-                        IsFavorite = await FavoritesDataManager.FromId(comic.Id) != null
+                        IsFavorite = await FavoriteDataManager.FromId(comic.Id) != null
                     };
 
-                    RecentReadItemData comic_record = await RecentReadDataManager.FromId(comic.Id);
+                    ComicExtraItemData comic_record = await ComicExtraDataManager.FromId(comic.Id);
                     
                     if (comic_record != null)
                     {
@@ -439,7 +439,7 @@ namespace ComicReader.Views
                 ComicItemModel result = (ComicItemModel)((MenuFlyoutItem)sender).DataContext;
                 result.IsFavorite = true;
                 Utils.Methods1<ComicItemModel>.NotifyCollectionChanged(Shared.SearchResults, result);
-                await FavoritesDataManager.Add(result.Id, result.Title, true);
+                await FavoriteDataManager.Add(result.Id, result.Title, true);
             });
         }
 
@@ -450,7 +450,7 @@ namespace ComicReader.Views
                 ComicItemModel result = (ComicItemModel)((MenuFlyoutItem)sender).DataContext;
                 result.IsFavorite = false;
                 Utils.Methods1<ComicItemModel>.NotifyCollectionChanged(Shared.SearchResults, result);
-                await FavoritesDataManager.RemoveWithId(result.Id, true);
+                await FavoriteDataManager.RemoveWithId(result.Id, true);
             });
         }
 

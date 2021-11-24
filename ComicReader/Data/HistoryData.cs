@@ -16,11 +16,13 @@ namespace ComicReader.Data
     using TaskResult = Utils.TaskQueue.TaskResult;
     using TaskException = Utils.TaskQueue.TaskException;
 
-    public class HistoryData
+    public class HistoryData : AppData
     {
+        public override string FileName => "History";
+
         public List<HistoryItemData> Items = new List<HistoryItemData>();
 
-        public void Pack()
+        public override void Pack()
         {
             foreach (HistoryItemData i in Items)
             {
@@ -28,12 +30,17 @@ namespace ComicReader.Data
             }
         }
 
-        public void Unpack()
+        public override void Unpack()
         {
             foreach (HistoryItemData i in Items)
             {
                 i.Unpack();
             }
+        }
+
+        public override void Set(object obj)
+        {
+            Database.History = obj as HistoryData;
         }
     }
 
@@ -61,45 +68,6 @@ namespace ComicReader.Data
 
     class HistoryDataManager
     {
-        private const string HISTORY_DATA_FILE_NAME = "his";
-
-        public static async Task Save(StorageFolder user_folder)
-        {
-            await DatabaseManager.WaitLock();
-            StorageFile file = await user_folder.CreateFileAsync(
-                HISTORY_DATA_FILE_NAME, CreationCollisionOption.ReplaceExisting);
-            IRandomAccessStream stream = await file.OpenAsync(
-                FileAccessMode.ReadWrite);
-
-            Database.History.Pack();
-            XmlSerializer serializer = new XmlSerializer(typeof(HistoryData));
-            serializer.Serialize(stream.AsStream(), Database.History);
-
-            stream.Dispose();
-            DatabaseManager.ReleaseLock();
-        }
-
-        public static async RawTask Load(StorageFolder user_folder)
-        {
-            object file = await DatabaseManager.TryGetFile(user_folder, HISTORY_DATA_FILE_NAME);
-
-            if (file == null)
-            {
-                return new TaskResult(TaskException.FileNotExists);
-            }
-
-            IRandomAccessStream stream =
-                await ((StorageFile)file).OpenAsync(FileAccessMode.Read);
-
-            XmlSerializer serializer = new XmlSerializer(typeof(HistoryData));
-            Database.History =
-                (HistoryData)serializer.Deserialize(stream.AsStream());
-            Database.History.Unpack();
-
-            stream.Dispose();
-            return new TaskResult();
-        }
-
         public static async Task Add(string id, string title, bool final)
         {
             await DatabaseManager.WaitLock();

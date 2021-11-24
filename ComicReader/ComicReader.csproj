@@ -142,11 +142,11 @@
     <Compile Include="Converters\BooleanToVisibilityConverter.cs" />
     <Compile Include="Converters\FavoritesItemTemplateSelector.cs" />
     <Compile Include="Converters\FolderItemTemplateSelector.cs" />
-    <Compile Include="Data\AppSettingsData.cs" />
+    <Compile Include="Data\AppSettingData.cs" />
     <Compile Include="Data\ComicData.cs" />
-    <Compile Include="Data\FavoritesData.cs" />
+    <Compile Include="Data\FavoriteData.cs" />
     <Compile Include="Data\HistoryData.cs" />
-    <Compile Include="Data\RecentReadData.cs" />
+    <Compile Include="Data\ComicExtraData.cs" />
     <Compile Include="Utils\TabManager.cs" />
     <Compile Include="Data\ViewModels.cs" />
     <Compile Include="Data\Database.cs" />
@@ -172,8 +172,8 @@
     <Compile Include="Views\EditComicInfoDialog.xaml.cs">
       <DependentUpon>EditComicInfoDialog.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\FavoritesPage.xaml.cs">
-      <DependentUpon>FavoritesPage.xaml</DependentUpon>
+    <Compile Include="Views\FavoritePage.xaml.cs">
+      <DependentUpon>FavoritePage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\HistoryPage.xaml.cs">
       <DependentUpon>HistoryPage.xaml</DependentUpon>
@@ -306,7 +306,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Views\FavoritesPage.xaml">
+    <Page Include="Views\FavoritePage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

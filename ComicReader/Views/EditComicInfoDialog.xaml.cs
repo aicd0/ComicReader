@@ -28,7 +28,7 @@ namespace ComicReader.Views
 
                 if (!m_comic.IsExternal)
                 {
-                    Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(DatabaseItem.Comics), "Saving...");
+                    Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(DatabaseItem.Comic), "Saving...");
                 }
             });
         }

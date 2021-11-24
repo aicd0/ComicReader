@@ -78,7 +78,7 @@ namespace ComicReader.Views
 
                 try
                 {
-                    if (!await AppSettingsDataManager.AddComicFolderUsingPicker())
+                    if (!await AppSettingDataManager.AddComicFolderUsingPicker())
                     {
                         return;
                     }
@@ -104,7 +104,7 @@ namespace ComicReader.Views
 
                 IsPrimaryButtonEnabled = false;
                 FolderItemModel item = (FolderItemModel)((Grid)sender).DataContext;
-                await AppSettingsDataManager.RemoveComicFolder(item.Folder);
+                await AppSettingDataManager.RemoveComicFolder(item.Folder);
                 await Update();
                 IsPrimaryButtonEnabled = true;
             });

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -7,6 +8,7 @@ using System.Threading.Tasks;
 using System.Xml.Serialization;
 using Windows.Storage;
 using Windows.Storage.AccessCache;
+using Windows.Storage.Streams;
 
 namespace ComicReader.Data
 {
@@ -17,26 +19,35 @@ namespace ComicReader.Data
 
     public enum DatabaseItem
     {
-        Comics,
-        ReadRecords,
+        Comic,
+        ComicExtra,
         Favorites,
         History,
-        Settings
+        AppSettings
     }
 
     public class Database
     {
-        public static ComicData Comics = new ComicData();
-        public static RecentReadData RecentRead = new RecentReadData();
-        public static FavoritesData Favorites = new FavoritesData();
+        public static AppSettingData AppSettings = new AppSettingData();
+        public static ComicData Comic = new ComicData();
+        public static ComicExtraData ComicExtra = new ComicExtraData();
+        public static FavoriteData Favorites = new FavoriteData();
         public static HistoryData History = new HistoryData();
-        public static AppSettingsData AppSettings = new AppSettingsData();
     };
+
+    public abstract class AppData
+    {
+        public abstract string FileName { get; }
+        public abstract void Pack();
+        public abstract void Unpack();
+        public abstract void Set(object obj);
+    }
 
     public class DatabaseManager
     {
         private static bool m_database_ready = false;
         private static SemaphoreSlim m_database_semaphore = new SemaphoreSlim(1);
+        private static StorageFolder DatabaseFolder => ApplicationData.Current.LocalFolder;
 
         public static async Task WaitLock()
         {
@@ -53,24 +64,22 @@ namespace ComicReader.Data
 
         private static async RawTask Save(DatabaseItem item)
         {
-            StorageFolder folder = ApplicationData.Current.LocalFolder;
-
             switch (item)
             {
-                case DatabaseItem.Comics:
-                    await ComicDataManager.Save(folder);
+                case DatabaseItem.Comic:
+                    await Save(Database.Comic);
                     break;
-                case DatabaseItem.ReadRecords:
-                    await RecentReadDataManager.Save(folder);
+                case DatabaseItem.ComicExtra:
+                    await Save(Database.ComicExtra);
                     break;
                 case DatabaseItem.Favorites:
-                    await FavoritesDataManager.Save(folder);
+                    await Save(Database.Favorites);
                     break;
                 case DatabaseItem.History:
-                    await HistoryDataManager.Save(folder);
+                    await Save(Database.History);
                     break;
-                case DatabaseItem.Settings:
-                    await AppSettingsDataManager.Save(folder);
+                case DatabaseItem.AppSettings:
+                    await Save(Database.AppSettings);
                     break;
                 default:
                     return new TaskResult(TaskException.InvalidParameters, fatal: true);
@@ -79,22 +88,62 @@ namespace ComicReader.Data
             return new TaskResult();
         }
 
+        private static async Task Save(AppData obj)
+        {
+            await WaitLock();
+            StorageFile file = await DatabaseFolder.CreateFileAsync(
+                obj.FileName, CreationCollisionOption.ReplaceExisting);
+            IRandomAccessStream stream = await file.OpenAsync(
+                FileAccessMode.ReadWrite);
+
+            obj.Pack();
+            XmlSerializer serializer = new XmlSerializer(obj.GetType());
+            serializer.Serialize(stream.AsStream(), obj);
+
+            stream.Dispose();
+            ReleaseLock();
+        }
+
         public static SealedTask LoadSealed() => (RawTask _) => Load().Result;
 
         private static async RawTask Load()
         {
-            StorageFolder folder = ApplicationData.Current.LocalFolder;
-
-            _ = await AppSettingsDataManager.Load(folder);
-            _ = await ComicDataManager.Load(folder);
-            _ = await RecentReadDataManager.Load(folder);
-            _ = await FavoritesDataManager.Load(folder);
-            _ = await HistoryDataManager.Load(folder);
+            await Load(Database.AppSettings);
+            await Load(Database.Comic);
+            await Load(Database.ComicExtra);
+            await Load(Database.Favorites);
+            await Load(Database.History);
             m_database_ready = true;
 
-            // this should only be called after AppSettings loaded
-            Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.UpdateSealed(lazy_load: false), "",
+            // this should only be called after AppSettings was loaded
+            Utils.TaskQueue.TaskQueueManager.AppendTask(UpdateSealed(lazy_load: false), "",
                 Utils.TaskQueue.TaskQueueManager.EmptyQueue());
+            return new TaskResult();
+        }
+
+        private static async RawTask Load(AppData obj)
+        {
+            object file = await TryGetFile(DatabaseFolder, obj.FileName);
+
+            if (file == null)
+            {
+                return new TaskResult(TaskException.FileNotExists);
+            }
+
+            IRandomAccessStream stream = await (file as StorageFile).OpenAsync(FileAccessMode.Read);
+            XmlSerializer serializer = new XmlSerializer(obj.GetType());
+
+            try
+            {
+                obj.Set(serializer.Deserialize(stream.AsStream()));
+            }
+            catch (Exception)
+            {
+                return new TaskResult(TaskException.Failure);
+            }
+
+            obj.Unpack();
+            stream.Dispose();
             return new TaskResult();
         }
 
@@ -102,9 +151,9 @@ namespace ComicReader.Data
 
         private static async RawTask Update(bool lazy_load)
         {
-            TaskResult res = await ComicDataManager.Update(lazy_load);
-            await RecentReadDataManager.Update();
-            return res;
+            await ComicDataManager.Update(lazy_load);
+            await ComicExtraDataManager.Update();
+            return new TaskResult();
         }
 
         public static async Task<object> TryGetFile(StorageFolder folder, string name)

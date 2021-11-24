@@ -19,7 +19,7 @@ namespace ComicReader.Controls
 
         private void ContentFrame_Loaded(object sender, Windows.UI.Xaml.RoutedEventArgs e)
         {
-            //ContentFrame.Navigate(typeof(FavoritesPage), null);
+            //ContentFrame.Navigate(typeof(FavoritePage), null);
         }
 
         private void OnNavPaneSelectionChanged(muxc.NavigationView sender, muxc.NavigationViewSelectionChangedEventArgs args)
@@ -37,7 +37,7 @@ namespace ComicReader.Controls
             switch (item)
             {
                 case "Favorites":
-                    page_type = typeof(FavoritesPage);
+                    page_type = typeof(FavoritePage);
                     break;
                 case "History":
                     page_type = typeof(HistoryPage);

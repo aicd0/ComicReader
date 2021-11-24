@@ -163,7 +163,7 @@ namespace ComicReader.Views
                 int cmp_func(ComicItemData x, ComicItemData y) => x.LastVisit > y.LastVisit ? 1 : -1;
                 Utils.MinHeap<ComicItemData> min_heap = new Utils.MinHeap<ComicItemData>(result_count, cmp_func);
 
-                foreach (ComicItemData comic in Database.Comics.Items)
+                foreach (ComicItemData comic in Database.Comic.Items)
                 {
                     if (comic.Hidden)
                     {
@@ -188,10 +188,10 @@ namespace ComicReader.Views
                         Comic = comic,
                         Title = comic.Title,
                         Id = comic.Id,
-                        IsFavorite = await FavoritesDataManager.FromId(comic.Id) != null
+                        IsFavorite = await FavoriteDataManager.FromId(comic.Id) != null
                     };
 
-                    RecentReadItemData comic_record = await RecentReadDataManager.FromId(comic.Id);
+                    ComicExtraItemData comic_record = await ComicExtraDataManager.FromId(comic.Id);
 
                     if (comic_record != null)
                     {
@@ -315,7 +315,7 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                if (!await AppSettingsDataManager.AddComicFolderUsingPicker())
+                if (!await AppSettingDataManager.AddComicFolderUsingPicker())
                 {
                     return;
                 }
@@ -352,7 +352,7 @@ namespace ComicReader.Views
             Utils.Methods.Run(async delegate
             {
                 FolderItemModel ctx = (FolderItemModel)((MenuFlyoutItem)sender).DataContext;
-                await AppSettingsDataManager.RemoveComicFolder(ctx.Folder, final: true);
+                await AppSettingDataManager.RemoveComicFolder(ctx.Folder, final: true);
                 await UpdateFolders();
                 Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.UpdateSealed(), "", m_update_queue);
                 Utils.TaskQueue.TaskQueueManager.AppendTask(UpdateSealed(), "", m_update_queue);

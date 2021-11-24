@@ -250,7 +250,7 @@ namespace ComicReader.Views
 
             Shared.ReaderRightToLeft = Database.AppSettings.RightToLeft;
             Shared.HistorySaveBrowsingHistory = Database.AppSettings.SaveHistory;
-            StatisticsTextBlock.Text = "Total collections: " + Database.Comics.Items.Count.ToString("#,#0", CultureInfo.InvariantCulture);
+            StatisticsTextBlock.Text = "Total collections: " + Database.Comic.Items.Count.ToString("#,#0", CultureInfo.InvariantCulture);
 
             m_updating = false;
             DatabaseManager.ReleaseLock();
@@ -284,7 +284,7 @@ namespace ComicReader.Views
             Database.AppSettings.SaveHistory = Shared.HistorySaveBrowsingHistory;
 
             DatabaseManager.ReleaseLock();
-            Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(DatabaseItem.Settings));
+            Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(DatabaseItem.AppSettings));
         }
 
         private void OnSettingsChanged()

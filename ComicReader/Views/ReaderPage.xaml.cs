@@ -1049,7 +1049,7 @@ namespace ComicReader.Views
 
         private Utils.Tab.TabManager m_tab_manager;
         private ComicItemData m_comic;
-        private RecentReadItemData m_comic_record;
+        private ComicExtraItemData m_comic_record;
         private Utils.TaskQueue.TaskQueue m_load_image_queue = Utils.TaskQueue.TaskQueueManager.EmptyQueue();
         private double m_reader_position;
         private GestureRecognizer m_gesture_recognizer;
@@ -1238,7 +1238,7 @@ namespace ComicReader.Views
             if (m_comic_record != null)
             {
                 m_comic_record.Progress = progress;
-                Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(DatabaseItem.ReadRecords));
+                Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(DatabaseItem.ComicExtra));
             }
         }
 
@@ -1259,7 +1259,7 @@ namespace ComicReader.Views
             if (!m_comic.IsExternal)
             {
                 // fetch the read record. create one if not exists.
-                m_comic_record = await RecentReadDataManager.FromId(m_comic.Id, create_if_not_exists: true);
+                m_comic_record = await ComicExtraDataManager.FromId(m_comic.Id, create_if_not_exists: true);
 
                 // add to history
                 await HistoryDataManager.Add(m_comic.Id, m_comic.Title1, true);
@@ -1269,7 +1269,7 @@ namespace ComicReader.Views
                 m_comic.LastVisit = DateTimeOffset.Now;
                 DatabaseManager.ReleaseLock();
                 Utils.TaskQueue.TaskQueueManager.AppendTask(
-                    DatabaseManager.SaveSealed(DatabaseItem.Comics));
+                    DatabaseManager.SaveSealed(DatabaseItem.Comic));
             }
 
             LoadImages();
@@ -1410,7 +1410,7 @@ namespace ComicReader.Views
 
             if (!m_comic.IsExternal)
             {
-                Shared.NavigationPageShared.IsFavorite = await FavoritesDataManager.FromId(m_comic.Id) != null;
+                Shared.NavigationPageShared.IsFavorite = await FavoriteDataManager.FromId(m_comic.Id) != null;
                 Shared.Rating = m_comic_record.Rating;
             }
         }
@@ -1731,11 +1731,11 @@ namespace ComicReader.Views
 
             if (is_favorite)
             {
-                await FavoritesDataManager.Add(m_comic.Id, m_comic.Title1, final: true);
+                await FavoriteDataManager.Add(m_comic.Id, m_comic.Title1, final: true);
             }
             else
             {
-                await FavoritesDataManager.RemoveWithId(m_comic.Id, final: true);
+                await FavoriteDataManager.RemoveWithId(m_comic.Id, final: true);
             }
         }
 
@@ -1785,7 +1785,7 @@ namespace ComicReader.Views
         private void OnRatingControlValueChanged(muxc.RatingControl sender, object args)
         {
             m_comic_record.Rating = (int)sender.Value;
-            Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(Data.DatabaseItem.ReadRecords));
+            Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(Data.DatabaseItem.ComicExtra));
         }
 
         private void OnInfoPaneTagClicked(object sender, RoutedEventArgs e)

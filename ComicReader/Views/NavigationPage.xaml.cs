@@ -320,9 +320,9 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                if (FavoritesPage.Current != null)
+                if (FavoritePage.Current != null)
                 {
-                    await FavoritesPage.Current.Update();
+                    await FavoritePage.Current.Update();
                 }
 
                 if (HistoryPage.Current != null)

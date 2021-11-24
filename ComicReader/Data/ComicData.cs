@@ -53,11 +53,13 @@ namespace ComicReader.Data
         }
     };
 
-    public class ComicData
+    public class ComicData : AppData
     {
+        public override string FileName => "Comics";
+
         public List<ComicItemData> Items = new List<ComicItemData>();
 
-        public void Pack()
+        public override void Pack()
         {
             foreach (ComicItemData i in Items)
             {
@@ -65,12 +67,17 @@ namespace ComicReader.Data
             }
         }
 
-        public void Unpack()
+        public override void Unpack()
         {
             foreach (ComicItemData i in Items)
             {
                 i.Unpack();
             }
+        }
+
+        public override void Set(object obj)
+        {
+            Database.Comic = obj as ComicData;
         }
     }
 
@@ -174,46 +181,8 @@ namespace ComicReader.Data
 
     class ComicDataManager
     {
-        private const string COMIC_DATA_FILE_NAME = "com";
         private const string COMIC_INFO_FILE_NAME = "Info.txt";
         private static Utils.CancellationLock m_update_comic_data_lock = new Utils.CancellationLock();
-
-        public static async Task Save(StorageFolder user_folder)
-        {
-            await DatabaseManager.WaitLock();
-            StorageFile file = await user_folder.CreateFileAsync(
-                COMIC_DATA_FILE_NAME, CreationCollisionOption.ReplaceExisting);
-            IRandomAccessStream stream = await file.OpenAsync(
-                FileAccessMode.ReadWrite);
-
-            Database.Comics.Pack();
-            XmlSerializer serializer = new XmlSerializer(typeof(ComicData));
-            serializer.Serialize(stream.AsStream(), Database.Comics);
-
-            stream.Dispose();
-            DatabaseManager.ReleaseLock();
-        }
-
-        public static async RawTask Load(StorageFolder user_folder)
-        {
-            object file = await DatabaseManager.TryGetFile(user_folder, COMIC_DATA_FILE_NAME);
-
-            if (file == null)
-            {
-                return new TaskResult(TaskException.FileNotExists);
-            }
-
-            IRandomAccessStream stream =
-                await ((StorageFile)file).OpenAsync(FileAccessMode.Read);
-
-            XmlSerializer serializer = new XmlSerializer(typeof(ComicData));
-            Database.Comics =
-                (ComicData)serializer.Deserialize(stream.AsStream());
-            Database.Comics.Unpack();
-
-            stream.Dispose();
-            return new TaskResult();
-        }
 
         public static async Task<ComicItemData> FromId(string _id)
         {
@@ -235,7 +204,7 @@ namespace ComicReader.Data
                 return null;
             }
 
-            foreach (ComicItemData comic in Database.Comics.Items)
+            foreach (ComicItemData comic in Database.Comic.Items)
             {
                 if (comic.Id == _id)
                 {
@@ -264,7 +233,7 @@ namespace ComicReader.Data
         {
             string dir_lower = dir.ToLower();
 
-            foreach (ComicItemData comic in Database.Comics.Items)
+            foreach (ComicItemData comic in Database.Comic.Items)
             {
                 if (comic.Directory.ToLower().Equals(dir_lower))
                 {
@@ -280,9 +249,9 @@ namespace ComicReader.Data
             ComicItemData comic = new ComicItemData();
             string id;
 
-            if (Database.Comics.Items.Count != 0)
+            if (Database.Comic.Items.Count != 0)
             {
-                id = (int.Parse(Database.Comics.Items[Database.Comics.Items.Count - 1].Id) + 1).ToString();
+                id = (int.Parse(Database.Comic.Items[Database.Comic.Items.Count - 1].Id) + 1).ToString();
             }
             else
             {
@@ -290,8 +259,7 @@ namespace ComicReader.Data
             }
 
             comic.Id = id;
-            comic.LastVisit = DateTimeOffset.Now;
-            Database.Comics.Items.Add(comic);
+            Database.Comic.Items.Add(comic);
             return comic;
         }
 
@@ -299,9 +267,9 @@ namespace ComicReader.Data
         {
             dir = dir.ToLower();
 
-            for (int i = 0; i < Database.Comics.Items.Count; ++i)
+            for (int i = 0; i < Database.Comic.Items.Count; ++i)
             {
-                var comic = Database.Comics.Items[i];
+                var comic = Database.Comic.Items[i];
                 var current_dir = comic.Directory.ToLower();
 
                 if (current_dir.Length < dir.Length)
@@ -311,7 +279,7 @@ namespace ComicReader.Data
 
                 if (current_dir.Substring(0, dir.Length).Equals(dir))
                 {
-                    Database.Comics.Items.RemoveAt(i);
+                    Database.Comic.Items.RemoveAt(i);
                     --i;
                 }
             }
@@ -367,7 +335,7 @@ namespace ComicReader.Data
                     }
                 }
 
-                Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(DatabaseItem.Settings));
+                Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(DatabaseItem.AppSettings));
 
                 // extracts StorageFolder.Path into a new string list
                 List<string> all_dir = new List<string>(all_folders.Count);
@@ -379,9 +347,9 @@ namespace ComicReader.Data
 
                 // get all folder paths in database
                 await DatabaseManager.WaitLock();
-                List<string> all_dir_in_lib = new List<string>(Database.Comics.Items.Count);
+                List<string> all_dir_in_lib = new List<string>(Database.Comic.Items.Count);
 
-                foreach (ComicItemData comic in Database.Comics.Items)
+                foreach (ComicItemData comic in Database.Comic.Items)
                 {
                     all_dir_in_lib.Add(comic.Directory);
                 }
@@ -429,7 +397,7 @@ namespace ComicReader.Data
                         {
                             await DatabaseManager.WaitLock();
                             ComicItemData comic = FromDirectoryNoLock(dir);
-                            Database.Comics.Items.Remove(comic);
+                            Database.Comic.Items.Remove(comic);
                             DatabaseManager.ReleaseLock();
                         }
 
@@ -506,13 +474,13 @@ namespace ComicReader.Data
                     if ((DateTimeOffset.Now - last_date_time).Seconds > 5.0)
                     {
                         Utils.TaskQueue.TaskQueueManager.AppendTask(
-                            DatabaseManager.SaveSealed(DatabaseItem.Comics));
+                            DatabaseManager.SaveSealed(DatabaseItem.Comic));
                         last_date_time = DateTimeOffset.Now;
                     }
                 }
 
                 // save
-                Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(DatabaseItem.Comics));
+                Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(DatabaseItem.Comic));
                 return new TaskResult();
             }
             finally
@@ -527,7 +495,7 @@ namespace ComicReader.Data
             comic.Hidden = true;
             DatabaseManager.ReleaseLock();
             Utils.TaskQueue.TaskQueueManager.AppendTask(
-                DatabaseManager.SaveSealed(DatabaseItem.Comics), "Saving...");
+                DatabaseManager.SaveSealed(DatabaseItem.Comic), "Saving...");
         }
 
         public static async Task Unhide(ComicItemData comic)
@@ -536,7 +504,7 @@ namespace ComicReader.Data
             comic.Hidden = false;
             DatabaseManager.ReleaseLock();
             Utils.TaskQueue.TaskQueueManager.AppendTask(
-                DatabaseManager.SaveSealed(DatabaseItem.Comics), "Saving...");
+                DatabaseManager.SaveSealed(DatabaseItem.Comic), "Saving...");
         }
 
         // info

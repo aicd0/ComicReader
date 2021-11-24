@@ -15,16 +15,23 @@ namespace ComicReader.Data
     using TaskResult = Utils.TaskQueue.TaskResult;
     using TaskException = Utils.TaskQueue.TaskException;
 
-    public class FavoritesData
+    public class FavoriteData : AppData
     {
-        public List<FavoritesNodeData> RootNodes = new List<FavoritesNodeData>();
+        public override string FileName => "Favorites";
 
-        public void Pack() { }
+        public List<FavoriteNodeData> RootNodes = new List<FavoriteNodeData>();
 
-        public void Unpack() { }
+        public override void Pack() { }
+
+        public override void Unpack() { }
+
+        public override void Set(object obj)
+        {
+            Database.Favorites = obj as FavoriteData;
+        }
     }
 
-    public class FavoritesNodeData
+    public class FavoriteNodeData
     {
         [XmlAttribute]
         public string Type;
@@ -32,51 +39,12 @@ namespace ComicReader.Data
         public string Name;
         [XmlAttribute]
         public string Id;
-        public List<FavoritesNodeData> Children = new List<FavoritesNodeData>();
+        public List<FavoriteNodeData> Children = new List<FavoriteNodeData>();
     };
 
-    class FavoritesDataManager
+    class FavoriteDataManager
     {
-        private const string FAVORITES_DATA_FILE_NAME = "fav";
-
-        public static async Task Save(StorageFolder user_folder)
-        {
-            await DatabaseManager.WaitLock();
-            StorageFile file = await user_folder.CreateFileAsync(
-                FAVORITES_DATA_FILE_NAME, CreationCollisionOption.ReplaceExisting);
-            IRandomAccessStream stream = await file.OpenAsync(
-                FileAccessMode.ReadWrite);
-
-            Database.Favorites.Pack();
-            XmlSerializer serializer = new XmlSerializer(typeof(FavoritesData));
-            serializer.Serialize(stream.AsStream(), Database.Favorites);
-
-            stream.Dispose();
-            DatabaseManager.ReleaseLock();
-        }
-
-        public static async RawTask Load(StorageFolder user_folder)
-        {
-            object file = await DatabaseManager.TryGetFile(user_folder, FAVORITES_DATA_FILE_NAME);
-
-            if (file == null)
-            {
-                return new TaskResult(TaskException.FileNotExists);
-            }
-
-            IRandomAccessStream stream =
-                await ((StorageFile)file).OpenAsync(FileAccessMode.Read);
-
-            XmlSerializer serializer = new XmlSerializer(typeof(FavoritesData));
-            Database.Favorites =
-                (FavoritesData)serializer.Deserialize(stream.AsStream());
-            Database.Favorites.Unpack();
-
-            stream.Dispose();
-            return new TaskResult();
-        }
-
-        public static async Task<FavoritesNodeData> FromId(string id)
+        public static async Task<FavoriteNodeData> FromId(string id)
         {
             await DatabaseManager.WaitLock();
             try
@@ -89,9 +57,9 @@ namespace ComicReader.Data
             }
         }
 
-        private static FavoritesNodeData FromIdNoLock(string id)
+        private static FavoriteNodeData FromIdNoLock(string id)
         {
-            FavoritesNodeData helper(List<FavoritesNodeData> e)
+            FavoriteNodeData helper(List<FavoriteNodeData> e)
             {
                 foreach (var node in e)
                 {
@@ -124,7 +92,7 @@ namespace ComicReader.Data
 
         public static async Task<bool> RemoveWithId(string id, bool final)
         {
-            bool helper(List<FavoritesNodeData> e)
+            bool helper(List<FavoriteNodeData> e)
             {
                 for (int i = 0; i < e.Count; ++i)
                 {
@@ -176,7 +144,7 @@ namespace ComicReader.Data
                     return;
                 }
 
-                FavoritesNodeData node = new FavoritesNodeData
+                FavoriteNodeData node = new FavoriteNodeData
                 {
                     Type = "i",
                     Name = title,
@@ -201,9 +169,9 @@ namespace ComicReader.Data
             Utils.TaskQueue.TaskQueueManager.AppendTask(
                 DatabaseManager.SaveSealed(DatabaseItem.Favorites));
 
-            if (Views.FavoritesPage.Current != null)
+            if (Views.FavoritePage.Current != null)
             {
-                await Views.FavoritesPage.Current.Update();
+                await Views.FavoritePage.Current.Update();
             }
         }
     }

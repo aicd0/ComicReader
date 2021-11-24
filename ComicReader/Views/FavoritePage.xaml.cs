@@ -12,7 +12,7 @@ using ComicReader.Data;
 
 namespace ComicReader.Views
 {
-    public class FavoritesPageShared : INotifyPropertyChanged
+    public class FavoritePageShared : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -28,18 +28,18 @@ namespace ComicReader.Views
         }
     }
 
-    public sealed partial class FavoritesPage : Page
+    public sealed partial class FavoritePage : Page
     {
-        public static FavoritesPage Current = null;
-        public FavoritesPageShared Shared { get; set; }
+        public static FavoritePage Current = null;
+        public FavoritePageShared Shared { get; set; }
         private ObservableCollection<FavoritesItemModel> DataSource { get; set; }
 
         private Utils.Tab.TabManager m_tab_manager;
 
-        public FavoritesPage()
+        public FavoritePage()
         {
             Current = this;
-            Shared = new FavoritesPageShared();
+            Shared = new FavoritePageShared();
             DataSource = new ObservableCollection<FavoritesItemModel>();
 
             m_tab_manager = new Utils.Tab.TabManager();
@@ -82,9 +82,9 @@ namespace ComicReader.Views
         // utilities
         public async Task Update()
         {
-            void helper(List<FavoritesNodeData> it, ObservableCollection<FavoritesItemModel> et, FavoritesItemModel parent)
+            void helper(List<FavoriteNodeData> it, ObservableCollection<FavoritesItemModel> et, FavoritesItemModel parent)
             {
-                foreach (FavoritesNodeData inode in it)
+                foreach (FavoriteNodeData inode in it)
                 {
                     TreeItemType type = inode.Type == "i" ? TreeItemType.Item : TreeItemType.Filter;
                     FavoritesItemModel enode = new FavoritesItemModel(inode.Name, type, parent);
@@ -110,11 +110,11 @@ namespace ComicReader.Views
 
         public async Task Save()
         {
-            void helper(List<FavoritesNodeData> it, ObservableCollection<FavoritesItemModel> et)
+            void helper(List<FavoriteNodeData> it, ObservableCollection<FavoritesItemModel> et)
             {
                 foreach (FavoritesItemModel enode in et)
                 {
-                    FavoritesNodeData inode = new FavoritesNodeData();
+                    FavoriteNodeData inode = new FavoriteNodeData();
                     inode.Type = enode.Type == TreeItemType.Filter ? "f" : "i";
                     inode.Name = enode.Name;
                     inode.Id = enode.Id;
