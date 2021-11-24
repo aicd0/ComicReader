@@ -17,18 +17,24 @@ namespace ComicReader.Data
 
     public class FavoriteData : AppData
     {
+        public List<FavoriteNodeData> RootNodes = new List<FavoriteNodeData>();
+
+        // serialization
         public override string FileName => "Favorites";
 
-        public List<FavoriteNodeData> RootNodes = new List<FavoriteNodeData>();
+        [XmlIgnore]
+        public override AppData Target
+        {
+            get => Database.Favorites;
+            set
+            {
+                Database.Favorites = value as FavoriteData;
+            }
+        }
 
         public override void Pack() { }
 
         public override void Unpack() { }
-
-        public override void Set(object obj)
-        {
-            Database.Favorites = obj as FavoriteData;
-        }
     }
 
     public class FavoriteNodeData

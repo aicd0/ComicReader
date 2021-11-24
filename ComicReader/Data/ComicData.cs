@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -55,9 +56,20 @@ namespace ComicReader.Data
 
     public class ComicData : AppData
     {
+        public List<ComicItemData> Items = new List<ComicItemData>();
+
+        // serialization
         public override string FileName => "Comics";
 
-        public List<ComicItemData> Items = new List<ComicItemData>();
+        [XmlIgnore]
+        public override AppData Target
+        {
+            get => Database.Comic;
+            set
+            {
+                Database.Comic = value as ComicData;
+            }
+        }
 
         public override void Pack()
         {
@@ -73,11 +85,6 @@ namespace ComicReader.Data
             {
                 i.Unpack();
             }
-        }
-
-        public override void Set(object obj)
-        {
-            Database.Comic = obj as ComicData;
         }
     }
 
@@ -128,12 +135,12 @@ namespace ComicReader.Data
 
         public void Pack()
         {
-            LastVisitStr = LastVisit.ToString();
+            LastVisitStr = LastVisit.ToString(CultureInfo.InvariantCulture);
         }
 
         public void Unpack()
         {
-            LastVisit = DateTimeOffset.Parse(LastVisitStr);
+            LastVisit = DateTimeOffset.Parse(LastVisitStr, CultureInfo.InvariantCulture);
         }
     };
 

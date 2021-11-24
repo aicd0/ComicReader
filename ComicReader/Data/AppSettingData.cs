@@ -19,20 +19,26 @@ namespace ComicReader.Data
 
     public class AppSettingData : AppData
     {
-        public override string FileName => "Settings";
-
         public List<string> ComicFolders = new List<string>();
         public bool RightToLeft = false;
         public bool SaveHistory = true;
 
+        // serialization
+        public override string FileName => "Settings";
+
+        [XmlIgnore]
+        public override AppData Target
+        {
+            get => Database.AppSettings;
+            set
+            {
+                Database.AppSettings = value as AppSettingData;
+            }
+        }
+
         public override void Pack() { }
 
         public override void Unpack() { }
-
-        public override void Set(object obj)
-        {
-            Database.AppSettings = obj as AppSettingData;
-        }
     }
     class AppSettingDataManager
     {

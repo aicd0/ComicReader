@@ -174,7 +174,8 @@ namespace ComicReader.Views
                 }
 
                 DatabaseManager.ReleaseLock();
-                IEnumerable<ComicItemData> sorted = min_heap.OrderBy((ComicItemData x) => x.LastVisit).Reverse();
+                List<ComicItemData> sorted = min_heap.ToList();
+                sorted = sorted.OrderBy((ComicItemData x) => x.LastVisit).Reverse().ToList();
 
                 // add to comic item source
                 Utils.ObservableCollectionPlus<ComicItemModel> comic_items = new Utils.ObservableCollectionPlus<ComicItemModel>();

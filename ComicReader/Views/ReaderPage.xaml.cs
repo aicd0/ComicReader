@@ -1314,56 +1314,12 @@ namespace ComicReader.Views
                 GridViewDataSource.Clear();
             });
 
-            List<ImageLoaderToken> reader_h_img_loader_tokens = new List<ImageLoaderToken>();
-            List<ImageLoaderToken> reader_v_img_loader_tokens = new List<ImageLoaderToken>();
             List<ImageLoaderToken> preview_img_loader_tokens = new List<ImageLoaderToken>();
 
             for (int i = 0; i < m_comic.ImageFiles.Count; ++i)
             {
                 int page = i + 1;
                 bool is_last_page = page == m_comic.ImageFiles.Count;
-
-                reader_v_img_loader_tokens.Add(new ImageLoaderToken
-                {
-                    Comic = m_comic,
-                    Index = i,
-                    Callback = (BitmapImage img) =>
-                    {
-                        OnePageReader.ImageSource.Add(new ReaderFrameModel
-                        {
-                            Page = page,
-                            TopPadding = true,
-                            BottomPadding = true,
-                            LeftPadding = false,
-                            RightPadding = false,
-                            ImageWidth = 500.0,
-                            ImageHeight = 500.0 / img.PixelWidth * img.PixelHeight,
-                            OnContainerLoaded = OnePageReader.OnContainerLoaded
-                        });
-                        OnePageReader.UpdateImages();
-                    }
-                });
-
-                reader_h_img_loader_tokens.Add(new ImageLoaderToken
-                {
-                    Comic = m_comic,
-                    Index = i,
-                    Callback = (BitmapImage img) =>
-                    {
-                        TwoPagesReader.ImageSource.Add(new ReaderFrameModel
-                        {
-                            Page = page,
-                            TopPadding = false,
-                            BottomPadding = false,
-                            LeftPadding = page == 1 || page % 2 == 0,
-                            RightPadding = is_last_page || page % 2 == 1,
-                            ImageWidth = 300.0 / img.PixelHeight * img.PixelWidth,
-                            ImageHeight = 300.0,
-                            OnContainerLoaded = TwoPagesReader.OnContainerLoaded
-                        });
-                        TwoPagesReader.UpdateImages();
-                    }
-                });
 
                 preview_img_loader_tokens.Add(new ImageLoaderToken
                 {
@@ -1376,19 +1332,40 @@ namespace ComicReader.Views
                             Image = img,
                             Page = page,
                         });
+
+                        OnePageReader.ImageSource.Add(new ReaderFrameModel
+                        {
+                            Page = page,
+                            TopPadding = true,
+                            BottomPadding = true,
+                            LeftPadding = false,
+                            RightPadding = false,
+                            ImageWidth = 500.0,
+                            ImageHeight = 500.0 / img.PixelWidth * img.PixelHeight,
+                            OnContainerLoaded = OnePageReader.OnContainerLoaded
+                        });
+
+                        TwoPagesReader.ImageSource.Add(new ReaderFrameModel
+                        {
+                            Page = page,
+                            TopPadding = false,
+                            BottomPadding = false,
+                            LeftPadding = page == 1 || page % 2 == 0,
+                            RightPadding = is_last_page || page % 2 == 1,
+                            ImageWidth = 300.0 / img.PixelHeight * img.PixelWidth,
+                            ImageHeight = 300.0,
+                            OnContainerLoaded = TwoPagesReader.OnContainerLoaded
+                        });
+
+                        OnePageReader.UpdateImages();
+                        TwoPagesReader.UpdateImages();
                     }
                 });
             }
 
-            Task reader_v_loader_task = ComicDataManager.LoadImages(reader_v_img_loader_tokens,
-                1.0, 1.0, m_reader_v_img_loader_lock);
-            Task reader_h_loader_task = ComicDataManager.LoadImages(reader_h_img_loader_tokens,
-                1.0, 1.0, m_reader_h_img_loader_lock);
             Task preview_loader_task = ComicDataManager.LoadImages(preview_img_loader_tokens,
                 preview_width, preview_height, m_preview_img_loader_lock);
 
-            await reader_v_loader_task.AsAsyncAction();
-            await reader_h_loader_task.AsAsyncAction();
             await preview_loader_task.AsAsyncAction();
             return new Utils.TaskQueue.TaskResult();
         }

@@ -17,18 +17,24 @@ namespace ComicReader.Data
 
     public class ComicExtraData : AppData
     {
+        public List<ComicExtraItemData> Items = new List<ComicExtraItemData>();
+
+        // serialization
         public override string FileName => "ComicExtra";
 
-        public List<ComicExtraItemData> Items = new List<ComicExtraItemData>();
+        [XmlIgnore]
+        public override AppData Target
+        {
+            get => Database.ComicExtra;
+            set
+            {
+                Database.ComicExtra = value as ComicExtraData;
+            }
+        }
 
         public override void Pack() { }
 
         public override void Unpack() { }
-
-        public override void Set(object obj)
-        {
-            Database.ComicExtra = obj as ComicExtraData;
-        }
     }
 
     public class ComicExtraItemData

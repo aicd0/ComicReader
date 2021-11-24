@@ -18,9 +18,20 @@ namespace ComicReader.Data
 
     public class HistoryData : AppData
     {
+        public List<HistoryItemData> Items = new List<HistoryItemData>();
+
+        // serialization
         public override string FileName => "History";
 
-        public List<HistoryItemData> Items = new List<HistoryItemData>();
+        [XmlIgnore]
+        public override AppData Target
+        {
+            get => Database.History;
+            set
+            {
+                Database.History = value as HistoryData;
+            }
+        }
 
         public override void Pack()
         {
@@ -36,11 +47,6 @@ namespace ComicReader.Data
             {
                 i.Unpack();
             }
-        }
-
-        public override void Set(object obj)
-        {
-            Database.History = obj as HistoryData;
         }
     }
 

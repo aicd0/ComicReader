@@ -38,9 +38,10 @@ namespace ComicReader.Data
     public abstract class AppData
     {
         public abstract string FileName { get; }
+        [XmlIgnore]
+        public abstract AppData Target { get; set; }
         public abstract void Pack();
         public abstract void Unpack();
-        public abstract void Set(object obj);
     }
 
     public class DatabaseManager
@@ -135,14 +136,14 @@ namespace ComicReader.Data
 
             try
             {
-                obj.Set(serializer.Deserialize(stream.AsStream()));
+                obj.Target = serializer.Deserialize(stream.AsStream()) as AppData;
             }
             catch (Exception)
             {
                 return new TaskResult(TaskException.Failure);
             }
 
-            obj.Unpack();
+            obj.Target.Unpack();
             stream.Dispose();
             return new TaskResult();
         }
