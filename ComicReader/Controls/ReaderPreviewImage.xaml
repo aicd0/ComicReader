@@ -10,7 +10,7 @@
 
     <Grid Width="{StaticResource ReaderPreviewImageWidth}"
           Height="{StaticResource ReaderPreviewImageHeight}">
-        <Image Source="{x:Bind Ctx.Image}"
+        <Image Source="{x:Bind Ctx.ImageSource}"
                Stretch="Uniform" />
         <Grid HorizontalAlignment="Right"
               VerticalAlignment="Bottom"

@@ -1,4 +1,6 @@
-﻿using System;
+﻿//#define DEBUG_LOG_IMAGE_LOADED
+
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -71,21 +73,9 @@ namespace ComicReader.Data
             }
         }
 
-        public override void Pack()
-        {
-            foreach (ComicItemData i in Items)
-            {
-                i.Pack();
-            }
-        }
+        public override void Pack() { }
 
-        public override void Unpack()
-        {
-            foreach (ComicItemData i in Items)
-            {
-                i.Unpack();
-            }
-        }
+        public override void Unpack() { }
     }
 
     public class ComicItemData
@@ -97,16 +87,12 @@ namespace ComicReader.Data
         public string m_title2 = "";
 
         [XmlAttribute]
-        public string Id;
+        public string Id = null;
         [XmlAttribute]
-        public string ComicCollectionId;
+        public string ComicCollectionId = null;
         public List<TagData> Tags = new List<TagData>();
         [XmlAttribute]
         public string Directory;
-        [XmlIgnore]
-        public DateTimeOffset LastVisit = DateTimeOffset.MinValue;
-        [XmlAttribute]
-        public string LastVisitStr;
         [XmlAttribute]
         public bool Hidden = false;
 
@@ -116,31 +102,75 @@ namespace ComicReader.Data
             get => m_title1;
             set { m_title1 = value.Length == 0 ? default_title : value; }
         }
+
         [XmlIgnore]
         public string Title2
         {
             get => m_title2;
             set { m_title2 = value; }
         }
+
         [XmlIgnore]
         public string Title => Title1 + (Title2.Length == 0 ? "" : "-" + Title2);
         [XmlIgnore]
         public bool IsExternal = false;
         [XmlIgnore]
-        public StorageFolder Folder;
+        public StorageFolder Folder = null;
         [XmlIgnore]
         public List<StorageFile> ImageFiles = new List<StorageFile>();
         [XmlIgnore]
-        public StorageFile InfoFile;
+        public StorageFile InfoFile = null;
 
-        public void Pack()
+        // extra data
+        [XmlIgnore]
+        private ComicExtraItemData m_extra_data = null;
+        [XmlIgnore]
+        private bool m_extra_data_set = false;
+
+        public async Task<ComicExtraItemData> GetExtraData(bool lazy = false, bool? create_if_not_exists = null)
         {
-            LastVisitStr = LastVisit.ToString(CultureInfo.InvariantCulture);
+            if (m_extra_data_set || lazy)
+            {
+                return m_extra_data;
+            }
+
+            ComicExtraItemData extra_data = create_if_not_exists == null ?
+                await ComicExtraDataManager.FromId(Id) :
+                await ComicExtraDataManager.FromId(Id, create_if_not_exists.Value);
+
+            if (extra_data != null)
+            {
+                SetExtraData(extra_data);
+            }
+
+            return m_extra_data;
         }
 
-        public void Unpack()
+        public ComicExtraItemData GetExtraDataNoLock(bool lazy = false, bool? create_if_not_exists = null)
         {
-            LastVisit = DateTimeOffset.Parse(LastVisitStr, CultureInfo.InvariantCulture);
+            if (m_extra_data_set || lazy)
+            {
+                return m_extra_data;
+            }
+
+            ComicExtraItemData extra_data = create_if_not_exists == null ?
+                ComicExtraDataManager.FromIdNoLock(Id) :
+                ComicExtraDataManager.FromIdNoLock(Id, create_if_not_exists.Value);
+
+            if (extra_data != null)
+            {
+                SetExtraData(extra_data);
+            }
+
+            return m_extra_data;
+        }
+
+        public void SetExtraData(ComicExtraItemData val)
+        {
+            System.Diagnostics.Debug.Assert(val != null);
+
+            m_extra_data = val;
+            m_extra_data_set = true;
         }
     };
 
@@ -164,10 +194,7 @@ namespace ComicReader.Data
 
         public static implicit operator ImageConstrain(double val)
         {
-            if (double.IsNaN(val))
-            {
-                throw new Exception("Invalid parameters");
-            }
+            System.Diagnostics.Debug.Assert(!double.IsNaN(val));
 
             return new ImageConstrain
             {
@@ -426,7 +453,7 @@ namespace ComicReader.Data
                         comic.Directory = dir;
                         comic.Folder = folder;
 
-                        if ((await UpdateInfoNoLock(comic)).ExceptionType != TaskException.Success)
+                        if ((await UpdateInfoNoLock(comic)).ExceptionType != TaskException.Success && !update)
                         {
                             TagData default_tag = new TagData
                             {
@@ -648,10 +675,7 @@ namespace ComicReader.Data
 
             TaskResult res = await CompleteFolderNoLock(comic);
 
-            if (res.ExceptionType != TaskException.Success)
-            {
-                throw new Exception();
-            }
+            System.Diagnostics.Debug.Assert(res.ExceptionType == TaskException.Success);
 
             IStorageItem item = await comic.Folder.TryGetItemAsync(COMIC_INFO_FILE_NAME);
 
@@ -805,21 +829,20 @@ namespace ComicReader.Data
 
             for (; _tokens.Count > 0;)
             {
-                ImageLoaderToken t = _tokens.First();
-                _tokens.RemoveAt(0);
-
                 if (cancellation_lock.CancellationRequested)
                 {
                     return;
                 }
 
-                ComicItemData comic = t.Comic;
+                ImageLoaderToken token = _tokens.First();
+                _tokens.RemoveAt(0);
+                ComicItemData comic = token.Comic;
 
                 if (comic.ImageFiles.Count == 0)
                 {
                     TaskResult res = await CompleteImages(comic);
 
-                    // skip the tokens whose comic folder cannot be reached
+                    // skip tokens whose comic folder cannot be reached
                     if (res.ExceptionType != TaskException.Success)
                     {
                         _tokens.RemoveAll(x => x.Comic == comic);
@@ -828,13 +851,13 @@ namespace ComicReader.Data
                     }
                 }
 
-                if (comic.ImageFiles.Count <= t.Index)
+                if (comic.ImageFiles.Count <= token.Index)
                 {
                     trig_update = true;
                     continue;
                 }
 
-                StorageFile image_file = comic.ImageFiles[t.Index];
+                StorageFile image_file = comic.ImageFiles[token.Index];
                 IRandomAccessStream stream;
 
                 try
@@ -898,7 +921,10 @@ namespace ComicReader.Data
                         image.DecodePixelWidth = (int)image_width;
                     }
 
-                    t.Callback?.Invoke(image);
+                    token.Callback?.Invoke(image);
+#if DEBUG_LOG_IMAGE_LOADED
+                    System.Diagnostics.Debug.Print("Image " + token.Index.ToString() + " loaded.\n");
+#endif
                 });
             }
 

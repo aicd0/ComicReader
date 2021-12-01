@@ -17,12 +17,14 @@ namespace ComicReader.Controls
         {
             // Notify binding changes.
             Bindings.Update();
-        }
 
-        private void OnFrameLoaded(object sender, RoutedEventArgs e)
-        {
-            Ctx.Container = sender as Grid;
-            Ctx.OnContainerLoaded?.Invoke(Ctx);
+            ReaderFrameModel new_ctx = args.NewValue as ReaderFrameModel;
+
+            if (new_ctx != null)
+            {
+                new_ctx.Container = sender as Grid;
+                new_ctx.OnContainerLoadedAsync?.Invoke(Ctx);
+            }
         }
     }
 }

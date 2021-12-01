@@ -119,8 +119,7 @@ namespace ComicReader.Views
         {
             Shared.NavigationPageShared.CurrentPageType = Utils.Tab.PageType.Home;
             tab_id.Tab.Header = "New tab";
-            tab_id.Tab.IconSource =
-                new muxc.SymbolIconSource() { Symbol = Symbol.Document };
+            tab_id.Tab.IconSource = new muxc.SymbolIconSource() { Symbol = Symbol.Document };
             NavigationPage.Current.SetSearchBox("");
         }
 
@@ -158,30 +157,26 @@ namespace ComicReader.Views
                 }
 
                 // get recent visited comics
-                await DatabaseManager.WaitLock();
                 const int result_count = 12;
-                int cmp_func(ComicItemData x, ComicItemData y) => x.LastVisit > y.LastVisit ? 1 : -1;
-                Utils.MinHeap<ComicItemData> min_heap = new Utils.MinHeap<ComicItemData>(result_count, cmp_func);
+                int cmp_func(ComicExtraItemData x, ComicExtraItemData y) => x.LastVisit > y.LastVisit ? 1 : -1;
+                Utils.MinHeap<ComicExtraItemData> min_heap = new Utils.MinHeap<ComicExtraItemData>(result_count, cmp_func);
+                await DatabaseManager.WaitLock();
 
-                foreach (ComicItemData comic in Database.Comic.Items)
+                foreach (ComicExtraItemData comic in Database.ComicExtra.Items)
                 {
-                    if (comic.Hidden)
-                    {
-                        continue;
-                    }
-
                     min_heap.Add(comic);
                 }
 
-                DatabaseManager.ReleaseLock();
-                List<ComicItemData> sorted = min_heap.ToList();
-                sorted = sorted.OrderBy((ComicItemData x) => x.LastVisit).Reverse().ToList();
-
-                // add to comic item source
+                IEnumerable<ComicExtraItemData> sorted = min_heap.OrderBy((ComicExtraItemData x) => x.LastVisit).Reverse();
                 Utils.ObservableCollectionPlus<ComicItemModel> comic_items = new Utils.ObservableCollectionPlus<ComicItemModel>();
 
-                foreach (ComicItemData comic in sorted)
+                foreach (ComicExtraItemData extra in sorted)
                 {
+                    ComicItemData comic = ComicDataManager.FromIdNoLock(extra.Id);
+                    if (comic == null) continue;
+                    if (comic.Hidden) continue;
+                    comic.SetExtraData(extra);
+
                     ComicItemModel data = new ComicItemModel
                     {
                         OnItemPressed = GridPointerPressed,
@@ -189,24 +184,35 @@ namespace ComicReader.Views
                         Comic = comic,
                         Title = comic.Title,
                         Id = comic.Id,
-                        IsFavorite = await FavoriteDataManager.FromId(comic.Id) != null
+                        IsFavorite = FavoriteDataManager.FromIdNoLock(comic.Id) != null,
+                        Rating = extra.Rating,
+                        Progress = extra.Progress >= 100 ? "Finished" : extra.Progress.ToString() + "%"
                     };
-
-                    ComicExtraItemData comic_record = await ComicExtraDataManager.FromId(comic.Id);
-
-                    if (comic_record != null)
-                    {
-                        data.Rating = comic_record.Rating;
-                        data.Progress = comic_record.Progress >= 100 ? "Finished" : comic_record.Progress.ToString() + "%";
-                    }
-                    else
-                    {
-                        data.Progress = "Unread";
-                    }
 
                     comic_items.Add(data);
                 }
 
+                for (int i = 0; i < Database.Comic.Items.Count && comic_items.Count < result_count; ++i)
+                {
+                    ComicItemData comic = Database.Comic.Items[i];
+                    if (comic.Hidden) continue;
+                    if (comic.GetExtraDataNoLock(lazy: true) != null) continue;
+
+                    ComicItemModel data = new ComicItemModel
+                    {
+                        OnItemPressed = GridPointerPressed,
+                        OnHideClicked = HideClick,
+                        Comic = comic,
+                        Title = comic.Title,
+                        Id = comic.Id,
+                        IsFavorite = FavoriteDataManager.FromIdNoLock(comic.Id) != null,
+                        Progress = "Unread"
+                    };
+
+                    comic_items.Add(data);
+                }
+
+                DatabaseManager.ReleaseLock();
                 Shared.ComicItemSource = comic_items;
 
                 // load images

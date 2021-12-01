@@ -20,7 +20,9 @@ namespace ComicReader.Data
     public class AppSettingData : AppData
     {
         public List<string> ComicFolders = new List<string>();
+        [XmlAttribute]
         public bool RightToLeft = false;
+        [XmlAttribute]
         public bool SaveHistory = true;
 
         // serialization

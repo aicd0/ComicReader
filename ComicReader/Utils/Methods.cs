@@ -36,10 +36,7 @@ namespace ComicReader.Utils
 
         public static async Task<StorageFolder> TryGetFolder(string path)
         {
-            if (path.Length == 0)
-            {
-                throw new Exception();
-            }
+            System.Diagnostics.Debug.Assert(path.Length != 0);
 
             string token_form = StringUtils.TokenFromPath(path);
             List<string> useless_tokens = new List<string>();

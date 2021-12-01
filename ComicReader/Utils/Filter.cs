@@ -22,15 +22,15 @@ namespace ComicReader.Utils.Search
 
             if (unique_string == "<~hidden>")
             {
-                return "All in your library";
+                return "All collections";
             }
             else if (unique_string == "<hidden>")
             {
-                return "All hidden items";
+                return "Hidden collections";
             }
             else if (m_subfilters.Count == 2 && m_subfilters[0] is SubFilterDirectory && m_subfilters[1].UniqueString == "~hidden")
             {
-                return "All items in " + (m_subfilters[0] as SubFilterDirectory).Directory;
+                return "All collections in " + (m_subfilters[0] as SubFilterDirectory).Directory;
             }
 
             return "";

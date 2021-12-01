@@ -35,19 +35,28 @@ namespace ComicReader.Views
             }
         }
 
-        public bool SearchResultEmpty => SearchResults.Count == 0;
+        public bool IsLoading;
+
+        public bool IsResultEmpty => SearchResults.Count == 0;
+
+        public void UpdateUI()
+        {
+            IsLoadingRingVisible = IsLoading;
+            IsResultGridVisible = !IsLoading && !IsResultEmpty;
+            IsNoResultTextVisible = !IsLoading && IsResultEmpty;
+        }
 
         // UI elements
-        private bool m_Loading;
-        public bool Loading
+        public Utils.ObservableCollectionPlus<ComicItemModel> SearchResults;
+
+        private bool m_IsLoadingRingVisible;
+        public bool IsLoadingRingVisible
         {
-            get => m_Loading;
+            get => m_IsLoadingRingVisible;
             set
             {
-                m_Loading = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Loading"));
-                SearchResultGridVisible = !Loading && !SearchResultEmpty;
-                NoResultPromptVisible = !Loading && SearchResultEmpty;
+                m_IsLoadingRingVisible = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsLoadingRingVisible"));
             }
         }
 
@@ -75,38 +84,36 @@ namespace ComicReader.Views
         }
         public bool FilterDetailsVisible => FilterDetails.Length > 0;
 
-        public Utils.ObservableCollectionPlus<ComicItemModel> SearchResults;
-
-        private bool m_SearchResultGridVisible;
-        public bool SearchResultGridVisible
+        private bool m_IsResultGridVisible;
+        public bool IsResultGridVisible
         {
-            get => m_SearchResultGridVisible;
+            get => m_IsResultGridVisible;
             set
             {
-                m_SearchResultGridVisible = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("SearchResultGridVisible"));
+                m_IsResultGridVisible = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsResultGridVisible"));
             }
         }
 
-        private string m_NoResultPrompt;
-        public string NoResultPrompt
+        private string m_NoResultText;
+        public string NoResultText
         {
-            get => m_NoResultPrompt;
+            get => m_NoResultText;
             set
             {
-                m_NoResultPrompt = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("NoResultPrompt"));
+                m_NoResultText = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("NoResultText"));
             }
         }
 
-        private bool m_NoResultPromptVisible;
-        public bool NoResultPromptVisible
+        private bool m_IsNoResultTextVisible;
+        public bool IsNoResultTextVisible
         {
-            get => m_NoResultPromptVisible;
+            get => m_IsNoResultTextVisible;
             set
             {
-                m_NoResultPromptVisible = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("NoResultPromptVisible"));
+                m_IsNoResultTextVisible = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsNoResultTextVisible"));
             }
         }
     }
@@ -223,20 +230,22 @@ namespace ComicReader.Views
             m_tab_manager.TabId.Tab.IconSource = new muxc.SymbolIconSource() { Symbol = Symbol.Find };
 
             // start searching
-            Shared.Loading = true;
+            Shared.IsLoading = true;
+            Shared.UpdateUI();
 
             if (!await SearchMain(keywords, filter))
             {
                 return;
             }
 
+            Shared.IsLoading = false;
+
             // update UI
             Shared.Title = title_text;
             Shared.FilterDetails = filter_details;
-            Shared.NoResultPrompt = "No results for \"" + keyword + "\"";
+            Shared.NoResultText = "No results for \"" + keyword + "\"";
             Shared.SearchResults.Clear();
             await LoadMoreResults(40);
-            Shared.Loading = false;
         }
 
         private class Match
@@ -349,19 +358,12 @@ namespace ComicReader.Views
                         IsFavorite = await FavoriteDataManager.FromId(comic.Id) != null
                     };
 
-                    ComicExtraItemData comic_record = await ComicExtraDataManager.FromId(comic.Id);
+                    ComicExtraItemData extra_data = await comic.GetExtraData();
                     
-                    if (comic_record != null)
+                    if (extra_data != null)
                     {
-                        result.Rating = comic_record.Rating;
-                        if (comic_record.Progress >= 100)
-                        {
-                            result.Progress = "Finished";
-                        }
-                        else
-                        {
-                            result.Progress = comic_record.Progress.ToString() + "% Completed";
-                        }
+                        result.Rating = extra_data.Rating;
+                        result.Progress = extra_data.Progress >= 100 ? "Finished" : extra_data.Progress.ToString() + "% Completed";
                     }
 
                     results_tmp.Add(result);
@@ -372,6 +374,8 @@ namespace ComicReader.Views
                 {
                     Shared.SearchResults.Add(result);
                 }
+
+                Shared.UpdateUI();
 
                 // load images
                 double image_height = (double)Application.Current.Resources["ComicItemHorizontalImageHeight"];
@@ -391,13 +395,11 @@ namespace ComicReader.Views
                     });
                 }
 
-                await Task.Run(delegate
-                {
-                    ComicDataManager.LoadImages(image_loader_tokens, double.PositiveInfinity, image_height, m_search_lock).Wait();
-                });
+                await ComicDataManager.LoadImages(image_loader_tokens, double.PositiveInfinity, image_height, m_search_lock);
             }
             finally
             {
+                Shared.UpdateUI();
                 m_search_lock.Release();
             }
         }

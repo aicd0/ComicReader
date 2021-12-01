@@ -27,6 +27,13 @@ namespace ComicReader.Utils
             _ = Interlocked.Decrement(ref m_cancellation_requests);
         }
 
+        public async Task WaitAsync(int milliseconds_timeout)
+        {
+            _ = Interlocked.Increment(ref m_cancellation_requests);
+            await m_semaphore.WaitAsync(milliseconds_timeout);
+            _ = Interlocked.Decrement(ref m_cancellation_requests);
+        }
+
         public void Release()
         {
             _ = m_semaphore.Release();

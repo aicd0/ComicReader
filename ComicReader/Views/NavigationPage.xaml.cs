@@ -70,27 +70,18 @@ namespace ComicReader.Views
             }
         }
 
-        private bool m_TwoPagesMode;
-        public bool TwoPagesMode
+        private bool? m_IsPreviewModeEnabled = null;
+        public bool IsPreviewModeEnabled
         {
-            get => m_TwoPagesMode;
+            get => m_IsPreviewModeEnabled != null && m_IsPreviewModeEnabled.Value;
             set
             {
-                m_TwoPagesMode = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("TwoPagesMode"));
-                OnTwoPagesModeChanged?.Invoke();
-            }
-        }
-
-        private bool m_PreviewMode;
-        public bool PreviewMode
-        {
-            get => m_PreviewMode;
-            set
-            {
-                m_PreviewMode = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("PreviewMode"));
-                OnGridViewModeChanged?.Invoke();
+                if (m_IsPreviewModeEnabled == null || m_IsPreviewModeEnabled.Value != value)
+                {
+                    m_IsPreviewModeEnabled = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsPreviewModeEnabled"));
+                    OnPreviewModeChanged?.Invoke();
+                }
             }
         }
 
@@ -150,8 +141,9 @@ namespace ComicReader.Views
         public Action OnSwitchFavorites;
         public Action OnZoomIn;
         public Action OnZoomOut;
-        public Action OnTwoPagesModeChanged;
-        public Action OnGridViewModeChanged;
+        public Action OnSwitchReaderOrientation;
+        public Action OnPreviewModeChanged;
+        public Action OnExpandComicInfoPane;
     }
 
     public sealed partial class NavigationPage : Page
@@ -313,7 +305,7 @@ namespace ComicReader.Views
 
         private void ComicInfoClick(object sender, RoutedEventArgs e)
         {
-            ReaderPage.Current.ExpandInfoPane();
+            Shared.OnExpandComicInfoPane?.Invoke();
         }
 
         private void SidePaneOpened(SplitView sender, object args)
@@ -330,6 +322,11 @@ namespace ComicReader.Views
                     await HistoryPage.Current.Update();
                 }
             });
+        }
+
+        private void OnSwitchReaderOrientationClicked(object sender, RoutedEventArgs e)
+        {
+            Shared.OnSwitchReaderOrientation?.Invoke();
         }
     }
 }

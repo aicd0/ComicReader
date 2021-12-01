@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -32,16 +33,48 @@ namespace ComicReader.Data
             }
         }
 
-        public override void Pack() { }
+        public override void Pack()
+        {
+            foreach (ComicExtraItemData i in Items)
+            {
+                i.Pack();
+            }
+        }
 
-        public override void Unpack() { }
+        public override void Unpack()
+        {
+            foreach (ComicExtraItemData i in Items)
+            {
+                i.Unpack();
+            }
+        }
     }
 
     public class ComicExtraItemData
     {
+        [XmlAttribute]
         public string Id = "";
+        [XmlAttribute]
         public int Rating = -1;
+        [XmlAttribute]
         public int Progress = 0;
+        [XmlIgnore]
+        public DateTimeOffset LastVisit = DateTimeOffset.MinValue;
+        [XmlAttribute]
+        public string LastVisitPack;
+        [XmlAttribute]
+        public double LastPosition = 0.0;
+        public List<double> ImageAspectRatios = new List<double>();
+
+        public void Pack()
+        {
+            LastVisitPack = LastVisit.ToString(CultureInfo.InvariantCulture);
+        }
+
+        public void Unpack()
+        {
+            LastVisit = DateTimeOffset.Parse(LastVisitPack, CultureInfo.InvariantCulture);
+        }
     }
 
     class ComicExtraDataManager
@@ -78,7 +111,7 @@ namespace ComicReader.Data
             }
         }
 
-        private static ComicExtraItemData FromIdNoLock(string id, bool create_if_not_exists)
+        public static ComicExtraItemData FromIdNoLock(string id, bool create_if_not_exists = false)
         {
             if (id.Length == 0)
             {

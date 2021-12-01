@@ -3,16 +3,16 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:controls="using:ComicReader.Controls"
              mc:Ignorable="d"
              d:DesignHeight="300"
              d:DesignWidth="400">
 
-    <Grid Loaded="OnFrameLoaded"
-          DataContextChanged="OnFrameDataContextChanged">
-        <Image Source="{x:Bind Ctx.Image, Mode=OneWay}"
-               Width="{x:Bind Ctx.ImageWidth}"
-               Height="{x:Bind Ctx.ImageHeight}"
-               Margin="{x:Bind Ctx.Margin}" />
+    <Grid DataContextChanged="OnFrameDataContextChanged">
+        <Grid Width="{x:Bind Ctx.ImageWidth, Mode=OneWay}"
+              Height="{x:Bind Ctx.ImageHeight, Mode=OneWay}"
+              Margin="{x:Bind Ctx.Margin}">
+            <Image Source="{x:Bind Ctx.ImageSource, Mode=OneWay}"
+                   Visibility="{x:Bind Ctx.IsImageVisible, Mode=OneWay}" />
+        </Grid>
     </Grid>
 </UserControl>

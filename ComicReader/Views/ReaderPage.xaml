@@ -22,7 +22,7 @@
             </ResourceDictionary.MergedDictionaries>
 
             <!-- Overwrite the scroll viewer style to enable PointerWheelChanged event. -->
-            <Style x:Key="TwoPagesScrollViewerStyle"
+            <Style x:Key="HorizontalReaderScrollViewerStyle"
                    TargetType="ScrollViewer">
                 <Setter Property="Template">
                     <Setter.Value>
@@ -31,7 +31,7 @@
                                     BorderBrush="{TemplateBinding BorderBrush}"
                                     BorderThickness="{TemplateBinding BorderThickness}"
                                     CornerRadius="{TemplateBinding CornerRadius}"
-                                    PointerWheelChanged="OnTwoPagesScrollViewerPointerWheelChanged">
+                                    PointerWheelChanged="OnHorizontalReaderScrollViewerPointerWheelChanged">
                                 <VisualStateManager.VisualStateGroups>
                                     <VisualStateGroup x:Name="ScrollingIndicatorStates">
                                         <VisualStateGroup.Transitions>
@@ -411,19 +411,19 @@
                 <Grid Tapped="OnReaderTapped">
                     <Grid x:Name="ManipulationReference" />
 
-                    <!-- one-page -->
-                    <ScrollViewer x:Name="OnePageVerticalScrollViewer"
-                                  ViewChanged="OnOnePageScrollViewerViewChanged"
-                                  SizeChanged="OnOnePageScrollViewerSizeChanged"
-                                  Visibility="{x:Bind Shared.IsOnePageReaderVisible, Mode=OneWay}"
+                    <!-- vertical -->
+                    <ScrollViewer x:Name="VerticalReaderScrollViewer"
+                                  ViewChanged="OnVerticalReaderScrollViewerViewChanged"
+                                  SizeChanged="OnVerticalReaderScrollViewerSizeChanged"
+                                  Visibility="{x:Bind Shared.IsVerticalReaderVisible, Mode=OneWay}"
                                   HorizontalScrollMode="Enabled"
                                   HorizontalScrollBarVisibility="Auto"
-                                  Loaded="OnOnePageScrollViewerLoaded"
+                                  Loaded="OnVerticalReaderScrollViewerLoaded"
                                   ZoomMode="Enabled">
                         <Grid HorizontalAlignment="Center">
-                            <ListView x:Name="OnePageImageListView"
-                                      ItemsSource="{x:Bind OnePageReader.ImageSource, Mode=OneWay}"
-                                      Loaded="OnOnePageListViewLoaded"
+                            <ListView x:Name="VerticalReaderListView"
+                                      ItemsSource="{x:Bind VerticalReader.DataSource, Mode=OneWay}"
+                                      Loaded="OnVerticalReaderListViewLoaded"
                                       SelectionMode="None"
                                       ScrollViewer.VerticalScrollBarVisibility="Disabled"
                                       ScrollViewer.HorizontalScrollBarVisibility="Disabled">
@@ -440,19 +440,19 @@
                                 </ListView.ItemContainerStyle>
                             </ListView>
                             <Grid Background="Transparent"
-                                  PointerPressed="OnScrollViewerPointerPressed"
-                                  PointerMoved="OnScrollViewerPointerMoved"
-                                  PointerReleased="OnScrollViewerPointerReleased" />
+                                  PointerPressed="OnReaderScrollViewerPointerPressed"
+                                  PointerMoved="OnReaderScrollViewerPointerMoved"
+                                  PointerReleased="OnReaderScrollViewerPointerReleased" />
                         </Grid>
                     </ScrollViewer>
 
-                    <!-- two-pages -->
-                    <ScrollViewer Style="{StaticResource TwoPagesScrollViewerStyle}"
-                                  x:Name="TwoPagesHorizontalScrollViewer"
-                                  ViewChanged="OnTwoPagesScrollViewerViewChanged"
-                                  SizeChanged="OnTwoPagesScrollViewerSizeChanged"
-                                  Visibility="{x:Bind Shared.IsTwoPagesReaderVisible, Mode=OneWay}"
-                                  Loaded="OnTwoPagesScrollViewerLoaded"
+                    <!-- horizontal -->
+                    <ScrollViewer Style="{StaticResource HorizontalReaderScrollViewerStyle}"
+                                  x:Name="HorizontalReaderScrollViewer"
+                                  ViewChanged="OnHorizontalReaderScrollViewerViewChanged"
+                                  SizeChanged="OnHorizontalReaderScrollViewerSizeChanged"
+                                  Visibility="{x:Bind Shared.IsHorizontalReaderVisible, Mode=OneWay}"
+                                  Loaded="OnHorizontalReaderScrollViewerLoaded"
                                   ZoomMode="Enabled"
                                   HorizontalScrollBarVisibility="Auto"
                                   HorizontalScrollMode="Enabled"
@@ -460,9 +460,9 @@
                                   VerticalScrollMode="Disabled"
                                   FlowDirection="{x:Bind Shared.ReaderFlowDirection, Mode=OneWay}">
                         <Grid VerticalAlignment="Center">
-                            <ListView x:Name="TwoPagesImageListView"
-                                      ItemsSource="{x:Bind TwoPagesReader.ImageSource, Mode=OneWay}"
-                                      Loaded="OnTwoPagesListViewLoaded"
+                            <ListView x:Name="HorizontalReaderListView"
+                                      ItemsSource="{x:Bind HorizontalReader.DataSource, Mode=OneWay}"
+                                      Loaded="OnHorizontalReaderListViewLoaded"
                                       SelectionMode="None"
                                       ScrollViewer.VerticalScrollBarVisibility="Disabled"
                                       ScrollViewer.HorizontalScrollBarVisibility="Disabled">
@@ -484,16 +484,16 @@
                                 </ListView.ItemContainerStyle>
                             </ListView>
                             <Grid Background="Transparent"
-                                  PointerPressed="OnScrollViewerPointerPressed"
-                                  PointerMoved="OnScrollViewerPointerMoved"
-                                  PointerReleased="OnScrollViewerPointerReleased" />
+                                  PointerPressed="OnReaderScrollViewerPointerPressed"
+                                  PointerMoved="OnReaderScrollViewerPointerMoved"
+                                  PointerReleased="OnReaderScrollViewerPointerReleased" />
                         </Grid>
                     </ScrollViewer>
                 </Grid>
 
                 <!-- preview -->
                 <ScrollViewer Visibility="{x:Bind Shared.IsGridViewVisible, Mode=OneWay}">
-                    <GridView ItemsSource="{x:Bind GridViewDataSource, Mode=OneWay}"
+                    <GridView ItemsSource="{x:Bind PreviewDataSource, Mode=OneWay}"
                               Padding="10"
                               HorizontalAlignment="Center"
                               VerticalAlignment="Center"
@@ -547,7 +547,7 @@
                                     Spacing="5">
                             <Grid Width="5" />
                             <ToggleButton Style="{StaticResource ReaderBottomTileToggleButtonStyle}"
-                                          IsChecked="{x:Bind Shared.BottomGridPinned, Mode=TwoWay}"
+                                          IsChecked="{x:Bind Shared.BottomTilePinned, Mode=TwoWay}"
                                           ToolTipService.ToolTip="{x:Bind Shared.PinButtonToolTip, Mode=OneWay}">
                                 <FontIcon Glyph="&#xE840;"
                                           FontSize="20" />
@@ -583,14 +583,14 @@
                                 <FontIcon Glyph="&#xE71F;"
                                           FontSize="20" />
                             </Button>
-                            <ToggleButton Style="{StaticResource ReaderBottomTileToggleButtonStyle}"
-                                          IsChecked="{x:Bind Shared.NavigationPageShared.TwoPagesMode, Mode=TwoWay}"
+                            <Button Style="{StaticResource ReaderBottomTileButtonStyle}"
+                                          Click="OnSwitchReaderOrientationClicked"
                                           ToolTipService.ToolTip="Two pages">
-                                <FontIcon Glyph="&#xE89A;"
+                                <FontIcon Glyph="&#xE8B4;"
                                           FontSize="20" />
-                            </ToggleButton>
+                            </Button>
                             <ToggleButton Style="{StaticResource ReaderBottomTileToggleButtonStyle}"
-                                          IsChecked="{x:Bind Shared.NavigationPageShared.PreviewMode, Mode=TwoWay}"
+                                          IsChecked="{x:Bind Shared.NavigationPageShared.IsPreviewModeEnabled, Mode=TwoWay}"
                                           ToolTipService.ToolTip="Preview">
                                 <FontIcon Glyph="&#xF0E2;"
                                           FontSize="20" />

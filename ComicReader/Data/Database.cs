@@ -1,4 +1,6 @@
-﻿using System;
+﻿//#define DEBUG_LOG_SAVE
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -65,6 +67,10 @@ namespace ComicReader.Data
 
         private static async RawTask Save(DatabaseItem item)
         {
+#if DEBUG_LOG_SAVE
+            System.Diagnostics.Debug.Print("Saving: " + item.ToString() + "\n");
+#endif
+
             switch (item)
             {
                 case DatabaseItem.Comic:
@@ -133,6 +139,10 @@ namespace ComicReader.Data
 
             IRandomAccessStream stream = await (file as StorageFile).OpenAsync(FileAccessMode.Read);
             XmlSerializer serializer = new XmlSerializer(obj.GetType());
+            serializer.UnknownAttribute += (object x, XmlAttributeEventArgs y) => throw new Exception();
+            serializer.UnknownElement += (object x, XmlElementEventArgs y) => throw new Exception();
+            serializer.UnknownNode += (object x, XmlNodeEventArgs y) => throw new Exception();
+            serializer.UnreferencedObject += (object x, UnreferencedObjectEventArgs y) => throw new Exception();
 
             try
             {

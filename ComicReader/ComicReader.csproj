@@ -147,6 +147,7 @@
     <Compile Include="Data\FavoriteData.cs" />
     <Compile Include="Data\HistoryData.cs" />
     <Compile Include="Data\ComicExtraData.cs" />
+    <Compile Include="Utils\Stopwatch.cs" />
     <Compile Include="Utils\TabManager.cs" />
     <Compile Include="Data\ViewModels.cs" />
     <Compile Include="Data\Database.cs" />

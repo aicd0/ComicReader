@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Threading.Tasks;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
@@ -124,13 +125,39 @@ namespace ComicReader.Data
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private BitmapImage m_Image = null;
-        public BitmapImage Image {
-            get => m_Image;
+        private BitmapImage m_ImageSource = null;
+        public BitmapImage ImageSource
+        {
+            get => m_ImageSource;
             set
             {
-                m_Image = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Image"));
+                m_ImageSource = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ImageSource"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsImageVisible"));
+            }
+        }
+
+        public bool IsImageVisible => ImageSource != null;
+
+        private double m_ImageWidth = 0.0;
+        public double ImageWidth
+        {
+            get => m_ImageWidth;
+            set
+            {
+                m_ImageWidth = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ImageWidth"));
+            }
+        }
+
+        private double m_ImageHeight = 0.0;
+        public double ImageHeight
+        {
+            get => m_ImageHeight;
+            set
+            {
+                m_ImageHeight = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ImageHeight"));
             }
         }
 
@@ -139,8 +166,6 @@ namespace ComicReader.Data
         public bool BottomPadding { get; set; } = false;
         public bool LeftPadding { get; set; } = false;
         public bool RightPadding { get; set; } = false;
-        public double ImageWidth { get; set; } = -1;
-        public double ImageHeight { get; set; } = -1;
 
         private Thickness? m_Margin = null;
         public Thickness Margin
@@ -163,7 +188,7 @@ namespace ComicReader.Data
         public double Width => Container.ActualWidth;
         public double Height => Container.ActualHeight;
         public Grid Container = null;
-        public Action<ReaderFrameModel> OnContainerLoaded;
+        public Func<ReaderFrameModel, Task> OnContainerLoadedAsync;
     };
 
     public class TagsModel

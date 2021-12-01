@@ -30,7 +30,7 @@
               VerticalAlignment="Top"
               Background="{ThemeResource TabViewItemHeaderBackgroundSelected}"
               Visibility="{x:Bind Shared.MainPageShared.IsFullscreen, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}">
-              
+
             <StackPanel Orientation="Vertical">
                 <Grid>
 
@@ -98,19 +98,19 @@
                             </AppBarButton.Content>
                         </AppBarButton>
 
-                        <!-- two-pages toggle -->
-                        <AppBarToggleButton Style="{StaticResource NavigationPageTopTileAppBarToggleButton}"
-                                            IsChecked="{x:Bind Shared.TwoPagesMode, Mode=TwoWay}"
-                                            ToolTipService.ToolTip="Two pages">
-                            <AppBarToggleButton.Content>
-                                <FontIcon Glyph="&#xE89A;" />
-                            </AppBarToggleButton.Content>
-                        </AppBarToggleButton>
+                        <!-- reader orientation toggle -->
+                        <AppBarButton Style="{StaticResource NavigationPageTopTileAppBarButton}"
+                                      Click="OnSwitchReaderOrientationClicked"
+                                      ToolTipService.ToolTip="Two pages">
+                            <AppBarButton.Content>
+                                <FontIcon Glyph="&#xE8B4;" />
+                            </AppBarButton.Content>
+                        </AppBarButton>
 
                         <!-- preview toggle -->
                         <AppBarToggleButton Style="{StaticResource NavigationPageTopTileAppBarToggleButton}"
                                             ToolTipService.ToolTip="Preview"
-                                            IsChecked="{x:Bind Shared.PreviewMode, Mode=TwoWay}">
+                                            IsChecked="{x:Bind Shared.IsPreviewModeEnabled, Mode=TwoWay}">
                             <AppBarToggleButton.Content>
                                 <FontIcon Glyph="&#xF0E2;" />
                             </AppBarToggleButton.Content>
@@ -124,7 +124,7 @@
                             <AppBarButton.Content>
                                 <Grid>
                                     <FontIcon Glyph="&#xE734;"
-                                              Visibility="{x:Bind Shared.IsFavorite, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}"/>
+                                              Visibility="{x:Bind Shared.IsFavorite, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
                                     <FontIcon Glyph="&#xE735;"
                                               Visibility="{x:Bind Shared.IsFavorite, Mode=OneWay}"
                                               Foreground="DeepSkyBlue" />

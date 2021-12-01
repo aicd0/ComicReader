@@ -63,7 +63,7 @@ namespace ComicReader.Data
             }
         }
 
-        private static FavoriteNodeData FromIdNoLock(string id)
+        public static FavoriteNodeData FromIdNoLock(string id)
         {
             FavoriteNodeData helper(List<FavoriteNodeData> e)
             {

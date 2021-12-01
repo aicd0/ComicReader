@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
-using Windows.Globalization;
 using Windows.Storage;
 using Windows.Storage.Streams;
 
@@ -57,18 +57,18 @@ namespace ComicReader.Data
         [XmlAttribute]
         public string Title;
         [XmlIgnore]
-        public DateTimeOffset DateTime;
+        public DateTimeOffset DateTime = DateTimeOffset.MinValue;
         [XmlAttribute]
         public string DateTimePack;
 
         public void Pack()
         {
-            DateTimePack = DateTime.ToString();
+            DateTimePack = DateTime.ToString(CultureInfo.InvariantCulture);
         }
 
         public void Unpack()
         {
-            DateTime = DateTimeOffset.Parse(DateTimePack);
+            DateTime = DateTimeOffset.Parse(DateTimePack, CultureInfo.InvariantCulture);
         }
     }
 
@@ -84,13 +84,12 @@ namespace ComicReader.Data
                     return;
                 }
 
-                Calendar calendar = new Calendar();
-                var datetime = calendar.GetDateTime();
-
-                HistoryItemData record = new HistoryItemData();
-                record.Id = id;
-                record.DateTime = datetime;
-                record.Title = title;
+                HistoryItemData record = new HistoryItemData
+                {
+                    Id = id,
+                    DateTime = DateTimeOffset.Now,
+                    Title = title
+                };
 
                 RemoveNoLock(id);
                 Database.History.Items.Insert(0, record);

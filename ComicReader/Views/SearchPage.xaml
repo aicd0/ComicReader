@@ -132,12 +132,12 @@
         <muxc:ProgressRing x:Name="SearchProgressRing"
                            VerticalAlignment="Center"
                            HorizontalAlignment="Center"
-                           Visibility="{x:Bind Shared.Loading, Mode=OneWay}"
+                           Visibility="{x:Bind Shared.IsLoadingRingVisible, Mode=OneWay}"
                            IsIndeterminate="True" />
 
         <!-- search results -->
         <ScrollViewer ViewChanged="ScrollViewer_ViewChanged"
-                      Visibility="{x:Bind Shared.SearchResultGridVisible, Mode=OneWay}">
+                      Visibility="{x:Bind Shared.IsResultGridVisible, Mode=OneWay}">
             <StackPanel Orientation="Vertical"
                         Margin="15,0,15,0"
                         HorizontalAlignment="Center">
@@ -173,8 +173,8 @@
         <StackPanel Orientation="Vertical"
                     VerticalAlignment="Center"
                     HorizontalAlignment="Center"
-                    Visibility="{x:Bind Shared.NoResultPromptVisible, Mode=OneWay}">
-            <TextBlock Text="{x:Bind Shared.NoResultPrompt, Mode=OneWay}"
+                    Visibility="{x:Bind Shared.IsNoResultTextVisible, Mode=OneWay}">
+            <TextBlock Text="{x:Bind Shared.NoResultText, Mode=OneWay}"
                        FontSize="28"
                        FontWeight="SemiBold"
                        HorizontalAlignment="Center" />

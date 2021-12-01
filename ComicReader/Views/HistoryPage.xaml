@@ -34,7 +34,7 @@
             </ListView.ItemsPanel>
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="data:HistoryItemModel">
-                    <Grid Padding="16,0,4,0">
+                    <Grid Padding="12,0,4,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
@@ -46,7 +46,7 @@
                                   Margin="0" />
                         <StackPanel Orientation="Vertical"
                                     Grid.Column="1"
-                                    Margin="4,2,0,4">
+                                    Margin="6,4,0,6">
                             <StackPanel.ContextFlyout>
                                 <MenuFlyout>
                                     <MenuFlyoutItem Text="Open in new tab"
@@ -64,7 +64,7 @@
                             <TextBlock Text="{x:Bind Time}"
                                        FontSize="13"
                                        Foreground="#999999"
-                                       Margin="0,-3,0,0"/>
+                                       Margin="0,-2,0,0"/>
                         </StackPanel>
                     </Grid>
                 </DataTemplate>
@@ -74,7 +74,7 @@
                     <GroupStyle.HeaderTemplate>
                         <DataTemplate x:DataType="data:HistoryItemGroupModel">
                             <Grid Background="Transparent"
-                                  Margin="0,18,0,1">
+                                  Margin="0,14,0,2">
                                 <TextBlock Text="{x:Bind Key}"
                                            FontSize="15"
                                            FontWeight="Bold"
