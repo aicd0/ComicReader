@@ -24,7 +24,21 @@ namespace ComicReader.Controls
         public ComicItemVertical()
         {
             InitializeComponent();
-            DataContextChanged += (s, e) => Bindings.Update();
+        }
+
+        private void OnDataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
+        {
+            Bindings.Update();
+        }
+
+        private void OnPointerEntered(object sender, PointerRoutedEventArgs e)
+        {
+            VisualStateManager.GoToState(this, "PointerOver", true);
+        }
+
+        private void OnPointerExited(object sender, PointerRoutedEventArgs e)
+        {
+            VisualStateManager.GoToState(this, "Normal", true);
         }
     }
 }

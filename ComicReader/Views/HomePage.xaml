@@ -29,17 +29,17 @@
                         Value="6" />
                 <Setter Property="mtuu:Effects.Shadow"
                         Value="{StaticResource CommonShadow}" />
-                <Setter Property="Background"
-                        Value="{StaticResource ComicItemBackground}" />
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="GridViewItem">
                             <ListViewItemPresenter x:Name="Root"
-                                                   CheckBrush="{ThemeResource GridViewItemCheckBrush}"
-                                                   ContentMargin="{TemplateBinding Padding}"
                                                    CheckBoxBrush="{ThemeResource GridViewItemCheckBoxBrush}"
-                                                   ContentTransitions="{TemplateBinding ContentTransitions}"
+                                                   CheckBrush="{ThemeResource GridViewItemCheckBrush}"
                                                    CheckMode="{ThemeResource GridViewItemCheckMode}"
+                                                   ContentMargin="{TemplateBinding Padding}"
+                                                   ContentTransitions="{TemplateBinding ContentTransitions}"
+                                                   Control.IsTemplateFocusTarget="True"
+                                                   CornerRadius="6"
                                                    DragOpacity="{ThemeResource ListViewItemDragThemeOpacity}"
                                                    DisabledOpacity="{ThemeResource ListViewItemDisabledThemeOpacity}"
                                                    DragBackground="{ThemeResource GridViewItemDragBackground}"
@@ -48,9 +48,7 @@
                                                    FocusVisualMargin="{TemplateBinding FocusVisualMargin}"
                                                    FocusSecondaryBorderBrush="{ThemeResource GridViewItemFocusSecondaryBorderBrush}"
                                                    HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                                   Control.IsTemplateFocusTarget="True"
                                                    PressedBackground="{ThemeResource GridViewItemBackgroundPressed}"
-                                                   PointerOverBackground="{ThemeResource GridViewItemBackgroundPointerOver}"
                                                    PlaceholderBackground="{ThemeResource GridViewItemPlaceholderBackground}"
                                                    RevealBorderThickness="0"
                                                    ReorderHintOffset="{ThemeResource GridViewItemReorderHintThemeOffset}"
@@ -59,24 +57,7 @@
                                                    SelectedBackground="{ThemeResource GridViewItemBackgroundSelected}"
                                                    SelectedPressedBackground="{ThemeResource GridViewItemBackgroundSelectedPressed}"
                                                    SelectedPointerOverBackground="{ThemeResource GridViewItemBackgroundSelectedPointerOver}"
-                                                   VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
-                                                   CornerRadius="6">
-
-                                <VisualStateManager.VisualStateGroups>
-                                    <VisualStateGroup x:Name="CommonStates">
-                                        <VisualState x:Name="Normal" />
-                                        <VisualState x:Name="Selected" />
-                                        <VisualState x:Name="PointerOver" />
-                                        <VisualState x:Name="PointerOverSelected" />
-                                        <VisualState x:Name="PointerOverPressed" />
-                                        <VisualState x:Name="Pressed" />
-                                        <VisualState x:Name="PressedSelected" />
-                                    </VisualStateGroup>
-                                    <VisualStateGroup x:Name="DisabledStates">
-                                        <VisualState x:Name="Enabled" />
-                                        <VisualState x:Name="Disabled" />
-                                    </VisualStateGroup>
-                                </VisualStateManager.VisualStateGroups>
+                                                   VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}">
                             </ListViewItemPresenter>
                         </ControlTemplate>
                     </Setter.Value>
@@ -217,7 +198,7 @@
                                 VerticalAlignment="Bottom">
                         <HyperlinkButton Content="See all"
                                          Click="OnSeeAllBtClicked"
-                                         IsEnabled="{x:Bind Shared.IsLibraryEmpty, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}"/>
+                                         IsEnabled="{x:Bind Shared.IsLibraryEmpty, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}" />
                         <HyperlinkButton Content="See hiddens"
                                          Click="OnSeeHiddenBtClick"
                                          IsEnabled="{x:Bind Shared.IsLibraryEmpty, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}" />
@@ -248,7 +229,7 @@
                             Spacing="10"
                             Margin="10,0,0,0">
                     <TextBlock Text="Seems that your library is empty. Try"
-                               VerticalAlignment="Center"/>
+                               VerticalAlignment="Center" />
                     <HyperlinkButton Content="Add a folder"
                                      Click="OnTryAddFolderBtClicked" />
                     <TextBlock Text="or"

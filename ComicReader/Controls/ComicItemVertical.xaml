@@ -22,14 +22,40 @@
 
             <mtuum:AttachedCardShadow x:Key="CommonShadow"
                                       Offset="0"
-                                      Opacity="0.1"/>
+                                      Opacity="0.1" />
 
             <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <Grid PointerPressed="{x:Bind Ctx.OnItemPressed}"
-          Background="Transparent">
+    <Grid x:Name="Root"
+          Background="{ThemeResource ComicItemBackground}"
+          DataContextChanged="OnDataContextChanged"
+          PointerEntered="OnPointerEntered"
+          PointerExited="OnPointerExited"
+          PointerPressed="{x:Bind Ctx.OnItemPressed}">
+
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup x:Name="CommonStates">
+                <VisualState x:Name="Normal">
+                    <VisualState.Setters>
+                        <Setter Target="Root.Background"
+                                Value="{ThemeResource ComicItemBackground}" />
+                    </VisualState.Setters>
+                </VisualState>
+                <VisualState x:Name="PointerOver">
+                    <VisualState.Setters>
+                        <Setter Target="Root.Background"
+                                Value="{ThemeResource ComicItemBackgroundPointerOver}" />
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
+
+        <Grid.BackgroundTransition>
+            <BrushTransition Duration="0:0:0.1" />
+        </Grid.BackgroundTransition>
+
         <Grid.ContextFlyout>
             <MenuFlyout>
                 <MenuFlyoutItem Text="Hide"
