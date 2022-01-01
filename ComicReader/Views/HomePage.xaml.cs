@@ -158,10 +158,8 @@ namespace ComicReader.Views
                     " ORDER BY " + ComicData.FieldLastVisit + " DESC LIMIT " +
                     result_count.ToString();
 
-                await ComicDataManager.WaitLock();
+                await ComicDataManager.WaitLock(); // Lock on.
                 SqliteDataReader query = await command.ExecuteReaderAsync();
-                ComicDataManager.ReleaseLock();
-
                 var comic_items = new Utils.ObservableCollectionPlus<ComicItemModel>();
 
                 while (query.Read())
@@ -184,7 +182,9 @@ namespace ComicReader.Views
 
                     comic_items.Add(data);
                 }
+                ComicDataManager.ReleaseLock(); // Lock off.
 
+                // Save results.
                 Shared.ComicItemSource = comic_items;
 
                 // Load images.

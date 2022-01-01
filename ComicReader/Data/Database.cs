@@ -138,7 +138,7 @@ namespace ComicReader.Data
                 string.Join(',', field_vals) + ");" +
                 "SELECT LAST_INSERT_ROWID();";
 
-            await ComicDataManager.WaitLock(); // Execution starts.
+            await ComicDataManager.WaitLock(); // Lock on.
             long rowid = (long)command.ExecuteScalar();
 
             // Copy to blobs.
@@ -153,7 +153,7 @@ namespace ComicReader.Data
                     await input_stream.CopyToAsync(write_stream);
                 }
             }
-            ComicDataManager.ReleaseLock(); // Execution ends.
+            ComicDataManager.ReleaseLock(); // Lock off.
 
             command.Dispose();
             return rowid;
@@ -180,7 +180,7 @@ namespace ComicReader.Data
                 }
             }
 
-            await ComicDataManager.WaitLock(); // Execution starts.
+            await ComicDataManager.WaitLock(); // Lock on.
             // Update basic fields.
             if (fields.Count > 0)
             {
@@ -214,8 +214,7 @@ namespace ComicReader.Data
                     }
                 }
             }
-            ComicDataManager.ReleaseLock(); // Execution ends.
-
+            ComicDataManager.ReleaseLock(); // Lock off.
             command.Dispose();
         }
 

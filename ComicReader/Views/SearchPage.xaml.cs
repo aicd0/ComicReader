@@ -266,16 +266,15 @@ namespace ComicReader.Views
                     keywords[i] = keywords[i].ToLower();
                 }
 
+                var matched = new List<Match>();
+
                 SqliteCommand command = DatabaseManager.Connection.CreateCommand();
                 command.CommandText = "SELECT " + ComicData.FieldId + "," +
                     ComicData.FieldTitle1 + "," + ComicData.FieldTitle2 + " FROM " +
                     DatabaseManager.ComicTable;
 
-                await ComicDataManager.WaitLock();
+                await ComicDataManager.WaitLock(); // Lock on.
                 SqliteDataReader query = await command.ExecuteReaderAsync();
-                ComicDataManager.ReleaseLock();
-
-                var matched = new List<Match>();
 
                 while(query.Read())
                 {
@@ -298,12 +297,14 @@ namespace ComicReader.Views
                         if (similarity < 1) continue;
                     }
 
+                    // Save results.
                     matched.Add(new Match
                     {
                         Id = query.GetInt32(0),
                         Similarity = similarity
                     });
                 }
+                ComicDataManager.ReleaseLock(); // Lock off.
 
                 // Sort by similarity.
                 matched = matched.OrderByDescending(x => x.Similarity).ToList();

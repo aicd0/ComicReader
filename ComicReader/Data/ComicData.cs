@@ -65,7 +65,7 @@ namespace ComicReader.Data
 
         // Basic fields.
         public long Id { get; private set; }
-        public string Title1 = default_title;
+        public string Title1;
         public string Title2;
         public string Directory;
         public bool Hidden = false;
@@ -92,12 +92,13 @@ namespace ComicReader.Data
         public const string FieldImageAspectRatios = "image_aspect_ratios";
 
         // Not in database.
-        private const string default_title = "Untitled Collection";
-        public string Title => Title1 + (Title2.Length == 0 ? "" : "-" + Title2);
+        public string Title => Title1.Length == 0 ?
+            (Title2.Length == 0 ? "Untitled Collection" : Title2) :
+            (Title2.Length == 0 ? Title1 : Title1 + " - " + Title2);
         public bool IsExternal = false;
         public StorageFolder Folder = null;
-        public List<StorageFile> ImageFiles = new List<StorageFile>();
         public StorageFile InfoFile = null;
+        public List<StorageFile> ImageFiles = new List<StorageFile>();
 
         // Saving.
         private async Task Save(List<Key> keys)
@@ -212,7 +213,7 @@ namespace ComicReader.Data
 
     class ComicDataManager
     {
-        private const string COMIC_INFO_FILE_NAME = "Info.txt";
+        private const string COMIC_INFO_FILE_NAME = "info.txt";
 
         private static readonly SemaphoreSlim TableLock = new SemaphoreSlim(1);
         private static readonly Utils.CancellationLock m_update_lock = new Utils.CancellationLock();
@@ -263,11 +264,16 @@ namespace ComicReader.Data
             command.Parameters.AddWithValue("@entry", entry);
 
             await WaitLock();
-            SqliteDataReader query = command.ExecuteReader();
-            ReleaseLock();
-
-            if (!query.Read()) return null;
-            return await From(query);
+            try
+            {
+                SqliteDataReader query = command.ExecuteReader();
+                if (!query.Read()) return null;
+                return await From(query);
+            }
+            finally
+            {
+                ReleaseLock();
+            }
         }
 
         public static async Task<ComicData> FromId(long id)
@@ -297,8 +303,8 @@ namespace ComicReader.Data
             SqliteCommand command = new SqliteCommand();
             command.Connection = DatabaseManager.Connection;
             command.CommandText = @"DELETE FROM " + DatabaseManager.ComicTable +
-                " WHERE " + ComicData.FieldDirectory + " LIKE @dir%";
-            command.Parameters.AddWithValue("@dir", dir);
+                " WHERE " + ComicData.FieldDirectory + " LIKE @pattern";
+            command.Parameters.AddWithValue("@pattern", dir + "%");
 
             await WaitLock();
             command.ExecuteNonQuery();
@@ -374,14 +380,14 @@ namespace ComicReader.Data
                     command.CommandText = "SELECT " + ComicData.FieldDirectory +
                         " FROM " + DatabaseManager.ComicTable;
 
-                    await WaitLock();
+                    await ComicDataManager.WaitLock(); // Lock on.
                     SqliteDataReader query = command.ExecuteReader();
-                    ReleaseLock();
 
                     while (query.Read())
                     {
                         all_dir_in_lib.Add(query.GetString(0));
                     }
+                    ComicDataManager.ReleaseLock(); // Lock off.
                 }
 
                 // get all folders added or removed.
@@ -401,7 +407,7 @@ namespace ComicReader.Data
                 // define a local method which will be used later to add or update dir.
                 async Task add_or_update_dir(string dir, bool update)
                 {
-                    // exclude folders which do not directly contain images (120s per 1k folders)
+                    // Exclude folders which do not directly contain images. (120s per 1k folders)
                     QueryOptions queryOptions = new QueryOptions
                     {
                         FolderDepth = FolderDepth.Shallow,
@@ -425,43 +431,43 @@ namespace ComicReader.Data
                         return;
                     }
 
-                    // write database.
-                    await DatabaseManager.WaitLock();
+                    // Update or create a new one.
+                    ComicData comic;
 
-                    try
+                    if (update)
                     {
-                        ComicData comic;
-
-                        if (update)
-                        {
-                            comic = await FromDirectory(dir);
-                        }
-                        else
-                        {
-                            comic = await New("", "", dir);
-                        }
-
-                        if (comic == null) return;
-
-                        comic.Folder = folder;
-
-                        if ((await UpdateInfoNoLock(comic)).ExceptionType != TaskException.Success && !update)
-                        {
-                            TagData default_tag = new TagData
-                            {
-                                Name = "Default",
-                                Tags = dir.Split("\\").ToHashSet()
-                            };
-
-                            comic.Tags.Add(default_tag);
-                        }
-
-                        await comic.SaveBasic();
+                        comic = await FromDirectory(dir);
                     }
-                    finally
+                    else
                     {
-                        DatabaseManager.ReleaseLock();
+                        comic = await New("", "", dir);
                     }
+
+                    if (comic == null)
+                    {
+                        return;
+                    }
+                    
+                    comic.Folder = folder;
+
+                    // Try load comic info locally.
+                    TaskResult r = await UpdateInfoNoLock(comic);
+
+                    if (!r.Successful && !update)
+                    {
+                        // Auto-imported properties.
+                        comic.Title1 = folder.DisplayName;
+
+                        TagData default_tag = new TagData
+                        {
+                            Name = "Default",
+                            Tags = dir.Split("\\").ToHashSet()
+                        };
+
+                        comic.Tags.Add(default_tag);
+                    }
+
+                    await comic.SaveBasic();
                 }
 
                 // generate a task queue.

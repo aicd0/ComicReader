@@ -31,9 +31,11 @@ namespace ComicReader.Utils
                 Description = desc;
             }
 
-            public TaskException ExceptionType;
-            public bool IsFatal = false;
-            public string Description;
+            public readonly TaskException ExceptionType;
+            public readonly bool IsFatal;
+            public readonly string Description;
+
+            public bool Successful => ExceptionType == TaskException.Success;
         }
 
         public class TaskQueue
