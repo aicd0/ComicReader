@@ -292,7 +292,7 @@ namespace ComicReader.Views
 
                 if (item.Type == TreeItemType.Item)
                 {
-                    ComicItemData comic = await ComicDataManager.FromId(item.Id);
+                    ComicData comic = await ComicDataManager.FromId(item.Id);
 
                     if (comic == null)
                     {
@@ -417,7 +417,7 @@ namespace ComicReader.Views
             Utils.Methods.Run(async delegate
             {
                 FavoritesItemModel item = (FavoritesItemModel)((MenuFlyoutItem)sender).DataContext;
-                ComicItemData comic = await ComicDataManager.FromId(item.Id);
+                ComicData comic = await ComicDataManager.FromId(item.Id);
                 MainPage.Current.LoadTab(null, Utils.Tab.PageType.Reader, comic);
             });
         }

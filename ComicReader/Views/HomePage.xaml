@@ -206,8 +206,8 @@
                 </Grid>
                 <Grid Height="10" />
                 <!--
-                DO NOT attach Visibility property to mtuuc:AdaptiveGridView as
-                it will result in a layout error. (Probably a bug from the API)
+                Do NOT attach Visibility property to mtuuc:AdaptiveGridView as this
+                will result in a layout error (Probably a bug from API).
                 -->
                 <mtuuc:AdaptiveGridView Style="{StaticResource HomePageAdaptiveGridViewStyle}"
                                         ItemsSource="{x:Bind Shared.ComicItemSource, Mode=OneWay}"
@@ -216,7 +216,7 @@
                                         DesiredWidth="160"
                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                         ScrollViewer.HorizontalScrollMode="Disabled"
-                                        StretchContentForSingleRow="True"
+                                        StretchContentForSingleRow="False"
                                         ItemContainerStyle="{StaticResource ComicItemContainerStyle}">
                     <mtuuc:AdaptiveGridView.ItemTemplate>
                         <DataTemplate x:DataType="data:ComicItemModel">

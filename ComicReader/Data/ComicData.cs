@@ -1,12 +1,12 @@
 ﻿//#define DEBUG_LOG_IMAGE_LOADED
 
+using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
-using System.Xml.Serialization;
 using Windows.Graphics.Display;
 using Windows.Storage;
 using Windows.Storage.Search;
@@ -19,10 +19,10 @@ namespace ComicReader.Data
     using SealedTask = Func<Task<Utils.TaskQueue.TaskResult>, Utils.TaskQueue.TaskResult>;
     using TaskResult = Utils.TaskQueue.TaskResult;
     using TaskException = Utils.TaskQueue.TaskException;
-
+    
+    [Serializable]
     public class TagData
     {
-        [XmlAttribute]
         public string Name;
         public HashSet<string> Tags = new HashSet<string>();
 
@@ -56,127 +56,124 @@ namespace ComicReader.Data
         }
     };
 
-    public class ComicData : AppData
+    public class ComicData
     {
-        public List<ComicItemData> Items = new List<ComicItemData>();
-
-        // serialization
-        public override string FileName => "Comics";
-
-        [XmlIgnore]
-        public override AppData Target
+        public ComicData(long id = -1)
         {
-            get => Database.Comic;
-            set
-            {
-                Database.Comic = value as ComicData;
-            }
+            Id = id;
         }
 
-        public override void Pack() { }
-
-        public override void Unpack() { }
-    }
-
-    public class ComicItemData
-    {
-        private const string default_title = "Untitled Collection";
-        [XmlAttribute]
-        public string m_title1 = default_title;
-        [XmlAttribute]
-        public string m_title2 = "";
-
-        [XmlAttribute]
-        public string Id = null;
-        [XmlAttribute]
-        public string ComicCollectionId = null;
-        public List<TagData> Tags = new List<TagData>();
-        [XmlAttribute]
+        // Basic fields.
+        public long Id { get; private set; }
+        public string Title1 = default_title;
+        public string Title2;
         public string Directory;
-        [XmlAttribute]
         public bool Hidden = false;
+        public int Rating = -1;
+        public int Progress = 0;
+        public DateTimeOffset LastVisit = DateTimeOffset.MinValue;
+        public double LastPosition = 0.0;
 
-        [XmlIgnore]
-        public string Title1
-        {
-            get => m_title1;
-            set { m_title1 = value.Length == 0 ? default_title : value; }
-        }
+        // Blob fields.
+        public List<TagData> Tags = new List<TagData>();
+        public List<double> ImageAspectRatios = new List<double>();
 
-        [XmlIgnore]
-        public string Title2
-        {
-            get => m_title2;
-            set { m_title2 = value; }
-        }
+        // Field names.
+        public const string FieldId = "id";
+        public const string FieldTitle1 = "title1";
+        public const string FieldTitle2 = "title2";
+        public const string FieldDirectory = "dir";
+        public const string FieldHidden = "hidden";
+        public const string FieldRating = "rating";
+        public const string FieldProgress = "progress";
+        public const string FieldLastVisit = "last_visit";
+        public const string FieldLastPosition = "last_pos";
+        public const string FieldTags = "tags";
+        public const string FieldImageAspectRatios = "image_aspect_ratios";
 
-        [XmlIgnore]
+        // Not in database.
+        private const string default_title = "Untitled Collection";
         public string Title => Title1 + (Title2.Length == 0 ? "" : "-" + Title2);
-        [XmlIgnore]
         public bool IsExternal = false;
-        [XmlIgnore]
         public StorageFolder Folder = null;
-        [XmlIgnore]
         public List<StorageFile> ImageFiles = new List<StorageFile>();
-        [XmlIgnore]
         public StorageFile InfoFile = null;
 
-        // extra data
-        [XmlIgnore]
-        private ComicExtraItemData m_extra_data = null;
-        [XmlIgnore]
-        private bool m_extra_data_set = false;
-
-        public async Task<ComicExtraItemData> GetExtraData(bool lazy = false, bool? create_if_not_exists = null)
+        // Saving.
+        private async Task Save(List<Key> keys)
         {
-            if (m_extra_data_set || lazy)
-            {
-                return m_extra_data;
-            }
+            if (Id < 0) throw new Exception();
 
-            ComicExtraItemData extra_data = create_if_not_exists == null ?
-                await ComicExtraDataManager.FromId(Id) :
-                await ComicExtraDataManager.FromId(Id, create_if_not_exists.Value);
-
-            if (extra_data != null)
-            {
-                SetExtraData(extra_data);
-            }
-
-            return m_extra_data;
+            Key id = new Key(FieldId, Id);
+            await DatabaseManager.Update(DatabaseManager.ComicTable, id, keys);
         }
 
-        public ComicExtraItemData GetExtraDataNoLock(bool lazy = false, bool? create_if_not_exists = null)
+        public async Task Save()
         {
-            if (m_extra_data_set || lazy)
+            List<Key> keys = new List<Key>
             {
-                return m_extra_data;
-            }
+                new Key(FieldTitle1, Title1),
+                new Key(FieldTitle2, Title2),
+                new Key(FieldDirectory, Directory),
+                new Key(FieldHidden, Hidden),
+                new Key(FieldRating, Rating),
+                new Key(FieldProgress, Progress),
+                new Key(FieldLastVisit, LastVisit),
+                new Key(FieldLastPosition, LastPosition),
+                new Key(FieldTags, Tags, blob: true),
+                new Key(FieldImageAspectRatios, ImageAspectRatios, blob: true),
+            };
 
-            ComicExtraItemData extra_data = create_if_not_exists == null ?
-                ComicExtraDataManager.FromIdNoLock(Id) :
-                ComicExtraDataManager.FromIdNoLock(Id, create_if_not_exists.Value);
-
-            if (extra_data != null)
+            if (Id < 0)
             {
-                SetExtraData(extra_data);
-            }
+                long rowid = await DatabaseManager.Insert(DatabaseManager.ComicTable, keys);
 
-            return m_extra_data;
+                // Retrieve ID from inserted row.
+                SqliteCommand command = DatabaseManager.Connection.CreateCommand();
+                command.CommandText = "SELECT " + FieldId + " FROM " +
+                    DatabaseManager.ComicTable + " WHERE ROWID=$rowid";
+                command.Parameters.AddWithValue("$rowid", rowid);
+
+                await ComicDataManager.WaitLock();
+                Id = (long)command.ExecuteScalar();
+                ComicDataManager.ReleaseLock();
+            }
+            else
+            {
+                await Save(keys);
+            }
         }
 
-        public void SetExtraData(ComicExtraItemData val)
+        public async Task SaveBasic()
         {
-            System.Diagnostics.Debug.Assert(val != null);
+            List<Key> keys = new List<Key>
+            {
+                new Key(FieldTitle1, Title1),
+                new Key(FieldTitle2, Title2),
+                new Key(FieldDirectory, Directory),
+                new Key(FieldHidden, Hidden),
+                new Key(FieldRating, Rating),
+                new Key(FieldProgress, Progress),
+                new Key(FieldLastVisit, LastVisit),
+                new Key(FieldLastPosition, LastPosition),
+                new Key(FieldTags, Tags, blob: true),
+            };
+            await Save(keys);
+        }
 
-            m_extra_data = val;
-            m_extra_data_set = true;
+        public async Task SaveImageAspectRatios()
+        {
+            List<Key> keys = new List<Key>
+            {
+                new Key(FieldImageAspectRatios, ImageAspectRatios, blob: true)
+            };
+            await Save(keys);
         }
     };
 
     public class ImageLoaderToken
     {
-        public ComicItemData Comic;
+        public ComicData Comic;
         public int Index;
         public Action<BitmapImage> Callback;
     }
@@ -216,112 +213,101 @@ namespace ComicReader.Data
     class ComicDataManager
     {
         private const string COMIC_INFO_FILE_NAME = "Info.txt";
-        private static Utils.CancellationLock m_update_comic_data_lock = new Utils.CancellationLock();
 
-        public static async Task<ComicItemData> FromId(string _id)
+        private static readonly SemaphoreSlim TableLock = new SemaphoreSlim(1);
+        private static readonly Utils.CancellationLock m_update_lock = new Utils.CancellationLock();
+
+        public static async Task WaitLock()
         {
-            await DatabaseManager.WaitLock();
-            try
-            {
-                return FromIdNoLock(_id);
-            }
-            finally
-            {
-                DatabaseManager.ReleaseLock();
-            }
+            await TableLock.WaitAsync();
         }
 
-        public static ComicItemData FromIdNoLock(string _id)
+        public static void ReleaseLock()
         {
-            if (_id.Length == 0)
-            {
-                return null;
-            }
-
-            foreach (ComicItemData comic in Database.Comic.Items)
-            {
-                if (comic.Id == _id)
-                {
-                    return comic;
-                }
-            }
-
-            return null;
+            TableLock.Release();
         }
 
-        public static async Task<ComicItemData> FromDirectory(string dir)
+        public static async Task<ComicData> From(SqliteDataReader query)
         {
-            await DatabaseManager.WaitLock();
-
-            try
+            ComicData comic = new ComicData(query.GetInt32(0))
             {
-                return FromDirectoryNoLock(dir);
-            }
-            finally
-            {
-                DatabaseManager.ReleaseLock();
-            }
-        }
+                Title1 = query.GetString(1),
+                Title2 = query.GetString(2),
+                Directory = query.GetString(3),
+                Hidden = query.GetBoolean(4),
+                Rating = query.GetInt32(5),
+                Progress = query.GetInt32(6),
+                LastVisit = query.GetDateTimeOffset(7),
+                LastPosition = query.GetDouble(8),
+            };
 
-        private static ComicItemData FromDirectoryNoLock(string dir)
-        {
-            string dir_lower = dir.ToLower();
+            MemoryStream stream = new MemoryStream();
 
-            foreach (ComicItemData comic in Database.Comic.Items)
-            {
-                if (comic.Directory.ToLower().Equals(dir_lower))
-                {
-                    return comic;
-                }
-            }
+            stream.Seek(0, SeekOrigin.Begin);
+            await query.GetStream(9).CopyToAsync(stream);
+            comic.Tags = (List<TagData>)Utils.Methods.DeserializeFromStream(stream);
 
-            return null;
-        }
+            stream.Seek(0, SeekOrigin.Begin);
+            await query.GetStream(10).CopyToAsync(stream);
+            comic.ImageAspectRatios = (List<double>)Utils.Methods.DeserializeFromStream(stream);
 
-        private static ComicItemData NewNoLock()
-        {
-            ComicItemData comic = new ComicItemData();
-            string id;
-
-            if (Database.Comic.Items.Count != 0)
-            {
-                id = (int.Parse(Database.Comic.Items[Database.Comic.Items.Count - 1].Id) + 1).ToString();
-            }
-            else
-            {
-                id = "0";
-            }
-
-            comic.Id = id;
-            Database.Comic.Items.Add(comic);
             return comic;
         }
 
-        private static void RemoveWithDirectoryNoLock(string dir)
+        private static async Task<ComicData> From(string col, object entry)
         {
-            dir = dir.ToLower();
+            SqliteCommand command = new SqliteCommand();
+            command.Connection = DatabaseManager.Connection;
+            command.CommandText = "SELECT * FROM " + DatabaseManager.ComicTable +
+                " WHERE " + col + "=@entry LIMIT 1";
+            command.Parameters.AddWithValue("@entry", entry);
 
-            for (int i = 0; i < Database.Comic.Items.Count; ++i)
+            await WaitLock();
+            SqliteDataReader query = command.ExecuteReader();
+            ReleaseLock();
+
+            if (!query.Read()) return null;
+            return await From(query);
+        }
+
+        public static async Task<ComicData> FromId(long id)
+        {
+            return await From(ComicData.FieldId, id);
+        }
+
+        public static async Task<ComicData> FromDirectory(string dir)
+        {
+            return await From(ComicData.FieldDirectory, dir);
+        }
+
+        private static async Task<ComicData> New(string title1, string title2, string dir)
+        {
+            ComicData comic = new ComicData
             {
-                var comic = Database.Comic.Items[i];
-                var current_dir = comic.Directory.ToLower();
+                Title1 = title1,
+                Title2 = title2,
+                Directory = dir
+            };
+            await comic.Save();
+            return comic;
+        }
 
-                if (current_dir.Length < dir.Length)
-                {
-                    continue;
-                }
+        private static async Task RemoveWithDirectory(string dir)
+        {
+            SqliteCommand command = new SqliteCommand();
+            command.Connection = DatabaseManager.Connection;
+            command.CommandText = @"DELETE FROM " + DatabaseManager.ComicTable +
+                " WHERE " + ComicData.FieldDirectory + " LIKE @dir%";
+            command.Parameters.AddWithValue("@dir", dir);
 
-                if (current_dir.Substring(0, dir.Length).Equals(dir))
-                {
-                    Database.Comic.Items.RemoveAt(i);
-                    --i;
-                }
-            }
+            await WaitLock();
+            command.ExecuteNonQuery();
+            ReleaseLock();
         }
 
         public static async RawTask Update(bool lazy_load)
         {
-            await m_update_comic_data_lock.WaitAsync();
+            await m_update_lock.WaitAsync();
 
             try
             {
@@ -363,7 +349,7 @@ namespace ComicReader.Data
                     all_folders = all_folders.Concat(folders).ToList();
 
                     // cancel this task if more requests came in
-                    if (m_update_comic_data_lock.CancellationRequested)
+                    if (m_update_lock.CancellationRequested)
                     {
                         return new TaskResult(TaskException.Cancellation);
                     }
@@ -380,12 +366,22 @@ namespace ComicReader.Data
                 }
 
                 // get all folder paths in database
-                await DatabaseManager.WaitLock();
-                List<string> all_dir_in_lib = new List<string>(Database.Comic.Items.Count);
+                List<string> all_dir_in_lib = new List<string>();
 
-                foreach (ComicItemData comic in Database.Comic.Items)
                 {
-                    all_dir_in_lib.Add(comic.Directory);
+                    SqliteCommand command = new SqliteCommand();
+                    command.Connection = DatabaseManager.Connection;
+                    command.CommandText = "SELECT " + ComicData.FieldDirectory +
+                        " FROM " + DatabaseManager.ComicTable;
+
+                    await WaitLock();
+                    SqliteDataReader query = command.ExecuteReader();
+                    ReleaseLock();
+
+                    while (query.Read())
+                    {
+                        all_dir_in_lib.Add(query.GetString(0));
+                    }
                 }
 
                 // get all folders added or removed.
@@ -399,10 +395,8 @@ namespace ComicReader.Data
                 // remove items from database.
                 foreach (var dir in dir_removed)
                 {
-                    RemoveWithDirectoryNoLock(dir);
+                    await RemoveWithDirectory(dir);
                 }
-
-                DatabaseManager.ReleaseLock();
 
                 // define a local method which will be used later to add or update dir.
                 async Task add_or_update_dir(string dir, bool update)
@@ -427,14 +421,7 @@ namespace ComicReader.Data
 
                     if (file_count == 0)
                     {
-                        if (update)
-                        {
-                            await DatabaseManager.WaitLock();
-                            ComicItemData comic = FromDirectoryNoLock(dir);
-                            Database.Comic.Items.Remove(comic);
-                            DatabaseManager.ReleaseLock();
-                        }
-
+                        if (update) await RemoveWithDirectory(dir);
                         return;
                     }
 
@@ -443,14 +430,19 @@ namespace ComicReader.Data
 
                     try
                     {
-                        ComicItemData comic = update ? FromDirectoryNoLock(dir) : NewNoLock();
+                        ComicData comic;
 
-                        if (comic == null)
+                        if (update)
                         {
-                            return;
+                            comic = await FromDirectory(dir);
+                        }
+                        else
+                        {
+                            comic = await New("", "", dir);
                         }
 
-                        comic.Directory = dir;
+                        if (comic == null) return;
+
                         comic.Folder = folder;
 
                         if ((await UpdateInfoNoLock(comic)).ExceptionType != TaskException.Success && !update)
@@ -463,6 +455,8 @@ namespace ComicReader.Data
 
                             comic.Tags.Add(default_tag);
                         }
+
+                        await comic.SaveBasic();
                     }
                     finally
                     {
@@ -499,50 +493,34 @@ namespace ComicReader.Data
                     await add_or_update_dir(p.Key, p.Value);
 
                     // cancel this task if more requests came in
-                    if (m_update_comic_data_lock.CancellationRequested)
+                    if (m_update_lock.CancellationRequested)
                     {
                         return new TaskResult(TaskException.Cancellation);
                     }
-
-                    // save for each 5s
-                    if ((DateTimeOffset.Now - last_date_time).Seconds > 5.0)
-                    {
-                        Utils.TaskQueue.TaskQueueManager.AppendTask(
-                            DatabaseManager.SaveSealed(DatabaseItem.Comic));
-                        last_date_time = DateTimeOffset.Now;
-                    }
                 }
 
-                // save
-                Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(DatabaseItem.Comic));
                 return new TaskResult();
             }
             finally
             {
-                m_update_comic_data_lock.Release();
+                m_update_lock.Release();
             }
         }
 
-        public static async Task Hide(ComicItemData comic)
+        public static async Task Hide(ComicData comic)
         {
-            await DatabaseManager.WaitLock();
             comic.Hidden = true;
-            DatabaseManager.ReleaseLock();
-            Utils.TaskQueue.TaskQueueManager.AppendTask(
-                DatabaseManager.SaveSealed(DatabaseItem.Comic), "Saving...");
+            await comic.SaveBasic();
         }
 
-        public static async Task Unhide(ComicItemData comic)
+        public static async Task Unhide(ComicData comic)
         {
-            await DatabaseManager.WaitLock();
             comic.Hidden = false;
-            DatabaseManager.ReleaseLock();
-            Utils.TaskQueue.TaskQueueManager.AppendTask(
-                DatabaseManager.SaveSealed(DatabaseItem.Comic), "Saving...");
+            await comic.SaveBasic();
         }
 
         // info
-        public static async Task<string> InfoString(ComicItemData comic)
+        public static async Task<string> InfoString(ComicData comic)
         {
             await DatabaseManager.WaitLock();
 
@@ -556,7 +534,7 @@ namespace ComicReader.Data
             }
         }
 
-        private static string InfoStringNoLock(ComicItemData comic)
+        private static string InfoStringNoLock(ComicData comic)
         {
             string text = "";
             text += "Title1: " + comic.Title1;
@@ -570,10 +548,10 @@ namespace ComicReader.Data
             return text;
         }
 
-        public static SealedTask SaveInfoFileSealed(ComicItemData comic) =>
+        public static SealedTask SaveInfoFileSealed(ComicData comic) =>
             (RawTask _) => SaveInfoFile(comic).Result;
 
-        private static async RawTask SaveInfoFile(ComicItemData comic)
+        private static async RawTask SaveInfoFile(ComicData comic)
         {
             await DatabaseManager.WaitLock();
 
@@ -587,7 +565,7 @@ namespace ComicReader.Data
             }
         }
 
-        private static async RawTask SaveInfoFileNoLock(ComicItemData comic)
+        private static async RawTask SaveInfoFileNoLock(ComicData comic)
         {
             TaskResult res = await CompleteInfoFileNoLock(comic, true);
 
@@ -602,14 +580,14 @@ namespace ComicReader.Data
             return new TaskResult();
         }
 
-        public static async Task ParseInfo(string text, ComicItemData comic)
+        public static async Task ParseInfo(string text, ComicData comic)
         {
             await DatabaseManager.WaitLock();
             ParseInfoNoLock(text, comic);
             DatabaseManager.ReleaseLock();
         }
 
-        private static void ParseInfoNoLock(string text, ComicItemData comic)
+        private static void ParseInfoNoLock(string text, ComicData comic)
         {
             comic.Title1 = "";
             comic.Title2 = "";
@@ -659,7 +637,7 @@ namespace ComicReader.Data
             }
         }
 
-        private static async RawTask CompleteInfoFileNoLock(ComicItemData comic, bool create_if_not_exists)
+        private static async RawTask CompleteInfoFileNoLock(ComicData comic, bool create_if_not_exists)
         {
             if (comic.InfoFile != null)
             {
@@ -699,7 +677,7 @@ namespace ComicReader.Data
             return new TaskResult();
         }
 
-        public static async RawTask UpdateInfo(ComicItemData comic)
+        public static async RawTask UpdateInfo(ComicData comic)
         {
             await DatabaseManager.WaitLock();
 
@@ -713,7 +691,7 @@ namespace ComicReader.Data
             }
         }
 
-        public static async RawTask UpdateInfoNoLock(ComicItemData comic)
+        public static async RawTask UpdateInfoNoLock(ComicData comic)
         {
             TaskResult res = await CompleteInfoFileNoLock(comic, false);
 
@@ -727,7 +705,7 @@ namespace ComicReader.Data
             return new TaskResult();
         }
 
-        private static async RawTask CompleteFolder(ComicItemData comic)
+        private static async RawTask CompleteFolder(ComicData comic)
         {
             await DatabaseManager.WaitLock();
 
@@ -741,7 +719,7 @@ namespace ComicReader.Data
             }
         }
 
-        private static async RawTask CompleteFolderNoLock(ComicItemData comic)
+        private static async RawTask CompleteFolderNoLock(ComicData comic)
         {
             if (comic.Folder != null)
             {
@@ -764,10 +742,10 @@ namespace ComicReader.Data
             return new TaskResult();
         }
 
-        public static SealedTask CompleteImagesSealed(ComicItemData comic) =>
+        public static SealedTask CompleteImagesSealed(ComicData comic) =>
             (RawTask _) => CompleteImages(comic).Result;
 
-        public static async RawTask CompleteImages(ComicItemData comic)
+        public static async RawTask CompleteImages(ComicData comic)
         {
             await DatabaseManager.WaitLock();
 
@@ -836,7 +814,7 @@ namespace ComicReader.Data
 
                 ImageLoaderToken token = _tokens.First();
                 _tokens.RemoveAt(0);
-                ComicItemData comic = token.Comic;
+                ComicData comic = token.Comic;
 
                 if (comic.ImageFiles.Count == 0)
                 {

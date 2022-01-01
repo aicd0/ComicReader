@@ -95,7 +95,11 @@ namespace ComicReader
 
         protected override void OnLaunched(LaunchActivatedEventArgs args)
         {
-            Startup(args.PrelaunchActivated, args.PreviousExecutionState);
+            Utils.Methods.Run(async delegate
+            {
+                await DatabaseManager.Init();
+                Startup(args.PrelaunchActivated, args.PreviousExecutionState);
+            });
         }
 
         void OnNavigationFailed(object sender, NavigationFailedEventArgs e)

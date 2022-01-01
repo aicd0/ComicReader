@@ -6,9 +6,9 @@ namespace ComicReader.Views
 {
     public sealed partial class EditComicInfoDialog : ContentDialog
     {
-        private ComicItemData m_comic;
+        private ComicData m_comic;
 
-        public EditComicInfoDialog(ComicItemData comic)
+        public EditComicInfoDialog(ComicData comic)
         {
             m_comic = comic;
 
@@ -25,11 +25,7 @@ namespace ComicReader.Views
                 await ComicDataManager.ParseInfo(text, m_comic);
                 Utils.TaskQueue.TaskQueueManager.AppendTask(
                     ComicDataManager.SaveInfoFileSealed(m_comic), "Saving...");
-
-                if (!m_comic.IsExternal)
-                {
-                    Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(DatabaseItem.Comic), "Saving...");
-                }
+                await m_comic.SaveBasic();
             });
         }
 

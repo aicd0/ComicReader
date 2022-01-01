@@ -19,18 +19,18 @@ namespace ComicReader.Data
             Image = new BitmapImage();
             Title = "";
             Detail = "";
-            Id = "";
+            Id = -1;
             Rating = -1;
             Progress = "";
             IsFavorite = false;
             m_IsImageLoaded = false;
         }
 
-        public ComicItemData Comic;
+        public ComicData Comic;
         public BitmapImage Image { get; set; }
         public string Title { get; set; }
         public string Detail { get; set; }
-        public string Id { get; set; }
+        public long Id { get; set; }
         public int Rating { get; set; }
         public string Progress { get; set; }
         public bool IsRatingVisible => Rating != -1;
@@ -75,7 +75,7 @@ namespace ComicReader.Data
 
         public string Name { get; set; }
         public string EditingName { get; set; }
-        public string Id { get; set; }
+        public long Id { get; set; }
         public bool IsRenaming { get; set; }
 
         private bool m_Expanded;
@@ -106,7 +106,7 @@ namespace ComicReader.Data
 
     public class HistoryItemModel
     {
-        public string Id { get; set; }
+        public long Id { get; set; }
         public string Time { get; set; }
         public string Title { get; set; }
     }

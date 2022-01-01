@@ -248,7 +248,7 @@ namespace ComicReader.Views
         public bool IsHorizontal => !IsVertical;
         public bool IsOnePage { get; private set; }
         public bool IsTwoPages => !IsOnePage;
-        public ComicItemData Comic { get; set; } = null;
+        public ComicData Comic { get; set; } = null;
         public int Pages => Comic.ImageFiles.Count;
 
         // True if ThisScrollViewer and ThisListView were loaded.
@@ -1126,8 +1126,7 @@ namespace ComicReader.Views
         private ObservableCollection<ReaderFrameModel> PreviewDataSource { get; set; }
 
         private Utils.Tab.TabManager m_tab_manager;
-        private ComicItemData m_comic;
-        private ComicExtraItemData m_comic_extra_data;
+        private ComicData m_comic;
         private Utils.TaskQueue.TaskQueue m_load_image_queue;
         private double m_reader_position;
         private GestureRecognizer m_gesture_recognizer;
@@ -1164,7 +1163,6 @@ namespace ComicReader.Views
             Unloaded += m_tab_manager.OnUnloaded;
 
             m_comic = null;
-            m_comic_extra_data = null;
             m_reader_position = 0.0;
 
             m_gesture_recognizer = new GestureRecognizer();
@@ -1239,7 +1237,7 @@ namespace ComicReader.Views
 
                 if (m_comic != tab_id.RequestArgs)
                 {
-                    ComicItemData comic = (ComicItemData)tab_id.RequestArgs;
+                    ComicData comic = (ComicData)tab_id.RequestArgs;
                     tab_id.Tab.Header = comic.Title1;
                     tab_id.Tab.IconSource = new muxc.SymbolIconSource { Symbol = Symbol.Document };
                     await LoadComic(comic);
@@ -1249,7 +1247,7 @@ namespace ComicReader.Views
 
         public static string PageUniqueString(object args)
         {
-            ComicItemData comic = (ComicItemData)args;
+            ComicData comic = (ComicData)args;
             return "Reader/" + comic.Directory;
         }
 
@@ -1289,7 +1287,7 @@ namespace ComicReader.Views
             PageIndicator.Text = control.Page.ToString() + " of " + image_count;
         }
 
-        private void UpdateProgress(ReaderModel control)
+        private async Task UpdateProgress(ReaderModel control)
         {
             int progress;
 
@@ -1312,17 +1310,13 @@ namespace ComicReader.Views
             }
 
             Shared.Progress = progress.ToString() + "%";
-
-            if (m_comic_extra_data != null)
-            {
-                m_comic_extra_data.Progress = progress;
-                m_comic_extra_data.LastPosition = control.PageReal;
-                Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(DatabaseItem.ComicExtra));
-            }
+            m_comic.Progress = progress;
+            m_comic.LastPosition = control.PageReal;
+            await m_comic.SaveBasic();
         }
 
         // loading
-        private async Task LoadComic(ComicItemData comic)
+        private async Task LoadComic(ComicData comic)
         {
             // Load the comic.
             if (comic == null)
@@ -1348,24 +1342,19 @@ namespace ComicReader.Views
                 // Add to history
                 await HistoryDataManager.Add(m_comic.Id, m_comic.Title1, true);
 
-                // Fetch the read record. Create one if not exists.
-                await DatabaseManager.WaitLock();
-                m_comic_extra_data = comic.GetExtraDataNoLock(create_if_not_exists: true);
-
                 // Update "last visit".
-                m_comic_extra_data.LastVisit = DateTimeOffset.Now;
-                DatabaseManager.ReleaseLock();
-                reader.SetInitialPage(m_comic_extra_data.LastPosition);
+                m_comic.LastVisit = DateTimeOffset.Now;
+                await m_comic.SaveBasic();
 
-                for (int i = 0; i < m_comic_extra_data.ImageAspectRatios.Count; ++i)
+                // Set initial page.
+                reader.SetInitialPage(m_comic.LastPosition);
+
+                for (int i = 0; i < m_comic.ImageAspectRatios.Count; ++i)
                 {
-                    double image_aspect_ratio = m_comic_extra_data.ImageAspectRatios[i];
+                    double image_aspect_ratio = m_comic.ImageAspectRatios[i];
                     VerticalReader.UpdateDataSource(i, image_aspect_ratio);
                     HorizontalReader.UpdateDataSource(i, image_aspect_ratio);
                 }
-
-                // Save comic extra data.
-                Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(DatabaseItem.ComicExtra));
 
                 Utils.TaskQueue.TaskQueueManager.AppendTask(
                     ComicDataManager.CompleteImagesSealed(m_comic), "Scanning images...", m_load_image_queue);
@@ -1401,8 +1390,8 @@ namespace ComicReader.Views
             });
 
             List<ImageLoaderToken> preview_img_loader_tokens = new List<ImageLoaderToken>();
-            Utils.Stopwatch save_extra_data_timer = new Utils.Stopwatch();
-            save_extra_data_timer.Start();
+            Utils.Stopwatch save_timer = new Utils.Stopwatch();
+            save_timer.Start();
 
             for (int i = 0; i < m_comic.ImageFiles.Count; ++i)
             {
@@ -1419,28 +1408,23 @@ namespace ComicReader.Views
                         double image_aspect_ratio = (double)img.PixelWidth / img.PixelHeight;
                         await DatabaseManager.WaitLock();
 
-                        System.Diagnostics.Debug.Assert(index <= m_comic_extra_data.ImageAspectRatios.Count);
+                        System.Diagnostics.Debug.Assert(index <= m_comic.ImageAspectRatios.Count);
 
-                        if (index < m_comic_extra_data.ImageAspectRatios.Count)
+                        if (index < m_comic.ImageAspectRatios.Count)
                         {
-                            m_comic_extra_data.ImageAspectRatios[index] = image_aspect_ratio;
+                            m_comic.ImageAspectRatios[index] = image_aspect_ratio;
                         }
                         else
                         {
-                            m_comic_extra_data.ImageAspectRatios.Add(image_aspect_ratio);
+                            m_comic.ImageAspectRatios.Add(image_aspect_ratio);
                         }
 
                         DatabaseManager.ReleaseLock();
 
-                        if (save_extra_data_timer.LapSpan().TotalSeconds > 5.0 || i == m_comic.ImageFiles.Count - 1)
+                        if (save_timer.LapSpan().TotalSeconds > 5.0 || i == m_comic.ImageFiles.Count - 1)
                         {
-                            save_extra_data_timer.Reset();
-                            Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(DatabaseItem.ComicExtra));
-                            Utils.TaskQueue.TaskQueueManager.AppendTask((RawTask _) =>
-                            {
-                                save_extra_data_timer.Start();
-                                return new TaskResult();
-                            });
+                            await m_comic.SaveImageAspectRatios();
+                            save_timer.Lap();
                         }
 
                         // Update previews.
@@ -1461,7 +1445,7 @@ namespace ComicReader.Views
                 preview_width, preview_height, m_preview_img_loader_lock);
 
             await preview_loader_task.AsAsyncAction();
-            return new Utils.TaskQueue.TaskResult();
+            return new TaskResult();
         }
 
         private async Task LoadComicInfo()
@@ -1479,7 +1463,7 @@ namespace ComicReader.Views
             if (!m_comic.IsExternal)
             {
                 Shared.NavigationPageShared.IsFavorite = await FavoriteDataManager.FromId(m_comic.Id) != null;
-                Shared.Rating = m_comic_extra_data.Rating;
+                Shared.Rating = m_comic.Rating;
             }
         }
 
@@ -1612,7 +1596,7 @@ namespace ComicReader.Views
                 if (control.IsLoaded || !e.IsIntermediate)
                 {
                     UpdatePage(control);
-                    UpdateProgress(control);
+                    await UpdateProgress(control);
                     BottomTileSetHold(false);
                 }
             });
@@ -1883,8 +1867,11 @@ namespace ComicReader.Views
 
         private void OnRatingControlValueChanged(muxc.RatingControl sender, object args)
         {
-            m_comic_extra_data.Rating = (int)sender.Value;
-            Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(Data.DatabaseItem.ComicExtra));
+            Utils.Methods.Run(async delegate
+            {
+                m_comic.Rating = (int)sender.Value;
+                await m_comic.SaveBasic();
+            });
         }
 
         private void OnInfoPaneTagClicked(object sender, RoutedEventArgs e)

@@ -1,19 +1,13 @@
-﻿using System;
+﻿using Microsoft.Data.Sqlite;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using System.Threading;
 using System.Threading.Tasks;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
 using Windows.UI.Input;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
@@ -156,26 +150,25 @@ namespace ComicReader.Views
                     return;
                 }
 
-                // get recent visited comics
+                // Get recent visited comics.
                 const int result_count = 12;
-                int cmp_func(ComicExtraItemData x, ComicExtraItemData y) => x.LastVisit > y.LastVisit ? 1 : -1;
-                Utils.MinHeap<ComicExtraItemData> min_heap = new Utils.MinHeap<ComicExtraItemData>(result_count, cmp_func);
-                await DatabaseManager.WaitLock();
 
-                foreach (ComicExtraItemData comic in Database.ComicExtra.Items)
+                SqliteCommand command = DatabaseManager.Connection.CreateCommand();
+                command.CommandText = "SELECT * FROM " + DatabaseManager.ComicTable +
+                    " ORDER BY " + ComicData.FieldLastVisit + " DESC LIMIT " +
+                    result_count.ToString();
+
+                await ComicDataManager.WaitLock();
+                SqliteDataReader query = await command.ExecuteReaderAsync();
+                ComicDataManager.ReleaseLock();
+
+                var comic_items = new Utils.ObservableCollectionPlus<ComicItemModel>();
+
+                while (query.Read())
                 {
-                    min_heap.Add(comic);
-                }
-
-                IEnumerable<ComicExtraItemData> sorted = min_heap.OrderBy((ComicExtraItemData x) => x.LastVisit).Reverse();
-                Utils.ObservableCollectionPlus<ComicItemModel> comic_items = new Utils.ObservableCollectionPlus<ComicItemModel>();
-
-                foreach (ComicExtraItemData extra in sorted)
-                {
-                    ComicItemData comic = ComicDataManager.FromIdNoLock(extra.Id);
+                    ComicData comic = await ComicDataManager.From(query);
                     if (comic == null) continue;
                     if (comic.Hidden) continue;
-                    comic.SetExtraData(extra);
 
                     ComicItemModel data = new ComicItemModel
                     {
@@ -185,37 +178,16 @@ namespace ComicReader.Views
                         Title = comic.Title,
                         Id = comic.Id,
                         IsFavorite = FavoriteDataManager.FromIdNoLock(comic.Id) != null,
-                        Rating = extra.Rating,
-                        Progress = extra.Progress >= 100 ? "Finished" : extra.Progress.ToString() + "%"
+                        Rating = comic.Rating,
+                        Progress = comic.Progress >= 100 ? "Finished" : comic.Progress.ToString() + "%"
                     };
 
                     comic_items.Add(data);
                 }
 
-                for (int i = 0; i < Database.Comic.Items.Count && comic_items.Count < result_count; ++i)
-                {
-                    ComicItemData comic = Database.Comic.Items[i];
-                    if (comic.Hidden) continue;
-                    if (comic.GetExtraDataNoLock(lazy: true) != null) continue;
-
-                    ComicItemModel data = new ComicItemModel
-                    {
-                        OnItemPressed = GridPointerPressed,
-                        OnHideClicked = HideClick,
-                        Comic = comic,
-                        Title = comic.Title,
-                        Id = comic.Id,
-                        IsFavorite = FavoriteDataManager.FromIdNoLock(comic.Id) != null,
-                        Progress = "Unread"
-                    };
-
-                    comic_items.Add(data);
-                }
-
-                DatabaseManager.ReleaseLock();
                 Shared.ComicItemSource = comic_items;
 
-                // load images
+                // Load images.
                 List<ImageLoaderToken> image_loader_tokens = new List<ImageLoaderToken>();
 
                 foreach (ComicItemModel item in Shared.ComicItemSource)
@@ -251,14 +223,15 @@ namespace ComicReader.Views
 
             try
             {
-                // add to folder item source
-                Collection<FolderItemModel> new_folder_source = new Collection<FolderItemModel>();
-
-                new_folder_source.Add(new FolderItemModel
+                // Add to folder item source.
+                var new_folder_source = new Collection<FolderItemModel>
                 {
-                    OnItemPressed = FolderItemPressed,
-                    IsAddNew = true
-                });
+                    new FolderItemModel
+                    {
+                        OnItemPressed = FolderItemPressed,
+                        IsAddNew = true
+                    }
+                };
 
                 await DatabaseManager.WaitLock();
 

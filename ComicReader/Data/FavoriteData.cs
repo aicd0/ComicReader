@@ -44,13 +44,13 @@ namespace ComicReader.Data
         [XmlAttribute]
         public string Name;
         [XmlAttribute]
-        public string Id;
+        public long Id;
         public List<FavoriteNodeData> Children = new List<FavoriteNodeData>();
     };
 
     class FavoriteDataManager
     {
-        public static async Task<FavoriteNodeData> FromId(string id)
+        public static async Task<FavoriteNodeData> FromId(long id)
         {
             await DatabaseManager.WaitLock();
             try
@@ -63,7 +63,7 @@ namespace ComicReader.Data
             }
         }
 
-        public static FavoriteNodeData FromIdNoLock(string id)
+        public static FavoriteNodeData FromIdNoLock(long id)
         {
             FavoriteNodeData helper(List<FavoriteNodeData> e)
             {
@@ -96,7 +96,7 @@ namespace ComicReader.Data
             return helper(Database.Favorites.RootNodes);
         }
 
-        public static async Task<bool> RemoveWithId(string id, bool final)
+        public static async Task<bool> RemoveWithId(long id, bool final)
         {
             bool helper(List<FavoriteNodeData> e)
             {
@@ -139,7 +139,7 @@ namespace ComicReader.Data
             return res;
         }
 
-        public static async Task Add(string id, string title, bool final)
+        public static async Task Add(long id, string title, bool final)
         {
             await DatabaseManager.WaitLock();
 

@@ -80,11 +80,15 @@
                       VerticalAlignment="Center"
                       Height="{StaticResource ComicItemVerticalImageHeight}">
                     <Grid Visibility="{x:Bind Ctx.IsImageLoaded, Mode=OneWay}">
-                        <Grid mtuu:Effects.Shadow="{StaticResource CommonShadow}">
+                        <Grid mtuu:Effects.Shadow="{StaticResource CommonShadow}"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center">
                             <Image Source="{x:Bind Ctx.Image}"
                                    Opacity="0" />
                         </Grid>
-                        <Border CornerRadius="5">
+                        <Border CornerRadius="5"
+                                HorizontalAlignment="Center"
+                                VerticalAlignment="Center">
                             <Image Source="{x:Bind Ctx.Image}" />
                         </Border>
                         <Grid Width="24"

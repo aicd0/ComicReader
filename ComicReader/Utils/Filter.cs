@@ -112,7 +112,7 @@ namespace ComicReader.Utils.Search
             return false;
         }
 
-        public bool Pass(ComicItemData comic)
+        public bool Pass(ComicData comic)
         {
             foreach (SubFilter subfilter in m_subfilters)
             {
@@ -342,7 +342,7 @@ namespace ComicReader.Utils.Search
     public abstract class SubFilter
     {
         public abstract string UniqueString { get; }
-        public abstract bool Pass(ComicItemData comic);
+        public abstract bool Pass(ComicData comic);
 
         public virtual bool ContainsFilter(string desc)
         {
@@ -362,7 +362,7 @@ namespace ComicReader.Utils.Search
             m_subfilter = subfilter;
         }
 
-        public override bool Pass(ComicItemData comic)
+        public override bool Pass(ComicData comic)
         {
             return !m_subfilter.Pass(comic);
         }
@@ -403,7 +403,7 @@ namespace ComicReader.Utils.Search
             m_unique_string = "or: " + string.Join(", ", all_unique_strings);
         }
 
-        public override bool Pass(ComicItemData comic)
+        public override bool Pass(ComicData comic)
         {
             foreach (SubFilter filter in m_filters)
             {
@@ -464,7 +464,7 @@ namespace ComicReader.Utils.Search
             m_unique_string = "and: " + string.Join(", ", all_unique_strings);
         }
 
-        public override bool Pass(ComicItemData comic)
+        public override bool Pass(ComicData comic)
         {
             foreach (SubFilter filter in m_filters)
             {
@@ -496,7 +496,7 @@ namespace ComicReader.Utils.Search
     {
         public override string UniqueString => "all";
 
-        public override bool Pass(ComicItemData comic)
+        public override bool Pass(ComicData comic)
         {
             return true;
         }
@@ -515,7 +515,7 @@ namespace ComicReader.Utils.Search
             m_directory = directory.ToLower().Replace('/', '\\');
         }
 
-        public override bool Pass(ComicItemData comic)
+        public override bool Pass(ComicData comic)
         {
             string comic_dir = comic.Directory.ToLower();
             return comic_dir.Length >= m_directory.Length && comic_dir.Substring(0, m_directory.Length).Equals(m_directory);
@@ -527,7 +527,7 @@ namespace ComicReader.Utils.Search
     {
         public override string UniqueString => "hidden";
 
-        public override bool Pass(ComicItemData comic)
+        public override bool Pass(ComicData comic)
         {
             return comic.Hidden;
         }
@@ -545,7 +545,7 @@ namespace ComicReader.Utils.Search
             m_tag = tag.ToLower();
         }
 
-        public override bool Pass(ComicItemData comic)
+        public override bool Pass(ComicData comic)
         {
             foreach (TagData tag_data in comic.Tags)
             {

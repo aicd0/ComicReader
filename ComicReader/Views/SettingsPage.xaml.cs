@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Data.Sqlite;
+using System;
 using System.ComponentModel;
 using System.Globalization;
 using System.Threading.Tasks;
@@ -68,17 +69,15 @@ namespace ComicReader.Views
             get => m_Appearance;
             set
             {
-                if (m_Appearance == value)
+                if (m_Appearance != value)
                 {
-                    return;
+                    m_Appearance = value;
+                    AppearanceLightChecked = m_Appearance == AppearanceSetting.Light;
+                    AppearanceDarkChecked = m_Appearance == AppearanceSetting.Dark;
+                    AppearanceUseSystemSettingChecked = m_Appearance == AppearanceSetting.UseSystemSetting;
+                    AppearanceChanged = m_Appearance != CurrentAppearance;
+                    OnSettingsChanged?.Invoke();
                 }
-
-                m_Appearance = value;
-                AppearanceLightChecked = m_Appearance == AppearanceSetting.Light;
-                AppearanceDarkChecked = m_Appearance == AppearanceSetting.Dark;
-                AppearanceUseSystemSettingChecked = m_Appearance == AppearanceSetting.UseSystemSetting;
-                AppearanceChanged = m_Appearance != CurrentAppearance;
-                OnSettingsChanged?.Invoke();
             }
         }
 
@@ -88,19 +87,17 @@ namespace ComicReader.Views
             get => m_AppearanceLightChecked;
             set
             {
-                if (value == m_AppearanceLightChecked)
+                if (value != m_AppearanceLightChecked)
                 {
-                    return;
+                    m_AppearanceLightChecked = value;
+
+                    if (value)
+                    {
+                        Appearance = AppearanceSetting.Light;
+                    }
+
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("AppearanceLightChecked"));
                 }
-
-                m_AppearanceLightChecked = value;
-
-                if (value)
-                {
-                    Appearance = AppearanceSetting.Light;
-                }
-
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("AppearanceLightChecked"));
             }
         }
 
@@ -110,19 +107,17 @@ namespace ComicReader.Views
             get => m_AppearanceDarkChecked;
             set
             {
-                if (value == m_AppearanceDarkChecked)
+                if (value != m_AppearanceDarkChecked)
                 {
-                    return;
+                    m_AppearanceDarkChecked = value;
+
+                    if (value)
+                    {
+                        Appearance = AppearanceSetting.Dark;
+                    }
+
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("AppearanceDarkChecked"));
                 }
-
-                m_AppearanceDarkChecked = value;
-
-                if (value)
-                {
-                    Appearance = AppearanceSetting.Dark;
-                }
-
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("AppearanceDarkChecked"));
             }
         }
 
@@ -132,19 +127,17 @@ namespace ComicReader.Views
             get => m_AppearanceUseSystemSettingChecked;
             set
             {
-                if (value == m_AppearanceUseSystemSettingChecked)
+                if (value != m_AppearanceUseSystemSettingChecked)
                 {
-                    return;
+                    m_AppearanceUseSystemSettingChecked = value;
+
+                    if (value)
+                    {
+                        Appearance = AppearanceSetting.UseSystemSetting;
+                    }
+
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("AppearanceUseSystemSettingChecked"));
                 }
-
-                m_AppearanceUseSystemSettingChecked = value;
-
-                if (value)
-                {
-                    Appearance = AppearanceSetting.UseSystemSetting;
-                }
-
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("AppearanceUseSystemSettingChecked"));
             }
         }
 
@@ -167,8 +160,8 @@ namespace ComicReader.Views
 
         private readonly Utils.Tab.TabManager m_tab_manager;
 
-        // Set the initial value of m_updating to TRUE to avoid copying values
-        // from controls (See Save()) while the page is launching.
+        // Initialize m_updating to TRUE to avoid copying values from
+        // controls (See Save()) while the page is launching.
         private bool m_updating = true;
 
         public SettingsPage()
@@ -226,7 +219,9 @@ namespace ComicReader.Views
         // utilities
         private async Task Update()
         {
-            // from local settings
+            m_updating = true;
+
+            // Appearance.
             object appearance_setting = ApplicationData.Current.LocalSettings.Values[AppearanceKey];
 
             if (appearance_setting == null)
@@ -244,25 +239,30 @@ namespace ComicReader.Views
 
             Shared.Appearance = Shared.CurrentAppearance;
 
-            // from database
+            // From database.
             await DatabaseManager.WaitLock();
-            m_updating = true;
 
             Shared.ReaderRightToLeft = Database.AppSettings.RightToLeft;
             Shared.HistorySaveBrowsingHistory = Database.AppSettings.SaveHistory;
-            StatisticsTextBlock.Text = "Total collections: " + Database.Comic.Items.Count.ToString("#,#0", CultureInfo.InvariantCulture);
 
-            m_updating = false;
             DatabaseManager.ReleaseLock();
+
+            // Comic count.
+            SqliteCommand command = DatabaseManager.Connection.CreateCommand();
+            command.CommandText = "SELECT COUNT(*) FROM " + DatabaseManager.ComicTable;
+
+            await ComicDataManager.WaitLock();
+            long comic_count = (long)command.ExecuteScalar();
+            ComicDataManager.ReleaseLock();
+
+            StatisticsTextBlock.Text = "Total collections: " +
+                comic_count.ToString("#,#0", CultureInfo.InvariantCulture);
+            
+            m_updating = false;
         }
 
         private async Task Save()
         {
-            if (m_updating)
-            {
-                return;
-            }
-
             // to local settings
             if (Shared.Appearance == AppearanceSetting.Light)
             {
@@ -289,6 +289,11 @@ namespace ComicReader.Views
 
         private void OnSettingsChanged()
         {
+            if (m_updating)
+            {
+                return;
+            }
+
             Utils.Methods.Run(async delegate
             {
                 await Save();

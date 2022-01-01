@@ -53,7 +53,7 @@ namespace ComicReader.Data
     public class HistoryItemData
     {
         [XmlAttribute]
-        public string Id;
+        public long Id;
         [XmlAttribute]
         public string Title;
         [XmlIgnore]
@@ -74,7 +74,7 @@ namespace ComicReader.Data
 
     class HistoryDataManager
     {
-        public static async Task Add(string id, string title, bool final)
+        public static async Task Add(long id, string title, bool final)
         {
             await DatabaseManager.WaitLock();
             try
@@ -111,7 +111,7 @@ namespace ComicReader.Data
             }
         }
 
-        public static async Task Remove(string id, bool final)
+        public static async Task Remove(long id, bool final)
         {
             await DatabaseManager.WaitLock();
             RemoveNoLock(id);
@@ -123,7 +123,7 @@ namespace ComicReader.Data
             }
         }
 
-        private static void RemoveNoLock(string id)
+        private static void RemoveNoLock(long id)
         {
             List<HistoryItemData> items = Database.History.Items;
 

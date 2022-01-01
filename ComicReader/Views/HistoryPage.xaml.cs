@@ -118,7 +118,7 @@ namespace ComicReader.Views
 
         private async Task OpenItem(HistoryItemModel item, bool new_tab)
         {
-            ComicItemData comic = await ComicDataManager.FromId(item.Id);
+            ComicData comic = await ComicDataManager.FromId(item.Id);
 
             if (comic == null)
             {

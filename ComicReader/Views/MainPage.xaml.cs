@@ -82,11 +82,11 @@ namespace ComicReader.Views
                 }
             }
 
-            ComicItemData comic = await ComicDataManager.FromDirectory(dir);
+            ComicData comic = await ComicDataManager.FromDirectory(dir);
 
             if (comic == null)
             {
-                comic = new ComicItemData();
+                comic = new ComicData();
                 comic.IsExternal = true;
                 comic.Directory = dir;
                 List<StorageFile> all_files = new List<StorageFile>();

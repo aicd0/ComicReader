@@ -1,5 +1,6 @@
 ﻿//#define DEBUG_LOG_SAVE
 
+using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -21,8 +22,6 @@ namespace ComicReader.Data
 
     public enum DatabaseItem
     {
-        Comic,
-        ComicExtra,
         Favorites,
         History,
         AppSettings
@@ -31,8 +30,6 @@ namespace ComicReader.Data
     public class Database
     {
         public static AppSettingData AppSettings = new AppSettingData();
-        public static ComicData Comic = new ComicData();
-        public static ComicExtraData ComicExtra = new ComicExtraData();
         public static FavoriteData Favorites = new FavoriteData();
         public static HistoryData History = new HistoryData();
     };
@@ -46,11 +43,181 @@ namespace ComicReader.Data
         public abstract void Unpack();
     }
 
+    public class Key
+    {
+        public Key(string name, object value = null, bool blob = false)
+        {
+            Name = name;
+            Value = value;
+            IsBlob = blob;
+        }
+
+        public string Name;
+        public object Value;
+        public bool IsBlob;
+    }
+
     public class DatabaseManager
     {
         private static bool m_database_ready = false;
         private static SemaphoreSlim m_database_semaphore = new SemaphoreSlim(1);
+        private static SqliteConnection m_connection = null;
+        public static SqliteConnection Connection => m_connection;
         private static StorageFolder DatabaseFolder => ApplicationData.Current.LocalFolder;
+        private static string DatabaseFileName => "database.db";
+        private static string DatabasePath => Path.Combine(DatabaseFolder.Path, DatabaseFileName);
+
+        public static string ComicTable
+        {
+            get
+            {
+                return "comics";
+            }
+        }
+
+        public static async Task Init()
+        {
+            // Create database.
+            await DatabaseFolder.CreateFileAsync(DatabaseFileName, CreationCollisionOption.OpenIfExists);
+            
+            // Create tables.
+            SqliteConnection connection =
+                new SqliteConnection($"Filename={DatabasePath}");
+            connection.Open();
+            SqliteCommand command = connection.CreateCommand();
+
+            command.CommandText = "CREATE TABLE IF NOT EXISTS " + ComicTable + " (" +
+                ComicData.FieldId + " INTEGER PRIMARY KEY AUTOINCREMENT," + // 0
+                ComicData.FieldTitle1 + " TEXT," + // 1
+                ComicData.FieldTitle2 + " TEXT," + // 2
+                ComicData.FieldDirectory + " TEXT NOT NULL," + // 3
+                ComicData.FieldHidden + " BOOLEAN DEFAULT 0 NOT NULL," + // 4
+                ComicData.FieldRating + " INTEGER DEFAULT -1 NOT NULL," + // 5
+                ComicData.FieldProgress + " INTEGER DEFAULT 0 NOT NULL," + // 6
+                ComicData.FieldLastVisit + " TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL," + // 7
+                ComicData.FieldLastPosition + " REAL DEFAULT 0 NOT NULL," + // 8
+                ComicData.FieldTags + " TEXT NOT NULL," + // 9
+                ComicData.FieldImageAspectRatios + " BLOB DEFAULT NULL)"; // 10
+            command.ExecuteNonQuery();
+
+            command.Dispose();
+            m_connection = connection;
+        }
+
+        public static async Task<long> Insert(string table, List<Key> keys)
+        {
+            List<string> field_names = new List<string>();
+            List<string> field_vals = new List<string>();
+            var blobs = new List<KeyValuePair<string, MemoryStream>>();
+            SqliteCommand command = Connection.CreateCommand();
+
+            foreach (Key key in keys)
+            {
+                field_names.Add(key.Name);
+
+                if (key.IsBlob)
+                {
+                    string param = "$len_" + key.Name;
+                    field_vals.Add("zeroblob(" + param + ")");
+
+                    MemoryStream stream = Utils.Methods.SerializeToStream(key.Value);
+                    blobs.Add(new KeyValuePair<string, MemoryStream>(key.Name, stream));
+
+                    command.Parameters.AddWithValue(param, stream.Length);
+                }
+                else
+                {
+                    string param = "@" + key.Name;
+                    field_vals.Add(param);
+                    command.Parameters.AddWithValue(param, key.Value);
+                }
+            }
+
+            command.CommandText = "INSERT INTO " + table + " (" +
+                string.Join(',', field_names) + ") VALUES (" +
+                string.Join(',', field_vals) + ");" +
+                "SELECT LAST_INSERT_ROWID();";
+
+            await ComicDataManager.WaitLock(); // Execution starts.
+            long rowid = (long)command.ExecuteScalar();
+
+            // Copy to blobs.
+            foreach (var pairs in blobs)
+            {
+                MemoryStream input_stream = pairs.Value;
+                input_stream.Seek(0, SeekOrigin.Begin);
+
+                using (SqliteBlob write_stream = new SqliteBlob(
+                    Connection, table, pairs.Key, rowid))
+                {
+                    await input_stream.CopyToAsync(write_stream);
+                }
+            }
+            ComicDataManager.ReleaseLock(); // Execution ends.
+
+            command.Dispose();
+            return rowid;
+        }
+
+        public static async Task Update(string table, Key primary_key, List<Key> keys)
+        {
+            List<string> fields = new List<string>();
+            List<Key> blob_keys = new List<Key>();
+            SqliteCommand command = Connection.CreateCommand();
+            command.Parameters.AddWithValue("@" + primary_key.Name, primary_key.Value);
+
+            foreach (Key key in keys)
+            {
+                if (key.IsBlob)
+                {
+                    blob_keys.Add(key);
+                }
+                else
+                {
+                    string param = "@" + key.Name;
+                    fields.Add(key.Name + "=" + param);
+                    command.Parameters.AddWithValue(param, key.Value);
+                }
+            }
+
+            await ComicDataManager.WaitLock(); // Execution starts.
+            // Update basic fields.
+            if (fields.Count > 0)
+            {
+                command.CommandText = "UPDATE " + table + " SET " +
+                    string.Join(',', fields) + " WHERE " + primary_key.Name + "=@" +
+                    primary_key.Name;
+
+                command.ExecuteNonQuery();
+            }
+
+            // Update blob fields.
+            if (blob_keys.Count > 0)
+            {
+                // Get rowid.
+                command.CommandText = "SELECT rowid FROM " + table +
+                    " WHERE " + primary_key.Name + "=@" + primary_key.Name;
+                SqliteDataReader reader = command.ExecuteReader();
+
+                if (!reader.Read()) throw new Exception();
+                long rowid = reader.GetInt64(0);
+
+                // Write into database.
+                foreach (Key key in blob_keys)
+                {
+                    MemoryStream input_stream = Utils.Methods.SerializeToStream(key.Value);
+
+                    using (SqliteBlob write_stream = new SqliteBlob(
+                        Connection, table, key.Name, rowid))
+                    {
+                        await input_stream.CopyToAsync(write_stream);
+                    }
+                }
+            }
+            ComicDataManager.ReleaseLock(); // Execution ends.
+
+            command.Dispose();
+        }
 
         public static async Task WaitLock()
         {
@@ -73,12 +240,6 @@ namespace ComicReader.Data
 
             switch (item)
             {
-                case DatabaseItem.Comic:
-                    await Save(Database.Comic);
-                    break;
-                case DatabaseItem.ComicExtra:
-                    await Save(Database.ComicExtra);
-                    break;
                 case DatabaseItem.Favorites:
                     await Save(Database.Favorites);
                     break;
@@ -116,8 +277,6 @@ namespace ComicReader.Data
         private static async RawTask Load()
         {
             await Load(Database.AppSettings);
-            await Load(Database.Comic);
-            await Load(Database.ComicExtra);
             await Load(Database.Favorites);
             await Load(Database.History);
             m_database_ready = true;
@@ -163,7 +322,6 @@ namespace ComicReader.Data
         private static async RawTask Update(bool lazy_load)
         {
             await ComicDataManager.Update(lazy_load);
-            await ComicExtraDataManager.Update();
             return new TaskResult();
         }
 

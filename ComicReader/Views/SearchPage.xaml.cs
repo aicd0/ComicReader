@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Data.Sqlite;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -124,7 +125,7 @@ namespace ComicReader.Views
         private SearchPageShared Shared { get; set; }
 
         private Utils.Tab.TabManager m_tab_manager;
-        private List<ComicItemData> m_all_results;
+        private List<ComicData> m_all_results;
         private Utils.CancellationLock m_search_lock;
 
         public SearchPage()
@@ -140,7 +141,7 @@ namespace ComicReader.Views
             m_tab_manager.OnUnregister = OnUnregister;
             m_tab_manager.OnUpdate = OnUpdate;
             Unloaded += m_tab_manager.OnUnloaded;
-            m_all_results = new List<ComicItemData>();
+            m_all_results = new List<ComicData>();
             m_search_lock = new Utils.CancellationLock();
 
             InitializeComponent();
@@ -250,7 +251,7 @@ namespace ComicReader.Views
 
         private class Match
         {
-            public ComicItemData Comic;
+            public long Id;
             public int Similarity = 0;
         }
 
@@ -265,50 +266,61 @@ namespace ComicReader.Views
                     keywords[i] = keywords[i].ToLower();
                 }
 
-                await DatabaseManager.WaitLock();
-                List<Match> matches = new List<Match>();
+                SqliteCommand command = DatabaseManager.Connection.CreateCommand();
+                command.CommandText = "SELECT " + ComicData.FieldId + "," +
+                    ComicData.FieldTitle1 + "," + ComicData.FieldTitle2 + " FROM " +
+                    DatabaseManager.ComicTable;
 
-                foreach (ComicItemData comic in Database.Comic.Items)
+                await ComicDataManager.WaitLock();
+                SqliteDataReader query = await command.ExecuteReaderAsync();
+                ComicDataManager.ReleaseLock();
+
+                var matched = new List<Match>();
+
+                while(query.Read())
                 {
-                    // cancel the current session if the next search begins
+                    // Cancel the current session if the next search has begun.
                     if (m_search_lock.CancellationRequested)
                     {
                         return false;
                     }
+
+                    string title1 = query.GetString(1);
+                    string title2 = query.GetString(2);
+
+                    // Calculate similarity.
+                    int similarity = 0;
+
+                    if (keywords.Count != 0)
+                    {
+                        string match_text = title1 + " " + title2;
+                        similarity = Utils.StringUtils.QuickMatch(keywords, match_text);
+                        if (similarity < 1) continue;
+                    }
+
+                    matched.Add(new Match
+                    {
+                        Id = query.GetInt32(0),
+                        Similarity = similarity
+                    });
+                }
+
+                // Sort by similarity.
+                matched = matched.OrderByDescending(x => x.Similarity).ToList();
+
+                // Save results.
+                m_all_results.Clear();
+
+                foreach (Match match in matched)
+                {
+                    ComicData comic = await ComicDataManager.FromId(match.Id);
 
                     if (!filter.Pass(comic))
                     {
                         continue;
                     }
 
-                    int similarity = 0;
-                    if (keywords.Count != 0)
-                    {
-                        string match_text = comic.Title1 + " " + comic.Title2;
-                        similarity = Utils.StringUtils.QuickMatch(keywords, match_text);
-
-                        if (similarity < 1)
-                        {
-                            continue;
-                        }
-                    }
-
-                    Match match = new Match
-                    {
-                        Comic = comic,
-                        Similarity = similarity
-                    };
-
-                    matches.Add(match);
-                }
-
-                DatabaseManager.ReleaseLock();
-                matches = matches.OrderByDescending(x => x.Similarity).ToList();
-                m_all_results.Clear();
-
-                foreach (Match match in matches)
-                {
-                    m_all_results.Add(match.Comic);
+                    m_all_results.Add(comic);
                 }
             }
             finally
@@ -342,7 +354,7 @@ namespace ComicReader.Views
 
                 for (int i = items_loaded; i < end_i; ++i)
                 {
-                    ComicItemData comic = m_all_results[i];
+                    ComicData comic = m_all_results[i];
 
                     ComicItemModel result = new ComicItemModel
                     {
@@ -355,16 +367,11 @@ namespace ComicReader.Views
                         Title = comic.Title,
                         Detail = "#" + comic.Id,
                         Id = comic.Id,
-                        IsFavorite = await FavoriteDataManager.FromId(comic.Id) != null
+                        IsFavorite = await FavoriteDataManager.FromId(comic.Id) != null,
+                        Rating = comic.Rating,
+                        Progress = comic.Progress >= 100 ? "Finished" :
+                            comic.Progress.ToString() + "% Completed",
                     };
-
-                    ComicExtraItemData extra_data = await comic.GetExtraData();
-                    
-                    if (extra_data != null)
-                    {
-                        result.Rating = extra_data.Rating;
-                        result.Progress = extra_data.Progress >= 100 ? "Finished" : extra_data.Progress.ToString() + "% Completed";
-                    }
 
                     results_tmp.Add(result);
                 }
@@ -416,7 +423,7 @@ namespace ComicReader.Views
                 }
 
                 ComicItemModel item = (ComicItemModel)((FrameworkElement)sender).DataContext;
-                ComicItemData comic = await ComicDataManager.FromId(item.Id);
+                ComicData comic = await ComicDataManager.FromId(item.Id);
                 MainPage.Current.LoadTab(null, Utils.Tab.PageType.Reader, comic);
             });
         }
