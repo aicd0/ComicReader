@@ -414,7 +414,6 @@
                     <!-- vertical -->
                     <ScrollViewer x:Name="VerticalReaderScrollViewer"
                                   ViewChanged="OnVerticalReaderScrollViewerViewChanged"
-                                  SizeChanged="OnVerticalReaderScrollViewerSizeChanged"
                                   Visibility="{x:Bind Shared.IsVerticalReaderVisible, Mode=OneWay}"
                                   HorizontalScrollMode="Enabled"
                                   HorizontalScrollBarVisibility="Auto"
@@ -450,7 +449,6 @@
                     <ScrollViewer Style="{StaticResource HorizontalReaderScrollViewerStyle}"
                                   x:Name="HorizontalReaderScrollViewer"
                                   ViewChanged="OnHorizontalReaderScrollViewerViewChanged"
-                                  SizeChanged="OnHorizontalReaderScrollViewerSizeChanged"
                                   Visibility="{x:Bind Shared.IsHorizontalReaderVisible, Mode=OneWay}"
                                   Loaded="OnHorizontalReaderScrollViewerLoaded"
                                   ZoomMode="Enabled"

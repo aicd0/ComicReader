@@ -142,7 +142,6 @@ namespace ComicReader.Views
         public async Task UpdateLibrary()
         {
             await m_update_library_lock.WaitAsync();
-
             try
             {
                 if (m_update_library_lock.CancellationRequested)
@@ -177,7 +176,8 @@ namespace ComicReader.Views
                         Id = comic.Id,
                         IsFavorite = FavoriteDataManager.FromIdNoLock(comic.Id) != null,
                         Rating = comic.Rating,
-                        Progress = comic.Progress >= 100 ? "Finished" : comic.Progress.ToString() + "%"
+                        Progress = comic.Progress < 0 ? "Unread" :
+                            (comic.Progress >= 100 ? "Finished" : comic.Progress.ToString() + "%")
                     };
 
                     comic_items.Add(data);
@@ -208,7 +208,9 @@ namespace ComicReader.Views
 
                 await Task.Run(delegate
                 {
-                    ComicDataManager.LoadImages(image_loader_tokens, image_height * 1.4, image_height * 1.4, m_update_library_lock).Wait();
+                    ComicDataManager.LoadImages(image_loader_tokens,
+                        image_height * 1.4, image_height * 1.4,
+                        m_update_library_lock).Wait();
                 });
             }
             finally

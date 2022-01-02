@@ -335,7 +335,6 @@ namespace ComicReader.Views
         private async Task LoadMoreResults(int count)
         {
             await m_search_lock.WaitAsync();
-
             try
             {
                 int items_loaded = Shared.SearchResults.Count;
@@ -370,8 +369,8 @@ namespace ComicReader.Views
                         Id = comic.Id,
                         IsFavorite = await FavoriteDataManager.FromId(comic.Id) != null,
                         Rating = comic.Rating,
-                        Progress = comic.Progress >= 100 ? "Finished" :
-                            comic.Progress.ToString() + "% Completed",
+                        Progress = comic.Progress < 0 ? "" :
+                            (comic.Progress >= 100 ? "Finished" : comic.Progress.ToString() + "% Completed")
                     };
 
                     results_tmp.Add(result);
@@ -403,7 +402,8 @@ namespace ComicReader.Views
                     });
                 }
 
-                await ComicDataManager.LoadImages(image_loader_tokens, double.PositiveInfinity, image_height, m_search_lock);
+                await ComicDataManager.LoadImages(image_loader_tokens,
+                    double.PositiveInfinity, image_height, m_search_lock);
             }
             finally
             {

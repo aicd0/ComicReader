@@ -91,13 +91,14 @@ namespace ComicReader.Data
                 ComicData.FieldTitle1 + " TEXT," + // 1
                 ComicData.FieldTitle2 + " TEXT," + // 2
                 ComicData.FieldDirectory + " TEXT NOT NULL," + // 3
-                ComicData.FieldHidden + " BOOLEAN DEFAULT 0 NOT NULL," + // 4
-                ComicData.FieldRating + " INTEGER DEFAULT -1 NOT NULL," + // 5
-                ComicData.FieldProgress + " INTEGER DEFAULT 0 NOT NULL," + // 6
-                ComicData.FieldLastVisit + " TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL," + // 7
+                ComicData.FieldHidden + " BOOLEAN NOT NULL," + // 4
+                ComicData.FieldRating + " INTEGER NOT NULL," + // 5
+                ComicData.FieldProgress + " INTEGER NOT NULL," + // 6
+                ComicData.FieldLastVisit + " TIMESTAMP NOT NULL," + // 7
                 ComicData.FieldLastPosition + " REAL DEFAULT 0 NOT NULL," + // 8
-                ComicData.FieldTags + " TEXT NOT NULL," + // 9
-                ComicData.FieldImageAspectRatios + " BLOB DEFAULT NULL)"; // 10
+                ComicData.FieldCoverFileName + " TEXT," + // 9
+                ComicData.FieldTags + " BLOB," + // 10
+                ComicData.FieldImageAspectRatios + " BLOB)"; // 11
             command.ExecuteNonQuery();
 
             command.Dispose();
@@ -117,12 +118,11 @@ namespace ComicReader.Data
 
                 if (key.IsBlob)
                 {
-                    string param = "$len_" + key.Name;
-                    field_vals.Add("zeroblob(" + param + ")");
-
-                    MemoryStream stream = Utils.Methods.SerializeToStream(key.Value);
+                    MemoryStream stream = Utils.Methods.SerializeToMemoryStream(key.Value);
                     blobs.Add(new KeyValuePair<string, MemoryStream>(key.Name, stream));
 
+                    string param = "$len_" + key.Name;
+                    field_vals.Add("zeroblob(" + param + ")");
                     command.Parameters.AddWithValue(param, stream.Length);
                 }
                 else
@@ -161,8 +161,10 @@ namespace ComicReader.Data
 
         public static async Task Update(string table, Key primary_key, List<Key> keys)
         {
+            if (keys.Count == 0) return;
+
             List<string> fields = new List<string>();
-            List<Key> blob_keys = new List<Key>();
+            var blobs = new List<KeyValuePair<string, MemoryStream>>();
             SqliteCommand command = Connection.CreateCommand();
             command.Parameters.AddWithValue("@" + primary_key.Name, primary_key.Value);
 
@@ -170,7 +172,12 @@ namespace ComicReader.Data
             {
                 if (key.IsBlob)
                 {
-                    blob_keys.Add(key);
+                    MemoryStream stream = Utils.Methods.SerializeToMemoryStream(key.Value);
+                    blobs.Add(new KeyValuePair<string, MemoryStream>(key.Name, stream));
+
+                    string param = "$len_" + key.Name;
+                    fields.Add(key.Name + "=zeroblob(" + param + ")");
+                    command.Parameters.AddWithValue(param, stream.Length);
                 }
                 else
                 {
@@ -180,41 +187,33 @@ namespace ComicReader.Data
                 }
             }
 
+            string condition = " WHERE " + primary_key.Name + "=@" + primary_key.Name;
+            command.CommandText = "UPDATE " + table + " SET " +
+                string.Join(',', fields) + condition;
+
             await ComicDataManager.WaitLock(); // Lock on.
-            // Update basic fields.
-            if (fields.Count > 0)
+            command.ExecuteNonQuery();
+
+            // Copy to blobs.
+            if (blobs.Count > 0)
             {
-                command.CommandText = "UPDATE " + table + " SET " +
-                    string.Join(',', fields) + " WHERE " + primary_key.Name + "=@" +
-                    primary_key.Name;
+                command.CommandText = "SELECT rowid FROM " + table + condition + " LIMIT 1";
+                long rowid = (long)command.ExecuteScalar();
 
-                command.ExecuteNonQuery();
-            }
-
-            // Update blob fields.
-            if (blob_keys.Count > 0)
-            {
-                // Get rowid.
-                command.CommandText = "SELECT rowid FROM " + table +
-                    " WHERE " + primary_key.Name + "=@" + primary_key.Name;
-                SqliteDataReader reader = command.ExecuteReader();
-
-                if (!reader.Read()) throw new Exception();
-                long rowid = reader.GetInt64(0);
-
-                // Write into database.
-                foreach (Key key in blob_keys)
+                foreach (var pairs in blobs)
                 {
-                    MemoryStream input_stream = Utils.Methods.SerializeToStream(key.Value);
+                    MemoryStream input_stream = pairs.Value;
+                    input_stream.Seek(0, SeekOrigin.Begin);
 
                     using (SqliteBlob write_stream = new SqliteBlob(
-                        Connection, table, key.Name, rowid))
+                        Connection, table, pairs.Key, rowid))
                     {
                         await input_stream.CopyToAsync(write_stream);
                     }
                 }
             }
             ComicDataManager.ReleaseLock(); // Lock off.
+
             command.Dispose();
         }
 
@@ -316,7 +315,8 @@ namespace ComicReader.Data
             return new TaskResult();
         }
 
-        public static SealedTask UpdateSealed(bool lazy_load = true) => (RawTask _) => Update(lazy_load).Result;
+        public static SealedTask UpdateSealed(bool lazy_load = true) =>
+            (RawTask _) => Update(lazy_load).Result;
 
         private static async RawTask Update(bool lazy_load)
         {

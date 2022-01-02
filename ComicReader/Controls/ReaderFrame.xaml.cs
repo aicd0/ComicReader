@@ -7,6 +7,7 @@ namespace ComicReader.Controls
     public sealed partial class ReadeFrame : UserControl
     {
         public ReaderFrameModel Ctx => DataContext as ReaderFrameModel;
+        private bool m_loaded = false;
 
         public ReadeFrame()
         {
@@ -18,12 +19,16 @@ namespace ComicReader.Controls
             // Notify binding changes.
             Bindings.Update();
 
-            ReaderFrameModel new_ctx = args.NewValue as ReaderFrameModel;
+            m_loaded = false;
+        }
 
-            if (new_ctx != null)
+        private void OnFrameSizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            if (!m_loaded && Ctx != null)
             {
-                new_ctx.Container = sender as Grid;
-                new_ctx.OnContainerLoadedAsync?.Invoke(Ctx);
+                m_loaded = true;
+                Ctx.Container = sender as Grid;
+                Ctx.OnContainerLoadedAsync?.Invoke(Ctx);
             }
         }
     }

@@ -35,7 +35,7 @@ namespace ComicReader.Utils
             await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, callback);
         }
 
-        public static MemoryStream SerializeToStream(object o)
+        public static MemoryStream SerializeToMemoryStream(object o)
         {
             MemoryStream stream = new MemoryStream();
             IFormatter formatter = new BinaryFormatter();
@@ -43,12 +43,20 @@ namespace ComicReader.Utils
             return stream;
         }
 
-        public static object DeserializeFromStream(MemoryStream stream)
+        public static object DeserializeFromMemoryStream(MemoryStream stream)
         {
             IFormatter formatter = new BinaryFormatter();
             stream.Seek(0, SeekOrigin.Begin);
             object o = formatter.Deserialize(stream);
             return o;
+        }
+
+        public static async Task<object> DeserializeFromStream(Stream stream)
+        {
+            MemoryStream mstream = new MemoryStream();
+            mstream.Seek(0, SeekOrigin.Begin);
+            await stream.CopyToAsync(mstream);
+            return DeserializeFromMemoryStream(mstream);
         }
 
         public static async Task<StorageFolder> TryGetFolder(string path)
@@ -74,12 +82,11 @@ namespace ComicReader.Utils
                 }
 
                 StorageFolder permit_folder = await
-                    StorageApplicationPermissions.FutureAccessList.GetFolderAsync(
-                        token);
+                    StorageApplicationPermissions.FutureAccessList.GetFolderAsync(token);
 
                 if (!StringUtils.TokenFromPath(permit_folder.Path).Equals(token))
                 {
-                    // remove the entry if folder path has changed
+                    // Remove the entry if folder path has changed.
                     useless_tokens.Add(token);
                     continue;
                 }
@@ -164,8 +171,6 @@ namespace ComicReader.Utils
                 old_collection.RemoveAt(i);
             }
         }
-
-
     }
 
     public interface IMethods3<out T, out U, out V> { }

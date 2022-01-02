@@ -11,14 +11,15 @@ namespace ComicReader.Utils
     {
         public enum TaskException
         {
-            Success,
-            Failure,
             Cancellation,
+            EmptySet,
+            Failure,
             FileNotExists,
-            ItemExists,
             InvalidParameters,
+            ItemExists,
             NameCollision,
             NoPermission,
+            Success,
         }
 
         public class TaskResult
