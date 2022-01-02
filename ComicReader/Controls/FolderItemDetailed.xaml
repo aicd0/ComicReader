@@ -28,7 +28,7 @@
                     <TextBlock Text="{x:Bind Title}"
                                TextTrimming="CharacterEllipsis"
                                FontWeight="SemiBold"
-                               Foreground="White"/>
+                               Foreground="White" />
                     <Grid Height="3" />
                     <TextBlock Text="{x:Bind Detail}"
                                FontSize="12"

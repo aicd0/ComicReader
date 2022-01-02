@@ -20,11 +20,13 @@
                 <ResourceDictionary Source="../Resources/Styles/RatingControl.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
+            <!-- Converters -->
+            <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
+
+            <!-- Shadows -->
             <mtuum:AttachedCardShadow x:Key="CommonShadow"
                                       Offset="0"
                                       Opacity="0.1" />
-
-            <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
         </ResourceDictionary>
     </UserControl.Resources>
 

@@ -55,7 +55,7 @@ namespace ComicReader
             {
                 rootFrame.Navigate(typeof(Views.MainPage));
                 Utils.TaskQueue.TaskQueueManager.AppendTask(
-                    DatabaseManager.LoadSealed(), "Loading...");
+                    XmlDatabaseManager.LoadSealed(), "Loading...");
             }
 
             if (prelaunch_activated)

@@ -16,7 +16,6 @@
                              PaneDisplayMode="LeftCompact"
                              SelectionChanged="OnNavPaneSelectionChanged">
             <Frame x:Name="ContentFrame"
-                   Loaded="ContentFrame_Loaded"
                    Background="#01FFFFFF"/>
             <muxc:NavigationView.MenuItems>
                 <muxc:NavigationViewItem Content="Favorites"

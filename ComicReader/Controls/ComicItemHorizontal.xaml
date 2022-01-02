@@ -4,7 +4,6 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
-             xmlns:muxm="using:Microsoft.UI.Xaml.Media"
              xmlns:converters="using:ComicReader.Converters"
              mc:Ignorable="d"
              d:DesignHeight="300"
@@ -15,7 +14,8 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="../Resources/Styles/RatingControl.xaml" />
             </ResourceDictionary.MergedDictionaries>
-            
+
+            <!-- Converters -->
             <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
         </ResourceDictionary>
     </UserControl.Resources>

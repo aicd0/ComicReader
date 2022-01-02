@@ -122,7 +122,7 @@ namespace ComicReader.Views
         // utilities
         public async Task Update()
         {
-            DatabaseContext db = new DatabaseContext();
+            LockContext db = new LockContext();
 
             await UpdateFolders();
             await UpdateLibrary(db);
@@ -141,7 +141,7 @@ namespace ComicReader.Views
             return new TaskResult();
         };
 
-        public async Task UpdateLibrary(DatabaseContext db)
+        public async Task UpdateLibrary(LockContext db)
         {
             await m_update_library_lock.WaitAsync();
             try
@@ -190,11 +190,11 @@ namespace ComicReader.Views
                 Shared.ComicItemSource = comic_items;
 
                 // Load images.
-                List<ImageLoaderToken> image_loader_tokens = new List<ImageLoaderToken>();
+                var image_loader_tokens = new List<Utils.ImageLoaderToken>();
 
                 foreach (ComicItemModel item in Shared.ComicItemSource)
                 {
-                    image_loader_tokens.Add(new ImageLoaderToken
+                    image_loader_tokens.Add(new Utils.ImageLoaderToken
                     {
                         Comic = item.Comic,
                         Index = 0,
@@ -210,7 +210,7 @@ namespace ComicReader.Views
 
                 await Task.Run(delegate
                 {
-                    ComicDataManager.LoadImages(db, image_loader_tokens,
+                    Utils.ImageLoader.Load(db, image_loader_tokens,
                         image_height * 1.4, image_height * 1.4,
                         m_update_library_lock).Wait();
                 });
@@ -237,9 +237,9 @@ namespace ComicReader.Views
                     }
                 };
 
-                await DatabaseManager.WaitLock();
+                await XmlDatabaseManager.WaitLock();
 
-                foreach (string folder in Database.AppSettings.ComicFolders)
+                foreach (string folder in XmlDatabase.Settings.ComicFolders)
                 {
                     FolderItemModel item = new FolderItemModel
                     {
@@ -252,7 +252,7 @@ namespace ComicReader.Views
                     new_folder_source.Add(item);
                 }
 
-                DatabaseManager.ReleaseLock();
+                XmlDatabaseManager.ReleaseLock();
                 Utils.Methods1<FolderItemModel>.UpdateCollection(FolderItemDataSource, new_folder_source, FolderItemModel.ContentEquals);
             }
             finally
@@ -289,7 +289,7 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                DatabaseContext db = new DatabaseContext();
+                LockContext db = new LockContext();
                 ComicItemModel ctx = (ComicItemModel)((MenuFlyoutItem)sender).DataContext;
                 await ComicDataManager.Hide(db, ctx.Comic);
                 await UpdateLibrary(db);
@@ -300,7 +300,7 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                if (!await AppSettingDataManager.AddComicFolderUsingPicker())
+                if (!await SettingDataManager.AddComicFolderUsingPicker())
                 {
                     return;
                 }
@@ -337,7 +337,7 @@ namespace ComicReader.Views
             Utils.Methods.Run(async delegate
             {
                 FolderItemModel ctx = (FolderItemModel)((MenuFlyoutItem)sender).DataContext;
-                await AppSettingDataManager.RemoveComicFolder(ctx.Folder, final: true);
+                await SettingDataManager.RemoveComicFolder(ctx.Folder, final: true);
                 await UpdateFolders();
                 Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.UpdateSealed(), "", m_update_queue);
                 Utils.TaskQueue.TaskQueueManager.AppendTask(UpdateSealed(), "", m_update_queue);

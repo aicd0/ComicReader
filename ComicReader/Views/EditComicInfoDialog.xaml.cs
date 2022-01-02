@@ -21,7 +21,7 @@ namespace ComicReader.Views
             // done
             Utils.Methods.Run(async delegate
             {
-                DatabaseContext db = new DatabaseContext();
+                LockContext db = new LockContext();
 
                 string text = MainEditBox.Text;
                 ComicDataManager.ParseInfo(text, m_comic);

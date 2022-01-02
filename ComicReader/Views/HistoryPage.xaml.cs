@@ -78,9 +78,9 @@ namespace ComicReader.Views
         {
             var source = new ObservableCollection<HistoryItemGroupModel>();
             HistoryItemGroupModel current_group = null;
-            await DatabaseManager.WaitLock();
+            await XmlDatabaseManager.WaitLock();
 
-            foreach (HistoryItemData item in Database.History.Items)
+            foreach (HistoryItemData item in XmlDatabase.History.Items)
             {
                 string key = item.DateTime.ToString("D");
 
@@ -105,7 +105,7 @@ namespace ComicReader.Views
                 current_group.Add(item_out);
             }
 
-            DatabaseManager.ReleaseLock();
+            XmlDatabaseManager.ReleaseLock();
 
             if (current_group != null)
             {
@@ -116,7 +116,7 @@ namespace ComicReader.Views
             MainListView.SelectedIndex = -1;
         }
 
-        private async Task OpenItem(DatabaseContext db, HistoryItemModel item, bool new_tab)
+        private async Task OpenItem(LockContext db, HistoryItemModel item, bool new_tab)
         {
             ComicData comic = await ComicDataManager.FromId(db, item.Id);
 
@@ -164,7 +164,7 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                DatabaseContext db = new DatabaseContext();
+                LockContext db = new LockContext();
                 HistoryItemModel item = (HistoryItemModel)((MenuFlyoutItem)sender).DataContext;
                 await OpenItem(db, item, true);
             });
@@ -183,7 +183,7 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                DatabaseContext db = new DatabaseContext();
+                LockContext db = new LockContext();
                 HistoryItemModel item = (HistoryItemModel)e.ClickedItem;
                 await OpenItem(db, item, false);
             });

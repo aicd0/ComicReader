@@ -102,10 +102,10 @@ namespace ComicReader.Views
                 }
             }
 
-            await DatabaseManager.WaitLock();
+            await XmlDatabaseManager.WaitLock();
             DataSource.Clear();
-            helper(Database.Favorites.RootNodes, DataSource, null);
-            DatabaseManager.ReleaseLock();
+            helper(XmlDatabase.Favorites.RootNodes, DataSource, null);
+            XmlDatabaseManager.ReleaseLock();
         }
 
         public async Task Save()
@@ -128,11 +128,11 @@ namespace ComicReader.Views
                 }
             }
 
-            await DatabaseManager.WaitLock();
-            Database.Favorites.RootNodes.Clear();
-            helper(Database.Favorites.RootNodes, DataSource);
-            DatabaseManager.ReleaseLock();
-            Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(DatabaseItem.Favorites));
+            await XmlDatabaseManager.WaitLock();
+            XmlDatabase.Favorites.RootNodes.Clear();
+            helper(XmlDatabase.Favorites.RootNodes, DataSource);
+            XmlDatabaseManager.ReleaseLock();
+            Utils.TaskQueue.TaskQueueManager.AppendTask(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Favorites));
         }
 
         private async Task DeleteItem(FavoritesItemModel item)
@@ -281,7 +281,7 @@ namespace ComicReader.Views
             // left-click
             Utils.Methods.Run(async delegate
             {
-                DatabaseContext db = new DatabaseContext();
+                LockContext db = new LockContext();
 
                 FavoritesItemModel item = (FavoritesItemModel)e.InvokedItem;
 
@@ -418,7 +418,7 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                DatabaseContext db = new DatabaseContext();
+                LockContext db = new LockContext();
 
                 FavoritesItemModel item = (FavoritesItemModel)((MenuFlyoutItem)sender).DataContext;
                 ComicData comic = await ComicDataManager.FromId(db, item.Id);

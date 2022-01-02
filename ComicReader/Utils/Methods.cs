@@ -112,6 +112,23 @@ namespace ComicReader.Utils
             return result;
         }
 
+        public static async Task<object> TryGetFile(StorageFolder folder, string name)
+        {
+            IStorageItem item = await folder.TryGetItemAsync(name);
+
+            if (item == null)
+            {
+                return null;
+            }
+
+            if (!item.IsOfType(StorageItemTypes.File))
+            {
+                return null;
+            }
+
+            return (StorageFile)item;
+        }
+
         public static async Task WaitFor(Func<bool> signal)
         {
             await Task.Run(delegate

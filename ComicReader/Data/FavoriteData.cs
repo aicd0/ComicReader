@@ -15,7 +15,7 @@ namespace ComicReader.Data
     using TaskResult = Utils.TaskQueue.TaskResult;
     using TaskException = Utils.TaskQueue.TaskException;
 
-    public class FavoriteData : AppData
+    public class FavoriteData : XmlData
     {
         public List<FavoriteNodeData> RootNodes = new List<FavoriteNodeData>();
 
@@ -23,13 +23,10 @@ namespace ComicReader.Data
         public override string FileName => "Favorites";
 
         [XmlIgnore]
-        public override AppData Target
+        public override XmlData Target
         {
-            get => Database.Favorites;
-            set
-            {
-                Database.Favorites = value as FavoriteData;
-            }
+            get => XmlDatabase.Favorites;
+            set => XmlDatabase.Favorites = value as FavoriteData;
         }
 
         public override void Pack() { }
@@ -52,14 +49,14 @@ namespace ComicReader.Data
     {
         public static async Task<FavoriteNodeData> FromId(long id)
         {
-            await DatabaseManager.WaitLock();
+            await XmlDatabaseManager.WaitLock();
             try
             {
                 return FromIdNoLock(id);
             }
             finally
             {
-                DatabaseManager.ReleaseLock();
+                XmlDatabaseManager.ReleaseLock();
             }
         }
 
@@ -93,7 +90,7 @@ namespace ComicReader.Data
                 return null;
             }
 
-            return helper(Database.Favorites.RootNodes);
+            return helper(XmlDatabase.Favorites.RootNodes);
         }
 
         public static async Task<bool> RemoveWithId(long id, bool final)
@@ -127,9 +124,9 @@ namespace ComicReader.Data
                 return false;
             }
 
-            await DatabaseManager.WaitLock();
-            bool res = helper(Database.Favorites.RootNodes);
-            DatabaseManager.ReleaseLock();
+            await XmlDatabaseManager.WaitLock();
+            bool res = helper(XmlDatabase.Favorites.RootNodes);
+            XmlDatabaseManager.ReleaseLock();
 
             if (final)
             {
@@ -141,7 +138,7 @@ namespace ComicReader.Data
 
         public static async Task Add(long id, string title, bool final)
         {
-            await DatabaseManager.WaitLock();
+            await XmlDatabaseManager.WaitLock();
 
             try
             {
@@ -157,11 +154,11 @@ namespace ComicReader.Data
                     Id = id
                 };
 
-                Database.Favorites.RootNodes.Add(node);
+                XmlDatabase.Favorites.RootNodes.Add(node);
             }
             finally
             {
-                DatabaseManager.ReleaseLock();
+                XmlDatabaseManager.ReleaseLock();
             }
 
             if (final)
@@ -173,7 +170,7 @@ namespace ComicReader.Data
         private static async Task Update()
         {
             Utils.TaskQueue.TaskQueueManager.AppendTask(
-                DatabaseManager.SaveSealed(DatabaseItem.Favorites));
+                XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Favorites));
 
             if (Views.FavoritePage.Current != null)
             {

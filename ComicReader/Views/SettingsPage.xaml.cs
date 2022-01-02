@@ -203,7 +203,7 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                DatabaseContext db = new DatabaseContext();
+                LockContext db = new LockContext();
                 await Update(db);
             });
         }
@@ -218,7 +218,7 @@ namespace ComicReader.Views
         public static string PageUniqueString(object _) => "settings";
 
         // utilities
-        private async Task Update(DatabaseContext db)
+        private async Task Update(LockContext db)
         {
             m_updating = true;
 
@@ -241,12 +241,12 @@ namespace ComicReader.Views
             Shared.Appearance = Shared.CurrentAppearance;
 
             // From database.
-            await DatabaseManager.WaitLock();
+            await XmlDatabaseManager.WaitLock();
 
-            Shared.ReaderRightToLeft = Database.AppSettings.RightToLeft;
-            Shared.HistorySaveBrowsingHistory = Database.AppSettings.SaveHistory;
+            Shared.ReaderRightToLeft = XmlDatabase.Settings.RightToLeft;
+            Shared.HistorySaveBrowsingHistory = XmlDatabase.Settings.SaveHistory;
 
-            DatabaseManager.ReleaseLock();
+            XmlDatabaseManager.ReleaseLock();
 
             // Comic count.
             SqliteCommand command = DatabaseManager.Connection.CreateCommand();
@@ -279,13 +279,13 @@ namespace ComicReader.Views
             }
 
             // to database
-            await DatabaseManager.WaitLock();
+            await XmlDatabaseManager.WaitLock();
 
-            Database.AppSettings.RightToLeft = Shared.ReaderRightToLeft;
-            Database.AppSettings.SaveHistory = Shared.HistorySaveBrowsingHistory;
+            XmlDatabase.Settings.RightToLeft = Shared.ReaderRightToLeft;
+            XmlDatabase.Settings.SaveHistory = Shared.HistorySaveBrowsingHistory;
 
-            DatabaseManager.ReleaseLock();
-            Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(DatabaseItem.AppSettings));
+            XmlDatabaseManager.ReleaseLock();
+            Utils.TaskQueue.TaskQueueManager.AppendTask(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
         }
 
         private void OnSettingsChanged()

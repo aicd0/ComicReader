@@ -847,7 +847,7 @@ namespace ComicReader.Views
         private Utils.CancellationLock m_container_loaded_lock = new Utils.CancellationLock();
         public async Task OnContainerLoaded(ReaderFrameModel ctx)
         {
-            DatabaseContext db = new DatabaseContext();
+            LockContext db = new LockContext();
 
             System.Diagnostics.Debug.Assert(ctx != null);
             System.Diagnostics.Debug.Assert(ctx.Container != null);
@@ -944,7 +944,7 @@ namespace ComicReader.Views
             }
         }
 
-        public async Task OnScrollViewerViewChanged(DatabaseContext db, bool is_intermediate)
+        public async Task OnScrollViewerViewChanged(LockContext db, bool is_intermediate)
         {
             if (!IsLoaded)
             {
@@ -1089,7 +1089,7 @@ namespace ComicReader.Views
             }
         }
 
-        private async Task UpdateImages(DatabaseContext db)
+        private async Task UpdateImages(LockContext db)
         {
             if (!IsLoaded || !await UpdatePage())
             {
@@ -1109,7 +1109,7 @@ namespace ComicReader.Views
                     return;
                 }
 
-                List<ImageLoaderToken> img_loader_tokens = new List<ImageLoaderToken>();
+                var img_loader_tokens = new List<Utils.ImageLoaderToken>();
                 int page_begin = Math.Max(Page - 5, 1);
                 int page_end = Math.Min(Page + 10, Pages);
                 int idx_begin = PageToIndex(page_begin);
@@ -1125,7 +1125,7 @@ namespace ComicReader.Views
                         continue;
                     }
 
-                    img_loader_tokens.Add(new ImageLoaderToken
+                    img_loader_tokens.Add(new Utils.ImageLoaderToken
                     {
                         Index = i,
                         Comic = Comic,
@@ -1136,7 +1136,7 @@ namespace ComicReader.Views
                     });
                 }
 
-                await ComicDataManager.LoadImages(db, img_loader_tokens,
+                await Utils.ImageLoader.Load(db, img_loader_tokens,
                     double.PositiveInfinity, double.PositiveInfinity,
                     m_update_image_lock);
 
@@ -1268,7 +1268,7 @@ namespace ComicReader.Views
 
         private void OnTabUpdate()
         {
-            Shared.ReaderFlowDirection = Database.AppSettings.RightToLeft ?
+            Shared.ReaderFlowDirection = XmlDatabase.Settings.RightToLeft ?
                 FlowDirection.RightToLeft : FlowDirection.LeftToRight;
             Shared.BottomTilePinned = false;
         }
@@ -1277,7 +1277,7 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                DatabaseContext db = new DatabaseContext();
+                LockContext db = new LockContext();
 
                 Shared.NavigationPageShared.CurrentPageType = Utils.Tab.PageType.Reader;
                 tab_id.Type = Utils.Tab.PageType.Reader;
@@ -1334,7 +1334,7 @@ namespace ComicReader.Views
             PageIndicator.Text = control.Page.ToString() + " of " + image_count;
         }
 
-        private async Task UpdateProgress(DatabaseContext db, ReaderModel control)
+        private async Task UpdateProgress(LockContext db, ReaderModel control)
         {
             await m_core_data_lock.WaitAsync(); // Data protection on.
 
@@ -1367,7 +1367,7 @@ namespace ComicReader.Views
         }
 
         // loading
-        private async Task LoadComic(DatabaseContext db, ComicData comic)
+        private async Task LoadComic(LockContext db, ComicData comic)
         {
             // Load the comic.
             if (comic == null)
@@ -1430,7 +1430,7 @@ namespace ComicReader.Views
             await LoadComicInfo();
         }
 
-        private async RawTask LoadImagesAsync(DatabaseContext db)
+        private async RawTask LoadImagesAsync(LockContext db)
         {
             await m_load_image_lock.WaitAsync();
 
@@ -1445,7 +1445,7 @@ namespace ComicReader.Views
                 PreviewDataSource.Clear();
             });
 
-            List<ImageLoaderToken> preview_img_loader_tokens = new List<ImageLoaderToken>();
+            var preview_img_loader_tokens = new List<Utils.ImageLoaderToken>();
             Utils.Stopwatch save_timer = new Utils.Stopwatch();
             save_timer.Start();
             ComicData comic = m_comic; // Stores locally.
@@ -1455,7 +1455,7 @@ namespace ComicReader.Views
                 int index = i; // Stores locally.
                 int page = i + 1; // Stores locally.
 
-                preview_img_loader_tokens.Add(new ImageLoaderToken
+                preview_img_loader_tokens.Add(new Utils.ImageLoaderToken
                 {
                     Comic = comic,
                     Index = index,
@@ -1502,10 +1502,8 @@ namespace ComicReader.Views
                 });
             }
 
-            Task preview_loader_task = ComicDataManager.LoadImages(db, 
-                preview_img_loader_tokens, preview_width, preview_height,
-                m_load_image_lock);
-            await preview_loader_task.AsAsyncAction();
+            await Utils.ImageLoader.Load(db,  preview_img_loader_tokens,
+                preview_width, preview_height, m_load_image_lock);
 
             m_load_image_lock.Release();
             return new TaskResult();
@@ -1562,7 +1560,7 @@ namespace ComicReader.Views
         }
 
         // reader
-        private async Task<bool> SetActiveReader(DatabaseContext db, ReaderModel reader)
+        private async Task<bool> SetActiveReader(LockContext db, ReaderModel reader)
         {
             System.Diagnostics.Debug.Assert(reader != null);
 
@@ -1606,7 +1604,7 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                DatabaseContext db = new DatabaseContext();
+                LockContext db = new LockContext();
 
                 if (!Shared.IsReaderVertical.HasValue)
                 {
@@ -1632,7 +1630,7 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                DatabaseContext db = new DatabaseContext();
+                LockContext db = new LockContext();
 
                 await control.OnScrollViewerViewChanged(db, e.IsIntermediate);
 
@@ -1902,7 +1900,7 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                DatabaseContext db = new DatabaseContext();
+                LockContext db = new LockContext();
                 m_comic.Rating = (int)sender.Value;
                 await m_comic.SaveBasic(db);
             });

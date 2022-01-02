@@ -3,16 +3,13 @@
 using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using Windows.Graphics.Display;
 using Windows.Storage;
 using Windows.Storage.Search;
 using Windows.Storage.Streams;
-using Windows.UI.Xaml.Media.Imaging;
 
 namespace ComicReader.Data
 {
@@ -104,29 +101,28 @@ namespace ComicReader.Data
         public List<StorageFile> ImageFiles = new List<StorageFile>();
 
         // Saving.
-        private async Task Save(DatabaseContext db, List<Key> keys)
+        private async Task Save(LockContext db, List<SqlKey> keys)
         {
-            if (Id < 0) throw new Exception();
-
-            Key id = new Key(FieldId, Id);
+            System.Diagnostics.Debug.Assert(Id >= 0);
+            SqlKey id = new SqlKey(FieldId, Id);
             await DatabaseManager.Update(db, DatabaseManager.ComicTable, id, keys);
         }
 
-        public async Task Save(DatabaseContext db)
+        public async Task Save(LockContext db)
         {
-            List<Key> keys = new List<Key>
+            List<SqlKey> keys = new List<SqlKey>
             {
-                new Key(FieldTitle1, Title1),
-                new Key(FieldTitle2, Title2),
-                new Key(FieldDirectory, Directory),
-                new Key(FieldHidden, Hidden),
-                new Key(FieldRating, Rating),
-                new Key(FieldProgress, Progress),
-                new Key(FieldLastVisit, LastVisit),
-                new Key(FieldLastPosition, LastPosition),
-                new Key(FieldCoverFileName, CoverFileName),
-                new Key(FieldTags, Tags, blob: true),
-                new Key(FieldImageAspectRatios, ImageAspectRatios, blob: true),
+                new SqlKey(FieldTitle1, Title1),
+                new SqlKey(FieldTitle2, Title2),
+                new SqlKey(FieldDirectory, Directory),
+                new SqlKey(FieldHidden, Hidden),
+                new SqlKey(FieldRating, Rating),
+                new SqlKey(FieldProgress, Progress),
+                new SqlKey(FieldLastVisit, LastVisit),
+                new SqlKey(FieldLastPosition, LastPosition),
+                new SqlKey(FieldCoverFileName, CoverFileName),
+                new SqlKey(FieldTags, Tags, blob: true),
+                new SqlKey(FieldImageAspectRatios, ImageAspectRatios, blob: true),
             };
 
             if (Id < 0)
@@ -151,72 +147,35 @@ namespace ComicReader.Data
             }
         }
 
-        public async Task SaveBasic(DatabaseContext db)
+        public async Task SaveBasic(LockContext db)
         {
-            List<Key> keys = new List<Key>
+            List<SqlKey> keys = new List<SqlKey>
             {
-                new Key(FieldTitle1, Title1),
-                new Key(FieldTitle2, Title2),
-                new Key(FieldDirectory, Directory),
-                new Key(FieldHidden, Hidden),
-                new Key(FieldRating, Rating),
-                new Key(FieldProgress, Progress),
-                new Key(FieldLastVisit, LastVisit),
-                new Key(FieldLastPosition, LastPosition),
-                new Key(FieldCoverFileName, CoverFileName),
-                new Key(FieldTags, Tags, blob: true),
+                new SqlKey(FieldTitle1, Title1),
+                new SqlKey(FieldTitle2, Title2),
+                new SqlKey(FieldDirectory, Directory),
+                new SqlKey(FieldHidden, Hidden),
+                new SqlKey(FieldRating, Rating),
+                new SqlKey(FieldProgress, Progress),
+                new SqlKey(FieldLastVisit, LastVisit),
+                new SqlKey(FieldLastPosition, LastPosition),
+                new SqlKey(FieldCoverFileName, CoverFileName),
+                new SqlKey(FieldTags, Tags, blob: true),
             };
+
             await Save(db, keys);
         }
 
-        public async Task SaveImageAspectRatios(DatabaseContext db)
+        public async Task SaveImageAspectRatios(LockContext db)
         {
-            List<Key> keys = new List<Key>
+            List<SqlKey> keys = new List<SqlKey>
             {
-                new Key(FieldImageAspectRatios, ImageAspectRatios, blob: true)
+                new SqlKey(FieldImageAspectRatios, ImageAspectRatios, blob: true)
             };
+
             await Save(db, keys);
         }
     };
-
-    public class ImageLoaderToken
-    {
-        public ComicData Comic;
-        public int Index;
-        public Action<BitmapImage> Callback;
-    }
-
-    public enum ImageConstrainOption
-    {
-        None,
-        SameAsFirstImage
-    }
-
-    public class ImageConstrain
-    {
-        public double Val;
-        public ImageConstrainOption Option;
-
-        public static implicit operator ImageConstrain(double val)
-        {
-            System.Diagnostics.Debug.Assert(!double.IsNaN(val));
-
-            return new ImageConstrain
-            {
-                Val = val,
-                Option = ImageConstrainOption.None
-            };
-        }
-
-        public static implicit operator ImageConstrain(ImageConstrainOption opt)
-        {
-            return new ImageConstrain
-            {
-                Val = 0.0,
-                Option = opt
-            };
-        }
-    }
 
     class ComicDataManager
     {
@@ -224,7 +183,7 @@ namespace ComicReader.Data
         private static readonly SemaphoreSlim m_table_lock = new SemaphoreSlim(1);
         private static readonly Utils.CancellationLock m_update_lock = new Utils.CancellationLock();
 
-        public static async Task WaitLock(DatabaseContext db)
+        public static async Task WaitLock(LockContext db)
         {
             int depth = Interlocked.Increment(ref db.ComicTableLockDepth);
 
@@ -236,7 +195,7 @@ namespace ComicReader.Data
             }
         }
 
-        public static void ReleaseLock(DatabaseContext db)
+        public static void ReleaseLock(LockContext db)
         {
             int depth = Interlocked.Decrement(ref db.ComicTableLockDepth);
 
@@ -248,7 +207,7 @@ namespace ComicReader.Data
             }
         }
 
-        public static async Task<ComicData> From(DatabaseContext db, SqliteDataReader query)
+        public static async Task<ComicData> From(LockContext db, SqliteDataReader query)
         {
             // Non-blob fields.
             ComicData comic = new ComicData(query.GetInt32(0))
@@ -298,7 +257,7 @@ namespace ComicReader.Data
             return comic;
         }
 
-        private static async Task<ComicData> From(DatabaseContext db, string col, object entry)
+        private static async Task<ComicData> From(LockContext db, string col, object entry)
         {
             SqliteCommand command = new SqliteCommand();
             command.Connection = DatabaseManager.Connection;
@@ -319,17 +278,17 @@ namespace ComicReader.Data
             }
         }
 
-        public static async Task<ComicData> FromId(DatabaseContext db, long id)
+        public static async Task<ComicData> FromId(LockContext db, long id)
         {
             return await From(db, ComicData.FieldId, id);
         }
 
-        public static async Task<ComicData> FromDirectory(DatabaseContext db, string dir)
+        public static async Task<ComicData> FromDirectory(LockContext db, string dir)
         {
             return await From(db, ComicData.FieldDirectory, dir);
         }
 
-        private static async Task<ComicData> New(DatabaseContext db, string title1, string title2, string dir)
+        private static async Task<ComicData> New(LockContext db, string title1, string title2, string dir)
         {
             ComicData comic = new ComicData
             {
@@ -341,7 +300,7 @@ namespace ComicReader.Data
             return comic;
         }
 
-        private static async Task RemoveWithDirectory(DatabaseContext db, string dir)
+        private static async Task RemoveWithDirectory(LockContext db, string dir)
         {
             SqliteCommand command = new SqliteCommand();
             command.Connection = DatabaseManager.Connection;
@@ -354,23 +313,22 @@ namespace ComicReader.Data
             ComicDataManager.ReleaseLock(db);
         }
 
-        public static async RawTask Update(DatabaseContext db, bool lazy_load)
+        public static async RawTask Update(LockContext db, bool lazy_load)
         {
             await m_update_lock.WaitAsync();
-
             try
             {
                 // get root folders
-                await DatabaseManager.WaitLock();
-                List<string> root_folders = new List<string>(Database.AppSettings.ComicFolders.Count);
+                await XmlDatabaseManager.WaitLock();
+                List<string> root_folders = new List<string>(XmlDatabase.Settings.ComicFolders.Count);
 
-                foreach (string folder_path in Database.AppSettings.ComicFolders)
+                foreach (string folder_path in XmlDatabase.Settings.ComicFolders)
                 {
                     root_folders.Add(folder_path);
                 }
 
                 // get all folders and subfolders
-                DatabaseManager.ReleaseLock();
+                XmlDatabaseManager.ReleaseLock();
                 List<StorageFolder> all_folders = new List<StorageFolder>();
 
                 foreach (string folder_path in root_folders)
@@ -380,9 +338,9 @@ namespace ComicReader.Data
                     // remove unreachable folders from database
                     if (folder == null)
                     {
-                        await DatabaseManager.WaitLock();
-                        Database.AppSettings.ComicFolders.Remove(folder_path);
-                        DatabaseManager.ReleaseLock();
+                        await XmlDatabaseManager.WaitLock();
+                        XmlDatabase.Settings.ComicFolders.Remove(folder_path);
+                        XmlDatabaseManager.ReleaseLock();
                         continue;
                     }
 
@@ -404,7 +362,7 @@ namespace ComicReader.Data
                     }
                 }
 
-                Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(DatabaseItem.AppSettings));
+                Utils.TaskQueue.TaskQueueManager.AppendTask(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
 
                 // extracts StorageFolder.Path into a new string list
                 List<string> all_dir = new List<string>(all_folders.Count);
@@ -556,13 +514,13 @@ namespace ComicReader.Data
             }
         }
 
-        public static async Task Hide(DatabaseContext db, ComicData comic)
+        public static async Task Hide(LockContext db, ComicData comic)
         {
             comic.Hidden = true;
             await comic.SaveBasic(db);
         }
 
-        public static async Task Unhide(DatabaseContext db, ComicData comic)
+        public static async Task Unhide(LockContext db, ComicData comic)
         {
             comic.Hidden = false;
             await comic.SaveBasic(db);
@@ -728,10 +686,10 @@ namespace ComicReader.Data
             return new TaskResult();
         }
 
-        public static async RawTask UpdateImages(DatabaseContext db, ComicData comic, bool cover = false)
+        public static async RawTask UpdateImages(LockContext db, ComicData comic, bool cover = false)
         {
             // Try complete comic folder.
-            await DatabaseManager.WaitLock();
+            await XmlDatabaseManager.WaitLock();
             try
             {
                 if (comic == null)
@@ -748,7 +706,7 @@ namespace ComicReader.Data
             }
             finally
             {
-                DatabaseManager.ReleaseLock();
+                XmlDatabaseManager.ReleaseLock();
             }
 
             // Try load cover on cover=true.
@@ -788,133 +746,6 @@ namespace ComicReader.Data
             comic.CoverFileName = comic.ImageFiles[0].Name;
             await comic.SaveBasic(db);
             return new TaskResult();
-        }
-
-        public static async Task LoadImages(DatabaseContext db,
-            IEnumerable<ImageLoaderToken> tokens, ImageConstrain max_width,
-            ImageConstrain max_height, Utils.CancellationLock cancellation_lock)
-        {
-            List<ImageLoaderToken> _tokens = new List<ImageLoaderToken>(tokens);
-            bool use_origin_size =
-                max_width.Option == ImageConstrainOption.None &&
-                double.IsInfinity(max_width.Val) &&
-                max_height.Option == ImageConstrainOption.None &&
-                double.IsInfinity(max_height.Val);
-            double raw_pixels_per_view_pixel = 0.0;
-            double frame_ratio = 0.0;
-            bool first = true;
-            bool trig_update = false;
-
-            for (; _tokens.Count > 0;)
-            {
-                if (cancellation_lock.CancellationRequested)
-                {
-                    return;
-                }
-
-                ImageLoaderToken token = _tokens.First();
-                _tokens.RemoveAt(0);
-                ComicData comic = token.Comic;
-
-                // Lazy load.
-                if (comic.ImageFiles.Count <= token.Index)
-                {
-                    TaskResult r = await UpdateImages(db, comic, cover: token.Index == 0);
-
-                    // Skip tokens whose comic folder cannot be reached.
-                    if (!r.Successful)
-                    {
-                        _tokens.RemoveAll(x => x.Comic == comic);
-                        trig_update = true;
-                        continue;
-                    }
-
-                    if (comic.ImageFiles.Count <= token.Index)
-                    {
-                        trig_update = true;
-                        continue;
-                    }
-                }
-
-                StorageFile image_file = comic.ImageFiles[token.Index];
-                IRandomAccessStream stream;
-
-                try
-                {
-                    stream = await image_file.OpenAsync(FileAccessMode.Read);
-                }
-                catch (FileNotFoundException)
-                {
-                    trig_update = true;
-                    continue;
-                }
-
-                BitmapImage image = null;
-                Task task = null;
-
-                await Utils.Methods.Sync(delegate
-                {
-                    image = new BitmapImage();
-                    task = image.SetSourceAsync(stream).AsTask();
-                });
-
-                await task.AsAsyncAction();
-                stream.Dispose();
-
-                await Utils.Methods.Sync(delegate
-                {
-                    if (first)
-                    {
-                        first = false;
-
-                        if (max_width.Option == ImageConstrainOption.SameAsFirstImage)
-                        {
-                            max_width.Val = image.PixelWidth;
-                        }
-
-                        if (max_height.Option == ImageConstrainOption.SameAsFirstImage)
-                        {
-                            max_height.Val = image.PixelHeight;
-                        }
-
-                        raw_pixels_per_view_pixel = DisplayInformation.GetForCurrentView().RawPixelsPerViewPixel;
-                        frame_ratio = max_width.Val / max_height.Val;
-                    }
-
-                    if (!use_origin_size)
-                    {
-                        double image_ratio = (double)image.PixelWidth / image.PixelHeight;
-                        double image_height;
-                        double image_width;
-                        if (image_ratio > frame_ratio)
-                        {
-                            image_width = max_width.Val * raw_pixels_per_view_pixel;
-                            image_height = image_width / image_ratio;
-                        }
-                        else
-                        {
-                            image_height = max_height.Val * raw_pixels_per_view_pixel;
-                            image_width = image_height * image_ratio;
-                        }
-                        image.DecodePixelHeight = (int)image_height;
-                        image.DecodePixelWidth = (int)image_width;
-                    }
-
-                    token.Callback?.Invoke(image);
-#if DEBUG_LOG_IMAGE_LOADED
-                    System.Diagnostics.Debug.Print("Image " + token.Index.ToString() + " loaded.\n");
-#endif
-                });
-            }
-
-            // Not all the images are successfully loaded, most likely that some of the
-            // files or directories has been renamed, moved or deleted. We trigger a
-            // DatabaseManager.Update() here to sync the changes.
-            if (trig_update)
-            {
-                Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.UpdateSealed(), "",
-                    Utils.TaskQueue.TaskQueueManager.EmptyQueue());
-            }
         }
     }
 }

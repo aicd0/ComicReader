@@ -166,7 +166,7 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                DatabaseContext db = new DatabaseContext();
+                LockContext db = new LockContext();
 
                 Shared.NavigationPageShared.CurrentPageType = Utils.Tab.PageType.Search;
                 NavigationPage.Current.SetSearchBox((string)tab_id.RequestArgs);
@@ -181,7 +181,7 @@ namespace ComicReader.Views
         }
 
         // update
-        private async Task StartSearch(DatabaseContext db)
+        private async Task StartSearch(LockContext db)
         {
             string keyword = (string)m_tab_manager.TabId.RequestArgs;
 
@@ -251,7 +251,7 @@ namespace ComicReader.Views
             public int Similarity = 0;
         }
 
-        private async Task<bool> SearchMain(DatabaseContext db, List<string> keywords, Utils.Search.Filter filter)
+        private async Task<bool> SearchMain(LockContext db, List<string> keywords, Utils.Search.Filter filter)
         {
             await m_search_lock.WaitAsync();
             try
@@ -327,7 +327,7 @@ namespace ComicReader.Views
             return true;
         }
 
-        private async Task LoadMoreResults(DatabaseContext db, int count)
+        private async Task LoadMoreResults(LockContext db, int count)
         {
             await m_search_lock.WaitAsync();
             try
@@ -381,11 +381,11 @@ namespace ComicReader.Views
 
                 // load images
                 double image_height = (double)Application.Current.Resources["ComicItemHorizontalImageHeight"];
-                List<ImageLoaderToken> image_loader_tokens = new List<ImageLoaderToken>();
+                var image_loader_tokens = new List<Utils.ImageLoaderToken>();
                 
                 foreach (ComicItemModel item in Shared.SearchResults.Skip(items_loaded))
                 {
-                    image_loader_tokens.Add(new ImageLoaderToken
+                    image_loader_tokens.Add(new Utils.ImageLoaderToken
                     {
                         Comic = item.Comic,
                         Index = 0,
@@ -397,7 +397,7 @@ namespace ComicReader.Views
                     });
                 }
 
-                await ComicDataManager.LoadImages(db, image_loader_tokens,
+                await Utils.ImageLoader.Load(db, image_loader_tokens,
                     double.PositiveInfinity, image_height, m_search_lock);
             }
             finally
@@ -412,7 +412,7 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                DatabaseContext db = new DatabaseContext();
+                LockContext db = new LockContext();
 
                 PointerPoint pt = e.GetCurrentPoint((UIElement)sender);
                 if (!pt.Properties.IsLeftButtonPressed)
@@ -430,7 +430,7 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                DatabaseContext db = new DatabaseContext();
+                LockContext db = new LockContext();
 
                 ScrollViewer scrollViewer = (ScrollViewer)sender;
 
@@ -467,7 +467,7 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                DatabaseContext db = new DatabaseContext();
+                LockContext db = new LockContext();
                 ComicItemModel ctx = (ComicItemModel)((MenuFlyoutItem)sender).DataContext;
                 await ComicDataManager.Unhide(db, ctx.Comic);
                 await StartSearch(db);
@@ -478,7 +478,7 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                DatabaseContext db = new DatabaseContext();
+                LockContext db = new LockContext();
                 ComicItemModel ctx = (ComicItemModel)((MenuFlyoutItem)sender).DataContext;
                 await ComicDataManager.Hide(db, ctx.Comic);
                 await StartSearch(db);

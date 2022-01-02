@@ -16,7 +16,7 @@ namespace ComicReader.Data
     using TaskResult = Utils.TaskQueue.TaskResult;
     using TaskException = Utils.TaskQueue.TaskException;
 
-    public class HistoryData : AppData
+    public class HistoryData : XmlData
     {
         public List<HistoryItemData> Items = new List<HistoryItemData>();
 
@@ -24,13 +24,10 @@ namespace ComicReader.Data
         public override string FileName => "History";
 
         [XmlIgnore]
-        public override AppData Target
+        public override XmlData Target
         {
-            get => Database.History;
-            set
-            {
-                Database.History = value as HistoryData;
-            }
+            get => XmlDatabase.History;
+            set => XmlDatabase.History = value as HistoryData;
         }
 
         public override void Pack()
@@ -76,10 +73,10 @@ namespace ComicReader.Data
     {
         public static async Task Add(long id, string title, bool final)
         {
-            await DatabaseManager.WaitLock();
+            await XmlDatabaseManager.WaitLock();
             try
             {
-                if (!Database.AppSettings.SaveHistory)
+                if (!XmlDatabase.Settings.SaveHistory)
                 {
                     return;
                 }
@@ -92,17 +89,17 @@ namespace ComicReader.Data
                 };
 
                 RemoveNoLock(id);
-                Database.History.Items.Insert(0, record);
+                XmlDatabase.History.Items.Insert(0, record);
             }
             finally
             {
-                DatabaseManager.ReleaseLock();
+                XmlDatabaseManager.ReleaseLock();
             }
 
             if (final)
             {
                 Utils.TaskQueue.TaskQueueManager.AppendTask(
-                    DatabaseManager.SaveSealed(DatabaseItem.History));
+                    XmlDatabaseManager.SaveSealed(XmlDatabaseItem.History));
 
                 if (Views.HistoryPage.Current != null)
                 {
@@ -113,19 +110,19 @@ namespace ComicReader.Data
 
         public static async Task Remove(long id, bool final)
         {
-            await DatabaseManager.WaitLock();
+            await XmlDatabaseManager.WaitLock();
             RemoveNoLock(id);
-            DatabaseManager.ReleaseLock();
+            XmlDatabaseManager.ReleaseLock();
 
             if (final)
             {
-                Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.SaveSealed(DatabaseItem.History));
+                Utils.TaskQueue.TaskQueueManager.AppendTask(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.History));
             }
         }
 
         private static void RemoveNoLock(long id)
         {
-            List<HistoryItemData> items = Database.History.Items;
+            List<HistoryItemData> items = XmlDatabase.History.Items;
 
             for (int i = 0; i < items.Count; ++i)
             {

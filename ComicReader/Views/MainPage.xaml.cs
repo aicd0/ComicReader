@@ -70,7 +70,7 @@ namespace ComicReader.Views
 
         private async Task _OnFileActivatedAsync(FileActivatedEventArgs args)
         {
-            DatabaseContext db = new DatabaseContext();
+            LockContext db = new LockContext();
 
             string dir = args.Files[0].Path;
 

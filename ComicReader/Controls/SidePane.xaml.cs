@@ -7,19 +7,11 @@ namespace ComicReader.Controls
 {
     public sealed partial class SidePane : UserControl
     {
-        public static SidePane Current = null;
         public NavigationPage Ctx => DataContext as NavigationPage;
 
         public SidePane()
         {
-            Current = this;
-
             InitializeComponent();
-        }
-
-        private void ContentFrame_Loaded(object sender, Windows.UI.Xaml.RoutedEventArgs e)
-        {
-            //ContentFrame.Navigate(typeof(FavoritePage), null);
         }
 
         private void OnNavPaneSelectionChanged(muxc.NavigationView sender, muxc.NavigationViewSelectionChangedEventArgs args)
@@ -33,7 +25,6 @@ namespace ComicReader.Controls
             };
 
             Type page_type;
-
             switch (item)
             {
                 case "Favorites":

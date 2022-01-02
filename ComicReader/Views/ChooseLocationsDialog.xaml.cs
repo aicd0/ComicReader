@@ -33,9 +33,9 @@ namespace ComicReader.Views
                 });
             }
 
-            await DatabaseManager.WaitLock();
+            await XmlDatabaseManager.WaitLock();
 
-            foreach (string folder in Database.AppSettings.ComicFolders)
+            foreach (string folder in XmlDatabase.Settings.ComicFolders)
             {
                 FolderItemDataSource.Add(new FolderItemModel
                 {
@@ -44,7 +44,7 @@ namespace ComicReader.Views
                 });
             }
 
-            DatabaseManager.ReleaseLock();
+            XmlDatabaseManager.ReleaseLock();
         }
 
         // events
@@ -78,7 +78,7 @@ namespace ComicReader.Views
 
                 try
                 {
-                    if (!await AppSettingDataManager.AddComicFolderUsingPicker())
+                    if (!await SettingDataManager.AddComicFolderUsingPicker())
                     {
                         return;
                     }
@@ -104,7 +104,7 @@ namespace ComicReader.Views
 
                 IsPrimaryButtonEnabled = false;
                 FolderItemModel item = (FolderItemModel)((Grid)sender).DataContext;
-                await AppSettingDataManager.RemoveComicFolder(item.Folder);
+                await SettingDataManager.RemoveComicFolder(item.Folder);
                 await Update();
                 IsPrimaryButtonEnabled = true;
             });
