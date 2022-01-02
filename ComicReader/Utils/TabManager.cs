@@ -50,24 +50,24 @@ namespace ComicReader.Utils.Tab
 
         private object Shared { get; set; }
 
-        public Action<object> OnRegister { get; set; }
+        public Action<object> OnTabRegister { get; set; }
 
-        public Action OnUnregister { get; set; }
+        public Action OnTabUnregister { get; set; }
 
-        public Action OnPageEntered { get; set; }
+        public Action OnTabUpdate { get; set; }
 
-        public Action<TabIdentifier> OnUpdate { get; set; }
+        public Action<TabIdentifier> OnTabStart { get; set; }
 
         private void _Unregister()
         {
             if (m_registered)
             {
-                OnUnregister?.Invoke();
+                OnTabUnregister?.Invoke();
                 m_registered = false;
             }
         }
 
-        public void OnUnloaded(object sender, RoutedEventArgs e)
+        public void OnTabUnloaded(object sender, RoutedEventArgs e)
         {
             _Unregister();
         }
@@ -90,7 +90,7 @@ namespace ComicReader.Utils.Tab
 
             if (!m_registered)
             {
-                OnRegister?.Invoke(Shared);
+                OnTabRegister?.Invoke(Shared);
                 m_registered = true;
             }
 
@@ -137,11 +137,11 @@ namespace ComicReader.Utils.Tab
                 TabIdInfo info = m_info[m_info_index];
                 TabId.Type = info.Type;
                 TabId.RequestArgs = info.RequestArgs;
-                TabId.OnTabSelected += OnPageEntered;
+                TabId.OnTabSelected += OnTabUpdate;
             }
 
-            OnPageEntered?.Invoke();
-            OnUpdate?.Invoke(TabId);
+            OnTabUpdate?.Invoke();
+            OnTabStart?.Invoke(TabId);
         }
 
         public static Type TypeFromPageTypeEnum(Utils.Tab.PageType type)

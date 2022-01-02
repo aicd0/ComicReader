@@ -37,10 +37,10 @@ namespace ComicReader.Views
             Shared = new HistoryPageShared();
 
             m_tab_manager = new Utils.Tab.TabManager();
-            m_tab_manager.OnRegister = OnRegister;
-            m_tab_manager.OnUnregister = OnUnregister;
-            m_tab_manager.OnPageEntered = OnPageEntered;
-            Unloaded += m_tab_manager.OnUnloaded;
+            m_tab_manager.OnTabRegister = OnTabRegister;
+            m_tab_manager.OnTabUnregister = OnTabUnregister;
+            m_tab_manager.OnTabUpdate = OnTabUpdate;
+            Unloaded += m_tab_manager.OnTabUnloaded;
 
             InitializeComponent();
         }
@@ -58,14 +58,14 @@ namespace ComicReader.Views
             m_tab_manager.OnNavigatedFrom(e);
         }
 
-        private void OnRegister(object shared)
+        private void OnTabRegister(object shared)
         {
             Shared.NavigationPageShared = (NavigationPageShared)shared;
         }
 
-        private void OnUnregister() { }
+        private void OnTabUnregister() { }
 
-        private void OnPageEntered()
+        private void OnTabUpdate()
         {
             Utils.Methods.Run(async delegate
             {
@@ -116,9 +116,9 @@ namespace ComicReader.Views
             MainListView.SelectedIndex = -1;
         }
 
-        private async Task OpenItem(HistoryItemModel item, bool new_tab)
+        private async Task OpenItem(DatabaseContext db, HistoryItemModel item, bool new_tab)
         {
-            ComicData comic = await ComicDataManager.FromId(item.Id);
+            ComicData comic = await ComicDataManager.FromId(db, item.Id);
 
             if (comic == null)
             {
@@ -164,8 +164,9 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
+                DatabaseContext db = new DatabaseContext();
                 HistoryItemModel item = (HistoryItemModel)((MenuFlyoutItem)sender).DataContext;
-                await OpenItem(item, true);
+                await OpenItem(db, item, true);
             });
         }
 
@@ -182,8 +183,9 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
+                DatabaseContext db = new DatabaseContext();
                 HistoryItemModel item = (HistoryItemModel)e.ClickedItem;
-                await OpenItem(item, false);
+                await OpenItem(db, item, false);
             });
         }
     }

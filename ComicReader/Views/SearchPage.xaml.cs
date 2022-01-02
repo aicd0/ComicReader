@@ -1,15 +1,9 @@
 ﻿using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
-using Windows.Graphics.Display;
-using Windows.Storage;
-using Windows.Storage.Streams;
-using Windows.UI.Core;
 using Windows.UI.Input;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -137,10 +131,10 @@ namespace ComicReader.Views
             Shared.SearchResults = new Utils.ObservableCollectionPlus<ComicItemModel>();
             
             m_tab_manager = new Utils.Tab.TabManager();
-            m_tab_manager.OnRegister = OnRegister;
-            m_tab_manager.OnUnregister = OnUnregister;
-            m_tab_manager.OnUpdate = OnUpdate;
-            Unloaded += m_tab_manager.OnUnloaded;
+            Unloaded += m_tab_manager.OnTabUnloaded;
+            m_tab_manager.OnTabRegister = OnTabRegister;
+            m_tab_manager.OnTabUnregister = OnTabUnregister;
+            m_tab_manager.OnTabStart = OnTabStart;
             m_all_results = new List<ComicData>();
             m_search_lock = new Utils.CancellationLock();
 
@@ -160,21 +154,23 @@ namespace ComicReader.Views
             m_tab_manager.OnNavigatedFrom(e);
         }
 
-        private void OnRegister(object shared)
+        private void OnTabRegister(object shared)
         {
             Shared.NavigationPageShared = (NavigationPageShared)shared;
 
         }
 
-        private void OnUnregister() { }
+        private void OnTabUnregister() { }
 
-        private void OnUpdate(Utils.Tab.TabIdentifier tab_id)
+        private void OnTabStart(Utils.Tab.TabIdentifier tab_id)
         {
             Utils.Methods.Run(async delegate
             {
+                DatabaseContext db = new DatabaseContext();
+
                 Shared.NavigationPageShared.CurrentPageType = Utils.Tab.PageType.Search;
                 NavigationPage.Current.SetSearchBox((string)tab_id.RequestArgs);
-                await StartSearch();
+                await StartSearch(db);
             });
         }
 
@@ -185,7 +181,7 @@ namespace ComicReader.Views
         }
 
         // update
-        private async Task StartSearch()
+        private async Task StartSearch(DatabaseContext db)
         {
             string keyword = (string)m_tab_manager.TabId.RequestArgs;
 
@@ -234,7 +230,7 @@ namespace ComicReader.Views
             Shared.IsLoading = true;
             Shared.UpdateUI();
 
-            if (!await SearchMain(keywords, filter))
+            if (!await SearchMain(db, keywords, filter))
             {
                 return;
             }
@@ -246,7 +242,7 @@ namespace ComicReader.Views
             Shared.FilterDetails = filter_details;
             Shared.NoResultText = "No results for \"" + keyword + "\"";
             Shared.SearchResults.Clear();
-            await LoadMoreResults(40);
+            await LoadMoreResults(db, 40);
         }
 
         private class Match
@@ -255,10 +251,9 @@ namespace ComicReader.Views
             public int Similarity = 0;
         }
 
-        private async Task<bool> SearchMain(List<string> keywords, Utils.Search.Filter filter)
+        private async Task<bool> SearchMain(DatabaseContext db, List<string> keywords, Utils.Search.Filter filter)
         {
             await m_search_lock.WaitAsync();
-
             try
             {
                 for (int i = 0; i < keywords.Count; ++i)
@@ -273,7 +268,7 @@ namespace ComicReader.Views
                     ComicData.FieldTitle1 + "," + ComicData.FieldTitle2 + " FROM " +
                     DatabaseManager.ComicTable;
 
-                await ComicDataManager.WaitLock(); // Lock on.
+                await ComicDataManager.WaitLock(db); // Lock on.
                 SqliteDataReader query = await command.ExecuteReaderAsync();
 
                 while(query.Read())
@@ -304,7 +299,7 @@ namespace ComicReader.Views
                         Similarity = similarity
                     });
                 }
-                ComicDataManager.ReleaseLock(); // Lock off.
+                ComicDataManager.ReleaseLock(db); // Lock off.
 
                 // Sort by similarity.
                 matched = matched.OrderByDescending(x => x.Similarity).ToList();
@@ -314,7 +309,7 @@ namespace ComicReader.Views
 
                 foreach (Match match in matched)
                 {
-                    ComicData comic = await ComicDataManager.FromId(match.Id);
+                    ComicData comic = await ComicDataManager.FromId(db, match.Id);
 
                     if (!filter.Pass(comic))
                     {
@@ -332,7 +327,7 @@ namespace ComicReader.Views
             return true;
         }
 
-        private async Task LoadMoreResults(int count)
+        private async Task LoadMoreResults(DatabaseContext db, int count)
         {
             await m_search_lock.WaitAsync();
             try
@@ -402,7 +397,7 @@ namespace ComicReader.Views
                     });
                 }
 
-                await ComicDataManager.LoadImages(image_loader_tokens,
+                await ComicDataManager.LoadImages(db, image_loader_tokens,
                     double.PositiveInfinity, image_height, m_search_lock);
             }
             finally
@@ -417,6 +412,8 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
+                DatabaseContext db = new DatabaseContext();
+
                 PointerPoint pt = e.GetCurrentPoint((UIElement)sender);
                 if (!pt.Properties.IsLeftButtonPressed)
                 {
@@ -424,7 +421,7 @@ namespace ComicReader.Views
                 }
 
                 ComicItemModel item = (ComicItemModel)((FrameworkElement)sender).DataContext;
-                ComicData comic = await ComicDataManager.FromId(item.Id);
+                ComicData comic = await ComicDataManager.FromId(db, item.Id);
                 MainPage.Current.LoadTab(null, Utils.Tab.PageType.Reader, comic);
             });
         }
@@ -433,11 +430,13 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
+                DatabaseContext db = new DatabaseContext();
+
                 ScrollViewer scrollViewer = (ScrollViewer)sender;
 
                 if (scrollViewer.ScrollableHeight - scrollViewer.VerticalOffset < scrollViewer.ActualHeight * 0.5)
                 {
-                    await LoadMoreResults(12);
+                    await LoadMoreResults(db, 12);
                 }
             });
         }
@@ -468,9 +467,10 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
+                DatabaseContext db = new DatabaseContext();
                 ComicItemModel ctx = (ComicItemModel)((MenuFlyoutItem)sender).DataContext;
-                await ComicDataManager.Unhide(ctx.Comic);
-                await StartSearch();
+                await ComicDataManager.Unhide(db, ctx.Comic);
+                await StartSearch(db);
             });
         }
 
@@ -478,9 +478,10 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
+                DatabaseContext db = new DatabaseContext();
                 ComicItemModel ctx = (ComicItemModel)((MenuFlyoutItem)sender).DataContext;
-                await ComicDataManager.Hide(ctx.Comic);
-                await StartSearch();
+                await ComicDataManager.Hide(db, ctx.Comic);
+                await StartSearch(db);
             });
         }
     }

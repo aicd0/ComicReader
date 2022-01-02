@@ -21,11 +21,13 @@ namespace ComicReader.Views
             // done
             Utils.Methods.Run(async delegate
             {
+                DatabaseContext db = new DatabaseContext();
+
                 string text = MainEditBox.Text;
-                await ComicDataManager.ParseInfo(text, m_comic);
+                ComicDataManager.ParseInfo(text, m_comic);
                 Utils.TaskQueue.TaskQueueManager.AppendTask(
                     ComicDataManager.SaveInfoFileSealed(m_comic), "Saving...");
-                await m_comic.SaveBasic();
+                await m_comic.SaveBasic(db);
             });
         }
 
@@ -36,10 +38,7 @@ namespace ComicReader.Views
 
         private void MainEditBoxLoaded(object sender, RoutedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
-            {
-                MainEditBox.Text = await ComicDataManager.InfoString(m_comic);
-            });
+            MainEditBox.Text = ComicDataManager.InfoString(m_comic);
         }
     }
 }

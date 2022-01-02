@@ -43,10 +43,10 @@ namespace ComicReader.Views
             DataSource = new ObservableCollection<FavoritesItemModel>();
 
             m_tab_manager = new Utils.Tab.TabManager();
-            m_tab_manager.OnRegister = OnRegister;
-            m_tab_manager.OnUnregister = OnUnregister;
-            m_tab_manager.OnPageEntered = OnPageEntered;
-            Unloaded += m_tab_manager.OnUnloaded;
+            Unloaded += m_tab_manager.OnTabUnloaded;
+            m_tab_manager.OnTabRegister = OnTabRegister;
+            m_tab_manager.OnTabUnregister = OnTabUnregister;
+            m_tab_manager.OnTabUpdate = OnTabUpdate;
 
             InitializeComponent();
         }
@@ -64,14 +64,14 @@ namespace ComicReader.Views
             m_tab_manager.OnNavigatedFrom(e);
         }
 
-        private void OnRegister(object shared)
+        private void OnTabRegister(object shared)
         {
             Shared.NavigationPageShared = (NavigationPageShared)shared;
         }
 
-        private void OnUnregister() { }
+        private void OnTabUnregister() { }
 
-        private void OnPageEntered()
+        private void OnTabUpdate()
         {
             Utils.Methods.Run(async delegate
             {
@@ -281,6 +281,8 @@ namespace ComicReader.Views
             // left-click
             Utils.Methods.Run(async delegate
             {
+                DatabaseContext db = new DatabaseContext();
+
                 FavoritesItemModel item = (FavoritesItemModel)e.InvokedItem;
 
                 if (item.IsRenaming)
@@ -292,7 +294,7 @@ namespace ComicReader.Views
 
                 if (item.Type == TreeItemType.Item)
                 {
-                    ComicData comic = await ComicDataManager.FromId(item.Id);
+                    ComicData comic = await ComicDataManager.FromId(db, item.Id);
 
                     if (comic == null)
                     {
@@ -416,8 +418,10 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
+                DatabaseContext db = new DatabaseContext();
+
                 FavoritesItemModel item = (FavoritesItemModel)((MenuFlyoutItem)sender).DataContext;
-                ComicData comic = await ComicDataManager.FromId(item.Id);
+                ComicData comic = await ComicDataManager.FromId(db, item.Id);
                 MainPage.Current.LoadTab(null, Utils.Tab.PageType.Reader, comic);
             });
         }

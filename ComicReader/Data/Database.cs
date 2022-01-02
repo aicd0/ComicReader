@@ -57,6 +57,11 @@ namespace ComicReader.Data
         public bool IsBlob;
     }
 
+    public class DatabaseContext
+    {
+        public int ComicTableLockDepth = 0;
+    }
+
     public class DatabaseManager
     {
         private static bool m_database_ready = false;
@@ -67,13 +72,7 @@ namespace ComicReader.Data
         private static string DatabaseFileName => "database.db";
         private static string DatabasePath => Path.Combine(DatabaseFolder.Path, DatabaseFileName);
 
-        public static string ComicTable
-        {
-            get
-            {
-                return "comics";
-            }
-        }
+        public static string ComicTable = "comics";
 
         public static async Task Init()
         {
@@ -95,7 +94,7 @@ namespace ComicReader.Data
                 ComicData.FieldRating + " INTEGER NOT NULL," + // 5
                 ComicData.FieldProgress + " INTEGER NOT NULL," + // 6
                 ComicData.FieldLastVisit + " TIMESTAMP NOT NULL," + // 7
-                ComicData.FieldLastPosition + " REAL DEFAULT 0 NOT NULL," + // 8
+                ComicData.FieldLastPosition + " REAL NOT NULL," + // 8
                 ComicData.FieldCoverFileName + " TEXT," + // 9
                 ComicData.FieldTags + " BLOB," + // 10
                 ComicData.FieldImageAspectRatios + " BLOB)"; // 11
@@ -105,7 +104,7 @@ namespace ComicReader.Data
             m_connection = connection;
         }
 
-        public static async Task<long> Insert(string table, List<Key> keys)
+        public static async Task<long> Insert(DatabaseContext db, string table, List<Key> keys)
         {
             List<string> field_names = new List<string>();
             List<string> field_vals = new List<string>();
@@ -138,7 +137,7 @@ namespace ComicReader.Data
                 string.Join(',', field_vals) + ");" +
                 "SELECT LAST_INSERT_ROWID();";
 
-            await ComicDataManager.WaitLock(); // Lock on.
+            await ComicDataManager.WaitLock(db); // Lock on.
             long rowid = (long)command.ExecuteScalar();
 
             // Copy to blobs.
@@ -153,13 +152,13 @@ namespace ComicReader.Data
                     await input_stream.CopyToAsync(write_stream);
                 }
             }
-            ComicDataManager.ReleaseLock(); // Lock off.
+            ComicDataManager.ReleaseLock(db); // Lock off.
 
             command.Dispose();
             return rowid;
         }
 
-        public static async Task Update(string table, Key primary_key, List<Key> keys)
+        public static async Task Update(DatabaseContext db, string table, Key primary_key, List<Key> keys)
         {
             if (keys.Count == 0) return;
 
@@ -191,7 +190,7 @@ namespace ComicReader.Data
             command.CommandText = "UPDATE " + table + " SET " +
                 string.Join(',', fields) + condition;
 
-            await ComicDataManager.WaitLock(); // Lock on.
+            await ComicDataManager.WaitLock(db); // Lock on.
             command.ExecuteNonQuery();
 
             // Copy to blobs.
@@ -212,7 +211,7 @@ namespace ComicReader.Data
                     }
                 }
             }
-            ComicDataManager.ReleaseLock(); // Lock off.
+            ComicDataManager.ReleaseLock(db); // Lock off.
 
             command.Dispose();
         }
@@ -316,11 +315,12 @@ namespace ComicReader.Data
         }
 
         public static SealedTask UpdateSealed(bool lazy_load = true) =>
-            (RawTask _) => Update(lazy_load).Result;
+            (RawTask _) => _Update(lazy_load).Result;
 
-        private static async RawTask Update(bool lazy_load)
+        private static async RawTask _Update(bool lazy_load)
         {
-            await ComicDataManager.Update(lazy_load);
+            DatabaseContext db = new DatabaseContext();
+            await ComicDataManager.Update(db, lazy_load);
             return new TaskResult();
         }
 
@@ -340,6 +340,5 @@ namespace ComicReader.Data
 
             return (StorageFile)item;
         }
-
     }
 }

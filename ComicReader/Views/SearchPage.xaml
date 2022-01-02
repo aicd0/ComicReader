@@ -143,8 +143,7 @@
                         HorizontalAlignment="Center">
                 <Grid Height="15" />
                 <StackPanel Orientation="Vertical"
-                            Margin="15,0,0,0"
-                            MinHeight="60">
+                            Margin="15,0,0,0">
                     <TextBlock Text="{x:Bind Shared.Title, Mode=OneWay}"
                                FontSize="28"
                                FontWeight="SemiBold"
@@ -157,7 +156,7 @@
                                Visibility="{x:Bind Shared.FilterDetailsVisible, Mode=OneWay}"
                                Margin="0,2,0,0" />
                 </StackPanel>
-                <Grid Height="15" />
+                <Grid Height="16" />
                 <GridView ItemContainerStyle="{StaticResource SearchResultItemContainerStyle}"
                           ItemsSource="{x:Bind Shared.SearchResults}">
                     <GridView.ItemTemplate>

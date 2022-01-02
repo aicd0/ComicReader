@@ -63,14 +63,15 @@ namespace ComicReader.Views
         {
             return delegate (Task<Utils.TaskQueue.TaskResult> _t)
             {
-                Task task = OnFileActivatedAsync(args);
-                task.Wait();
+                _OnFileActivatedAsync(args).Wait();
                 return new Utils.TaskQueue.TaskResult();
             };
         }
 
-        private async Task OnFileActivatedAsync(FileActivatedEventArgs args)
+        private async Task _OnFileActivatedAsync(FileActivatedEventArgs args)
         {
+            DatabaseContext db = new DatabaseContext();
+
             string dir = args.Files[0].Path;
 
             for (int p = dir.Length - 1; p >= 0; --p)
@@ -82,7 +83,7 @@ namespace ComicReader.Views
                 }
             }
 
-            ComicData comic = await ComicDataManager.FromDirectory(dir);
+            ComicData comic = await ComicDataManager.FromDirectory(db, dir);
 
             if (comic == null)
             {

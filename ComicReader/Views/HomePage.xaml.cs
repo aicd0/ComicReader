@@ -68,11 +68,11 @@ namespace ComicReader.Views
             FolderItemDataSource = new ObservableCollection<FolderItemModel>();
 
             m_tab_manager = new Utils.Tab.TabManager();
-            m_tab_manager.OnRegister = OnRegister;
-            m_tab_manager.OnUnregister = OnUnregister;
-            m_tab_manager.OnPageEntered = OnPageEntered;
-            m_tab_manager.OnUpdate = OnUpdate;
-            Unloaded += m_tab_manager.OnUnloaded;
+            Unloaded += m_tab_manager.OnTabUnloaded;
+            m_tab_manager.OnTabRegister = OnTabRegister;
+            m_tab_manager.OnTabUnregister = OnTabUnregister;
+            m_tab_manager.OnTabUpdate = OnTabUpdate;
+            m_tab_manager.OnTabStart = OnTabStart;
 
             m_update_folder_lock = new Utils.CancellationLock();
             m_update_library_lock = new Utils.CancellationLock();
@@ -94,14 +94,14 @@ namespace ComicReader.Views
             m_tab_manager.OnNavigatedFrom(e);
         }
 
-        private void OnRegister(object shared)
+        private void OnTabRegister(object shared)
         {
             Shared.NavigationPageShared = (NavigationPageShared)shared;
         }
 
-        private void OnUnregister() { }
+        private void OnTabUnregister() { }
 
-        private void OnPageEntered()
+        private void OnTabUpdate()
         {
             Utils.Methods.Run(async delegate
             {
@@ -109,7 +109,7 @@ namespace ComicReader.Views
             });
         }
 
-        private void OnUpdate(Utils.Tab.TabIdentifier tab_id)
+        private void OnTabStart(Utils.Tab.TabIdentifier tab_id)
         {
             Shared.NavigationPageShared.CurrentPageType = Utils.Tab.PageType.Home;
             tab_id.Tab.Header = "New tab";
@@ -122,8 +122,10 @@ namespace ComicReader.Views
         // utilities
         public async Task Update()
         {
+            DatabaseContext db = new DatabaseContext();
+
             await UpdateFolders();
-            await UpdateLibrary();
+            await UpdateLibrary(db);
         }
 
         public SealedTask UpdateSealed() => delegate (RawTask _)
@@ -139,7 +141,7 @@ namespace ComicReader.Views
             return new TaskResult();
         };
 
-        public async Task UpdateLibrary()
+        public async Task UpdateLibrary(DatabaseContext db)
         {
             await m_update_library_lock.WaitAsync();
             try
@@ -157,13 +159,13 @@ namespace ComicReader.Views
                     " ORDER BY " + ComicData.FieldLastVisit + " DESC LIMIT " +
                     result_count.ToString();
 
-                await ComicDataManager.WaitLock(); // Lock on.
+                await ComicDataManager.WaitLock(db); // Lock on.
                 SqliteDataReader query = await command.ExecuteReaderAsync();
                 var comic_items = new Utils.ObservableCollectionPlus<ComicItemModel>();
 
                 while (query.Read())
                 {
-                    ComicData comic = await ComicDataManager.From(query);
+                    ComicData comic = await ComicDataManager.From(db, query);
                     if (comic == null) continue;
                     if (comic.Hidden) continue;
 
@@ -182,7 +184,7 @@ namespace ComicReader.Views
 
                     comic_items.Add(data);
                 }
-                ComicDataManager.ReleaseLock(); // Lock off.
+                ComicDataManager.ReleaseLock(db); // Lock off.
 
                 // Save results.
                 Shared.ComicItemSource = comic_items;
@@ -208,7 +210,7 @@ namespace ComicReader.Views
 
                 await Task.Run(delegate
                 {
-                    ComicDataManager.LoadImages(image_loader_tokens,
+                    ComicDataManager.LoadImages(db, image_loader_tokens,
                         image_height * 1.4, image_height * 1.4,
                         m_update_library_lock).Wait();
                 });
@@ -287,9 +289,10 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
+                DatabaseContext db = new DatabaseContext();
                 ComicItemModel ctx = (ComicItemModel)((MenuFlyoutItem)sender).DataContext;
-                await ComicDataManager.Hide(ctx.Comic);
-                await UpdateLibrary();
+                await ComicDataManager.Hide(db, ctx.Comic);
+                await UpdateLibrary(db);
             });
         }
 

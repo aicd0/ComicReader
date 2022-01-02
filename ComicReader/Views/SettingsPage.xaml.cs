@@ -170,11 +170,11 @@ namespace ComicReader.Views
             Shared.OnSettingsChanged = OnSettingsChanged;
 
             m_tab_manager = new Utils.Tab.TabManager();
-            m_tab_manager.OnRegister = OnRegister;
-            m_tab_manager.OnUnregister = OnUnregister;
-            m_tab_manager.OnPageEntered = OnPageEntered;
-            m_tab_manager.OnUpdate = OnUpdate;
-            Unloaded += m_tab_manager.OnUnloaded;
+            m_tab_manager.OnTabRegister = OnTabRegister;
+            m_tab_manager.OnTabUnregister = OnTabUnregister;
+            m_tab_manager.OnTabUpdate = OnTabUpdate;
+            m_tab_manager.OnTabStart = OnTabStart;
+            Unloaded += m_tab_manager.OnTabUnloaded;
 
             InitializeComponent();
         }
@@ -192,22 +192,23 @@ namespace ComicReader.Views
             m_tab_manager.OnNavigatedFrom(e);
         }
 
-        private void OnRegister(object shared)
+        private void OnTabRegister(object shared)
         {
             Shared.MainPageShared = (MainPageShared)shared;
         }
 
-        private void OnUnregister() { }
+        private void OnTabUnregister() { }
 
-        private void OnPageEntered()
+        private void OnTabUpdate()
         {
             Utils.Methods.Run(async delegate
             {
-                await Update();
+                DatabaseContext db = new DatabaseContext();
+                await Update(db);
             });
         }
 
-        private void OnUpdate(Utils.Tab.TabIdentifier tab_id)
+        private void OnTabStart(Utils.Tab.TabIdentifier tab_id)
         {
             m_tab_manager.TabId.Tab.Header = "Settings";
             m_tab_manager.TabId.Tab.IconSource =
@@ -217,7 +218,7 @@ namespace ComicReader.Views
         public static string PageUniqueString(object _) => "settings";
 
         // utilities
-        private async Task Update()
+        private async Task Update(DatabaseContext db)
         {
             m_updating = true;
 
@@ -251,9 +252,9 @@ namespace ComicReader.Views
             SqliteCommand command = DatabaseManager.Connection.CreateCommand();
             command.CommandText = "SELECT COUNT(*) FROM " + DatabaseManager.ComicTable;
 
-            await ComicDataManager.WaitLock();
+            await ComicDataManager.WaitLock(db);
             long comic_count = (long)command.ExecuteScalar();
-            ComicDataManager.ReleaseLock();
+            ComicDataManager.ReleaseLock(db);
 
             StatisticsTextBlock.Text = "Total collections: " +
                 comic_count.ToString("#,#0", CultureInfo.InvariantCulture);

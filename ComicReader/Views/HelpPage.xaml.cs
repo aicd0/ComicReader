@@ -23,8 +23,8 @@ namespace ComicReader.Views
         public HelpPage()
         {
             m_tab_manager = new Utils.Tab.TabManager();
-            m_tab_manager.OnUpdate = OnUpdate;
-            Unloaded += m_tab_manager.OnUnloaded;
+            m_tab_manager.OnTabStart = OnTabStart;
+            Unloaded += m_tab_manager.OnTabUnloaded;
 
             InitializeComponent();
         }
@@ -42,7 +42,7 @@ namespace ComicReader.Views
             m_tab_manager.OnNavigatedFrom(e);
         }
 
-        private void OnUpdate(Utils.Tab.TabIdentifier tab_id)
+        private void OnTabStart(Utils.Tab.TabIdentifier tab_id)
         {
             m_tab_manager.TabId.Tab.Header = "How to use this app";
             m_tab_manager.TabId.Tab.IconSource =

@@ -1,5 +1,5 @@
 ﻿#define DEBUG_LOG_READER_LOAD
-//#define DEBUG_LOG_READER_JUMP
+#define DEBUG_LOG_READER_JUMP
 #define DEBUG_LOG_VIEW_CHANGE
 
 using System;
@@ -462,22 +462,31 @@ namespace ComicReader.Views
             page = Math.Min(Pages, page);
 
             int page_int = (int)page;
-            double page_dec = page - page_int;
-            double? parallel_offset = PageOffset(page_int, use_page_center);
+            double page_frac = page - page_int;
 
-            if (!parallel_offset.HasValue)
+            double offset;
+
+            // Calculate parallel offset of this page.
+            double? this_offset = PageOffset(page_int, use_page_center);
+
+            if (!this_offset.HasValue)
             {
                 return null;
             }
 
-            double? next_offset = PageOffset(page_int + 1, use_page_center);
+            offset = this_offset.Value;
 
-            if (next_offset.HasValue)
+            // Calculate parallel offset of next page and mix with this page.
+            double? _next_offset = PageOffset(page_int + 1, use_page_center);
+
+            if (_next_offset.HasValue)
             {
-                parallel_offset += (next_offset.Value - parallel_offset) * page_dec;
+                offset += page_frac * (_next_offset.Value - this_offset.Value);
             }
 
-            return parallel_offset * ZoomFactorFinal - ViewportParallelLength * 0.5;
+            offset = offset * ZoomFactorFinal - ViewportParallelLength * 0.5;
+            offset = Math.Max(0.0, offset);
+            return offset;
         }
 
         public void IncreasePage(int increment, bool disable_animation)
@@ -729,18 +738,17 @@ namespace ComicReader.Views
                 m_disable_animation_final = true;
             }
 
-            bool success = ThisScrollViewer.ChangeView(HorizontalOffsetFinal, VerticalOffsetFinal, ZoomFactorFinal, m_disable_animation_final);
+            ThisScrollViewer.ChangeView(HorizontalOffsetFinal, VerticalOffsetFinal, ZoomFactorFinal, m_disable_animation_final);
 
 #if DEBUG_LOG_READER_JUMP
             System.Diagnostics.Debug.Print("Commit:"
                 + " Z=" + ZoomFactorFinal.ToString()
                 + ",H=" + HorizontalOffsetFinal.ToString()
                 + ",V=" + VerticalOffsetFinal.ToString()
-                + ",D=" + m_disable_animation_final
-                + " (" + success.ToString() + ")\n");
+                + ",D=" + m_disable_animation_final + "\n");
 #endif
 
-            return success;
+            return true;
         }
 
         // list view
@@ -839,6 +847,8 @@ namespace ComicReader.Views
         private Utils.CancellationLock m_container_loaded_lock = new Utils.CancellationLock();
         public async Task OnContainerLoaded(ReaderFrameModel ctx)
         {
+            DatabaseContext db = new DatabaseContext();
+
             System.Diagnostics.Debug.Assert(ctx != null);
             System.Diagnostics.Debug.Assert(ctx.Container != null);
 
@@ -893,7 +903,7 @@ namespace ComicReader.Views
                 }
 
                 // Check if the initial page was loaded.
-                if (!IsInitialPageReached)
+                if (!IsInitialPageReached && IsLoaded)
                 {
                     if (!IsInitialPageLoaded)
                     {
@@ -921,6 +931,7 @@ namespace ComicReader.Views
 #if DEBUG_LOG_READER_LOAD
                         if (IsInitialPageReached)
                         {
+                            await UpdateImages(db);
                             System.Diagnostics.Debug.Print("Initial page reached.\n");
                         }
 #endif
@@ -933,14 +944,12 @@ namespace ComicReader.Views
             }
         }
 
-        public async Task OnScrollViewerViewChanged(bool is_intermediate)
+        public async Task OnScrollViewerViewChanged(DatabaseContext db, bool is_intermediate)
         {
             if (!IsLoaded)
             {
                 return;
             }
-
-            await UpdateImages();
 
             if (!is_intermediate)
             {
@@ -963,6 +972,8 @@ namespace ComicReader.Views
                     + "\n");
 #endif
             }
+
+            await UpdateImages(db);
         }
 
         // others
@@ -1078,7 +1089,7 @@ namespace ComicReader.Views
             }
         }
 
-        private async Task UpdateImages()
+        private async Task UpdateImages(DatabaseContext db)
         {
             if (!IsLoaded || !await UpdatePage())
             {
@@ -1098,11 +1109,12 @@ namespace ComicReader.Views
                     return;
                 }
 
+                List<ImageLoaderToken> img_loader_tokens = new List<ImageLoaderToken>();
                 int page_begin = Math.Max(Page - 5, 1);
                 int page_end = Math.Min(Page + 10, Pages);
                 int idx_begin = PageToIndex(page_begin);
                 int idx_end = PageToIndex(page_end);
-                List<ImageLoaderToken> img_loader_tokens = new List<ImageLoaderToken>();
+                idx_end = Math.Min(DataSource.Count - 1, idx_end);
                 
                 for (int i = idx_begin; i <= idx_end; ++i)
                 {
@@ -1124,7 +1136,7 @@ namespace ComicReader.Views
                     });
                 }
 
-                await ComicDataManager.LoadImages(img_loader_tokens,
+                await ComicDataManager.LoadImages(db, img_loader_tokens,
                     double.PositiveInfinity, double.PositiveInfinity,
                     m_update_image_lock);
 
@@ -1170,6 +1182,7 @@ namespace ComicReader.Views
         private int m_bottom_tile_exit_requests;
 
         // lock
+        private SemaphoreSlim m_core_data_lock = new SemaphoreSlim(1);
         private Utils.CancellationLock m_load_image_lock = new Utils.CancellationLock();
 
         public ReaderPage()
@@ -1188,11 +1201,11 @@ namespace ComicReader.Views
             PreviewDataSource = new ObservableCollection<ReaderFrameModel>();
 
             m_tab_manager = new Utils.Tab.TabManager();
-            m_tab_manager.OnPageEntered = OnPageEntered;
-            m_tab_manager.OnRegister = OnRegister;
-            m_tab_manager.OnUnregister = OnUnregister;
-            m_tab_manager.OnUpdate = OnUpdate;
-            Unloaded += m_tab_manager.OnUnloaded;
+            m_tab_manager.OnTabUpdate = OnTabUpdate;
+            m_tab_manager.OnTabRegister = OnTabRegister;
+            m_tab_manager.OnTabUnregister = OnTabUnregister;
+            m_tab_manager.OnTabStart = OnTabStart;
+            Unloaded += m_tab_manager.OnTabUnloaded;
 
             m_comic = null;
             m_reader_position = 0.0;
@@ -1226,7 +1239,7 @@ namespace ComicReader.Views
             m_tab_manager.OnNavigatedFrom(e);
         }
 
-        private void OnRegister(object shared)
+        private void OnTabRegister(object shared)
         {
             Shared.NavigationPageShared = (NavigationPageShared)shared;
 
@@ -1242,7 +1255,7 @@ namespace ComicReader.Views
             Shared.UpdateReaderUI();
         }
 
-        private void OnUnregister()
+        private void OnTabUnregister()
         {
             Shared.NavigationPageShared.OnSwitchFavorites -= OnSwitchFavorites;
             Shared.NavigationPageShared.MainPageShared.OnExitFullscreenMode -= BottomGridForceHide;
@@ -1253,17 +1266,19 @@ namespace ComicReader.Views
             Shared.NavigationPageShared.OnExpandComicInfoPane -= ExpandInfoPane;
         }
 
-        private void OnPageEntered()
+        private void OnTabUpdate()
         {
             Shared.ReaderFlowDirection = Database.AppSettings.RightToLeft ?
                 FlowDirection.RightToLeft : FlowDirection.LeftToRight;
             Shared.BottomTilePinned = false;
         }
 
-        private void OnUpdate(Utils.Tab.TabIdentifier tab_id)
+        private void OnTabStart(Utils.Tab.TabIdentifier tab_id)
         {
             Utils.Methods.Run(async delegate
             {
+                DatabaseContext db = new DatabaseContext();
+
                 Shared.NavigationPageShared.CurrentPageType = Utils.Tab.PageType.Reader;
                 tab_id.Type = Utils.Tab.PageType.Reader;
 
@@ -1272,7 +1287,7 @@ namespace ComicReader.Views
                     ComicData comic = (ComicData)tab_id.RequestArgs;
                     tab_id.Tab.Header = comic.Title1;
                     tab_id.Tab.IconSource = new muxc.SymbolIconSource { Symbol = Symbol.Document };
-                    await LoadComic(comic);
+                    await LoadComic(db, comic);
                 }
             });
         }
@@ -1319,8 +1334,10 @@ namespace ComicReader.Views
             PageIndicator.Text = control.Page.ToString() + " of " + image_count;
         }
 
-        private async Task UpdateProgress(ReaderModel control)
+        private async Task UpdateProgress(DatabaseContext db, ReaderModel control)
         {
+            await m_core_data_lock.WaitAsync(); // Data protection on.
+
             int progress;
 
             if (m_comic.ImageFiles.Count == 0)
@@ -1344,17 +1361,21 @@ namespace ComicReader.Views
             Shared.Progress = progress.ToString() + "%";
             m_comic.Progress = progress;
             m_comic.LastPosition = control.PageReal;
-            await m_comic.SaveBasic();
+            await m_comic.SaveBasic(db);
+
+            m_core_data_lock.Release(); // Data protection off.
         }
 
         // loading
-        private async Task LoadComic(ComicData comic)
+        private async Task LoadComic(DatabaseContext db, ComicData comic)
         {
             // Load the comic.
             if (comic == null)
             {
                 return;
             }
+
+            await m_core_data_lock.WaitAsync(); // Data protection on.
 
             m_comic = comic;
             m_load_image_queue = Utils.TaskQueue.TaskQueueManager.EmptyQueue();
@@ -1364,7 +1385,7 @@ namespace ComicReader.Views
             VerticalReader.Reset();
             HorizontalReader.Reset();
 
-            await SetActiveReader(VerticalReader);
+            await SetActiveReader(db, VerticalReader);
             ReaderModel reader = GetCurrentReader();
             System.Diagnostics.Debug.Assert(reader != null);
 
@@ -1376,10 +1397,10 @@ namespace ComicReader.Views
 
                 // Update "last visit".
                 m_comic.LastVisit = DateTimeOffset.Now;
-                await m_comic.SaveBasic();
+                await m_comic.SaveBasic(db);
 
                 // Update image files.
-                await ComicDataManager.UpdateImages(m_comic);
+                await ComicDataManager.UpdateImages(db, m_comic);
 
                 // Set initial page.
                 reader.SetInitialPage(m_comic.LastPosition);
@@ -1393,6 +1414,8 @@ namespace ComicReader.Views
                 }
             }
 
+            m_core_data_lock.Release(); // Data protection off.
+
             Utils.TaskQueue.TaskQueueManager.AppendTask(delegate (RawTask _t)
             {
                 // Stop loading if failed to retrieve image folder.
@@ -1401,13 +1424,13 @@ namespace ComicReader.Views
                     return _t.Result;
                 }
 
-                return LoadImagesAsync().Result;
+                return LoadImagesAsync(db).Result;
             }, "", m_load_image_queue);
 
             await LoadComicInfo();
         }
 
-        private async RawTask LoadImagesAsync()
+        private async RawTask LoadImagesAsync(DatabaseContext db)
         {
             await m_load_image_lock.WaitAsync();
 
@@ -1461,7 +1484,7 @@ namespace ComicReader.Views
                         // Save for each 5 sec.
                         if (save_timer.LapSpan().TotalSeconds > 5.0 || index == comic.ImageFiles.Count - 1)
                         {
-                            await comic.SaveImageAspectRatios();
+                            await comic.SaveImageAspectRatios(db);
                             save_timer.Lap();
                         }
 
@@ -1479,7 +1502,7 @@ namespace ComicReader.Views
                 });
             }
 
-            Task preview_loader_task = ComicDataManager.LoadImages(
+            Task preview_loader_task = ComicDataManager.LoadImages(db, 
                 preview_img_loader_tokens, preview_width, preview_height,
                 m_load_image_lock);
             await preview_loader_task.AsAsyncAction();
@@ -1539,7 +1562,7 @@ namespace ComicReader.Views
         }
 
         // reader
-        private async Task<bool> SetActiveReader(ReaderModel reader)
+        private async Task<bool> SetActiveReader(DatabaseContext db, ReaderModel reader)
         {
             System.Diagnostics.Debug.Assert(reader != null);
 
@@ -1566,7 +1589,7 @@ namespace ComicReader.Views
                 double position = m_reader_position;
 
                 Shared.UpdateReaderUI();
-                await last_reader.OnScrollViewerViewChanged(false);
+                await last_reader.OnScrollViewerViewChanged(db, false);
 
                 await Utils.Methods.WaitFor(() => this_reader.IsLoaded);
                 this_reader.SetScrollViewer(zoom, position, use_page_center: false, true);
@@ -1583,6 +1606,8 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
+                DatabaseContext db = new DatabaseContext();
+
                 if (!Shared.IsReaderVertical.HasValue)
                 {
                     return;
@@ -1599,7 +1624,7 @@ namespace ComicReader.Views
                     reader = VerticalReader;
                 }
 
-                await SetActiveReader(reader);
+                await SetActiveReader(db, reader);
             });
         }
 
@@ -1607,12 +1632,14 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
-                await control.OnScrollViewerViewChanged(e.IsIntermediate);
+                DatabaseContext db = new DatabaseContext();
+
+                await control.OnScrollViewerViewChanged(db, e.IsIntermediate);
 
                 if (control.IsLoaded || !e.IsIntermediate)
                 {
                     UpdatePage(control);
-                    await UpdateProgress(control);
+                    await UpdateProgress(db, control);
                     BottomTileSetHold(false);
                 }
             });
@@ -1875,8 +1902,9 @@ namespace ComicReader.Views
         {
             Utils.Methods.Run(async delegate
             {
+                DatabaseContext db = new DatabaseContext();
                 m_comic.Rating = (int)sender.Value;
-                await m_comic.SaveBasic();
+                await m_comic.SaveBasic(db);
             });
         }
 

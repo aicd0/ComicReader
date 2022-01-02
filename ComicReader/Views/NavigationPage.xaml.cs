@@ -160,10 +160,10 @@ namespace ComicReader.Views
             Shared = new NavigationPageShared();
 
             m_tab_manager = new Utils.Tab.TabManager();
-            m_tab_manager.OnRegister = OnRegister;
-            m_tab_manager.OnUnregister = OnUnregister;
-            m_tab_manager.OnPageEntered = OnPageEntered;
-            Unloaded += m_tab_manager.OnUnloaded;
+            m_tab_manager.OnTabRegister = OnTabRegister;
+            m_tab_manager.OnTabUnregister = OnTabUnregister;
+            m_tab_manager.OnTabUpdate = OnTabUpdate;
+            Unloaded += m_tab_manager.OnTabUnloaded;
 
             InitializeComponent();
         }
@@ -181,15 +181,15 @@ namespace ComicReader.Views
             m_tab_manager.OnNavigatedFrom(e);
         }
 
-        private void OnRegister(object shared)
+        private void OnTabRegister(object shared)
         {
             Shared.MainPageShared = (MainPageShared)shared;
             Shared.RefreshPage = RefreshPage;
         }
 
-        private void OnUnregister() { }
+        private void OnTabUnregister() { }
 
-        private void OnPageEntered()
+        private void OnTabUpdate()
         {
             if (NavigationPageSidePane != null)
             {
