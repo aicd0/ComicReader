@@ -270,11 +270,14 @@
                 </Setter>
             </Style>
 
+            <!-- Converters -->
+            <converters:BooleanToDoubleConverter x:Key="BooleanToDoubleConverter" />
+            <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
+
+            <!-- Shadows -->
             <mtuum:AttachedCardShadow x:Key="CommonShadow"
                                       Offset="0"
                                       Opacity="0.1" />
-
-            <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
         </ResourceDictionary>
     </Page.Resources>
 
@@ -284,7 +287,7 @@
                    PanePlacement="Right"
                    PaneBackground="{ThemeResource SidePaneBackground}">
 
-            <!-- information pane -->
+            <!-- Information pane -->
             <SplitView.Pane>
                 <Grid>
                     <Grid.RowDefinitions>
@@ -292,20 +295,20 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <!-- information -->
+                    <!-- Information -->
                     <ScrollViewer Grid.Row="0"
                                   Padding="15,0,15,0">
                         <StackPanel Orientation="Vertical">
                             <Grid Height="34" />
 
-                            <!-- title -->
+                            <!-- Title1 -->
                             <TextBlock FontSize="20"
                                        FontWeight="Light"
                                        IsTextSelectionEnabled="True"
                                        Text="{x:Bind Shared.ComicTitle1, Mode=OneWay}"
                                        TextWrapping="Wrap" />
 
-                            <!-- sub-title -->
+                            <!-- Title2 -->
                             <TextBlock TextWrapping="Wrap"
                                        FontSize="20"
                                        FontWeight="Light"
@@ -314,7 +317,7 @@
                                        Margin="0,10,0,0"
                                        Visibility="{x:Bind Shared.IsComicTitle2Visible, Mode=OneWay}" />
 
-                            <!-- directory -->
+                            <!-- Directory -->
                             <TextBlock IsTextSelectionEnabled="True"
                                        VerticalAlignment="Center"
                                        Margin="0,10,0,0"
@@ -322,14 +325,14 @@
                                        FontWeight="Light"
                                        Text="{x:Bind Shared.ComicDir, Mode=OneWay}" />
 
-                            <!-- rating -->
+                            <!-- Rating -->
                             <muxc:RatingControl HorizontalAlignment="Left"
                                                 Margin="0,10,0,0"
                                                 Value="{x:Bind Shared.Rating, Mode=TwoWay}"
                                                 ValueChanged="OnRatingControlValueChanged"
                                                 IsEnabled="{x:Bind Shared.NavigationPageShared.NotExternal, Mode=OneWay}" />
 
-                            <!-- tags -->
+                            <!-- Tags -->
                             <Rectangle Fill="#606060"
                                        Height="1"
                                        Margin="0,10"
@@ -381,7 +384,7 @@
                         </StackPanel>
                     </ScrollViewer>
 
-                    <!-- buttons -->
+                    <!-- Bottom buttons -->
                     <StackPanel Grid.Row="1"
                                 Orientation="Horizontal"
                                 HorizontalAlignment="Right"
@@ -404,17 +407,18 @@
                 </Grid>
             </SplitView.Pane>
 
-            <!-- main -->
+            <!-- Main section -->
             <Grid>
 
-                <!-- reader -->
+                <!-- Reader -->
                 <Grid Tapped="OnReaderTapped">
                     <Grid x:Name="ManipulationReference" />
 
-                    <!-- vertical -->
+                    <!-- Vertical -->
                     <ScrollViewer x:Name="VerticalReaderScrollViewer"
                                   ViewChanged="OnVerticalReaderScrollViewerViewChanged"
-                                  Visibility="{x:Bind Shared.IsVerticalReaderVisible, Mode=OneWay}"
+                                  IsHitTestVisible="{x:Bind Shared.NavigationPageShared.IsVerticalReaderVisible, Mode=OneWay}"
+                                  Opacity="{x:Bind Shared.NavigationPageShared.IsVerticalReaderVisible, Converter={StaticResource BooleanToDoubleConverter}, Mode=OneWay}"
                                   HorizontalScrollMode="Enabled"
                                   HorizontalScrollBarVisibility="Auto"
                                   Loaded="OnVerticalReaderScrollViewerLoaded"
@@ -445,11 +449,12 @@
                         </Grid>
                     </ScrollViewer>
 
-                    <!-- horizontal -->
+                    <!-- Horizontal -->
                     <ScrollViewer Style="{StaticResource HorizontalReaderScrollViewerStyle}"
                                   x:Name="HorizontalReaderScrollViewer"
                                   ViewChanged="OnHorizontalReaderScrollViewerViewChanged"
-                                  Visibility="{x:Bind Shared.IsHorizontalReaderVisible, Mode=OneWay}"
+                                  IsHitTestVisible="{x:Bind Shared.NavigationPageShared.IsHorizontalReaderVisible, Mode=OneWay}"
+                                  Opacity="{x:Bind Shared.NavigationPageShared.IsHorizontalReaderVisible, Converter={StaticResource BooleanToDoubleConverter}, Mode=OneWay}"
                                   Loaded="OnHorizontalReaderScrollViewerLoaded"
                                   ZoomMode="Enabled"
                                   HorizontalScrollBarVisibility="Auto"
@@ -489,8 +494,9 @@
                     </ScrollViewer>
                 </Grid>
 
-                <!-- preview -->
-                <ScrollViewer Visibility="{x:Bind Shared.IsGridViewVisible, Mode=OneWay}">
+                <!-- Grid Preview -->
+                <ScrollViewer IsHitTestVisible="{x:Bind Shared.IsGridViewVisible, Mode=OneWay}"
+                              Opacity="{x:Bind Shared.IsGridViewVisible, Converter={StaticResource BooleanToDoubleConverter}, Mode=OneWay}">
                     <GridView ItemsSource="{x:Bind PreviewDataSource, Mode=OneWay}"
                               Padding="10"
                               HorizontalAlignment="Center"
@@ -514,7 +520,7 @@
                     </GridView>
                 </ScrollViewer>
 
-                <!-- bottom tile -->
+                <!-- Bottom Tile -->
                 <Grid x:Name="BottomGrid"
                       VerticalAlignment="Bottom"
                       Background="{ThemeResource ReaderBottomTileBackground}"
@@ -544,12 +550,16 @@
                                     VerticalAlignment="Center"
                                     Spacing="5">
                             <Grid Width="5" />
+
+                            <!-- Pin -->
                             <ToggleButton Style="{StaticResource ReaderBottomTileToggleButtonStyle}"
                                           IsChecked="{x:Bind Shared.BottomTilePinned, Mode=TwoWay}"
                                           ToolTipService.ToolTip="{x:Bind Shared.PinButtonToolTip, Mode=OneWay}">
                                 <FontIcon Glyph="&#xE840;"
                                           FontSize="20" />
                             </ToggleButton>
+
+                            <!-- More -->
                             <Button Style="{StaticResource ReaderBottomTileButtonStyle}"
                                     ToolTipService.ToolTip="More">
                                 <Button.Flyout>
@@ -567,6 +577,8 @@
                                           FontSize="20" />
                             </Button>
                             <AppBarSeparator />
+
+                            <!-- Zooming -->
                             <Button Style="{StaticResource ReaderBottomTileButtonStyle}"
                                     IsEnabled="{x:Bind Shared.NavigationPageShared.ZoomInEnabled, Mode=OneWay}"
                                     ToolTipService.ToolTip="Zoom in"
@@ -581,18 +593,34 @@
                                 <FontIcon Glyph="&#xE71F;"
                                           FontSize="20" />
                             </Button>
-                            <Button Style="{StaticResource ReaderBottomTileButtonStyle}"
-                                          Click="OnSwitchReaderOrientationClicked"
-                                          ToolTipService.ToolTip="Two pages">
-                                <FontIcon Glyph="&#xE8B4;"
-                                          FontSize="20" />
-                            </Button>
+
+                            <!-- Orientation toggle -->
+                            <Grid>
+                                <Button Style="{StaticResource ReaderBottomTileButtonStyle}"
+                                        Click="OnSwitchReaderOrientationClicked"
+                                        ToolTipService.ToolTip="Two pages"
+                                        Visibility="{x:Bind Shared.NavigationPageShared.IsVerticalReaderVisible, Mode=OneWay}">
+                                    <FontIcon Glyph="&#xE89A;"
+                                              FontSize="20" />
+                                </Button>
+                                <Button Style="{StaticResource ReaderBottomTileButtonStyle}"
+                                        Click="OnSwitchReaderOrientationClicked"
+                                        ToolTipService.ToolTip="One page"
+                                        Visibility="{x:Bind Shared.NavigationPageShared.IsHorizontalReaderVisible, Mode=OneWay}">
+                                    <FontIcon Glyph="&#xE7C3;"
+                                              FontSize="20" />
+                                </Button>
+                            </Grid>
+
+                            <!-- Grid preview toggle -->
                             <ToggleButton Style="{StaticResource ReaderBottomTileToggleButtonStyle}"
                                           IsChecked="{x:Bind Shared.NavigationPageShared.IsPreviewModeEnabled, Mode=TwoWay}"
                                           ToolTipService.ToolTip="Preview">
                                 <FontIcon Glyph="&#xF0E2;"
                                           FontSize="20" />
                             </ToggleButton>
+
+                            <!-- Add to favorites -->
                             <Button Style="{StaticResource ReaderBottomTileButtonStyle}"
                                     IsEnabled="{x:Bind Shared.NavigationPageShared.NotExternal, Mode=OneWay}"
                                     ToolTipService.ToolTip="{x:Bind Shared.NavigationPageShared.FavoriteButtonToolTip, Mode=OneWay}"
@@ -608,6 +636,8 @@
                                 </Grid>
                             </Button>
                         </StackPanel>
+
+                        <!-- Page indicator -->
                         <TextBlock x:Name="PageIndicator"
                                    HorizontalAlignment="Center"
                                    VerticalAlignment="Center"
@@ -616,7 +646,7 @@
                     </Grid>
                 </Grid>
 
-                <!-- fullscreen button -->
+                <!-- Fullscreen button -->
                 <Grid VerticalAlignment="Bottom"
                       HorizontalAlignment="Right">
                     <Button Style="{StaticResource ReaderFullscreenButtonStyle}"

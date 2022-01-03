@@ -129,14 +129,26 @@ namespace ComicReader.Utils
             return (StorageFile)item;
         }
 
-        public static async Task WaitFor(Func<bool> signal)
+        public static async Task WaitFor(Func<bool> signal, int timeout_milliseconds = -1)
         {
+            DateTimeOffset start_time = DateTimeOffset.Now;
+            
             await Task.Run(delegate
             {
                 SpinWait sw = new SpinWait();
 
                 while (!signal())
                 {
+                    if (timeout_milliseconds >= 0)
+                    {
+                        TimeSpan time_elapsed = DateTimeOffset.Now - start_time;
+
+                        if ((int)time_elapsed.TotalMilliseconds > timeout_milliseconds)
+                        {
+                            break;
+                        }
+                    }
+
                     sw.SpinOnce();
                 }
             });

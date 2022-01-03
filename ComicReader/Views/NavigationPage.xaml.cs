@@ -70,6 +70,28 @@ namespace ComicReader.Views
             }
         }
 
+        private bool m_IsVerticalReaderVisible = false;
+        public bool IsVerticalReaderVisible
+        {
+            get => m_IsVerticalReaderVisible;
+            set
+            {
+                m_IsVerticalReaderVisible = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsVerticalReaderVisible"));
+            }
+        }
+
+        private bool m_IsHorizontalReaderVisible = false;
+        public bool IsHorizontalReaderVisible
+        {
+            get => m_IsHorizontalReaderVisible;
+            set
+            {
+                m_IsHorizontalReaderVisible = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsHorizontalReaderVisible"));
+            }
+        }
+
         private bool? m_IsPreviewModeEnabled = null;
         public bool IsPreviewModeEnabled
         {

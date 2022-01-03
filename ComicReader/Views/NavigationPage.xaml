@@ -98,16 +98,27 @@
                             </AppBarButton.Content>
                         </AppBarButton>
 
-                        <!-- reader orientation toggle -->
-                        <AppBarButton Style="{StaticResource NavigationPageTopTileAppBarButton}"
-                                      Click="OnSwitchReaderOrientationClicked"
-                                      ToolTipService.ToolTip="Two pages">
-                            <AppBarButton.Content>
-                                <FontIcon Glyph="&#xE8B4;" />
-                            </AppBarButton.Content>
-                        </AppBarButton>
+                        <!-- Reader orientation -->
+                        <Grid>
+                            <AppBarButton Style="{StaticResource NavigationPageTopTileAppBarButton}"
+                                          Click="OnSwitchReaderOrientationClicked"
+                                          ToolTipService.ToolTip="Two pages"
+                                          Visibility="{x:Bind Shared.IsVerticalReaderVisible, Mode=OneWay}">
+                                <AppBarButton.Content>
+                                    <FontIcon Glyph="&#xE89A;" />
+                                </AppBarButton.Content>
+                            </AppBarButton>
+                            <AppBarButton Style="{StaticResource NavigationPageTopTileAppBarButton}"
+                                          Click="OnSwitchReaderOrientationClicked"
+                                          ToolTipService.ToolTip="One page"
+                                          Visibility="{x:Bind Shared.IsHorizontalReaderVisible, Mode=OneWay}">
+                                <AppBarButton.Content>
+                                    <FontIcon Glyph="&#xE7C3;" />
+                                </AppBarButton.Content>
+                            </AppBarButton>
+                        </Grid>
 
-                        <!-- preview toggle -->
+                        <!-- Reader grid preview toggle -->
                         <AppBarToggleButton Style="{StaticResource NavigationPageTopTileAppBarToggleButton}"
                                             ToolTipService.ToolTip="Preview"
                                             IsChecked="{x:Bind Shared.IsPreviewModeEnabled, Mode=TwoWay}">
@@ -116,7 +127,7 @@
                             </AppBarToggleButton.Content>
                         </AppBarToggleButton>
 
-                        <!-- add to favorites -->
+                        <!-- Add to favorites -->
                         <AppBarButton Style="{StaticResource NavigationPageTopTileAppBarButton}"
                                       ToolTipService.ToolTip="{x:Bind Shared.FavoriteButtonToolTip, Mode=OneWay}"
                                       IsEnabled="{x:Bind Shared.NotExternal, Mode=OneWay}"

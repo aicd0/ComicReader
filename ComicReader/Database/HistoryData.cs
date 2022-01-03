@@ -128,7 +128,7 @@ namespace ComicReader.Database
             {
                 HistoryItemData record = items[i];
 
-                if (record.Id.Equals(id))
+                if (record.Id == id)
                 {
                     items.RemoveAt(i);
                     --i;

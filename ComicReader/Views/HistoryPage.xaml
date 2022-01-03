@@ -26,7 +26,7 @@
                   IsItemClickEnabled="True"
                   ItemContainerStyle="{StaticResource HistoryPageItem}"
                   x:Name="MainListView"
-                  Margin="0,-10,0,0">
+                  Margin="0,0,0,0">
             <ListView.ItemsPanel>
                 <ItemsPanelTemplate>
                     <ItemsStackPanel AreStickyGroupHeadersEnabled="False" />
@@ -34,38 +34,44 @@
             </ListView.ItemsPanel>
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="data:HistoryItemViewModel">
-                    <Grid Padding="12,0,4,0">
+                    <Grid Padding="12,0,10,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
+                        
+                        <Grid.ContextFlyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem Text="Open in new tab"
+                                                Icon="Document"
+                                                Click="OpenInNewTabClick" />
+                                <MenuFlyoutSeparator />
+                                <MenuFlyoutItem Text="Delete"
+                                                Icon="Delete"
+                                                Click="DeleteClick" />
+                            </MenuFlyout>
+                        </Grid.ContextFlyout>
+                        
                         <FontIcon Grid.Column="0"
                                   FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                  Glyph="&#xE729;"
-                                  FontSize="20"
-                                  Margin="0" />
-                        <StackPanel Orientation="Vertical"
-                                    Grid.Column="1"
-                                    Margin="6,4,0,6">
-                            <StackPanel.ContextFlyout>
-                                <MenuFlyout>
-                                    <MenuFlyoutItem Text="Open in new tab"
-                                                    Icon="Document"
-                                                    Click="OpenInNewTabClick" />
-                                    <MenuFlyoutSeparator />
-                                    <MenuFlyoutItem Text="Delete"
-                                                    Icon="Delete"
-                                                    Click="DeleteClick" />
-                                </MenuFlyout>
-                            </StackPanel.ContextFlyout>
-                            <TextBlock Text="{x:Bind Title}"
-                                       TextTrimming="CharacterEllipsis"
-                                       ToolTipService.ToolTip="{x:Bind Title}" />
-                            <TextBlock Text="{x:Bind Time}"
-                                       FontSize="13"
-                                       Foreground="#999999"
-                                       Margin="0,-2,0,0"/>
-                        </StackPanel>
+                                  Glyph="&#xF5ED;"
+                                  FontSize="18"
+                                  Margin="0,2,0,0" />
+                        <TextBlock Text="{x:Bind Title}"
+                                   Grid.Column="1"
+                                   FontSize="14"
+                                   TextTrimming="CharacterEllipsis"
+                                   ToolTipService.ToolTip="{x:Bind Title}"
+                                   VerticalAlignment="Center"
+                                   Margin="10,0,0,1" />
+                        <TextBlock Text="{x:Bind Time}"
+                                   FontSize="13"
+                                   Grid.Column="2"
+                                   HorizontalAlignment="Right"
+                                   VerticalAlignment="Center"
+                                   Foreground="#999999"
+                                   Margin="1,0,0,0" />
                     </Grid>
                 </DataTemplate>
             </ListView.ItemTemplate>
@@ -73,12 +79,12 @@
                 <GroupStyle HeaderContainerStyle="{StaticResource HistoryPageHeader}">
                     <GroupStyle.HeaderTemplate>
                         <DataTemplate x:DataType="data:HistoryGroupViewModel">
-                            <Grid Background="Transparent"
-                                  Margin="0,14,0,2">
+                            <Grid Background="#404040"
+                                  Margin="0,0,0,0">
                                 <TextBlock Text="{x:Bind Key}"
                                            FontSize="15"
-                                           FontWeight="Bold"
-                                           Margin="10,0,0,2" />
+                                           FontWeight="SemiBold"
+                                           Margin="12,3,0,5"/>
                             </Grid>
                         </DataTemplate>
                     </GroupStyle.HeaderTemplate>

@@ -18,7 +18,7 @@
         <Setter Property="Padding"
                 Value="0" />
         <Setter Property="HorizontalContentAlignment"
-                Value="Left" />
+                Value="Stretch" />
         <Setter Property="VerticalContentAlignment"
                 Value="Center" />
         <Setter Property="MinWidth"

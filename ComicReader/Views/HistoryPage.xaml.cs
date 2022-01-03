@@ -99,7 +99,7 @@ namespace ComicReader.Views
                 HistoryItemViewModel item_out = new HistoryItemViewModel
                 {
                     Id = item.Id,
-                    Time = item.DateTime.ToString("g"),
+                    Time = item.DateTime.ToString("t"),
                     Title = item.Title
                 };
 

@@ -139,6 +139,7 @@
       <DependentUpon>TagButton.xaml</DependentUpon>
     </Compile>
     <Compile Include="Converters\BooleanNegationConverter.cs" />
+    <Compile Include="Converters\BooleanToDoubleConverter.cs" />
     <Compile Include="Converters\BooleanToVisibilityConverter.cs" />
     <Compile Include="Converters\FavoritesItemTemplateSelector.cs" />
     <Compile Include="Converters\FolderItemTemplateSelector.cs" />
