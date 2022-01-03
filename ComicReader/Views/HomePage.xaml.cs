@@ -12,13 +12,14 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 using muxc = Microsoft.UI.Xaml.Controls;
-using ComicReader.Data;
+using ComicReader.Database;
+using ComicReader.DesignData;
 
 namespace ComicReader.Views
 {
-    using RawTask = Task<Utils.TaskQueue.TaskResult>;
-    using SealedTask = Func<Task<Utils.TaskQueue.TaskResult>, Utils.TaskQueue.TaskResult>;
-    using TaskResult = Utils.TaskQueue.TaskResult;
+    using RawTask = Task<Utils.TaskResult>;
+    using SealedTask = Func<Task<Utils.TaskResult>, Utils.TaskResult>;
+    using TaskResult = Utils.TaskResult;
 
     public class HomePageShared : INotifyPropertyChanged
     {
@@ -35,8 +36,8 @@ namespace ComicReader.Views
             }
         }
 
-        private Utils.ObservableCollectionPlus<ComicItemModel> m_ComicItemSource = new Utils.ObservableCollectionPlus<ComicItemModel>();
-        public Utils.ObservableCollectionPlus<ComicItemModel> ComicItemSource
+        private Utils.ObservableCollectionPlus<ComicItemViewModel> m_ComicItemSource = new Utils.ObservableCollectionPlus<ComicItemViewModel>();
+        public Utils.ObservableCollectionPlus<ComicItemViewModel> ComicItemSource
         {
             get => m_ComicItemSource;
             set
@@ -54,18 +55,18 @@ namespace ComicReader.Views
     {
         public static HomePage Current;
         public HomePageShared Shared { get; set; }
-        public ObservableCollection<FolderItemModel> FolderItemDataSource { get; set; }
+        public ObservableCollection<FolderItemViewModel> FolderItemDataSource { get; set; }
 
         private readonly Utils.Tab.TabManager m_tab_manager;
         private Utils.CancellationLock m_update_folder_lock;
         private Utils.CancellationLock m_update_library_lock;
-        private Utils.TaskQueue.TaskQueue m_update_queue;
+        private Utils.TaskQueue m_update_queue;
 
         public HomePage()
         {
             Current = this;
             Shared = new HomePageShared();
-            FolderItemDataSource = new ObservableCollection<FolderItemModel>();
+            FolderItemDataSource = new ObservableCollection<FolderItemViewModel>();
 
             m_tab_manager = new Utils.Tab.TabManager();
             Unloaded += m_tab_manager.OnTabUnloaded;
@@ -76,7 +77,7 @@ namespace ComicReader.Views
 
             m_update_folder_lock = new Utils.CancellationLock();
             m_update_library_lock = new Utils.CancellationLock();
-            m_update_queue = Utils.TaskQueue.TaskQueueManager.EmptyQueue();
+            m_update_queue = Utils.TaskQueueManager.EmptyQueue();
 
             InitializeComponent();
         }
@@ -103,7 +104,7 @@ namespace ComicReader.Views
 
         private void OnTabUpdate()
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 await Update();
             });
@@ -132,7 +133,7 @@ namespace ComicReader.Views
         {
             Task update_task = null;
 
-            Utils.Methods.Sync(delegate
+            Utils.C0.Sync(delegate
             {
                 update_task = Update();
             }).Wait();
@@ -154,14 +155,14 @@ namespace ComicReader.Views
                 // Get recent visited comics.
                 const int result_count = 12;
 
-                SqliteCommand command = DatabaseManager.Connection.CreateCommand();
-                command.CommandText = "SELECT * FROM " + DatabaseManager.ComicTable +
+                SqliteCommand command = SqliteDatabaseManager.NewCommand();
+                command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.ComicTable +
                     " ORDER BY " + ComicData.FieldLastVisit + " DESC LIMIT " +
                     result_count.ToString();
 
                 await ComicDataManager.WaitLock(db); // Lock on.
                 SqliteDataReader query = await command.ExecuteReaderAsync();
-                var comic_items = new Utils.ObservableCollectionPlus<ComicItemModel>();
+                var comic_items = new Utils.ObservableCollectionPlus<ComicItemViewModel>();
 
                 while (query.Read())
                 {
@@ -169,7 +170,7 @@ namespace ComicReader.Views
                     if (comic == null) continue;
                     if (comic.Hidden) continue;
 
-                    ComicItemModel data = new ComicItemModel
+                    ComicItemViewModel data = new ComicItemViewModel
                     {
                         OnItemPressed = GridPointerPressed,
                         OnHideClicked = HideClick,
@@ -192,7 +193,7 @@ namespace ComicReader.Views
                 // Load images.
                 var image_loader_tokens = new List<Utils.ImageLoaderToken>();
 
-                foreach (ComicItemModel item in Shared.ComicItemSource)
+                foreach (ComicItemViewModel item in Shared.ComicItemSource)
                 {
                     image_loader_tokens.Add(new Utils.ImageLoaderToken
                     {
@@ -228,9 +229,9 @@ namespace ComicReader.Views
             try
             {
                 // Add to folder item source.
-                var new_folder_source = new Collection<FolderItemModel>
+                var new_folder_source = new Collection<FolderItemViewModel>
                 {
-                    new FolderItemModel
+                    new FolderItemViewModel
                     {
                         OnItemPressed = FolderItemPressed,
                         IsAddNew = true
@@ -241,7 +242,7 @@ namespace ComicReader.Views
 
                 foreach (string folder in XmlDatabase.Settings.ComicFolders)
                 {
-                    FolderItemModel item = new FolderItemModel
+                    FolderItemViewModel item = new FolderItemViewModel
                     {
                         OnItemPressed = FolderItemPressed,
                         OnRemoveClicked = FolderItemRemoveClick,
@@ -253,7 +254,7 @@ namespace ComicReader.Views
                 }
 
                 XmlDatabaseManager.ReleaseLock();
-                Utils.Methods1<FolderItemModel>.UpdateCollection(FolderItemDataSource, new_folder_source, FolderItemModel.ContentEquals);
+                Utils.C1<FolderItemViewModel>.UpdateCollection(FolderItemDataSource, new_folder_source, FolderItemViewModel.ContentEquals);
             }
             finally
             {
@@ -274,7 +275,7 @@ namespace ComicReader.Views
 
         private void GridPointerPressed(object sender, PointerRoutedEventArgs e)
         {
-            ComicItemModel ctx = (ComicItemModel)((Grid)sender).DataContext;
+            ComicItemViewModel ctx = (ComicItemViewModel)((Grid)sender).DataContext;
             PointerPoint pt = e.GetCurrentPoint((UIElement)sender);
 
             if (!pt.Properties.IsLeftButtonPressed)
@@ -287,10 +288,10 @@ namespace ComicReader.Views
 
         private void HideClick(object sender, RoutedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 LockContext db = new LockContext();
-                ComicItemModel ctx = (ComicItemModel)((MenuFlyoutItem)sender).DataContext;
+                ComicItemViewModel ctx = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 await ComicDataManager.Hide(db, ctx.Comic);
                 await UpdateLibrary(db);
             });
@@ -298,7 +299,7 @@ namespace ComicReader.Views
 
         private void AddNewFolder()
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 if (!await SettingDataManager.AddComicFolderUsingPicker())
                 {
@@ -306,8 +307,9 @@ namespace ComicReader.Views
                 }
 
                 await UpdateFolders();
-                Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.UpdateSealed(), "", m_update_queue);
-                Utils.TaskQueue.TaskQueueManager.AppendTask(UpdateSealed(), "", m_update_queue);
+                Utils.TaskQueueManager.AppendTask(
+                    ComicDataManager.UpdateSealed(lazy_load: true), "", m_update_queue);
+                Utils.TaskQueueManager.AppendTask(UpdateSealed(), "", m_update_queue);
             });
         }
 
@@ -320,7 +322,7 @@ namespace ComicReader.Views
                 return;
             }
 
-            FolderItemModel ctx = (FolderItemModel)((Grid)sender).DataContext;
+            FolderItemViewModel ctx = (FolderItemViewModel)((Grid)sender).DataContext;
 
             if (ctx.IsAddNew)
             {
@@ -334,13 +336,14 @@ namespace ComicReader.Views
 
         private void FolderItemRemoveClick(object sender, RoutedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
-                FolderItemModel ctx = (FolderItemModel)((MenuFlyoutItem)sender).DataContext;
+                FolderItemViewModel ctx = (FolderItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 await SettingDataManager.RemoveComicFolder(ctx.Folder, final: true);
                 await UpdateFolders();
-                Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.UpdateSealed(), "", m_update_queue);
-                Utils.TaskQueue.TaskQueueManager.AppendTask(UpdateSealed(), "", m_update_queue);
+                Utils.TaskQueueManager.AppendTask(
+                    ComicDataManager.UpdateSealed(lazy_load: true), "", m_update_queue);
+                Utils.TaskQueueManager.AppendTask(UpdateSealed(), "", m_update_queue);
             });
         }
 

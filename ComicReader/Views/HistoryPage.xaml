@@ -3,7 +3,7 @@
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-      xmlns:data="using:ComicReader.Data"
+      xmlns:data="using:ComicReader.DesignData"
       mc:Ignorable="d"
       Background="Transparent"
       NavigationCacheMode="Enabled">
@@ -33,7 +33,7 @@
                 </ItemsPanelTemplate>
             </ListView.ItemsPanel>
             <ListView.ItemTemplate>
-                <DataTemplate x:DataType="data:HistoryItemModel">
+                <DataTemplate x:DataType="data:HistoryItemViewModel">
                     <Grid Padding="12,0,4,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
@@ -72,7 +72,7 @@
             <ListView.GroupStyle>
                 <GroupStyle HeaderContainerStyle="{StaticResource HistoryPageHeader}">
                     <GroupStyle.HeaderTemplate>
-                        <DataTemplate x:DataType="data:HistoryItemGroupModel">
+                        <DataTemplate x:DataType="data:HistoryGroupViewModel">
                             <Grid Background="Transparent"
                                   Margin="0,14,0,2">
                                 <TextBlock Text="{x:Bind Key}"

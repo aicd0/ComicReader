@@ -1,11 +1,11 @@
 ﻿using Windows.UI.Xaml.Controls;
-using ComicReader.Data;
+using ComicReader.DesignData;
 
 namespace ComicReader.Controls
 {
     public sealed partial class TagButton : UserControl
     {
-        public TagModel Ctx => DataContext as TagModel;
+        public TagViewModel Ctx => DataContext as TagViewModel;
 
         public TagButton()
         {

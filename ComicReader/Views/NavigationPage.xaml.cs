@@ -310,7 +310,7 @@ namespace ComicReader.Views
 
         private void SidePaneOpened(SplitView sender, object args)
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 if (FavoritePage.Current != null)
                 {

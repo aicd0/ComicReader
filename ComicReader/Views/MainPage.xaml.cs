@@ -12,11 +12,11 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using muxc = Microsoft.UI.Xaml.Controls;
-using ComicReader.Data;
+using ComicReader.Database;
 
 namespace ComicReader.Views
 {
-    using SealedTask = Func<Task<Utils.TaskQueue.TaskResult>, Utils.TaskQueue.TaskResult>;
+    using SealedTask = Func<Task<Utils.TaskResult>, Utils.TaskResult>;
 
     public class MainPageShared : INotifyPropertyChanged
     {
@@ -61,10 +61,10 @@ namespace ComicReader.Views
         // file activation
         public SealedTask OnFileActivatedSealed(FileActivatedEventArgs args)
         {
-            return delegate (Task<Utils.TaskQueue.TaskResult> _t)
+            return delegate (Task<Utils.TaskResult> _t)
             {
                 _OnFileActivatedAsync(args).Wait();
-                return new Utils.TaskQueue.TaskResult();
+                return new Utils.TaskResult();
             };
         }
 
@@ -128,7 +128,7 @@ namespace ComicReader.Views
                     new Utils.StringUtils.FileNameComparer());
             }
 
-            await Utils.Methods.Sync(delegate
+            await Utils.C0.Sync(delegate
             {
                 LoadTab(null, Utils.Tab.PageType.Reader, comic);
             });

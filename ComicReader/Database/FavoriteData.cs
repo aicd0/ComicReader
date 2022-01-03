@@ -8,12 +8,12 @@ using System.Xml.Serialization;
 using Windows.Storage;
 using Windows.Storage.Streams;
 
-namespace ComicReader.Data
+namespace ComicReader.Database
 {
-    using RawTask = Task<Utils.TaskQueue.TaskResult>;
-    using SealedTask = Func<Task<Utils.TaskQueue.TaskResult>, Utils.TaskQueue.TaskResult>;
-    using TaskResult = Utils.TaskQueue.TaskResult;
-    using TaskException = Utils.TaskQueue.TaskException;
+    using RawTask = Task<Utils.TaskResult>;
+    using SealedTask = Func<Task<Utils.TaskResult>, Utils.TaskResult>;
+    using TaskResult = Utils.TaskResult;
+    using TaskException = Utils.TaskException;
 
     public class FavoriteData : XmlData
     {
@@ -169,7 +169,7 @@ namespace ComicReader.Data
 
         private static async Task Update()
         {
-            Utils.TaskQueue.TaskQueueManager.AppendTask(
+            Utils.TaskQueueManager.AppendTask(
                 XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Favorites));
 
             if (Views.FavoritePage.Current != null)

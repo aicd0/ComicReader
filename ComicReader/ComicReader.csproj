@@ -142,22 +142,29 @@
     <Compile Include="Converters\BooleanToVisibilityConverter.cs" />
     <Compile Include="Converters\FavoritesItemTemplateSelector.cs" />
     <Compile Include="Converters\FolderItemTemplateSelector.cs" />
-    <Compile Include="Data\SettingData.cs" />
-    <Compile Include="Data\ComicData.cs" />
-    <Compile Include="Data\FavoriteData.cs" />
-    <Compile Include="Data\HistoryData.cs" />
+    <Compile Include="Database\SettingData.cs" />
+    <Compile Include="Database\ComicData.cs" />
+    <Compile Include="Database\FavoriteData.cs" />
+    <Compile Include="Database\HistoryData.cs" />
+    <Compile Include="Database\SqliteDatabase.cs" />
+    <Compile Include="Database\XmlDatabase.cs" />
+    <Compile Include="DesignData\ComicItemViewModel.cs" />
+    <Compile Include="DesignData\FavoriteItemViewModel.cs" />
+    <Compile Include="DesignData\HistoryViewModel.cs" />
+    <Compile Include="DesignData\ReaderFrameViewModel.cs" />
+    <Compile Include="DesignData\TagViewModel.cs" />
     <Compile Include="Utils\ImageLoader.cs" />
     <Compile Include="Utils\Stopwatch.cs" />
     <Compile Include="Utils\TabManager.cs" />
-    <Compile Include="Data\ViewModels.cs" />
-    <Compile Include="Data\Database.cs" />
+    <Compile Include="DesignData\FolderItemViewModel.cs" />
+    <Compile Include="Database\Database.cs" />
     <Compile Include="Utils\TaskQueue.cs" />
     <Compile Include="Utils\CancellationLock.cs" />
     <Compile Include="Utils\Heap.cs" />
     <Compile Include="Utils\Filter.cs" />
     <Compile Include="Utils\StringUtils.cs" />
     <Compile Include="Utils\ObservableCollectionPlus.cs" />
-    <Compile Include="Utils\Methods.cs" />
+    <Compile Include="Utils\Common.cs" />
     <Compile Include="Views\HelpPage.xaml.cs">
       <DependentUpon>HelpPage.xaml</DependentUpon>
     </Compile>
@@ -378,6 +385,7 @@
   <ItemGroup>
     <PRIResource Include="Resources\Strings\en\Resources.resw" />
   </ItemGroup>
+  <ItemGroup />
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
   </PropertyGroup>

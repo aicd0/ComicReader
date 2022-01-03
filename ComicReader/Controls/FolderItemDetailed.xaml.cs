@@ -1,11 +1,11 @@
 ﻿using Windows.UI.Xaml.Controls;
-using ComicReader.Data;
+using ComicReader.DesignData;
 
 namespace ComicReader.Controls
 {
     public sealed partial class FolderItemDetailed : UserControl
     {
-        public FolderItemModel Ctx => DataContext as FolderItemModel;
+        public FolderItemViewModel Ctx => DataContext as FolderItemViewModel;
         public string Title { get; set; }
         public string Detail { get; set; }
         public string Glyph { get; set; }

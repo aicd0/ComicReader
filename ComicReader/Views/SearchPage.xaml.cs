@@ -11,7 +11,8 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 using muxc = Microsoft.UI.Xaml.Controls;
-using ComicReader.Data;
+using ComicReader.Database;
+using ComicReader.DesignData;
 
 namespace ComicReader.Views
 {
@@ -42,7 +43,7 @@ namespace ComicReader.Views
         }
 
         // UI elements
-        public Utils.ObservableCollectionPlus<ComicItemModel> SearchResults;
+        public Utils.ObservableCollectionPlus<ComicItemViewModel> SearchResults;
 
         private bool m_IsLoadingRingVisible;
         public bool IsLoadingRingVisible
@@ -128,7 +129,7 @@ namespace ComicReader.Views
             Shared = new SearchPageShared();
             Shared.Title = "";
             Shared.FilterDetails = "";
-            Shared.SearchResults = new Utils.ObservableCollectionPlus<ComicItemModel>();
+            Shared.SearchResults = new Utils.ObservableCollectionPlus<ComicItemViewModel>();
             
             m_tab_manager = new Utils.Tab.TabManager();
             Unloaded += m_tab_manager.OnTabUnloaded;
@@ -164,7 +165,7 @@ namespace ComicReader.Views
 
         private void OnTabStart(Utils.Tab.TabIdentifier tab_id)
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 LockContext db = new LockContext();
 
@@ -263,10 +264,10 @@ namespace ComicReader.Views
 
                 var matched = new List<Match>();
 
-                SqliteCommand command = DatabaseManager.Connection.CreateCommand();
+                SqliteCommand command = SqliteDatabaseManager.NewCommand();
                 command.CommandText = "SELECT " + ComicData.FieldId + "," +
                     ComicData.FieldTitle1 + "," + ComicData.FieldTitle2 + " FROM " +
-                    DatabaseManager.ComicTable;
+                    SqliteDatabaseManager.ComicTable;
 
                 await ComicDataManager.WaitLock(db); // Lock on.
                 SqliteDataReader query = await command.ExecuteReaderAsync();
@@ -345,13 +346,13 @@ namespace ComicReader.Views
                 }
 
                 int end_i = items_loaded + count;
-                List<ComicItemModel> results_tmp = new List<ComicItemModel>();
+                List<ComicItemViewModel> results_tmp = new List<ComicItemViewModel>();
 
                 for (int i = items_loaded; i < end_i; ++i)
                 {
                     ComicData comic = m_all_results[i];
 
-                    ComicItemModel result = new ComicItemModel
+                    ComicItemViewModel result = new ComicItemViewModel
                     {
                         OnItemPressed = OnListViewPressed,
                         OnHideClicked = HideClick,
@@ -372,7 +373,7 @@ namespace ComicReader.Views
                 }
 
                 // update UI
-                foreach (ComicItemModel result in results_tmp)
+                foreach (ComicItemViewModel result in results_tmp)
                 {
                     Shared.SearchResults.Add(result);
                 }
@@ -383,7 +384,7 @@ namespace ComicReader.Views
                 double image_height = (double)Application.Current.Resources["ComicItemHorizontalImageHeight"];
                 var image_loader_tokens = new List<Utils.ImageLoaderToken>();
                 
-                foreach (ComicItemModel item in Shared.SearchResults.Skip(items_loaded))
+                foreach (ComicItemViewModel item in Shared.SearchResults.Skip(items_loaded))
                 {
                     image_loader_tokens.Add(new Utils.ImageLoaderToken
                     {
@@ -410,7 +411,7 @@ namespace ComicReader.Views
         // events processing
         private void OnListViewPressed(object sender, PointerRoutedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 LockContext db = new LockContext();
 
@@ -420,7 +421,7 @@ namespace ComicReader.Views
                     return;
                 }
 
-                ComicItemModel item = (ComicItemModel)((FrameworkElement)sender).DataContext;
+                ComicItemViewModel item = (ComicItemViewModel)((FrameworkElement)sender).DataContext;
                 ComicData comic = await ComicDataManager.FromId(db, item.Id);
                 MainPage.Current.LoadTab(null, Utils.Tab.PageType.Reader, comic);
             });
@@ -428,7 +429,7 @@ namespace ComicReader.Views
 
         private void ScrollViewer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 LockContext db = new LockContext();
 
@@ -443,32 +444,32 @@ namespace ComicReader.Views
 
         private void AddToFavoritesBtClick(object sender, RoutedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
-                ComicItemModel result = (ComicItemModel)((MenuFlyoutItem)sender).DataContext;
+                ComicItemViewModel result = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 result.IsFavorite = true;
-                Utils.Methods1<ComicItemModel>.NotifyCollectionChanged(Shared.SearchResults, result);
+                Utils.C1<ComicItemViewModel>.NotifyCollectionChanged(Shared.SearchResults, result);
                 await FavoriteDataManager.Add(result.Id, result.Title, true);
             });
         }
 
         private void RemoveFromFavoritesBtClick(object sender, RoutedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
-                ComicItemModel result = (ComicItemModel)((MenuFlyoutItem)sender).DataContext;
+                ComicItemViewModel result = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 result.IsFavorite = false;
-                Utils.Methods1<ComicItemModel>.NotifyCollectionChanged(Shared.SearchResults, result);
+                Utils.C1<ComicItemViewModel>.NotifyCollectionChanged(Shared.SearchResults, result);
                 await FavoriteDataManager.RemoveWithId(result.Id, true);
             });
         }
 
         private void UnhideClick(object sender, RoutedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 LockContext db = new LockContext();
-                ComicItemModel ctx = (ComicItemModel)((MenuFlyoutItem)sender).DataContext;
+                ComicItemViewModel ctx = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 await ComicDataManager.Unhide(db, ctx.Comic);
                 await StartSearch(db);
             });
@@ -476,10 +477,10 @@ namespace ComicReader.Views
 
         private void HideClick(object sender, RoutedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 LockContext db = new LockContext();
-                ComicItemModel ctx = (ComicItemModel)((MenuFlyoutItem)sender).DataContext;
+                ComicItemViewModel ctx = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 await ComicDataManager.Hide(db, ctx.Comic);
                 await StartSearch(db);
             });

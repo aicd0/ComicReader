@@ -11,12 +11,12 @@ using Windows.Storage;
 using Windows.Storage.Search;
 using Windows.Storage.Streams;
 
-namespace ComicReader.Data
+namespace ComicReader.Database
 {
-    using RawTask = Task<Utils.TaskQueue.TaskResult>;
-    using SealedTask = Func<Task<Utils.TaskQueue.TaskResult>, Utils.TaskQueue.TaskResult>;
-    using TaskResult = Utils.TaskQueue.TaskResult;
-    using TaskException = Utils.TaskQueue.TaskException;
+    using RawTask = Task<Utils.TaskResult>;
+    using SealedTask = Func<Task<Utils.TaskResult>, Utils.TaskResult>;
+    using TaskResult = Utils.TaskResult;
+    using TaskException = Utils.TaskException;
     
     [Serializable]
     public class TagData
@@ -105,7 +105,7 @@ namespace ComicReader.Data
         {
             System.Diagnostics.Debug.Assert(Id >= 0);
             SqlKey id = new SqlKey(FieldId, Id);
-            await DatabaseManager.Update(db, DatabaseManager.ComicTable, id, keys);
+            await SqliteDatabaseManager.Update(db, SqliteDatabaseManager.ComicTable, id, keys);
         }
 
         public async Task Save(LockContext db)
@@ -127,12 +127,12 @@ namespace ComicReader.Data
 
             if (Id < 0)
             {
-                long rowid = await DatabaseManager.Insert(db, DatabaseManager.ComicTable, keys);
+                long rowid = await SqliteDatabaseManager.Insert(db, SqliteDatabaseManager.ComicTable, keys);
 
                 // Retrieve ID from inserted row.
-                SqliteCommand command = DatabaseManager.Connection.CreateCommand();
+                SqliteCommand command = SqliteDatabaseManager.NewCommand();
                 command.CommandText = "SELECT " + FieldId + " FROM " +
-                    DatabaseManager.ComicTable + " WHERE ROWID=$rowid";
+                    SqliteDatabaseManager.ComicTable + " WHERE ROWID=$rowid";
                 command.Parameters.AddWithValue("$rowid", rowid);
 
                 await ComicDataManager.WaitLock(db);
@@ -229,7 +229,7 @@ namespace ComicReader.Data
             // Tags
             try
             {
-                comic.Tags = (List<TagData>)await Utils.Methods.DeserializeFromStream(query.GetStream(10));
+                comic.Tags = (List<TagData>)await Utils.C0.DeserializeFromStream(query.GetStream(10));
             }
             catch (SerializationException)
             {
@@ -246,7 +246,7 @@ namespace ComicReader.Data
             // ImageAspectRatios
             try
             {
-                comic.ImageAspectRatios = (List<double>)await Utils.Methods.DeserializeFromStream(query.GetStream(11));
+                comic.ImageAspectRatios = (List<double>)await Utils.C0.DeserializeFromStream(query.GetStream(11));
             }
             catch (SerializationException)
             {
@@ -259,9 +259,8 @@ namespace ComicReader.Data
 
         private static async Task<ComicData> From(LockContext db, string col, object entry)
         {
-            SqliteCommand command = new SqliteCommand();
-            command.Connection = DatabaseManager.Connection;
-            command.CommandText = "SELECT * FROM " + DatabaseManager.ComicTable +
+            SqliteCommand command = SqliteDatabaseManager.NewCommand();
+            command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.ComicTable +
                 " WHERE " + col + "=@entry LIMIT 1";
             command.Parameters.AddWithValue("@entry", entry);
 
@@ -302,9 +301,8 @@ namespace ComicReader.Data
 
         private static async Task RemoveWithDirectory(LockContext db, string dir)
         {
-            SqliteCommand command = new SqliteCommand();
-            command.Connection = DatabaseManager.Connection;
-            command.CommandText = @"DELETE FROM " + DatabaseManager.ComicTable +
+            SqliteCommand command = SqliteDatabaseManager.NewCommand();
+            command.CommandText = @"DELETE FROM " + SqliteDatabaseManager.ComicTable +
                 " WHERE " + ComicData.FieldDirectory + " LIKE @pattern";
             command.Parameters.AddWithValue("@pattern", dir + "%");
 
@@ -312,6 +310,9 @@ namespace ComicReader.Data
             command.ExecuteNonQuery();
             ComicDataManager.ReleaseLock(db);
         }
+
+        public static SealedTask UpdateSealed(bool lazy_load) =>
+            (RawTask _) => Update(new LockContext(), lazy_load).Result;
 
         public static async RawTask Update(LockContext db, bool lazy_load)
         {
@@ -333,7 +334,7 @@ namespace ComicReader.Data
 
                 foreach (string folder_path in root_folders)
                 {
-                    StorageFolder folder = await Utils.Methods.TryGetFolder(folder_path);
+                    StorageFolder folder = await Utils.C0.TryGetFolder(folder_path);
 
                     // remove unreachable folders from database
                     if (folder == null)
@@ -362,7 +363,7 @@ namespace ComicReader.Data
                     }
                 }
 
-                Utils.TaskQueue.TaskQueueManager.AppendTask(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
+                Utils.TaskQueueManager.AppendTask(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
 
                 // extracts StorageFolder.Path into a new string list
                 List<string> all_dir = new List<string>(all_folders.Count);
@@ -376,10 +377,9 @@ namespace ComicReader.Data
                 List<string> all_dir_in_lib = new List<string>();
 
                 {
-                    SqliteCommand command = new SqliteCommand();
-                    command.Connection = DatabaseManager.Connection;
+                    SqliteCommand command = SqliteDatabaseManager.NewCommand();
                     command.CommandText = "SELECT " + ComicData.FieldDirectory +
-                        " FROM " + DatabaseManager.ComicTable;
+                        " FROM " + SqliteDatabaseManager.ComicTable;
 
                     await ComicDataManager.WaitLock(db); // Lock on.
                     SqliteDataReader query = command.ExecuteReader();
@@ -392,10 +392,10 @@ namespace ComicReader.Data
                 }
 
                 // get all folders added or removed.
-                List<string> dir_added = Utils.Methods3<string, string, string>.Except(all_dir, all_dir_in_lib,
+                List<string> dir_added = Utils.C3<string, string, string>.Except(all_dir, all_dir_in_lib,
                     Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
                     new Utils.StringUtils.DefaultEqualityComparer()).ToList();
-                List<string> dir_removed = Utils.Methods3<string, string, string>.Except(all_dir_in_lib, all_dir,
+                List<string> dir_removed = Utils.C3<string, string, string>.Except(all_dir_in_lib, all_dir,
                     Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
                     new Utils.StringUtils.DefaultEqualityComparer()).ToList();
 
@@ -416,7 +416,7 @@ namespace ComicReader.Data
                         FileTypeFilter = { ".jpg", ".jpeg", ".png", ".bmp" }
                     };
 
-                    StorageFolder folder = await Utils.Methods.TryGetFolder(dir);
+                    StorageFolder folder = await Utils.C0.TryGetFolder(dir);
 
                     if (folder == null)
                     {
@@ -482,7 +482,7 @@ namespace ComicReader.Data
 
                 if (!lazy_load)
                 {
-                    List<string> dir_kept = Utils.Methods3<string, string, string>.Intersect(all_dir, all_dir_in_lib,
+                    List<string> dir_kept = Utils.C3<string, string, string>.Intersect(all_dir, all_dir_in_lib,
                         Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
                         new Utils.StringUtils.DefaultEqualityComparer()).ToList();
 
@@ -554,7 +554,7 @@ namespace ComicReader.Data
             }
 
             string text = InfoString(comic);
-            IBuffer buffer = Utils.Methods.GetBufferFromString(text);
+            IBuffer buffer = Utils.C0.GetBufferFromString(text);
             await FileIO.WriteBufferAsync(comic.InfoFile, buffer);
             return new TaskResult();
         }
@@ -675,7 +675,7 @@ namespace ComicReader.Data
                 return new TaskResult(TaskException.InvalidParameters);
             }
 
-            StorageFolder folder = await Utils.Methods.TryGetFolder(comic.Directory);
+            StorageFolder folder = await Utils.C0.TryGetFolder(comic.Directory);
 
             if (folder == null)
             {

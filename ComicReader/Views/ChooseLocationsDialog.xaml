@@ -3,7 +3,7 @@
                xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-               xmlns:data="using:ComicReader.Data"
+               xmlns:data="using:ComicReader.DesignData"
                xmlns:converters="using:ComicReader.Converters"
                mc:Ignorable="d"
                Title="Build your comic collections from your local files"
@@ -14,7 +14,7 @@
 
         <!-- common template -->
         <DataTemplate x:Key="CommonTemplate"
-                      x:DataType="data:FolderItemModel">
+                      x:DataType="data:FolderItemViewModel">
             <Grid Background="Transparent"
                   PointerPressed="RemoveFolderPointerPressed">
                 <Grid.ColumnDefinitions>
@@ -38,7 +38,7 @@
 
         <!-- add a new folder template -->
         <DataTemplate x:Key="AddNewTemplate"
-                      x:DataType="data:FolderItemModel">
+                      x:DataType="data:FolderItemViewModel">
             <Grid Background="Transparent"
                   PointerPressed="AddNewPointerPressed">
                 <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"

@@ -1,11 +1,11 @@
 ﻿using Windows.UI.Xaml.Controls;
-using ComicReader.Data;
+using ComicReader.DesignData;
 
 namespace ComicReader.Controls
 {
     public sealed partial class ComicItemHorizontal : UserControl
     {
-        public ComicItemModel Ctx => DataContext as ComicItemModel;
+        public ComicItemViewModel Ctx => DataContext as ComicItemViewModel;
 
         public ComicItemHorizontal()
         {

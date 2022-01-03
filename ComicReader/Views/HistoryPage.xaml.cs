@@ -4,7 +4,8 @@ using System.Threading.Tasks;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
-using ComicReader.Data;
+using ComicReader.Database;
+using ComicReader.DesignData;
 
 namespace ComicReader.Views
 {
@@ -67,7 +68,7 @@ namespace ComicReader.Views
 
         private void OnTabUpdate()
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 await Update();
             });
@@ -76,8 +77,8 @@ namespace ComicReader.Views
         // utilities
         public async Task Update()
         {
-            var source = new ObservableCollection<HistoryItemGroupModel>();
-            HistoryItemGroupModel current_group = null;
+            var source = new ObservableCollection<HistoryGroupViewModel>();
+            HistoryGroupViewModel current_group = null;
             await XmlDatabaseManager.WaitLock();
 
             foreach (HistoryItemData item in XmlDatabase.History.Items)
@@ -92,10 +93,10 @@ namespace ComicReader.Views
 
                 if (current_group == null)
                 {
-                    current_group = new HistoryItemGroupModel(key);
+                    current_group = new HistoryGroupViewModel(key);
                 }
 
-                HistoryItemModel item_out = new HistoryItemModel
+                HistoryItemViewModel item_out = new HistoryItemViewModel
                 {
                     Id = item.Id,
                     Time = item.DateTime.ToString("g"),
@@ -116,7 +117,7 @@ namespace ComicReader.Views
             MainListView.SelectedIndex = -1;
         }
 
-        private async Task OpenItem(LockContext db, HistoryItemModel item, bool new_tab)
+        private async Task OpenItem(LockContext db, HistoryItemViewModel item, bool new_tab)
         {
             ComicData comic = await ComicDataManager.FromId(db, item.Id);
 
@@ -131,18 +132,18 @@ namespace ComicReader.Views
             }
         }
 
-        private async Task DeleteItem(HistoryItemModel item)
+        private async Task DeleteItem(HistoryItemViewModel item)
         {
             await HistoryDataManager.Remove(item.Id, true);
-            ObservableCollection<HistoryItemGroupModel> source = (ObservableCollection<HistoryItemGroupModel>)HistorySource.Source;
+            ObservableCollection<HistoryGroupViewModel> source = (ObservableCollection<HistoryGroupViewModel>)HistorySource.Source;
 
             for (int i = 0; i < source.Count; ++i)
             {
-                HistoryItemGroupModel group = source[i];
+                HistoryGroupViewModel group = source[i];
 
                 for (int j = 0; j < group.Count; ++j)
                 {
-                    HistoryItemModel item2 = group[j];
+                    HistoryItemViewModel item2 = group[j];
 
                     if (item2.Id == item.Id)
                     {
@@ -162,29 +163,29 @@ namespace ComicReader.Views
         // events
         private void OpenInNewTabClick(object sender, RoutedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 LockContext db = new LockContext();
-                HistoryItemModel item = (HistoryItemModel)((MenuFlyoutItem)sender).DataContext;
+                HistoryItemViewModel item = (HistoryItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 await OpenItem(db, item, true);
             });
         }
 
         private void DeleteClick(object sender, RoutedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
-                HistoryItemModel item = (HistoryItemModel)((MenuFlyoutItem)sender).DataContext;
+                HistoryItemViewModel item = (HistoryItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 await DeleteItem(item);
             });
         }
 
         private void MainListViewItemClick(object sender, ItemClickEventArgs e)
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 LockContext db = new LockContext();
-                HistoryItemModel item = (HistoryItemModel)e.ClickedItem;
+                HistoryItemViewModel item = (HistoryItemViewModel)e.ClickedItem;
                 await OpenItem(db, item, false);
             });
         }

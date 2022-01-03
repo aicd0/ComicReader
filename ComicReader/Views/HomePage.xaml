@@ -8,7 +8,7 @@
       xmlns:mtuum="using:Microsoft.Toolkit.Uwp.UI.Media"
       xmlns:controls="using:ComicReader.Controls"
       xmlns:converters="using:ComicReader.Converters"
-      xmlns:data="using:ComicReader.Data"
+      xmlns:data="using:ComicReader.DesignData"
       mc:Ignorable="d"
       NavigationCacheMode="Enabled"
       Background="Transparent">
@@ -153,14 +153,14 @@
             </Style>
 
             <DataTemplate x:Key="FolderItemCommonTemplate"
-                          x:DataType="data:FolderItemModel">
+                          x:DataType="data:FolderItemViewModel">
                 <controls:FolderItemDetailed Title="{x:Bind Folder}"
                                              Detail=""
                                              Glyph="&#xE8B7;" />
             </DataTemplate>
 
             <DataTemplate x:Key="FolderItemAddNewTemplate"
-                          x:DataType="data:FolderItemModel">
+                          x:DataType="data:FolderItemViewModel">
                 <controls:FolderItemDetailed Title="Add a folder"
                                              Detail="Include more folders in your collection"
                                              Glyph="&#xE8F4;" />
@@ -219,7 +219,7 @@
                                         StretchContentForSingleRow="False"
                                         ItemContainerStyle="{StaticResource ComicItemContainerStyle}">
                     <mtuuc:AdaptiveGridView.ItemTemplate>
-                        <DataTemplate x:DataType="data:ComicItemModel">
+                        <DataTemplate x:DataType="data:ComicItemViewModel">
                             <controls:ComicItemVertical DataContext="{x:Bind}" />
                         </DataTemplate>
                     </mtuuc:AdaptiveGridView.ItemTemplate>

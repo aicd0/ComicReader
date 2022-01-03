@@ -1,12 +1,12 @@
 ﻿using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using ComicReader.Data;
+using ComicReader.DesignData;
 
 namespace ComicReader.Controls
 {
     public sealed partial class ReadeFrame : UserControl
     {
-        public ReaderFrameModel Ctx => DataContext as ReaderFrameModel;
+        public ReaderFrameViewModel Ctx => DataContext as ReaderFrameViewModel;
 
         private bool m_loaded = false;
 

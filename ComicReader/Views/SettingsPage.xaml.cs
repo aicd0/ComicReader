@@ -8,7 +8,7 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
 using muxc = Microsoft.UI.Xaml.Controls;
-using ComicReader.Data;
+using ComicReader.Database;
 
 namespace ComicReader.Views
 {
@@ -201,7 +201,7 @@ namespace ComicReader.Views
 
         private void OnTabUpdate()
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 LockContext db = new LockContext();
                 await Update(db);
@@ -249,8 +249,8 @@ namespace ComicReader.Views
             XmlDatabaseManager.ReleaseLock();
 
             // Comic count.
-            SqliteCommand command = DatabaseManager.Connection.CreateCommand();
-            command.CommandText = "SELECT COUNT(*) FROM " + DatabaseManager.ComicTable;
+            SqliteCommand command = SqliteDatabaseManager.NewCommand();
+            command.CommandText = "SELECT COUNT(*) FROM " + SqliteDatabaseManager.ComicTable;
 
             await ComicDataManager.WaitLock(db);
             long comic_count = (long)command.ExecuteScalar();
@@ -285,7 +285,7 @@ namespace ComicReader.Views
             XmlDatabase.Settings.SaveHistory = Shared.HistorySaveBrowsingHistory;
 
             XmlDatabaseManager.ReleaseLock();
-            Utils.TaskQueue.TaskQueueManager.AppendTask(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
+            Utils.TaskQueueManager.AppendTask(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
         }
 
         private void OnSettingsChanged()
@@ -295,7 +295,7 @@ namespace ComicReader.Views
                 return;
             }
 
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 await Save();
             });
@@ -304,7 +304,7 @@ namespace ComicReader.Views
         // events
         private void ChooseLocationsClick(object sender, RoutedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 ChooseLocationsDialog dialog = new ChooseLocationsDialog();
                 _ = await dialog.ShowAsync().AsTask();

@@ -17,7 +17,7 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 using Windows.UI.ViewManagement;
-using ComicReader.Data;
+using ComicReader.Database;
 
 namespace ComicReader
 {
@@ -54,8 +54,6 @@ namespace ComicReader
             if (rootFrame.Content == null)
             {
                 rootFrame.Navigate(typeof(Views.MainPage));
-                Utils.TaskQueue.TaskQueueManager.AppendTask(
-                    XmlDatabaseManager.LoadSealed(), "Loading...");
             }
 
             if (prelaunch_activated)
@@ -95,9 +93,11 @@ namespace ComicReader
 
         protected override void OnLaunched(LaunchActivatedEventArgs args)
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
+                // Initialize the database.
                 await DatabaseManager.Init();
+
                 Startup(args.PrelaunchActivated, args.PreviousExecutionState);
             });
         }
@@ -118,7 +118,7 @@ namespace ComicReader
         {
             base.OnFileActivated(args);
             Startup(false, args.PreviousExecutionState);
-            Utils.TaskQueue.TaskQueueManager.AppendTask(Views.MainPage.Current.OnFileActivatedSealed(args));
+            Utils.TaskQueueManager.AppendTask(Views.MainPage.Current.OnFileActivatedSealed(args));
         }
     }
 }

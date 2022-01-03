@@ -5,7 +5,7 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
       xmlns:converters="using:ComicReader.Converters"
-      xmlns:data="using:ComicReader.Data"
+      xmlns:data="using:ComicReader.DesignData"
       mc:Ignorable="d"
       Background="Transparent"
       NavigationCacheMode="Enabled">
@@ -15,7 +15,7 @@
 
         <!-- common template -->
         <DataTemplate x:Key="CommonTemplate"
-                      x:DataType="data:FavoritesItemModel">
+                      x:DataType="data:FavoriteItemViewModel">
             <muxc:TreeViewItem AutomationProperties.Name="{x:Bind Name}"
                                ItemsSource="{x:Bind Children}"
                                AllowDrop="{x:Bind AllowDrop}"
@@ -75,7 +75,7 @@
 
         <!-- renaming template -->
         <DataTemplate x:Key="RenamingTemplate"
-                      x:DataType="data:FavoritesItemModel">
+                      x:DataType="data:FavoriteItemViewModel">
             <muxc:TreeViewItem AutomationProperties.Name="{x:Bind Name}"
                                ItemsSource="{x:Bind Children}"
                                IsExpanded="{x:Bind Expanded, Mode=TwoWay}"

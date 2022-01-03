@@ -19,12 +19,13 @@ using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 using muxc = Microsoft.UI.Xaml.Controls;
-using ComicReader.Data;
+using ComicReader.Database;
+using ComicReader.DesignData;
 
 namespace ComicReader.Views
 {
-    using RawTask = Task<Utils.TaskQueue.TaskResult>;
-    using TaskResult = Utils.TaskQueue.TaskResult;
+    using RawTask = Task<Utils.TaskResult>;
+    using TaskResult = Utils.TaskResult;
 
     public class ReaderPageShared : INotifyPropertyChanged
     {
@@ -89,8 +90,8 @@ namespace ComicReader.Views
             }
         }
 
-        private ObservableCollection<TagsModel> m_ComicTags;
-        public ObservableCollection<TagsModel> ComicTags
+        private ObservableCollection<TagCollectionViewModel> m_ComicTags;
+        public ObservableCollection<TagCollectionViewModel> ComicTags
         {
             get => m_ComicTags;
             set
@@ -272,8 +273,8 @@ namespace ComicReader.Views
         }
 
         // data source
-        public ObservableCollection<ReaderFrameModel> DataSource { get; private set; }
-            = new ObservableCollection<ReaderFrameModel>();
+        public ObservableCollection<ReaderFrameViewModel> DataSource { get; private set; }
+            = new ObservableCollection<ReaderFrameViewModel>();
 
         /// <summary>
         /// Add or update DataSource with index and image aspect ratio. Index has to be<br/>
@@ -303,7 +304,7 @@ namespace ComicReader.Views
                 bool left_padding = IsHorizontal && (IsOnePage || index == 0 || index % 2 == 1);
                 bool right_padding = IsHorizontal && (IsOnePage || index == Pages - 1 || index % 2 == 0);
 
-                DataSource.Add(new ReaderFrameModel
+                DataSource.Add(new ReaderFrameViewModel
                 {
                     Page = IndexToPage(index),
                     TopPadding = top_padding,
@@ -317,7 +318,7 @@ namespace ComicReader.Views
             }
             else
             {
-                ReaderFrameModel item = DataSource[index];
+                ReaderFrameViewModel item = DataSource[index];
                 item.ImageWidth = new_image_width;
                 item.ImageHeight = new_image_height;
             }
@@ -434,7 +435,7 @@ namespace ComicReader.Views
                 return null;
             }
 
-            ReaderFrameModel item = DataSource[page_idx];
+            ReaderFrameViewModel item = DataSource[page_idx];
             Grid page_container = item.Container;
 
             if (page_container == null)
@@ -845,7 +846,7 @@ namespace ComicReader.Views
 
         // events
         private Utils.CancellationLock m_container_loaded_lock = new Utils.CancellationLock();
-        public async Task OnContainerLoaded(ReaderFrameModel ctx)
+        public async Task OnContainerLoaded(ReaderFrameViewModel ctx)
         {
             LockContext db = new LockContext();
 
@@ -858,7 +859,7 @@ namespace ComicReader.Views
                 // Wait until the framework was fully loaded.
                 if (!IsFrameworkLoaded)
                 {
-                    await Utils.Methods.WaitFor(() => IsFrameworkLoaded);
+                    await Utils.C0.WaitFor(() => IsFrameworkLoaded);
 #if DEBUG_LOG_READER_LOAD
                     System.Diagnostics.Debug.Print("Reader framework loaded.\n");
 #endif
@@ -867,7 +868,7 @@ namespace ComicReader.Views
                 // Initialize the framework if first page was loaded.
                 if (!IsFrameworkInitialized && ctx.Page == 1)
                 {
-                    await Utils.Methods.Sync(delegate
+                    await Utils.C0.Sync(delegate
                     {
                         SetScrollViewer(m_zoom, null, null, true);
                         FixPadding();
@@ -882,7 +883,7 @@ namespace ComicReader.Views
                 // Update margin if last page was loaded.
                 if (!IsLastPageLoaded && ctx.Page == Pages)
                 {
-                    await Utils.Methods.Sync(delegate
+                    await Utils.C0.Sync(delegate
                     {
                         FixPadding();
                     });
@@ -1101,7 +1102,7 @@ namespace ComicReader.Views
             {
                 if (!IsActive)
                 {
-                    foreach (ReaderFrameModel m in DataSource)
+                    foreach (ReaderFrameViewModel m in DataSource)
                     {
                         m.ImageSource = null;
                     }
@@ -1118,7 +1119,7 @@ namespace ComicReader.Views
                 
                 for (int i = idx_begin; i <= idx_end; ++i)
                 {
-                    ReaderFrameModel m = DataSource[i]; // Stores locally.
+                    ReaderFrameViewModel m = DataSource[i]; // Stores locally.
 
                     if (m.ImageSource != null)
                     {
@@ -1142,7 +1143,7 @@ namespace ComicReader.Views
 
                 for (int i = 0; i < DataSource.Count; ++i)
                 {
-                    ReaderFrameModel m = DataSource[i];
+                    ReaderFrameViewModel m = DataSource[i];
 
                     if (m.Page >= page_begin || m.Page <= page_end)
                     {
@@ -1167,11 +1168,11 @@ namespace ComicReader.Views
         public ReaderPageShared Shared { get; set; }
         private ReaderModel VerticalReader { get; set; }
         private ReaderModel HorizontalReader { get; set; }
-        private ObservableCollection<ReaderFrameModel> PreviewDataSource { get; set; }
+        private ObservableCollection<ReaderFrameViewModel> PreviewDataSource { get; set; }
 
         private Utils.Tab.TabManager m_tab_manager;
         private ComicData m_comic;
-        private Utils.TaskQueue.TaskQueue m_load_image_queue;
+        private Utils.TaskQueue m_load_image_queue;
         private double m_reader_position;
         private GestureRecognizer m_gesture_recognizer;
 
@@ -1191,14 +1192,14 @@ namespace ComicReader.Views
             Shared.ComicTitle1 = "";
             Shared.ComicTitle2 = "";
             Shared.ComicDir = "";
-            Shared.ComicTags = new ObservableCollection<TagsModel>();
+            Shared.ComicTags = new ObservableCollection<TagCollectionViewModel>();
             Shared.IsEditable = false;
             Shared.BottomTilePinned = false;
             Shared.BottomTilePinnedChanged = OnBottomTilePinnedChanged;
 
             VerticalReader = new ReaderModel(Shared, VerticalReaderScrollViewer, VerticalReaderListView, true);
             HorizontalReader = new ReaderModel(Shared, HorizontalReaderScrollViewer, HorizontalReaderListView, false);
-            PreviewDataSource = new ObservableCollection<ReaderFrameModel>();
+            PreviewDataSource = new ObservableCollection<ReaderFrameViewModel>();
 
             m_tab_manager = new Utils.Tab.TabManager();
             m_tab_manager.OnTabUpdate = OnTabUpdate;
@@ -1275,7 +1276,7 @@ namespace ComicReader.Views
 
         private void OnTabStart(Utils.Tab.TabIdentifier tab_id)
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 LockContext db = new LockContext();
 
@@ -1378,7 +1379,7 @@ namespace ComicReader.Views
             await m_core_data_lock.WaitAsync(); // Data protection on.
 
             m_comic = comic;
-            m_load_image_queue = Utils.TaskQueue.TaskQueueManager.EmptyQueue();
+            m_load_image_queue = Utils.TaskQueueManager.EmptyQueue();
 
             VerticalReader.Comic = m_comic;
             HorizontalReader.Comic = m_comic;
@@ -1416,7 +1417,7 @@ namespace ComicReader.Views
 
             m_core_data_lock.Release(); // Data protection off.
 
-            Utils.TaskQueue.TaskQueueManager.AppendTask(delegate (RawTask _t)
+            Utils.TaskQueueManager.AppendTask(delegate (RawTask _t)
             {
                 // Stop loading if failed to retrieve image folder.
                 if (!_t.Result.Successful)
@@ -1489,7 +1490,7 @@ namespace ComicReader.Views
                         }
 
                         // Update previews.
-                        PreviewDataSource.Add(new ReaderFrameModel
+                        PreviewDataSource.Add(new ReaderFrameViewModel
                         {
                             ImageSource = img,
                             Page = page,
@@ -1535,16 +1536,16 @@ namespace ComicReader.Views
                 return;
             }
 
-            ObservableCollection<TagsModel> new_collection = new ObservableCollection<TagsModel>();
+            ObservableCollection<TagCollectionViewModel> new_collection = new ObservableCollection<TagCollectionViewModel>();
 
             for (int i = 0; i < m_comic.Tags.Count; ++i)
             {
                 TagData tags = m_comic.Tags[i];
-                TagsModel tags_model = new TagsModel(tags.Name);
+                TagCollectionViewModel tags_model = new TagCollectionViewModel(tags.Name);
 
                 foreach (string tag in tags.Tags)
                 {
-                    TagModel tag_model = new TagModel
+                    TagViewModel tag_model = new TagViewModel
                     {
                         Tag = tag,
                         OnClicked = OnInfoPaneTagClicked
@@ -1589,7 +1590,7 @@ namespace ComicReader.Views
                 Shared.UpdateReaderUI();
                 await last_reader.OnScrollViewerViewChanged(db, false);
 
-                await Utils.Methods.WaitFor(() => this_reader.IsLoaded);
+                await Utils.C0.WaitFor(() => this_reader.IsLoaded);
                 this_reader.SetScrollViewer(zoom, position, use_page_center: false, true);
             }
             else
@@ -1602,7 +1603,7 @@ namespace ComicReader.Views
 
         public void SwitchReaderOrientation()
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 LockContext db = new LockContext();
 
@@ -1628,7 +1629,7 @@ namespace ComicReader.Views
 
         private void OnReaderScrollViewerViewChanged(ReaderModel control, ScrollViewerViewChangedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 LockContext db = new LockContext();
 
@@ -1700,9 +1701,9 @@ namespace ComicReader.Views
         // preview
         private void OnGridViewItemClicked(object sender, ItemClickEventArgs e)
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
-                ReaderFrameModel ctx = (ReaderFrameModel)e.ClickedItem;
+                ReaderFrameViewModel ctx = (ReaderFrameViewModel)e.ClickedItem;
 
                 Shared.NavigationPageShared.IsPreviewModeEnabled = false;
 
@@ -1713,7 +1714,7 @@ namespace ComicReader.Views
                     return;
                 }
 
-                await Utils.Methods.WaitFor(() => reader.IsLoaded);
+                await Utils.C0.WaitFor(() => reader.IsLoaded);
                 reader.SetScrollViewer(null, ctx.Page, use_page_center: true, true);
             });
         }
@@ -1855,7 +1856,7 @@ namespace ComicReader.Views
 
         private void OnSwitchFavorites()
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 await SetIsFavorite(!Shared.NavigationPageShared.IsFavorite);
             });
@@ -1863,7 +1864,7 @@ namespace ComicReader.Views
 
         private void OnFavoriteBtChecked(object sender, RoutedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 await SetIsFavorite(true);
             });
@@ -1871,7 +1872,7 @@ namespace ComicReader.Views
 
         private void OnFavoriteBtUnchecked(object sender, Windows.UI.Xaml.RoutedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 await SetIsFavorite(false);
             });
@@ -1898,7 +1899,7 @@ namespace ComicReader.Views
 
         private void OnRatingControlValueChanged(muxc.RatingControl sender, object args)
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 LockContext db = new LockContext();
                 m_comic.Rating = (int)sender.Value;
@@ -1908,13 +1909,13 @@ namespace ComicReader.Views
 
         private void OnInfoPaneTagClicked(object sender, RoutedEventArgs e)
         {
-            TagModel ctx = (TagModel)((Button)sender).DataContext;
+            TagViewModel ctx = (TagViewModel)((Button)sender).DataContext;
             MainPage.Current.LoadTab(null, Utils.Tab.PageType.Search, "<tag:" + ctx.Tag + ">");
         }
 
         private void OnEditBtClicked(object sender, RoutedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 if (m_comic == null)
                 {
@@ -2023,7 +2024,7 @@ namespace ComicReader.Views
                     return;
                 }
 
-                _ = Utils.Methods.Sync(delegate
+                _ = Utils.C0.Sync(delegate
                 {
                     BottomTileHide();
                 });

@@ -8,9 +8,9 @@
              xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
              xmlns:muxm="using:Microsoft.UI.Xaml.Media"
              xmlns:converters="using:ComicReader.Converters"
-             xmlns:data="using:ComicReader.Data"
+             xmlns:data="using:ComicReader.DesignData"
              mc:Ignorable="d"
-             d:DataContext="{d:DesignInstance Type=data:ComicItemModel}"
+             d:DataContext="{d:DesignInstance Type=data:ComicItemViewModel}"
              d:DesignHeight="200"
              d:DesignWidth="140">
 

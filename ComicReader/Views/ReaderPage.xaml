@@ -9,7 +9,7 @@
       xmlns:mtuum="using:Microsoft.Toolkit.Uwp.UI.Media"
       xmlns:controls="using:ComicReader.Controls"
       xmlns:converters="using:ComicReader.Converters"
-      xmlns:data="using:ComicReader.Data"
+      xmlns:data="using:ComicReader.DesignData"
       mc:Ignorable="d"
       NavigationCacheMode="Enabled">
 
@@ -348,7 +348,7 @@
                                     </Style>
                                 </ListView.ItemContainerStyle>
                                 <ListView.ItemTemplate>
-                                    <DataTemplate x:DataType="data:TagsModel">
+                                    <DataTemplate x:DataType="data:TagCollectionViewModel">
                                         <StackPanel Orientation="Vertical"
                                                     Margin="0,0,0,10">
                                             <StackPanel Orientation="Horizontal"
@@ -365,7 +365,7 @@
                                             </StackPanel>
                                             <muxc:ItemsRepeater ItemsSource="{x:Bind Tags}">
                                                 <muxc:ItemsRepeater.ItemTemplate>
-                                                    <DataTemplate x:DataType="data:TagModel">
+                                                    <DataTemplate x:DataType="data:TagViewModel">
                                                         <controls:TagButton DataContext="{x:Bind}" />
                                                     </DataTemplate>
                                                 </muxc:ItemsRepeater.ItemTemplate>
@@ -427,7 +427,7 @@
                                       ScrollViewer.VerticalScrollBarVisibility="Disabled"
                                       ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                                 <ListView.ItemTemplate>
-                                    <DataTemplate x:DataType="data:ReaderFrameModel">
+                                    <DataTemplate x:DataType="data:ReaderFrameViewModel">
                                         <controls:ReadeFrame DataContext="{x:Bind}" />
                                     </DataTemplate>
                                 </ListView.ItemTemplate>
@@ -465,7 +465,7 @@
                                       ScrollViewer.VerticalScrollBarVisibility="Disabled"
                                       ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                                 <ListView.ItemTemplate>
-                                    <DataTemplate x:DataType="data:ReaderFrameModel">
+                                    <DataTemplate x:DataType="data:ReaderFrameViewModel">
                                         <controls:ReadeFrame DataContext="{x:Bind}" />
                                     </DataTemplate>
                                 </ListView.ItemTemplate>
@@ -507,7 +507,7 @@
                             </Style>
                         </GridView.ItemContainerStyle>
                         <GridView.ItemTemplate>
-                            <DataTemplate x:DataType="data:ReaderFrameModel">
+                            <DataTemplate x:DataType="data:ReaderFrameViewModel">
                                 <controls:ReaderPreviewImage DataContext="{x:Bind}" />
                             </DataTemplate>
                         </GridView.ItemTemplate>

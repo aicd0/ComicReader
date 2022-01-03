@@ -8,7 +8,8 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Navigation;
-using ComicReader.Data;
+using ComicReader.Database;
+using ComicReader.DesignData;
 
 namespace ComicReader.Views
 {
@@ -32,7 +33,7 @@ namespace ComicReader.Views
     {
         public static FavoritePage Current = null;
         public FavoritePageShared Shared { get; set; }
-        private ObservableCollection<FavoritesItemModel> DataSource { get; set; }
+        private ObservableCollection<FavoriteItemViewModel> DataSource { get; set; }
 
         private Utils.Tab.TabManager m_tab_manager;
 
@@ -40,7 +41,7 @@ namespace ComicReader.Views
         {
             Current = this;
             Shared = new FavoritePageShared();
-            DataSource = new ObservableCollection<FavoritesItemModel>();
+            DataSource = new ObservableCollection<FavoriteItemViewModel>();
 
             m_tab_manager = new Utils.Tab.TabManager();
             Unloaded += m_tab_manager.OnTabUnloaded;
@@ -73,7 +74,7 @@ namespace ComicReader.Views
 
         private void OnTabUpdate()
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 await Update();
             });
@@ -82,14 +83,14 @@ namespace ComicReader.Views
         // utilities
         public async Task Update()
         {
-            void helper(List<FavoriteNodeData> it, ObservableCollection<FavoritesItemModel> et, FavoritesItemModel parent)
+            void helper(List<FavoriteNodeData> it, ObservableCollection<FavoriteItemViewModel> et, FavoriteItemViewModel parent)
             {
                 foreach (FavoriteNodeData inode in it)
                 {
-                    TreeItemType type = inode.Type == "i" ? TreeItemType.Item : TreeItemType.Filter;
-                    FavoritesItemModel enode = new FavoritesItemModel(inode.Name, type, parent);
+                    FavoriteNodeType type = inode.Type == "i" ? FavoriteNodeType.Item : FavoriteNodeType.Filter;
+                    FavoriteItemViewModel enode = new FavoriteItemViewModel(inode.Name, type, parent);
 
-                    if (type == TreeItemType.Filter)
+                    if (type == FavoriteNodeType.Filter)
                     {
                         helper(inode.Children, enode.Children, enode);
                     }
@@ -110,12 +111,12 @@ namespace ComicReader.Views
 
         public async Task Save()
         {
-            void helper(List<FavoriteNodeData> it, ObservableCollection<FavoritesItemModel> et)
+            void helper(List<FavoriteNodeData> it, ObservableCollection<FavoriteItemViewModel> et)
             {
-                foreach (FavoritesItemModel enode in et)
+                foreach (FavoriteItemViewModel enode in et)
                 {
                     FavoriteNodeData inode = new FavoriteNodeData();
-                    inode.Type = enode.Type == TreeItemType.Filter ? "f" : "i";
+                    inode.Type = enode.Type == FavoriteNodeType.Filter ? "f" : "i";
                     inode.Name = enode.Name;
                     inode.Id = enode.Id;
 
@@ -132,10 +133,10 @@ namespace ComicReader.Views
             XmlDatabase.Favorites.RootNodes.Clear();
             helper(XmlDatabase.Favorites.RootNodes, DataSource);
             XmlDatabaseManager.ReleaseLock();
-            Utils.TaskQueue.TaskQueueManager.AppendTask(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Favorites));
+            Utils.TaskQueueManager.AppendTask(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Favorites));
         }
 
-        private async Task DeleteItem(FavoritesItemModel item)
+        private async Task DeleteItem(FavoriteItemViewModel item)
         {
             if (item.Parent != null)
             {
@@ -151,7 +152,7 @@ namespace ComicReader.Views
 
         private async Task ResetItems()
         {
-            async Task<bool> helper(ObservableCollection<FavoritesItemModel> root)
+            async Task<bool> helper(ObservableCollection<FavoriteItemViewModel> root)
             {
                 foreach (var item in root)
                 {
@@ -167,13 +168,13 @@ namespace ComicReader.Views
                         }
 
                         item.IsRenaming = false;
-                        ObservableCollection<FavoritesItemModel> parent = item.Parent != null ? item.Parent.Children : DataSource;
-                        Utils.Methods1<FavoritesItemModel>.NotifyCollectionChanged(parent, item);
+                        ObservableCollection<FavoriteItemViewModel> parent = item.Parent != null ? item.Parent.Children : DataSource;
+                        Utils.C1<FavoriteItemViewModel>.NotifyCollectionChanged(parent, item);
                         await Save();
                         return true;
                     }
 
-                    if (item.Expanded && item.Type == TreeItemType.Filter)
+                    if (item.Expanded && item.Type == FavoriteNodeType.Filter)
                     {
                         if (await helper(item.Children))
                         {
@@ -188,7 +189,7 @@ namespace ComicReader.Views
             await helper(DataSource);
         }
 
-        private void CreateNewFolder(ObservableCollection<FavoritesItemModel> folder, FavoritesItemModel parent)
+        private void CreateNewFolder(ObservableCollection<FavoriteItemViewModel> folder, FavoriteItemViewModel parent)
         {
             string folderName;
             for (int folderIndex = 1; folderIndex < 65536; ++folderIndex)
@@ -215,7 +216,7 @@ namespace ComicReader.Views
 
                 if (!isDuplicated)
                 {
-                    var newFolder = new FavoritesItemModel(folderName, TreeItemType.Filter, parent)
+                    var newFolder = new FavoriteItemViewModel(folderName, FavoriteNodeType.Filter, parent)
                     {
                         IsRenaming = true
                     };
@@ -226,9 +227,9 @@ namespace ComicReader.Views
             }
         }
 
-        private void SortFavorites(ObservableCollection<FavoritesItemModel> source)
+        private void SortFavorites(ObservableCollection<FavoriteItemViewModel> source)
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 var ordered = source.OrderBy(x => x.Name, new Utils.StringUtils.OrdinalComparer()).ToList();
 
@@ -252,7 +253,7 @@ namespace ComicReader.Views
         // events
         private void MainTreeViewBackgroundPressed(object sender, PointerRoutedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 await ResetItems();
             });
@@ -261,10 +262,10 @@ namespace ComicReader.Views
         private void MainTreeViewItemPressed(object sender, PointerRoutedEventArgs e)
         {
             // right-click
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 var item = (Microsoft.UI.Xaml.Controls.TreeViewItem)sender;
-                var ctx = (FavoritesItemModel)item.DataContext;
+                var ctx = (FavoriteItemViewModel)item.DataContext;
 
                 if (ctx.IsRenaming)
                 {
@@ -279,11 +280,11 @@ namespace ComicReader.Views
         private void MainTreeViewItemInvoked(Microsoft.UI.Xaml.Controls.TreeView sender, Microsoft.UI.Xaml.Controls.TreeViewItemInvokedEventArgs e)
         {
             // left-click
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 LockContext db = new LockContext();
 
-                FavoritesItemModel item = (FavoritesItemModel)e.InvokedItem;
+                FavoriteItemViewModel item = (FavoriteItemViewModel)e.InvokedItem;
 
                 if (item.IsRenaming)
                 {
@@ -292,7 +293,7 @@ namespace ComicReader.Views
 
                 await ResetItems();
 
-                if (item.Type == TreeItemType.Item)
+                if (item.Type == FavoriteNodeType.Item)
                 {
                     ComicData comic = await ComicDataManager.FromId(db, item.Id);
 
@@ -311,31 +312,31 @@ namespace ComicReader.Views
 
         private void DeleteClick(object sender, RoutedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
-                FavoritesItemModel item = (FavoritesItemModel)((MenuFlyoutItem)sender).DataContext;
+                FavoriteItemViewModel item = (FavoriteItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 await DeleteItem(item);
             });
         }
 
         private void RenameClick(object sender, RoutedEventArgs e)
         {
-            FavoritesItemModel item = (FavoritesItemModel)((MenuFlyoutItem)sender).DataContext;
+            FavoriteItemViewModel item = (FavoriteItemViewModel)((MenuFlyoutItem)sender).DataContext;
             item.IsRenaming = true;
-            ObservableCollection<FavoritesItemModel> parent = item.Parent != null ? item.Parent.Children : DataSource;
-            Utils.Methods1<FavoritesItemModel>.NotifyCollectionChanged(parent, item);
+            ObservableCollection<FavoriteItemViewModel> parent = item.Parent != null ? item.Parent.Children : DataSource;
+            Utils.C1<FavoriteItemViewModel>.NotifyCollectionChanged(parent, item);
         }
 
         private void RenameTextBoxTextChanged(object sender, TextChangedEventArgs e)
         {
             var textBox = (TextBox)sender;
-            var item = (FavoritesItemModel)textBox.DataContext;
+            var item = (FavoriteItemViewModel)textBox.DataContext;
             item.EditingName = textBox.Text;
         }
 
         private void RenameTextBoxKeyDown(object sender, KeyRoutedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 if (e.Key == Windows.System.VirtualKey.Enter)
                 {
@@ -347,7 +348,7 @@ namespace ComicReader.Views
 
         private void RenameTextBoxDataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
         {
-            FavoritesItemModel ctx = (FavoritesItemModel)args.NewValue;
+            FavoriteItemViewModel ctx = (FavoriteItemViewModel)args.NewValue;
 
             if (ctx.IsRenaming)
             {
@@ -359,16 +360,16 @@ namespace ComicReader.Views
 
         private void NewFolderClick(object sender, RoutedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
-                var item = (FavoritesItemModel)((MenuFlyoutItem)sender).DataContext;
+                var item = (FavoriteItemViewModel)((MenuFlyoutItem)sender).DataContext;
 
-                if (item.Type == TreeItemType.Filter)
+                if (item.Type == FavoriteNodeType.Filter)
                 {
                     if (!item.Expanded)
                     {
                         item.Expanded = true;
-                        Utils.Methods1<FavoritesItemModel>.NotifyCollectionChanged(item.Parent != null ? item.Parent.Children : DataSource, item);
+                        Utils.C1<FavoriteItemViewModel>.NotifyCollectionChanged(item.Parent != null ? item.Parent.Children : DataSource, item);
                     }
 
                     CreateNewFolder(item.Children, item);
@@ -391,7 +392,7 @@ namespace ComicReader.Views
 
         private void RootNewFolderClick(object sender, RoutedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 CreateNewFolder(DataSource, null);
                 await Save();
@@ -401,11 +402,11 @@ namespace ComicReader.Views
         private void MainTreeViewDragItemsCompleted(Microsoft.UI.Xaml.Controls.TreeView sender,
             Microsoft.UI.Xaml.Controls.TreeViewDragItemsCompletedEventArgs args)
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
-                var parent = (FavoritesItemModel)args.NewParentItem;
+                var parent = (FavoriteItemViewModel)args.NewParentItem;
 
-                foreach (FavoritesItemModel item in args.Items)
+                foreach (FavoriteItemViewModel item in args.Items)
                 {
                     item.Parent = parent;
                 }
@@ -416,11 +417,11 @@ namespace ComicReader.Views
 
         private void OpenInNewTabClick(object sender, RoutedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 LockContext db = new LockContext();
 
-                FavoritesItemModel item = (FavoritesItemModel)((MenuFlyoutItem)sender).DataContext;
+                FavoriteItemViewModel item = (FavoriteItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 ComicData comic = await ComicDataManager.FromId(db, item.Id);
                 MainPage.Current.LoadTab(null, Utils.Tab.PageType.Reader, comic);
             });
@@ -428,8 +429,8 @@ namespace ComicReader.Views
 
         private void SortByNameClick(object sender, RoutedEventArgs e)
         {
-            FavoritesItemModel item = (FavoritesItemModel)((MenuFlyoutItem)sender).DataContext;
-            ObservableCollection<FavoritesItemModel> parent = item.Parent != null ? item.Parent.Children : DataSource;
+            FavoriteItemViewModel item = (FavoriteItemViewModel)((MenuFlyoutItem)sender).DataContext;
+            ObservableCollection<FavoriteItemViewModel> parent = item.Parent != null ? item.Parent.Children : DataSource;
             SortFavorites(parent);
         }
 

@@ -1,6 +1,6 @@
 ﻿using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using ComicReader.Data;
+using ComicReader.DesignData;
 
 namespace ComicReader.Converters
 {
@@ -11,7 +11,7 @@ namespace ComicReader.Converters
 
         protected override DataTemplate SelectTemplateCore(object item)
         {
-            FolderItemModel folder_item = (FolderItemModel)item;
+            FolderItemViewModel folder_item = (FolderItemViewModel)item;
             return folder_item.IsAddNew ? AddNewTemplate : CommonTemplate;
         }
     };

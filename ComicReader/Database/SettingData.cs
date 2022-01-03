@@ -10,11 +10,11 @@ using Windows.Storage.AccessCache;
 using Windows.Storage.Pickers;
 using Windows.Storage.Streams;
 
-namespace ComicReader.Data
+namespace ComicReader.Database
 {
-    using RawTask = Task<Utils.TaskQueue.TaskResult>;
-    using TaskResult = Utils.TaskQueue.TaskResult;
-    using TaskException = Utils.TaskQueue.TaskException;
+    using RawTask = Task<Utils.TaskResult>;
+    using TaskResult = Utils.TaskResult;
+    using TaskException = Utils.TaskException;
 
     public class SettingData : XmlData
     {
@@ -84,7 +84,7 @@ namespace ComicReader.Data
 
             if (final)
             {
-                Utils.TaskQueue.TaskQueueManager.AppendTask(
+                Utils.TaskQueueManager.AppendTask(
                     XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
             }
 
@@ -99,7 +99,7 @@ namespace ComicReader.Data
 
             if (final)
             {
-                Utils.TaskQueue.TaskQueueManager.AppendTask(
+                Utils.TaskQueueManager.AppendTask(
                     XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
             }
         }

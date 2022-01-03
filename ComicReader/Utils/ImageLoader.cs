@@ -7,12 +7,10 @@ using Windows.Graphics.Display;
 using Windows.Storage;
 using Windows.Storage.Streams;
 using Windows.UI.Xaml.Media.Imaging;
-using ComicReader.Data;
+using ComicReader.Database;
 
 namespace ComicReader.Utils
 {
-    using TaskResult = Utils.TaskQueue.TaskResult;
-
     public class ImageLoaderToken
     {
         public ComicData Comic;
@@ -120,7 +118,7 @@ namespace ComicReader.Utils
                 BitmapImage image = null;
                 Task task = null;
 
-                await Utils.Methods.Sync(delegate
+                await Utils.C0.Sync(delegate
                 {
                     image = new BitmapImage();
                     task = image.SetSourceAsync(stream).AsTask();
@@ -129,7 +127,7 @@ namespace ComicReader.Utils
                 await task.AsAsyncAction();
                 stream.Dispose();
 
-                await Utils.Methods.Sync(delegate
+                await Utils.C0.Sync(delegate
                 {
                     if (first_token)
                     {
@@ -180,8 +178,8 @@ namespace ComicReader.Utils
             // DatabaseManager.Update() here to sync the changes.
             if (trig_update)
             {
-                Utils.TaskQueue.TaskQueueManager.AppendTask(DatabaseManager.UpdateSealed(), "",
-                    Utils.TaskQueue.TaskQueueManager.EmptyQueue());
+                Utils.TaskQueueManager.AppendTask(ComicDataManager.UpdateSealed(lazy_load: false), "",
+                    Utils.TaskQueueManager.EmptyQueue());
             }
         }
     }

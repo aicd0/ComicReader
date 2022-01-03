@@ -4,17 +4,18 @@ using Windows.Storage.AccessCache;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
-using ComicReader.Data;
+using ComicReader.Database;
+using ComicReader.DesignData;
 
 namespace ComicReader.Views
 {
     public sealed partial class ChooseLocationsDialog : ContentDialog
     {
-        public ObservableCollection<FolderItemModel> FolderItemDataSource { get; set; }
+        public ObservableCollection<FolderItemViewModel> FolderItemDataSource { get; set; }
 
         public ChooseLocationsDialog()
         {
-            FolderItemDataSource = new ObservableCollection<FolderItemModel>();
+            FolderItemDataSource = new ObservableCollection<FolderItemViewModel>();
 
             InitializeComponent();
         }
@@ -27,7 +28,7 @@ namespace ComicReader.Views
             if (StorageApplicationPermissions.FutureAccessList.Entries.Count <
                 StorageApplicationPermissions.FutureAccessList.MaximumItemsAllowed)
             {
-                FolderItemDataSource.Add(new FolderItemModel
+                FolderItemDataSource.Add(new FolderItemViewModel
                 {
                     IsAddNew = true
                 });
@@ -37,7 +38,7 @@ namespace ComicReader.Views
 
             foreach (string folder in XmlDatabase.Settings.ComicFolders)
             {
-                FolderItemDataSource.Add(new FolderItemModel
+                FolderItemDataSource.Add(new FolderItemViewModel
                 {
                     Folder = folder,
                     IsAddNew = false
@@ -51,14 +52,14 @@ namespace ComicReader.Views
         private void ContentDialogPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
         {
             // comfirm changes
-            Utils.TaskQueue.TaskQueueManager.AppendTask(
-                DatabaseManager.UpdateSealed(lazy_load: false), "",
-                Utils.TaskQueue.TaskQueueManager.EmptyQueue());
+            Utils.TaskQueueManager.AppendTask(
+                ComicDataManager.UpdateSealed(lazy_load: false), "",
+                Utils.TaskQueueManager.EmptyQueue());
         }
 
         private void ListViewLoaded(object sender, RoutedEventArgs e)
         {
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 await Update();
             });
@@ -67,7 +68,7 @@ namespace ComicReader.Views
         private void AddNewPointerPressed(object sender, PointerRoutedEventArgs e)
         {
             // add a folder
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 if (!IsPrimaryButtonEnabled)
                 {
@@ -95,7 +96,7 @@ namespace ComicReader.Views
         private void RemoveFolderPointerPressed(object sender, PointerRoutedEventArgs e)
         {
             // remove a folder
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 if (!IsPrimaryButtonEnabled)
                 {
@@ -103,7 +104,7 @@ namespace ComicReader.Views
                 }
 
                 IsPrimaryButtonEnabled = false;
-                FolderItemModel item = (FolderItemModel)((Grid)sender).DataContext;
+                FolderItemViewModel item = (FolderItemViewModel)((Grid)sender).DataContext;
                 await SettingDataManager.RemoveComicFolder(item.Folder);
                 await Update();
                 IsPrimaryButtonEnabled = true;

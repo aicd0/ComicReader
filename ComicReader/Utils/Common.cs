@@ -16,7 +16,7 @@ using Windows.UI.Core;
 
 namespace ComicReader.Utils
 {
-    internal class Methods
+    public class C0
     {
         public static void Run(Action action)
         {
@@ -156,8 +156,8 @@ namespace ComicReader.Utils
         }
     }
 
-    public interface IMethods1<out T> { }
-    public class Methods1<T> : IMethods1<T>
+    interface IC1<out T> { }
+    public class C1<T> : IC1<T>
     {
         public static void NotifyCollectionChanged(ObservableCollection<T> collection, T item)
         {
@@ -190,8 +190,8 @@ namespace ComicReader.Utils
         }
     }
 
-    public interface IMethods3<out T, out U, out V> { }
-    public class Methods3<T, U, V> : IMethods3<T, U, V>
+    public interface IC3<out T, out U, out V> { }
+    public class C3<T, U, V> : IC3<T, U, V>
     {
         private class KeyEqualityComparer : EqualityComparer<KeyValuePair<V, object>>
         {

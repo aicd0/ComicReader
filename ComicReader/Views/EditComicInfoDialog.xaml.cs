@@ -1,6 +1,6 @@
 ﻿using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using ComicReader.Data;
+using ComicReader.Database;
 
 namespace ComicReader.Views
 {
@@ -19,13 +19,13 @@ namespace ComicReader.Views
         private void ContentDialogPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
         {
             // done
-            Utils.Methods.Run(async delegate
+            Utils.C0.Run(async delegate
             {
                 LockContext db = new LockContext();
 
                 string text = MainEditBox.Text;
                 ComicDataManager.ParseInfo(text, m_comic);
-                Utils.TaskQueue.TaskQueueManager.AppendTask(
+                Utils.TaskQueueManager.AppendTask(
                     ComicDataManager.SaveInfoFileSealed(m_comic), "Saving...");
                 await m_comic.SaveBasic(db);
             });

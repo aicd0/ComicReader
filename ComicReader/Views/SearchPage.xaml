@@ -4,7 +4,7 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
-      xmlns:data="using:ComicReader.Data"
+      xmlns:data="using:ComicReader.DesignData"
       xmlns:controls="using:ComicReader.Controls"
       mc:Ignorable="d"
       NavigationCacheMode="Enabled"
@@ -160,7 +160,7 @@
                 <GridView ItemContainerStyle="{StaticResource SearchResultItemContainerStyle}"
                           ItemsSource="{x:Bind Shared.SearchResults}">
                     <GridView.ItemTemplate>
-                        <DataTemplate x:DataType="data:ComicItemModel">
+                        <DataTemplate x:DataType="data:ComicItemViewModel">
                             <controls:ComicItemHorizontal DataContext="{x:Bind}" />
                         </DataTemplate>
                     </GridView.ItemTemplate>
