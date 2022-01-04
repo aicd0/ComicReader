@@ -356,19 +356,21 @@ namespace ComicReader.Views
 
                     ComicItemViewModel result = new ComicItemViewModel
                     {
-                        OnItemPressed = OnListViewPressed,
-                        OnHideClicked = HideClick,
-                        OnUnhideClicked = UnhideClick,
-                        OnAddToFavoritesClicked = AddToFavoritesBtClick,
-                        OnRemoveFromFavoritesClicked = RemoveFromFavoritesBtClick,
                         Comic = comic,
                         Title = comic.Title,
                         Detail = "#" + comic.Id,
-                        Id = comic.Id,
-                        IsFavorite = await FavoriteDataManager.FromId(comic.Id) != null,
                         Rating = comic.Rating,
                         Progress = comic.Progress < 0 ? "" :
-                            (comic.Progress >= 100 ? "Finished" : comic.Progress.ToString() + "% Completed")
+                            (comic.Progress >= 100 ? "Finished" :
+                            comic.Progress.ToString() + "% Completed"),
+                        IsFavorite = await FavoriteDataManager.FromId(comic.Id) != null,
+
+                        OnItemPressed = OnComicItemPressed,
+                        OnOpenInNewTabClicked = OnOpenInNewTabClicked,
+                        OnAddToFavoritesClicked = OnAddToFavoritesClicked,
+                        OnRemoveFromFavoritesClicked = OnRemoveFromFavoritesClicked,
+                        OnHideClicked = OnHideComicClicked,
+                        OnUnhideClicked = OnUnhideComicClicked,
                     };
 
                     results_tmp.Add(result);
@@ -411,7 +413,7 @@ namespace ComicReader.Views
         }
 
         // events processing
-        private void OnListViewPressed(object sender, PointerRoutedEventArgs e)
+        private void OnComicItemPressed(object sender, PointerRoutedEventArgs e)
         {
             Utils.C0.Run(async delegate
             {
@@ -424,7 +426,7 @@ namespace ComicReader.Views
                 }
 
                 ComicItemViewModel item = (ComicItemViewModel)((FrameworkElement)sender).DataContext;
-                ComicData comic = await ComicDataManager.FromId(db, item.Id);
+                ComicData comic = await ComicDataManager.FromId(db, item.Comic.Id);
                 MainPage.Current.LoadTab(null, Utils.Tab.PageType.Reader, comic);
             });
         }
@@ -444,29 +446,33 @@ namespace ComicReader.Views
             });
         }
 
-        private void AddToFavoritesBtClick(object sender, RoutedEventArgs e)
+        private void OnOpenInNewTabClicked(object sender, RoutedEventArgs e)
+        {
+            ComicItemViewModel item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
+            MainPage.Current.LoadTab(null, Utils.Tab.PageType.Reader, item.Comic);
+        }
+
+        private void OnAddToFavoritesClicked(object sender, RoutedEventArgs e)
         {
             Utils.C0.Run(async delegate
             {
                 ComicItemViewModel result = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 result.IsFavorite = true;
-                Utils.C1<ComicItemViewModel>.NotifyCollectionChanged(Shared.SearchResults, result);
-                await FavoriteDataManager.Add(result.Id, result.Title, true);
+                await FavoriteDataManager.Add(result.Comic.Id, result.Title, true);
             });
         }
 
-        private void RemoveFromFavoritesBtClick(object sender, RoutedEventArgs e)
+        private void OnRemoveFromFavoritesClicked(object sender, RoutedEventArgs e)
         {
             Utils.C0.Run(async delegate
             {
                 ComicItemViewModel result = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 result.IsFavorite = false;
-                Utils.C1<ComicItemViewModel>.NotifyCollectionChanged(Shared.SearchResults, result);
-                await FavoriteDataManager.RemoveWithId(result.Id, true);
+                await FavoriteDataManager.RemoveWithId(result.Comic.Id, true);
             });
         }
 
-        private void UnhideClick(object sender, RoutedEventArgs e)
+        private void OnUnhideComicClicked(object sender, RoutedEventArgs e)
         {
             Utils.C0.Run(async delegate
             {
@@ -477,7 +483,7 @@ namespace ComicReader.Views
             });
         }
 
-        private void HideClick(object sender, RoutedEventArgs e)
+        private void OnHideComicClicked(object sender, RoutedEventArgs e)
         {
             Utils.C0.Run(async delegate
             {

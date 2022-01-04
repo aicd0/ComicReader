@@ -45,11 +45,11 @@
                             <MenuFlyout>
                                 <MenuFlyoutItem Text="Open in new tab"
                                                 Icon="Document"
-                                                Click="OpenInNewTabClick" />
+                                                Click="OnOpenInNewTabClicked" />
                                 <MenuFlyoutSeparator />
                                 <MenuFlyoutItem Text="Delete"
                                                 Icon="Delete"
-                                                Click="DeleteClick" />
+                                                Click="OnDeleteItemClicked" />
                             </MenuFlyout>
                         </Grid.ContextFlyout>
                         

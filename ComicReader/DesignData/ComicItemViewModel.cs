@@ -17,25 +17,35 @@ namespace ComicReader.DesignData
 
         public ComicItemViewModel()
         {
-            Image = new BitmapImage();
             Title = "";
             Detail = "";
-            Id = -1;
             Rating = -1;
             Progress = "";
             IsFavorite = false;
+            Image = new BitmapImage();
             m_IsImageLoaded = false;
         }
 
         public ComicData Comic;
-        public BitmapImage Image { get; set; }
         public string Title { get; set; }
         public string Detail { get; set; }
-        public long Id { get; set; }
         public int Rating { get; set; }
         public string Progress { get; set; }
+
+        private bool m_IsFavorite;
+        public bool IsFavorite
+        {
+            get => m_IsFavorite;
+            set
+            {
+                m_IsFavorite = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsFavorite"));
+            }
+        }
+
+        public BitmapImage Image { get; set; }
+
         public bool IsRatingVisible => Rating != -1;
-        public bool IsFavorite { get; set; }
         public bool IsHide => Comic.Hidden;
 
         private bool m_IsImageLoaded;
@@ -51,9 +61,10 @@ namespace ComicReader.DesignData
 
         // events
         public PointerEventHandler OnItemPressed { get; set; }
-        public RoutedEventHandler OnHideClicked { get; set; }
-        public RoutedEventHandler OnUnhideClicked { get; set; }
+        public RoutedEventHandler OnOpenInNewTabClicked { get; set; }
         public RoutedEventHandler OnAddToFavoritesClicked { get; set; }
         public RoutedEventHandler OnRemoveFromFavoritesClicked { get; set; }
+        public RoutedEventHandler OnHideClicked { get; set; }
+        public RoutedEventHandler OnUnhideClicked { get; set; }
     };
 }

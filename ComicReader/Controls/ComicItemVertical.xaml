@@ -22,6 +22,7 @@
 
             <!-- Converters -->
             <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
+            <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
 
             <!-- Shadows -->
             <mtuum:AttachedCardShadow x:Key="CommonShadow"
@@ -60,8 +61,20 @@
 
         <Grid.ContextFlyout>
             <MenuFlyout>
+                <MenuFlyoutItem Text="Open in new tab"
+                                Click="{x:Bind Ctx.OnOpenInNewTabClicked}"
+                                Icon="Document" />
+                <MenuFlyoutItem Text="Add to favorites"
+                                Click="{x:Bind Ctx.OnAddToFavoritesClicked}"
+                                Visibility="{x:Bind Ctx.IsFavorite, Converter={StaticResource BooleanToVisibilityNegationConverter}}"
+                                Icon="Favorite" />
+                <MenuFlyoutItem Text="Remove from favorites"
+                                Click="{x:Bind Ctx.OnRemoveFromFavoritesClicked}"
+                                Visibility="{x:Bind Ctx.IsFavorite}"
+                                Icon="Unfavorite"/>
                 <MenuFlyoutItem Text="Hide"
-                                Click="{x:Bind Ctx.OnHideClicked}">
+                                Click="{x:Bind Ctx.OnHideClicked}"
+                                Visibility="{x:Bind Ctx.IsHide, Converter={StaticResource BooleanToVisibilityNegationConverter}}">
                     <MenuFlyoutItem.Icon>
                         <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
                                   Glyph="&#xE8FF;" />
@@ -81,7 +94,7 @@
                 <Grid HorizontalAlignment="Center"
                       VerticalAlignment="Center"
                       Height="{StaticResource ComicItemVerticalImageHeight}">
-                    <Grid Visibility="{x:Bind Ctx.IsImageLoaded, Mode=OneWay}">
+                    <Grid Visibility="{x:Bind Ctx.IsImageLoaded}">
                         <Grid mtuu:Effects.Shadow="{StaticResource CommonShadow}"
                               HorizontalAlignment="Center"
                               VerticalAlignment="Center">
@@ -93,18 +106,18 @@
                                 VerticalAlignment="Center">
                             <Image Source="{x:Bind Ctx.Image}" />
                         </Border>
-                        <Grid Width="24"
-                              Height="24"
+                        <Grid Width="26"
+                              Height="26"
+                              Margin="2"
                               VerticalAlignment="Bottom"
                               HorizontalAlignment="Right"
-                              Margin="5"
                               Visibility="{x:Bind Ctx.IsFavorite}">
                             <Border CornerRadius="5">
                                 <Border.Background>
                                     <muxm:AcrylicBrush BackgroundSource="Backdrop"
-                                                       TintColor="Black"
+                                                       TintColor="DarkViolet"
                                                        TintOpacity="0.0"
-                                                       TintLuminosityOpacity="0.3" />
+                                                       TintLuminosityOpacity="0.8" />
                                 </Border.Background>
                             </Border>
                             <FontIcon Glyph="&#xE735;"
@@ -112,7 +125,7 @@
                                       Foreground="SkyBlue" />
                         </Grid>
                     </Grid>
-                    <muxc:ProgressRing IsActive="{x:Bind Ctx.IsImageLoaded, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}" />
+                    <muxc:ProgressRing IsActive="{x:Bind Ctx.IsImageLoaded, Converter={StaticResource BooleanNegationConverter}}" />
                 </Grid>
             </Grid>
             <Grid Grid.Row="2"

@@ -162,7 +162,7 @@ namespace ComicReader.Views
         }
 
         // events
-        private void OpenInNewTabClick(object sender, RoutedEventArgs e)
+        private void OnOpenInNewTabClicked(object sender, RoutedEventArgs e)
         {
             Utils.C0.Run(async delegate
             {
@@ -172,7 +172,7 @@ namespace ComicReader.Views
             });
         }
 
-        private void DeleteClick(object sender, RoutedEventArgs e)
+        private void OnDeleteItemClicked(object sender, RoutedEventArgs e)
         {
             Utils.C0.Run(async delegate
             {

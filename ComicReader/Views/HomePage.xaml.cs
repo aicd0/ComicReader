@@ -36,25 +36,25 @@ namespace ComicReader.Views
             }
         }
 
-        private Utils.ObservableCollectionPlus<ComicItemViewModel> m_ComicItemSource = new Utils.ObservableCollectionPlus<ComicItemViewModel>();
-        public Utils.ObservableCollectionPlus<ComicItemViewModel> ComicItemSource
+        private bool m_IsLibraryEmpty = false;
+        public bool IsLibraryEmpty
         {
-            get => m_ComicItemSource;
+            get => m_IsLibraryEmpty;
             set
             {
-                m_ComicItemSource = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ComicItemSource"));
+                m_IsLibraryEmpty = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsLibraryEmpty"));
             }
         }
-
-        public bool IsLibraryEmpty => ComicItemSource.Count == 0;
     }
 
     public sealed partial class HomePage : Page
     {
         public static HomePage Current;
         public HomePageShared Shared { get; set; }
+
+        private Utils.ObservableCollectionPlus<ComicItemViewModel> ComicItemSource
+            = new Utils.ObservableCollectionPlus<ComicItemViewModel>();
         public ObservableCollection<FolderItemViewModel> FolderItemDataSource { get; set; }
 
         private readonly Utils.Tab.TabManager m_tab_manager;
@@ -173,15 +173,18 @@ namespace ComicReader.Views
 
                     ComicItemViewModel data = new ComicItemViewModel
                     {
-                        OnItemPressed = GridPointerPressed,
-                        OnHideClicked = HideClick,
                         Comic = comic,
                         Title = comic.Title,
-                        Id = comic.Id,
-                        IsFavorite = FavoriteDataManager.FromIdNoLock(comic.Id) != null,
                         Rating = comic.Rating,
                         Progress = comic.Progress < 0 ? "Unread" :
-                            (comic.Progress >= 100 ? "Finished" : comic.Progress.ToString() + "%")
+                            (comic.Progress >= 100 ? "Finished" : comic.Progress.ToString() + "%"),
+                        IsFavorite = FavoriteDataManager.FromIdNoLock(comic.Id) != null,
+
+                        OnItemPressed = OnComicItemPressed,
+                        OnOpenInNewTabClicked = OnOpenInNewTabClicked,
+                        OnAddToFavoritesClicked = OnAddToFavoritesClicked,
+                        OnRemoveFromFavoritesClicked = OnRemoveFromFavoritesClicked,
+                        OnHideClicked = OnHideComicClicked,
                     };
 
                     comic_items.Add(data);
@@ -189,13 +192,20 @@ namespace ComicReader.Views
                 ComicDataManager.ReleaseLock(db); // Lock off.
 
                 // Save results.
-                Shared.ComicItemSource = comic_items;
+                Utils.C1<ComicItemViewModel>.UpdateCollection(ComicItemSource, comic_items,
+                    (ComicItemViewModel x, ComicItemViewModel y) => x.Comic.Id == y.Comic.Id);
+                Shared.IsLibraryEmpty = ComicItemSource.Count == 0;
 
                 // Load images.
                 var image_loader_tokens = new List<Utils.ImageLoaderToken>();
 
-                foreach (ComicItemViewModel item in Shared.ComicItemSource)
+                foreach (ComicItemViewModel item in ComicItemSource)
                 {
+                    if (item.IsImageLoaded)
+                    {
+                        continue;
+                    }
+
                     image_loader_tokens.Add(new Utils.ImageLoaderToken
                     {
                         Comic = item.Comic,
@@ -274,9 +284,15 @@ namespace ComicReader.Views
             MainPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Search, "<hidden>");
         }
 
-        private void GridPointerPressed(object sender, PointerRoutedEventArgs e)
+        private void OnOpenInNewTabClicked(object sender, RoutedEventArgs e)
         {
-            ComicItemViewModel ctx = (ComicItemViewModel)((Grid)sender).DataContext;
+            ComicItemViewModel item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
+            MainPage.Current.LoadTab(null, Utils.Tab.PageType.Reader, item.Comic);
+        }
+
+        private void OnComicItemPressed(object sender, PointerRoutedEventArgs e)
+        {
+            ComicItemViewModel item = (ComicItemViewModel)((Grid)sender).DataContext;
             PointerPoint pt = e.GetCurrentPoint((UIElement)sender);
 
             if (!pt.Properties.IsLeftButtonPressed)
@@ -284,16 +300,36 @@ namespace ComicReader.Views
                 return;
             }
 
-            MainPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Reader, ctx.Comic);
+            MainPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Reader, item.Comic);
         }
 
-        private void HideClick(object sender, RoutedEventArgs e)
+        private void OnAddToFavoritesClicked(object sender, RoutedEventArgs e)
+        {
+            Utils.C0.Run(async delegate
+            {
+                ComicItemViewModel item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
+                item.IsFavorite = true;
+                await FavoriteDataManager.Add(item.Comic.Id, item.Title, true);
+            });
+        }
+
+        private void OnRemoveFromFavoritesClicked(object sender, RoutedEventArgs e)
+        {
+            Utils.C0.Run(async delegate
+            {
+                ComicItemViewModel item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
+                item.IsFavorite = false;
+                await FavoriteDataManager.RemoveWithId(item.Comic.Id, true);
+            });
+        }
+
+        private void OnHideComicClicked(object sender, RoutedEventArgs e)
         {
             Utils.C0.Run(async delegate
             {
                 LockContext db = new LockContext();
-                ComicItemViewModel ctx = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-                await ComicDataManager.Hide(db, ctx.Comic);
+                ComicItemViewModel item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
+                await ComicDataManager.Hide(db, item.Comic);
                 await UpdateLibrary(db);
             });
         }
@@ -323,15 +359,15 @@ namespace ComicReader.Views
                 return;
             }
 
-            FolderItemViewModel ctx = (FolderItemViewModel)((Grid)sender).DataContext;
+            FolderItemViewModel item = (FolderItemViewModel)((Grid)sender).DataContext;
 
-            if (ctx.IsAddNew)
+            if (item.IsAddNew)
             {
                 AddNewFolder();
             }
             else
             {
-                MainPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Search, "<dir:" + ctx.Folder + ">");
+                MainPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Search, "<dir:" + item.Folder + ">");
             }
         }
 
@@ -339,8 +375,8 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                FolderItemViewModel ctx = (FolderItemViewModel)((MenuFlyoutItem)sender).DataContext;
-                await SettingDataManager.RemoveComicFolder(ctx.Folder, final: true);
+                FolderItemViewModel item = (FolderItemViewModel)((MenuFlyoutItem)sender).DataContext;
+                await SettingDataManager.RemoveComicFolder(item.Folder, final: true);
                 await UpdateFolders();
                 Utils.TaskQueueManager.AppendTask(
                     ComicDataManager.UpdateSealed(lazy_load: true), "", m_update_queue);

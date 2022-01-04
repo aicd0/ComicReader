@@ -210,7 +210,7 @@
                 will result in a layout error (Probably a bug from API).
                 -->
                 <mtuuc:AdaptiveGridView Style="{StaticResource HomePageAdaptiveGridViewStyle}"
-                                        ItemsSource="{x:Bind Shared.ComicItemSource, Mode=OneWay}"
+                                        ItemsSource="{x:Bind ComicItemSource}"
                                         OneRowModeEnabled="True"
                                         ItemHeight="310"
                                         DesiredWidth="160"

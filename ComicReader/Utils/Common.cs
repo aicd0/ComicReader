@@ -178,26 +178,26 @@ namespace ComicReader.Utils
             collection.RemoveAt(idx);
         }
 
-        public static void UpdateCollection(ObservableCollection<T> old_collection,
-            Collection<T> new_collection, Func<T, T, bool> equal_func)
+        public static void UpdateCollection(ObservableCollection<T> dst_collection,
+            Collection<T> src_collection, Func<T, T, bool> equal_func)
         {
-            for (int i = 0; i < Math.Min(old_collection.Count, new_collection.Count); ++i)
+            for (int i = 0; i < Math.Min(dst_collection.Count, src_collection.Count); ++i)
             {
-                if (!equal_func(new_collection[i], old_collection[i]))
+                if (!equal_func(src_collection[i], dst_collection[i]))
                 {
-                    old_collection.RemoveAt(i);
+                    dst_collection.RemoveAt(i);
                     --i;
                 }
             }
 
-            for (int i = old_collection.Count; i < new_collection.Count; ++i)
+            for (int i = dst_collection.Count; i < src_collection.Count; ++i)
             {
-                old_collection.Add(new_collection[i]);
+                dst_collection.Add(src_collection[i]);
             }
 
-            for (int i = new_collection.Count; i < old_collection.Count;)
+            for (int i = src_collection.Count; i < dst_collection.Count;)
             {
-                old_collection.RemoveAt(i);
+                dst_collection.RemoveAt(i);
             }
         }
     }
