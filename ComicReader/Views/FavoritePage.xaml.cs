@@ -43,11 +43,12 @@ namespace ComicReader.Views
             Shared = new FavoritePageShared();
             DataSource = new ObservableCollection<FavoriteItemViewModel>();
 
-            m_tab_manager = new Utils.Tab.TabManager();
-            Unloaded += m_tab_manager.OnTabUnloaded;
-            m_tab_manager.OnTabRegister = OnTabRegister;
-            m_tab_manager.OnTabUnregister = OnTabUnregister;
-            m_tab_manager.OnTabUpdate = OnTabUpdate;
+            m_tab_manager = new Utils.Tab.TabManager(this)
+            {
+                OnTabRegister = OnTabRegister,
+                OnTabUnregister = OnTabUnregister,
+                OnTabUpdate = OnTabUpdate
+            };
 
             InitializeComponent();
         }
@@ -304,7 +305,7 @@ namespace ComicReader.Views
                     else
                     {
                         MainPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Reader, comic);
-                        Shared.NavigationPageShared.PaneOpen = false;
+                        Shared.NavigationPageShared.IsSidePaneOpen = false;
                     }
                 }
             });

@@ -132,7 +132,7 @@
         <muxc:ProgressRing x:Name="SearchProgressRing"
                            VerticalAlignment="Center"
                            HorizontalAlignment="Center"
-                           Visibility="{x:Bind Shared.IsLoadingRingVisible, Mode=OneWay}"
+                           IsActive="{x:Bind Shared.IsLoadingRingVisible, Mode=OneWay}"
                            IsIndeterminate="True" />
 
         <!-- search results -->

@@ -21,7 +21,7 @@
             </ResourceDictionary.MergedDictionaries>
 
             <!-- Converters -->
-            <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
+            <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
 
             <!-- Shadows -->
             <mtuum:AttachedCardShadow x:Key="CommonShadow"
@@ -112,7 +112,7 @@
                                       Foreground="SkyBlue" />
                         </Grid>
                     </Grid>
-                    <muxc:ProgressRing Visibility="{x:Bind Ctx.IsImageLoaded, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
+                    <muxc:ProgressRing IsActive="{x:Bind Ctx.IsImageLoaded, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}" />
                 </Grid>
             </Grid>
             <Grid Grid.Row="2"

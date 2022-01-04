@@ -287,7 +287,7 @@
                    PanePlacement="Right"
                    PaneBackground="{ThemeResource SidePaneBackground}">
 
-            <!-- Information pane -->
+            <!-- Information Pane -->
             <SplitView.Pane>
                 <Grid>
                     <Grid.RowDefinitions>
@@ -303,7 +303,7 @@
 
                             <!-- Title1 -->
                             <TextBlock FontSize="20"
-                                       FontWeight="Light"
+                                       FontWeight="SemiLight"
                                        IsTextSelectionEnabled="True"
                                        Text="{x:Bind Shared.ComicTitle1, Mode=OneWay}"
                                        TextWrapping="Wrap" />
@@ -311,31 +311,32 @@
                             <!-- Title2 -->
                             <TextBlock TextWrapping="Wrap"
                                        FontSize="20"
-                                       FontWeight="Light"
+                                       FontWeight="SemiLight"
                                        IsTextSelectionEnabled="True"
                                        Text="{x:Bind Shared.ComicTitle2, Mode=OneWay}"
                                        Margin="0,10,0,0"
                                        Visibility="{x:Bind Shared.IsComicTitle2Visible, Mode=OneWay}" />
 
+                            <!-- Rating -->
+                            <muxc:RatingControl Value="{x:Bind Shared.Rating, Mode=TwoWay}"
+                                                ValueChanged="OnRatingControlValueChanged"
+                                                IsEnabled="{x:Bind Shared.NavigationPageShared.NotExternal, Mode=OneWay}"
+                                                HorizontalAlignment="Left"
+                                                Margin="0,10,0,0"/>
+
                             <!-- Directory -->
                             <TextBlock IsTextSelectionEnabled="True"
                                        VerticalAlignment="Center"
-                                       Margin="0,10,0,0"
+                                       Margin="0,20,0,0"
                                        TextWrapping="Wrap"
-                                       FontWeight="Light"
+                                       FontSize="13"
+                                       FontWeight="SemiLight"
                                        Text="{x:Bind Shared.ComicDir, Mode=OneWay}" />
-
-                            <!-- Rating -->
-                            <muxc:RatingControl HorizontalAlignment="Left"
-                                                Margin="0,10,0,0"
-                                                Value="{x:Bind Shared.Rating, Mode=TwoWay}"
-                                                ValueChanged="OnRatingControlValueChanged"
-                                                IsEnabled="{x:Bind Shared.NavigationPageShared.NotExternal, Mode=OneWay}" />
 
                             <!-- Tags -->
                             <Rectangle Fill="#606060"
                                        Height="1"
-                                       Margin="0,10"
+                                       Margin="0,24,0,10"
                                        Visibility="{x:Bind Shared.IsComicTagsVisible, Mode=OneWay}" />
                             <ListView ItemsSource="{x:Bind Shared.ComicTags, Mode=OneWay}"
                                       SelectionMode="None"
@@ -355,7 +356,7 @@
                                         <StackPanel Orientation="Vertical"
                                                     Margin="0,0,0,10">
                                             <StackPanel Orientation="Horizontal"
-                                                        Margin="5,0,0,2">
+                                                        Margin="5,0,0,4">
                                                 <FontIcon FontFamily="Segoe MDL2 Assets"
                                                           Glyph="&#xE8EC;"
                                                           VerticalAlignment="Center"
@@ -363,7 +364,7 @@
                                                           Margin="0,0,5,0" />
                                                 <TextBlock Text="{x:Bind Name}"
                                                            VerticalAlignment="Center"
-                                                           Margin="0,0,0,4"
+                                                           Margin="0,0,0,2"
                                                            FontSize="12" />
                                             </StackPanel>
                                             <muxc:ItemsRepeater ItemsSource="{x:Bind Tags}">
@@ -392,13 +393,13 @@
                         <AppBarButton Click="OnEditBtClicked"
                                       Icon="Edit"
                                       Label="Edit"
-                                      Width="60"
+                                      Width="70"
                                       IsEnabled="{x:Bind Shared.IsEditable, Mode=OneWay}" />
                         <AppBarToggleButton x:Name="FavoriteBt"
                                             Icon="Favorite"
                                             Label="Favorite"
-                                            Margin="5,0,0,0"
-                                            Width="60"
+                                            Margin="2,0,0,0"
+                                            Width="70"
                                             IsChecked="{x:Bind Shared.NavigationPageShared.IsFavorite, Mode=OneWay}"
                                             Checked="OnFavoriteBtChecked"
                                             Unchecked="OnFavoriteBtUnchecked"
@@ -409,6 +410,10 @@
 
             <!-- Main section -->
             <Grid>
+                <muxc:ProgressRing IsActive="{x:Bind Shared.IsLoadingRingVisible, Mode=OneWay}"
+                                   HorizontalAlignment="Left"
+                                   VerticalAlignment="Bottom"
+                                   Margin="20"/>
 
                 <!-- Reader -->
                 <Grid Tapped="OnReaderTapped">
@@ -599,14 +604,16 @@
                                 <Button Style="{StaticResource ReaderBottomTileButtonStyle}"
                                         Click="OnSwitchReaderOrientationClicked"
                                         ToolTipService.ToolTip="Two pages"
-                                        Visibility="{x:Bind Shared.NavigationPageShared.IsVerticalReaderVisible, Mode=OneWay}">
+                                        Visibility="{x:Bind Shared.NavigationPageShared.IsSwitchToHorizontalReaderButtonVisible, Mode=OneWay}"
+                                        IsEnabled="{x:Bind Shared.NavigationPageShared.IsVerticalReaderVisible, Mode=OneWay}">
                                     <FontIcon Glyph="&#xE89A;"
                                               FontSize="20" />
                                 </Button>
                                 <Button Style="{StaticResource ReaderBottomTileButtonStyle}"
                                         Click="OnSwitchReaderOrientationClicked"
                                         ToolTipService.ToolTip="One page"
-                                        Visibility="{x:Bind Shared.NavigationPageShared.IsHorizontalReaderVisible, Mode=OneWay}">
+                                        Visibility="{x:Bind Shared.NavigationPageShared.IsSwitchToVerticalReaderButtonVisible, Mode=OneWay}"
+                                        IsEnabled="{x:Bind Shared.NavigationPageShared.IsHorizontalReaderVisible, Mode=OneWay}">
                                     <FontIcon Glyph="&#xE7C3;"
                                               FontSize="20" />
                                 </Button>
@@ -614,7 +621,7 @@
 
                             <!-- Grid preview toggle -->
                             <ToggleButton Style="{StaticResource ReaderBottomTileToggleButtonStyle}"
-                                          IsChecked="{x:Bind Shared.NavigationPageShared.IsPreviewModeEnabled, Mode=TwoWay}"
+                                          IsChecked="{x:Bind Shared.NavigationPageShared.IsPreviewButtonToggled, Mode=TwoWay}"
                                           ToolTipService.ToolTip="Preview">
                                 <FontIcon Glyph="&#xF0E2;"
                                           FontSize="20" />

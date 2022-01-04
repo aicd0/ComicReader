@@ -130,12 +130,14 @@ namespace ComicReader.Views
             Shared.Title = "";
             Shared.FilterDetails = "";
             Shared.SearchResults = new Utils.ObservableCollectionPlus<ComicItemViewModel>();
-            
-            m_tab_manager = new Utils.Tab.TabManager();
-            Unloaded += m_tab_manager.OnTabUnloaded;
-            m_tab_manager.OnTabRegister = OnTabRegister;
-            m_tab_manager.OnTabUnregister = OnTabUnregister;
-            m_tab_manager.OnTabStart = OnTabStart;
+
+            m_tab_manager = new Utils.Tab.TabManager(this)
+            {
+                OnTabRegister = OnTabRegister,
+                OnTabUnregister = OnTabUnregister,
+                OnTabStart = OnTabStart
+            };
+
             m_all_results = new List<ComicData>();
             m_search_lock = new Utils.CancellationLock();
 

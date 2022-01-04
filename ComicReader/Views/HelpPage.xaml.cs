@@ -22,9 +22,10 @@ namespace ComicReader.Views
 
         public HelpPage()
         {
-            m_tab_manager = new Utils.Tab.TabManager();
-            m_tab_manager.OnTabStart = OnTabStart;
-            Unloaded += m_tab_manager.OnTabUnloaded;
+            m_tab_manager = new Utils.Tab.TabManager(this)
+            {
+                OnTabStart = OnTabStart
+            };
 
             InitializeComponent();
         }

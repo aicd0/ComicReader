@@ -37,11 +37,12 @@ namespace ComicReader.Views
             Current = this;
             Shared = new HistoryPageShared();
 
-            m_tab_manager = new Utils.Tab.TabManager();
-            m_tab_manager.OnTabRegister = OnTabRegister;
-            m_tab_manager.OnTabUnregister = OnTabUnregister;
-            m_tab_manager.OnTabUpdate = OnTabUpdate;
-            Unloaded += m_tab_manager.OnTabUnloaded;
+            m_tab_manager = new Utils.Tab.TabManager(this)
+            {
+                OnTabRegister = OnTabRegister,
+                OnTabUnregister = OnTabUnregister,
+                OnTabUpdate = OnTabUpdate
+            };
 
             InitializeComponent();
         }
@@ -128,7 +129,7 @@ namespace ComicReader.Views
             else
             {
                 MainPage.Current.LoadTab(new_tab ? null : m_tab_manager.TabId, Utils.Tab.PageType.Reader, comic);
-                Shared.NavigationPageShared.PaneOpen = false;
+                Shared.NavigationPageShared.IsSidePaneOpen = false;
             }
         }
 

@@ -68,12 +68,13 @@ namespace ComicReader.Views
             Shared = new HomePageShared();
             FolderItemDataSource = new ObservableCollection<FolderItemViewModel>();
 
-            m_tab_manager = new Utils.Tab.TabManager();
-            Unloaded += m_tab_manager.OnTabUnloaded;
-            m_tab_manager.OnTabRegister = OnTabRegister;
-            m_tab_manager.OnTabUnregister = OnTabUnregister;
-            m_tab_manager.OnTabUpdate = OnTabUpdate;
-            m_tab_manager.OnTabStart = OnTabStart;
+            m_tab_manager = new Utils.Tab.TabManager(this)
+            {
+                OnTabRegister = OnTabRegister,
+                OnTabUnregister = OnTabUnregister,
+                OnTabUpdate = OnTabUpdate,
+                OnTabStart = OnTabStart
+            };
 
             m_update_folder_lock = new Utils.CancellationLock();
             m_update_library_lock = new Utils.CancellationLock();

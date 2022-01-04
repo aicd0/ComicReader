@@ -59,14 +59,52 @@ namespace ComicReader.Views
             }
         }
 
-        private bool m_PaneOpen;
-        public bool PaneOpen
+        private bool m_IsSidePaneOpen;
+        public bool IsSidePaneOpen
         {
-            get => m_PaneOpen;
+            get => m_IsSidePaneOpen;
             set
             {
-                m_PaneOpen = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("PaneOpen"));
+                m_IsSidePaneOpen = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsSidePaneOpen"));
+            }
+        }
+
+        #region ReaderPage
+        private bool? m_IsPreviewButtonToggled = null;
+        public bool IsPreviewButtonToggled
+        {
+            get => m_IsPreviewButtonToggled != null && m_IsPreviewButtonToggled.Value;
+            set
+            {
+                if (m_IsPreviewButtonToggled == null || m_IsPreviewButtonToggled.Value != value)
+                {
+                    m_IsPreviewButtonToggled = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsPreviewButtonToggled"));
+                    OnPreviewModeChanged?.Invoke();
+                }
+            }
+        }
+
+        private bool m_IsSwitchToVerticalReaderButtonVisible = false;
+        public bool IsSwitchToVerticalReaderButtonVisible
+        {
+            get => m_IsSwitchToVerticalReaderButtonVisible;
+            set
+            {
+                m_IsSwitchToVerticalReaderButtonVisible = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsSwitchToVerticalReaderButtonVisible"));
+            }
+        }
+
+        private bool m_IsSwitchToHorizontalReaderButtonVisible = false;
+        public bool IsSwitchToHorizontalReaderButtonVisible
+        {
+            get => m_IsSwitchToHorizontalReaderButtonVisible;
+            set
+            {
+                m_IsSwitchToHorizontalReaderButtonVisible = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsSwitchToHorizontalReaderButtonVisible"));
             }
         }
 
@@ -89,21 +127,6 @@ namespace ComicReader.Views
             {
                 m_IsHorizontalReaderVisible = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsHorizontalReaderVisible"));
-            }
-        }
-
-        private bool? m_IsPreviewModeEnabled = null;
-        public bool IsPreviewModeEnabled
-        {
-            get => m_IsPreviewModeEnabled != null && m_IsPreviewModeEnabled.Value;
-            set
-            {
-                if (m_IsPreviewModeEnabled == null || m_IsPreviewModeEnabled.Value != value)
-                {
-                    m_IsPreviewModeEnabled = value;
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsPreviewModeEnabled"));
-                    OnPreviewModeChanged?.Invoke();
-                }
             }
         }
 
@@ -166,6 +189,7 @@ namespace ComicReader.Views
         public Action OnSwitchReaderOrientation;
         public Action OnPreviewModeChanged;
         public Action OnExpandComicInfoPane;
+        #endregion
     }
 
     public sealed partial class NavigationPage : Page
@@ -181,11 +205,12 @@ namespace ComicReader.Views
             Current = this;
             Shared = new NavigationPageShared();
 
-            m_tab_manager = new Utils.Tab.TabManager();
-            m_tab_manager.OnTabRegister = OnTabRegister;
-            m_tab_manager.OnTabUnregister = OnTabUnregister;
-            m_tab_manager.OnTabUpdate = OnTabUpdate;
-            Unloaded += m_tab_manager.OnTabUnloaded;
+            m_tab_manager = new Utils.Tab.TabManager(this)
+            {
+                OnTabRegister = OnTabRegister,
+                OnTabUnregister = OnTabUnregister,
+                OnTabUpdate = OnTabUpdate
+            };
 
             InitializeComponent();
         }

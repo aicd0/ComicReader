@@ -169,12 +169,13 @@ namespace ComicReader.Views
             Shared = new SettingsPageShared();
             Shared.OnSettingsChanged = OnSettingsChanged;
 
-            m_tab_manager = new Utils.Tab.TabManager();
-            m_tab_manager.OnTabRegister = OnTabRegister;
-            m_tab_manager.OnTabUnregister = OnTabUnregister;
-            m_tab_manager.OnTabUpdate = OnTabUpdate;
-            m_tab_manager.OnTabStart = OnTabStart;
-            Unloaded += m_tab_manager.OnTabUnloaded;
+            m_tab_manager = new Utils.Tab.TabManager(this)
+            {
+                OnTabRegister = OnTabRegister,
+                OnTabUnregister = OnTabUnregister,
+                OnTabUpdate = OnTabUpdate,
+                OnTabStart = OnTabStart
+            };
 
             InitializeComponent();
         }

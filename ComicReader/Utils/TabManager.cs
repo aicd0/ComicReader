@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Windows.UI.Xaml;
+using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
 using muxc = Microsoft.UI.Xaml.Controls;
 
@@ -48,8 +49,6 @@ namespace ComicReader.Utils.Tab
 
         public TabIdentifier TabId { get; private set; }
 
-        private object Shared { get; set; }
-
         public Action<object> OnTabRegister { get; set; }
 
         public Action OnTabUnregister { get; set; }
@@ -58,23 +57,55 @@ namespace ComicReader.Utils.Tab
 
         public Action<TabIdentifier> OnTabStart { get; set; }
 
-        private void _Unregister()
+        private object Shared { get; set; }
+
+        public TabManager(Page page)
         {
-            if (m_registered)
-            {
-                OnTabUnregister?.Invoke();
-                m_registered = false;
-            }
+            page.Loaded += OnTabLoaded;
+            page.Unloaded += OnTabUnloaded;
         }
 
-        public void OnTabUnloaded(object sender, RoutedEventArgs e)
+        private void _Register()
+        {
+            if (m_registered || !m_initialized)
+            {
+                return;
+            }
+
+            System.Diagnostics.Debug.Assert(Shared != null);
+
+            if (Shared == null)
+            {
+                return;
+            }
+
+            m_registered = true;
+            OnTabRegister?.Invoke(Shared);
+        }
+
+        private void _Unregister()
+        {
+            if (!m_registered)
+            {
+                return;
+            }
+
+            m_registered = false;
+            OnTabUnregister?.Invoke();
+        }
+
+        private void OnTabLoaded(object sender, RoutedEventArgs e)
+        {
+            _Register();
+        }
+
+        private void OnTabUnloaded(object sender, RoutedEventArgs e)
         {
             _Unregister();
         }
 
         public void OnNavigatedFrom(NavigatingCancelEventArgs e)
         {
-            _Unregister();
             m_navigation_mode = e.NavigationMode;
         }
 
@@ -88,11 +119,7 @@ namespace ComicReader.Utils.Tab
                 m_initialized = true;
             }
 
-            if (!m_registered)
-            {
-                OnTabRegister?.Invoke(Shared);
-                m_registered = true;
-            }
+            _Register();
 
             if (e.NavigationMode == NavigationMode.New)
             {

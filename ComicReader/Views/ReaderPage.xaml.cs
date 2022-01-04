@@ -27,228 +27,44 @@ namespace ComicReader.Views
     using RawTask = Task<Utils.TaskResult>;
     using TaskResult = Utils.TaskResult;
 
-    public class ReaderPageShared : INotifyPropertyChanged
-    {
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        private NavigationPageShared m_NavigationPageShared;
-        public NavigationPageShared NavigationPageShared
-        {
-            get => m_NavigationPageShared;
-            set
-            {
-                m_NavigationPageShared = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("NavigationPageShared"));
-            }
-        }
-
-        private FlowDirection m_ReaderFlowDirection;
-        public FlowDirection ReaderFlowDirection
-        {
-            get => m_ReaderFlowDirection;
-            set
-            {
-                m_ReaderFlowDirection = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ReaderFlowDirection"));
-            }
-        }
-
-        // comic info
-        private string m_ComicTitle1;
-        public string ComicTitle1
-        {
-            get => m_ComicTitle1;
-            set
-            {
-                m_ComicTitle1 = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ComicTitle1"));
-            }
-        }
-
-        private string m_ComicTitle2;
-        public string ComicTitle2
-        {
-            get => m_ComicTitle2;
-            set
-            {
-                m_ComicTitle2 = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ComicTitle2"));
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsComicTitle2Visible"));
-            }
-        }
-
-        public bool IsComicTitle2Visible => ComicTitle2.Length > 0;
-
-        private string m_ComicDir;
-        public string ComicDir
-        {
-            get => m_ComicDir;
-            set
-            {
-                m_ComicDir = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ComicDir"));
-            }
-        }
-
-        private ObservableCollection<TagCollectionViewModel> m_ComicTags;
-        public ObservableCollection<TagCollectionViewModel> ComicTags
-        {
-            get => m_ComicTags;
-            set
-            {
-                m_ComicTags = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ComicTags"));
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsComicTagsVisible"));
-            }
-        }
-
-        public bool IsComicTagsVisible => ComicTags != null && ComicTags.Count > 0;
-
-        private bool m_IsEditable;
-        public bool IsEditable
-        {
-            get => m_IsEditable;
-            set
-            {
-                m_IsEditable = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsEditable"));
-            }
-        }
-
-        // read record
-        private double m_Rating;
-        public double Rating
-        {
-            get => m_Rating;
-            set
-            {
-                m_Rating = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Rating"));
-            }
-        }
-
-        private string m_Progress;
-        public string Progress
-        {
-            get => m_Progress;
-            set
-            {
-                m_Progress = value;
-                if (PropertyChanged != null)
-                {
-                    PropertyChanged(this, new PropertyChangedEventArgs("Progress"));
-                }
-            }
-        }
-
-        // reader
-        public bool? IsReaderVertical = null;
-
-        private bool m_IsGridViewVisible = false;
-        public bool IsGridViewVisible
-        {
-            get => m_IsGridViewVisible;
-            set
-            {
-                m_IsGridViewVisible = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsGridViewVisible"));
-            }
-        }
-
-        public void UpdateReaderUI()
-        {
-            bool grid_view_visible = NavigationPageShared.IsPreviewModeEnabled;
-            bool reader_visible = !grid_view_visible && IsReaderVertical.HasValue;
-            bool vertical_reader_visible = reader_visible && IsReaderVertical.Value;
-            bool horizontal_reader_visible = reader_visible && !vertical_reader_visible;
-
-            IsGridViewVisible = grid_view_visible;
-            NavigationPageShared.IsVerticalReaderVisible = vertical_reader_visible;
-            NavigationPageShared.IsHorizontalReaderVisible = horizontal_reader_visible;
-        }
-
-        // bottom tile
-        private bool m_BottomTilePinned = false;
-        public bool BottomTilePinned
-        {
-            get => m_BottomTilePinned;
-            set
-            {
-                m_BottomTilePinned = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("BottomTilePinned"));
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("PinButtonToolTip"));
-                BottomTilePinnedChanged?.Invoke();
-            }
-        }
-
-        public string PinButtonToolTip
-        {
-            get
-            {
-                return BottomTilePinned ? "Unpin" : "Pin";
-            }
-        }
-
-        public Action BottomTilePinnedChanged;
-    }
-
     public class ReaderModel
     {
         private const int max_zoom = 250;
         private const int min_zoom = 90;
 
-        public ReaderModel(ReaderPageShared shared, ScrollViewer scroll_viewer, ListView list_view, bool is_vertical)
+        public ReaderModel(ReaderPageShared shared, bool is_vertical)
         {
+            m_shared = shared;
+
             IsVertical = is_vertical;
             IsOnePage = is_vertical;
-
-            Shared = shared;
-            ThisScrollViewer = scroll_viewer;
-            ThisListView = list_view;
-
-            DisplayInformation display_info = DisplayInformation.GetForCurrentView();
         }
 
-        private bool m_final_value_set = false;
-        private bool m_disable_animation_final;
-        private Utils.CancellationLock m_update_image_lock = new Utils.CancellationLock();
-
-        public ReaderPageShared Shared;
+        public ComicData Comic { get; set; } = null;
         public ScrollViewer ThisScrollViewer;
         public ListView ThisListView;
+        public double InitialPage { private get; set; } = 0.0;
 
-        public bool IsActive =>
-            Shared.IsReaderVertical.HasValue &&
-            Shared.IsReaderVertical.Value == IsVertical;
+        public Action OnLoaded;
 
+        public bool IsLoaded { get; private set; } = false;
+        public bool IsActive => !m_shared.IsLoading && m_shared.IsReaderVertical == IsVertical;
         public bool IsVertical { get; private set; }
         public bool IsHorizontal => !IsVertical;
         public bool IsOnePage { get; private set; }
         public bool IsTwoPages => !IsOnePage;
-        public ComicData Comic { get; set; } = null;
         public int Pages => Comic.ImageFiles.Count;
 
-        // True if ThisScrollViewer and ThisListView were loaded.
-        public bool IsFrameworkLoaded => ThisScrollViewer != null && ThisListView != null;
-
-        // True if IsFrameworkLoaded is true, and ThisScrollViewer was initialized.
-        private bool IsFrameworkInitialized = false;
-
-        // True if IsFrameworkInitialized and IsInitialPageLoaded is true, and initial page was set.
-        public bool IsLoaded { get; private set; } = false;
-
-        // True if the last page was loaded.
+        private bool IsFrameworkLoaded => ThisScrollViewer != null && ThisListView != null;
+        private bool IsFrameworkReady = false;
         private bool IsLastPageLoaded = false;
-
-        // initial page
-        private double m_initial_page = 0.0;
         private bool IsInitialPageLoaded = false;
         private bool IsInitialPageReached = false;
 
-        public void SetInitialPage(double page_real)
-        {
-            m_initial_page = page_real;
-        }
+        private ReaderPageShared m_shared;
+        private bool m_final_value_set = false;
+        private bool m_disable_animation_final;
+        private Utils.CancellationLock m_update_image_lock = new Utils.CancellationLock();
 
         // data source
         public ObservableCollection<ReaderFrameViewModel> DataSource { get; private set; }
@@ -271,7 +87,6 @@ namespace ComicReader.Views
             if (index > DataSource.Count)
             {
                 // Unexpected item.
-                System.Diagnostics.Debug.Assert(false);
                 return;
             }
 
@@ -557,8 +372,8 @@ namespace ComicReader.Views
             }
 
             m_zoom = (int)zoom;
-            Shared.NavigationPageShared.ZoomInEnabled = m_zoom < max_zoom;
-            Shared.NavigationPageShared.ZoomOutEnabled = m_zoom > min_zoom;
+            m_shared.NavigationPageShared.ZoomInEnabled = m_zoom < max_zoom;
+            m_shared.NavigationPageShared.ZoomOutEnabled = m_zoom > min_zoom;
             _FixParallelOffset();
             return true;
         }
@@ -840,13 +655,14 @@ namespace ComicReader.Views
                 if (!IsFrameworkLoaded)
                 {
                     await Utils.C0.WaitFor(() => IsFrameworkLoaded);
+
 #if DEBUG_LOG_READER_LOAD
-                    System.Diagnostics.Debug.Print("Reader framework loaded.\n");
+                    System.Diagnostics.Debug.Print("Framework loaded.\n");
 #endif
                 }
 
                 // Initialize the framework if first page was loaded.
-                if (!IsFrameworkInitialized && ctx.Page == 1)
+                if (!IsFrameworkReady && ctx.Page == 1)
                 {
                     await Utils.C0.Sync(delegate
                     {
@@ -854,9 +670,10 @@ namespace ComicReader.Views
                         FixPadding();
                     });
 
-                    IsFrameworkInitialized = true;
+                    IsFrameworkReady = true;
+
 #if DEBUG_LOG_READER_LOAD
-                    System.Diagnostics.Debug.Print("Reader framework initialized.\n");
+                    System.Diagnostics.Debug.Print("Framework ready.\n");
 #endif
                 }
 
@@ -869,35 +686,28 @@ namespace ComicReader.Views
                     });
 
                     IsLastPageLoaded = true;
+
 #if DEBUG_LOG_READER_LOAD
                     System.Diagnostics.Debug.Print("Last page loaded.\n");
 #endif
                 }
 
-                // Check if the reader was loaded.
-                if (!IsLoaded && IsFrameworkInitialized)
-                {
-                    IsLoaded = true;
-#if DEBUG_LOG_READER_LOAD
-                    System.Diagnostics.Debug.Print("Reader loaded.\n");
-#endif
-                }
-
                 // Check if the initial page was loaded.
-                if (!IsInitialPageReached && IsLoaded)
+                if (!IsInitialPageReached && IsFrameworkReady)
                 {
                     if (!IsInitialPageLoaded)
                     {
-                        int page_idx = PageToIndex((int)m_initial_page);
+                        int page_idx = PageToIndex((int)InitialPage);
 
                         if (page_idx < DataSource.Count && DataSource[page_idx].Container != null)
                         {
-                            int next_page = (int)m_initial_page + 1;
+                            int next_page = (int)InitialPage + 1;
                             page_idx = PageToIndex(next_page);
 
                             if (next_page > Pages || (page_idx < DataSource.Count && DataSource[page_idx].Container != null))
                             {
                                 IsInitialPageLoaded = true;
+
 #if DEBUG_LOG_READER_LOAD
                                 System.Diagnostics.Debug.Print("Initial page loaded.\n");
 #endif
@@ -908,15 +718,29 @@ namespace ComicReader.Views
                     // Jump to the initial page if initial page was loaded.
                     if (IsInitialPageLoaded)
                     {
-                        IsInitialPageReached = _SetScrollViewer(null, null, null, m_initial_page, false, true);
-#if DEBUG_LOG_READER_LOAD
+                        IsInitialPageReached = _SetScrollViewer(null, null, null, InitialPage, false, true);
+
                         if (IsInitialPageReached)
                         {
-                            await UpdateImages(db);
+#if DEBUG_LOG_READER_LOAD
                             System.Diagnostics.Debug.Print("Initial page reached.\n");
-                        }
 #endif
+
+                            await UpdateImages(db);
+                        }
                     }
+                }
+
+                // Check if the reader was loaded.
+                if (!IsLoaded && IsInitialPageReached)
+                {
+                    IsLoaded = true;
+
+#if DEBUG_LOG_READER_LOAD
+                    System.Diagnostics.Debug.Print("Reader loaded.\n");
+#endif
+
+                    OnLoaded?.Invoke();
                 }
             }
             finally
@@ -960,13 +784,18 @@ namespace ComicReader.Views
         // others
         public void Reset()
         {
-            DataSource.Clear();
-            _SyncFinalVal();
+            IsLoaded = false;
+            IsFrameworkReady = false;
             IsLastPageLoaded = false;
-            IsFrameworkInitialized = false;
             IsInitialPageLoaded = false;
             IsInitialPageReached = false;
-            IsLoaded = false;
+
+            Comic = null;
+            InitialPage = 0.0;
+            OnLoaded = null;
+            DataSource.Clear();
+
+            _SyncFinalVal();
         }
 
         private void _FillFinalVal()
@@ -1072,7 +901,7 @@ namespace ComicReader.Views
 
         private async Task UpdateImages(LockContext db)
         {
-            if (!IsLoaded || !await UpdatePage())
+            if (!IsFrameworkLoaded || !await UpdatePage())
             {
                 return;
             }
@@ -1143,6 +972,186 @@ namespace ComicReader.Views
         }
     }
 
+    public class ReaderPageShared : INotifyPropertyChanged
+    {
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        private NavigationPageShared m_NavigationPageShared;
+        public NavigationPageShared NavigationPageShared
+        {
+            get => m_NavigationPageShared;
+            set
+            {
+                m_NavigationPageShared = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("NavigationPageShared"));
+            }
+        }
+
+        private FlowDirection m_ReaderFlowDirection;
+        public FlowDirection ReaderFlowDirection
+        {
+            get => m_ReaderFlowDirection;
+            set
+            {
+                m_ReaderFlowDirection = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ReaderFlowDirection"));
+            }
+        }
+
+        // comic info
+        private string m_ComicTitle1;
+        public string ComicTitle1
+        {
+            get => m_ComicTitle1;
+            set
+            {
+                m_ComicTitle1 = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ComicTitle1"));
+            }
+        }
+
+        private string m_ComicTitle2;
+        public string ComicTitle2
+        {
+            get => m_ComicTitle2;
+            set
+            {
+                m_ComicTitle2 = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ComicTitle2"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsComicTitle2Visible"));
+            }
+        }
+
+        public bool IsComicTitle2Visible => ComicTitle2.Length > 0;
+
+        private string m_ComicDir;
+        public string ComicDir
+        {
+            get => m_ComicDir;
+            set
+            {
+                m_ComicDir = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ComicDir"));
+            }
+        }
+
+        private ObservableCollection<TagCollectionViewModel> m_ComicTags;
+        public ObservableCollection<TagCollectionViewModel> ComicTags
+        {
+            get => m_ComicTags;
+            set
+            {
+                m_ComicTags = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ComicTags"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsComicTagsVisible"));
+            }
+        }
+
+        public bool IsComicTagsVisible => ComicTags != null && ComicTags.Count > 0;
+
+        private bool m_IsEditable;
+        public bool IsEditable
+        {
+            get => m_IsEditable;
+            set
+            {
+                m_IsEditable = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsEditable"));
+            }
+        }
+
+        // read record
+        private double m_Rating;
+        public double Rating
+        {
+            get => m_Rating;
+            set
+            {
+                m_Rating = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Rating"));
+            }
+        }
+
+        private string m_Progress;
+        public string Progress
+        {
+            get => m_Progress;
+            set
+            {
+                m_Progress = value;
+                if (PropertyChanged != null)
+                {
+                    PropertyChanged(this, new PropertyChangedEventArgs("Progress"));
+                }
+            }
+        }
+
+        // reader
+        public bool IsLoading = true;
+        public bool IsReaderVertical = true;
+
+        private bool m_IsLoadingRingVisible = false;
+        public bool IsLoadingRingVisible
+        {
+            get => m_IsLoadingRingVisible;
+            set
+            {
+                m_IsLoadingRingVisible = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsLoadingRingVisible"));
+            }
+        }
+
+        private bool m_IsGridViewVisible = false;
+        public bool IsGridViewVisible
+        {
+            get => m_IsGridViewVisible;
+            set
+            {
+                m_IsGridViewVisible = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsGridViewVisible"));
+            }
+        }
+
+        public void UpdateReaderUI()
+        {
+            bool grid_view_visible = !IsLoading && NavigationPageShared.IsPreviewButtonToggled;
+            bool reader_visible = !IsLoading && !grid_view_visible;
+            bool vertical_reader_visible = reader_visible && IsReaderVertical;
+            bool horizontal_reader_visible = reader_visible && !vertical_reader_visible;
+
+            IsLoadingRingVisible = IsLoading;
+            IsGridViewVisible = grid_view_visible;
+            NavigationPageShared.IsSwitchToVerticalReaderButtonVisible = !IsReaderVertical;
+            NavigationPageShared.IsSwitchToHorizontalReaderButtonVisible = IsReaderVertical;
+            NavigationPageShared.IsVerticalReaderVisible = vertical_reader_visible;
+            NavigationPageShared.IsHorizontalReaderVisible = horizontal_reader_visible;
+        }
+
+        // bottom tile
+        private bool m_BottomTilePinned = false;
+        public bool BottomTilePinned
+        {
+            get => m_BottomTilePinned;
+            set
+            {
+                m_BottomTilePinned = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("BottomTilePinned"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("PinButtonToolTip"));
+                BottomTilePinnedChanged?.Invoke();
+            }
+        }
+
+        public string PinButtonToolTip
+        {
+            get
+            {
+                return BottomTilePinned ? "Unpin" : "Pin";
+            }
+        }
+
+        public Action BottomTilePinnedChanged;
+    }
+
     public sealed partial class ReaderPage : Page
     {
         public ReaderPageShared Shared { get; set; }
@@ -1177,16 +1186,17 @@ namespace ComicReader.Views
             Shared.BottomTilePinned = false;
             Shared.BottomTilePinnedChanged = OnBottomTilePinnedChanged;
 
-            VerticalReader = new ReaderModel(Shared, VerticalReaderScrollViewer, VerticalReaderListView, true);
-            HorizontalReader = new ReaderModel(Shared, HorizontalReaderScrollViewer, HorizontalReaderListView, false);
+            VerticalReader = new ReaderModel(Shared, true);
+            HorizontalReader = new ReaderModel(Shared, false);
             PreviewDataSource = new ObservableCollection<ReaderFrameViewModel>();
 
-            m_tab_manager = new Utils.Tab.TabManager();
-            m_tab_manager.OnTabUpdate = OnTabUpdate;
-            m_tab_manager.OnTabRegister = OnTabRegister;
-            m_tab_manager.OnTabUnregister = OnTabUnregister;
-            m_tab_manager.OnTabStart = OnTabStart;
-            Unloaded += m_tab_manager.OnTabUnloaded;
+            m_tab_manager = new Utils.Tab.TabManager(this)
+            {
+                OnTabUpdate = OnTabUpdate,
+                OnTabRegister = OnTabRegister,
+                OnTabUnregister = OnTabUnregister,
+                OnTabStart = OnTabStart
+            };
 
             m_comic = null;
             m_reader_position = 0.0;
@@ -1232,7 +1242,7 @@ namespace ComicReader.Views
             Shared.NavigationPageShared.OnPreviewModeChanged += Shared.UpdateReaderUI;
             Shared.NavigationPageShared.OnExpandComicInfoPane += ExpandInfoPane;
 
-            Shared.NavigationPageShared.IsPreviewModeEnabled = false;
+            Shared.NavigationPageShared.IsPreviewButtonToggled = false;
             Shared.UpdateReaderUI();
         }
 
@@ -1282,12 +1292,7 @@ namespace ComicReader.Views
         // Utilities
         private ReaderModel GetCurrentReader()
         {
-            if (!Shared.IsReaderVertical.HasValue)
-            {
-                return null;
-            }
-
-            if (Shared.IsReaderVertical.Value)
+            if (Shared.IsReaderVertical)
             {
                 return VerticalReader;
             }
@@ -1350,11 +1355,26 @@ namespace ComicReader.Views
         // Loading
         private async Task LoadComic(LockContext db, ComicData comic)
         {
-            // Load the comic.
             if (comic == null)
             {
                 return;
             }
+
+            Shared.IsLoading = true;
+            Shared.UpdateReaderUI();
+
+            VerticalReader.Reset();
+            HorizontalReader.Reset();
+
+            await SetActiveReader(db, VerticalReader);
+            ReaderModel reader = GetCurrentReader();
+            System.Diagnostics.Debug.Assert(reader != null);
+
+            reader.OnLoaded = () =>
+            {
+                Shared.IsLoading = false;
+                Shared.UpdateReaderUI();
+            };
 
             await m_core_data_lock.WaitAsync(); // Data protection on.
 
@@ -1363,12 +1383,6 @@ namespace ComicReader.Views
 
             VerticalReader.Comic = m_comic;
             HorizontalReader.Comic = m_comic;
-            VerticalReader.Reset();
-            HorizontalReader.Reset();
-
-            await SetActiveReader(db, VerticalReader);
-            ReaderModel reader = GetCurrentReader();
-            System.Diagnostics.Debug.Assert(reader != null);
 
             // Additional procedures for comics in the library.
             if (!m_comic.IsExternal)
@@ -1384,7 +1398,7 @@ namespace ComicReader.Views
                 await ComicDataManager.UpdateImages(db, m_comic);
 
                 // Set initial page.
-                reader.SetInitialPage(m_comic.LastPosition);
+                reader.InitialPage = m_comic.LastPosition;
 
                 // Call UpdateDataSource() to load frames into readers.
                 for (int i = 0; i < m_comic.ImageAspectRatios.Count; ++i)
@@ -1588,14 +1602,9 @@ namespace ComicReader.Views
             {
                 LockContext db = new LockContext();
 
-                if (!Shared.IsReaderVertical.HasValue)
-                {
-                    return;
-                }
-
                 ReaderModel reader = null;
 
-                if (Shared.IsReaderVertical.Value)
+                if (Shared.IsReaderVertical)
                 {
                     reader = HorizontalReader;
                 }
@@ -1689,7 +1698,7 @@ namespace ComicReader.Views
             {
                 ReaderFrameViewModel ctx = (ReaderFrameViewModel)e.ClickedItem;
 
-                Shared.NavigationPageShared.IsPreviewModeEnabled = false;
+                Shared.NavigationPageShared.IsPreviewButtonToggled = false;
 
                 ReaderModel reader = GetCurrentReader();
 

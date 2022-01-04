@@ -16,6 +16,7 @@
             </ResourceDictionary.MergedDictionaries>
 
             <!-- Converters -->
+            <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
             <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
         </ResourceDictionary>
     </UserControl.Resources>
@@ -61,7 +62,7 @@
             <Grid Grid.Column="0">
                 <Image Source="{x:Bind Ctx.Image}"
                        Stretch="UniformToFill" />
-                <muxc:ProgressRing Visibility="{x:Bind Ctx.IsImageLoaded, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
+                <muxc:ProgressRing IsActive="{x:Bind Ctx.IsImageLoaded, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}" />
             </Grid>
             <Grid Grid.Column="1">
                 <Grid Padding="12,2,8,5">
