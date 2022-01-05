@@ -327,13 +327,29 @@ namespace ComicReader.Utils.Search
                     return new SubFilterAll();
                 case "dir":
                 case "directory":
+                case "folder":
+                case "location":
+                case "path":
                     return new SubFilterDirectory(args);
                 case "hidden":
+                case "hide":
                     return new SubFilterHidden();
+                case "id":
+                case "no":
+                case "num":
+                case "number":
+                    return new SubFilterId(args);
+                case "rating":
+                case "ratings":
+                case "rate":
+                case "star":
+                case "stars":
+                    return new SubFilterRating(args);
                 case "tag":
+                case "tags":
                     return new SubFilterTag(args);
                 default:
-                    return null;
+                    return new SubFilterCategoryTag(filter_type, args);
             }
         }
     }
@@ -491,6 +507,45 @@ namespace ComicReader.Utils.Search
         }
     }
 
+    // <...: ...>
+    // Tags filter with category specified.
+    public class SubFilterCategoryTag : SubFilter
+    {
+        private readonly string m_category;
+        private readonly string m_tag;
+
+        public override string UniqueString => m_category + ": " + m_tag;
+
+        public SubFilterCategoryTag(string category, string tag)
+        {
+            m_category = category.ToLower();
+            m_tag = tag.ToLower();
+        }
+
+        public override bool Pass(ComicData comic)
+        {
+            foreach (TagData tag_data in comic.Tags)
+            {
+                if (!tag_data.Name.ToLower().Equals(m_category))
+                {
+                    continue;
+                }
+
+                foreach (string tag in tag_data.Tags)
+                {
+                    if (tag.ToLower().Equals(m_tag))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            return false;
+        }
+    }
+
     // <all>
     public class SubFilterAll : SubFilter
     {
@@ -530,6 +585,54 @@ namespace ComicReader.Utils.Search
         public override bool Pass(ComicData comic)
         {
             return comic.Hidden;
+        }
+    }
+
+    // <id>
+    public class SubFilterId : SubFilter
+    {
+        private readonly long m_id;
+        private readonly bool m_valid;
+
+        public override string UniqueString => "id: " + m_id.ToString();
+
+        public SubFilterId(string id)
+        {
+            if (id.Length > 0 && id[0] == '#')
+            {
+                id = id.Substring(1);
+            }
+
+            m_valid = long.TryParse(id, out m_id);
+        }
+
+        public override bool Pass(ComicData comic)
+        {
+            return m_valid && comic.Id == m_id;
+        }
+    }
+
+    // <rating>
+    public class SubFilterRating : SubFilter
+    {
+        private readonly int m_rating;
+        private readonly bool m_valid;
+
+        public override string UniqueString => "rating: " + m_rating.ToString();
+
+        public SubFilterRating(string rating)
+        {
+            m_valid = int.TryParse(rating, out m_rating);
+
+            if (m_valid && m_rating < 1)
+            {
+                m_rating = -1;
+            }
+        }
+
+        public override bool Pass(ComicData comic)
+        {
+            return m_valid && comic.Rating == m_rating;
         }
     }
 

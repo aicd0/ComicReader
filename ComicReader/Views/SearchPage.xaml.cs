@@ -160,7 +160,6 @@ namespace ComicReader.Views
         private void OnTabRegister(object shared)
         {
             Shared.NavigationPageShared = (NavigationPageShared)shared;
-
         }
 
         private void OnTabUnregister() { }

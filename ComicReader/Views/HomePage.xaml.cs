@@ -154,18 +154,15 @@ namespace ComicReader.Views
                 }
 
                 // Get recent visited comics.
-                const int result_count = 12;
-
                 SqliteCommand command = SqliteDatabaseManager.NewCommand();
                 command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.ComicTable +
-                    " ORDER BY " + ComicData.FieldLastVisit + " DESC LIMIT " +
-                    result_count.ToString();
+                    " ORDER BY " + ComicData.FieldLastVisit + " DESC";
 
                 await ComicDataManager.WaitLock(db); // Lock on.
                 SqliteDataReader query = await command.ExecuteReaderAsync();
                 var comic_items = new Utils.ObservableCollectionPlus<ComicItemViewModel>();
 
-                while (query.Read())
+                while (query.Read() && comic_items.Count < 16)
                 {
                     ComicData comic = await ComicDataManager.From(db, query);
                     if (comic == null) continue;

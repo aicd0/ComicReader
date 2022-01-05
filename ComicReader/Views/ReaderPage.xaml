@@ -322,6 +322,7 @@
                                                 ValueChanged="OnRatingControlValueChanged"
                                                 IsEnabled="{x:Bind Shared.NavigationPageShared.NotExternal, Mode=OneWay}"
                                                 HorizontalAlignment="Left"
+                                                IsClearEnabled="True"
                                                 Margin="0,10,0,0"/>
 
                             <!-- Directory -->

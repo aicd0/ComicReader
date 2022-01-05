@@ -1,9 +1,9 @@
 ﻿<ContentDialog x:Class="ComicReader.Views.EditComicInfoDialog"
                xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-               xmlns:local="using:ComicReader.Views"
                xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+               xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
                mc:Ignorable="d"
                Title="Collection information"
                PrimaryButtonText="Done"
@@ -13,10 +13,46 @@
                DefaultButton="Primary">
 
     <Grid>
-        <TextBox x:Name="MainEditBox"
-                 Loaded="MainEditBoxLoaded"
-                 AcceptsReturn="True"
-                 Width="500"
-                 MinHeight="200" />
+        <StackPanel Orientation="Vertical">
+            <TextBlock Text="Title 1:"/>
+            <TextBox x:Name="Title1TextBox"
+                     Margin="0,6,0,0"
+                     TextWrapping="Wrap"/>
+            <TextBlock Text="Title 2:"
+                       Margin="0,8,0,0" />
+            <TextBox x:Name="Title2TextBox"
+                     Margin="0,6,0,0"
+                     TextWrapping="Wrap" />
+            <StackPanel Margin="0,8,0,0">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Tags:" />
+                    <Button Background="Transparent"
+                            BorderThickness="0"
+                            Padding="0"
+                            VerticalAlignment="Bottom"
+                            Margin="20,0,0,2"
+                            Click="OnShowTagInfoButtonClicked">
+                        <Button.Content>
+                            <FontIcon Glyph="&#xE946;"
+                                      FontSize="13" />
+                        </Button.Content>
+                    </Button>
+                </StackPanel>
+                <Grid Height="8"
+                      Visibility="{x:Bind Shared.IsTagInfoBarOpen, Mode=OneWay}" />
+                <muxc:InfoBar IsOpen="{x:Bind Shared.IsTagInfoBarOpen, Mode=OneWay}"
+                              CloseButtonClick="OnTagInfoBarCloseButtonClicked"
+                              Severity="Informational"
+                              Title="Tags"
+                              Message="You can add tags to your comic to make it easier to manage the comics in your library. For example:&#13;&#13;Category1: tag1/tag2/tag3&#13;Category2: tag4/tag5&#13;..."/>
+            </StackPanel>
+            <TextBox x:Name="TagTextBox"
+                     Loaded="MainEditBoxLoaded"
+                     AcceptsReturn="True"
+                     Width="500"
+                     MinHeight="120"
+                     TextWrapping="Wrap"
+                     Margin="0,6,0,0" />
+        </StackPanel>
     </Grid>
 </ContentDialog>

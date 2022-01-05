@@ -178,26 +178,135 @@ namespace ComicReader.Utils
             collection.RemoveAt(idx);
         }
 
+        private enum _ModificationType
+        {
+            Unset,
+            Skip,
+            Delete,
+            Add
+        }
+
+        class _Modification
+        {
+            public _ModificationType Type = _ModificationType.Unset;
+            public int MinSteps;
+        }
+
         public static void UpdateCollection(ObservableCollection<T> dst_collection,
             Collection<T> src_collection, Func<T, T, bool> equal_func)
         {
-            for (int i = 0; i < Math.Min(dst_collection.Count, src_collection.Count); ++i)
+            // DP Problem: Edit Distance
+            List<List<_Modification>> modifications = new List<List<_Modification>>(dst_collection.Count + 1);
+
+            for (int i = 0; i < dst_collection.Count + 1; i++)
             {
-                if (!equal_func(src_collection[i], dst_collection[i]))
+                var row = new List<_Modification>(src_collection.Count + 1);
+
+                for (int j = 0; j < src_collection.Count + 1; j++)
                 {
-                    dst_collection.RemoveAt(i);
-                    --i;
+                    row.Add(new _Modification());
+                }
+
+                modifications.Add(row);
+            }
+
+            // Initialize cache.
+            for (int i = 1; i < modifications[0].Count; ++i)
+            {
+                var mod = modifications[0][i];
+                mod.Type = _ModificationType.Add;
+                mod.MinSteps = i;
+            }
+
+            for (int i = 1; i < modifications.Count; ++i)
+            {
+                var mod = modifications[i][0];
+                mod.Type = _ModificationType.Delete;
+                mod.MinSteps = i;
+            }
+
+            // Update the whole cache.
+            for (int i = 1; i < modifications.Count; ++i)
+            {
+                var row = modifications[i];
+                var last_row = modifications[i - 1];
+
+                for (int j = 1; j < row.Count; ++j)
+                {
+                    if (equal_func(dst_collection[i - 1], src_collection[j - 1]))
+                    {
+                        row[j].Type = _ModificationType.Skip;
+                        row[j].MinSteps = last_row[j - 1].MinSteps;
+                    }
+                    else
+                    {
+                        if (row[j - 1].MinSteps < last_row[j].MinSteps)
+                        {
+                            row[j].Type = _ModificationType.Add;
+                            row[j].MinSteps = row[j - 1].MinSteps + 1;
+                        }
+                        else
+                        {
+                            row[j].Type = _ModificationType.Delete;
+                            row[j].MinSteps = last_row[j].MinSteps + 1;
+                        }
+                    }
                 }
             }
 
-            for (int i = dst_collection.Count; i < src_collection.Count; ++i)
+            // Backtracking to find the best solution.
+            List<_ModificationType> solution = new List<_ModificationType>();
+
             {
-                dst_collection.Add(src_collection[i]);
+                int i = dst_collection.Count;
+                int j = src_collection.Count;
+                
+                while (i + j > 0)
+                {
+                    var type = modifications[i][j].Type;
+                    solution.Add(type);
+
+                    if (type == _ModificationType.Skip)
+                    {
+                        i--;
+                        j--;
+                    }
+                    else if (type == _ModificationType.Add)
+                    {
+                        j--;
+                    }
+                    else
+                    {
+                        i--;
+                    }
+                }
             }
 
-            for (int i = src_collection.Count; i < dst_collection.Count;)
+            // Perform the solution.
             {
-                dst_collection.RemoveAt(i);
+                int i = 0;
+                int j = 0;
+
+                for (int k = solution.Count - 1; k >= 0; --k)
+                {
+                    _ModificationType type = solution[k];
+
+                    if (type == _ModificationType.Skip)
+                    {
+                        ++i;
+                        ++j;
+                    }
+                    else if (type == _ModificationType.Add)
+                    {
+                        dst_collection.Insert(i, src_collection[j]);
+                        ++i;
+                        ++j;
+                    }
+                    else
+                    {
+                        dst_collection.RemoveAt(i);
+                    }
+                }
             }
         }
     }

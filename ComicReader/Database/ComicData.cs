@@ -530,12 +530,19 @@ namespace ComicReader.Database
         public static string InfoString(ComicData comic)
         {
             string text = "";
-            text += "Title1: " + comic.Title1;
-            text += "\nTitle2: " + comic.Title2;
+            text += "Title1: " + comic.Title1 + "\n";
+            text += "Title2: " + comic.Title2 + "\n";
+            text += TagString(comic);
+            return text;
+        }
+
+        public static string TagString(ComicData comic)
+        {
+            string text = "";
 
             foreach (TagData tag in comic.Tags)
             {
-                text += "\n" + tag.Name + ": " + Utils.StringUtils.Join("/", tag.Tags);
+                text += tag.Name + ": " + Utils.StringUtils.Join("/", tag.Tags) + "\n";
             }
 
             return text;
@@ -561,6 +568,8 @@ namespace ComicReader.Database
 
         public static void ParseInfo(string text, ComicData comic)
         {
+            bool title1_set = false;
+            bool title2_set = false;
             comic.Title1 = "";
             comic.Title2 = "";
             comic.Tags.Clear();
@@ -578,12 +587,14 @@ namespace ComicReader.Database
 
                 string name = tag_data.Name.ToLower();
 
-                if (name == "title1" || name == "title" || name == "t1" || name == "to")
+                if (!title1_set && (name == "title1" || name == "title" || name == "t1" || name == "to"))
                 {
+                    title1_set = true;
                     comic.Title1 = Utils.StringUtils.Join("/", tag_data.Tags);
                 }
-                else if (name == "title2" || name == "t2")
+                else if (!title2_set && (name == "title2" || name == "t2"))
                 {
+                    title2_set = true;
                     comic.Title2 = Utils.StringUtils.Join("/", tag_data.Tags);
                 }
                 else

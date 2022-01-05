@@ -14,12 +14,15 @@
             CornerRadius="13"
             Height="26"
             MinWidth="26"
-            Content="{x:Bind Ctx.Tag}"
             Padding="9,0,9,2"
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             FontSize="13"
             FontWeight="Bold"
             Click="{x:Bind Ctx.OnClicked}">
+        <Button.Content>
+            <TextBlock Text="{x:Bind Ctx.Tag}"
+                       TextTrimming="CharacterEllipsis"/>
+        </Button.Content>
     </Button>
 </UserControl>
