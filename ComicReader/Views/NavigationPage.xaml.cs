@@ -11,6 +11,7 @@ namespace ComicReader.Views
         public event PropertyChangedEventHandler PropertyChanged;
 
         public Action RefreshPage;
+        public Action<string> SetSearchBox;
 
         private MainPageShared m_MainPageShared;
         public MainPageShared MainPageShared
@@ -194,7 +195,6 @@ namespace ComicReader.Views
 
     public sealed partial class NavigationPage : Page
     {
-        public static NavigationPage Current;
         public NavigationPageShared Shared { get; set; }
         public Utils.Tab.TabIdentifier TabId => m_tab_manager.TabId;
 
@@ -202,7 +202,6 @@ namespace ComicReader.Views
 
         public NavigationPage()
         {
-            Current = this;
             Shared = new NavigationPageShared();
 
             m_tab_manager = new Utils.Tab.TabManager(this)
@@ -232,6 +231,7 @@ namespace ComicReader.Views
         {
             Shared.MainPageShared = (MainPageShared)shared;
             Shared.RefreshPage = RefreshPage;
+            Shared.SetSearchBox = SetSearchBox;
         }
 
         private void OnTabUnregister() { }

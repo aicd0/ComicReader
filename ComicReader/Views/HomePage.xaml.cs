@@ -50,7 +50,6 @@ namespace ComicReader.Views
 
     public sealed partial class HomePage : Page
     {
-        public static HomePage Current;
         public HomePageShared Shared { get; set; }
 
         private Utils.ObservableCollectionPlus<ComicItemViewModel> ComicItemSource
@@ -64,7 +63,6 @@ namespace ComicReader.Views
 
         public HomePage()
         {
-            Current = this;
             Shared = new HomePageShared();
             FolderItemDataSource = new ObservableCollection<FolderItemViewModel>();
 
@@ -116,7 +114,7 @@ namespace ComicReader.Views
             Shared.NavigationPageShared.CurrentPageType = Utils.Tab.PageType.Home;
             tab_id.Tab.Header = "New tab";
             tab_id.Tab.IconSource = new muxc.SymbolIconSource() { Symbol = Symbol.Document };
-            NavigationPage.Current.SetSearchBox("");
+            Shared.NavigationPageShared.SetSearchBox("");
         }
 
         public static string PageUniqueString(object args) => "blank";

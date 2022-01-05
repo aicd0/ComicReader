@@ -125,7 +125,6 @@
                                       Foreground="SkyBlue" />
                         </Grid>
                     </Grid>
-                    <muxc:ProgressRing IsActive="{x:Bind Ctx.IsImageLoaded, Converter={StaticResource BooleanNegationConverter}}" />
                 </Grid>
             </Grid>
             <Grid Grid.Row="2"

@@ -116,7 +116,6 @@ namespace ComicReader.Views
 
     public sealed partial class SearchPage : Page
     {
-        public static SearchPage Current;
         private SearchPageShared Shared { get; set; }
 
         private Utils.Tab.TabManager m_tab_manager;
@@ -125,7 +124,6 @@ namespace ComicReader.Views
 
         public SearchPage()
         {
-            Current = this;
             Shared = new SearchPageShared();
             Shared.Title = "";
             Shared.FilterDetails = "";
@@ -171,7 +169,7 @@ namespace ComicReader.Views
                 LockContext db = new LockContext();
 
                 Shared.NavigationPageShared.CurrentPageType = Utils.Tab.PageType.Search;
-                NavigationPage.Current.SetSearchBox((string)tab_id.RequestArgs);
+                Shared.NavigationPageShared.SetSearchBox((string)tab_id.RequestArgs);
                 await StartSearch(db);
             });
         }

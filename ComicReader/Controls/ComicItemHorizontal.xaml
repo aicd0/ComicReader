@@ -62,9 +62,10 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <Grid Grid.Column="0">
+                <Rectangle Fill="#555555"
+                           Visibility="{x:Bind Ctx.IsImageLoaded, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}"/>
                 <Image Source="{x:Bind Ctx.Image}"
                        Stretch="UniformToFill" />
-                <muxc:ProgressRing IsActive="{x:Bind Ctx.IsImageLoaded, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}" />
             </Grid>
             <Grid Grid.Column="1">
                 <Grid Padding="12,2,8,5">

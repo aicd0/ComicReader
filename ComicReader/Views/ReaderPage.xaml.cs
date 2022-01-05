@@ -1,7 +1,7 @@
 ﻿#if DEBUG
 #define DEBUG_LOG_READER_LOAD
-#define DEBUG_LOG_READER_JUMP
-#define DEBUG_LOG_VIEW_CHANGE
+//#define DEBUG_LOG_READER_JUMP
+//#define DEBUG_LOG_VIEW_CHANGE
 #endif
 
 using System;
@@ -659,7 +659,7 @@ namespace ComicReader.Views
                     await Utils.C0.WaitFor(() => IsFrameworkLoaded);
 
 #if DEBUG_LOG_READER_LOAD
-                    System.Diagnostics.Debug.Print("Framework loaded.\n");
+                    if (IsCurrentReader) System.Diagnostics.Debug.Print("Framework loaded.\n");
 #endif
                 }
 
@@ -675,7 +675,7 @@ namespace ComicReader.Views
                     IsFrameworkReady = true;
 
 #if DEBUG_LOG_READER_LOAD
-                    System.Diagnostics.Debug.Print("Framework ready.\n");
+                    if (IsCurrentReader) System.Diagnostics.Debug.Print("Framework ready.\n");
 #endif
                 }
 
@@ -690,7 +690,7 @@ namespace ComicReader.Views
                     IsLastPageLoaded = true;
 
 #if DEBUG_LOG_READER_LOAD
-                    System.Diagnostics.Debug.Print("Last page loaded.\n");
+                    if (IsCurrentReader) System.Diagnostics.Debug.Print("Last page loaded.\n");
 #endif
                 }
 
@@ -703,7 +703,7 @@ namespace ComicReader.Views
                     if (IsInitialPageReached)
                     {
 #if DEBUG_LOG_READER_LOAD
-                        System.Diagnostics.Debug.Print("Initial page reached.\n");
+                        if (IsCurrentReader) System.Diagnostics.Debug.Print("Initial page reached.\n");
 #endif
                     }
                 }
@@ -713,7 +713,7 @@ namespace ComicReader.Views
                     IsImageUpdateSucceeded = await UpdateImages(db);
 
 #if DEBUG_LOG_READER_LOAD
-                    System.Diagnostics.Debug.Print("Image updated.\n");
+                    if (IsCurrentReader) System.Diagnostics.Debug.Print("Image updated.\n");
 #endif
                 }
 
@@ -723,7 +723,7 @@ namespace ComicReader.Views
                     IsLoaded = true;
 
 #if DEBUG_LOG_READER_LOAD
-                    System.Diagnostics.Debug.Print("Reader loaded.\n");
+                    if (IsCurrentReader) System.Diagnostics.Debug.Print("Reader loaded.\n");
 #endif
 
                     OnLoaded?.Invoke();
@@ -821,7 +821,7 @@ namespace ComicReader.Views
             await m_update_page_lock.WaitAsync();
             try
             {
-                double current_offset = (ParallelOffset + ViewportParallelLength * 0.5) / ZoomFactor;
+                double current_offset = (ParallelOffsetFinal + ViewportParallelLength * 0.5) / ZoomFactorFinal;
 
                 // Use binary search to locate the current page.
                 if (DataSource.Count == 0)
@@ -892,6 +892,8 @@ namespace ComicReader.Views
                 return false;
             }
 
+            if (IsCurrentReader) System.Diagnostics.Debug.Print("Update image page " + Page.ToString() + ".\n");
+
             await m_update_image_lock.WaitAsync();
             try
             {
@@ -930,6 +932,8 @@ namespace ComicReader.Views
                             m.ImageSource = img;
                         }
                     });
+
+                    if (IsCurrentReader) System.Diagnostics.Debug.Print("Update image add " + i.ToString() + ".\n");
                 }
 
                 await Utils.ImageLoader.Load(db, img_loader_tokens,
@@ -948,6 +952,7 @@ namespace ComicReader.Views
                     if (m.ImageSource != null)
                     {
                         m.ImageSource = null;
+                        if (IsCurrentReader) System.Diagnostics.Debug.Print("Update image remove " + i.ToString() + ".\n");
                     }
                 }
 
@@ -1347,6 +1352,10 @@ namespace ComicReader.Views
             {
                 return;
             }
+
+#if DEBUG_LOG_READER_LOAD
+            System.Diagnostics.Debug.Print("============================\n");
+#endif
 
             Shared.IsLoading = true;
             Shared.UpdateReaderUI();
