@@ -23,6 +23,17 @@ namespace ComicReader.Views
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("NavigationPageShared"));
             }
         }
+
+        private bool m_IsEmpty = false;
+        public bool IsEmpty
+        {
+            get => m_IsEmpty;
+            set
+            {
+                m_IsEmpty = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsEmpty"));
+            }
+        }
     }
 
     public sealed partial class HistoryPage : Page
@@ -116,6 +127,7 @@ namespace ComicReader.Views
 
             HistorySource.Source = source;
             MainListView.SelectedIndex = -1;
+            Shared.IsEmpty = source.Count == 0;
         }
 
         private async Task OpenItem(LockContext db, HistoryItemViewModel item, bool new_tab)
@@ -159,6 +171,8 @@ namespace ComicReader.Views
                     --i;
                 }
             }
+
+            Shared.IsEmpty = source.Count == 0;
         }
 
         // events

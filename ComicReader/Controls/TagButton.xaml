@@ -19,7 +19,8 @@
             VerticalAlignment="Center"
             FontSize="13"
             FontWeight="Bold"
-            Click="{x:Bind Ctx.OnClicked}">
+            Click="{x:Bind Ctx.OnClicked}"
+            ToolTipService.ToolTip="{x:Bind Ctx.Tag}">
         <Button.Content>
             <TextBlock Text="{x:Bind Ctx.Tag}"
                        TextTrimming="CharacterEllipsis"/>

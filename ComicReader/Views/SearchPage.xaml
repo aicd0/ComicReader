@@ -148,13 +148,14 @@
                                FontSize="28"
                                FontWeight="SemiBold"
                                FontStyle="Italic"
-                               TextWrapping="NoWrap" />
+                               TextTrimming="CharacterEllipsis"/>
                     <TextBlock Text="{x:Bind Shared.FilterDetails, Mode=OneWay}"
                                Foreground="{ThemeResource FilterTextForeground}"
                                FontSize="14"
                                FontWeight="Normal"
                                Visibility="{x:Bind Shared.FilterDetailsVisible, Mode=OneWay}"
-                               Margin="0,2,0,0" />
+                               Margin="0,2,0,0"
+                               TextWrapping="Wrap"/>
                 </StackPanel>
                 <Grid Height="16" />
                 <GridView ItemContainerStyle="{StaticResource SearchResultItemContainerStyle}"
@@ -172,11 +173,13 @@
         <StackPanel Orientation="Vertical"
                     VerticalAlignment="Center"
                     HorizontalAlignment="Center"
-                    Visibility="{x:Bind Shared.IsNoResultTextVisible, Mode=OneWay}">
+                    Visibility="{x:Bind Shared.IsNoResultTextVisible, Mode=OneWay}"
+                    Margin="10,0">
             <TextBlock Text="{x:Bind Shared.NoResultText, Mode=OneWay}"
                        FontSize="28"
                        FontWeight="SemiBold"
-                       HorizontalAlignment="Center" />
+                       HorizontalAlignment="Center"
+                       TextTrimming="CharacterEllipsis"/>
             <TextBlock Text="Try searching with different keywords"
                        FontSize="18"
                        HorizontalAlignment="Center"

@@ -226,16 +226,27 @@
                 </mtuuc:AdaptiveGridView>
                 <StackPanel Visibility="{x:Bind Shared.IsLibraryEmpty, Mode=OneWay}"
                             Orientation="Horizontal"
-                            Spacing="10"
-                            Margin="10,0,0,0">
+                            Margin="10,0,0,0"
+                            HorizontalAlignment="Left"
+                            BorderBrush="#505050"
+                            BorderThickness="2"
+                            CornerRadius="5"
+                            Padding="60,30">
+                    <FontIcon Glyph="&#xE946;"
+                              FontSize="14"
+                              VerticalAlignment="Center"
+                              Margin="0,3,0,0"/>
                     <TextBlock Text="Seems that your library is empty. Try"
-                               VerticalAlignment="Center" />
-                    <HyperlinkButton Content="Add a folder"
+                               VerticalAlignment="Center"
+                               Margin="6,0,0,0"/>
+                    <HyperlinkButton Content="add a folder"
                                      Click="OnTryAddFolderBtClicked" />
                     <TextBlock Text="or"
                                VerticalAlignment="Center" />
-                    <HyperlinkButton Content="Refresh"
+                    <HyperlinkButton Content="refresh"
                                      Click="OnRefreshBtClicked" />
+                    <TextBlock Text="."
+                               VerticalAlignment="Center" />
                 </StackPanel>
                 <Grid Height="50" />
                 <TextBlock x:Uid="Folders"

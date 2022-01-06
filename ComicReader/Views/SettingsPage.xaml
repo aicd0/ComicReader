@@ -33,50 +33,67 @@
                       VerticalScrollMode="Auto"
                       Padding="30,0,25,0"
                       Grid.Row="1">
-            <StackPanel Orientation="Vertical">
-                <TextBlock Text="Images on this PC"
-                           Style="{StaticResource SettingsPageSubTitleTextBlock}" />
-                <Grid Height="4" />
-                <Button Content="Choose where we look for images"
-                        Click="ChooseLocationsClick" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="50" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
 
-                <!-- Reader -->
-                <TextBlock Text="Reader"
-                           Style="{StaticResource SettingsPageSubTitleTextBlock}" />
-                <TextBlock Text="Right to left" />
-                <ToggleSwitch IsOn="{x:Bind Shared.ReaderRightToLeft, Mode=TwoWay}" />
+                <StackPanel Orientation="Vertical"
+                            Grid.Column="0">
+                    <TextBlock Text="Images on this PC"
+                               Style="{StaticResource SettingsPageSubTitleTextBlock}" />
+                    <Grid Height="4" />
+                    <Button Content="Choose where we look for images"
+                            Click="ChooseLocationsClick" />
 
-                <!-- History -->
-                <TextBlock Text="History"
-                           Style="{StaticResource SettingsPageSubTitleTextBlock}" />
-                <TextBlock Text="Save browsing history" />
-                <ToggleSwitch IsOn="{x:Bind Shared.HistorySaveBrowsingHistory, Mode=TwoWay}" />
+                    <!-- Reader -->
+                    <TextBlock Text="Reader"
+                               Style="{StaticResource SettingsPageSubTitleTextBlock}" />
+                    <TextBlock Text="Right to left" />
+                    <ToggleSwitch IsOn="{x:Bind Shared.ReaderRightToLeft, Mode=TwoWay}" />
 
-                <!-- Appearance -->
-                <TextBlock Text="Appearance"
-                           Style="{StaticResource SettingsPageSubTitleTextBlock}" />
-                <TextBlock Text="You'll see your change the next time you start the app"
-                           Visibility="{x:Bind Shared.AppearanceChanged, Mode=OneWay}" />
-                <muxc:RadioButtons>
-                    <RadioButton Content="Light"
-                                 IsChecked="{x:Bind Shared.AppearanceLightChecked, Mode=TwoWay}" />
-                    <RadioButton Content="Dark"
-                                 IsChecked="{x:Bind Shared.AppearanceDarkChecked, Mode=TwoWay}" />
-                    <RadioButton Content="Use system setting"
-                                 IsChecked="{x:Bind Shared.AppearanceUseSystemSettingChecked, Mode=TwoWay}" />
-                </muxc:RadioButtons>
+                    <!-- History -->
+                    <TextBlock Text="History"
+                               Style="{StaticResource SettingsPageSubTitleTextBlock}" />
+                    <Grid Height="4" />
+                    <Button Content="Clear all"
+                            Click="OnHistoryClearAllClicked"
+                            IsEnabled="{x:Bind Shared.IsClearHistoryEnabled, Mode=OneWay}"/>
+                    <Grid Height="8" />
+                    <TextBlock Text="Save browsing history" />
+                    <ToggleSwitch IsOn="{x:Bind Shared.HistorySaveBrowsingHistory, Mode=TwoWay}" />
 
-                <!-- Statistics -->
-                <TextBlock Text="Statistics"
-                           Style="{StaticResource SettingsPageSubTitleTextBlock}" />
-                <TextBlock x:Name="StatisticsTextBlock"
-                           Text="No information collected." />
+                    <!-- Appearance -->
+                    <TextBlock Text="Appearance"
+                               Style="{StaticResource SettingsPageSubTitleTextBlock}" />
+                    <TextBlock Text="You'll see your change the next time you start the app"
+                               Visibility="{x:Bind Shared.AppearanceChanged, Mode=OneWay}" />
+                    <muxc:RadioButtons>
+                        <RadioButton Content="Light"
+                                     IsChecked="{x:Bind Shared.AppearanceLightChecked, Mode=TwoWay}" />
+                        <RadioButton Content="Dark"
+                                     IsChecked="{x:Bind Shared.AppearanceDarkChecked, Mode=TwoWay}" />
+                        <RadioButton Content="Use system setting"
+                                     IsChecked="{x:Bind Shared.AppearanceUseSystemSettingChecked, Mode=TwoWay}" />
+                    </muxc:RadioButtons>
+                </StackPanel>
 
-                <!-- About -->
-                <TextBlock Text="About"
-                           Style="{StaticResource SettingsPageSubTitleTextBlock}" />
-                <TextBlock Text="Nothing remarkable." />
-            </StackPanel>
+                <StackPanel Orientation="Vertical"
+                            Grid.Column="2">
+                    <!-- Statistics -->
+                    <TextBlock Text="Statistics"
+                               Style="{StaticResource SettingsPageSubTitleTextBlock}" />
+                    <TextBlock x:Name="StatisticsTextBlock"
+                               Text="No information collected." />
+
+                    <!-- About -->
+                    <TextBlock Text="About"
+                               Style="{StaticResource SettingsPageSubTitleTextBlock}" />
+                    <TextBlock Text="Nothing remarkable." />
+                </StackPanel>
+            </Grid>
         </ScrollViewer>
     </Grid>
 </Page>

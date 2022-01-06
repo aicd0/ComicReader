@@ -120,6 +120,14 @@ namespace ComicReader.Database
             }
         }
 
+        public static async Task Clear()
+        {
+            await XmlDatabaseManager.WaitLock();
+            XmlDatabase.History.Items.Clear();
+            XmlDatabaseManager.ReleaseLock();
+            Utils.TaskQueueManager.AppendTask(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.History));
+        }
+
         private static void RemoveNoLock(long id)
         {
             List<HistoryItemData> items = XmlDatabase.History.Items;

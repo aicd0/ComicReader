@@ -101,6 +101,11 @@
     </Page.Resources>
 
     <Grid>
+        <TextBlock Text="Your favorites appears here."
+                   Visibility="{x:Bind Shared.IsEmpty, Mode=OneWay}"
+                   Margin="0,10"
+                   HorizontalAlignment="Center"
+                   FontWeight="SemiBold" />
         <muxc:TreeView x:Name="MainTreeView"
                        ItemInvoked="MainTreeViewItemInvoked"
                        PointerPressed="MainTreeViewBackgroundPressed"

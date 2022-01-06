@@ -49,6 +49,17 @@ namespace ComicReader.Views
             }
         }
 
+        private bool m_IsClearHistoryEnabled = false;
+        public bool IsClearHistoryEnabled
+        {
+            get => m_IsClearHistoryEnabled;
+            set
+            {
+                m_IsClearHistoryEnabled = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsClearHistoryEnabled"));
+            }
+        }
+
         private bool m_HistorySaveBrowsingHistory;
         public bool HistorySaveBrowsingHistory
         {
@@ -245,6 +256,7 @@ namespace ComicReader.Views
             await XmlDatabaseManager.WaitLock();
 
             Shared.ReaderRightToLeft = XmlDatabase.Settings.RightToLeft;
+            Shared.IsClearHistoryEnabled = XmlDatabase.History.Items.Count > 0;
             Shared.HistorySaveBrowsingHistory = XmlDatabase.Settings.SaveHistory;
 
             XmlDatabaseManager.ReleaseLock();
@@ -309,6 +321,15 @@ namespace ComicReader.Views
             {
                 ChooseLocationsDialog dialog = new ChooseLocationsDialog();
                 _ = await dialog.ShowAsync().AsTask();
+            });
+        }
+
+        private void OnHistoryClearAllClicked(object sender, RoutedEventArgs e)
+        {
+            Utils.C0.Run(async delegate
+            {
+                await HistoryDataManager.Clear();
+                Shared.IsClearHistoryEnabled = false;
             });
         }
     }

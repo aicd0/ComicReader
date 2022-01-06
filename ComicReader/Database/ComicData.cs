@@ -458,14 +458,18 @@ namespace ComicReader.Database
                     {
                         // Auto-imported properties.
                         comic.Title1 = folder.DisplayName;
+                        List<string> tags = dir.Split("\\").ToList();
 
-                        TagData default_tag = new TagData
+                        if (tags.Count > 1)
                         {
-                            Name = "Default",
-                            Tags = dir.Split("\\").ToHashSet()
-                        };
+                            TagData default_tag = new TagData
+                            {
+                                Name = "Default",
+                                Tags = tags.Skip(1).ToHashSet(),
+                            };
 
-                        comic.Tags.Add(default_tag);
+                            comic.Tags.Add(default_tag);
+                        }
                     }
 
                     await comic.SaveBasic(db);

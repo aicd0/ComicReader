@@ -424,7 +424,7 @@ namespace ComicReader.Views
 
                 ComicItemViewModel item = (ComicItemViewModel)((FrameworkElement)sender).DataContext;
                 ComicData comic = await ComicDataManager.FromId(db, item.Comic.Id);
-                MainPage.Current.LoadTab(null, Utils.Tab.PageType.Reader, comic);
+                MainPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Reader, comic);
             });
         }
 

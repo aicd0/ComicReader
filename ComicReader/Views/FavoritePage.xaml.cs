@@ -27,6 +27,17 @@ namespace ComicReader.Views
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("NavigationPageShared"));
             }
         }
+
+        private bool m_IsEmpty = false;
+        public bool IsEmpty
+        {
+            get => m_IsEmpty;
+            set
+            {
+                m_IsEmpty = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsEmpty"));
+            }
+        }
     }
 
     public sealed partial class FavoritePage : Page
@@ -108,6 +119,7 @@ namespace ComicReader.Views
             DataSource.Clear();
             helper(XmlDatabase.Favorites.RootNodes, DataSource, null);
             XmlDatabaseManager.ReleaseLock();
+            Shared.IsEmpty = DataSource.Count == 0;
         }
 
         public async Task Save()
@@ -149,6 +161,7 @@ namespace ComicReader.Views
             }
 
             await Save();
+            Shared.IsEmpty = DataSource.Count == 0;
         }
 
         private async Task ResetItems()
@@ -188,6 +201,7 @@ namespace ComicReader.Views
             }
 
             await helper(DataSource);
+            Shared.IsEmpty = DataSource.Count == 0;
         }
 
         private void CreateNewFolder(ObservableCollection<FavoriteItemViewModel> folder, FavoriteItemViewModel parent)
@@ -226,6 +240,8 @@ namespace ComicReader.Views
                     break;
                 }
             }
+
+            Shared.IsEmpty = DataSource.Count == 0;
         }
 
         private void SortFavorites(ObservableCollection<FavoriteItemViewModel> source)
