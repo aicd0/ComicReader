@@ -233,7 +233,7 @@ namespace ComicReader.Views
             InitializeComponent();
         }
 
-        // navigation
+        // Navigation
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);

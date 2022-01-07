@@ -157,6 +157,7 @@
     <Compile Include="DesignData\TagViewModel.cs" />
     <Compile Include="Utils\ImageLoader.cs" />
     <Compile Include="Utils\Stopwatch.cs" />
+    <Compile Include="Utils\SystemIO.cs" />
     <Compile Include="Utils\TabManager.cs" />
     <Compile Include="DesignData\FolderItemViewModel.cs" />
     <Compile Include="Database\Database.cs" />

@@ -91,16 +91,7 @@ namespace ComicReader.Utils
                     continue;
                 }
 
-                string permit_folder_path = permit_folder.Path.ToLower();
-                string rest_path = path.Substring(permit_folder_path.Length);
-
-                if (rest_path.Length <= 1)
-                {
-                    result = permit_folder;
-                    break;
-                }
-
-                result = await permit_folder.GetFolderAsync(rest_path.Substring(1));
+                result = await TryGetFolder(permit_folder, path);
                 break;
             }
 
@@ -110,6 +101,30 @@ namespace ComicReader.Utils
             }
 
             return result;
+        }
+
+        public static async Task<StorageFolder> TryGetFolder(StorageFolder base_folder, string path)
+        {
+            if (base_folder.Path.Length > path.Length)
+            {
+                return null;
+            }
+
+            string rest_path = path.Substring(base_folder.Path.Length);
+
+            if (rest_path.Length <= 1)
+            {
+                return base_folder;
+            }
+
+            IStorageItem item = await base_folder.TryGetItemAsync(rest_path.Substring(1));
+
+            if (item == null || !item.IsOfType(StorageItemTypes.Folder))
+            {
+                return null;
+            }
+
+            return item as StorageFolder;
         }
 
         public static async Task<object> TryGetFile(StorageFolder folder, string name)
@@ -333,7 +348,7 @@ namespace ComicReader.Utils
         public static void UpdateCollection(ObservableCollection<T> dst_collection,
             Collection<T> src_collection, Func<T, T, bool> equal_func)
         {
-            if ((dst_collection.Count + 1) * (src_collection.Count + 1) <= 512)
+            if (dst_collection.Count * src_collection.Count <= 512)
             {
                 UpdateCollectionWithMinimumEditing(dst_collection, src_collection, equal_func);
             }

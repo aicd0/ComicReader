@@ -366,69 +366,17 @@ namespace ComicReader.Database
             ComicDataManager.ReleaseLock(db);
         }
 
-        public static SealedTask UpdateSealed(bool lazy_load) =>
-            (RawTask _) => Update(new LockContext(), lazy_load).Result;
+        public static SealedTask UpdateSealed(bool lazy_load)
+        {
+            return (RawTask _) => _Update(new LockContext(), lazy_load).Result;
+        }
 
-        public static async RawTask Update(LockContext db, bool lazy_load)
+        private static async RawTask _Update(LockContext db, bool lazy_load)
         {
             await m_update_lock.WaitAsync();
             try
             {
-                // get root folders
-                await XmlDatabaseManager.WaitLock();
-                List<string> root_folders = new List<string>(XmlDatabase.Settings.ComicFolders.Count);
-
-                foreach (string folder_path in XmlDatabase.Settings.ComicFolders)
-                {
-                    root_folders.Add(folder_path);
-                }
-
-                // get all folders and subfolders
-                XmlDatabaseManager.ReleaseLock();
-                List<StorageFolder> all_folders = new List<StorageFolder>();
-
-                foreach (string folder_path in root_folders)
-                {
-                    StorageFolder folder = await Utils.C0.TryGetFolder(folder_path);
-
-                    // remove unreachable folders from database
-                    if (folder == null)
-                    {
-                        await XmlDatabaseManager.WaitLock();
-                        XmlDatabase.Settings.ComicFolders.Remove(folder_path);
-                        XmlDatabaseManager.ReleaseLock();
-                        continue;
-                    }
-
-                    all_folders.Add(folder);
-
-                    StorageFolderQueryResult query = folder.CreateFolderQueryWithOptions(new QueryOptions
-                    {
-                        FolderDepth = FolderDepth.Deep,
-                        IndexerOption = IndexerOption.UseIndexerWhenAvailable
-                    });
-
-                    IReadOnlyList<StorageFolder> folders = await query.GetFoldersAsync(); // 20s per 1k folders
-                    all_folders = all_folders.Concat(folders).ToList();
-
-                    // cancel this task if more requests came in
-                    if (m_update_lock.CancellationRequested)
-                    {
-                        return new TaskResult(TaskException.Cancellation);
-                    }
-                }
-
-                Utils.TaskQueueManager.AppendTask(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
-
-                // extracts StorageFolder.Path into a new string list
-                List<string> all_dir = new List<string>(all_folders.Count);
-
-                for (int i = 0; i < all_folders.Count; ++i)
-                {
-                    all_dir.Add(all_folders[i].Path);
-                }
-
-                // get all folder paths in database
+                // Get all folder path of comics in the database.
                 List<string> all_dir_in_lib = new List<string>();
 
                 {
@@ -437,7 +385,7 @@ namespace ComicReader.Database
                         " FROM " + SqliteDatabaseManager.ComicTable;
 
                     await ComicDataManager.WaitLock(db); // Lock on.
-                    SqliteDataReader query = command.ExecuteReader();
+                    SqliteDataReader query = await command.ExecuteReaderAsync();
 
                     while (query.Read())
                     {
@@ -446,123 +394,148 @@ namespace ComicReader.Database
                     ComicDataManager.ReleaseLock(db); // Lock off.
                 }
 
-                // get all folders added or removed.
-                List<string> dir_added = Utils.C3<string, string, string>.Except(all_dir, all_dir_in_lib,
-                    Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
-                    new Utils.StringUtils.DefaultEqualityComparer()).ToList();
+                // Get all root folders from setting.
+                await XmlDatabaseManager.WaitLock();
+                List<string> root_folders = new List<string>(XmlDatabase.Settings.ComicFolders.Count);
+
+                foreach (string folder_path in XmlDatabase.Settings.ComicFolders)
+                {
+                    root_folders.Add(folder_path);
+                }
+                XmlDatabaseManager.ReleaseLock();
+
+                // Get all subfolders in root folders.
+                var all_dir = new List<string>();
+
+                foreach (string folder_path in root_folders)
+                {
+                    // Cancel this task if more requests have come in.
+                    if (m_update_lock.CancellationRequested)
+                    {
+                        return new TaskResult(TaskException.Cancellation);
+                    }
+
+                    StorageFolder root_folder = await Utils.C0.TryGetFolder(folder_path);
+
+                    // Remove unreachable folders from database.
+                    if (root_folder == null)
+                    {
+                        await XmlDatabaseManager.WaitLock();
+                        XmlDatabase.Settings.ComicFolders.Remove(folder_path);
+                        XmlDatabaseManager.ReleaseLock();
+                        continue;
+                    }
+
+                    // Create a folder query.
+                    QueryOptions query_options;
+                    IndexedState indexes_state = await root_folder.GetIndexedStateAsync();
+
+                    if (indexes_state == IndexedState.FullyIndexed)
+                    {
+                        query_options = new QueryOptions
+                        {
+                            FolderDepth = FolderDepth.Deep,
+                            IndexerOption = IndexerOption.OnlyUseIndexerAndOptimizeForIndexedProperties,
+                        };
+                    }
+                    else
+                    {
+                        query_options = new QueryOptions
+                        {
+                            FolderDepth = FolderDepth.Deep,
+                            IndexerOption = IndexerOption.UseIndexerWhenAvailable,
+                        };
+                    }
+
+                    query_options.SetPropertyPrefetch(Windows.Storage.FileProperties.PropertyPrefetchOptions.BasicProperties, new string[] { });
+                    StorageFolderQueryResult query = root_folder.CreateFolderQueryWithOptions(query_options);
+
+                    uint start_index = 0;
+                    const uint step_size = 1;
+
+                    while (true)
+                    {
+                        IReadOnlyList<StorageFolder> subfolders = await query.GetFoldersAsync(start_index, step_size); // Really slow.
+
+                        var all_folders = new List<StorageFolder>(subfolders);
+
+                        if (start_index == 0)
+                        {
+                            all_folders.Add(root_folder);
+                        }
+
+                        if (all_folders.Count == 0)
+                        {
+                            break;
+                        }
+
+                        // Extracts StorageFolder.Path into a new string list.
+                        var all_dir_iter = new List<string>(all_folders.Count);
+
+                        for (int i = 0; i < all_folders.Count; ++i)
+                        {
+                            all_dir_iter.Add(all_folders[i].Path);
+                        }
+
+                        all_dir.AddRange(all_dir_iter);
+
+                        // Generate a task queue for updating.
+                        var queue = new List<KeyValuePair<StorageFolder, bool>>();
+
+                        // Get folders added.
+                        List<string> dir_added = Utils.C3<string, string, string>.Except(all_dir_iter, all_dir_in_lib,
+                            Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
+                            new Utils.StringUtils.DefaultEqualityComparer()).ToList();
+
+                        foreach (string dir in dir_added)
+                        {
+                            StorageFolder folder = await Utils.C0.TryGetFolder(root_folder, dir);
+
+                            // "False" indicates the dir will be directly added to
+                            // the database instead of updating an existing one.
+                            queue.Add(new KeyValuePair<StorageFolder, bool>(folder, false));
+                        }
+
+                        if (!lazy_load)
+                        {
+                            List<string> dir_kept = Utils.C3<string, string, string>.Intersect(all_dir_iter, all_dir_in_lib,
+                                Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
+                                new Utils.StringUtils.DefaultEqualityComparer()).ToList();
+
+                            foreach (string dir in dir_kept)
+                            {
+                                StorageFolder folder = await Utils.C0.TryGetFolder(root_folder, dir);
+
+                                // "True" indicates the item with the same dir in the
+                                // database will be updated. No new items will be added.
+                                queue.Add(new KeyValuePair<StorageFolder, bool>(folder, true));
+                            }
+                        }
+
+                        foreach (KeyValuePair<StorageFolder, bool> p in queue)
+                        {
+                            // Cancel this task if more requests have come in.
+                            if (m_update_lock.CancellationRequested)
+                            {
+                                return new TaskResult(TaskException.Cancellation);
+                            }
+
+                            await _AddOrUpdateFolder(db, p.Key, p.Value);
+                        }
+
+                        start_index += step_size;
+                    }
+                }
+
+                // Get folders removed.
                 List<string> dir_removed = Utils.C3<string, string, string>.Except(all_dir_in_lib, all_dir,
                     Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
                     new Utils.StringUtils.DefaultEqualityComparer()).ToList();
 
                 // remove items from database.
-                foreach (var dir in dir_removed)
+                foreach (string dir in dir_removed)
                 {
                     await RemoveWithDirectory(db, dir);
-                }
-
-                // define a local method which will be used later to add or update dir.
-                async Task add_or_update_dir(string dir, bool update)
-                {
-                    // Exclude folders which do not directly contain images. (120s per 1k folders)
-                    QueryOptions queryOptions = new QueryOptions
-                    {
-                        FolderDepth = FolderDepth.Shallow,
-                        IndexerOption = IndexerOption.UseIndexerWhenAvailable,
-                        FileTypeFilter = { ".jpg", ".jpeg", ".png", ".bmp" }
-                    };
-
-                    StorageFolder folder = await Utils.C0.TryGetFolder(dir);
-
-                    if (folder == null)
-                    {
-                        return;
-                    }
-
-                    StorageFileQueryResult query = folder.CreateFileQueryWithOptions(queryOptions);
-                    uint file_count = await query.GetItemCountAsync();
-
-                    if (file_count == 0)
-                    {
-                        if (update) await RemoveWithDirectory(db, dir);
-                        return;
-                    }
-
-                    // Update or create a new one.
-                    ComicData comic;
-
-                    if (update)
-                    {
-                        comic = await FromDirectory(db, dir);
-                    }
-                    else
-                    {
-                        comic = await New(db, "", "", dir);
-                    }
-
-                    if (comic == null)
-                    {
-                        return;
-                    }
-                    
-                    comic.Folder = folder;
-
-                    // Try load comic info locally.
-                    TaskResult r = await UpdateInfo(comic);
-
-                    if (!r.Successful && !update)
-                    {
-                        // Auto-imported properties.
-                        comic.Title1 = folder.DisplayName;
-                        List<string> tags = dir.Split("\\").ToList();
-
-                        if (tags.Count > 1)
-                        {
-                            TagData default_tag = new TagData
-                            {
-                                Name = "Default",
-                                Tags = tags.Skip(1).ToHashSet(),
-                            };
-
-                            comic.Tags.Add(default_tag);
-                        }
-                    }
-
-                    await comic.SaveBasic(db);
-                }
-
-                // generate a task queue.
-                List<KeyValuePair<string, bool>> queue = new List<KeyValuePair<string, bool>>();
-
-                foreach (string dir in dir_added)
-                {
-                    // "false" indicates the dir will be directly added to the database instead of updating an existing one.
-                    queue.Add(new KeyValuePair<string, bool>(dir, false));
-                }
-
-                if (!lazy_load)
-                {
-                    List<string> dir_kept = Utils.C3<string, string, string>.Intersect(all_dir, all_dir_in_lib,
-                        Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
-                        new Utils.StringUtils.DefaultEqualityComparer()).ToList();
-
-                    foreach (string dir in dir_kept)
-                    {
-                        // "true" indicates the item with the same dir in the database will be updated. no new items will be added.
-                        queue.Add(new KeyValuePair<string, bool>(dir, true));
-                    }
-                }
-
-                DateTimeOffset last_date_time = DateTimeOffset.Now;
-
-                foreach (KeyValuePair<string, bool> p in queue)
-                {
-                    await add_or_update_dir(p.Key, p.Value);
-
-                    // cancel this task if more requests came in
-                    if (m_update_lock.CancellationRequested)
-                    {
-                        return new TaskResult(TaskException.Cancellation);
-                    }
                 }
 
                 return new TaskResult();
@@ -571,6 +544,72 @@ namespace ComicReader.Database
             {
                 m_update_lock.Release();
             }
+        }
+
+        private static async Task _AddOrUpdateFolder(LockContext db, StorageFolder folder, bool update)
+        {
+            // Exclude folders which do not directly contain images. (120s per 1k folders)
+            QueryOptions queryOptions = new QueryOptions
+            {
+                FolderDepth = FolderDepth.Shallow,
+                IndexerOption = IndexerOption.UseIndexerWhenAvailable,
+                FileTypeFilter = { ".jpg", ".jpeg", ".png", ".bmp" }
+            };
+
+            StorageFileQueryResult query = folder.CreateFileQueryWithOptions(queryOptions);
+            uint file_count = await query.GetItemCountAsync();
+
+            if (file_count == 0)
+            {
+                if (update)
+                {
+                    await RemoveWithDirectory(db, folder.Path);
+                }
+
+                return;
+            }
+
+            // Update or create a new one.
+            ComicData comic;
+
+            if (update)
+            {
+                comic = await FromDirectory(db, folder.Path);
+            }
+            else
+            {
+                comic = await New(db, "", "", folder.Path);
+            }
+
+            if (comic == null)
+            {
+                return;
+            }
+
+            comic.Folder = folder;
+
+            // Try load comic info locally.
+            TaskResult r = await UpdateInfo(comic);
+
+            if (!r.Successful && !update)
+            {
+                // Auto-imported properties.
+                comic.Title1 = folder.DisplayName;
+                List<string> tags = folder.Path.Split("\\").ToList();
+
+                if (tags.Count > 1)
+                {
+                    TagData default_tag = new TagData
+                    {
+                        Name = "Default",
+                        Tags = tags.Skip(1).ToHashSet(),
+                    };
+
+                    comic.Tags.Add(default_tag);
+                }
+            }
+
+            await comic.SaveBasic(db);
         }
 
         public static async Task Hide(LockContext db, ComicData comic)
