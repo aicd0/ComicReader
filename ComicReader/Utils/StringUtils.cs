@@ -120,6 +120,33 @@ namespace ComicReader.Utils
             return path.ToLower().Replace('\\', '%');
         }
 
-        public static string UniquePath(string path) => path.ToLower();
+        public static string UniquePath(string path)
+        {
+            return path.ToLower();
+        }
+
+        public static string FilenameFromPath(string path)
+        {
+            int i = path.LastIndexOf('\\');
+
+            if (i == -1)
+            {
+                return path;
+            }
+
+            return path.Substring(i + 1);
+        }
+
+        public static string FilenameExtensionFromFilename(string filename)
+        {
+            int i = filename.LastIndexOf('.');
+
+            if (i == -1)
+            {
+                return "";
+            }
+
+            return filename.Substring(i + 1);
+        }
     }
 }

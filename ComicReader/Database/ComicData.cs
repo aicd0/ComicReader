@@ -1,6 +1,4 @@
-﻿//#define DEBUG_LOG_IMAGE_LOADED
-
-using Microsoft.Data.Sqlite;
+﻿using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -175,13 +173,6 @@ namespace ComicReader.Database
         // Saving.
         private async Task Save(LockContext db, List<SqlKey> keys)
         {
-            System.Diagnostics.Debug.Assert(Id >= 0);
-            SqlKey id = new SqlKey(FieldId, Id);
-            await SqliteDatabaseManager.Update(db, SqliteDatabaseManager.ComicTable, id, keys);
-        }
-
-        public async Task Save(LockContext db)
-        {
             if (Id < 0)
             {
                 long rowid = await SqliteDatabaseManager.Insert(db, SqliteDatabaseManager.ComicTable, AllFields);
@@ -200,7 +191,8 @@ namespace ComicReader.Database
             }
             else
             {
-                await Save(db, AllFields);
+                SqlKey id = new SqlKey(FieldId, Id);
+                await SqliteDatabaseManager.Update(db, SqliteDatabaseManager.ComicTable, id, keys);
             }
         }
 
@@ -342,18 +334,6 @@ namespace ComicReader.Database
             return await From(db, ComicData.FieldDirectory, dir);
         }
 
-        private static async Task<ComicData> New(LockContext db, string title1, string title2, string dir)
-        {
-            ComicData comic = new ComicData
-            {
-                Title1 = title1,
-                Title2 = title2,
-                Directory = dir
-            };
-            await comic.Save(db);
-            return comic;
-        }
-
         private static async Task RemoveWithDirectory(LockContext db, string dir)
         {
             SqliteCommand command = SqliteDatabaseManager.NewCommand();
@@ -409,12 +389,6 @@ namespace ComicReader.Database
 
                 foreach (string folder_path in root_folders)
                 {
-                    // Cancel this task if more requests have come in.
-                    if (m_update_lock.CancellationRequested)
-                    {
-                        return new TaskResult(TaskException.Cancellation);
-                    }
-
                     StorageFolder root_folder = await Utils.C0.TryGetFolder(folder_path);
 
                     // Remove unreachable folders from database.
@@ -426,93 +400,56 @@ namespace ComicReader.Database
                         continue;
                     }
 
-                    // Create a folder query.
-                    QueryOptions query_options;
-                    IndexedState indexes_state = await root_folder.GetIndexedStateAsync();
-
-                    if (indexes_state == IndexedState.FullyIndexed)
-                    {
-                        query_options = new QueryOptions
-                        {
-                            FolderDepth = FolderDepth.Deep,
-                            IndexerOption = IndexerOption.OnlyUseIndexerAndOptimizeForIndexedProperties,
-                        };
-                    }
-                    else
-                    {
-                        query_options = new QueryOptions
-                        {
-                            FolderDepth = FolderDepth.Deep,
-                            IndexerOption = IndexerOption.UseIndexerWhenAvailable,
-                        };
-                    }
-
-                    query_options.SetPropertyPrefetch(Windows.Storage.FileProperties.PropertyPrefetchOptions.BasicProperties, new string[] { });
-                    StorageFolderQueryResult query = root_folder.CreateFolderQueryWithOptions(query_options);
-
-                    uint start_index = 0;
-                    const uint step_size = 1;
+                    var ctx = new Utils.SystemIO.SubFoldersDeepSearchContext(folder_path);
+                    bool initial_loop = true;
 
                     while (true)
                     {
-                        IReadOnlyList<StorageFolder> subfolders = await query.GetFoldersAsync(start_index, step_size); // Really slow.
+                        List<string> dirs = Utils.SystemIO.SubFoldersDeep(ctx, 1);
 
-                        var all_folders = new List<StorageFolder>(subfolders);
-
-                        if (start_index == 0)
+                        if (initial_loop)
                         {
-                            all_folders.Add(root_folder);
+                            dirs.Add(folder_path);
+                            initial_loop = false;
                         }
 
-                        if (all_folders.Count == 0)
+                        if (dirs.Count == 0)
                         {
                             break;
                         }
 
-                        // Extracts StorageFolder.Path into a new string list.
-                        var all_dir_iter = new List<string>(all_folders.Count);
-
-                        for (int i = 0; i < all_folders.Count; ++i)
-                        {
-                            all_dir_iter.Add(all_folders[i].Path);
-                        }
-
-                        all_dir.AddRange(all_dir_iter);
-
+                        all_dir.AddRange(dirs);
+                        
                         // Generate a task queue for updating.
-                        var queue = new List<KeyValuePair<StorageFolder, bool>>();
+                        var queue = new List<KeyValuePair<string, bool>>();
 
                         // Get folders added.
-                        List<string> dir_added = Utils.C3<string, string, string>.Except(all_dir_iter, all_dir_in_lib,
+                        List<string> dir_added = Utils.C3<string, string, string>.Except(dirs, all_dir_in_lib,
                             Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
                             new Utils.StringUtils.DefaultEqualityComparer()).ToList();
 
                         foreach (string dir in dir_added)
                         {
-                            StorageFolder folder = await Utils.C0.TryGetFolder(root_folder, dir);
-
                             // "False" indicates the dir will be directly added to
                             // the database instead of updating an existing one.
-                            queue.Add(new KeyValuePair<StorageFolder, bool>(folder, false));
+                            queue.Add(new KeyValuePair<string, bool>(dir, false));
                         }
 
                         if (!lazy_load)
                         {
-                            List<string> dir_kept = Utils.C3<string, string, string>.Intersect(all_dir_iter, all_dir_in_lib,
+                            List<string> dir_kept = Utils.C3<string, string, string>.Intersect(dirs, all_dir_in_lib,
                                 Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
                                 new Utils.StringUtils.DefaultEqualityComparer()).ToList();
 
                             foreach (string dir in dir_kept)
                             {
-                                StorageFolder folder = await Utils.C0.TryGetFolder(root_folder, dir);
-
                                 // "True" indicates the item with the same dir in the
                                 // database will be updated. No new items will be added.
-                                queue.Add(new KeyValuePair<StorageFolder, bool>(folder, true));
+                                queue.Add(new KeyValuePair<string, bool>(dir, true));
                             }
                         }
 
-                        foreach (KeyValuePair<StorageFolder, bool> p in queue)
+                        for (int i = 0; i < queue.Count; ++i)
                         {
                             // Cancel this task if more requests have come in.
                             if (m_update_lock.CancellationRequested)
@@ -520,10 +457,9 @@ namespace ComicReader.Database
                                 return new TaskResult(TaskException.Cancellation);
                             }
 
-                            await _AddOrUpdateFolder(db, p.Key, p.Value);
+                            var p = queue[i];
+                            _AddOrUpdateFolder(db, p.Key, p.Value).Wait();
                         }
-
-                        start_index += step_size;
                     }
                 }
 
@@ -546,24 +482,34 @@ namespace ComicReader.Database
             }
         }
 
-        private static async Task _AddOrUpdateFolder(LockContext db, StorageFolder folder, bool update)
+        private static async Task _AddOrUpdateFolder(LockContext db, string path, bool update)
         {
-            // Exclude folders which do not directly contain images. (120s per 1k folders)
-            QueryOptions queryOptions = new QueryOptions
+            List<string> file_names = Utils.SystemIO.SubFiles(path, "*");
+            bool info_file_exist = false;
+
+            for (int i = file_names.Count - 1; i >= 0; i--)
             {
-                FolderDepth = FolderDepth.Shallow,
-                IndexerOption = IndexerOption.UseIndexerWhenAvailable,
-                FileTypeFilter = { ".jpg", ".jpeg", ".png", ".bmp" }
-            };
+                string file_path = file_names[i];
+                string filename = Utils.StringUtils.FilenameFromPath(file_path).ToLower();
 
-            StorageFileQueryResult query = folder.CreateFileQueryWithOptions(queryOptions);
-            uint file_count = await query.GetItemCountAsync();
+                if (filename == COMIC_INFO_FILE_NAME)
+                {
+                    info_file_exist = true;
+                }
 
-            if (file_count == 0)
+                string ext = Utils.StringUtils.FilenameExtensionFromFilename(filename);
+
+                if (ext != "jpg" && ext != "jpeg" && ext != "png" && ext != "bmp")
+                {
+                    file_names.RemoveAt(i);
+                }
+            }
+
+            if (file_names.Count == 0)
             {
                 if (update)
                 {
-                    await RemoveWithDirectory(db, folder.Path);
+                    await RemoveWithDirectory(db, path);
                 }
 
                 return;
@@ -574,11 +520,14 @@ namespace ComicReader.Database
 
             if (update)
             {
-                comic = await FromDirectory(db, folder.Path);
+                comic = await FromDirectory(db, path);
             }
             else
             {
-                comic = await New(db, "", "", folder.Path);
+                comic = new ComicData
+                {
+                    Directory = path
+                };
             }
 
             if (comic == null)
@@ -586,27 +535,36 @@ namespace ComicReader.Database
                 return;
             }
 
-            comic.Folder = folder;
-
-            // Try load comic info locally.
-            TaskResult r = await UpdateInfo(comic);
-
-            if (!r.Successful && !update)
+            if (info_file_exist)
             {
-                // Auto-imported properties.
-                comic.Title1 = folder.DisplayName;
-                List<string> tags = folder.Path.Split("\\").ToList();
+                // Load comic info locally.
+                TaskResult r = await UpdateInfo(comic);
 
-                if (tags.Count > 1)
+                if (r.Successful)
                 {
-                    TagData default_tag = new TagData
-                    {
-                        Name = "Default",
-                        Tags = tags.Skip(1).ToHashSet(),
-                    };
-
-                    comic.Tags.Add(default_tag);
+                    await comic.SaveBasic(db);
+                    return;
                 }
+            }
+
+            if (update)
+            {
+                return;
+            }
+
+            // Auto-imported properties.
+            List<string> tags = path.Split("\\").ToList();
+            comic.Title1 = tags[tags.Count - 1];
+
+            if (tags.Count > 1)
+            {
+                TagData default_tag = new TagData
+                {
+                    Name = "Default",
+                    Tags = tags.Skip(1).ToHashSet(),
+                };
+
+                comic.Tags.Add(default_tag);
             }
 
             await comic.SaveBasic(db);
@@ -760,11 +718,11 @@ namespace ComicReader.Database
 
         public static async RawTask UpdateInfo(ComicData comic)
         {
-            TaskResult res = await CompleteInfoFile(comic, false);
+            TaskResult r = await CompleteInfoFile(comic, false);
 
-            if (res.ExceptionType != TaskException.Success)
+            if (!r.Successful)
             {
-                return res;
+                return r;
             }
 
             string content = await FileIO.ReadTextAsync(comic.InfoFile);

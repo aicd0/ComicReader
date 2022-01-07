@@ -1,6 +1,6 @@
 ﻿#if DEBUG
-#define DEBUG_LOG_LOAD
-//#define DEBUG_LOG_READER_JUMP
+//#define DEBUG_LOG_LOAD
+//#define DEBUG_LOG_JUMP
 //#define DEBUG_LOG_VIEW_CHANGE
 #endif
 
@@ -533,36 +533,37 @@ namespace ComicReader.Views
         {
             if (!IsFrameworkLoaded) return false;
 
-#if DEBUG_LOG_READER_JUMP
-            System.Diagnostics.Debug.Print("ParamIn:"
+#if DEBUG_LOG_JUMP
+            _Log("ParamIn:"
                 + " Z=" + zoom.ToString()
                 + ",H=" + horizontal_offset.ToString()
                 + ",V=" + vertical_offset.ToString()
                 + ",P=" + page.ToString()
                 + ",Pc=" + use_page_center.ToString()
-                + ",D=" + disable_animation.ToString()
-                + "\n");
+                + ",D=" + disable_animation.ToString());
 #endif
 
             bool r = _SetScrollViewerPage(page, use_page_center, ref horizontal_offset, ref vertical_offset);
-            if (!r) return false;
 
-#if DEBUG_LOG_READER_JUMP
-            System.Diagnostics.Debug.Print("ParamSetPage:"
+            if (!r)
+            {
+                return false;
+            }
+
+#if DEBUG_LOG_JUMP
+            _Log("ParamSetPage:"
                 + ",H=" + horizontal_offset.ToString()
-                + ",V=" + vertical_offset.ToString()
-                + "\n");
+                + ",V=" + vertical_offset.ToString());
 #endif
 
             _SetScrollViewerZoom(ref horizontal_offset, ref vertical_offset, ref zoom, out float? zoom_out);
 
-#if DEBUG_LOG_READER_JUMP
-            System.Diagnostics.Debug.Print("ParamSetZoom:"
+#if DEBUG_LOG_JUMP
+            _Log("ParamSetZoom:"
                 + " Z=" + zoom.ToString()
                 + ",Zo=" + zoom_out.ToString()
                 + ",H=" + horizontal_offset.ToString()
-                + ",V=" + vertical_offset.ToString()
-                + "\n");
+                + ",V=" + vertical_offset.ToString());
 #endif
             
             if (!_ChangeView(zoom_out, horizontal_offset, vertical_offset, disable_animation))
@@ -662,8 +663,8 @@ namespace ComicReader.Views
                 return false;
             }
 
-#if DEBUG_LOG_READER_JUMP
-            System.Diagnostics.Debug.Print("FixOffset\n");
+#if DEBUG_LOG_JUMP
+            _Log("FixOffset");
 #endif
 
             if (DataSource[0].Container == null)
@@ -735,12 +736,12 @@ namespace ComicReader.Views
 
             ThisScrollViewer.ChangeView(HorizontalOffsetFinal, VerticalOffsetFinal, ZoomFactorFinal, m_disable_animation_final);
 
-#if DEBUG_LOG_READER_JUMP
-            System.Diagnostics.Debug.Print("Commit:"
+#if DEBUG_LOG_JUMP
+            _Log("Commit:"
                 + " Z=" + ZoomFactorFinal.ToString()
                 + ",H=" + HorizontalOffsetFinal.ToString()
                 + ",V=" + VerticalOffsetFinal.ToString()
-                + ",D=" + m_disable_animation_final + "\n");
+                + ",D=" + m_disable_animation_final);
 #endif
 
             return true;
@@ -756,8 +757,8 @@ namespace ComicReader.Views
 
             if (DataSource[0].Container == null || DataSource[DataSource.Count - 1].Container == null) return;
 
-#if DEBUG_LOG_READER_JUMP
-            System.Diagnostics.Debug.Print("FixPadding\n");
+#if DEBUG_LOG_JUMP
+            _Log("FixPadding");
 #endif
 
             double zoom_factor = min_zoom * zoom_coefficient;
@@ -863,8 +864,9 @@ namespace ComicReader.Views
 
         private async Task _UpdateImages(LockContext db)
         {
-            if (IsCurrentReader) System.Diagnostics.Debug.Print("Update image page " + Page.ToString() + ".\n");
-
+#if DEBUG_LOG_LOAD
+            _Log("Updating images around page " + Page.ToString() + ".");
+#endif
             await m_update_image_lock.WaitAsync();
             try
             {

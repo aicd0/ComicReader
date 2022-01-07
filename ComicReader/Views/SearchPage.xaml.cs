@@ -210,8 +210,9 @@ namespace ComicReader.Views
         private SearchPageShared Shared { get; set; }
 
         private Utils.Tab.TabManager m_tab_manager;
-        private List<ComicData> m_all_results;
-        private Utils.CancellationLock m_search_lock;
+        private List<ComicData> m_all_results = new List<ComicData>();
+        private Utils.CancellationLock m_search_lock = new Utils.CancellationLock();
+        private Utils.CancellationLock m_load_result_lock = new Utils.CancellationLock();
 
         public SearchPage()
         {
@@ -226,9 +227,6 @@ namespace ComicReader.Views
                 OnTabUnregister = OnTabUnregister,
                 OnTabStart = OnTabStart
             };
-
-            m_all_results = new List<ComicData>();
-            m_search_lock = new Utils.CancellationLock();
 
             InitializeComponent();
         }
@@ -426,7 +424,7 @@ namespace ComicReader.Views
 
         private async Task LoadMoreResults(LockContext db, int count)
         {
-            await m_search_lock.WaitAsync();
+            await m_load_result_lock.WaitAsync();
             try
             {
                 int items_loaded = Shared.SearchResults.Count;
@@ -484,8 +482,13 @@ namespace ComicReader.Views
                 double image_height = (double)Application.Current.Resources["ComicItemHorizontalImageHeight"];
                 var image_loader_tokens = new List<Utils.ImageLoaderToken>();
                 
-                foreach (ComicItemViewModel item in Shared.SearchResults.Skip(items_loaded))
+                foreach (ComicItemViewModel item in Shared.SearchResults)
                 {
+                    if (item.IsImageLoaded)
+                    {
+                        continue;
+                    }
+
                     image_loader_tokens.Add(new Utils.ImageLoaderToken
                     {
                         Comic = item.Comic,
@@ -499,12 +502,12 @@ namespace ComicReader.Views
                 }
 
                 await Utils.ImageLoader.Load(db, image_loader_tokens,
-                    double.PositiveInfinity, image_height, m_search_lock);
+                    double.PositiveInfinity, image_height, m_load_result_lock);
             }
             finally
             {
                 Shared.UpdateUI();
-                m_search_lock.Release();
+                m_load_result_lock.Release();
             }
         }
 

@@ -10,6 +10,10 @@ namespace ComicReader.Utils
 {
     public class SystemIO
     {
+        public const int FIND_FIRST_EX_CASE_SENSITIVE = 1;
+        public const int FIND_FIRST_EX_LARGE_FETCH = 2;
+        public const int FIND_FIRST_EX_ON_DISK_ENTRIES_ONLY = 4;
+
         // https://docs.microsoft.com/en-us/windows/win32/api/minwinbase/ne-minwinbase-findex_info_levels
         public enum FindExInfoLevel
         {
@@ -18,7 +22,7 @@ namespace ComicReader.Utils
         }
 
         // https://docs.microsoft.com/en-us/windows/win32/api/minwinbase/ne-minwinbase-findex_search_ops
-        private enum FINDEX_SEARCH_OPS
+        public enum FIndexSearchOps
         {
             FindExSearchNameMatch = 0,
             FindExSearchLimitToDirectories = 1,
@@ -49,13 +53,9 @@ namespace ComicReader.Utils
             string lpFileName,
             FindExInfoLevel fInfoLevelId,
             out WIN32_FIND_DATA lpFindFileData,
-            FINDEX_SEARCH_OPS fSearchOp,
+            FIndexSearchOps fSearchOp,
             IntPtr lpSearchFilter,
             int dwAdditionalFlags);
-
-        public const int FIND_FIRST_EX_CASE_SENSITIVE = 1;
-        public const int FIND_FIRST_EX_LARGE_FETCH = 2;
-        public const int FIND_FIRST_EX_ON_DISK_ENTRIES_ONLY = 4;
 
         [DllImport("api-ms-win-core-file-l1-1-0.dll", CharSet = CharSet.Unicode)]
         private static extern bool FindNextFile(IntPtr hFindFile, out WIN32_FIND_DATA lpFindFileData);
@@ -63,38 +63,153 @@ namespace ComicReader.Utils
         [DllImport("api-ms-win-core-file-l1-1-0.dll")]
         private static extern bool FindClose(IntPtr hFindFile);
 
-        public static List<string> SearchFolder(string pattern)
+        // SubFoldersDeep
+        public class SubFoldersDeepSearchContextNode
         {
-            FindExInfoLevel find_info_level = FindExInfoLevel.FindExInfoStandard;
-            int additional_flags = 0;
+            public List<string> Paths = new List<string>();
+            public int Index = 0;
+
+            public string CurrentPath => Paths[Index];
+        }
+
+        public class SubFoldersDeepSearchContext
+        {
+            public SubFoldersDeepSearchContext(string path)
+            {
+                Nodes.Add(new SubFoldersDeepSearchContextNode
+                {
+                    Paths = new List<string> { path + "\\" }
+                });
+
+                if (Environment.OSVersion.Version.Major >= 6)
+                {
+                    FindInfoLevel = FindExInfoLevel.FindExInfoBasic;
+                    AdditionalFlags = FIND_FIRST_EX_LARGE_FETCH;
+                }
+                else
+                {
+                    FindInfoLevel = FindExInfoLevel.FindExInfoStandard;
+                    AdditionalFlags = 0;
+                }
+            }
+
+            public List<SubFoldersDeepSearchContextNode> Nodes = new List<SubFoldersDeepSearchContextNode>();
+            public readonly FindExInfoLevel FindInfoLevel;
+            public readonly FIndexSearchOps IndexSearchOps = FIndexSearchOps.FindExSearchNameMatch;
+            public readonly int AdditionalFlags;
+        };
+
+        public static List<string> SubFoldersDeep(SubFoldersDeepSearchContext ctx, uint min_step)
+        {
+            List<string> results = new List<string>();
+
+            if (ctx.Nodes.Count == 0)
+            {
+                return results;
+            }
+
+            _SubFoldersDeep(ctx, min_step, results);
+            return results;
+        }
+
+        private static bool _SubFoldersDeep(SubFoldersDeepSearchContext ctx, uint min_step, List<string> results, int depth = 0)
+        {
+            if (ctx.Nodes.Count <= depth)
+            {
+                // Visit current node.
+                string path = ctx.Nodes[ctx.Nodes.Count - 1].CurrentPath;
+                IntPtr h_file = FindFirstFileExFromApp(path + "*", ctx.FindInfoLevel,
+                    out _, ctx.IndexSearchOps, IntPtr.Zero, ctx.AdditionalFlags);
+
+                if (h_file.ToInt64() == -1)
+                {
+                    return true;
+                }
+
+                int i_begin = results.Count;
+                FindNextFile(h_file, out _);
+                while (FindNextFile(h_file, out WIN32_FIND_DATA find_data))
+                {
+                    if (((FileAttributes)find_data.dwFileAttributes & FileAttributes.Directory) == FileAttributes.Directory)
+                    {
+                        results.Add(path + find_data.cFileName);
+                    }
+                }
+                FindClose(h_file);
+                int i_end = results.Count;
+
+                if (i_begin == i_end)
+                {
+                    return true;
+                }
+
+                ctx.Nodes.Add(new SubFoldersDeepSearchContextNode
+                {
+                    Paths = results.GetRange(i_begin, i_end - i_begin)
+                });
+
+                // Exit if min_step is reached.
+                if (results.Count >= min_step)
+                {
+                    return false;
+                }
+            }
+
+            // Search deeper.
+            while (ctx.Nodes[depth].Index < ctx.Nodes[depth].Paths.Count)
+            {
+                if (!_SubFoldersDeep(ctx, min_step, results, depth + 1))
+                {
+                    return false;
+                }
+
+                ctx.Nodes[depth].Index++;
+            }
+
+            ctx.Nodes.RemoveAt(ctx.Nodes.Count - 1);
+            return true;
+        }
+
+        // SubFiles
+        public static List<string> SubFiles(string path, string name)
+        {
+            FindExInfoLevel FindInfoLevel;
+            FIndexSearchOps IndexSearchOps = FIndexSearchOps.FindExSearchNameMatch;
+            int AdditionalFlags;
 
             if (Environment.OSVersion.Version.Major >= 6)
             {
-                find_info_level = FindExInfoLevel.FindExInfoBasic;
-                additional_flags = FIND_FIRST_EX_LARGE_FETCH;
+                FindInfoLevel = FindExInfoLevel.FindExInfoBasic;
+                AdditionalFlags = FIND_FIRST_EX_LARGE_FETCH;
+            }
+            else
+            {
+                FindInfoLevel = FindExInfoLevel.FindExInfoStandard;
+                AdditionalFlags = 0;
             }
 
-            IntPtr hFile = FindFirstFileExFromApp(pattern, find_info_level, out WIN32_FIND_DATA find_data,
-                FINDEX_SEARCH_OPS.FindExSearchNameMatch, IntPtr.Zero, additional_flags);
+            path += "\\";
+            List<string> results = new List<string>();
 
-            if (hFile.ToInt64() == -1)
+            IntPtr h_file = FindFirstFileExFromApp(path + name, FindInfoLevel,
+                out _, IndexSearchOps, IntPtr.Zero, AdditionalFlags);
+
+            if (h_file.ToInt64() == -1)
             {
-                return null;
+                return results;
             }
 
-            List<string> file_names = new List<string>();
-
-            do
+            FindNextFile(h_file, out _);
+            while (FindNextFile(h_file, out WIN32_FIND_DATA find_data))
             {
-                if (((FileAttributes)find_data.dwFileAttributes & FileAttributes.Directory) == FileAttributes.Directory)
+                if (((FileAttributes)find_data.dwFileAttributes & FileAttributes.Directory) != FileAttributes.Directory)
                 {
-                    string fn = find_data.cFileName;
-                    file_names.Add(fn);
+                    results.Add(path + find_data.cFileName);
                 }
-            } while (FindNextFile(hFile, out find_data));
+            }
+            FindClose(h_file);
 
-            FindClose(hFile);
-            return file_names;
+            return results;
         }
     }
 }

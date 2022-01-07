@@ -1,4 +1,8 @@
-﻿using System;
+﻿#if DEBUG
+#define DEBUG_LOG_EVERYTHING
+#endif
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -52,11 +56,20 @@ namespace ComicReader.Utils
 
     public class ImageLoader
     {
+        private static void _Log(string text)
+        {
+            System.Diagnostics.Debug.Print("Image Loader: " + text + ".\n");
+        }
+
         public static async Task Load(LockContext db,
             IEnumerable<ImageLoaderToken> tokens, ImageConstrain max_width,
             ImageConstrain max_height, Utils.CancellationLock cancellation_lock)
         {
             List<ImageLoaderToken> tokens_cpy = new List<ImageLoaderToken>(tokens);
+
+#if DEBUG_LOG_EVERYTHING
+            _Log("Loading " + tokens_cpy.Count.ToString() + " images");
+#endif
 
             bool use_origin_size =
                 max_width.Option == ImageConstrainOption.None &&
@@ -69,10 +82,17 @@ namespace ComicReader.Utils
             bool first_token = true;
             bool trig_update = false;
 
+#if DEBUG_LOG_EVERYTHING
+            int token_i = 0;
+#endif
+
             for (; tokens_cpy.Count > 0;)
             {
                 if (cancellation_lock.CancellationRequested)
                 {
+#if DEBUG_LOG_EVERYTHING
+                    _Log("Task cancelled");
+#endif
                     return;
                 }
 
@@ -90,13 +110,23 @@ namespace ComicReader.Utils
                     // Skip tokens whose comic folder cannot be reached.
                     if (!r.Successful)
                     {
+#if DEBUG_LOG_EVERYTHING
+                        _Log("Token " + token_i.ToString() + " (idx=" + token.Index.ToString() + ") skipped because failed to get its folder");
+                        int token_before = tokens_cpy.Count;
+#endif
                         tokens_cpy.RemoveAll(x => x.Comic == comic);
+#if DEBUG_LOG_EVERYTHING
+                        _Log((tokens_cpy.Count - token_before).ToString() + " token with same comic were removed.");
+#endif
                         trig_update = true;
                         continue;
                     }
 
                     if (comic.ImageFiles.Count <= token.Index)
                     {
+#if DEBUG_LOG_EVERYTHING
+                        _Log("Index " + token.Index.ToString() + " skipped because image files not enough");
+#endif
                         trig_update = true;
                         continue;
                     }
@@ -111,6 +141,9 @@ namespace ComicReader.Utils
                 }
                 catch (FileNotFoundException)
                 {
+#if DEBUG_LOG_EVERYTHING
+                    _Log("Index " + token.Index.ToString() + " skipped because file not found");
+#endif
                     trig_update = true;
                     continue;
                 }
@@ -167,11 +200,16 @@ namespace ComicReader.Utils
                     }
 
                     token.Callback?.Invoke(image);
-#if DEBUG_LOG_IMAGE_LOADED
-                    System.Diagnostics.Debug.Print("Image " + token.Index.ToString() + " loaded.\n");
+#if DEBUG_LOG_EVERYTHING
+                    _Log("Token " + token_i.ToString() + " (idx=" + token.Index.ToString() + ") loaded");
+                    token_i++;
 #endif
                 });
             }
+
+#if DEBUG_LOG_EVERYTHING
+            _Log("All tokens loaded (trig_update=" + trig_update.ToString() + ")");
+#endif
 
             // Not all the images are successfully loaded, most likely that some of the
             // files or directories has been renamed, moved or deleted. We trigger a

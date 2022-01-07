@@ -46,9 +46,15 @@ namespace ComicReader.Utils
 
         private void ItemPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
-            //CollectionItemChanged?.Invoke(sender, e);
+            int idx = IndexOf((T)sender);
+
+            if (idx < 0)
+            {
+                return;
+            }
+
             NotifyCollectionChangedEventArgs args =
-                new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, sender, sender, IndexOf((T)sender));
+                new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, sender, sender, idx);
             OnCollectionChanged(args);
         }
     }
