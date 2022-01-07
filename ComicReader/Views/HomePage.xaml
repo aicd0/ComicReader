@@ -152,7 +152,7 @@
                 </Setter>
             </Style>
 
-            <DataTemplate x:Key="FolderItemCommonTemplate"
+            <DataTemplate x:Key="FolderItemNormalTemplate"
                           x:DataType="data:FolderItemViewModel">
                 <controls:FolderItemDetailed Title="{x:Bind Folder}"
                                              Detail=""
@@ -167,7 +167,7 @@
             </DataTemplate>
 
             <converters:FolderItemTemplateSelector x:Key="FolderItemTemplateSelector"
-                                                   CommonTemplate="{StaticResource FolderItemCommonTemplate}"
+                                                   NormalTemplate="{StaticResource FolderItemNormalTemplate}"
                                                    AddNewTemplate="{StaticResource FolderItemAddNewTemplate}" />
 
             <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Windows.UI.Input;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
@@ -112,6 +113,96 @@ namespace ComicReader.Views
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsNoResultTextVisible"));
             }
         }
+
+        private bool m_IsSelectMode = false;
+        public bool IsSelectMode
+        {
+            get => m_IsSelectMode;
+            set
+            {
+                m_IsSelectMode = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsSelectMode"));
+            }
+        }
+
+        private ListViewSelectionMode m_ComicItemSelectionMode = ListViewSelectionMode.None;
+        public ListViewSelectionMode ComicItemSelectionMode
+        {
+            get => m_ComicItemSelectionMode;
+            set
+            {
+                m_ComicItemSelectionMode = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ComicItemSelectionMode"));
+            }
+        }
+
+        public bool CommandBarSelectAllToggleOmitOnce = false;
+        private bool m_IsCommandBarSelectAllToggled = false;
+        public bool IsCommandBarSelectAllToggled
+        {
+            get => m_IsCommandBarSelectAllToggled;
+            set
+            {
+                if (m_IsCommandBarSelectAllToggled != value)
+                {
+                    if (!CommandBarSelectAllToggleOmitOnce)
+                    {
+                        OnCommandBarSelectAllToggleChanged(value);
+                    }
+
+                    m_IsCommandBarSelectAllToggled = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsCommandBarSelectAllToggled"));
+                }
+                
+                CommandBarSelectAllToggleOmitOnce = false;
+            }
+        }
+
+        private bool m_IsCommandBarFavoriteEnabled = false;
+        public bool IsCommandBarFavoriteEnabled
+        {
+            get => m_IsCommandBarFavoriteEnabled;
+            set
+            {
+                m_IsCommandBarFavoriteEnabled = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsCommandBarFavoriteEnabled"));
+            }
+        }
+
+        private bool m_IsCommandBarUnFavoriteEnabled = false;
+        public bool IsCommandBarUnFavoriteEnabled
+        {
+            get => m_IsCommandBarUnFavoriteEnabled;
+            set
+            {
+                m_IsCommandBarUnFavoriteEnabled = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsCommandBarUnFavoriteEnabled"));
+            }
+        }
+
+        private bool m_IsCommandBarHideEnabled = false;
+        public bool IsCommandBarHideEnabled
+        {
+            get => m_IsCommandBarHideEnabled;
+            set
+            {
+                m_IsCommandBarHideEnabled = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsCommandBarHideEnabled"));
+            }
+        }
+
+        private bool m_IsCommandBarUnHideEnabled = false;
+        public bool IsCommandBarUnHideEnabled
+        {
+            get => m_IsCommandBarUnHideEnabled;
+            set
+            {
+                m_IsCommandBarUnHideEnabled = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsCommandBarUnHideEnabled"));
+            }
+        }
+
+        public Action<bool> OnCommandBarSelectAllToggleChanged;
     }
 
     public sealed partial class SearchPage : Page
@@ -158,6 +249,7 @@ namespace ComicReader.Views
         private void OnTabRegister(object shared)
         {
             Shared.NavigationPageShared = (NavigationPageShared)shared;
+            Shared.OnCommandBarSelectAllToggleChanged = OnCommandBarSelectAllToggleChanged;
         }
 
         private void OnTabUnregister() { }
@@ -170,6 +262,9 @@ namespace ComicReader.Views
 
                 Shared.NavigationPageShared.CurrentPageType = Utils.Tab.PageType.Search;
                 Shared.NavigationPageShared.SetSearchBox((string)tab_id.RequestArgs);
+                Shared.IsSelectMode = false;
+                Shared.ComicItemSelectionMode = ListViewSelectionMode.None;
+
                 await StartSearch(db);
             });
         }
@@ -183,6 +278,8 @@ namespace ComicReader.Views
         // update
         private async Task StartSearch(LockContext db)
         {
+            SetSelectMode(false);
+
             string keyword = (string)m_tab_manager.TabId.RequestArgs;
 
             // extract filters and keywords from string
@@ -361,6 +458,7 @@ namespace ComicReader.Views
                             (comic.Progress >= 100 ? "Finished" :
                             comic.Progress.ToString() + "% Completed"),
                         IsFavorite = await FavoriteDataManager.FromId(comic.Id) != null,
+                        IsSelectMode = Shared.IsSelectMode,
 
                         OnItemPressed = OnComicItemPressed,
                         OnOpenInNewTabClicked = OnOpenInNewTabClicked,
@@ -368,6 +466,7 @@ namespace ComicReader.Views
                         OnRemoveFromFavoritesClicked = OnRemoveFromFavoritesClicked,
                         OnHideClicked = OnHideComicClicked,
                         OnUnhideClicked = OnUnhideComicClicked,
+                        OnSelectClicked = OnSelectClicked,
                     };
 
                     results_tmp.Add(result);
@@ -416,7 +515,13 @@ namespace ComicReader.Views
             {
                 LockContext db = new LockContext();
 
+                if (Shared.IsSelectMode)
+                {
+                    return;
+                }
+
                 PointerPoint pt = e.GetCurrentPoint((UIElement)sender);
+
                 if (!pt.Properties.IsLeftButtonPressed)
                 {
                     return;
@@ -428,7 +533,7 @@ namespace ComicReader.Views
             });
         }
 
-        private void ScrollViewer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
+        private void OnScrollViewerViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
         {
             Utils.C0.Run(async delegate
             {
@@ -487,6 +592,184 @@ namespace ComicReader.Views
                 LockContext db = new LockContext();
                 ComicItemViewModel ctx = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 await ComicDataManager.Hide(db, ctx.Comic);
+                await StartSearch(db);
+            });
+        }
+
+        private void SetSelectMode(bool val)
+        {
+            if (val == Shared.IsSelectMode)
+            {
+                return;
+            }
+
+            Shared.IsSelectMode = val;
+            Shared.ComicItemSelectionMode = val ? ListViewSelectionMode.Multiple : ListViewSelectionMode.None;
+
+            foreach (ComicItemViewModel model in Shared.SearchResults)
+            {
+                model.IsSelectMode = val;
+            }
+        }
+
+        private void OnSelectClicked(object sender, RoutedEventArgs e)
+        {
+            SetSelectMode(true);
+        }
+
+        private void OnScrollViewerTapped(object sender, TappedRoutedEventArgs e)
+        {
+            SetSelectMode(false);
+        }
+
+        private void OnComicItemTapped(object sender, TappedRoutedEventArgs e)
+        {
+            e.Handled = true;
+        }
+
+        private void OnGridViewSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            IList<object> selected_items = SearchResultGridView.SelectedItems;
+
+            bool all_selected = selected_items.Count == Shared.SearchResults.Count;
+            bool favorite_enabled = false;
+            bool unfavorite_enabled = false;
+            bool hide_enabled = false;
+            bool unhide_enabled = false;
+
+            foreach (object item in selected_items)
+            {
+                // Never modify any element in the loop as selected_items is only a
+                // reference to SearchResultGridView.SelectedItems property.
+                ComicItemViewModel model = item as ComicItemViewModel;
+
+                if (model.IsFavorite)
+                {
+                    unfavorite_enabled = true;
+                }
+                else
+                {
+                    favorite_enabled = true;
+                }
+
+                if (model.IsHide)
+                {
+                    unhide_enabled = true;
+                }
+                else
+                {
+                    hide_enabled = true;
+                }
+            }
+
+            Shared.CommandBarSelectAllToggleOmitOnce = true;
+            Shared.IsCommandBarSelectAllToggled = all_selected;
+            Shared.IsCommandBarFavoriteEnabled = favorite_enabled;
+            Shared.IsCommandBarUnFavoriteEnabled = unfavorite_enabled;
+            Shared.IsCommandBarHideEnabled = hide_enabled;
+            Shared.IsCommandBarUnHideEnabled = unhide_enabled;
+        }
+
+        private void OnCommandBarSelectAllToggleChanged(bool toggled)
+        {
+            if (toggled)
+            {
+                SearchResultGridView.SelectAll();
+            }
+            else
+            {
+                SearchResultGridView.DeselectRange(new ItemIndexRange(0, (uint)Shared.SearchResults.Count));
+            }
+        }
+
+        private void CommandBarFavoriteClicked(object sender, RoutedEventArgs e)
+        {
+            Utils.C0.Run(async delegate
+            {
+                List<object> selected_items = new List<object>(SearchResultGridView.SelectedItems);
+
+                for (int i = 0; i < selected_items.Count; ++i)
+                {
+                    ComicItemViewModel model = selected_items[i] as ComicItemViewModel;
+
+                    if (model.IsFavorite)
+                    {
+                        continue;
+                    }
+
+                    model.IsFavorite = true;
+                    await FavoriteDataManager.Add(model.Comic.Id, model.Title, i == selected_items.Count - 1);
+                }
+
+                SetSelectMode(false);
+            });
+        }
+
+        private void CommandBarUnFavoriteClicked(object sender, RoutedEventArgs e)
+        {
+            Utils.C0.Run(async delegate
+            {
+                List<object> selected_items = new List<object>(SearchResultGridView.SelectedItems);
+
+                for (int i = 0; i < selected_items.Count; ++i)
+                {
+                    ComicItemViewModel model = selected_items[i] as ComicItemViewModel;
+
+                    if (!model.IsFavorite)
+                    {
+                        continue;
+                    }
+
+                    model.IsFavorite = false;
+                    await FavoriteDataManager.RemoveWithId(model.Comic.Id, i == selected_items.Count - 1);
+                }
+
+                SetSelectMode(false);
+            });
+        }
+
+        private void CommandBarHideClicked(object sender, RoutedEventArgs e)
+        {
+            Utils.C0.Run(async delegate
+            {
+                LockContext db = new LockContext();
+                List<object> selected_items = new List<object>(SearchResultGridView.SelectedItems);
+
+                for (int i = 0; i < selected_items.Count; ++i)
+                {
+                    ComicItemViewModel model = selected_items[i] as ComicItemViewModel;
+
+                    if (model.IsHide)
+                    {
+                        continue;
+                    }
+
+                    await ComicDataManager.Hide(db, model.Comic);
+                }
+
+                await StartSearch(db);
+            });
+        }
+
+        private void CommandBarUnhideClicked(object sender, RoutedEventArgs e)
+        {
+            Utils.C0.Run(async delegate
+            {
+                LockContext db = new LockContext();
+                List<object> selected_items = new List<object>(SearchResultGridView.SelectedItems);
+
+                for (int i = 0; i < selected_items.Count; ++i)
+                {
+                    ComicItemViewModel model = selected_items[i] as ComicItemViewModel;
+
+                    if (!model.IsHide)
+                    {
+                        continue;
+                    }
+
+                    await ComicDataManager.Unhide(db, model.Comic);
+                }
+
                 await StartSearch(db);
             });
         }

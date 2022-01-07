@@ -13,8 +13,8 @@
     <Page.Resources>
         <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
 
-        <!-- common template -->
-        <DataTemplate x:Key="CommonTemplate"
+        <!-- Normal Template -->
+        <DataTemplate x:Key="NormalTemplate"
                       x:DataType="data:FavoriteItemViewModel">
             <muxc:TreeViewItem AutomationProperties.Name="{x:Bind Name}"
                                ItemsSource="{x:Bind Children}"
@@ -73,7 +73,7 @@
             </muxc:TreeViewItem>
         </DataTemplate>
 
-        <!-- renaming template -->
+        <!-- Renaming Template -->
         <DataTemplate x:Key="RenamingTemplate"
                       x:DataType="data:FavoriteItemViewModel">
             <muxc:TreeViewItem AutomationProperties.Name="{x:Bind Name}"
@@ -94,9 +94,9 @@
             </muxc:TreeViewItem>
         </DataTemplate>
 
-        <!-- template selector -->
+        <!-- Template Selectors -->
         <converters:FavoritesItemTemplateSelector x:Key="FavoritesItemTemplateSelector"
-                                                  CommonTemplate="{StaticResource CommonTemplate}"
+                                                  NormalTemplate="{StaticResource NormalTemplate}"
                                                   RenamingTemplate="{StaticResource RenamingTemplate}" />
     </Page.Resources>
 

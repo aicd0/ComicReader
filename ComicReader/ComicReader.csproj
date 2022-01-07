@@ -143,6 +143,7 @@
     <Compile Include="Converters\BooleanToVisibilityConverter.cs" />
     <Compile Include="Converters\FavoritesItemTemplateSelector.cs" />
     <Compile Include="Converters\FolderItemTemplateSelector.cs" />
+    <Compile Include="Converters\SearchResultItemContainerStyleSelector.cs" />
     <Compile Include="Database\SettingData.cs" />
     <Compile Include="Database\ComicData.cs" />
     <Compile Include="Database\FavoriteData.cs" />
@@ -250,6 +251,10 @@
     <Page Include="Controls\TagButton.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Resources\Styles\GridViewItem.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="Resources\Styles\AdaptiveGridView.xaml">
       <SubType>Designer</SubType>

@@ -15,24 +15,13 @@ namespace ComicReader.DesignData
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public ComicItemViewModel()
-        {
-            Title = "";
-            Detail = "";
-            Rating = -1;
-            Progress = "";
-            IsFavorite = false;
-            Image = new BitmapImage();
-            m_IsImageLoaded = false;
-        }
-
         public ComicData Comic;
         public string Title { get; set; }
         public string Detail { get; set; }
-        public int Rating { get; set; }
+        public int Rating { get; set; } = -1;
         public string Progress { get; set; }
 
-        private bool m_IsFavorite;
+        private bool m_IsFavorite = false;
         public bool IsFavorite
         {
             get => m_IsFavorite;
@@ -43,12 +32,12 @@ namespace ComicReader.DesignData
             }
         }
 
-        public BitmapImage Image { get; set; }
+        public BitmapImage Image { get; set; } = new BitmapImage();
 
         public bool IsRatingVisible => Rating != -1;
         public bool IsHide => Comic.Hidden;
 
-        private bool m_IsImageLoaded;
+        private bool m_IsImageLoaded = false;
         public bool IsImageLoaded
         {
             get => m_IsImageLoaded;
@@ -59,6 +48,17 @@ namespace ComicReader.DesignData
             }
         }
 
+        private bool m_IsSelectMode = false;
+        public bool IsSelectMode
+        {
+            get => m_IsSelectMode;
+            set
+            {
+                m_IsSelectMode = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsSelectMode"));
+            }
+        }
+
         // events
         public PointerEventHandler OnItemPressed { get; set; }
         public RoutedEventHandler OnOpenInNewTabClicked { get; set; }
@@ -66,5 +66,6 @@ namespace ComicReader.DesignData
         public RoutedEventHandler OnRemoveFromFavoritesClicked { get; set; }
         public RoutedEventHandler OnHideClicked { get; set; }
         public RoutedEventHandler OnUnhideClicked { get; set; }
+        public RoutedEventHandler OnSelectClicked { get; set; }
     };
 }

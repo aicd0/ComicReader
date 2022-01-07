@@ -6,126 +6,25 @@
       xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
       xmlns:data="using:ComicReader.DesignData"
       xmlns:controls="using:ComicReader.Controls"
+      xmlns:converters="using:ComicReader.Converters"
       mc:Ignorable="d"
       NavigationCacheMode="Enabled"
       Background="Transparent">
 
     <Page.Resources>
-        <Style x:Key="SearchResultItemContainerStyle"
-               TargetType="GridViewItem">
-            <Setter Property="FontFamily"
-                    Value="{ThemeResource ContentControlThemeFontFamily}" />
-            <Setter Property="FontSize"
-                    Value="{ThemeResource ControlContentThemeFontSize}" />
-            <Setter Property="Background"
-                    Value="{ThemeResource ComicItemBackground}" />
-            <Setter Property="Foreground"
-                    Value="{ThemeResource GridViewItemForeground}" />
-            <Setter Property="BorderBrush"
-                    Value="{ThemeResource ComicItemBorderBrush}" />
-            <Setter Property="BorderThickness"
-                    Value="1" />
-            <Setter Property="TabNavigation"
-                    Value="Local" />
-            <Setter Property="IsHoldingEnabled"
-                    Value="True" />
-            <Setter Property="HorizontalContentAlignment"
-                    Value="Center" />
-            <Setter Property="VerticalContentAlignment"
-                    Value="Center" />
-            <Setter Property="Margin"
-                    Value="4" />
-            <Setter Property="MinWidth"
-                    Value="{ThemeResource GridViewItemMinWidth}" />
-            <Setter Property="MinHeight"
-                    Value="{ThemeResource GridViewItemMinHeight}" />
-            <Setter Property="AllowDrop"
-                    Value="False" />
-            <Setter Property="UseSystemFocusVisuals"
-                    Value="{StaticResource UseSystemFocusVisuals}" />
-            <Setter Property="FocusVisualMargin"
-                    Value="-2" />
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="GridViewItem">
-                        <ListViewItemPresenter x:Name="Root"
-                                               CheckMode="{ThemeResource GridViewItemCheckMode}"
-                                               CheckBoxBrush="{ThemeResource GridViewItemCheckBoxBrush}"
-                                               CheckBrush="{ThemeResource GridViewItemCheckBrush}"
-                                               ContentMargin="{TemplateBinding Padding}"
-                                               ContentTransitions="{TemplateBinding ContentTransitions}"
-                                               DragOpacity="{ThemeResource ListViewItemDragThemeOpacity}"
-                                               DragBackground="{ThemeResource GridViewItemDragBackground}"
-                                               DisabledOpacity="{ThemeResource ListViewItemDisabledThemeOpacity}"
-                                               DragForeground="{ThemeResource GridViewItemDragForeground}"
-                                               FocusVisualMargin="{TemplateBinding FocusVisualMargin}"
-                                               FocusBorderBrush="{ThemeResource GridViewItemFocusBorderBrush}"
-                                               FocusSecondaryBorderBrush="{ThemeResource GridViewItemFocusSecondaryBorderBrush}"
-                                               HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                               Control.IsTemplateFocusTarget="True"
-                                               PlaceholderBackground="{ThemeResource GridViewItemPlaceholderBackground}"
-                                               PointerOverBackground="{ThemeResource GridViewItemBackgroundPointerOver}"
-                                               PressedBackground="{ThemeResource GridViewItemBackgroundPressed}"
-                                               RevealBorderThickness="{ThemeResource GridViewItemRevealBorderThemeThickness}"
-                                               RevealBackground="{ThemeResource GridViewItemRevealBackground}"
-                                               RevealBorderBrush="{ThemeResource GridViewItemRevealBorderBrush}"
-                                               ReorderHintOffset="{ThemeResource GridViewItemReorderHintThemeOffset}"
-                                               SelectedForeground="{ThemeResource GridViewItemForegroundSelected}"
-                                               SelectedPointerOverBackground="{ThemeResource GridViewItemBackgroundSelectedPointerOver}"
-                                               SelectionCheckMarkVisualEnabled="{ThemeResource GridViewItemSelectionCheckMarkVisualEnabled}"
-                                               SelectedBackground="{ThemeResource GridViewItemBackgroundSelected}"
-                                               SelectedPressedBackground="{ThemeResource GridViewItemBackgroundSelectedPressed}"
-                                               VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}">
-                            <VisualStateManager.VisualStateGroups>
-                                <VisualStateGroup x:Name="CommonStates">
-                                    <VisualState x:Name="Normal" />
-                                    <VisualState x:Name="Selected" />
-                                    <VisualState x:Name="PointerOver">
-                                        <VisualState.Setters>
-                                            <Setter Target="Root.(RevealBrush.State)"
-                                                    Value="PointerOver" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="PointerOverSelected">
-                                        <VisualState.Setters>
-                                            <Setter Target="Root.(RevealBrush.State)"
-                                                    Value="PointerOver" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="PointerOverPressed">
-                                        <VisualState.Setters>
-                                            <Setter Target="Root.(RevealBrush.State)"
-                                                    Value="Pressed" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="Pressed">
-                                        <VisualState.Setters>
-                                            <Setter Target="Root.(RevealBrush.State)"
-                                                    Value="Pressed" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                    <VisualState x:Name="PressedSelected">
-                                        <VisualState.Setters>
-                                            <Setter Target="Root.(RevealBrush.State)"
-                                                    Value="Pressed" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                </VisualStateGroup>
-                                <VisualStateGroup x:Name="DisabledStates">
-                                    <VisualState x:Name="Enabled" />
-                                    <VisualState x:Name="Disabled">
-                                        <VisualState.Setters>
-                                            <Setter Target="Root.RevealBorderThickness"
-                                                    Value="0" />
-                                        </VisualState.Setters>
-                                    </VisualState>
-                                </VisualStateGroup>
-                            </VisualStateManager.VisualStateGroups>
-                        </ListViewItemPresenter>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Resources/Styles/GridViewItem.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            
+            <!-- Value Converters -->
+            <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
+            
+            <!-- Style Selectors -->
+            <converters:SearchResultItemContainerStyleSelector x:Key="SearchResultItemContainerStyleSelector"
+                                                               NormalStyle="{StaticResource SearchResultItemContainerRevealStyle}"
+                                                               ExpandedStyle="{StaticResource SearchResultItemContainerExpandedStyle}"/>
+        </ResourceDictionary>
     </Page.Resources>
 
     <Grid>
@@ -135,9 +34,10 @@
                            IsActive="{x:Bind Shared.IsLoadingRingVisible, Mode=OneWay}"
                            IsIndeterminate="True" />
 
-        <!-- search results -->
-        <ScrollViewer ViewChanged="ScrollViewer_ViewChanged"
-                      Visibility="{x:Bind Shared.IsResultGridVisible, Mode=OneWay}">
+        <!-- Search Results -->
+        <ScrollViewer ViewChanged="OnScrollViewerViewChanged"
+                      Visibility="{x:Bind Shared.IsResultGridVisible, Mode=OneWay}"
+                      Tapped="OnScrollViewerTapped">
             <StackPanel Orientation="Vertical"
                         Margin="15,0,15,0"
                         HorizontalAlignment="Center">
@@ -148,28 +48,33 @@
                                FontSize="28"
                                FontWeight="SemiBold"
                                FontStyle="Italic"
-                               TextTrimming="CharacterEllipsis"/>
+                               TextTrimming="CharacterEllipsis" />
                     <TextBlock Text="{x:Bind Shared.FilterDetails, Mode=OneWay}"
                                Foreground="{ThemeResource FilterTextForeground}"
                                FontSize="14"
                                FontWeight="Normal"
                                Visibility="{x:Bind Shared.FilterDetailsVisible, Mode=OneWay}"
                                Margin="0,2,0,0"
-                               TextWrapping="Wrap"/>
+                               TextWrapping="Wrap" />
                 </StackPanel>
                 <Grid Height="16" />
-                <GridView ItemContainerStyle="{StaticResource SearchResultItemContainerStyle}"
-                          ItemsSource="{x:Bind Shared.SearchResults}">
+                <GridView x:Name="SearchResultGridView"
+                          ItemsSource="{x:Bind Shared.SearchResults}"
+                          SelectionMode="{x:Bind Shared.ComicItemSelectionMode, Mode=OneWay}"
+                          ItemContainerStyleSelector="{StaticResource SearchResultItemContainerStyleSelector}"
+                          SelectionChanged="OnGridViewSelectionChanged">
                     <GridView.ItemTemplate>
                         <DataTemplate x:DataType="data:ComicItemViewModel">
-                            <controls:ComicItemHorizontal DataContext="{x:Bind}" />
+                            <controls:ComicItemHorizontal Tapped="OnComicItemTapped"
+                                                          IsContextFlyoutEnabled="{x:Bind IsSelectMode, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}"/>
                         </DataTemplate>
                     </GridView.ItemTemplate>
                 </GridView>
+                <Grid Height="60" Visibility="{x:Bind Shared.IsSelectMode, Mode=OneWay}" />
             </StackPanel>
         </ScrollViewer>
 
-        <!-- no results -->
+        <!-- No Results -->
         <StackPanel Orientation="Vertical"
                     VerticalAlignment="Center"
                     HorizontalAlignment="Center"
@@ -179,11 +84,47 @@
                        FontSize="28"
                        FontWeight="SemiBold"
                        HorizontalAlignment="Center"
-                       TextTrimming="CharacterEllipsis"/>
+                       TextTrimming="CharacterEllipsis" />
             <TextBlock Text="Try searching with different keywords"
                        FontSize="18"
                        HorizontalAlignment="Center"
                        Margin="0,15,0,0" />
+        </StackPanel>
+
+        <!-- Command Bar -->
+        <StackPanel Orientation="Horizontal"
+                    VerticalAlignment="Bottom"
+                    Background="#2D2D2D"
+                    Padding="6,0"
+                    Visibility="{x:Bind Shared.IsSelectMode, Mode=OneWay}">
+            <AppBarToggleButton Icon="SelectAll"
+                                Label="Select all"
+                                IsChecked="{x:Bind Shared.IsCommandBarSelectAllToggled, Mode=TwoWay}"/>
+            <AppBarSeparator />
+            <AppBarButton Icon="Favorite"
+                          Label="Favorite"
+                          IsEnabled="{x:Bind Shared.IsCommandBarFavoriteEnabled, Mode=OneWay}"
+                          Click="CommandBarFavoriteClicked"/>
+            <AppBarButton Icon="UnFavorite"
+                          Label="UnFavorite"
+                          IsEnabled="{x:Bind Shared.IsCommandBarUnFavoriteEnabled, Mode=OneWay}"
+                          Click="CommandBarUnFavoriteClicked"/>
+            <AppBarButton Label="Hide"
+                          IsEnabled="{x:Bind Shared.IsCommandBarHideEnabled, Mode=OneWay}"
+                          Click="CommandBarHideClicked">
+                <AppBarButton.Icon>
+                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
+                              Glyph="&#xE8FF;" />
+                </AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton Label="Unhide"
+                          IsEnabled="{x:Bind Shared.IsCommandBarUnHideEnabled, Mode=OneWay}"
+                          Click="CommandBarUnhideClicked">
+                <AppBarButton.Icon>
+                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
+                              Glyph="&#xE7B3;" />
+                </AppBarButton.Icon>
+            </AppBarButton>
         </StackPanel>
     </Grid>
 </Page>

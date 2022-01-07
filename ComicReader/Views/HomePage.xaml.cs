@@ -141,6 +141,16 @@ namespace ComicReader.Views
             return new TaskResult();
         };
 
+        private void ComicDataToViewModel(ComicData comic, ComicItemViewModel model)
+        {
+            model.Comic = comic;
+            model.Title = comic.Title;
+            model.Rating = comic.Rating;
+            model.Progress = comic.Progress < 0 ? "Unread" :
+                (comic.Progress >= 100 ? "Finished" : comic.Progress.ToString() + "%");
+            model.IsFavorite = FavoriteDataManager.FromIdNoLock(comic.Id) != null;
+        }
+
         public async Task UpdateLibrary(LockContext db)
         {
             await m_update_library_lock.WaitAsync();
@@ -166,15 +176,8 @@ namespace ComicReader.Views
                     if (comic == null) continue;
                     if (comic.Hidden) continue;
 
-                    ComicItemViewModel data = new ComicItemViewModel
+                    ComicItemViewModel model = new ComicItemViewModel
                     {
-                        Comic = comic,
-                        Title = comic.Title,
-                        Rating = comic.Rating,
-                        Progress = comic.Progress < 0 ? "Unread" :
-                            (comic.Progress >= 100 ? "Finished" : comic.Progress.ToString() + "%"),
-                        IsFavorite = FavoriteDataManager.FromIdNoLock(comic.Id) != null,
-
                         OnItemPressed = OnComicItemPressed,
                         OnOpenInNewTabClicked = OnOpenInNewTabClicked,
                         OnAddToFavoritesClicked = OnAddToFavoritesClicked,
@@ -182,13 +185,17 @@ namespace ComicReader.Views
                         OnHideClicked = OnHideComicClicked,
                     };
 
-                    comic_items.Add(data);
+                    ComicDataToViewModel(comic, model);
+                    comic_items.Add(model);
                 }
                 ComicDataManager.ReleaseLock(db); // Lock off.
 
                 // Save results.
                 Utils.C1<ComicItemViewModel>.UpdateCollection(ComicItemSource, comic_items,
-                    (ComicItemViewModel x, ComicItemViewModel y) => x.Comic.Id == y.Comic.Id);
+                    (ComicItemViewModel x, ComicItemViewModel y) =>
+                    x.Comic.Title == y.Comic.Title &&
+                    x.Rating == y.Rating &&
+                    x.Progress == y.Progress);
                 Shared.IsLibraryEmpty = ComicItemSource.Count == 0;
 
                 // Load images.

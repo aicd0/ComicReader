@@ -56,11 +56,6 @@ namespace ComicReader.Database
 
     public class ComicData
     {
-        public ComicData(long id = -1)
-        {
-            Id = id;
-        }
-
         // Non-blob fields.
         public long Id { get; private set; }
         public string Title1 = "";
@@ -91,6 +86,37 @@ namespace ComicReader.Database
         public const string FieldTags = "tags";
         public const string FieldImageAspectRatios = "image_aspect_ratios";
 
+        // Fields.
+        private List<SqlKey> AllFields
+        {
+            get
+            {
+                List<SqlKey> all = new List<SqlKey>();
+                all.AddRange(BasicFields);
+                all.AddRange(ImageAspectRatiosFields);
+                return all;
+            }
+        }
+
+        private List<SqlKey> BasicFields => new List<SqlKey>
+        {
+            new SqlKey(FieldTitle1, Title1),
+            new SqlKey(FieldTitle2, Title2),
+            new SqlKey(FieldDirectory, Directory),
+            new SqlKey(FieldHidden, Hidden),
+            new SqlKey(FieldRating, Rating),
+            new SqlKey(FieldProgress, Progress),
+            new SqlKey(FieldLastVisit, LastVisit),
+            new SqlKey(FieldLastPosition, LastPosition),
+            new SqlKey(FieldCoverFileName, CoverFileName),
+            new SqlKey(FieldTags, Tags, blob: true),
+        };
+
+        private List<SqlKey> ImageAspectRatiosFields => new List<SqlKey>
+        {
+            new SqlKey(FieldImageAspectRatios, ImageAspectRatios, blob: true),
+        };
+
         // Not in database.
         public string Title => Title1.Length == 0 ?
             (Title2.Length == 0 ? "Untitled Collection" : Title2) :
@@ -99,6 +125,52 @@ namespace ComicReader.Database
         public StorageFolder Folder = null;
         public StorageFile InfoFile = null;
         public List<StorageFile> ImageFiles = new List<StorageFile>();
+
+        public ComicData(long id = -1)
+        {
+            Id = id;
+        }
+
+        public void From(long id, string title1, string title2, string directory,
+            bool hidden, int rating, int progress, DateTimeOffset last_visit,
+            double last_position, string cover_file_name, List<TagData> tags, 
+            List<double> image_aspect_ratios)
+        {
+            Id = id;
+            Title1 = title1;
+            Title2 = title2;
+            Directory = directory;
+            Hidden = hidden;
+            Rating = rating;
+            Progress = progress;
+            LastVisit = last_visit;
+            LastPosition = last_position;
+            CoverFileName = cover_file_name;
+            Tags = tags;
+            ImageAspectRatios = image_aspect_ratios;
+        }
+
+        // Updating.
+        public async Task<bool> Update(LockContext db)
+        {
+            if (Id < 0)
+            {
+                System.Diagnostics.Debug.Assert(false);
+                return false;
+            }
+
+            ComicData comic = await ComicDataManager.FromId(db, Id);
+
+            if (comic == null)
+            {
+                return false;
+            }
+
+            From(comic.Id, comic.Title1, comic.Title2, comic.Directory, comic.Hidden, comic.Rating,
+                comic.Progress, comic.LastVisit, comic.LastPosition,
+                comic.CoverFileName, comic.Tags, comic.ImageAspectRatios);
+            return true;
+        }
 
         // Saving.
         private async Task Save(LockContext db, List<SqlKey> keys)
@@ -110,24 +182,9 @@ namespace ComicReader.Database
 
         public async Task Save(LockContext db)
         {
-            List<SqlKey> keys = new List<SqlKey>
-            {
-                new SqlKey(FieldTitle1, Title1),
-                new SqlKey(FieldTitle2, Title2),
-                new SqlKey(FieldDirectory, Directory),
-                new SqlKey(FieldHidden, Hidden),
-                new SqlKey(FieldRating, Rating),
-                new SqlKey(FieldProgress, Progress),
-                new SqlKey(FieldLastVisit, LastVisit),
-                new SqlKey(FieldLastPosition, LastPosition),
-                new SqlKey(FieldCoverFileName, CoverFileName),
-                new SqlKey(FieldTags, Tags, blob: true),
-                new SqlKey(FieldImageAspectRatios, ImageAspectRatios, blob: true),
-            };
-
             if (Id < 0)
             {
-                long rowid = await SqliteDatabaseManager.Insert(db, SqliteDatabaseManager.ComicTable, keys);
+                long rowid = await SqliteDatabaseManager.Insert(db, SqliteDatabaseManager.ComicTable, AllFields);
 
                 // Retrieve ID from inserted row.
                 SqliteCommand command = SqliteDatabaseManager.NewCommand();
@@ -143,37 +200,18 @@ namespace ComicReader.Database
             }
             else
             {
-                await Save(db, keys);
+                await Save(db, AllFields);
             }
         }
 
         public async Task SaveBasic(LockContext db)
         {
-            List<SqlKey> keys = new List<SqlKey>
-            {
-                new SqlKey(FieldTitle1, Title1),
-                new SqlKey(FieldTitle2, Title2),
-                new SqlKey(FieldDirectory, Directory),
-                new SqlKey(FieldHidden, Hidden),
-                new SqlKey(FieldRating, Rating),
-                new SqlKey(FieldProgress, Progress),
-                new SqlKey(FieldLastVisit, LastVisit),
-                new SqlKey(FieldLastPosition, LastPosition),
-                new SqlKey(FieldCoverFileName, CoverFileName),
-                new SqlKey(FieldTags, Tags, blob: true),
-            };
-
-            await Save(db, keys);
+            await Save(db, BasicFields);
         }
 
         public async Task SaveImageAspectRatios(LockContext db)
         {
-            List<SqlKey> keys = new List<SqlKey>
-            {
-                new SqlKey(FieldImageAspectRatios, ImageAspectRatios, blob: true)
-            };
-
-            await Save(db, keys);
+            await Save(db, ImageAspectRatiosFields);
         }
     };
 
@@ -209,48 +247,60 @@ namespace ComicReader.Database
 
         public static async Task<ComicData> From(LockContext db, SqliteDataReader query)
         {
+            bool reset_basic = false;
+            bool reset_image_aspect_ratios = false;
+
             // Non-blob fields.
-            ComicData comic = new ComicData(query.GetInt32(0))
-            {
-                Title1 = query.GetString(1),
-                Title2 = query.GetString(2),
-                Directory = query.GetString(3),
-                Hidden = query.GetBoolean(4),
-                Rating = query.GetInt32(5),
-                Progress = query.GetInt32(6),
-                LastVisit = query.GetDateTimeOffset(7),
-                LastPosition = query.GetDouble(8),
-                CoverFileName = query.GetString(9),
-            };
+            long id = query.GetInt64(0);
+            string title1 = query.GetString(1);
+            string title2 = query.GetString(2);
+            string directory = query.GetString(3);
+            bool hidden = query.GetBoolean(4);
+            int rating = query.GetInt32(5);
+            int progress = query.GetInt32(6);
+            DateTimeOffset last_visit = query.GetDateTimeOffset(7);
+            double last_position = query.GetDouble(8);
+            string cover_file_name = query.GetString(9);
 
             // Blob fields.
-            bool reload_info = false;
+            List<TagData> tags = new List<TagData>();
+            List<double> image_aspect_ratios = new List<double>();
 
             // Tags
             try
             {
-                comic.Tags = (List<TagData>)await Utils.C0.DeserializeFromStream(query.GetStream(10));
+                tags = (List<TagData>)await Utils.C0.DeserializeFromStream(query.GetStream(10));
             }
             catch (SerializationException)
             {
-                comic.Tags = new List<TagData>();
-                reload_info = true;
-            }
-
-            if (reload_info)
-            {
-                await UpdateInfo(comic);
-                await comic.SaveBasic(db);
+                reset_basic = true;
             }
 
             // ImageAspectRatios
             try
             {
-                comic.ImageAspectRatios = (List<double>)await Utils.C0.DeserializeFromStream(query.GetStream(11));
+                image_aspect_ratios = (List<double>)await Utils.C0.DeserializeFromStream(query.GetStream(11));
             }
             catch (SerializationException)
             {
-                comic.ImageAspectRatios= new List<double>();
+                reset_image_aspect_ratios = true;
+            }
+
+            // Create an instance of ComicData.
+            ComicData comic = new ComicData();
+
+            comic.From(id, title1, title2, directory, hidden, rating, progress,
+                last_visit, last_position, cover_file_name, tags, image_aspect_ratios);
+
+            // Post processes.
+            if (reset_basic)
+            {
+                await UpdateInfo(comic);
+                await comic.SaveBasic(db);
+            }
+
+            if (reset_image_aspect_ratios)
+            {
                 await comic.SaveImageAspectRatios(db);
             }
 
@@ -268,7 +318,12 @@ namespace ComicReader.Database
             try
             {
                 SqliteDataReader query = command.ExecuteReader();
-                if (!query.Read()) return null;
+
+                if (!query.Read())
+                {
+                    return null;
+                }
+
                 return await From(db, query);
             }
             finally

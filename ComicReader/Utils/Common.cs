@@ -192,7 +192,7 @@ namespace ComicReader.Utils
             public int MinSteps;
         }
 
-        public static void UpdateCollection(ObservableCollection<T> dst_collection,
+        public static void UpdateCollectionWithMinimumEditing(ObservableCollection<T> dst_collection,
             Collection<T> src_collection, Func<T, T, bool> equal_func)
         {
             // DP Problem: Edit Distance
@@ -260,7 +260,7 @@ namespace ComicReader.Utils
             {
                 int i = dst_collection.Count;
                 int j = src_collection.Count;
-                
+
                 while (i + j > 0)
                 {
                     var type = modifications[i][j].Type;
@@ -307,6 +307,39 @@ namespace ComicReader.Utils
                         dst_collection.RemoveAt(i);
                     }
                 }
+            }
+        }
+
+        public static void UpdateCollectionWithDeleteFirstMatch(ObservableCollection<T> dst_collection,
+            Collection<T> src_collection, Func<T, T, bool> equal_func)
+        {
+            for (int i = 0; i < src_collection.Count; ++i)
+            {
+                if (i < dst_collection.Count)
+                {
+                    if (!equal_func(dst_collection[i], src_collection[i]))
+                    {
+                        dst_collection.RemoveAt(i);
+                        --i;
+                    }
+                }
+                else
+                {
+                    dst_collection.Add(src_collection[i]);
+                }
+            }
+        }
+
+        public static void UpdateCollection(ObservableCollection<T> dst_collection,
+            Collection<T> src_collection, Func<T, T, bool> equal_func)
+        {
+            if ((dst_collection.Count + 1) * (src_collection.Count + 1) <= 512)
+            {
+                UpdateCollectionWithMinimumEditing(dst_collection, src_collection, equal_func);
+            }
+            else
+            {
+                UpdateCollectionWithDeleteFirstMatch(dst_collection, src_collection, equal_func);
             }
         }
     }

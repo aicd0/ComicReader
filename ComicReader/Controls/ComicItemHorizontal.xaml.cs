@@ -1,4 +1,5 @@
-﻿using Windows.UI.Xaml.Controls;
+﻿using Windows.UI.Xaml;
+using Windows.UI.Xaml.Controls;
 using ComicReader.DesignData;
 
 namespace ComicReader.Controls
@@ -12,5 +13,13 @@ namespace ComicReader.Controls
             InitializeComponent();
             DataContextChanged += (s, e) => Bindings.Update();
         }
+
+        public bool IsContextFlyoutEnabled
+        {
+            get { return (bool)GetValue(IsContextFlyoutEnabledProperty); }
+            set { SetValue(IsContextFlyoutEnabledProperty, value); }
+        }
+        public static readonly DependencyProperty IsContextFlyoutEnabledProperty =
+            DependencyProperty.Register(nameof(IsContextFlyoutEnabled), typeof(bool), typeof(ComicItemHorizontal), new PropertyMetadata(true));
     }
 }

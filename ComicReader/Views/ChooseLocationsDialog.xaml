@@ -12,8 +12,8 @@
 
     <ContentDialog.Resources>
 
-        <!-- common template -->
-        <DataTemplate x:Key="CommonTemplate"
+        <!-- Normal Template -->
+        <DataTemplate x:Key="NormalTemplate"
                       x:DataType="data:FolderItemViewModel">
             <Grid Background="Transparent"
                   PointerPressed="RemoveFolderPointerPressed">
@@ -36,7 +36,7 @@
             </Grid>
         </DataTemplate>
 
-        <!-- add a new folder template -->
+        <!-- Add New Template -->
         <DataTemplate x:Key="AddNewTemplate"
                       x:DataType="data:FolderItemViewModel">
             <Grid Background="Transparent"
@@ -47,9 +47,9 @@
             </Grid>
         </DataTemplate>
 
-        <!-- template selector -->
+        <!-- Template Selectors -->
         <converters:FolderItemTemplateSelector x:Key="FolderItemTemplateSelector"
-                                                    CommonTemplate="{StaticResource CommonTemplate}"
+                                                    NormalTemplate="{StaticResource NormalTemplate}"
                                                     AddNewTemplate="{StaticResource AddNewTemplate}" />
     </ContentDialog.Resources>
 
