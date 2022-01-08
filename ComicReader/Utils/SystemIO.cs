@@ -78,7 +78,7 @@ namespace ComicReader.Utils
             {
                 Nodes.Add(new SubFoldersDeepSearchContextNode
                 {
-                    Paths = new List<string> { path + "\\" }
+                    Paths = new List<string> { path }
                 });
 
                 if (Environment.OSVersion.Version.Major >= 6)
@@ -117,7 +117,7 @@ namespace ComicReader.Utils
             if (ctx.Nodes.Count <= depth)
             {
                 // Visit current node.
-                string path = ctx.Nodes[ctx.Nodes.Count - 1].CurrentPath;
+                string path = ctx.Nodes[ctx.Nodes.Count - 1].CurrentPath + "\\";
                 IntPtr h_file = FindFirstFileExFromApp(path + "*", ctx.FindInfoLevel,
                     out _, ctx.IndexSearchOps, IntPtr.Zero, ctx.AdditionalFlags);
 

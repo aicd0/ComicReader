@@ -50,22 +50,19 @@ namespace ComicReader.Views
 
     public sealed partial class HomePage : Page
     {
-        public HomePageShared Shared { get; set; }
+        public HomePageShared Shared { get; set; } = new HomePageShared();
 
         private Utils.ObservableCollectionPlus<ComicItemViewModel> ComicItemSource
             = new Utils.ObservableCollectionPlus<ComicItemViewModel>();
         public ObservableCollection<FolderItemViewModel> FolderItemDataSource { get; set; }
+            = new ObservableCollection<FolderItemViewModel>();
 
         private readonly Utils.Tab.TabManager m_tab_manager;
-        private Utils.CancellationLock m_update_folder_lock;
-        private Utils.CancellationLock m_update_library_lock;
-        private Utils.TaskQueue m_update_queue;
+        private Utils.CancellationLock m_update_folder_lock = new Utils.CancellationLock();
+        private Utils.CancellationLock m_update_library_lock = new Utils.CancellationLock();
 
         public HomePage()
         {
-            Shared = new HomePageShared();
-            FolderItemDataSource = new ObservableCollection<FolderItemViewModel>();
-
             m_tab_manager = new Utils.Tab.TabManager(this)
             {
                 OnTabRegister = OnTabRegister,
@@ -73,10 +70,6 @@ namespace ComicReader.Views
                 OnTabUpdate = OnTabUpdate,
                 OnTabStart = OnTabStart
             };
-
-            m_update_folder_lock = new Utils.CancellationLock();
-            m_update_library_lock = new Utils.CancellationLock();
-            m_update_queue = Utils.TaskQueueManager.EmptyQueue();
 
             InitializeComponent();
         }
@@ -97,9 +90,14 @@ namespace ComicReader.Views
         private void OnTabRegister(object shared)
         {
             Shared.NavigationPageShared = (NavigationPageShared)shared;
+
+            ComicDataManager.OnUpdated += OnComicDataUpdated;
         }
 
-        private void OnTabUnregister() { }
+        private void OnTabUnregister()
+        {
+            ComicDataManager.OnUpdated -= OnComicDataUpdated;
+        }
 
         private void OnTabUpdate()
         {
@@ -128,18 +126,24 @@ namespace ComicReader.Views
             await UpdateLibrary(db);
         }
 
-        public SealedTask UpdateSealed() => delegate (RawTask _)
+        public SealedTask UpdateSealed()
         {
-            Task update_task = null;
-
-            Utils.C0.Sync(delegate
+            return delegate (RawTask _)
             {
-                update_task = Update();
-            }).Wait();
+                // IMPORTANT: Use TaskCompletionSource to guarantee all async tasks
+                // in Sync block has completed.
+                TaskCompletionSource<bool> completion_src = new TaskCompletionSource<bool>();
 
-            update_task.Wait();
-            return new TaskResult();
-        };
+                Utils.C0.Sync(async delegate
+                {
+                    await Update();
+                    completion_src.SetResult(true);
+                }).Wait();
+
+                completion_src.Task.Wait();
+                return new TaskResult();
+            };
+        }
 
         private void ComicDataToViewModel(ComicData comic, ComicItemViewModel model)
         {
@@ -149,6 +153,21 @@ namespace ComicReader.Views
             model.Progress = comic.Progress < 0 ? "Unread" :
                 (comic.Progress >= 100 ? "Finished" : comic.Progress.ToString() + "%");
             model.IsFavorite = FavoriteDataManager.FromIdNoLock(comic.Id) != null;
+        }
+
+        private void OnComicDataUpdated(LockContext db)
+        {
+            // IMPORTANT: Use TaskCompletionSource to guarantee all async tasks
+            // in Sync block has completed.
+            TaskCompletionSource<bool> completion_src = new TaskCompletionSource<bool>();
+
+            Utils.C0.Sync(async delegate
+            {
+                await UpdateLibrary(db);
+                completion_src.SetResult(true);
+            }).Wait();
+
+            completion_src.Task.Wait();
         }
 
         public async Task UpdateLibrary(LockContext db)
@@ -347,8 +366,7 @@ namespace ComicReader.Views
 
                 await UpdateFolders();
                 Utils.TaskQueueManager.AppendTask(
-                    ComicDataManager.UpdateSealed(lazy_load: true), "", m_update_queue);
-                Utils.TaskQueueManager.AppendTask(UpdateSealed(), "", m_update_queue);
+                    ComicDataManager.UpdateSealed(lazy_load: true), "");
             });
         }
 
@@ -381,8 +399,7 @@ namespace ComicReader.Views
                 await SettingDataManager.RemoveComicFolder(item.Folder, final: true);
                 await UpdateFolders();
                 Utils.TaskQueueManager.AppendTask(
-                    ComicDataManager.UpdateSealed(lazy_load: true), "", m_update_queue);
-                Utils.TaskQueueManager.AppendTask(UpdateSealed(), "", m_update_queue);
+                    ComicDataManager.UpdateSealed(lazy_load: true), "");
             });
         }
 

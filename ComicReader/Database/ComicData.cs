@@ -209,7 +209,8 @@ namespace ComicReader.Database
 
     class ComicDataManager
     {
-        private const string COMIC_INFO_FILE_NAME = "info.txt";
+        private const string ComicInfoFileName = "info.txt";
+        public static Action<LockContext> OnUpdated;
         private static readonly SemaphoreSlim m_table_lock = new SemaphoreSlim(1);
         private static readonly Utils.CancellationLock m_update_lock = new Utils.CancellationLock();
 
@@ -386,6 +387,8 @@ namespace ComicReader.Database
 
                 // Get all subfolders in root folders.
                 var all_dir = new List<string>();
+                Utils.Stopwatch watch = new Utils.Stopwatch();
+                watch.Start();
 
                 foreach (string folder_path in root_folders)
                 {
@@ -459,6 +462,12 @@ namespace ComicReader.Database
 
                             var p = queue[i];
                             _AddOrUpdateFolder(db, p.Key, p.Value).Wait();
+
+                            if (watch.LapSpan().TotalSeconds > 1.5)
+                            {
+                                OnUpdated?.Invoke(db);
+                                watch.Lap();
+                            }
                         }
                     }
                 }
@@ -472,12 +481,19 @@ namespace ComicReader.Database
                 foreach (string dir in dir_removed)
                 {
                     await RemoveWithDirectory(db, dir);
+
+                    if (watch.LapSpan().TotalSeconds > 1.5)
+                    {
+                        OnUpdated?.Invoke(db);
+                        watch.Lap();
+                    }
                 }
 
                 return new TaskResult();
             }
             finally
             {
+                OnUpdated?.Invoke(db);
                 m_update_lock.Release();
             }
         }
@@ -492,7 +508,7 @@ namespace ComicReader.Database
                 string file_path = file_names[i];
                 string filename = Utils.StringUtils.FilenameFromPath(file_path).ToLower();
 
-                if (filename == COMIC_INFO_FILE_NAME)
+                if (filename == ComicInfoFileName)
                 {
                     info_file_exist = true;
                 }
@@ -694,7 +710,7 @@ namespace ComicReader.Database
 
             System.Diagnostics.Debug.Assert(res.ExceptionType == TaskException.Success);
 
-            IStorageItem item = await comic.Folder.TryGetItemAsync(COMIC_INFO_FILE_NAME);
+            IStorageItem item = await comic.Folder.TryGetItemAsync(ComicInfoFileName);
 
             if (item == null)
             {
@@ -703,7 +719,7 @@ namespace ComicReader.Database
                     return new TaskResult(TaskException.FileNotExists);
                 }
 
-                comic.InfoFile = await comic.Folder.CreateFileAsync(COMIC_INFO_FILE_NAME, CreationCollisionOption.FailIfExists);
+                comic.InfoFile = await comic.Folder.CreateFileAsync(ComicInfoFileName, CreationCollisionOption.FailIfExists);
                 return new TaskResult();
             }
 

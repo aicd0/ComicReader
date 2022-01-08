@@ -37,14 +37,14 @@ namespace ComicReader.Views
 
         public Action OnSettingsChanged;
 
-        private bool m_ReaderRightToLeft;
-        public bool ReaderRightToLeft
+        private bool m_ReaderLeftToRight;
+        public bool ReaderLeftToRight
         {
-            get => m_ReaderRightToLeft;
+            get => m_ReaderLeftToRight;
             set
             {
-                m_ReaderRightToLeft = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ReaderRightToLeft"));
+                m_ReaderLeftToRight = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ReaderLeftToRight"));
                 OnSettingsChanged?.Invoke();
             }
         }
@@ -207,9 +207,14 @@ namespace ComicReader.Views
         private void OnTabRegister(object shared)
         {
             Shared.MainPageShared = (MainPageShared)shared;
+
+            ComicDataManager.OnUpdated += OnComicDataUpdated;
         }
 
-        private void OnTabUnregister() { }
+        private void OnTabUnregister()
+        {
+            ComicDataManager.OnUpdated -= OnComicDataUpdated;
+        }
 
         private void OnTabUpdate()
         {
@@ -252,16 +257,38 @@ namespace ComicReader.Views
 
             Shared.Appearance = Shared.CurrentAppearance;
 
-            // From database.
+            // From Xml.
             await XmlDatabaseManager.WaitLock();
 
-            Shared.ReaderRightToLeft = XmlDatabase.Settings.RightToLeft;
+            Shared.ReaderLeftToRight = XmlDatabase.Settings.LeftToRight;
             Shared.IsClearHistoryEnabled = XmlDatabase.History.Items.Count > 0;
             Shared.HistorySaveBrowsingHistory = XmlDatabase.Settings.SaveHistory;
 
             XmlDatabaseManager.ReleaseLock();
+            
+            m_updating = false;
 
-            // Comic count.
+            // Statistics.
+            await UpdateStatistis(db);
+        }
+
+        private void OnComicDataUpdated(LockContext db)
+        {
+            // IMPORTANT: Use TaskCompletionSource to guarantee all async tasks
+            // in Sync block has completed.
+            TaskCompletionSource<bool> completion_src = new TaskCompletionSource<bool>();
+
+            Utils.C0.Sync(async delegate
+            {
+                await UpdateStatistis(db);
+                completion_src.SetResult(true);
+            }).Wait();
+
+            completion_src.Task.Wait();
+        }
+
+        private async Task UpdateStatistis(LockContext db)
+        {
             SqliteCommand command = SqliteDatabaseManager.NewCommand();
             command.CommandText = "SELECT COUNT(*) FROM " + SqliteDatabaseManager.ComicTable;
 
@@ -271,8 +298,6 @@ namespace ComicReader.Views
 
             StatisticsTextBlock.Text = "Total collections: " +
                 comic_count.ToString("#,#0", CultureInfo.InvariantCulture);
-            
-            m_updating = false;
         }
 
         private async Task Save()
@@ -294,7 +319,7 @@ namespace ComicReader.Views
             // to database
             await XmlDatabaseManager.WaitLock();
 
-            XmlDatabase.Settings.RightToLeft = Shared.ReaderRightToLeft;
+            XmlDatabase.Settings.LeftToRight = Shared.ReaderLeftToRight;
             XmlDatabase.Settings.SaveHistory = Shared.HistorySaveBrowsingHistory;
 
             XmlDatabaseManager.ReleaseLock();
@@ -330,6 +355,20 @@ namespace ComicReader.Views
             {
                 await HistoryDataManager.Clear();
                 Shared.IsClearHistoryEnabled = false;
+            });
+        }
+
+        private void OnSendFeedbackButtonClicked(object sender, RoutedEventArgs e)
+        {
+            Utils.C0.Run(async delegate
+            {
+                Uri uri = new Uri(@"https://github.com/aicd0/ComicReader/issues/new");
+                bool success = await Windows.System.Launcher.LaunchUriAsync(uri);
+
+                if (!success)
+                {
+                    // ...
+                }
             });
         }
     }

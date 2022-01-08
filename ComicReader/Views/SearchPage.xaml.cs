@@ -273,7 +273,7 @@ namespace ComicReader.Views
             return "Search/" + keyword;
         }
 
-        // update
+        // Unsorted
         private async Task StartSearch(LockContext db)
         {
             SetSelectMode(false);
@@ -511,7 +511,6 @@ namespace ComicReader.Views
             }
         }
 
-        // events processing
         private void OnComicItemPressed(object sender, PointerRoutedEventArgs e)
         {
             Utils.C0.Run(async delegate

@@ -19,7 +19,7 @@ namespace ComicReader.Database
     public class SettingData : XmlData
     {
         public List<string> ComicFolders = new List<string>();
-        public bool RightToLeft = false;
+        public bool LeftToRight = false;
         public bool SaveHistory = true;
 
         // serialization
@@ -91,7 +91,7 @@ namespace ComicReader.Database
             return new TaskResult();
         }
 
-        public static async Task RemoveComicFolder(string folder, bool final = false)
+        public static async Task RemoveComicFolder(string folder, bool final)
         {
             await XmlDatabaseManager.WaitLock();
             _ = XmlDatabase.Settings.ComicFolders.Remove(folder);

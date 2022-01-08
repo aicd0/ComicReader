@@ -69,6 +69,7 @@ namespace ComicReader.Database
             return new TaskResult();
         }
 
+        [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
         private static async RawTask _Load(XmlData obj)
         {
             object file = await Utils.C0.TryGetFile(DatabaseFolder, obj.FileName);
@@ -80,10 +81,10 @@ namespace ComicReader.Database
 
             IRandomAccessStream stream = await (file as StorageFile).OpenAsync(FileAccessMode.Read);
             XmlSerializer serializer = new XmlSerializer(obj.GetType());
-            serializer.UnknownAttribute += (object x, XmlAttributeEventArgs y) => throw new Exception();
-            serializer.UnknownElement += (object x, XmlElementEventArgs y) => throw new Exception();
-            serializer.UnknownNode += (object x, XmlNodeEventArgs y) => throw new Exception();
-            serializer.UnreferencedObject += (object x, UnreferencedObjectEventArgs y) => throw new Exception();
+            //serializer.UnknownAttribute += (object x, XmlAttributeEventArgs y) => throw new Exception();
+            //serializer.UnknownElement += (object x, XmlElementEventArgs y) => throw new Exception();
+            //serializer.UnknownNode += (object x, XmlNodeEventArgs y) => throw new Exception();
+            //serializer.UnreferencedObject += (object x, UnreferencedObjectEventArgs y) => throw new Exception();
 
             try
             {

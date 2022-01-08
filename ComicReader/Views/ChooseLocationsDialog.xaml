@@ -11,46 +11,54 @@
                PrimaryButtonClick="ContentDialogPrimaryButtonClick">
 
     <ContentDialog.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Resources/Styles/ListViewItem.xaml" />
+            </ResourceDictionary.MergedDictionaries>
 
-        <!-- Normal Template -->
-        <DataTemplate x:Key="NormalTemplate"
-                      x:DataType="data:FolderItemViewModel">
-            <Grid Background="Transparent"
-                  PointerPressed="RemoveFolderPointerPressed">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0"
-                           Text="{x:Bind Folder}"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center"
-                           TextWrapping="Wrap"
-                           Foreground="White"/>
-                <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                          Glyph="&#xE894;"
-                          FontSize="14"
-                          Grid.Column="1"
-                          Margin="6,0,0,0"
-                          Foreground="White"/>
-            </Grid>
-        </DataTemplate>
+            <!-- Normal Template -->
+            <DataTemplate x:Key="NormalTemplate"
+                          x:DataType="data:FolderItemViewModel">
+                <Grid Background="{ThemeResource SystemAccentColor}"
+                      PointerPressed="RemoveFolderPointerPressed"
+                      Padding="20,10"
+                      ToolTipService.ToolTip="Remove this folder">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0"
+                               Text="{x:Bind Folder}"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               TextWrapping="Wrap"
+                               Foreground="White" />
+                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
+                              Glyph="&#xE894;"
+                              FontSize="14"
+                              Grid.Column="1"
+                              Margin="10,0,0,0"
+                              Foreground="White" />
+                </Grid>
+            </DataTemplate>
 
-        <!-- Add New Template -->
-        <DataTemplate x:Key="AddNewTemplate"
-                      x:DataType="data:FolderItemViewModel">
-            <Grid Background="Transparent"
-                  PointerPressed="AddNewPointerPressed">
-                <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                          Glyph="&#xE710;"
-                          Foreground="White" />
-            </Grid>
-        </DataTemplate>
+            <!-- Add New Template -->
+            <DataTemplate x:Key="AddNewTemplate"
+                          x:DataType="data:FolderItemViewModel">
+                <Grid PointerPressed="AddNewPointerPressed"
+                      Background="{ThemeResource SystemAccentColor}"
+                      ToolTipService.ToolTip="Add a new folder">
+                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
+                              Glyph="&#xE710;"
+                              Foreground="White" />
+                </Grid>
+            </DataTemplate>
 
-        <!-- Template Selectors -->
-        <converters:FolderItemTemplateSelector x:Key="FolderItemTemplateSelector"
-                                                    NormalTemplate="{StaticResource NormalTemplate}"
-                                                    AddNewTemplate="{StaticResource AddNewTemplate}" />
+            <!-- Template Selectors -->
+            <converters:FolderItemTemplateSelector x:Key="FolderItemTemplateSelector"
+                                                   NormalTemplate="{StaticResource NormalTemplate}"
+                                                   AddNewTemplate="{StaticResource AddNewTemplate}" />
+        </ResourceDictionary>
     </ContentDialog.Resources>
 
     <Grid>
@@ -67,15 +75,13 @@
                         <Setter Property="VerticalContentAlignment"
                                 Value="Stretch" />
                         <Setter Property="Margin"
-                                Value="0,5,0,0" />
+                                Value="0,10,0,0" />
                         <Setter Property="MinHeight"
                                 Value="70" />
                         <Setter Property="Width"
-                                Value="300" />
+                                Value="350" />
                         <Setter Property="Padding"
-                                Value="20,10" />
-                        <Setter Property="Background"
-                                Value="{ThemeResource SystemAccentColor}" />
+                                Value="0" />
                     </Style>
                 </ListView.ItemContainerStyle>
             </ListView>

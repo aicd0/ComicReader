@@ -11,5 +11,11 @@
         <Setter Property="Margin"
                 Value="0,26,0,6" />
     </Style>
+
+    <Style TargetType="TextBlock"
+           x:Key="SettingsPageBodyTextBlock">
+        <Setter Property="TextWrapping"
+                Value="Wrap" />
+    </Style>
     
 </ResourceDictionary>

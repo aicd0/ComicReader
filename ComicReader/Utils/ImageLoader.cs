@@ -1,5 +1,5 @@
 ﻿#if DEBUG
-#define DEBUG_LOG_EVERYTHING
+//#define DEBUG_LOG_EVERYTHING
 #endif
 
 using System;
@@ -56,10 +56,12 @@ namespace ComicReader.Utils
 
     public class ImageLoader
     {
+#if DEBUG_LOG_EVERYTHING
         private static void _Log(string text)
         {
             System.Diagnostics.Debug.Print("Image Loader: " + text + ".\n");
         }
+#endif
 
         public static async Task Load(LockContext db,
             IEnumerable<ImageLoaderToken> tokens, ImageConstrain max_width,
@@ -116,7 +118,7 @@ namespace ComicReader.Utils
 #endif
                         tokens_cpy.RemoveAll(x => x.Comic == comic);
 #if DEBUG_LOG_EVERYTHING
-                        _Log((tokens_cpy.Count - token_before).ToString() + " token with same comic were removed.");
+                        _Log((tokens_cpy.Count - token_before).ToString() + " tokens with same comic were removed.");
 #endif
                         trig_update = true;
                         continue;

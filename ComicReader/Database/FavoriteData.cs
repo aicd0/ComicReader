@@ -130,7 +130,8 @@ namespace ComicReader.Database
 
             if (final)
             {
-                await Update();
+                Utils.TaskQueueManager.AppendTask(
+                    XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Favorites));
             }
 
             return res;
@@ -163,18 +164,8 @@ namespace ComicReader.Database
 
             if (final)
             {
-                await Update();
-            }
-        }
-
-        private static async Task Update()
-        {
-            Utils.TaskQueueManager.AppendTask(
-                XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Favorites));
-
-            if (Views.FavoritePage.Current != null)
-            {
-                await Views.FavoritePage.Current.Update();
+                Utils.TaskQueueManager.AppendTask(
+                    XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Favorites));
             }
         }
     }

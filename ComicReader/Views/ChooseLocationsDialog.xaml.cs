@@ -48,13 +48,11 @@ namespace ComicReader.Views
             XmlDatabaseManager.ReleaseLock();
         }
 
-        // events
         private void ContentDialogPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
         {
-            // comfirm changes
+            // Update comics.
             Utils.TaskQueueManager.AppendTask(
-                ComicDataManager.UpdateSealed(lazy_load: false), "",
-                Utils.TaskQueueManager.EmptyQueue());
+                ComicDataManager.UpdateSealed(lazy_load: false), "", Utils.TaskQueueManager.EmptyQueue());
         }
 
         private void ListViewLoaded(object sender, RoutedEventArgs e)
@@ -67,7 +65,7 @@ namespace ComicReader.Views
 
         private void AddNewPointerPressed(object sender, PointerRoutedEventArgs e)
         {
-            // add a folder
+            // Add a folder.
             Utils.C0.Run(async delegate
             {
                 if (!IsPrimaryButtonEnabled)
@@ -105,7 +103,7 @@ namespace ComicReader.Views
 
                 IsPrimaryButtonEnabled = false;
                 FolderItemViewModel item = (FolderItemViewModel)((Grid)sender).DataContext;
-                await SettingDataManager.RemoveComicFolder(item.Folder);
+                await SettingDataManager.RemoveComicFolder(item.Folder, final: true);
                 await Update();
                 IsPrimaryButtonEnabled = true;
             });
