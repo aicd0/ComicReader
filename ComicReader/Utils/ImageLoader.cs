@@ -1,5 +1,5 @@
 ﻿#if DEBUG
-//#define DEBUG_LOG_EVERYTHING
+#define DEBUG_LOG_EVERYTHING
 #endif
 
 using System;
@@ -218,7 +218,7 @@ namespace ComicReader.Utils
             // DatabaseManager.Update() here to sync the changes.
             if (trig_update)
             {
-                Utils.TaskQueueManager.AppendTask(ComicDataManager.UpdateSealed(lazy_load: false), "",
+                Utils.TaskQueueManager.AppendTask(ComicDataManager.UpdateSealed(lazy_load: true), "",
                     Utils.TaskQueueManager.EmptyQueue());
             }
         }

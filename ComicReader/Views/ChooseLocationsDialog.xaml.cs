@@ -52,7 +52,7 @@ namespace ComicReader.Views
         {
             // Update comics.
             Utils.TaskQueueManager.AppendTask(
-                ComicDataManager.UpdateSealed(lazy_load: false), "", Utils.TaskQueueManager.EmptyQueue());
+                ComicDataManager.UpdateSealed(lazy_load: true), "", Utils.TaskQueueManager.EmptyQueue());
         }
 
         private void ListViewLoaded(object sender, RoutedEventArgs e)

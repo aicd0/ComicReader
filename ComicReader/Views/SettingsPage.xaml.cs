@@ -296,7 +296,8 @@ namespace ComicReader.Views
             long comic_count = (long)command.ExecuteScalar();
             ComicDataManager.ReleaseLock(db);
 
-            StatisticsTextBlock.Text = "Total collections: " +
+            string total_comic_string = Utils.C0.TryGetResourceString("TotalComics");
+            StatisticsTextBlock.Text = total_comic_string +
                 comic_count.ToString("#,#0", CultureInfo.InvariantCulture);
         }
 

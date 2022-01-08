@@ -1,4 +1,5 @@
 ﻿<ContentDialog x:Class="ComicReader.Views.EditComicInfoDialog"
+               x:Uid="EditComicInfoDialog"
                xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -14,18 +15,18 @@
 
     <Grid>
         <StackPanel Orientation="Vertical">
-            <TextBlock Text="Title 1:"/>
+            <TextBlock x:Uid="Title1"/>
             <TextBox x:Name="Title1TextBox"
                      Margin="0,6,0,0"
                      TextWrapping="Wrap"/>
-            <TextBlock Text="Title 2:"
+            <TextBlock x:Uid="Title2"
                        Margin="0,8,0,0" />
             <TextBox x:Name="Title2TextBox"
                      Margin="0,6,0,0"
                      TextWrapping="Wrap" />
             <StackPanel Margin="0,8,0,0">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Tags:" />
+                    <TextBlock x:Uid="Tags" />
                     <Button Background="Transparent"
                             BorderThickness="0"
                             Padding="0"
@@ -40,11 +41,10 @@
                 </StackPanel>
                 <Grid Height="8"
                       Visibility="{x:Bind Shared.IsTagInfoBarOpen, Mode=OneWay}" />
-                <muxc:InfoBar IsOpen="{x:Bind Shared.IsTagInfoBarOpen, Mode=OneWay}"
+                <muxc:InfoBar x:Uid="TagIntroduction"
+                              IsOpen="{x:Bind Shared.IsTagInfoBarOpen, Mode=OneWay}"
                               CloseButtonClick="OnTagInfoBarCloseButtonClicked"
-                              Severity="Informational"
-                              Title="Tags"
-                              Message="You can add tags to your comic to make it easier to manage the comics in your library. For example:&#13;&#13;Category1: tag1/tag2/tag3&#13;Category2: tag4/tag5&#13;..."/>
+                              Severity="Informational"/>
             </StackPanel>
             <TextBox x:Name="TagTextBox"
                      Loaded="MainEditBoxLoaded"

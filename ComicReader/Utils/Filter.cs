@@ -22,15 +22,18 @@ namespace ComicReader.Utils.Search
 
             if (unique_string == "<~hidden>")
             {
-                return "All collections";
+                return Utils.C0.TryGetResourceString("AllComics");
             }
             else if (unique_string == "<hidden>")
             {
-                return "Hidden collections";
+                return Utils.C0.TryGetResourceString("AllHidden");
             }
             else if (m_subfilters.Count == 2 && m_subfilters[0] is SubFilterDirectory && m_subfilters[1].UniqueString == "~hidden")
             {
-                return "All collections in " + (m_subfilters[0] as SubFilterDirectory).Directory;
+                string dir = (m_subfilters[0] as SubFilterDirectory).Directory;
+                string format_string = Utils.C0.TryGetResourceString("AllComicsIn");
+                format_string = format_string.Replace("$path", dir);
+                return format_string;
             }
 
             return "";
@@ -51,8 +54,9 @@ namespace ComicReader.Utils.Search
                 return "";
             }
 
-            bool is_multiple = cpy.Count > 1;
-            string res = cpy.Count.ToString() + " " + (is_multiple ? "filters" : "filter") + " applied:";
+            string format_string = Utils.C0.TryGetResourceString("FilteredBy");
+            format_string = format_string.Replace("$count", cpy.Count.ToString());
+            string res = format_string + ": ";
 
             foreach (SubFilter f in cpy)
             {

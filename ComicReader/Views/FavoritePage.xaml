@@ -25,17 +25,17 @@
                                PointerPressed="MainTreeViewItemPressed">
                 <muxc:TreeViewItem.ContextFlyout>
                     <MenuFlyout>
-                        <MenuFlyoutItem Text="Open in new tab"
+                        <MenuFlyoutItem x:Uid="MenuFlyoutOpenInNewTab"
                                         Click="OpenInNewTabClick"
                                         Visibility="{x:Bind IsItem, Mode=OneWay}" />
-                        <MenuFlyoutItem Text="Create new folder"
+                        <MenuFlyoutItem x:Uid="MenuFlyoutCreateNewFolder"
                                         Click="NewFolderClick" />
-                        <MenuFlyoutItem Text="Sort by name"
+                        <MenuFlyoutItem x:Uid="MenuFlyoutSortByName"
                                         Click="SortByNameClick" />
-                        <MenuFlyoutItem Text="Rename"
+                        <MenuFlyoutItem x:Uid="MenuFlyoutRename"
                                         Click="RenameClick" />
                         <MenuFlyoutSeparator />
-                        <MenuFlyoutItem Text="Delete"
+                        <MenuFlyoutItem x:Uid="MenuFlyoutDelete"
                                         Click="DeleteClick" />
                     </MenuFlyout>
                 </muxc:TreeViewItem.ContextFlyout>
@@ -101,7 +101,7 @@
     </Page.Resources>
 
     <Grid>
-        <TextBlock Text="Your favorites appears here."
+        <TextBlock x:Uid="NoFavorite"
                    Visibility="{x:Bind Shared.IsEmpty, Mode=OneWay}"
                    Margin="0,10"
                    HorizontalAlignment="Center"
@@ -114,9 +114,9 @@
                        DragItemsCompleted="MainTreeViewDragItemsCompleted">
             <muxc:TreeView.ContextFlyout>
                 <MenuFlyout>
-                    <MenuFlyoutItem Text="Create new folder"
+                    <MenuFlyoutItem x:Uid="MenuFlyoutCreateNewFolder"
                                     Click="RootNewFolderClick" />
-                    <MenuFlyoutItem Text="Sort by name"
+                    <MenuFlyoutItem x:Uid="MenuFlyoutSortByName"
                                     Click="RootSortByNameClick" />
                 </MenuFlyout>
             </muxc:TreeView.ContextFlyout>

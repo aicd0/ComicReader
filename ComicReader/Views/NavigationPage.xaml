@@ -44,30 +44,31 @@
                                 Orientation="Horizontal"
                                 VerticalAlignment="Center"
                                 Grid.Column="0">
-                        <AppBarButton Icon="Back"
+                        <AppBarButton x:Uid="BackButton"
+                                      Icon="Back"
                                       Style="{StaticResource NavigationPageTopTileAppBarButton}"
-                                      ToolTipService.ToolTip="Back"
                                       Click="GoBackClick"
                                       IsEnabled="{x:Bind ContentFrame.CanGoBack, Mode=OneWay}" />
-                        <AppBarButton Icon="Forward"
+                        <AppBarButton x:Uid="ForwardButton"
+                                      Icon="Forward"
                                       Style="{StaticResource NavigationPageTopTileAppBarButton}"
-                                      ToolTipService.ToolTip="Forward"
                                       Click="GoForwardClick"
                                       IsEnabled="{x:Bind ContentFrame.CanGoForward, Mode=OneWay}" />
-                        <AppBarButton Icon="Home"
+                        <AppBarButton x:Uid="HomeButton"
+                                      Icon="Home"
                                       Style="{StaticResource NavigationPageTopTileAppBarButton}"
-                                      ToolTipService.ToolTip="Home"
                                       Click="HomeClick"
                                       Visibility="{x:Bind Shared.IsHomePage, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
-                        <AppBarButton Icon="Refresh"
+                        <AppBarButton x:Uid="RefreshButton"
+                                      Icon="Refresh"
                                       Style="{StaticResource NavigationPageTopTileAppBarButton}"
-                                      ToolTipService.ToolTip="Refresh"
                                       Click="OnRefreshBtClicked"
                                       Visibility="{x:Bind Shared.IsHomePage, Mode=OneWay}" />
                     </StackPanel>
 
                     <!-- search box -->
-                    <AutoSuggestBox Grid.Column="1"
+                    <AutoSuggestBox x:Uid="SearchBox"
+                                    Grid.Column="1"
                                     Margin="15,0,15,0"
                                     CornerRadius="6"
                                     VerticalAlignment="Center"
@@ -77,7 +78,6 @@
                                     x:Name="SearchBox"
                                     TextChanged="SearchBoxTextChanged"
                                     QuerySubmitted="SearchBoxQuerySubmitted"
-                                    PlaceholderText="Search titles, tags, locations, etc."
                                     QueryIcon="Find"
                                     MinWidth="300"
                                     Visibility="{x:Bind Shared.IsReaderPage, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
@@ -90,23 +90,23 @@
                                 Grid.Column="2">
 
                         <!-- expand favorites pane button -->
-                        <AppBarButton Click="FavoritesClick"
-                                      Style="{StaticResource NavigationPageTopTileAppBarButton}"
-                                      ToolTipService.ToolTip="Favorites and history">
+                        <AppBarButton x:Uid="FavoritesButton"
+                                      Click="FavoritesClick"
+                                      Style="{StaticResource NavigationPageTopTileAppBarButton}">
                             <AppBarButton.Content>
                                 <FontIcon Glyph="&#xE728;" />
                             </AppBarButton.Content>
                         </AppBarButton>
 
                         <!-- more button -->
-                        <AppBarButton Style="{StaticResource NavigationPageTopTileAppBarButton}"
-                                      ToolTipService.ToolTip="Settings and more">
+                        <AppBarButton x:Uid="MoreButton"
+                                      Style="{StaticResource NavigationPageTopTileAppBarButton}">
                             <AppBarButton.Content>
                                 <FontIcon Glyph="&#xE712;" />
                             </AppBarButton.Content>
                             <AppBarButton.Flyout>
                                 <MenuFlyout Placement="BottomEdgeAlignedRight">
-                                    <MenuFlyoutItem Text="Comic Info"
+                                    <MenuFlyoutItem x:Uid="MenuFlyoutComicInfo"
                                                     Click="ComicInfoClick"
                                                     Visibility="{x:Bind Shared.IsReaderPage, Mode=OneWay}">
                                         <MenuFlyoutItem.Icon>
@@ -114,10 +114,10 @@
                                         </MenuFlyoutItem.Icon>
                                     </MenuFlyoutItem>
                                     <MenuFlyoutSeparator Visibility="{x:Bind Shared.IsReaderPage, Mode=OneWay}" />
-                                    <MenuFlyoutItem Text="Settings"
+                                    <MenuFlyoutItem x:Uid="MenuFlyoutSettings"
                                                     Icon="Setting"
                                                     Click="OnMenuItemSettingsClicked" />
-                                    <MenuFlyoutItem Text="Help"
+                                    <MenuFlyoutItem x:Uid="MenuFlyoutHelp"
                                                     Icon="Help"
                                                     Click="OnMenuItemHelpClicked" />
                                 </MenuFlyout>
@@ -132,16 +132,16 @@
                             Visibility="{x:Bind Shared.IsReaderPage, Mode=OneWay}">
 
                     <!-- zoom in/out -->
-                    <AppBarButton Style="{StaticResource NavigationPageTopTileAppBarButton}"
-                                  ToolTipService.ToolTip="Zoom in"
+                    <AppBarButton x:Uid="ZoomInButton"
+                                  Style="{StaticResource NavigationPageTopTileAppBarButton}"
                                   IsEnabled="{x:Bind Shared.ZoomInEnabled, Mode=OneWay}"
                                   Click="ZoomInClick">
                         <AppBarButton.Content>
                             <FontIcon Glyph="&#xE8A3;" />
                         </AppBarButton.Content>
                     </AppBarButton>
-                    <AppBarButton Style="{StaticResource NavigationPageTopTileAppBarButton}"
-                                  ToolTipService.ToolTip="Zoom out"
+                    <AppBarButton x:Uid="ZoomOutButton"
+                                  Style="{StaticResource NavigationPageTopTileAppBarButton}"
                                   IsEnabled="{x:Bind Shared.ZoomOutEnabled, Mode=OneWay}"
                                   Click="ZoomOutClick">
                         <AppBarButton.Content>
@@ -151,18 +151,18 @@
 
                     <!-- Reader orientation -->
                     <Grid>
-                        <AppBarButton Style="{StaticResource NavigationPageTopTileAppBarButton}"
+                        <AppBarButton x:Uid="HorizontalButton"
+                                       Style="{StaticResource NavigationPageTopTileAppBarButton}"
                                       Click="OnSwitchReaderOrientationClicked"
-                                      ToolTipService.ToolTip="Two pages"
                                       Visibility="{x:Bind Shared.IsSwitchToHorizontalReaderButtonVisible, Mode=OneWay}"
                                       IsEnabled="{x:Bind Shared.IsVerticalReaderVisible, Mode=OneWay}">
                             <AppBarButton.Content>
                                 <FontIcon Glyph="&#xE89A;" />
                             </AppBarButton.Content>
                         </AppBarButton>
-                        <AppBarButton Style="{StaticResource NavigationPageTopTileAppBarButton}"
+                        <AppBarButton x:Uid="VerticalButton"
+                                      Style="{StaticResource NavigationPageTopTileAppBarButton}"
                                       Click="OnSwitchReaderOrientationClicked"
-                                      ToolTipService.ToolTip="One page"
                                       Visibility="{x:Bind Shared.IsHorizontalReaderVisible, Mode=OneWay}"
                                       IsEnabled="{x:Bind Shared.IsHorizontalReaderVisible, Mode=OneWay}">
                             <AppBarButton.Content>
@@ -172,8 +172,8 @@
                     </Grid>
 
                     <!-- Reader grid preview toggle -->
-                    <AppBarToggleButton Style="{StaticResource NavigationPageTopTileAppBarToggleButton}"
-                                        ToolTipService.ToolTip="Preview"
+                    <AppBarToggleButton x:Uid="AllPagesButton"
+                                        Style="{StaticResource NavigationPageTopTileAppBarToggleButton}"
                                         IsChecked="{x:Bind Shared.IsPreviewButtonToggled, Mode=TwoWay}">
                         <AppBarToggleButton.Content>
                             <FontIcon Glyph="&#xF0E2;" />

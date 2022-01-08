@@ -8,6 +8,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Core;
+using Windows.ApplicationModel.Resources;
 using Windows.Security.Cryptography;
 using Windows.Storage;
 using Windows.Storage.AccessCache;
@@ -33,6 +34,18 @@ namespace ComicReader.Utils
         public static async Task Sync(DispatchedHandler callback)
         {
             await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, callback);
+        }
+
+        public static string TryGetResourceString(string resource)
+        {
+            ResourceLoader resource_loader = ResourceLoader.GetForCurrentView();
+
+            if (resource_loader == null)
+            {
+                return "?";
+            }
+
+            return resource_loader.GetString(resource);
         }
 
         public static MemoryStream SerializeToMemoryStream(object o)
@@ -208,16 +221,16 @@ namespace ComicReader.Utils
         }
 
         public static void UpdateCollectionWithMinimumEditing(ObservableCollection<T> dst_collection,
-            Collection<T> src_collection, Func<T, T, bool> equal_func)
+            IEnumerable<T> src_collection, Func<T, T, bool> equal_func)
         {
             // DP Problem: Edit Distance
             List<List<_Modification>> modifications = new List<List<_Modification>>(dst_collection.Count + 1);
 
             for (int i = 0; i < dst_collection.Count + 1; i++)
             {
-                var row = new List<_Modification>(src_collection.Count + 1);
+                var row = new List<_Modification>(src_collection.Count() + 1);
 
-                for (int j = 0; j < src_collection.Count + 1; j++)
+                for (int j = 0; j < src_collection.Count() + 1; j++)
                 {
                     row.Add(new _Modification());
                 }
@@ -248,7 +261,7 @@ namespace ComicReader.Utils
 
                 for (int j = 1; j < row.Count; ++j)
                 {
-                    if (equal_func(dst_collection[i - 1], src_collection[j - 1]))
+                    if (equal_func(dst_collection[i - 1], src_collection.ElementAt(j - 1)))
                     {
                         row[j].Type = _ModificationType.Skip;
                         row[j].MinSteps = last_row[j - 1].MinSteps;
@@ -274,7 +287,7 @@ namespace ComicReader.Utils
 
             {
                 int i = dst_collection.Count;
-                int j = src_collection.Count;
+                int j = src_collection.Count();
 
                 while (i + j > 0)
                 {
@@ -313,7 +326,7 @@ namespace ComicReader.Utils
                     }
                     else if (type == _ModificationType.Add)
                     {
-                        dst_collection.Insert(i, src_collection[j]);
+                        dst_collection.Insert(i, src_collection.ElementAt(j));
                         ++i;
                         ++j;
                     }
@@ -326,13 +339,13 @@ namespace ComicReader.Utils
         }
 
         public static void UpdateCollectionWithDeleteFirstMatch(ObservableCollection<T> dst_collection,
-            Collection<T> src_collection, Func<T, T, bool> equal_func)
+            IEnumerable<T> src_collection, Func<T, T, bool> equal_func)
         {
-            for (int i = 0; i < src_collection.Count; ++i)
+            for (int i = 0; i < src_collection.Count(); ++i)
             {
                 if (i < dst_collection.Count)
                 {
-                    if (!equal_func(dst_collection[i], src_collection[i]))
+                    if (!equal_func(dst_collection[i], src_collection.ElementAt(i)))
                     {
                         dst_collection.RemoveAt(i);
                         --i;
@@ -340,15 +353,15 @@ namespace ComicReader.Utils
                 }
                 else
                 {
-                    dst_collection.Add(src_collection[i]);
+                    dst_collection.Add(src_collection.ElementAt(i));
                 }
             }
         }
 
         public static void UpdateCollection(ObservableCollection<T> dst_collection,
-            Collection<T> src_collection, Func<T, T, bool> equal_func)
+            IEnumerable<T> src_collection, Func<T, T, bool> equal_func)
         {
-            if (dst_collection.Count * src_collection.Count <= 512)
+            if (dst_collection.Count * src_collection.Count() <= 512)
             {
                 UpdateCollectionWithMinimumEditing(dst_collection, src_collection, equal_func);
             }

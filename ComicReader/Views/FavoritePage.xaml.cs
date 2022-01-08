@@ -207,22 +207,24 @@ namespace ComicReader.Views
         private void CreateNewFolder(ObservableCollection<FavoriteItemViewModel> folder, FavoriteItemViewModel parent)
         {
             string folderName;
+            string new_folder_string = Utils.C0.TryGetResourceString("NewFolder");
+
             for (int folderIndex = 1; folderIndex < 65536; ++folderIndex)
             {
                 if (folderIndex > 1)
                 {
-                    folderName = "New folder (" + folderIndex.ToString();
-                    folderName = folderName + ")";
+                    folderName = new_folder_string + " (" + folderIndex.ToString() + ")";
                 }
                 else
                 {
-                    folderName = "New folder";
+                    folderName = new_folder_string;
                 }
 
                 bool isDuplicated = false;
-                foreach (var i in folder)
+
+                foreach (FavoriteItemViewModel item in folder)
                 {
-                    if (i.Name == folderName)
+                    if (item.Name == folderName)
                     {
                         isDuplicated = true;
                         break;

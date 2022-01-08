@@ -117,10 +117,299 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="Folders.Text" xml:space="preserve">
+  <data name="About.Text" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="AddFolderButton.Content" xml:space="preserve">
+    <value>add a folder</value>
+  </data>
+  <data name="AddFolderControl.Detail" xml:space="preserve">
+    <value>Include more folders in your collection</value>
+  </data>
+  <data name="AddFolderControl.Title" xml:space="preserve">
+    <value>Add a folder</value>
+  </data>
+  <data name="AddLocationButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Add a folder</value>
+  </data>
+  <data name="AddToFavorites" xml:space="preserve">
+    <value>Add to favorites</value>
+  </data>
+  <data name="AllComics" xml:space="preserve">
+    <value>All comics</value>
+  </data>
+  <data name="AllComicsIn" xml:space="preserve">
+    <value>All comics in $path</value>
+  </data>
+  <data name="AllHidden" xml:space="preserve">
+    <value>All hidden items</value>
+  </data>
+  <data name="AllMatchedResults" xml:space="preserve">
+    <value>All matched results</value>
+  </data>
+  <data name="AllPagesButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>All pages</value>
+  </data>
+  <data name="Appearance.Text" xml:space="preserve">
+    <value>Appearance</value>
+  </data>
+  <data name="ApplyOnNextLaunch.Text" xml:space="preserve">
+    <value>You'll see your change the next time you start the app</value>
+  </data>
+  <data name="BackButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Go back</value>
+  </data>
+  <data name="ChooseLocationButton.Content" xml:space="preserve">
+    <value>Choose where we look for images</value>
+  </data>
+  <data name="ChooseLocationDialog.PrimaryButtonText" xml:space="preserve">
+    <value>Done</value>
+  </data>
+  <data name="ChooseLocationDialog.Title" xml:space="preserve">
+    <value>Build your collections from your local files</value>
+  </data>
+  <data name="ClearAllHistoryButton.Content" xml:space="preserve">
+    <value>Clear all</value>
+  </data>
+  <data name="DefaultTags" xml:space="preserve">
+    <value>Default tags</value>
+  </data>
+  <data name="Disclaimer.Text" xml:space="preserve">
+    <value>Disclaimer</value>
+  </data>
+  <data name="EditComicInfoDialog.PrimaryButtonText" xml:space="preserve">
+    <value>Done</value>
+  </data>
+  <data name="EditComicInfoDialog.SecondaryButtonText" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="EditComicInfoDialog.Title" xml:space="preserve">
+    <value>Comic information</value>
+  </data>
+  <data name="EditInfoButton.Label" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="FavoriteAppBarButton.Label" xml:space="preserve">
+    <value>Favorite</value>
+  </data>
+  <data name="FavoritesButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Favorites and history</value>
+  </data>
+  <data name="FavoriteToggleButton.Label" xml:space="preserve">
+    <value>Favorite</value>
+  </data>
+  <data name="Feedback.Text" xml:space="preserve">
+    <value>Feedback</value>
+  </data>
+  <data name="FeedbackIntroduction.Text" xml:space="preserve">
+    <value>Use the button below to send us suggestions or issue a bug on GitHub.</value>
+  </data>
+  <data name="FilteredBy" xml:space="preserve">
+    <value>$count filter(s) applied</value>
+  </data>
+  <data name="Finshed" xml:space="preserve">
+    <value>Finshed</value>
+  </data>
+  <data name="FoldersHeader.Text" xml:space="preserve">
     <value>Folders</value>
   </data>
-  <data name="Library.Text" xml:space="preserve">
+  <data name="ForwardButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Go forward</value>
+  </data>
+  <data name="HideAppBarButton.Label" xml:space="preserve">
+    <value>Hide</value>
+  </data>
+  <data name="History.Text" xml:space="preserve">
+    <value>History</value>
+  </data>
+  <data name="HomeButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="HomePageRefreshButton.Content" xml:space="preserve">
+    <value>refresh</value>
+  </data>
+  <data name="HorizontalButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Horizontal</value>
+  </data>
+  <data name="ImageOnDevice.Text" xml:space="preserve">
+    <value>Images on this device</value>
+  </data>
+  <data name="LeftToRight.Text" xml:space="preserve">
+    <value>Left to right</value>
+  </data>
+  <data name="LibraryEmptyPart1.Text" xml:space="preserve">
+    <value>Seems that your library is empty. Try</value>
+  </data>
+  <data name="LibraryEmptyPart2.Text" xml:space="preserve">
+    <value>or</value>
+  </data>
+  <data name="LibraryEmptyPart3.Text" xml:space="preserve">
+    <value>.</value>
+  </data>
+  <data name="LibraryHeader.Text" xml:space="preserve">
     <value>Library</value>
+  </data>
+  <data name="MenuFlyoutAddToFavorites.Text" xml:space="preserve">
+    <value>Add to favorites</value>
+  </data>
+  <data name="MenuFlyoutComicInfo.Text" xml:space="preserve">
+    <value>Comic information</value>
+  </data>
+  <data name="MenuFlyoutCreateNewFolder.Text" xml:space="preserve">
+    <value>Create new folder</value>
+  </data>
+  <data name="MenuFlyoutDelete.Text" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="MenuFlyoutHelp.Text" xml:space="preserve">
+    <value>Help</value>
+  </data>
+  <data name="MenuFlyoutHide.Text" xml:space="preserve">
+    <value>Hide</value>
+  </data>
+  <data name="MenuFlyoutOpenInNewTab.Text" xml:space="preserve">
+    <value>Open in new tab</value>
+  </data>
+  <data name="MenuFlyoutRemoveFromFavorites.Text" xml:space="preserve">
+    <value>Remove from favorites</value>
+  </data>
+  <data name="MenuFlyoutRemoveFromList.Text" xml:space="preserve">
+    <value>Remove from list</value>
+  </data>
+  <data name="MenuFlyoutRename.Text" xml:space="preserve">
+    <value>Rename</value>
+  </data>
+  <data name="MenuFlyoutSelect.Text" xml:space="preserve">
+    <value>Select</value>
+  </data>
+  <data name="MenuFlyoutSettings.Text" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="MenuFlyoutSortByName.Text" xml:space="preserve">
+    <value>Sort by name</value>
+  </data>
+  <data name="MenuFlyoutUnhide.Text" xml:space="preserve">
+    <value>Unhide</value>
+  </data>
+  <data name="MoreButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>More</value>
+  </data>
+  <data name="NewFolder" xml:space="preserve">
+    <value>New folder</value>
+  </data>
+  <data name="NewTab" xml:space="preserve">
+    <value>New tab</value>
+  </data>
+  <data name="NoFavorite.Text" xml:space="preserve">
+    <value>Your favorites appears here</value>
+  </data>
+  <data name="NoHistory.Text" xml:space="preserve">
+    <value>Your browsing history appears here</value>
+  </data>
+  <data name="NoResults" xml:space="preserve">
+    <value>No results for "$keyword"</value>
+  </data>
+  <data name="NoResultsDetail.Text" xml:space="preserve">
+    <value>Try searching with different keywords</value>
+  </data>
+  <data name="Pin" xml:space="preserve">
+    <value>Pin</value>
+  </data>
+  <data name="Reader.Text" xml:space="preserve">
+    <value>Reader</value>
+  </data>
+  <data name="RefreshButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Refresh</value>
+  </data>
+  <data name="RemoveFromFavorites" xml:space="preserve">
+    <value>Remove from favorites</value>
+  </data>
+  <data name="RemoveLocationButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Remove this folder from the list</value>
+  </data>
+  <data name="SaveHistory.Text" xml:space="preserve">
+    <value>Save browsing history</value>
+  </data>
+  <data name="SearchBox.PlaceholderText" xml:space="preserve">
+    <value>Search titles, tags, folders, etc.</value>
+  </data>
+  <data name="SearchResults" xml:space="preserve">
+    <value>Search results</value>
+  </data>
+  <data name="SearchResultsOf" xml:space="preserve">
+    <value>Results of '$keyword'</value>
+  </data>
+  <data name="SelectAllAppBarButton.Label" xml:space="preserve">
+    <value>Select all</value>
+  </data>
+  <data name="SendFeedbackButton.Content" xml:space="preserve">
+    <value>Send feedback</value>
+  </data>
+  <data name="SettingHeader.Text" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="ShowAllButton.Content" xml:space="preserve">
+    <value>Show all</value>
+  </data>
+  <data name="ShowHiddenButton.Content" xml:space="preserve">
+    <value>Show hidden items</value>
+  </data>
+  <data name="Statistics.Text" xml:space="preserve">
+    <value>Statistics</value>
+  </data>
+  <data name="TagIntroduction.Message" xml:space="preserve">
+    <value>You can add tags to your comic to make it easier to manage your library. For example:
+
+Category1: tag1/tag2/tag3
+Category2: tag4/tag5
+...</value>
+  </data>
+  <data name="TagIntroduction.Title" xml:space="preserve">
+    <value>Tags</value>
+  </data>
+  <data name="Tags.Text" xml:space="preserve">
+    <value>Tags:</value>
+  </data>
+  <data name="ThemeDark.Content" xml:space="preserve">
+    <value>Dark</value>
+  </data>
+  <data name="ThemeLight.Content" xml:space="preserve">
+    <value>Light</value>
+  </data>
+  <data name="ThemeUseSystemSetting.Content" xml:space="preserve">
+    <value>Use system setting</value>
+  </data>
+  <data name="Title1.Text" xml:space="preserve">
+    <value>Title 1:</value>
+  </data>
+  <data name="Title2.Text" xml:space="preserve">
+    <value>Title 2:</value>
+  </data>
+  <data name="TotalComics" xml:space="preserve">
+    <value>Total comics: </value>
+  </data>
+  <data name="UnFavoriteAppBarButton.Label" xml:space="preserve">
+    <value>UnFavorite</value>
+  </data>
+  <data name="UnhideAppBarButton.Label" xml:space="preserve">
+    <value>Unhide</value>
+  </data>
+  <data name="Unpin" xml:space="preserve">
+    <value>Unpin</value>
+  </data>
+  <data name="Unread" xml:space="preserve">
+    <value>Unread</value>
+  </data>
+  <data name="VerticalButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Vertical</value>
+  </data>
+  <data name="WatchingFolders.Text" xml:space="preserve">
+    <value>Right now, we're watching these folders:</value>
+  </data>
+  <data name="ZoomInButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Zoom in</value>
+  </data>
+  <data name="ZoomOutButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Zoom out</value>
   </data>
 </root>

@@ -214,6 +214,22 @@ namespace ComicReader.Database
         private static readonly SemaphoreSlim m_table_lock = new SemaphoreSlim(1);
         private static readonly Utils.CancellationLock m_update_lock = new Utils.CancellationLock();
 
+        private static string m_default_tags = "";
+        private static string DefaultTags
+        {
+            get
+            {
+                if (m_default_tags.Length == 0)
+                {
+                    Utils.C0.Sync(delegate
+                    {
+                        m_default_tags = Utils.C0.TryGetResourceString("DefaultTags");
+                    }).Wait();
+                }
+                return m_default_tags;
+            } 
+        }
+
         public static async Task WaitLock(LockContext db)
         {
             int depth = Interlocked.Increment(ref db.ComicTableLockDepth);
@@ -576,7 +592,7 @@ namespace ComicReader.Database
             {
                 TagData default_tag = new TagData
                 {
-                    Name = "Default",
+                    Name = DefaultTags,
                     Tags = tags.Skip(1).ToHashSet(),
                 };
 

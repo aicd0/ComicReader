@@ -1,4 +1,5 @@
 ﻿<ContentDialog x:Class="ComicReader.Views.ChooseLocationsDialog"
+               x:Uid="ChooseLocationDialog"
                xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -6,8 +7,6 @@
                xmlns:data="using:ComicReader.DesignData"
                xmlns:converters="using:ComicReader.Converters"
                mc:Ignorable="d"
-               Title="Build your comic collections from your local files"
-               PrimaryButtonText="Done"
                PrimaryButtonClick="ContentDialogPrimaryButtonClick">
 
     <ContentDialog.Resources>
@@ -19,10 +18,10 @@
             <!-- Normal Template -->
             <DataTemplate x:Key="NormalTemplate"
                           x:DataType="data:FolderItemViewModel">
-                <Grid Background="{ThemeResource SystemAccentColor}"
+                <Grid x:Uid="RemoveLocationButton"
+                      Background="{ThemeResource SystemAccentColor}"
                       PointerPressed="RemoveFolderPointerPressed"
-                      Padding="20,10"
-                      ToolTipService.ToolTip="Remove this folder">
+                      Padding="20,10">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
@@ -45,9 +44,9 @@
             <!-- Add New Template -->
             <DataTemplate x:Key="AddNewTemplate"
                           x:DataType="data:FolderItemViewModel">
-                <Grid PointerPressed="AddNewPointerPressed"
-                      Background="{ThemeResource SystemAccentColor}"
-                      ToolTipService.ToolTip="Add a new folder">
+                <Grid x:Uid="AddLocationButton"
+                      PointerPressed="AddNewPointerPressed"
+                      Background="{ThemeResource SystemAccentColor}">
                     <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
                               Glyph="&#xE710;"
                               Foreground="White" />
@@ -63,7 +62,7 @@
 
     <Grid>
         <StackPanel Orientation="Vertical">
-            <TextBlock Text="Right now, we're watching these folders:" />
+            <TextBlock x:Uid="WatchingFolders" />
             <Grid Height="10" />
             <ListView ItemTemplateSelector="{StaticResource FolderItemTemplateSelector}"
                       Loaded="ListViewLoaded"

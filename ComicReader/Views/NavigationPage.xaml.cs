@@ -180,7 +180,14 @@ namespace ComicReader.Views
         {
             get
             {
-                return IsFavorite ? "Remove from favorites" : "Add to favorites";
+                if (IsFavorite)
+                {
+                    return Utils.C0.TryGetResourceString("RemoveFromFavorites");
+                }
+                else
+                {
+                    return Utils.C0.TryGetResourceString("AddToFavorites");
+                }
             }
         }
 

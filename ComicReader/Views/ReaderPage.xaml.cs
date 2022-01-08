@@ -1183,7 +1183,14 @@ namespace ComicReader.Views
         {
             get
             {
-                return BottomTilePinned ? "Unpin" : "Pin";
+                if (BottomTilePinned)
+                {
+                    return Utils.C0.TryGetResourceString("Unpin");
+                }
+                else
+                {
+                    return Utils.C0.TryGetResourceString("Pin");
+                }
             }
         }
 

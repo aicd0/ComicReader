@@ -28,7 +28,7 @@ namespace ComicReader.Database
             await XmlDatabaseManager.Load();
 
             Utils.TaskQueueManager.AppendTask(
-                ComicDataManager.UpdateSealed(lazy_load: false));
+                ComicDataManager.UpdateSealed(lazy_load: true));
 
             return new TaskResult();
         }

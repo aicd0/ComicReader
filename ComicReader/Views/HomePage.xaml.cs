@@ -110,7 +110,7 @@ namespace ComicReader.Views
         private void OnTabStart(Utils.Tab.TabIdentifier tab_id)
         {
             Shared.NavigationPageShared.CurrentPageType = Utils.Tab.PageType.Home;
-            tab_id.Tab.Header = "New tab";
+            tab_id.Tab.Header = Utils.C0.TryGetResourceString("NewTab");
             tab_id.Tab.IconSource = new muxc.SymbolIconSource() { Symbol = Symbol.Document };
             Shared.NavigationPageShared.SetSearchBox("");
         }
@@ -150,9 +150,27 @@ namespace ComicReader.Views
             model.Comic = comic;
             model.Title = comic.Title;
             model.Rating = comic.Rating;
-            model.Progress = comic.Progress < 0 ? "Unread" :
-                (comic.Progress >= 100 ? "Finished" : comic.Progress.ToString() + "%");
+
+            if (comic.Progress < 0)
+            {
+                model.Progress = Utils.C0.TryGetResourceString("Unread");
+            }
+            else if (comic.Progress >= 100)
+            {
+                model.Progress = Utils.C0.TryGetResourceString("Finshed");
+            }
+            else
+            {
+                model.Progress = comic.Progress.ToString() + "%";
+            }
+
             model.IsFavorite = FavoriteDataManager.FromIdNoLock(comic.Id) != null;
+
+            model.OnItemPressed = OnComicItemPressed;
+            model.OnOpenInNewTabClicked = OnOpenInNewTabClicked;
+            model.OnAddToFavoritesClicked = OnAddToFavoritesClicked;
+            model.OnRemoveFromFavoritesClicked = OnRemoveFromFavoritesClicked;
+            model.OnHideClicked = OnHideComicClicked;
         }
 
         private void OnComicDataUpdated(LockContext db)
@@ -182,39 +200,53 @@ namespace ComicReader.Views
 
                 // Get recent visited comics.
                 SqliteCommand command = SqliteDatabaseManager.NewCommand();
-                command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.ComicTable +
-                    " ORDER BY " + ComicData.FieldLastVisit + " DESC";
+
+                // Use ORDER BY here will cause a crush (especially for a large dataset)
+                // due to https://github.com/dotnet/efcore/issues/20044.
+                // Change Microsoft.Data.Sqlite.Core to SQLitePCLRaw.bundle_winsqlite3 will
+                // solve the problem but the app cannot not be built in Release mode.
+                // (See https://github.com/ericsink/SQLitePCL.raw/issues/346)
+                // As a workaround here we will sort the data manually.
+
+                // command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.ComicTable +
+                //     " ORDER BY " + ComicData.FieldLastVisit + " DESC";
+                command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.ComicTable;
 
                 await ComicDataManager.WaitLock(db); // Lock on.
                 SqliteDataReader query = await command.ExecuteReaderAsync();
-                var comic_items = new Utils.ObservableCollectionPlus<ComicItemViewModel>();
+                var comic_items = new List<ComicItemViewModel>();
 
                 while (query.Read() && comic_items.Count < 16)
                 {
                     ComicData comic = await ComicDataManager.From(db, query);
-                    if (comic == null) continue;
-                    if (comic.Hidden) continue;
-
-                    ComicItemViewModel model = new ComicItemViewModel
+                    
+                    if (comic == null)
                     {
-                        OnItemPressed = OnComicItemPressed,
-                        OnOpenInNewTabClicked = OnOpenInNewTabClicked,
-                        OnAddToFavoritesClicked = OnAddToFavoritesClicked,
-                        OnRemoveFromFavoritesClicked = OnRemoveFromFavoritesClicked,
-                        OnHideClicked = OnHideComicClicked,
-                    };
+                        continue;
+                    }
 
+                    if (comic.Hidden)
+                    {
+                        continue;
+                    }
+
+                    ComicItemViewModel model = new ComicItemViewModel();
                     ComicDataToViewModel(comic, model);
+
                     comic_items.Add(model);
                 }
                 ComicDataManager.ReleaseLock(db); // Lock off.
+
+                // Sort the comics by LastVisit descending.
+                comic_items = comic_items.OrderByDescending((ComicItemViewModel x) => x.Comic.LastVisit).ToList();
 
                 // Save results.
                 Utils.C1<ComicItemViewModel>.UpdateCollection(ComicItemSource, comic_items,
                     (ComicItemViewModel x, ComicItemViewModel y) =>
                     x.Comic.Title == y.Comic.Title &&
                     x.Rating == y.Rating &&
-                    x.Progress == y.Progress);
+                    x.Progress == y.Progress &&
+                    x.IsFavorite == y.IsFavorite);
                 Shared.IsLibraryEmpty = ComicItemSource.Count == 0;
 
                 // Load images.

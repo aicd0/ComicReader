@@ -78,7 +78,7 @@
               Visibility="{x:Bind Ctx.IsAddNew, Converter={StaticResource BooleanToVisibilityNegationConverter}}">
             <Grid.ContextFlyout>
                 <MenuFlyout>
-                    <MenuFlyoutItem Text="Remove"
+                    <MenuFlyoutItem x:Uid="MenuFlyoutRemoveFromList"
                                     Icon="Delete"
                                     Click="{x:Bind Ctx.OnRemoveClicked}" />
                 </MenuFlyout>

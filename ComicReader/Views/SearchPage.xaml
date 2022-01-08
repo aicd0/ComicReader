@@ -47,7 +47,6 @@
                     <TextBlock Text="{x:Bind Shared.Title, Mode=OneWay}"
                                FontSize="28"
                                FontWeight="SemiBold"
-                               FontStyle="Italic"
                                TextTrimming="CharacterEllipsis" />
                     <TextBlock Text="{x:Bind Shared.FilterDetails, Mode=OneWay}"
                                Foreground="{ThemeResource FilterTextForeground}"
@@ -85,7 +84,7 @@
                        FontWeight="SemiBold"
                        HorizontalAlignment="Center"
                        TextTrimming="CharacterEllipsis" />
-            <TextBlock Text="Try searching with different keywords"
+            <TextBlock x:Uid="NoResultsDetail"
                        FontSize="18"
                        HorizontalAlignment="Center"
                        Margin="0,15,0,0" />
@@ -97,19 +96,19 @@
                     Background="#2D2D2D"
                     Padding="6,0"
                     Visibility="{x:Bind Shared.IsSelectMode, Mode=OneWay}">
-            <AppBarToggleButton Icon="SelectAll"
-                                Label="Select all"
+            <AppBarToggleButton x:Uid="SelectAllAppBarButton"
+                                Icon="SelectAll"
                                 IsChecked="{x:Bind Shared.IsCommandBarSelectAllToggled, Mode=TwoWay}"/>
             <AppBarSeparator />
-            <AppBarButton Icon="Favorite"
-                          Label="Favorite"
+            <AppBarButton x:Uid="FavoriteAppBarButton"
+                          Icon="Favorite"
                           IsEnabled="{x:Bind Shared.IsCommandBarFavoriteEnabled, Mode=OneWay}"
                           Click="CommandBarFavoriteClicked"/>
-            <AppBarButton Icon="UnFavorite"
-                          Label="UnFavorite"
+            <AppBarButton x:Uid="UnFavoriteAppBarButton"
+                          Icon="UnFavorite"
                           IsEnabled="{x:Bind Shared.IsCommandBarUnFavoriteEnabled, Mode=OneWay}"
                           Click="CommandBarUnFavoriteClicked"/>
-            <AppBarButton Label="Hide"
+            <AppBarButton x:Uid="HideAppBarButton"
                           IsEnabled="{x:Bind Shared.IsCommandBarHideEnabled, Mode=OneWay}"
                           Click="CommandBarHideClicked">
                 <AppBarButton.Icon>
@@ -117,7 +116,7 @@
                               Glyph="&#xE8FF;" />
                 </AppBarButton.Icon>
             </AppBarButton>
-            <AppBarButton Label="Unhide"
+            <AppBarButton x:Uid="UnhideAppBarButton"
                           IsEnabled="{x:Bind Shared.IsCommandBarUnHideEnabled, Mode=OneWay}"
                           Click="CommandBarUnhideClicked">
                 <AppBarButton.Icon>

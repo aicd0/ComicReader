@@ -323,7 +323,7 @@
                                                 IsEnabled="{x:Bind Shared.NavigationPageShared.NotExternal, Mode=OneWay}"
                                                 HorizontalAlignment="Left"
                                                 IsClearEnabled="True"
-                                                Margin="0,10,0,0"/>
+                                                Margin="0,10,0,0" />
 
                             <!-- Directory -->
                             <TextBlock IsTextSelectionEnabled="True"
@@ -391,14 +391,14 @@
                                 Orientation="Horizontal"
                                 HorizontalAlignment="Right"
                                 Margin="15,5,15,3">
-                        <AppBarButton Click="OnEditBtClicked"
+                        <AppBarButton x:Uid="EditInfoButton"
+                                      Click="OnEditBtClicked"
                                       Icon="Edit"
-                                      Label="Edit"
                                       Width="70"
                                       IsEnabled="{x:Bind Shared.IsEditable, Mode=OneWay}" />
                         <AppBarToggleButton x:Name="FavoriteBt"
+                                            x:Uid="FavoriteToggleButton"
                                             Icon="Favorite"
-                                            Label="Favorite"
                                             Margin="2,0,0,0"
                                             Width="70"
                                             IsChecked="{x:Bind Shared.NavigationPageShared.IsFavorite, Mode=OneWay}"
@@ -414,7 +414,7 @@
                 <muxc:ProgressRing IsActive="{x:Bind Shared.IsLoadingRingVisible, Mode=OneWay}"
                                    HorizontalAlignment="Left"
                                    VerticalAlignment="Bottom"
-                                   Margin="20"/>
+                                   Margin="20" />
 
                 <!-- Reader -->
                 <Grid Tapped="OnReaderTapped">
@@ -566,11 +566,11 @@
                             </ToggleButton>
 
                             <!-- More -->
-                            <Button Style="{StaticResource ReaderBottomTileButtonStyle}"
-                                    ToolTipService.ToolTip="More">
+                            <Button x:Uid="MoreButton"
+                                    Style="{StaticResource ReaderBottomTileButtonStyle}">
                                 <Button.Flyout>
                                     <MenuFlyout>
-                                        <MenuFlyoutItem Text="Comic Info"
+                                        <MenuFlyoutItem x:Uid="MenuFlyoutComicInfo"
                                                         Click="OnComicInfoClicked">
                                             <MenuFlyoutItem.Icon>
                                                 <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
@@ -585,16 +585,16 @@
                             <AppBarSeparator />
 
                             <!-- Zooming -->
-                            <Button Style="{StaticResource ReaderBottomTileButtonStyle}"
+                            <Button x:Uid="ZoomInButton"
+                                    Style="{StaticResource ReaderBottomTileButtonStyle}"
                                     IsEnabled="{x:Bind Shared.NavigationPageShared.ZoomInEnabled, Mode=OneWay}"
-                                    ToolTipService.ToolTip="Zoom in"
                                     Click="OnZoomInBtClicked">
                                 <FontIcon Glyph="&#xE8A3;"
                                           FontSize="20" />
                             </Button>
-                            <Button Style="{StaticResource ReaderBottomTileButtonStyle}"
+                            <Button x:Uid="ZoomOutButton"
+                                    Style="{StaticResource ReaderBottomTileButtonStyle}"
                                     IsEnabled="{x:Bind Shared.NavigationPageShared.ZoomOutEnabled, Mode=OneWay}"
-                                    ToolTipService.ToolTip="Zoom out"
                                     Click="OnZoomOutBtClicked">
                                 <FontIcon Glyph="&#xE71F;"
                                           FontSize="20" />
@@ -602,17 +602,17 @@
 
                             <!-- Orientation toggle -->
                             <Grid>
-                                <Button Style="{StaticResource ReaderBottomTileButtonStyle}"
+                                <Button x:Uid="HorizontalButton"
+                                        Style="{StaticResource ReaderBottomTileButtonStyle}"
                                         Click="OnSwitchReaderOrientationClicked"
-                                        ToolTipService.ToolTip="Two pages"
                                         Visibility="{x:Bind Shared.NavigationPageShared.IsSwitchToHorizontalReaderButtonVisible, Mode=OneWay}"
                                         IsEnabled="{x:Bind Shared.NavigationPageShared.IsVerticalReaderVisible, Mode=OneWay}">
                                     <FontIcon Glyph="&#xE89A;"
                                               FontSize="20" />
                                 </Button>
-                                <Button Style="{StaticResource ReaderBottomTileButtonStyle}"
+                                <Button x:Uid="VerticalButton"
+                                        Style="{StaticResource ReaderBottomTileButtonStyle}"
                                         Click="OnSwitchReaderOrientationClicked"
-                                        ToolTipService.ToolTip="One page"
                                         Visibility="{x:Bind Shared.NavigationPageShared.IsSwitchToVerticalReaderButtonVisible, Mode=OneWay}"
                                         IsEnabled="{x:Bind Shared.NavigationPageShared.IsHorizontalReaderVisible, Mode=OneWay}">
                                     <FontIcon Glyph="&#xE7C3;"
@@ -621,9 +621,9 @@
                             </Grid>
 
                             <!-- Grid preview toggle -->
-                            <ToggleButton Style="{StaticResource ReaderBottomTileToggleButtonStyle}"
-                                          IsChecked="{x:Bind Shared.NavigationPageShared.IsPreviewButtonToggled, Mode=TwoWay}"
-                                          ToolTipService.ToolTip="Preview">
+                            <ToggleButton x:Uid="AllPagesButton"
+                                          Style="{StaticResource ReaderBottomTileToggleButtonStyle}"
+                                          IsChecked="{x:Bind Shared.NavigationPageShared.IsPreviewButtonToggled, Mode=TwoWay}">
                                 <FontIcon Glyph="&#xF0E2;"
                                           FontSize="20" />
                             </ToggleButton>

@@ -161,8 +161,7 @@
 
             <DataTemplate x:Key="FolderItemAddNewTemplate"
                           x:DataType="data:FolderItemViewModel">
-                <controls:FolderItemDetailed Title="Add a folder"
-                                             Detail="Include more folders in your collection"
+                <controls:FolderItemDetailed x:Uid="AddFolderControl"
                                              Glyph="&#xE8F4;" />
             </DataTemplate>
 
@@ -185,7 +184,7 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock x:Uid="Library"
+                    <TextBlock x:Uid="LibraryHeader"
                                Grid.Column="0"
                                FontSize="22"
                                FontWeight="SemiBold"
@@ -196,10 +195,10 @@
                                 Orientation="Horizontal"
                                 Margin="0,0,10,0"
                                 VerticalAlignment="Bottom">
-                        <HyperlinkButton Content="See all"
+                        <HyperlinkButton x:Uid="ShowAllButton"
                                          Click="OnSeeAllBtClicked"
                                          IsEnabled="{x:Bind Shared.IsLibraryEmpty, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}" />
-                        <HyperlinkButton Content="See hiddens"
+                        <HyperlinkButton x:Uid="ShowHiddenButton"
                                          Click="OnSeeHiddenBtClick"
                                          IsEnabled="{x:Bind Shared.IsLibraryEmpty, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}" />
                     </StackPanel>
@@ -236,20 +235,20 @@
                               FontSize="14"
                               VerticalAlignment="Center"
                               Margin="0,3,0,0"/>
-                    <TextBlock Text="Seems that your library is empty. Try"
+                    <TextBlock x:Uid="LibraryEmptyPart1"
                                VerticalAlignment="Center"
                                Margin="6,0,0,0"/>
-                    <HyperlinkButton Content="add a folder"
+                    <HyperlinkButton x:Uid="AddFolderButton"
                                      Click="OnTryAddFolderBtClicked" />
-                    <TextBlock Text="or"
+                    <TextBlock x:Uid="LibraryEmptyPart2"
                                VerticalAlignment="Center" />
-                    <HyperlinkButton Content="refresh"
+                    <HyperlinkButton x:Uid="HomePageRefreshButton"
                                      Click="OnRefreshBtClicked" />
-                    <TextBlock Text="."
+                    <TextBlock x:Uid="LibraryEmptyPart3"
                                VerticalAlignment="Center" />
                 </StackPanel>
                 <Grid Height="50" />
-                <TextBlock x:Uid="Folders"
+                <TextBlock x:Uid="FoldersHeader"
                            FontSize="22"
                            FontWeight="SemiBold"
                            Margin="6,0,0,0" />
@@ -260,7 +259,6 @@
                                         DesiredWidth="295"
                                         ItemTemplateSelector="{StaticResource FolderItemTemplateSelector}"
                                         StretchContentForSingleRow="False" />
-
             </StackPanel>
         </ScrollViewer>
     </Grid>

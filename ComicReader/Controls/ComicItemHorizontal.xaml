@@ -93,18 +93,18 @@
               Visibility="{x:Bind IsContextFlyoutEnabled}">
             <Grid.ContextFlyout>
                 <MenuFlyout>
-                    <MenuFlyoutItem Click="{x:Bind Ctx.OnOpenInNewTabClicked}"
-                                    Text="Open in new tab"
+                    <MenuFlyoutItem x:Uid="MenuFlyoutOpenInNewTab"
+                                    Click="{x:Bind Ctx.OnOpenInNewTabClicked}"
                                     Icon="Document" />
-                    <MenuFlyoutItem Click="{x:Bind Ctx.OnAddToFavoritesClicked}"
-                                    Text="Add to favorites"
+                    <MenuFlyoutItem x:Uid="MenuFlyoutAddToFavorites"
+                                    Click="{x:Bind Ctx.OnAddToFavoritesClicked}"
                                     Visibility="{x:Bind Ctx.IsFavorite, Converter={StaticResource BooleanToVisibilityNegationConverter}}"
                                     Icon="Favorite" />
-                    <MenuFlyoutItem Click="{x:Bind Ctx.OnRemoveFromFavoritesClicked}"
-                                    Text="Remove from favorites"
+                    <MenuFlyoutItem x:Uid="MenuFlyoutRemoveFromFavorites"
+                                    Click="{x:Bind Ctx.OnRemoveFromFavoritesClicked}"
                                     Icon="Unfavorite"
                                     Visibility="{x:Bind Ctx.IsFavorite}" />
-                    <MenuFlyoutItem Text="Hide"
+                    <MenuFlyoutItem x:Uid="MenuFlyoutHide"
                                     Visibility="{x:Bind Ctx.IsHide, Converter={StaticResource BooleanToVisibilityNegationConverter}}"
                                     Click="{x:Bind Ctx.OnHideClicked}">
                         <MenuFlyoutItem.Icon>
@@ -112,7 +112,7 @@
                                       Glyph="&#xE8FF;" />
                         </MenuFlyoutItem.Icon>
                     </MenuFlyoutItem>
-                    <MenuFlyoutItem Text="Unhide"
+                    <MenuFlyoutItem x:Uid="MenuFlyoutUnhide"
                                     Visibility="{x:Bind Ctx.IsHide}"
                                     Click="{x:Bind Ctx.OnUnhideClicked}">
                         <MenuFlyoutItem.Icon>
@@ -121,7 +121,7 @@
                         </MenuFlyoutItem.Icon>
                     </MenuFlyoutItem>
                     <MenuFlyoutSeparator />
-                    <MenuFlyoutItem Text="Select"
+                    <MenuFlyoutItem x:Uid="MenuFlyoutSelect"
                                     Click="{x:Bind Ctx.OnSelectClicked}">
                         <MenuFlyoutItem.Icon>
                             <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"

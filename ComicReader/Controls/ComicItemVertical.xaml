@@ -61,18 +61,19 @@
 
         <Grid.ContextFlyout>
             <MenuFlyout>
-                <MenuFlyoutItem Text="Open in new tab"
+                <MenuFlyoutItem x:Uid="MenuFlyoutOpenInNewTab"
                                 Click="{x:Bind Ctx.OnOpenInNewTabClicked}"
                                 Icon="Document" />
-                <MenuFlyoutItem Text="Add to favorites"
+                <MenuFlyoutItem x:Uid="MenuFlyoutAddToFavorites"
                                 Click="{x:Bind Ctx.OnAddToFavoritesClicked}"
                                 Visibility="{x:Bind Ctx.IsFavorite, Converter={StaticResource BooleanToVisibilityNegationConverter}}"
                                 Icon="Favorite" />
-                <MenuFlyoutItem Text="Remove from favorites"
+                <MenuFlyoutItem x:Uid="MenuFlyoutRemoveFromFavorites"
                                 Click="{x:Bind Ctx.OnRemoveFromFavoritesClicked}"
                                 Visibility="{x:Bind Ctx.IsFavorite}"
                                 Icon="Unfavorite"/>
-                <MenuFlyoutItem Text="Hide"
+                <MenuFlyoutSeparator />
+                <MenuFlyoutItem x:Uid="MenuFlyoutHide"
                                 Click="{x:Bind Ctx.OnHideClicked}"
                                 Visibility="{x:Bind Ctx.IsHide, Converter={StaticResource BooleanToVisibilityNegationConverter}}">
                     <MenuFlyoutItem.Icon>
@@ -102,7 +103,8 @@
                                    Opacity="0" />
                         </Grid>
                         <Border CornerRadius="5">
-                            <Image Source="{x:Bind Ctx.Image}" />
+                            <Image Source="{x:Bind Ctx.Image}"
+                                   Opacity="0"/>
                         </Border>
                             <Grid Width="26"
                                   Height="26"

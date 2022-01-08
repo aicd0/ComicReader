@@ -25,7 +25,7 @@
             <FontIcon FontFamily="Segoe MDL2 Assets"
                       Glyph="&#xE713;"
                       Margin="25,6,10,0" />
-            <TextBlock Text="Settings"
+            <TextBlock x:Uid="SettingHeader"
                        FontSize="32"
                        FontWeight="Light" />
         </StackPanel>
@@ -42,43 +42,47 @@
 
                 <StackPanel Orientation="Vertical"
                             Grid.Column="0">
-                    <TextBlock Text="Images on this PC"
+                    <TextBlock x:Uid="ImageOnDevice"
                                Style="{StaticResource SettingsPageSubTitleTextBlock}" />
-                    <Grid Height="4" />
-                    <Button Content="Choose where we look for images"
+                    <Button x:Uid="ChooseLocationButton"
                             Click="ChooseLocationsClick" />
+                    <Grid Height="30" />
+                    <Button Content="Rescan file system" />
+                    <Grid Height="8" />
+                    <TextBlock Text="NOTICE: In most cases this operation is unnecessary and could lead to high CPU occupation which may drain your battery quickly. Use this function only when you need to update some comic information that has been modified externally."
+                               Style="{StaticResource SettingsPageBodyTextBlock}"
+                               Foreground="#C0C0C0" />
 
                     <!-- Reader -->
-                    <TextBlock Text="Reader"
+                    <TextBlock x:Uid="Reader"
                                Style="{StaticResource SettingsPageSubTitleTextBlock}" />
-                    <TextBlock Text="Left to reft"
+                    <TextBlock x:Uid="LeftToRight"
                                Style="{StaticResource SettingsPageBodyTextBlock}" />
                     <ToggleSwitch IsOn="{x:Bind Shared.ReaderLeftToRight, Mode=TwoWay}" />
 
                     <!-- History -->
-                    <TextBlock Text="History"
+                    <TextBlock x:Uid="History"
                                Style="{StaticResource SettingsPageSubTitleTextBlock}" />
-                    <Grid Height="4" />
-                    <Button Content="Clear all"
+                    <Button x:Uid="ClearAllHistoryButton"
                             Click="OnHistoryClearAllClicked"
                             IsEnabled="{x:Bind Shared.IsClearHistoryEnabled, Mode=OneWay}"/>
-                    <Grid Height="8" />
-                    <TextBlock Text="Save browsing history"
+                    <Grid Height="10" />
+                    <TextBlock x:Uid="SaveHistory"
                                Style="{StaticResource SettingsPageBodyTextBlock}" />
                     <ToggleSwitch IsOn="{x:Bind Shared.HistorySaveBrowsingHistory, Mode=TwoWay}" />
 
                     <!-- Appearance -->
-                    <TextBlock Text="Appearance"
+                    <TextBlock x:Uid="Appearance"
                                Style="{StaticResource SettingsPageSubTitleTextBlock}" />
-                    <TextBlock Text="You'll see your change the next time you start the app"
+                    <TextBlock x:Uid="ApplyOnNextLaunch"
                                Visibility="{x:Bind Shared.AppearanceChanged, Mode=OneWay}"
                                Style="{StaticResource SettingsPageBodyTextBlock}" />
                     <muxc:RadioButtons>
-                        <RadioButton Content="Light"
+                        <RadioButton x:Uid="ThemeLight"
                                      IsChecked="{x:Bind Shared.AppearanceLightChecked, Mode=TwoWay}" />
-                        <RadioButton Content="Dark"
+                        <RadioButton x:Uid="ThemeDark"
                                      IsChecked="{x:Bind Shared.AppearanceDarkChecked, Mode=TwoWay}" />
-                        <RadioButton Content="Use system setting"
+                        <RadioButton x:Uid="ThemeUseSystemSetting"
                                      IsChecked="{x:Bind Shared.AppearanceUseSystemSettingChecked, Mode=TwoWay}" />
                     </muxc:RadioButtons>
                 </StackPanel>
@@ -86,29 +90,29 @@
                 <StackPanel Orientation="Vertical"
                             Grid.Column="2">
                     <!-- Statistics -->
-                    <TextBlock Text="Statistics"
+                    <TextBlock x:Uid="Statistics"
                                Style="{StaticResource SettingsPageSubTitleTextBlock}" />
                     <TextBlock x:Name="StatisticsTextBlock"
                                Text="Updating..."
                                Style="{StaticResource SettingsPageBodyTextBlock}" />
 
                     <!-- Feedback -->
-                    <TextBlock Text="Feedback"
+                    <TextBlock x:Uid="Feedback"
                                Style="{StaticResource SettingsPageSubTitleTextBlock}" />
-                    <TextBlock Text="Use the button below to send us suggestions or issue a bug on Github."
+                    <TextBlock x:Uid="FeedbackIntroduction"
                                Style="{StaticResource SettingsPageBodyTextBlock}"/>
-                    <Button Content="Send feedback"
+                    <Button x:Uid="SendFeedbackButton"
                             Margin="0,10,0,0"
                             Click="OnSendFeedbackButtonClicked"/>
 
                     <!-- About -->
-                    <TextBlock Text="About"
+                    <TextBlock x:Uid="About"
                                Style="{StaticResource SettingsPageSubTitleTextBlock}" />
                     <TextBlock Text="Version: 1.0.0"
                                Style="{StaticResource SettingsPageBodyTextBlock}" />
 
                     <!-- Disclaimer -->
-                    <TextBlock Text="Disclaimer"
+                    <TextBlock x:Uid="Disclaimer"
                                Style="{StaticResource SettingsPageSubTitleTextBlock}" />
                     <TextBlock Text="THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
                                Style="{StaticResource SettingsPageBodyTextBlock}"

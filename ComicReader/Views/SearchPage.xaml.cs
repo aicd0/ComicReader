@@ -303,7 +303,8 @@ namespace ComicReader.Views
             {
                 string keyword_combined = Utils.StringUtils.Join(" ", keywords);
                 title_text = "\"" + keyword_combined + "\"";
-                tab_title = "Results of '" + keyword_combined + "'";
+                tab_title = Utils.C0.TryGetResourceString("SearchResultsOf");
+                tab_title = tab_title.Replace("$keyword", keyword_combined);
             }
             else if (filter_brief.Length != 0)
             {
@@ -313,8 +314,8 @@ namespace ComicReader.Views
             }
             else
             {
-                title_text = "All matched results";
-                tab_title = "Search results";
+                title_text = Utils.C0.TryGetResourceString("AllMatchedResults");
+                tab_title = Utils.C0.TryGetResourceString("SearchResults");
             }
 
             // update tab header
@@ -335,7 +336,11 @@ namespace ComicReader.Views
             // update UI
             Shared.Title = title_text;
             Shared.FilterDetails = filter_details;
-            Shared.NoResultText = "No results for \"" + keyword + "\"";
+
+            string no_results = Utils.C0.TryGetResourceString("NoResults");
+            no_results = no_results.Replace("$keyword", keyword);
+
+            Shared.NoResultText = no_results;
             Shared.SearchResults.Clear();
             await LoadMoreResults(db, 40);
         }
@@ -432,11 +437,6 @@ namespace ComicReader.Views
                 if (items_loaded + count > m_all_results.Count)
                 {
                     count = m_all_results.Count - items_loaded;
-                }
-
-                if (count == 0)
-                {
-                    return;
                 }
 
                 int end_i = items_loaded + count;

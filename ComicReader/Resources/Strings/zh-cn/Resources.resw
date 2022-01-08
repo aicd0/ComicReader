@@ -117,10 +117,299 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="Folders.Text" xml:space="preserve">
+  <data name="About.Text" xml:space="preserve">
+    <value>关于</value>
+  </data>
+  <data name="AddFolderButton.Content" xml:space="preserve">
+    <value>添加文件夹</value>
+  </data>
+  <data name="AddFolderControl.Detail" xml:space="preserve">
+    <value>在仓库中添加更多文件夹</value>
+  </data>
+  <data name="AddFolderControl.Title" xml:space="preserve">
+    <value>添加文件夹</value>
+  </data>
+  <data name="AddLocationButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>添加位置</value>
+  </data>
+  <data name="AddToFavorites" xml:space="preserve">
+    <value>添加收藏</value>
+  </data>
+  <data name="AllComics" xml:space="preserve">
+    <value>所有漫画</value>
+  </data>
+  <data name="AllComicsIn" xml:space="preserve">
+    <value>所有位于 $path 的漫画</value>
+  </data>
+  <data name="AllHidden" xml:space="preserve">
+    <value>所有隐藏项</value>
+  </data>
+  <data name="AllMatchedResults" xml:space="preserve">
+    <value>所有搜索结果</value>
+  </data>
+  <data name="AllPagesButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>所有页面</value>
+  </data>
+  <data name="Appearance.Text" xml:space="preserve">
+    <value>外观</value>
+  </data>
+  <data name="ApplyOnNextLaunch.Text" xml:space="preserve">
+    <value>您将在下次应用启动时看到您的更改</value>
+  </data>
+  <data name="BackButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>返回</value>
+  </data>
+  <data name="ChooseLocationButton.Content" xml:space="preserve">
+    <value>添加或修改图片位置</value>
+  </data>
+  <data name="ChooseLocationDialog.PrimaryButtonText" xml:space="preserve">
+    <value>完成</value>
+  </data>
+  <data name="ChooseLocationDialog.Title" xml:space="preserve">
+    <value>从以下位置扫描图片</value>
+  </data>
+  <data name="ClearAllHistoryButton.Content" xml:space="preserve">
+    <value>清除所有记录</value>
+  </data>
+  <data name="DefaultTags" xml:space="preserve">
+    <value>默认标签</value>
+  </data>
+  <data name="Disclaimer.Text" xml:space="preserve">
+    <value>免责声明</value>
+  </data>
+  <data name="EditComicInfoDialog.PrimaryButtonText" xml:space="preserve">
+    <value>完成</value>
+  </data>
+  <data name="EditComicInfoDialog.SecondaryButtonText" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="EditComicInfoDialog.Title" xml:space="preserve">
+    <value>漫画信息</value>
+  </data>
+  <data name="EditInfoButton.Label" xml:space="preserve">
+    <value>编辑</value>
+  </data>
+  <data name="FavoriteAppBarButton.Label" xml:space="preserve">
+    <value>收藏</value>
+  </data>
+  <data name="FavoritesButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>收藏夹及历史记录</value>
+  </data>
+  <data name="FavoriteToggleButton.Label" xml:space="preserve">
+    <value>收藏</value>
+  </data>
+  <data name="Feedback.Text" xml:space="preserve">
+    <value>反馈</value>
+  </data>
+  <data name="FeedbackIntroduction.Text" xml:space="preserve">
+    <value>您可以通过以下按钮在GitHub上向我们提交建议或报告问题。</value>
+  </data>
+  <data name="FilteredBy" xml:space="preserve">
+    <value>$count个过滤条件</value>
+  </data>
+  <data name="Finshed" xml:space="preserve">
+    <value>已完成</value>
+  </data>
+  <data name="FoldersHeader.Text" xml:space="preserve">
     <value>文件夹</value>
   </data>
-  <data name="Library.Text" xml:space="preserve">
-    <value>书库</value>
+  <data name="ForwardButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>前进</value>
+  </data>
+  <data name="HideAppBarButton.Label" xml:space="preserve">
+    <value>隐藏</value>
+  </data>
+  <data name="History.Text" xml:space="preserve">
+    <value>历史记录</value>
+  </data>
+  <data name="HomeButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>主页</value>
+  </data>
+  <data name="HomePageRefreshButton.Content" xml:space="preserve">
+    <value>刷新</value>
+  </data>
+  <data name="HorizontalButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>横向翻页</value>
+  </data>
+  <data name="ImageOnDevice.Text" xml:space="preserve">
+    <value>此设备上的图片</value>
+  </data>
+  <data name="LeftToRight.Text" xml:space="preserve">
+    <value>从左到右</value>
+  </data>
+  <data name="LibraryEmptyPart1.Text" xml:space="preserve">
+    <value>您的仓库似乎是空的，尝试</value>
+  </data>
+  <data name="LibraryEmptyPart2.Text" xml:space="preserve">
+    <value>或</value>
+  </data>
+  <data name="LibraryEmptyPart3.Text" xml:space="preserve">
+    <value>。</value>
+  </data>
+  <data name="LibraryHeader.Text" xml:space="preserve">
+    <value>库</value>
+  </data>
+  <data name="MenuFlyoutAddToFavorites.Text" xml:space="preserve">
+    <value>添加收藏</value>
+  </data>
+  <data name="MenuFlyoutComicInfo.Text" xml:space="preserve">
+    <value>漫画信息</value>
+  </data>
+  <data name="MenuFlyoutCreateNewFolder.Text" xml:space="preserve">
+    <value>新建文件夹</value>
+  </data>
+  <data name="MenuFlyoutDelete.Text" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="MenuFlyoutHelp.Text" xml:space="preserve">
+    <value>帮助</value>
+  </data>
+  <data name="MenuFlyoutHide.Text" xml:space="preserve">
+    <value>隐藏</value>
+  </data>
+  <data name="MenuFlyoutOpenInNewTab.Text" xml:space="preserve">
+    <value>在新选项卡中打开</value>
+  </data>
+  <data name="MenuFlyoutRemoveFromFavorites.Text" xml:space="preserve">
+    <value>取消收藏</value>
+  </data>
+  <data name="MenuFlyoutRemoveFromList.Text" xml:space="preserve">
+    <value>从列表中移除</value>
+  </data>
+  <data name="MenuFlyoutRename.Text" xml:space="preserve">
+    <value>重命名</value>
+  </data>
+  <data name="MenuFlyoutSelect.Text" xml:space="preserve">
+    <value>选择</value>
+  </data>
+  <data name="MenuFlyoutSettings.Text" xml:space="preserve">
+    <value>设置</value>
+  </data>
+  <data name="MenuFlyoutSortByName.Text" xml:space="preserve">
+    <value>按名称排序</value>
+  </data>
+  <data name="MenuFlyoutUnhide.Text" xml:space="preserve">
+    <value>取消隐藏</value>
+  </data>
+  <data name="MoreButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>更多</value>
+  </data>
+  <data name="NewFolder" xml:space="preserve">
+    <value>新建文件夹</value>
+  </data>
+  <data name="NewTab" xml:space="preserve">
+    <value>新标签页</value>
+  </data>
+  <data name="NoFavorite.Text" xml:space="preserve">
+    <value>您的收藏会显示在此处</value>
+  </data>
+  <data name="NoHistory.Text" xml:space="preserve">
+    <value>您的浏览记录会显示在此处</value>
+  </data>
+  <data name="NoResults" xml:space="preserve">
+    <value>没有找到与 "$keyword" 相关的结果</value>
+  </data>
+  <data name="NoResultsDetail.Text" xml:space="preserve">
+    <value>尝试使用不同关键词进行搜索</value>
+  </data>
+  <data name="Pin" xml:space="preserve">
+    <value>固定</value>
+  </data>
+  <data name="Reader.Text" xml:space="preserve">
+    <value>阅读器</value>
+  </data>
+  <data name="RefreshButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>刷新</value>
+  </data>
+  <data name="RemoveFromFavorites" xml:space="preserve">
+    <value>取消收藏</value>
+  </data>
+  <data name="RemoveLocationButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>从列表中移除当前位置</value>
+  </data>
+  <data name="SaveHistory.Text" xml:space="preserve">
+    <value>记录您的浏览历史</value>
+  </data>
+  <data name="SearchBox.PlaceholderText" xml:space="preserve">
+    <value>搜索标题、标签、文件夹等</value>
+  </data>
+  <data name="SearchResults" xml:space="preserve">
+    <value>搜索结果</value>
+  </data>
+  <data name="SearchResultsOf" xml:space="preserve">
+    <value>'$keyword' 的搜索结果</value>
+  </data>
+  <data name="SelectAllAppBarButton.Label" xml:space="preserve">
+    <value>全选</value>
+  </data>
+  <data name="SendFeedbackButton.Content" xml:space="preserve">
+    <value>发送反馈</value>
+  </data>
+  <data name="SettingHeader.Text" xml:space="preserve">
+    <value>设置</value>
+  </data>
+  <data name="ShowAllButton.Content" xml:space="preserve">
+    <value>显示全部</value>
+  </data>
+  <data name="ShowHiddenButton.Content" xml:space="preserve">
+    <value>显示隐藏项</value>
+  </data>
+  <data name="Statistics.Text" xml:space="preserve">
+    <value>统计信息</value>
+  </data>
+  <data name="TagIntroduction.Message" xml:space="preserve">
+    <value>为漫画添加标签可以使您的仓库更易于管理，格式如下：
+
+类别1: 标签1/标签2/标签3
+类别2: 标签4/标签5
+...</value>
+  </data>
+  <data name="TagIntroduction.Title" xml:space="preserve">
+    <value>标签</value>
+  </data>
+  <data name="Tags.Text" xml:space="preserve">
+    <value>标签:</value>
+  </data>
+  <data name="ThemeDark.Content" xml:space="preserve">
+    <value>深色</value>
+  </data>
+  <data name="ThemeLight.Content" xml:space="preserve">
+    <value>浅色</value>
+  </data>
+  <data name="ThemeUseSystemSetting.Content" xml:space="preserve">
+    <value>跟随系统设置</value>
+  </data>
+  <data name="Title1.Text" xml:space="preserve">
+    <value>标题 1:</value>
+  </data>
+  <data name="Title2.Text" xml:space="preserve">
+    <value>标题 2:</value>
+  </data>
+  <data name="TotalComics" xml:space="preserve">
+    <value>漫画总数：</value>
+  </data>
+  <data name="UnFavoriteAppBarButton.Label" xml:space="preserve">
+    <value>取消收藏</value>
+  </data>
+  <data name="UnhideAppBarButton.Label" xml:space="preserve">
+    <value>取消隐藏</value>
+  </data>
+  <data name="Unpin" xml:space="preserve">
+    <value>取消固定</value>
+  </data>
+  <data name="Unread" xml:space="preserve">
+    <value>未阅读</value>
+  </data>
+  <data name="VerticalButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>纵向翻页</value>
+  </data>
+  <data name="WatchingFolders.Text" xml:space="preserve">
+    <value>目前，您的仓库包含如下文件夹：</value>
+  </data>
+  <data name="ZoomInButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>放大</value>
+  </data>
+  <data name="ZoomOutButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>缩小</value>
   </data>
 </root>
