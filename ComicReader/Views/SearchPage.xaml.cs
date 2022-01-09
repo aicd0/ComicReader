@@ -210,9 +210,11 @@ namespace ComicReader.Views
         private SearchPageShared Shared { get; set; }
 
         private Utils.Tab.TabManager m_tab_manager;
-        private List<ComicData> m_all_results = new List<ComicData>();
+        private List<Match> m_matches = new List<Match>();
+        private Utils.Search.Filter m_filter;
+        private int m_match_index = 0;
         private Utils.CancellationLock m_search_lock = new Utils.CancellationLock();
-        private Utils.CancellationLock m_load_result_lock = new Utils.CancellationLock();
+        private Utils.CancellationLock m_load_image_lock = new Utils.CancellationLock();
 
         public SearchPage()
         {
@@ -276,72 +278,81 @@ namespace ComicReader.Views
         // Unsorted
         private async Task StartSearch(LockContext db)
         {
-            SetSelectMode(false);
-
-            string keyword = (string)m_tab_manager.TabId.RequestArgs;
-
-            // extract filters and keywords from string
-            Utils.Search.Filter filter = Utils.Search.Filter.Parse(keyword, out List<string> remaining);
-            List<string> keywords = new List<string>();
-
-            foreach (string text in remaining)
+            await m_search_lock.WaitAsync();
+            try
             {
-                keywords = keywords.Concat(text.Split(' ', StringSplitOptions.RemoveEmptyEntries)).ToList();
+                SetSelectMode(false);
+                string keyword = (string)m_tab_manager.TabId.RequestArgs;
+
+                // extract filters and keywords from string
+                m_filter = Utils.Search.Filter.Parse(keyword, out List<string> remaining);
+                List<string> keywords = new List<string>();
+
+                foreach (string text in remaining)
+                {
+                    keywords = keywords.Concat(text.Split(' ', StringSplitOptions.RemoveEmptyEntries)).ToList();
+                }
+
+                if (!m_filter.ContainsFilter("hidden"))
+                {
+                    _ = m_filter.AddFilter("~hidden");
+                }
+
+                string title_text;
+                string tab_title;
+                string filter_brief = m_filter.DescriptionBrief();
+                string filter_details = m_filter.DescriptionDetailed();
+
+                if (keywords.Count != 0)
+                {
+                    string keyword_combined = Utils.StringUtils.Join(" ", keywords);
+                    title_text = "\"" + keyword_combined + "\"";
+                    tab_title = Utils.C0.TryGetResourceString("SearchResultsOf");
+                    tab_title = tab_title.Replace("$keyword", keyword_combined);
+                }
+                else if (filter_brief.Length != 0)
+                {
+                    title_text = filter_brief;
+                    tab_title = filter_brief;
+                    filter_details = "";
+                }
+                else
+                {
+                    title_text = Utils.C0.TryGetResourceString("AllMatchedResults");
+                    tab_title = Utils.C0.TryGetResourceString("SearchResults");
+                }
+
+                // update tab header
+                m_tab_manager.TabId.Tab.Header = tab_title;
+                m_tab_manager.TabId.Tab.IconSource = new muxc.SymbolIconSource() { Symbol = Symbol.Find };
+
+                // start searching
+                Shared.IsLoading = true;
+                Shared.UpdateUI();
+
+                if (!await SearchMain(db, keywords))
+                {
+                    return;
+                }
+
+                m_match_index = 0;
+                Shared.IsLoading = false;
+
+                // update UI
+                Shared.Title = title_text;
+                Shared.FilterDetails = filter_details;
+
+                string no_results = Utils.C0.TryGetResourceString("NoResults");
+                no_results = no_results.Replace("$keyword", keyword);
+
+                Shared.NoResultText = no_results;
+                Shared.SearchResults.Clear();
+            }
+            finally
+            {
+                m_search_lock.Release();
             }
 
-            if (!filter.ContainsFilter("hidden"))
-            {
-                _ = filter.AddFilter("~hidden");
-            }
-
-            string title_text;
-            string tab_title;
-            string filter_brief = filter.DescriptionBrief();
-            string filter_details = filter.DescriptionDetailed();
-
-            if (keywords.Count != 0)
-            {
-                string keyword_combined = Utils.StringUtils.Join(" ", keywords);
-                title_text = "\"" + keyword_combined + "\"";
-                tab_title = Utils.C0.TryGetResourceString("SearchResultsOf");
-                tab_title = tab_title.Replace("$keyword", keyword_combined);
-            }
-            else if (filter_brief.Length != 0)
-            {
-                title_text = filter_brief;
-                tab_title = filter_brief;
-                filter_details = "";
-            }
-            else
-            {
-                title_text = Utils.C0.TryGetResourceString("AllMatchedResults");
-                tab_title = Utils.C0.TryGetResourceString("SearchResults");
-            }
-
-            // update tab header
-            m_tab_manager.TabId.Tab.Header = tab_title;
-            m_tab_manager.TabId.Tab.IconSource = new muxc.SymbolIconSource() { Symbol = Symbol.Find };
-
-            // start searching
-            Shared.IsLoading = true;
-            Shared.UpdateUI();
-
-            if (!await SearchMain(db, keywords, filter))
-            {
-                return;
-            }
-
-            Shared.IsLoading = false;
-
-            // update UI
-            Shared.Title = title_text;
-            Shared.FilterDetails = filter_details;
-
-            string no_results = Utils.C0.TryGetResourceString("NoResults");
-            no_results = no_results.Replace("$keyword", keyword);
-
-            Shared.NoResultText = no_results;
-            Shared.SearchResults.Clear();
             await LoadMoreResults(db, 40);
         }
 
@@ -351,137 +362,135 @@ namespace ComicReader.Views
             public int Similarity = 0;
         }
 
-        private async Task<bool> SearchMain(LockContext db, List<string> keywords, Utils.Search.Filter filter)
+        private async Task<bool> SearchMain(LockContext db, List<string> keywords)
+        {
+            for (int i = 0; i < keywords.Count; ++i)
+            {
+                keywords[i] = keywords[i].ToLower();
+            }
+
+            var matched = new List<Match>();
+
+            SqliteCommand command = SqliteDatabaseManager.NewCommand();
+            command.CommandText = "SELECT " + ComicData.FieldId + "," +
+                ComicData.FieldTitle1 + "," + ComicData.FieldTitle2 + " FROM " +
+                SqliteDatabaseManager.ComicTable;
+
+            await ComicDataManager.WaitLock(db); // Lock on.
+            SqliteDataReader query = await command.ExecuteReaderAsync();
+
+            while(query.Read())
+            {
+                // Cancel the current session if the next search has begun.
+                if (m_search_lock.CancellationRequested)
+                {
+                    return false;
+                }
+
+                string title1 = query.GetString(1);
+                string title2 = query.GetString(2);
+
+                // Calculate similarity.
+                int similarity = 0;
+
+                if (keywords.Count != 0)
+                {
+                    string match_text = title1 + " " + title2;
+                    similarity = Utils.StringUtils.QuickMatch(keywords, match_text);
+
+                    if (similarity < 1)
+                    {
+                        continue;
+                    }
+                }
+
+                // Save results.
+                matched.Add(new Match
+                {
+                    Id = query.GetInt32(0),
+                    Similarity = similarity
+                });
+            }
+            ComicDataManager.ReleaseLock(db); // Lock off.
+
+            // Sort by similarity.
+            m_matches = matched.OrderByDescending(x => x.Similarity).ToList();
+            return true;
+        }
+
+        private async Task<ComicItemViewModel> ComicDataToViewModel(ComicData comic)
+        {
+            return new ComicItemViewModel
+            {
+                Comic = comic,
+                Title = comic.Title,
+                Detail = "#" + comic.Id,
+                Rating = comic.Rating,
+                Progress = comic.Progress < 0 ? "" :
+                            (comic.Progress >= 100 ? "Finished" :
+                            comic.Progress.ToString() + "% Completed"),
+                IsFavorite = await FavoriteDataManager.FromId(comic.Id) != null,
+                IsSelectMode = Shared.IsSelectMode,
+
+                OnItemPressed = OnComicItemPressed,
+                OnOpenInNewTabClicked = OnOpenInNewTabClicked,
+                OnAddToFavoritesClicked = OnAddToFavoritesClicked,
+                OnRemoveFromFavoritesClicked = OnRemoveFromFavoritesClicked,
+                OnHideClicked = OnHideComicClicked,
+                OnUnhideClicked = OnUnhideComicClicked,
+                OnSelectClicked = OnSelectClicked,
+            };
+        }
+
+        private async Task LoadMoreResults(LockContext db, int count)
         {
             await m_search_lock.WaitAsync();
             try
             {
-                for (int i = 0; i < keywords.Count; ++i)
+                for (int i = 0; i < count; ++m_match_index)
                 {
-                    keywords[i] = keywords[i].ToLower();
-                }
-
-                var matched = new List<Match>();
-
-                SqliteCommand command = SqliteDatabaseManager.NewCommand();
-                command.CommandText = "SELECT " + ComicData.FieldId + "," +
-                    ComicData.FieldTitle1 + "," + ComicData.FieldTitle2 + " FROM " +
-                    SqliteDatabaseManager.ComicTable;
-
-                await ComicDataManager.WaitLock(db); // Lock on.
-                SqliteDataReader query = await command.ExecuteReaderAsync();
-
-                while(query.Read())
-                {
-                    // Cancel the current session if the next search has begun.
                     if (m_search_lock.CancellationRequested)
                     {
-                        return false;
+                        return;
                     }
 
-                    string title1 = query.GetString(1);
-                    string title2 = query.GetString(2);
-
-                    // Calculate similarity.
-                    int similarity = 0;
-
-                    if (keywords.Count != 0)
+                    if (m_match_index >= m_matches.Count)
                     {
-                        string match_text = title1 + " " + title2;
-                        similarity = Utils.StringUtils.QuickMatch(keywords, match_text);
-                        if (similarity < 1) continue;
+                        break;
                     }
 
-                    // Save results.
-                    matched.Add(new Match
-                    {
-                        Id = query.GetInt32(0),
-                        Similarity = similarity
-                    });
-                }
-                ComicDataManager.ReleaseLock(db); // Lock off.
-
-                // Sort by similarity.
-                matched = matched.OrderByDescending(x => x.Similarity).ToList();
-
-                // Save results.
-                m_all_results.Clear();
-
-                foreach (Match match in matched)
-                {
+                    Match match = m_matches[m_match_index];
                     ComicData comic = await ComicDataManager.FromId(db, match.Id);
 
-                    if (!filter.Pass(comic))
+                    if (!m_filter.Pass(comic))
                     {
                         continue;
                     }
 
-                    m_all_results.Add(comic);
+                    ComicItemViewModel item = await ComicDataToViewModel(comic);
+                    Shared.SearchResults.Add(item);
+                    ++i;
                 }
+
+                Shared.UpdateUI();
             }
             finally
             {
                 m_search_lock.Release();
             }
 
-            return true;
+            // Load images.
+            await LoadImages(db);
         }
 
-        private async Task LoadMoreResults(LockContext db, int count)
+        private async Task LoadImages(LockContext db)
         {
-            await m_load_result_lock.WaitAsync();
+            await m_load_image_lock.WaitAsync();
             try
             {
-                int items_loaded = Shared.SearchResults.Count;
-
-                if (items_loaded + count > m_all_results.Count)
-                {
-                    count = m_all_results.Count - items_loaded;
-                }
-
-                int end_i = items_loaded + count;
-                List<ComicItemViewModel> results_tmp = new List<ComicItemViewModel>();
-
-                for (int i = items_loaded; i < end_i; ++i)
-                {
-                    ComicData comic = m_all_results[i];
-
-                    ComicItemViewModel result = new ComicItemViewModel
-                    {
-                        Comic = comic,
-                        Title = comic.Title,
-                        Detail = "#" + comic.Id,
-                        Rating = comic.Rating,
-                        Progress = comic.Progress < 0 ? "" :
-                            (comic.Progress >= 100 ? "Finished" :
-                            comic.Progress.ToString() + "% Completed"),
-                        IsFavorite = await FavoriteDataManager.FromId(comic.Id) != null,
-                        IsSelectMode = Shared.IsSelectMode,
-
-                        OnItemPressed = OnComicItemPressed,
-                        OnOpenInNewTabClicked = OnOpenInNewTabClicked,
-                        OnAddToFavoritesClicked = OnAddToFavoritesClicked,
-                        OnRemoveFromFavoritesClicked = OnRemoveFromFavoritesClicked,
-                        OnHideClicked = OnHideComicClicked,
-                        OnUnhideClicked = OnUnhideComicClicked,
-                        OnSelectClicked = OnSelectClicked,
-                    };
-
-                    results_tmp.Add(result);
-                }
-
-                // update UI
-                foreach (ComicItemViewModel result in results_tmp)
-                {
-                    Shared.SearchResults.Add(result);
-                }
-
-                Shared.UpdateUI();
-
-                // load images
                 double image_height = (double)Application.Current.Resources["ComicItemHorizontalImageHeight"];
                 var image_loader_tokens = new List<Utils.ImageLoaderToken>();
-                
+
                 foreach (ComicItemViewModel item in Shared.SearchResults)
                 {
                     if (item.IsImageLoaded)
@@ -502,12 +511,11 @@ namespace ComicReader.Views
                 }
 
                 await Utils.ImageLoader.Load(db, image_loader_tokens,
-                    double.PositiveInfinity, image_height, m_load_result_lock);
+                    double.PositiveInfinity, image_height, m_load_image_lock);
             }
             finally
             {
-                Shared.UpdateUI();
-                m_load_result_lock.Release();
+                m_load_image_lock.Release();
             }
         }
 

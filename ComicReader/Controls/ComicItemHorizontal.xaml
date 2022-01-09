@@ -31,10 +31,11 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <Grid Grid.Column="0">
-                <Rectangle Fill="#555555"
+                <Rectangle Fill="#505050"
                            Visibility="{x:Bind Ctx.IsImageLoaded, Converter={StaticResource BooleanToVisibilityNegationConverter}}" />
                 <Image Source="{x:Bind Ctx.Image}"
-                       Stretch="UniformToFill" />
+                       Stretch="UniformToFill"
+                       Opacity="0"/>
             </Grid>
             <Grid Grid.Column="1">
                 <Grid Padding="12,2,8,5">

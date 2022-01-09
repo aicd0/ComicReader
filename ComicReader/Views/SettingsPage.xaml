@@ -4,6 +4,7 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
+      xmlns:converters="using:ComicReader.Converters"
       mc:Ignorable="d"
       Background="{ThemeResource TabViewItemHeaderBackgroundSelected}">
 
@@ -12,6 +13,9 @@
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="../Resources/Styles/TextBlock.xaml" />
             </ResourceDictionary.MergedDictionaries>
+            
+            <!-- Converters -->
+            <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
         </ResourceDictionary>
     </Page.Resources>
 
@@ -47,9 +51,16 @@
                     <Button x:Uid="ChooseLocationButton"
                             Click="ChooseLocationsClick" />
                     <Grid Height="30" />
-                    <Button Content="Rescan file system" />
+                    <StackPanel Orientation="Horizontal">
+                        <Button x:Uid="RescanFilesButton"
+                                Click="OnRescanFilesClicked"
+                                IsEnabled="{x:Bind Shared.IsRescanning, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}" />
+                        <ProgressRing IsActive="{x:Bind Shared.IsRescanning, Mode=OneWay}"
+                                      VerticalAlignment="Center"
+                                      Margin="20,0,0,0"/>
+                    </StackPanel>
                     <Grid Height="8" />
-                    <TextBlock Text="NOTICE: In most cases this operation is unnecessary and could lead to high CPU occupation which may drain your battery quickly. Use this function only when you need to update some comic information that has been modified externally."
+                    <TextBlock x:Uid="RescanFilesDetail"
                                Style="{StaticResource SettingsPageBodyTextBlock}"
                                Foreground="#C0C0C0" />
 

@@ -211,6 +211,7 @@ namespace ComicReader.Database
     {
         private const string ComicInfoFileName = "info.txt";
         public static Action<LockContext> OnUpdated;
+        public static bool IsRescanning { get; private set; } = false;
         private static readonly SemaphoreSlim m_table_lock = new SemaphoreSlim(1);
         private static readonly Utils.CancellationLock m_update_lock = new Utils.CancellationLock();
 
@@ -373,6 +374,12 @@ namespace ComicReader.Database
             await m_update_lock.WaitAsync();
             try
             {
+                if (!lazy_load)
+                {
+                    IsRescanning = true;
+                    OnUpdated?.Invoke(db);
+                }
+
                 // Get all folder path of comics in the database.
                 List<string> all_dir_in_lib = new List<string>();
 
@@ -422,19 +429,23 @@ namespace ComicReader.Database
                     var ctx = new Utils.SystemIO.SubFoldersDeepSearchContext(folder_path);
                     bool initial_loop = true;
 
-                    while (true)
+                    while (Utils.SystemIO.SubFoldersDeep(ctx, out List<string> dirs, 500))
                     {
-                        List<string> dirs = Utils.SystemIO.SubFoldersDeep(ctx, 1);
-
                         if (initial_loop)
                         {
                             dirs.Add(folder_path);
                             initial_loop = false;
                         }
 
+                        // Cancel this task if more requests have come in.
+                        if (m_update_lock.CancellationRequested)
+                        {
+                            return new TaskResult(TaskException.Cancellation);
+                        }
+
                         if (dirs.Count == 0)
                         {
-                            break;
+                            continue;
                         }
 
                         all_dir.AddRange(dirs);
@@ -509,6 +520,7 @@ namespace ComicReader.Database
             }
             finally
             {
+                IsRescanning = false;
                 OnUpdated?.Invoke(db);
                 m_update_lock.Release();
             }

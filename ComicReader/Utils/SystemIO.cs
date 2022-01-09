@@ -97,19 +97,20 @@ namespace ComicReader.Utils
             public readonly FindExInfoLevel FindInfoLevel;
             public readonly FIndexSearchOps IndexSearchOps = FIndexSearchOps.FindExSearchNameMatch;
             public readonly int AdditionalFlags;
+            public int _FolderScanned = 0;
         };
 
-        public static List<string> SubFoldersDeep(SubFoldersDeepSearchContext ctx, uint min_step)
+        public static bool SubFoldersDeep(SubFoldersDeepSearchContext ctx, out List<string> results, uint min_step)
         {
-            List<string> results = new List<string>();
+            results = new List<string>();
 
             if (ctx.Nodes.Count == 0)
             {
-                return results;
+                return false;
             }
 
-            _SubFoldersDeep(ctx, min_step, results);
-            return results;
+            ctx._FolderScanned = 0;
+            return _SubFoldersDeep(ctx, min_step, results);
         }
 
         private static bool _SubFoldersDeep(SubFoldersDeepSearchContext ctx, uint min_step, List<string> results, int depth = 0)
@@ -123,7 +124,7 @@ namespace ComicReader.Utils
 
                 if (h_file.ToInt64() == -1)
                 {
-                    return true;
+                    return false;
                 }
 
                 int i_begin = results.Count;
@@ -140,34 +141,35 @@ namespace ComicReader.Utils
 
                 if (i_begin == i_end)
                 {
-                    return true;
+                    return false;
                 }
 
                 ctx.Nodes.Add(new SubFoldersDeepSearchContextNode
                 {
                     Paths = results.GetRange(i_begin, i_end - i_begin)
                 });
-
-                // Exit if min_step is reached.
-                if (results.Count >= min_step)
-                {
-                    return false;
-                }
             }
 
             // Search deeper.
             while (ctx.Nodes[depth].Index < ctx.Nodes[depth].Paths.Count)
             {
-                if (!_SubFoldersDeep(ctx, min_step, results, depth + 1))
+                // Exit if min_step is reached.
+                if (ctx._FolderScanned + results.Count >= min_step)
                 {
-                    return false;
+                    return true;
+                }
+
+                if (_SubFoldersDeep(ctx, min_step, results, depth + 1))
+                {
+                    return true;
                 }
 
                 ctx.Nodes[depth].Index++;
+                ctx._FolderScanned++;
             }
 
             ctx.Nodes.RemoveAt(ctx.Nodes.Count - 1);
-            return true;
+            return false;
         }
 
         // SubFiles

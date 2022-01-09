@@ -49,6 +49,17 @@ namespace ComicReader.Views
             }
         }
 
+        private bool m_IsRescanning = true;
+        public bool IsRescanning
+        {
+            get => m_IsRescanning;
+            set
+            {
+                m_IsRescanning = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsRescanning"));
+            }
+        }
+
         private bool m_IsClearHistoryEnabled = false;
         public bool IsClearHistoryEnabled
         {
@@ -268,6 +279,9 @@ namespace ComicReader.Views
             
             m_updating = false;
 
+            // Rescan status.
+            UpdateRescanStatus();
+
             // Statistics.
             await UpdateStatistis(db);
         }
@@ -280,6 +294,7 @@ namespace ComicReader.Views
 
             Utils.C0.Sync(async delegate
             {
+                UpdateRescanStatus();
                 await UpdateStatistis(db);
                 completion_src.SetResult(true);
             }).Wait();
@@ -299,6 +314,11 @@ namespace ComicReader.Views
             string total_comic_string = Utils.C0.TryGetResourceString("TotalComics");
             StatisticsTextBlock.Text = total_comic_string +
                 comic_count.ToString("#,#0", CultureInfo.InvariantCulture);
+        }
+
+        private void UpdateRescanStatus()
+        {
+            Shared.IsRescanning = ComicDataManager.IsRescanning;
         }
 
         private async Task Save()
@@ -371,6 +391,13 @@ namespace ComicReader.Views
                     // ...
                 }
             });
+        }
+
+        private void OnRescanFilesClicked(object sender, RoutedEventArgs e)
+        {
+            Shared.IsRescanning = true;
+            Utils.TaskQueueManager.AppendTask(
+                ComicDataManager.UpdateSealed(lazy_load: false), "", Utils.TaskQueueManager.EmptyQueue());
         }
     }
 }

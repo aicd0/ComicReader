@@ -327,6 +327,12 @@
   <data name="RemoveLocationButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>从列表中移除当前位置</value>
   </data>
+  <data name="RescanFilesButton.Content" xml:space="preserve">
+    <value>重新扫描文件</value>
+  </data>
+  <data name="RescanFilesDetail.Text" xml:space="preserve">
+    <value>提示: 在大多数情况下该操作非必需且可能引起较高的CPU占用，进而减少您的电池使用时间。仅当部分漫画信息被从外部修改时可使用该功能同步数据库。</value>
+  </data>
   <data name="SaveHistory.Text" xml:space="preserve">
     <value>记录您的浏览历史</value>
   </data>

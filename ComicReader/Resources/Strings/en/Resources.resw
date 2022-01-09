@@ -327,6 +327,12 @@
   <data name="RemoveLocationButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>Remove this folder from the list</value>
   </data>
+  <data name="RescanFilesButton.Content" xml:space="preserve">
+    <value>Rescan files</value>
+  </data>
+  <data name="RescanFilesDetail.Text" xml:space="preserve">
+    <value>NOTICE: In most cases this operation is unnecessary and could lead to high CPU occupation which may drain your battery quickly. Use this function only when you need to update some comic information that has been modified externally.</value>
+  </data>
   <data name="SaveHistory.Text" xml:space="preserve">
     <value>Save browsing history</value>
   </data>
