@@ -414,10 +414,22 @@ namespace ComicReader.Views
                 return null;
             }
 
+            int idx = PageToIndex(Page);
+
+            if (DataSource.Count <= idx)
+            {
+                idx = 0;
+            }
+
+            if (DataSource.Count <= idx)
+            {
+                return null;
+            }
+
             double viewport_width = ThisScrollViewer.ViewportWidth;
             double viewport_height = ThisScrollViewer.ViewportHeight;
-            double image_width = DataSource[0].ImageWidth;
-            double image_height = DataSource[0].ImageHeight;
+            double image_width = DataSource[idx].ImageWidth;
+            double image_height = DataSource[idx].ImageHeight;
 
             if (IsTwoPages)
             {

@@ -99,7 +99,7 @@
                     <Grid Height="8" />
                     <TextBlock x:Uid="RescanFilesDetail"
                                Style="{StaticResource SettingsPageBodyTextBlock}"
-                               Foreground="#C0C0C0" />
+                               Foreground="{ThemeResource GreyTextForeground}" />
                 </StackPanel>
 
                 <StackPanel Orientation="Vertical"

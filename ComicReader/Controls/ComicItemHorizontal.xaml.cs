@@ -21,5 +21,13 @@ namespace ComicReader.Controls
         }
         public static readonly DependencyProperty IsContextFlyoutEnabledProperty =
             DependencyProperty.Register(nameof(IsContextFlyoutEnabled), typeof(bool), typeof(ComicItemHorizontal), new PropertyMetadata(true));
+
+        private void OnMenuFlyoutOpening(object sender, object e)
+        {
+            if (!IsContextFlyoutEnabled)
+            {
+                (sender as MenuFlyout).Hide();
+            }
+        }
     }
 }

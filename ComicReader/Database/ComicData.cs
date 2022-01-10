@@ -579,7 +579,7 @@ namespace ComicReader.Database
                         // Get folders added.
                         List<string> dir_added = Utils.C3<string, string, string>.Except(dirs, all_dir_in_lib,
                             Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
-                            new Utils.StringUtils.DefaultEqualityComparer()).ToList();
+                            new Utils.C1<string>.DefaultEqualityComparer()).ToList();
 
                         foreach (string dir in dir_added)
                         {
@@ -592,7 +592,7 @@ namespace ComicReader.Database
                         {
                             List<string> dir_kept = Utils.C3<string, string, string>.Intersect(dirs, all_dir_in_lib,
                                 Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
-                                new Utils.StringUtils.DefaultEqualityComparer()).ToList();
+                                new Utils.C1<string>.DefaultEqualityComparer()).ToList();
 
                             foreach (string dir in dir_kept)
                             {
@@ -625,7 +625,7 @@ namespace ComicReader.Database
                 // Get folders removed.
                 List<string> dir_removed = Utils.C3<string, string, string>.Except(all_dir_in_lib, all_dir,
                     Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
-                    new Utils.StringUtils.DefaultEqualityComparer()).ToList();
+                    new Utils.C1<string>.DefaultEqualityComparer()).ToList();
 
                 // remove items from database.
                 foreach (string dir in dir_removed)

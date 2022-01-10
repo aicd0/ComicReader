@@ -211,7 +211,6 @@ namespace ComicReader.Views
 
         private Utils.Tab.TabManager m_tab_manager;
         private List<Match> m_matches = new List<Match>();
-        private Utils.Search.Filter m_filter;
         private int m_match_index = 0;
         private Utils.CancellationLock m_search_lock = new Utils.CancellationLock();
         private Utils.CancellationLock m_load_image_lock = new Utils.CancellationLock();
@@ -285,7 +284,7 @@ namespace ComicReader.Views
                 string keyword = (string)m_tab_manager.TabId.RequestArgs;
 
                 // extract filters and keywords from string
-                m_filter = Utils.Search.Filter.Parse(keyword, out List<string> remaining);
+                Utils.Search.Filter filter = Utils.Search.Filter.Parse(keyword, out List<string> remaining);
                 List<string> keywords = new List<string>();
 
                 foreach (string text in remaining)
@@ -293,15 +292,15 @@ namespace ComicReader.Views
                     keywords = keywords.Concat(text.Split(' ', StringSplitOptions.RemoveEmptyEntries)).ToList();
                 }
 
-                if (!m_filter.ContainsFilter("hidden"))
+                if (!filter.ContainsFilter("hidden"))
                 {
-                    _ = m_filter.AddFilter("~hidden");
+                    _ = filter.AddFilter("~hidden");
                 }
 
                 string title_text;
                 string tab_title;
-                string filter_brief = m_filter.DescriptionBrief();
-                string filter_details = m_filter.DescriptionDetailed();
+                string filter_brief = filter.DescriptionBrief();
+                string filter_details = filter.DescriptionDetailed();
 
                 if (keywords.Count != 0)
                 {
@@ -330,7 +329,7 @@ namespace ComicReader.Views
                 Shared.IsLoading = true;
                 Shared.UpdateUI();
 
-                if (!await SearchMain(db, keywords))
+                if (!await SearchMain(db, keywords, filter))
                 {
                     return;
                 }
@@ -362,39 +361,32 @@ namespace ComicReader.Views
             public int Similarity = 0;
         }
 
-        private async Task<bool> SearchMain(LockContext db, List<string> keywords)
+        private async Task<bool> SearchMain(LockContext db, List<string> keywords, Utils.Search.Filter filter)
         {
             for (int i = 0; i < keywords.Count; ++i)
             {
                 keywords[i] = keywords[i].ToLower();
             }
 
+            List<Match> keyword_matched = new List<Match>();
+
             SqliteCommand command = SqliteDatabaseManager.NewCommand();
             command.CommandText = "SELECT " + ComicData.Field.Id + "," +
                 ComicData.Field.Title1 + "," + ComicData.Field.Title2 + " FROM " +
-                SqliteDatabaseManager.ComicTable + " WHERE " + m_filter.ToSQL(command.Parameters);
-
+                SqliteDatabaseManager.ComicTable;
             await ComicDataManager.WaitLock(db); // Lock on.
             SqliteDataReader query = await command.ExecuteReaderAsync();
 
-            var matched = new List<Match>();
-
-            while(query.Read())
+            while (query.Read())
             {
-                // Cancel the current session if the next search has begun.
-                if (m_search_lock.CancellationRequested)
-                {
-                    return false;
-                }
-
-                string title1 = query.GetString(1);
-                string title2 = query.GetString(2);
-
                 // Calculate similarity.
                 int similarity = 0;
 
                 if (keywords.Count != 0)
                 {
+                    string title1 = query.GetString(1);
+                    string title2 = query.GetString(2);
+
                     string match_text = title1 + " " + title2;
                     similarity = Utils.StringUtils.QuickMatch(keywords, match_text);
 
@@ -405,16 +397,30 @@ namespace ComicReader.Views
                 }
 
                 // Save results.
-                matched.Add(new Match
+                keyword_matched.Add(new Match
                 {
-                    Id = query.GetInt32(0),
+                    Id = query.GetInt64(0),
                     Similarity = similarity
                 });
             }
+
+            List<long> all = new List<long>(keyword_matched.Count);
+
+            foreach (Match match in keyword_matched)
+            {
+                all.Add(match.Id);
+            }
+
+            List<long> filter_matched = filter.Match(all);
             ComicDataManager.ReleaseLock(db); // Lock off.
 
+            // Intersect two.
+            m_matches = Utils.C3<Match, long, long>.Intersect(keyword_matched, filter_matched,
+                (Match x) => x.Id, (long x) => x,
+                new Utils.C1<long>.DefaultEqualityComparer()).ToList();
+
             // Sort by similarity.
-            m_matches = matched.OrderByDescending(x => x.Similarity).ToList();
+            m_matches = m_matches.OrderByDescending(x => x.Similarity).ToList();
             return true;
         }
 
@@ -461,11 +467,6 @@ namespace ComicReader.Views
 
                     Match match = m_matches[m_match_index];
                     ComicData comic = await ComicDataManager.FromId(db, match.Id);
-
-                    if (!m_filter.Pass(comic))
-                    {
-                        continue;
-                    }
 
                     ComicItemViewModel item = await ComicDataToViewModel(comic);
                     Shared.SearchResults.Add(item);

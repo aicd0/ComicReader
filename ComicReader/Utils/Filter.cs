@@ -117,38 +117,16 @@ namespace ComicReader.Utils.Search
             return false;
         }
 
-        public string ToSQL(SqliteParameterCollection parameters)
+        public List<long> Match(List<long> all)
         {
-            SqlParameterContext ctx = new SqlParameterContext(parameters);
+            List<long> result = all;
 
-            string sql = "1";
-
-            foreach (SubFilter sub in m_subfilters)
+            foreach (SubFilter filter in m_subfilters)
             {
-                string sub_sql = sub.ToSQL(ctx);
-
-                if (sub_sql == null)
-                {
-                    continue;
-                }
-
-                sql += " AND (" + sub_sql + ")";
+                result = result.Intersect(filter.Match(all)).ToList();
             }
 
-            return sql;
-        }
-
-        public bool Pass(ComicData comic)
-        {
-            foreach (SubFilter subfilter in m_subfilters)
-            {
-                if (!subfilter.Pass(comic))
-                {
-                    return false;
-                }
-            }
-
-            return true;
+            return result;
         }
 
         public bool IsEmpty()
@@ -404,12 +382,7 @@ namespace ComicReader.Utils.Search
     {
         public abstract string UniqueString { get; }
 
-        public virtual string ToSQL(SqlParameterContext ctx)
-        {
-            return null; // Not supported.
-        }
-
-        public abstract bool Pass(ComicData comic);
+        public abstract List<long> Match(List<long> all);
 
         public virtual bool ContainsFilter(string desc)
         {
@@ -424,26 +397,14 @@ namespace ComicReader.Utils.Search
 
         public override string UniqueString => "~" + m_subfilter.UniqueString;
 
-        public override string ToSQL(SqlParameterContext ctx)
-        {
-            string sub_sql = m_subfilter.ToSQL(ctx);
-
-            if (sub_sql == null)
-            {
-                return null;
-            }
-
-            return "NOT (" + sub_sql + ")";
-        }
-
         public SubFilterInverse(SubFilter subfilter)
         {
             m_subfilter = subfilter;
         }
 
-        public override bool Pass(ComicData comic)
+        public override List<long> Match(List<long> all)
         {
-            return !m_subfilter.Pass(comic);
+            return all.Except(m_subfilter.Match(all)).ToList();
         }
 
         public override bool ContainsFilter(string desc)
@@ -482,40 +443,16 @@ namespace ComicReader.Utils.Search
             m_unique_string = "or: " + string.Join(", ", all_unique_strings);
         }
 
-        public override string ToSQL(SqlParameterContext ctx)
+        public override List<long> Match(List<long> all)
         {
-            string sql = "";
+            List<long> result = new List<long>();
 
-            for (int i = 0; i < m_filters.Count; i++)
-            {
-                string sub_sql = m_filters[i].ToSQL(ctx);
-
-                if (sub_sql == null)
-                {
-                    return null;
-                }
-
-                if (i > 0)
-                {
-                    sql += " OR ";
-                }
-
-                sql += "(" + sub_sql + ")";
-            }
-
-            return sql;
-        }
-
-        public override bool Pass(ComicData comic)
-        {
             foreach (SubFilter filter in m_filters)
             {
-                if (filter.Pass(comic))
-                {
-                    return true;
-                }
+                result = result.Union(filter.Match(all)).ToList();
             }
-            return false;
+
+            return result;
         }
 
         public override bool ContainsFilter(string desc)
@@ -567,41 +504,16 @@ namespace ComicReader.Utils.Search
             m_unique_string = "and: " + string.Join(", ", all_unique_strings);
         }
 
-        public override string ToSQL(SqlParameterContext ctx)
+        public override List<long> Match(List<long> all)
         {
-            string sql = "";
+            List<long> result = all;
 
-            for (int i = 0; i < m_filters.Count; i++)
-            {
-                string sub_sql = m_filters[i].ToSQL(ctx);
-
-                if (sub_sql == null)
-                {
-                    return null;
-                }
-
-                if (i > 0)
-                {
-                    sql += " AND ";
-                }
-
-                sql += "(" + sub_sql + ")";
-            }
-
-            return sql;
-        }
-
-        public override bool Pass(ComicData comic)
-        {
             foreach (SubFilter filter in m_filters)
             {
-                if (!filter.Pass(comic))
-                {
-                    return false;
-                }
+                result = result.Intersect(filter.Match(all)).ToList();
             }
 
-            return true;
+            return result;
         }
 
         public override bool ContainsFilter(string desc)
@@ -633,37 +545,65 @@ namespace ComicReader.Utils.Search
             m_tag = tag.ToLower();
         }
 
-        public override string ToSQL(SqlParameterContext ctx)
+        private class MatchedItem
         {
-            return ctx.AddValue(m_tag) + " COLLATE NOCASE IN (SELECT " + ComicData.Field.Tag.Content +
-                " FROM " + SqliteDatabaseManager.TagTable + " WHERE " + ComicData.Field.Tag.TagCategoryId +
-                " IN (SELECT " + ComicData.Field.TagCategory.Id + " FROM " + SqliteDatabaseManager.TagCategoryTable +
-                " WHERE " + ComicData.Field.TagCategory.Name + "=" + ctx.AddValue(m_category) +
-                " COLLATE NOCASE AND " + SqliteDatabaseManager.ComicTable + "." + ComicData.Field.Id + "=" +
-                ComicData.Field.TagCategory.ComicId + "))";
-        }
+            public long TagCategoryId;
+            public long ComicId;
+        } 
 
-        public override bool Pass(ComicData comic)
+        public override List<long> Match(List<long> all)
         {
-            foreach (TagData tag_data in comic.Tags)
+            SqliteCommand command = SqliteDatabaseManager.NewCommand();
+
+            // Query matched tag categories.
+            List<MatchedItem> tag_category_matched = new List<MatchedItem>();
+
+            command.CommandText = "SELECT " + ComicData.Field.TagCategory.Id + "," + ComicData.Field.TagCategory.ComicId +
+                " FROM " + SqliteDatabaseManager.TagCategoryTable + " WHERE " + ComicData.Field.TagCategory.Name +
+                "=$category COLLATE NOCASE";
+            command.Parameters.AddWithValue("$category", m_category);
+            SqliteDataReader query = command.ExecuteReader();
+
+            while (query.Read())
             {
-                if (!tag_data.Name.ToLower().Equals(m_category))
+                tag_category_matched.Add(new MatchedItem
                 {
-                    continue;
-                }
-
-                foreach (string tag in tag_data.Tags)
-                {
-                    if (tag.ToLower().Equals(m_tag))
-                    {
-                        return true;
-                    }
-                }
-
-                return false;
+                    TagCategoryId = query.GetInt64(0),
+                    ComicId = query.GetInt64(1)
+                });
             }
 
-            return false;
+            query.Close();
+
+            // Query matched tags.
+            List<long> tag_matched = new List<long>();
+
+            command.CommandText = "SELECT " + ComicData.Field.Tag.TagCategoryId + " FROM " + SqliteDatabaseManager.TagTable +
+                " WHERE " + ComicData.Field.Tag.Content + "=$tag COLLATE NOCASE";
+            command.Parameters.AddWithValue("$tag", m_tag);
+            query = command.ExecuteReader();
+
+            while (query.Read())
+            {
+                tag_matched.Add(query.GetInt64(0));
+            }
+
+            query.Close();
+            command.Dispose();
+
+            // Intersect two.
+            IEnumerable<MatchedItem> matched = Utils.C3<MatchedItem, long, long>.Intersect(tag_category_matched, tag_matched,
+                (MatchedItem x) => x.TagCategoryId, (long x) => x,
+                new Utils.C1<long>.DefaultEqualityComparer());
+
+            List<long> results = new List<long>(matched.Count());
+
+            foreach (MatchedItem item in matched)
+            {
+                results.Add(item.ComicId);
+            }
+
+            return results;
         }
     }
 
@@ -672,14 +612,9 @@ namespace ComicReader.Utils.Search
     {
         public override string UniqueString => "all";
 
-        public override string ToSQL(SqlParameterContext ctx)
+        public override List<long> Match(List<long> all)
         {
-            return "1";
-        }
-
-        public override bool Pass(ComicData comic)
-        {
-            return true;
+            return all;
         }
     }
 
@@ -696,15 +631,24 @@ namespace ComicReader.Utils.Search
             m_directory = directory.ToLower().Replace('/', '\\');
         }
 
-        public override string ToSQL(SqlParameterContext ctx)
+        public override List<long> Match(List<long> all)
         {
-            return ComicData.Field.Directory + " LIKE " + ctx.AddValue(m_directory + "%");
-        }
+            List<long> results = new List<long>();
 
-        public override bool Pass(ComicData comic)
-        {
-            string comic_dir = comic.Directory.ToLower();
-            return comic_dir.Length >= m_directory.Length && comic_dir.Substring(0, m_directory.Length).Equals(m_directory);
+            SqliteCommand command = SqliteDatabaseManager.NewCommand();
+            command.CommandText = "SELECT " + ComicData.Field.Id + " FROM " + SqliteDatabaseManager.ComicTable + " WHERE "
+                + ComicData.Field.Directory + " LIKE $dir%";
+            command.Parameters.AddWithValue("$dir", m_directory);
+            SqliteDataReader query = command.ExecuteReader();
+
+            while (query.Read())
+            {
+                results.Add(query.GetInt64(0));
+            }
+
+            query.Close();
+            command.Dispose();
+            return results;
         }
     }
 
@@ -713,14 +657,23 @@ namespace ComicReader.Utils.Search
     {
         public override string UniqueString => "hidden";
 
-        public override string ToSQL(SqlParameterContext ctx)
+        public override List<long> Match(List<long> all)
         {
-            return ComicData.Field.Hidden + "=1";
-        }
+            List<long> results = new List<long>();
 
-        public override bool Pass(ComicData comic)
-        {
-            return comic.Hidden;
+            SqliteCommand command = SqliteDatabaseManager.NewCommand();
+            command.CommandText = "SELECT " + ComicData.Field.Id + " FROM " + SqliteDatabaseManager.ComicTable + " WHERE "
+                + ComicData.Field.Hidden + "=1";
+            SqliteDataReader query = command.ExecuteReader();
+
+            while (query.Read())
+            {
+                results.Add(query.GetInt64(0));
+            }
+
+            query.Close();
+            command.Dispose();
+            return results;
         }
     }
 
@@ -742,21 +695,23 @@ namespace ComicReader.Utils.Search
             m_valid = long.TryParse(id, out m_id);
         }
 
-        public override string ToSQL(SqlParameterContext ctx)
+        public override List<long> Match(List<long> all)
         {
-            if (m_valid)
-            {
-                return ComicData.Field.Id + "=" + m_id.ToString();
-            }
-            else
-            {
-                return "0";
-            }
-        }
+            List<long> results = new List<long>();
 
-        public override bool Pass(ComicData comic)
-        {
-            return m_valid && comic.Id == m_id;
+            SqliteCommand command = SqliteDatabaseManager.NewCommand();
+            command.CommandText = "SELECT " + ComicData.Field.Id + " FROM " + SqliteDatabaseManager.ComicTable + " WHERE "
+                + ComicData.Field.Id + "=" + m_id.ToString() + " LIMIT 1";
+            SqliteDataReader query = command.ExecuteReader();
+
+            while (query.Read())
+            {
+                results.Add(query.GetInt64(0));
+            }
+
+            query.Close();
+            command.Dispose();
+            return results;
         }
     }
 
@@ -778,21 +733,23 @@ namespace ComicReader.Utils.Search
             }
         }
 
-        public override string ToSQL(SqlParameterContext ctx)
+        public override List<long> Match(List<long> all)
         {
-            if (m_valid)
-            {
-                return ComicData.Field.Id + "=" + m_rating.ToString();
-            }
-            else
-            {
-                return "0";
-            }
-        }
+            List<long> results = new List<long>();
 
-        public override bool Pass(ComicData comic)
-        {
-            return m_valid && comic.Rating == m_rating;
+            SqliteCommand command = SqliteDatabaseManager.NewCommand();
+            command.CommandText = "SELECT " + ComicData.Field.Id + " FROM " + SqliteDatabaseManager.ComicTable + " WHERE "
+                + ComicData.Field.Rating + "=" + m_rating.ToString();
+            SqliteDataReader query = command.ExecuteReader();
+
+            while (query.Read())
+            {
+                results.Add(query.GetInt64(0));
+            }
+
+            query.Close();
+            command.Dispose();
+            return results;
         }
     }
 
@@ -808,27 +765,23 @@ namespace ComicReader.Utils.Search
             m_tag = tag.ToLower();
         }
 
-        public override string ToSQL(SqlParameterContext ctx)
+        public override List<long> Match(List<long> all)
         {
-            return ctx.AddValue(m_tag) + " COLLATE NOCASE IN (SELECT " + ComicData.Field.Tag.Content +
-                " FROM " + SqliteDatabaseManager.TagTable + " WHERE " + ComicData.Field.Tag.ComicId +
-                "=" + SqliteDatabaseManager.ComicTable + "." + ComicData.Field.Id + ")";
-        }
+            List<long> results = new List<long>();
 
-        public override bool Pass(ComicData comic)
-        {
-            foreach (TagData tag_data in comic.Tags)
+            SqliteCommand command = SqliteDatabaseManager.NewCommand();
+            command.CommandText = "SELECT DISTINCT " + ComicData.Field.Tag.ComicId + " FROM " +
+                SqliteDatabaseManager.TagTable + " WHERE " + ComicData.Field.Tag.Content + "=" +
+                "$tag COLLATE NOCASE";
+            command.Parameters.AddWithValue("$tag", m_tag);
+            SqliteDataReader query = command.ExecuteReader();
+
+            while (query.Read())
             {
-                foreach (string tag in tag_data.Tags)
-                {
-                    if (tag.ToLower().Equals(m_tag))
-                    {
-                        return true;
-                    }
-                }
+                results.Add(query.GetInt64(0));
             }
 
-            return false;
+            return results;
         }
     }
 }

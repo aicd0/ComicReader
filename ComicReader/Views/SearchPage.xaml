@@ -49,7 +49,7 @@
                                FontWeight="SemiBold"
                                TextTrimming="CharacterEllipsis" />
                     <TextBlock Text="{x:Bind Shared.FilterDetails, Mode=OneWay}"
-                               Foreground="{ThemeResource FilterTextForeground}"
+                               Foreground="{ThemeResource GreyTextForeground}"
                                FontSize="14"
                                FontWeight="Normal"
                                Visibility="{x:Bind Shared.FilterDetailsVisible, Mode=OneWay}"

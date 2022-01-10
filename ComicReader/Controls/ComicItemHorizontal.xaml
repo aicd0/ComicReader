@@ -23,6 +23,45 @@
 
     <Grid PointerPressed="{x:Bind Ctx.OnItemPressed}"
           Background="Transparent">
+        <Grid.ContextFlyout>
+            <MenuFlyout Opening="OnMenuFlyoutOpening">
+                <MenuFlyoutItem x:Uid="MenuFlyoutOpenInNewTab"
+                                Click="{x:Bind Ctx.OnOpenInNewTabClicked}"
+                                Icon="Document" />
+                <MenuFlyoutItem x:Uid="MenuFlyoutAddToFavorites"
+                                Click="{x:Bind Ctx.OnAddToFavoritesClicked}"
+                                Visibility="{x:Bind Ctx.IsFavorite, Converter={StaticResource BooleanToVisibilityNegationConverter}}"
+                                Icon="Favorite" />
+                <MenuFlyoutItem x:Uid="MenuFlyoutRemoveFromFavorites"
+                                Click="{x:Bind Ctx.OnRemoveFromFavoritesClicked}"
+                                Icon="Unfavorite"
+                                Visibility="{x:Bind Ctx.IsFavorite}" />
+                <MenuFlyoutItem x:Uid="MenuFlyoutHide"
+                                Visibility="{x:Bind Ctx.IsHide, Converter={StaticResource BooleanToVisibilityNegationConverter}}"
+                                Click="{x:Bind Ctx.OnHideClicked}">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                  Glyph="&#xE8FF;" />
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem x:Uid="MenuFlyoutUnhide"
+                                Visibility="{x:Bind Ctx.IsHide}"
+                                Click="{x:Bind Ctx.OnUnhideClicked}">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                  Glyph="&#xE7B3;" />
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutSeparator />
+                <MenuFlyoutItem x:Uid="MenuFlyoutSelect"
+                                Click="{x:Bind Ctx.OnSelectClicked}">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                  Glyph="&#xE762;" />
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+            </MenuFlyout>
+        </Grid.ContextFlyout>
         <Grid Width="300"
               Height="{StaticResource ComicItemHorizontalImageHeight}"
               Margin="10,8">
@@ -31,7 +70,7 @@
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <Grid Grid.Column="0">
-                <Rectangle Fill="#505050"
+                <Rectangle Fill="{ThemeResource ImagePlaceHolderBackground}"
                            Visibility="{x:Bind Ctx.IsImageLoaded, Converter={StaticResource BooleanToVisibilityNegationConverter}}" />
                 <Image Source="{x:Bind Ctx.Image}"
                        Stretch="UniformToFill" />
@@ -88,48 +127,6 @@
                           Margin="0,0,10,8"
                           Foreground="DeepSkyBlue" />
             </Grid>
-        </Grid>
-        <Grid Background="Transparent"
-              Visibility="{x:Bind IsContextFlyoutEnabled}">
-            <Grid.ContextFlyout>
-                <MenuFlyout>
-                    <MenuFlyoutItem x:Uid="MenuFlyoutOpenInNewTab"
-                                    Click="{x:Bind Ctx.OnOpenInNewTabClicked}"
-                                    Icon="Document" />
-                    <MenuFlyoutItem x:Uid="MenuFlyoutAddToFavorites"
-                                    Click="{x:Bind Ctx.OnAddToFavoritesClicked}"
-                                    Visibility="{x:Bind Ctx.IsFavorite, Converter={StaticResource BooleanToVisibilityNegationConverter}}"
-                                    Icon="Favorite" />
-                    <MenuFlyoutItem x:Uid="MenuFlyoutRemoveFromFavorites"
-                                    Click="{x:Bind Ctx.OnRemoveFromFavoritesClicked}"
-                                    Icon="Unfavorite"
-                                    Visibility="{x:Bind Ctx.IsFavorite}" />
-                    <MenuFlyoutItem x:Uid="MenuFlyoutHide"
-                                    Visibility="{x:Bind Ctx.IsHide, Converter={StaticResource BooleanToVisibilityNegationConverter}}"
-                                    Click="{x:Bind Ctx.OnHideClicked}">
-                        <MenuFlyoutItem.Icon>
-                            <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                      Glyph="&#xE8FF;" />
-                        </MenuFlyoutItem.Icon>
-                    </MenuFlyoutItem>
-                    <MenuFlyoutItem x:Uid="MenuFlyoutUnhide"
-                                    Visibility="{x:Bind Ctx.IsHide}"
-                                    Click="{x:Bind Ctx.OnUnhideClicked}">
-                        <MenuFlyoutItem.Icon>
-                            <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                      Glyph="&#xE7B3;" />
-                        </MenuFlyoutItem.Icon>
-                    </MenuFlyoutItem>
-                    <MenuFlyoutSeparator />
-                    <MenuFlyoutItem x:Uid="MenuFlyoutSelect"
-                                    Click="{x:Bind Ctx.OnSelectClicked}">
-                        <MenuFlyoutItem.Icon>
-                            <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                      Glyph="&#xE762;" />
-                        </MenuFlyoutItem.Icon>
-                    </MenuFlyoutItem>
-                </MenuFlyout>
-            </Grid.ContextFlyout>
         </Grid>
     </Grid>
 </UserControl>

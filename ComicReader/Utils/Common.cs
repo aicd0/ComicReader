@@ -199,6 +199,19 @@ namespace ComicReader.Utils
     interface IC1<out T> { }
     public class C1<T> : IC1<T>
     {
+        public class DefaultEqualityComparer : EqualityComparer<T>
+        {
+            public override bool Equals(T x, T y)
+            {
+                return x.Equals(y);
+            }
+
+            public override int GetHashCode(T obj)
+            {
+                return obj.GetHashCode();
+            }
+        }
+
         public static void NotifyCollectionChanged(ObservableCollection<T> collection, T item)
         {
             int idx = collection.IndexOf(item);
