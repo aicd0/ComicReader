@@ -71,7 +71,7 @@
                 <MenuFlyoutItem x:Uid="MenuFlyoutRemoveFromFavorites"
                                 Click="{x:Bind Ctx.OnRemoveFromFavoritesClicked}"
                                 Visibility="{x:Bind Ctx.IsFavorite}"
-                                Icon="Unfavorite"/>
+                                Icon="Unfavorite" />
                 <MenuFlyoutSeparator />
                 <MenuFlyoutItem x:Uid="MenuFlyoutHide"
                                 Click="{x:Bind Ctx.OnHideClicked}"
@@ -103,27 +103,26 @@
                                    Opacity="0" />
                         </Grid>
                         <Border CornerRadius="5">
-                            <Image Source="{x:Bind Ctx.Image}"
-                                   Opacity="0"/>
+                            <Image Source="{x:Bind Ctx.Image}" />
                         </Border>
-                            <Grid Width="26"
-                                  Height="26"
-                                  Margin="2"
-                                  VerticalAlignment="Bottom"
-                                  HorizontalAlignment="Right"
-                                  Visibility="{x:Bind Ctx.IsFavorite}">
-                                <Border CornerRadius="5">
-                                    <Border.Background>
-                                        <muxm:AcrylicBrush BackgroundSource="Backdrop"
-                                                           TintColor="DarkViolet"
-                                                           TintOpacity="0.0"
-                                                           TintLuminosityOpacity="0.8" />
-                                    </Border.Background>
-                                </Border>
-                                <FontIcon Glyph="&#xE735;"
-                                          FontSize="14"
-                                          Foreground="SkyBlue" />
-                            </Grid>
+                        <Grid Width="26"
+                              Height="26"
+                              Margin="2"
+                              VerticalAlignment="Bottom"
+                              HorizontalAlignment="Right"
+                              Visibility="{x:Bind Ctx.IsFavorite}">
+                            <Border CornerRadius="5">
+                                <Border.Background>
+                                    <muxm:AcrylicBrush BackgroundSource="Backdrop"
+                                                       TintColor="DarkViolet"
+                                                       TintOpacity="0.0"
+                                                       TintLuminosityOpacity="0.8" />
+                                </Border.Background>
+                            </Border>
+                            <FontIcon Glyph="&#xE735;"
+                                      FontSize="14"
+                                      Foreground="SkyBlue" />
+                        </Grid>
                     </Grid>
                 </Grid>
             </Grid>

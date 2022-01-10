@@ -369,15 +369,15 @@ namespace ComicReader.Views
                 keywords[i] = keywords[i].ToLower();
             }
 
-            var matched = new List<Match>();
-
             SqliteCommand command = SqliteDatabaseManager.NewCommand();
-            command.CommandText = "SELECT " + ComicData.FieldId + "," +
-                ComicData.FieldTitle1 + "," + ComicData.FieldTitle2 + " FROM " +
-                SqliteDatabaseManager.ComicTable;
+            command.CommandText = "SELECT " + ComicData.Field.Id + "," +
+                ComicData.Field.Title1 + "," + ComicData.Field.Title2 + " FROM " +
+                SqliteDatabaseManager.ComicTable + " WHERE " + m_filter.ToSQL(command.Parameters);
 
             await ComicDataManager.WaitLock(db); // Lock on.
             SqliteDataReader query = await command.ExecuteReaderAsync();
+
+            var matched = new List<Match>();
 
             while(query.Read())
             {

@@ -46,23 +46,11 @@
 
                 <StackPanel Orientation="Vertical"
                             Grid.Column="0">
+                    <!-- Image Source -->
                     <TextBlock x:Uid="ImageOnDevice"
                                Style="{StaticResource SettingsPageSubTitleTextBlock}" />
                     <Button x:Uid="ChooseLocationButton"
                             Click="ChooseLocationsClick" />
-                    <Grid Height="30" />
-                    <StackPanel Orientation="Horizontal">
-                        <Button x:Uid="RescanFilesButton"
-                                Click="OnRescanFilesClicked"
-                                IsEnabled="{x:Bind Shared.IsRescanning, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}" />
-                        <ProgressRing IsActive="{x:Bind Shared.IsRescanning, Mode=OneWay}"
-                                      VerticalAlignment="Center"
-                                      Margin="20,0,0,0"/>
-                    </StackPanel>
-                    <Grid Height="8" />
-                    <TextBlock x:Uid="RescanFilesDetail"
-                               Style="{StaticResource SettingsPageBodyTextBlock}"
-                               Foreground="#C0C0C0" />
 
                     <!-- Reader -->
                     <TextBlock x:Uid="Reader"
@@ -96,6 +84,22 @@
                         <RadioButton x:Uid="ThemeUseSystemSetting"
                                      IsChecked="{x:Bind Shared.AppearanceUseSystemSettingChecked, Mode=TwoWay}" />
                     </muxc:RadioButtons>
+
+                    <!-- Advanced -->
+                    <TextBlock x:Uid="Advanced"
+                               Style="{StaticResource SettingsPageSubTitleTextBlock}" />
+                    <StackPanel Orientation="Horizontal">
+                        <Button x:Uid="RescanFilesButton"
+                                Click="OnRescanFilesClicked"
+                                IsEnabled="{x:Bind Shared.IsRescanning, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}" />
+                        <ProgressRing IsActive="{x:Bind Shared.IsRescanning, Mode=OneWay}"
+                                      VerticalAlignment="Center"
+                                      Margin="20,0,0,0" />
+                    </StackPanel>
+                    <Grid Height="8" />
+                    <TextBlock x:Uid="RescanFilesDetail"
+                               Style="{StaticResource SettingsPageBodyTextBlock}"
+                               Foreground="#C0C0C0" />
                 </StackPanel>
 
                 <StackPanel Orientation="Vertical"
@@ -119,7 +123,11 @@
                     <!-- About -->
                     <TextBlock x:Uid="About"
                                Style="{StaticResource SettingsPageSubTitleTextBlock}" />
-                    <TextBlock Text="Version: 1.0.0"
+                    <TextBlock x:Name="AboutBuildVersionControl"
+                               Text="AboutBuildVersion"
+                               Style="{StaticResource SettingsPageBodyTextBlock}" />
+                    <TextBlock x:Name="AboutCopyrightControl"
+                               Text="© AboutCopyright"
                                Style="{StaticResource SettingsPageBodyTextBlock}" />
 
                     <!-- Disclaimer -->

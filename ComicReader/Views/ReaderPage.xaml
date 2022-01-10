@@ -11,7 +11,7 @@
       xmlns:converters="using:ComicReader.Converters"
       xmlns:data="using:ComicReader.DesignData"
       mc:Ignorable="d"
-      NavigationCacheMode="Required">
+      NavigationCacheMode="Enabled">
 
     <Page.Resources>
         <ResourceDictionary>

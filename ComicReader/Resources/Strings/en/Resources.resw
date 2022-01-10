@@ -120,6 +120,9 @@
   <data name="About.Text" xml:space="preserve">
     <value>About</value>
   </data>
+  <data name="AboutCopyright" xml:space="preserve">
+    <value>© 2021 $author. All rights reserved.</value>
+  </data>
   <data name="AddFolderButton.Content" xml:space="preserve">
     <value>add a folder</value>
   </data>
@@ -134,6 +137,9 @@
   </data>
   <data name="AddToFavorites" xml:space="preserve">
     <value>Add to favorites</value>
+  </data>
+  <data name="Advanced.Text" xml:space="preserve">
+    <value>Advanced</value>
   </data>
   <data name="AllComics" xml:space="preserve">
     <value>All comics</value>
@@ -155,6 +161,9 @@
   </data>
   <data name="ApplyOnNextLaunch.Text" xml:space="preserve">
     <value>You'll see your change the next time you start the app</value>
+  </data>
+  <data name="AppName" xml:space="preserve">
+    <value>Comic Reader</value>
   </data>
   <data name="BackButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>Go back</value>
@@ -331,7 +340,7 @@
     <value>Rescan files</value>
   </data>
   <data name="RescanFilesDetail.Text" xml:space="preserve">
-    <value>NOTICE: In most cases this operation is unnecessary and could lead to high CPU occupation which may drain your battery quickly. Use this function only when you need to update some comic information that has been modified externally.</value>
+    <value>NOTICE: In most cases this operation is unnecessary and could lead to high CPU occupation which may drain your battery quickly. Use this function only when you need to update some comic information that‘s been modified externally.</value>
   </data>
   <data name="SaveHistory.Text" xml:space="preserve">
     <value>Save browsing history</value>

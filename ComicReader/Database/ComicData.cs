@@ -1,6 +1,7 @@
 ﻿using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Threading;
@@ -70,49 +71,51 @@ namespace ComicReader.Database
         public List<TagData> Tags = new List<TagData>();
         public List<double> ImageAspectRatios = new List<double>();
 
-        // Field names.
-        public const string FieldId = "id";
-        public const string FieldTitle1 = "title1";
-        public const string FieldTitle2 = "title2";
-        public const string FieldDirectory = "dir";
-        public const string FieldHidden = "hidden";
-        public const string FieldRating = "rating";
-        public const string FieldProgress = "progress";
-        public const string FieldLastVisit = "last_visit";
-        public const string FieldLastPosition = "last_pos";
-        public const string FieldCoverFileName = "cover_file_name";
-        public const string FieldTags = "tags";
-        public const string FieldImageAspectRatios = "image_aspect_ratios";
-
         // Fields.
-        private List<SqlKey> AllFields
+        public class Field
         {
-            get
+            // Field comic.
+            public const string Id = "id";
+            public const string Title1 = "title1";
+            public const string Title2 = "title2";
+            public const string Directory = "dir";
+            public const string Hidden = "hidden";
+            public const string Rating = "rating";
+            public const string Progress = "progress";
+            public const string LastVisit = "last_visit";
+            public const string LastPosition = "last_pos";
+            public const string CoverFileName = "cover_file_name";
+            public const string ImageAspectRatios = "image_aspect_ratios";
+
+            // Field tag category.
+            public class TagCategory
             {
-                List<SqlKey> all = new List<SqlKey>();
-                all.AddRange(BasicFields);
-                all.AddRange(ImageAspectRatiosFields);
-                return all;
+                public const string Id = "id";
+                public const string Name = "name";
+                public const string ComicId = "comic_id";
+            }
+
+            // Field tag.
+            public class Tag
+            {
+                public const string Content = "content";
+                public const string ComicId = "comic_id";
+                public const string TagCategoryId = "cate_id";
             }
         }
-
-        private List<SqlKey> BasicFields => new List<SqlKey>
+        
+        public List<SqlKey> AllFields => new List<SqlKey>
         {
-            new SqlKey(FieldTitle1, Title1),
-            new SqlKey(FieldTitle2, Title2),
-            new SqlKey(FieldDirectory, Directory),
-            new SqlKey(FieldHidden, Hidden),
-            new SqlKey(FieldRating, Rating),
-            new SqlKey(FieldProgress, Progress),
-            new SqlKey(FieldLastVisit, LastVisit),
-            new SqlKey(FieldLastPosition, LastPosition),
-            new SqlKey(FieldCoverFileName, CoverFileName),
-            new SqlKey(FieldTags, Tags, blob: true),
-        };
-
-        private List<SqlKey> ImageAspectRatiosFields => new List<SqlKey>
-        {
-            new SqlKey(FieldImageAspectRatios, ImageAspectRatios, blob: true),
+            new SqlKey(Field.Title1, Title1),
+            new SqlKey(Field.Title2, Title2),
+            new SqlKey(Field.Directory, Directory),
+            new SqlKey(Field.Hidden, Hidden),
+            new SqlKey(Field.Rating, Rating),
+            new SqlKey(Field.Progress, Progress),
+            new SqlKey(Field.LastVisit, LastVisit),
+            new SqlKey(Field.LastPosition, LastPosition),
+            new SqlKey(Field.CoverFileName, CoverFileName),
+            new SqlKey(Field.ImageAspectRatios, ImageAspectRatios, blob: true),
         };
 
         // Not in database.
@@ -171,50 +174,145 @@ namespace ComicReader.Database
         }
 
         // Saving.
-        private async Task Save(LockContext db, List<SqlKey> keys)
+        private async Task _SaveTags(LockContext db, bool remove_old = true)
         {
-            if (Id < 0)
+            if (remove_old)
             {
-                long rowid = await SqliteDatabaseManager.Insert(db, SqliteDatabaseManager.ComicTable, AllFields);
+                SqliteCommand command = SqliteDatabaseManager.NewCommand();
+                command.CommandText = "DELETE FROM " + SqliteDatabaseManager.TagCategoryTable
+                    + " WHERE " + Field.TagCategory.ComicId + "=" + Id;
+                command.ExecuteNonQuery();
+            }
+
+            foreach (TagData category in Tags)
+            {
+                // Insert to tag category table.
+                string name = category.Name;
+
+                List<SqlKey> tag_category_fields = new List<SqlKey>
+                {
+                    new SqlKey(Field.TagCategory.Name, name),
+                    new SqlKey(Field.TagCategory.ComicId, Id),
+                };
+
+                long rowid = await SqliteDatabaseManager.Insert(db, SqliteDatabaseManager.TagCategoryTable, tag_category_fields);
 
                 // Retrieve ID from inserted row.
                 SqliteCommand command = SqliteDatabaseManager.NewCommand();
-                command.CommandText = "SELECT " + FieldId + " FROM " +
-                    SqliteDatabaseManager.ComicTable + " WHERE ROWID=$rowid";
+                command.CommandText = "SELECT " + Field.TagCategory.Id + " FROM " +
+                    SqliteDatabaseManager.TagCategoryTable + " WHERE ROWID=$rowid";
                 command.Parameters.AddWithValue("$rowid", rowid);
 
-                await ComicDataManager.WaitLock(db);
-                Id = (long)command.ExecuteScalar();
-                ComicDataManager.ReleaseLock(db);
+                long tag_category_id = (long)command.ExecuteScalar();
 
-                command.Dispose();
+                foreach (string tag in category.Tags)
+                {
+                    List<SqlKey> tag_fields = new List<SqlKey>
+                    {
+                        new SqlKey(Field.Tag.Content, tag),
+                        new SqlKey(Field.Tag.ComicId, Id),
+                        new SqlKey(Field.Tag.TagCategoryId, tag_category_id),
+                    };
+
+                    _ = await SqliteDatabaseManager.Insert(db, SqliteDatabaseManager.TagTable, tag_fields);
+                }
+            }
+        }
+
+        private async Task _Insert(LockContext db)
+        {
+            // Insert to comic table.
+            long rowid = await SqliteDatabaseManager.Insert(db, SqliteDatabaseManager.ComicTable, AllFields);
+
+            // Retrieve ID from inserted row.
+            SqliteCommand command = SqliteDatabaseManager.NewCommand();
+            command.CommandText = "SELECT " + Field.Id + " FROM " +
+                SqliteDatabaseManager.ComicTable + " WHERE ROWID=$rowid";
+            command.Parameters.AddWithValue("$rowid", rowid);
+
+            await ComicDataManager.WaitLock(db);
+            Id = (long)command.ExecuteScalar();
+            ComicDataManager.ReleaseLock(db);
+
+            // Cleanups.
+            command.Dispose();
+
+            // Insert tags.
+            await _SaveTags(db, remove_old: false);
+        }
+
+        private async Task Save(LockContext db, List<SqlKey> keys, bool save_tags)
+        {
+            await ComicDataManager.WaitLock(db); // Lock on.
+            if (Id < 0)
+            {
+                await _Insert(db);
             }
             else
             {
-                SqlKey id = new SqlKey(FieldId, Id);
+                SqlKey id = new SqlKey(Field.Id, Id);
                 await SqliteDatabaseManager.Update(db, SqliteDatabaseManager.ComicTable, id, keys);
+
+                if (save_tags)
+                {
+                    await _SaveTags(db);
+                }
             }
+            ComicDataManager.ReleaseLock(db); // Lock off.
+        }
+
+        public async Task Save(LockContext db)
+        {
+            await Save(db, AllFields, save_tags: true);
         }
 
         public async Task SaveBasic(LockContext db)
         {
-            await Save(db, BasicFields);
+            List<SqlKey> fields = new List<SqlKey>
+            {
+                new SqlKey(Field.Title1, Title1),
+                new SqlKey(Field.Title2, Title2),
+                new SqlKey(Field.Directory, Directory),
+                new SqlKey(Field.Hidden, Hidden),
+                new SqlKey(Field.Rating, Rating),
+                new SqlKey(Field.Progress, Progress),
+                new SqlKey(Field.LastVisit, LastVisit),
+                new SqlKey(Field.LastPosition, LastPosition),
+                new SqlKey(Field.CoverFileName, CoverFileName),
+            };
+
+            await Save(db, fields, save_tags: false);
+        }
+
+        public async Task SaveTags(LockContext db)
+        {
+            List<SqlKey> fields = new List<SqlKey>();
+
+            await Save(db, fields, save_tags: true);
         }
 
         public async Task SaveImageAspectRatios(LockContext db)
         {
-            await Save(db, ImageAspectRatiosFields);
+            List<SqlKey> fields = new List<SqlKey>
+            {
+                new SqlKey(Field.ImageAspectRatios, ImageAspectRatios, blob: true),
+            };
+
+            await Save(db, fields, save_tags: false);
         }
     };
 
     class ComicDataManager
     {
         private const string ComicInfoFileName = "info.txt";
-        public static Action<LockContext> OnUpdated;
-        public static bool IsRescanning { get; private set; } = false;
-        private static readonly SemaphoreSlim m_table_lock = new SemaphoreSlim(1);
-        private static readonly Utils.CancellationLock m_update_lock = new Utils.CancellationLock();
 
+        // Subscriptions.
+        public static Action<LockContext> OnUpdated;
+
+        // Observers.
+        public static bool IsRescanning { get; private set; } = false;
+
+        // Resources.
         private static string m_default_tags = "";
         private static string DefaultTags
         {
@@ -230,6 +328,10 @@ namespace ComicReader.Database
                 return m_default_tags;
             } 
         }
+
+        // Locks.
+        private static readonly SemaphoreSlim m_table_lock = new SemaphoreSlim(1);
+        private static readonly Utils.CancellationLock m_update_lock = new Utils.CancellationLock();
 
         public static async Task WaitLock(LockContext db)
         {
@@ -257,10 +359,7 @@ namespace ComicReader.Database
 
         public static async Task<ComicData> From(LockContext db, SqliteDataReader query)
         {
-            bool reset_basic = false;
-            bool reset_image_aspect_ratios = false;
-
-            // Non-blob fields.
+            // Directly imported fields.
             long id = query.GetInt64(0);
             string title1 = query.GetString(1);
             string title2 = query.GetString(2);
@@ -272,24 +371,54 @@ namespace ComicReader.Database
             double last_position = query.GetDouble(8);
             string cover_file_name = query.GetString(9);
 
-            // Blob fields.
-            List<TagData> tags = new List<TagData>();
-            List<double> image_aspect_ratios = new List<double>();
-
             // Tags
-            try
+            List<TagData> tags = new List<TagData>();
+
+            SqliteCommand tag_category_command = SqliteDatabaseManager.NewCommand();
+            tag_category_command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.TagCategoryTable +
+                " WHERE " + ComicData.Field.TagCategory.ComicId + "=" + id.ToString();
+
+            await ComicDataManager.WaitLock(db);
+            SqliteDataReader tag_category_query = tag_category_command.ExecuteReader();
+            ComicDataManager.ReleaseLock(db);
+
+            while (tag_category_query.Read())
             {
-                tags = (List<TagData>)await Utils.C0.DeserializeFromStream(query.GetStream(10));
+                long tag_category_id = tag_category_query.GetInt64(0);
+                string name = tag_category_query.GetString(1);
+
+                TagData tag_data = new TagData
+                {
+                    Name = name
+                };
+
+                SqliteCommand tag_command = SqliteDatabaseManager.NewCommand();
+                tag_command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.TagTable +
+                    " WHERE " + ComicData.Field.Tag.TagCategoryId + "=" + tag_category_id.ToString();
+
+                await ComicDataManager.WaitLock(db);
+                SqliteDataReader tag_query = tag_command.ExecuteReader();
+                ComicDataManager.ReleaseLock(db);
+
+                while (tag_query.Read())
+                {
+                    string tag = tag_query.GetString(0);
+                    tag_data.Tags.Add(tag);
+                }
+
+                tags.Add(tag_data);
+                tag_command.Dispose();
             }
-            catch (SerializationException)
-            {
-                reset_basic = true;
-            }
+
+            tag_category_command.Dispose();
 
             // ImageAspectRatios
+            bool reset_image_aspect_ratios = false;
+            List<double> image_aspect_ratios = new List<double>();
+
             try
             {
-                image_aspect_ratios = (List<double>)await Utils.C0.DeserializeFromStream(query.GetStream(11));
+                image_aspect_ratios = (List<double>)await Utils.C0.DeserializeFromStream(query.GetStream(10));
             }
             catch (SerializationException)
             {
@@ -302,13 +431,7 @@ namespace ComicReader.Database
             comic.From(id, title1, title2, directory, hidden, rating, progress,
                 last_visit, last_position, cover_file_name, tags, image_aspect_ratios);
 
-            // Post processes.
-            if (reset_basic)
-            {
-                await UpdateInfo(comic);
-                await comic.SaveBasic(db);
-            }
-
+            // Post-procedures.
             if (reset_image_aspect_ratios)
             {
                 await comic.SaveImageAspectRatios(db);
@@ -344,19 +467,19 @@ namespace ComicReader.Database
 
         public static async Task<ComicData> FromId(LockContext db, long id)
         {
-            return await From(db, ComicData.FieldId, id);
+            return await From(db, ComicData.Field.Id, id);
         }
 
         public static async Task<ComicData> FromDirectory(LockContext db, string dir)
         {
-            return await From(db, ComicData.FieldDirectory, dir);
+            return await From(db, ComicData.Field.Directory, dir);
         }
 
         private static async Task RemoveWithDirectory(LockContext db, string dir)
         {
             SqliteCommand command = SqliteDatabaseManager.NewCommand();
-            command.CommandText = @"DELETE FROM " + SqliteDatabaseManager.ComicTable +
-                " WHERE " + ComicData.FieldDirectory + " LIKE @pattern";
+            command.CommandText = "DELETE FROM " + SqliteDatabaseManager.ComicTable +
+                " WHERE " + ComicData.Field.Directory + " LIKE @pattern";
             command.Parameters.AddWithValue("@pattern", dir + "%");
 
             await ComicDataManager.WaitLock(db);
@@ -385,7 +508,7 @@ namespace ComicReader.Database
 
                 {
                     SqliteCommand command = SqliteDatabaseManager.NewCommand();
-                    command.CommandText = "SELECT " + ComicData.FieldDirectory +
+                    command.CommandText = "SELECT " + ComicData.Field.Directory +
                         " FROM " + SqliteDatabaseManager.ComicTable;
 
                     await ComicDataManager.WaitLock(db); // Lock on.
@@ -426,10 +549,10 @@ namespace ComicReader.Database
                         continue;
                     }
 
-                    var ctx = new Utils.SystemIO.SubFoldersDeepSearchContext(folder_path);
+                    var ctx = new Utils.Win32IO.SubFoldersDeepSearchContext(folder_path);
                     bool initial_loop = true;
 
-                    while (Utils.SystemIO.SubFoldersDeep(ctx, out List<string> dirs, 500))
+                    while (Utils.Win32IO.SubFoldersDeep(ctx, out List<string> dirs, 500))
                     {
                         if (initial_loop)
                         {
@@ -528,7 +651,7 @@ namespace ComicReader.Database
 
         private static async Task _AddOrUpdateFolder(LockContext db, string path, bool update)
         {
-            List<string> file_names = Utils.SystemIO.SubFiles(path, "*");
+            List<string> file_names = Utils.Win32IO.SubFiles(path, "*");
             bool info_file_exist = false;
 
             for (int i = file_names.Count - 1; i >= 0; i--)
@@ -586,7 +709,7 @@ namespace ComicReader.Database
 
                 if (r.Successful)
                 {
-                    await comic.SaveBasic(db);
+                    await comic.Save(db);
                     return;
                 }
             }
@@ -611,7 +734,7 @@ namespace ComicReader.Database
                 comic.Tags.Add(default_tag);
             }
 
-            await comic.SaveBasic(db);
+            await comic.Save(db);
         }
 
         public static async Task Hide(LockContext db, ComicData comic)
@@ -762,15 +885,19 @@ namespace ComicReader.Database
 
         public static async RawTask UpdateInfo(ComicData comic)
         {
-            TaskResult r = await CompleteInfoFile(comic, false);
+            string path = comic.Directory + "\\" + ComicInfoFileName;
+            string text;
 
-            if (!r.Successful)
+            try
             {
-                return r;
+                text = await Utils.Win32IO.ReadFileFromPath(path);
+            }
+            catch (FileNotFoundException)
+            {
+                return new TaskResult(TaskException.FileNotExists);
             }
 
-            string content = await FileIO.ReadTextAsync(comic.InfoFile);
-            ParseInfo(content, comic);
+            ParseInfo(text, comic);
             return new TaskResult();
         }
 

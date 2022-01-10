@@ -27,6 +27,8 @@ namespace ComicReader.Database
     public class SqliteDatabaseManager
     {
         public static string ComicTable = "comics";
+        public static string TagCategoryTable = "tag_categories";
+        public static string TagTable = "tags";
 
         private static StorageFolder DatabaseFolder => ApplicationData.Current.LocalFolder;
         private static string DatabaseFileName => "database.db";
@@ -39,28 +41,45 @@ namespace ComicReader.Database
             // Create database.
             await DatabaseFolder.CreateFileAsync(DatabaseFileName, CreationCollisionOption.OpenIfExists);
 
-            // Create tables.
+            // Build connection.
             SqliteConnection connection =
                 new SqliteConnection($"Filename={DatabasePath}");
             connection.Open();
             SqliteCommand command = connection.CreateCommand();
 
+            // Create comic table.
             command.CommandText = "CREATE TABLE IF NOT EXISTS " + ComicTable + " (" +
-                ComicData.FieldId + " INTEGER PRIMARY KEY AUTOINCREMENT," + // 0
-                ComicData.FieldTitle1 + " TEXT," + // 1
-                ComicData.FieldTitle2 + " TEXT," + // 2
-                ComicData.FieldDirectory + " TEXT NOT NULL," + // 3
-                ComicData.FieldHidden + " BOOLEAN NOT NULL," + // 4
-                ComicData.FieldRating + " INTEGER NOT NULL," + // 5
-                ComicData.FieldProgress + " INTEGER NOT NULL," + // 6
-                ComicData.FieldLastVisit + " TIMESTAMP NOT NULL," + // 7
-                ComicData.FieldLastPosition + " REAL NOT NULL," + // 8
-                ComicData.FieldCoverFileName + " TEXT," + // 9
-                ComicData.FieldTags + " BLOB," + // 10
-                ComicData.FieldImageAspectRatios + " BLOB)"; // 11
+                ComicData.Field.Id + " INTEGER PRIMARY KEY AUTOINCREMENT," + // 0
+                ComicData.Field.Title1 + " TEXT," + // 1
+                ComicData.Field.Title2 + " TEXT," + // 2
+                ComicData.Field.Directory + " TEXT NOT NULL," + // 3
+                ComicData.Field.Hidden + " BOOLEAN NOT NULL," + // 4
+                ComicData.Field.Rating + " INTEGER NOT NULL," + // 5
+                ComicData.Field.Progress + " INTEGER NOT NULL," + // 6
+                ComicData.Field.LastVisit + " TIMESTAMP NOT NULL," + // 7
+                ComicData.Field.LastPosition + " REAL NOT NULL," + // 8
+                ComicData.Field.CoverFileName + " TEXT," + // 9
+                ComicData.Field.ImageAspectRatios + " BLOB)"; // 10
             command.ExecuteNonQuery();
 
+            // Create tag category table.
+            command.CommandText = "CREATE TABLE IF NOT EXISTS " + TagCategoryTable + " (" +
+                ComicData.Field.TagCategory.Id + " INTEGER PRIMARY KEY AUTOINCREMENT," + // 0
+                ComicData.Field.TagCategory.Name + " TEXT," + // 1
+                ComicData.Field.TagCategory.ComicId + " INTEGER REFERENCES " + ComicTable + "(" + ComicData.Field.Id + ") ON DELETE CASCADE)"; // 2
+            command.ExecuteNonQuery();
+
+            // Create tag table.
+            command.CommandText = "CREATE TABLE IF NOT EXISTS " + TagTable + " (" +
+                ComicData.Field.Tag.Content + " TEXT," + // 0
+                ComicData.Field.Tag.ComicId + " INTEGER NOT NULL," + // 1
+                ComicData.Field.Tag.TagCategoryId + " INTEGER REFERENCES " + TagCategoryTable + "(" + ComicData.Field.TagCategory.Id + ") ON DELETE CASCADE)"; // 2
+            command.ExecuteNonQuery();
+            
+            // Cleanups.
             command.Dispose();
+
+            // Enable database.
             m_connection = connection;
         }
 
@@ -105,6 +124,7 @@ namespace ComicReader.Database
 
             await ComicDataManager.WaitLock(db); // Lock on.
             long rowid = (long)command.ExecuteScalar();
+            command.Dispose();
 
             // Copy to blobs.
             foreach (var pairs in blobs)
@@ -120,13 +140,15 @@ namespace ComicReader.Database
             }
             ComicDataManager.ReleaseLock(db); // Lock off.
 
-            command.Dispose();
             return rowid;
         }
 
         public static async Task Update(LockContext db, string table, SqlKey primary_key, List<SqlKey> keys)
         {
-            if (keys.Count == 0) return;
+            if (keys.Count == 0)
+            {
+                return;
+            }
 
             List<string> fields = new List<string>();
             var blobs = new List<KeyValuePair<string, MemoryStream>>();

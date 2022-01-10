@@ -34,8 +34,7 @@
                 <Rectangle Fill="#505050"
                            Visibility="{x:Bind Ctx.IsImageLoaded, Converter={StaticResource BooleanToVisibilityNegationConverter}}" />
                 <Image Source="{x:Bind Ctx.Image}"
-                       Stretch="UniformToFill"
-                       Opacity="0"/>
+                       Stretch="UniformToFill" />
             </Grid>
             <Grid Grid.Column="1">
                 <Grid Padding="12,2,8,5">

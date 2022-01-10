@@ -49,6 +49,7 @@ namespace ComicReader.Views
 
                 ComicDataManager.ParseInfo(text, m_comic);
                 await m_comic.SaveBasic(db);
+                await m_comic.SaveTags(db);
 
                 Utils.TaskQueueManager.AppendTask(
                     ComicDataManager.SaveInfoFileSealed(m_comic), "Saving...");

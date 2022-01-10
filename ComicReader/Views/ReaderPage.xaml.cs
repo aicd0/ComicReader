@@ -1315,13 +1315,10 @@ namespace ComicReader.Views
                 Shared.NavigationPageShared.CurrentPageType = Utils.Tab.PageType.Reader;
                 tab_id.Type = Utils.Tab.PageType.Reader;
 
-                if (m_comic != tab_id.RequestArgs)
-                {
-                    ComicData comic = (ComicData)tab_id.RequestArgs;
-                    tab_id.Tab.Header = comic.Title1;
-                    tab_id.Tab.IconSource = new muxc.SymbolIconSource { Symbol = Symbol.Document };
-                    await LoadComic(db, comic);
-                }
+                ComicData comic = (ComicData)tab_id.RequestArgs;
+                tab_id.Tab.Header = comic.Title1;
+                tab_id.Tab.IconSource = new muxc.SymbolIconSource { Symbol = Symbol.Document };
+                await LoadComic(db, comic);
             });
         }
 

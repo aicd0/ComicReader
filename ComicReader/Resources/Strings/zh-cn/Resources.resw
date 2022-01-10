@@ -120,6 +120,9 @@
   <data name="About.Text" xml:space="preserve">
     <value>关于</value>
   </data>
+  <data name="AboutCopyright" xml:space="preserve">
+    <value>© 2021 $author。保留所有权利。</value>
+  </data>
   <data name="AddFolderButton.Content" xml:space="preserve">
     <value>添加文件夹</value>
   </data>
@@ -134,6 +137,9 @@
   </data>
   <data name="AddToFavorites" xml:space="preserve">
     <value>添加收藏</value>
+  </data>
+  <data name="Advanced.Text" xml:space="preserve">
+    <value>高级</value>
   </data>
   <data name="AllComics" xml:space="preserve">
     <value>所有漫画</value>
@@ -155,6 +161,9 @@
   </data>
   <data name="ApplyOnNextLaunch.Text" xml:space="preserve">
     <value>您将在下次应用启动时看到您的更改</value>
+  </data>
+  <data name="AppName" xml:space="preserve">
+    <value>漫画阅读器</value>
   </data>
   <data name="BackButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>返回</value>
@@ -331,7 +340,7 @@
     <value>重新扫描文件</value>
   </data>
   <data name="RescanFilesDetail.Text" xml:space="preserve">
-    <value>提示: 在大多数情况下该操作非必需且可能引起较高的CPU占用，进而减少您的电池使用时间。仅当部分漫画信息被从外部修改时可使用该功能同步数据库。</value>
+    <value>提示: 在大多数情况下该操作非必需且可能引起较高的CPU占用，进而减少您的电池使用时间。仅当部分漫画信息被从外部修改时可使用该功能进行数据同步。</value>
   </data>
   <data name="SaveHistory.Text" xml:space="preserve">
     <value>记录您的浏览历史</value>

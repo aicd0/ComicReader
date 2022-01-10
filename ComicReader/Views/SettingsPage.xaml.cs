@@ -3,6 +3,7 @@ using System;
 using System.ComponentModel;
 using System.Globalization;
 using System.Threading.Tasks;
+using Windows.ApplicationModel;
 using Windows.Storage;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -284,6 +285,16 @@ namespace ComicReader.Views
 
             // Statistics.
             await UpdateStatistis(db);
+
+            // About
+            PackageVersion version = Package.Current.Id.Version;
+            string app_name = Utils.C0.TryGetResourceString("AppName");
+            AboutBuildVersionControl.Text = app_name + " " + version.Major + "." + version.Minor + "." + version.Build + "." + version.Revision;
+
+            string author = "aicd0";
+            string about_copyright = Utils.C0.TryGetResourceString("AboutCopyright");
+            about_copyright = about_copyright.Replace("$author", author);
+            AboutCopyrightControl.Text = about_copyright;
         }
 
         private void OnComicDataUpdated(LockContext db)

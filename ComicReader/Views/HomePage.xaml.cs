@@ -173,6 +173,12 @@ namespace ComicReader.Views
             model.OnHideClicked = OnHideComicClicked;
         }
 
+        class _Record
+        {
+            public long Id;
+            public DateTimeOffset LastVisit;
+        }
+
         private void OnComicDataUpdated(LockContext db)
         {
             // IMPORTANT: Use TaskCompletionSource to guarantee all async tasks
@@ -201,24 +207,40 @@ namespace ComicReader.Views
                 // Get recent visited comics.
                 SqliteCommand command = SqliteDatabaseManager.NewCommand();
 
-                // Use ORDER BY here will cause a crush (especially for a large dataset)
+                // Use ORDER BY here will cause a crush (especially for a large result set)
                 // due to https://github.com/dotnet/efcore/issues/20044.
-                // Change Microsoft.Data.Sqlite.Core to SQLitePCLRaw.bundle_winsqlite3 will
-                // solve the problem but the app cannot not be built in Release mode.
+                // Switch from Microsoft.Data.Sqlite to SQLitePCLRaw.bundle_winsqlite3 will
+                // solve the issue but the app then cannot not be built in Release mode.
                 // (See https://github.com/ericsink/SQLitePCL.raw/issues/346)
-                // As a workaround here we will sort the data manually.
+                // A workaround here is to sort the data manually.
 
                 // command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.ComicTable +
-                //     " ORDER BY " + ComicData.FieldLastVisit + " DESC";
-                command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.ComicTable;
+                //     " ORDER BY " + ComicData.Field.LastVisit + " DESC";
+                command.CommandText = "SELECT " + ComicData.Field.Id + "," + ComicData.Field.LastVisit +
+                    " FROM " + SqliteDatabaseManager.ComicTable;
 
                 await ComicDataManager.WaitLock(db); // Lock on.
                 SqliteDataReader query = await command.ExecuteReaderAsync();
+                var records = new List<_Record>();
+
+                while (query.Read())
+                {
+                    records.Add(new _Record
+                    {
+                        Id = query.GetInt64(0),
+                        LastVisit = query.GetDateTime(1),
+                    });
+                }
+
+                // Sort the data using LastVisit descending.
+                records = records.OrderByDescending((_Record x) => x.LastVisit).ToList();
+                
+                // Convert to view models.
                 var comic_items = new List<ComicItemViewModel>();
 
-                while (query.Read() && comic_items.Count < 16)
+                for (int i = 0; comic_items.Count < 16 && i < records.Count; ++i)
                 {
-                    ComicData comic = await ComicDataManager.From(db, query);
+                    ComicData comic = await ComicDataManager.FromId(db, records[i].Id);
                     
                     if (comic == null)
                     {
@@ -236,9 +258,6 @@ namespace ComicReader.Views
                     comic_items.Add(model);
                 }
                 ComicDataManager.ReleaseLock(db); // Lock off.
-
-                // Sort the comics by LastVisit descending.
-                comic_items = comic_items.OrderByDescending((ComicItemViewModel x) => x.Comic.LastVisit).ToList();
 
                 // Save results.
                 Utils.C1<ComicItemViewModel>.UpdateCollection(ComicItemSource, comic_items,

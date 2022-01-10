@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Win32.SafeHandles;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -8,21 +9,32 @@ using System.Threading.Tasks;
 
 namespace ComicReader.Utils
 {
-    public class SystemIO
+    public class Win32IO
     {
-        public const int FIND_FIRST_EX_CASE_SENSITIVE = 1;
-        public const int FIND_FIRST_EX_LARGE_FETCH = 2;
-        public const int FIND_FIRST_EX_ON_DISK_ENTRIES_ONLY = 4;
+        internal const int FIND_FIRST_EX_CASE_SENSITIVE = 1;
+        internal const int FIND_FIRST_EX_LARGE_FETCH = 2;
+        internal const int FIND_FIRST_EX_ON_DISK_ENTRIES_ONLY = 4;
+
+        internal const int GENERIC_READ = unchecked((int)0x80000000);
+        internal const int GENERIC_ALL = unchecked((int)0x10000000);
+
+        internal const int CREATE_NEW = 1;
+        internal const int CREATE_ALWAYS = 2;
+        internal const int OPEN_EXISTING = 3;
+        internal const int OPEN_ALWAYS = 4;
+        internal const int TRUNCATE_EXISTING = 5;
+
+        internal const int FILE_ATTRIBUTE_NORMAL = 0x80;
 
         // https://docs.microsoft.com/en-us/windows/win32/api/minwinbase/ne-minwinbase-findex_info_levels
-        public enum FindExInfoLevel
+        internal enum FindExInfoLevel
         {
             FindExInfoStandard = 0,
             FindExInfoBasic = 1
         }
 
         // https://docs.microsoft.com/en-us/windows/win32/api/minwinbase/ne-minwinbase-findex_search_ops
-        public enum FIndexSearchOps
+        internal enum FIndexSearchOps
         {
             FindExSearchNameMatch = 0,
             FindExSearchLimitToDirectories = 1,
@@ -31,7 +43,7 @@ namespace ComicReader.Utils
         }
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
-        private struct WIN32_FIND_DATA
+        internal struct WIN32_FIND_DATA
         {
             public uint dwFileAttributes;
             public System.Runtime.InteropServices.ComTypes.FILETIME ftCreationTime;
@@ -49,7 +61,7 @@ namespace ComicReader.Utils
 
         // https://docs.microsoft.com/en-us/windows/win32/api/fileapifromapp/nf-fileapifromapp-findfirstfileexfromappw
         [DllImport("api-ms-win-core-file-fromapp-l1-1-0.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        private static extern IntPtr FindFirstFileExFromApp(
+        static internal extern IntPtr FindFirstFileExFromApp(
             string lpFileName,
             FindExInfoLevel fInfoLevelId,
             out WIN32_FIND_DATA lpFindFileData,
@@ -58,10 +70,20 @@ namespace ComicReader.Utils
             int dwAdditionalFlags);
 
         [DllImport("api-ms-win-core-file-l1-1-0.dll", CharSet = CharSet.Unicode)]
-        private static extern bool FindNextFile(IntPtr hFindFile, out WIN32_FIND_DATA lpFindFileData);
+        static internal extern bool FindNextFile(IntPtr hFindFile, out WIN32_FIND_DATA lpFindFileData);
 
         [DllImport("api-ms-win-core-file-l1-1-0.dll")]
-        private static extern bool FindClose(IntPtr hFindFile);
+        static internal extern bool FindClose(IntPtr hFindFile);
+
+        // https://docs.microsoft.com/en-us/windows/win32/api/fileapifromapp/nf-fileapifromapp-createfilefromappw
+        [DllImport("api-ms-win-core-file-fromapp-l1-1-0.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        static internal extern SafeFileHandle CreateFileFromApp(string lpFileName,
+            int dwDesiredAccess,
+            int dwShareMode,
+            IntPtr lpSecurityAttributes,
+            uint dwCreationDisposition,
+            uint dwFlagsAndAttributes,
+            SafeFileHandle hTemplateFile);
 
         // SubFoldersDeep
         public class SubFoldersDeepSearchContextNode
@@ -94,8 +116,8 @@ namespace ComicReader.Utils
             }
 
             public List<SubFoldersDeepSearchContextNode> Nodes = new List<SubFoldersDeepSearchContextNode>();
-            public readonly FindExInfoLevel FindInfoLevel;
-            public readonly FIndexSearchOps IndexSearchOps = FIndexSearchOps.FindExSearchNameMatch;
+            readonly internal FindExInfoLevel FindInfoLevel;
+            readonly internal FIndexSearchOps IndexSearchOps = FIndexSearchOps.FindExSearchNameMatch;
             public readonly int AdditionalFlags;
             public int _FolderScanned = 0;
         };
@@ -110,7 +132,15 @@ namespace ComicReader.Utils
             }
 
             ctx._FolderScanned = 0;
-            return _SubFoldersDeep(ctx, min_step, results);
+
+            bool not_end = _SubFoldersDeep(ctx, min_step, results);
+
+            if (results.Count > 0)
+            {
+                return true;
+            }
+
+            return not_end;
         }
 
         private static bool _SubFoldersDeep(SubFoldersDeepSearchContext ctx, uint min_step, List<string> results, int depth = 0)
@@ -212,6 +242,23 @@ namespace ComicReader.Utils
             FindClose(h_file);
 
             return results;
+        }
+
+        public static async Task<string> ReadFileFromPath(string path)
+        {
+            SafeFileHandle h = CreateFileFromApp(path, GENERIC_READ, 0, IntPtr.Zero, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, new SafeFileHandle(IntPtr.Zero, true));
+            
+            if (h.IsInvalid)
+            {
+                throw new FileNotFoundException();
+            }
+
+            using (FileStream stream = new FileStream(h, FileAccess.Read))
+            using (StreamReader reader = new StreamReader(stream))
+            {
+                string text = await reader.ReadToEndAsync();
+                return text;
+            }
         }
     }
 }
