@@ -1,5 +1,5 @@
 ﻿#if DEBUG
-#define DEBUG_LOG_EVERYTHING
+//#define DEBUG_LOG_EVERYTHING
 #endif
 
 using System;

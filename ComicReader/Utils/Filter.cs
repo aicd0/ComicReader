@@ -637,8 +637,8 @@ namespace ComicReader.Utils.Search
 
             SqliteCommand command = SqliteDatabaseManager.NewCommand();
             command.CommandText = "SELECT " + ComicData.Field.Id + " FROM " + SqliteDatabaseManager.ComicTable + " WHERE "
-                + ComicData.Field.Directory + " LIKE $dir%";
-            command.Parameters.AddWithValue("$dir", m_directory);
+                + ComicData.Field.Directory + " LIKE $dir";
+            command.Parameters.AddWithValue("$dir", m_directory + "%");
             SqliteDataReader query = command.ExecuteReader();
 
             while (query.Read())

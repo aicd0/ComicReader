@@ -15,8 +15,8 @@
   <mp:PhoneIdentity PhoneProductId="94c30a89-3ab2-40a3-b689-d82e918e6c7f" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>ComicReader</DisplayName>
-    <PublisherDisplayName>aicd0</PublisherDisplayName>
+    <DisplayName>Comic Reader</DisplayName>
+    <PublisherDisplayName>wowwowwow</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 

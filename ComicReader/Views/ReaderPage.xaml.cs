@@ -2,6 +2,7 @@
 //#define DEBUG_LOG_LOAD
 //#define DEBUG_LOG_JUMP
 //#define DEBUG_LOG_VIEW_CHANGE
+//#define DEBUG_LOG_UPDATE_PAGE
 #endif
 
 using System;
@@ -401,7 +402,7 @@ namespace ComicReader.Views
 #endif
             }
 
-            await _UpdateImages(db);
+            await _UpdateImages(db, final);
             return true;
         }
 
@@ -808,9 +809,9 @@ namespace ComicReader.Views
             await m_update_page_lock.WaitAsync();
             try
             {
-                double current_offset = use_final ?
-                    (ParallelOffsetFinal + ViewportParallelLength * 0.5) / ZoomFactorFinal :
-                    (ParallelOffset + ViewportParallelLength * 0.5) / ZoomFactor;
+                double parallel_offset = use_final ? ParallelOffsetFinal : ParallelOffset;
+                double zoom_factor = use_final ? ZoomFactorFinal : ZoomFactor;
+                double current_offset = (parallel_offset + ViewportParallelLength * 0.5) / zoom_factor;
 
                 // Use binary search to locate the current page.
                 if (DataSource.Count == 0)
@@ -868,6 +869,14 @@ namespace ComicReader.Views
                 }
 
                 m_page = res;
+#if DEBUG_LOG_UPDATE_PAGE
+                _Log("Page updated (" +
+                    "Page=" + m_page.ToString() +
+                    ",UseF=" + use_final.ToString() +
+                    ",PO=" + parallel_offset.ToString() +
+                    ",ZF=" + zoom_factor.ToString() +
+                    ",O=" + current_offset.ToString() + ")");
+#endif
                 return true;
             }
             finally
@@ -876,7 +885,7 @@ namespace ComicReader.Views
             }
         }
 
-        private async Task _UpdateImages(LockContext db)
+        private async Task _UpdateImages(LockContext db, bool remove_out_of_view = true)
         {
 #if DEBUG_LOG_LOAD
             _Log("Updating images (page " + Page.ToString() + ")");
@@ -925,18 +934,21 @@ namespace ComicReader.Views
                     double.PositiveInfinity, double.PositiveInfinity,
                     m_update_image_lock);
 
-                for (int i = 0; i < DataSource.Count; ++i)
+                if (remove_out_of_view)
                 {
-                    ReaderFrameViewModel m = DataSource[i];
-
-                    if (m.Page >= page_begin && m.Page <= page_end)
+                    for (int i = 0; i < DataSource.Count; ++i)
                     {
-                        continue;
-                    }
+                        ReaderFrameViewModel m = DataSource[i];
 
-                    if (m.ImageSource != null)
-                    {
-                        m.ImageSource = null;
+                        if (m.Page >= page_begin && m.Page <= page_end)
+                        {
+                            continue;
+                        }
+
+                        if (m.ImageSource != null)
+                        {
+                            m.ImageSource = null;
+                        }
                     }
                 }
             }
@@ -1009,7 +1021,7 @@ namespace ComicReader.Views
         private int IndexToPage(int index) => Math.Max(index + 1, 1);
 
         //  Others
-#if DEBUG_LOG_LOAD || DEBUG_LOG_JUMP || DEBUG_LOG_VIEW_CHANGE
+#if DEBUG_LOG_LOAD || DEBUG_LOG_JUMP || DEBUG_LOG_VIEW_CHANGE || DEBUG_LOG_UPDATE_PAGE
         private void _Log(string text)
         {
             if (!IsCurrentReader)
