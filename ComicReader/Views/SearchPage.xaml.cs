@@ -209,6 +209,35 @@ namespace ComicReader.Views
     {
         private SearchPageShared Shared { get; set; }
 
+        // Resources.
+        private string m_string_finished = null;
+        private string StringFinished
+        {
+            get
+            {
+                if (m_string_finished == null)
+                {
+                    m_string_finished = Utils.C0.TryGetResourceString("Finished");
+                }
+
+                return m_string_finished;
+            }
+        }
+
+        private string m_string_finish_percentage = null;
+        private string StringFinishPercentage
+        {
+            get
+            {
+                if (m_string_finish_percentage == null)
+                {
+                    m_string_finish_percentage = Utils.C0.TryGetResourceString("FinishPercentage");
+                }
+
+                return m_string_finish_percentage;
+            }
+        }
+
         private Utils.Tab.TabManager m_tab_manager;
         private List<Match> m_matches = new List<Match>();
         private int m_match_index = 0;
@@ -433,8 +462,8 @@ namespace ComicReader.Views
                 Detail = "#" + comic.Id,
                 Rating = comic.Rating,
                 Progress = comic.Progress < 0 ? "" :
-                            (comic.Progress >= 100 ? "Finished" :
-                            comic.Progress.ToString() + "% Completed"),
+                            (comic.Progress >= 100 ? StringFinished :
+                             StringFinishPercentage.Replace("$percentage", comic.Progress.ToString())),
                 IsFavorite = await FavoriteDataManager.FromId(comic.Id) != null,
                 IsSelectMode = Shared.IsSelectMode,
 

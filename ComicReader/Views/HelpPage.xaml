@@ -4,10 +4,15 @@
       xmlns:local="using:ComicReader.Views"
       xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:mtuuc="using:Microsoft.Toolkit.Uwp.UI.Controls"
       mc:Ignorable="d"
       Background="{ThemeResource TabViewItemHeaderBackgroundSelected}">
 
     <Grid>
-        <TextBlock Text="This is a help page." />
+        <ScrollViewer>
+            <mtuuc:MarkdownTextBlock Background="Transparent"
+                                     x:Uid="HelpPageMarkdown"
+                                     Margin="20,10"/>
+        </ScrollViewer>
     </Grid>
 </Page>

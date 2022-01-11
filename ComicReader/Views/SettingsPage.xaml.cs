@@ -239,7 +239,7 @@ namespace ComicReader.Views
 
         private void OnTabStart(Utils.Tab.TabIdentifier tab_id)
         {
-            m_tab_manager.TabId.Tab.Header = "Settings";
+            m_tab_manager.TabId.Tab.Header = Utils.C0.TryGetResourceString("Settings");
             m_tab_manager.TabId.Tab.IconSource =
                 new muxc.SymbolIconSource() { Symbol = Symbol.Setting };
         }
@@ -286,9 +286,15 @@ namespace ComicReader.Views
             // Statistics.
             await UpdateStatistis(db);
 
-            // About
-            PackageVersion version = Package.Current.Id.Version;
+            // Feedback.
             string app_name = Utils.C0.TryGetResourceString("AppName");
+            string contribution_before_link = Utils.C0.TryGetResourceString("ContributionRunBeforeLink");
+            contribution_before_link = contribution_before_link.Replace("$appname", app_name);
+            ContributionRunBeforeLink.Text = contribution_before_link;
+            ContributionRunAfterLink.Text = Utils.C0.TryGetResourceString("ContributionRunAfterLink");
+
+            // About.
+            PackageVersion version = Package.Current.Id.Version;
             AboutBuildVersionControl.Text = app_name + " " + version.Major + "." + version.Minor + "." + version.Build + "." + version.Revision;
 
             string author = "aicd0";

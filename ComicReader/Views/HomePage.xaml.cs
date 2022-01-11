@@ -52,6 +52,35 @@ namespace ComicReader.Views
     {
         public HomePageShared Shared { get; set; } = new HomePageShared();
 
+        // Resources.
+        private string m_string_finished = null;
+        private string StringFinished
+        {
+            get
+            {
+                if (m_string_finished == null)
+                {
+                    m_string_finished = Utils.C0.TryGetResourceString("Finished");
+                }
+
+                return m_string_finished;
+            }
+        }
+
+        private string m_string_unread = null;
+        private string StringUnread
+        {
+            get
+            {
+                if (m_string_unread == null)
+                {
+                    m_string_unread = Utils.C0.TryGetResourceString("Unread");
+                }
+
+                return m_string_unread;
+            }
+        }
+
         private Utils.ObservableCollectionPlus<ComicItemViewModel> ComicItemSource
             = new Utils.ObservableCollectionPlus<ComicItemViewModel>();
         public ObservableCollection<FolderItemViewModel> FolderItemDataSource { get; set; }
@@ -153,11 +182,11 @@ namespace ComicReader.Views
 
             if (comic.Progress < 0)
             {
-                model.Progress = Utils.C0.TryGetResourceString("Unread");
+                model.Progress = StringUnread;
             }
             else if (comic.Progress >= 100)
             {
-                model.Progress = Utils.C0.TryGetResourceString("Finshed");
+                model.Progress = StringFinished;
             }
             else
             {

@@ -121,7 +121,7 @@
     <value>关于</value>
   </data>
   <data name="AboutCopyright" xml:space="preserve">
-    <value>© 2021 $author。保留所有权利。</value>
+    <value>© 2022 $author。保留所有权利。</value>
   </data>
   <data name="AddFolderButton.Content" xml:space="preserve">
     <value>添加文件夹</value>
@@ -180,6 +180,12 @@
   <data name="ClearAllHistoryButton.Content" xml:space="preserve">
     <value>清除所有记录</value>
   </data>
+  <data name="ContributionRunAfterLink" xml:space="preserve">
+    <value>上了解如何参与该项目的开发。</value>
+  </data>
+  <data name="ContributionRunBeforeLink" xml:space="preserve">
+    <value>$appname是一个开源项目。在</value>
+  </data>
   <data name="DefaultTags" xml:space="preserve">
     <value>默认标签</value>
   </data>
@@ -216,14 +222,100 @@
   <data name="FilteredBy" xml:space="preserve">
     <value>$count个过滤条件</value>
   </data>
-  <data name="Finshed" xml:space="preserve">
+  <data name="Finished" xml:space="preserve">
     <value>已完成</value>
+  </data>
+  <data name="FinishPercentage" xml:space="preserve">
+    <value>已读$percentage%</value>
   </data>
   <data name="FoldersHeader.Text" xml:space="preserve">
     <value>文件夹</value>
   </data>
   <data name="ForwardButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>前进</value>
+  </data>
+  <data name="Help" xml:space="preserve">
+    <value>帮助</value>
+  </data>
+  <data name="HelpPageMarkdown.Text" xml:space="preserve">
+    <value># 如何使用过滤条件进行搜索
+您可以通过在搜索中使用过滤条件使您的搜索结果更加精确。
+
+### 基本用法
+`关键词1 关键词2... &lt;过滤条件1&gt; &lt;过滤条件2&gt;...` (过滤条件间的空格非必需)
+
+以下为您列出几种常用的过滤条件：
+
+### 目录
+只显示在指定目录下的项目。
+
+* 格式：`&lt;dir: 目录1[, 目录2, 目录3...]&gt;`
+
+* 例如：`漫画标题 &lt;dir: D:\漫画文件夹&gt;`
+
+* 等价写法：directory, folder, location, path.
+
+### 隐藏项
+只显示被隐藏的项目
+
+* 格式：`&lt;hidden&gt;`
+
+* 等价写法：hide.
+
+### 标签
+只显示包含特定标签的项目。
+
+* 格式：`&lt;tag: 标签1[, 标签2, 标签3...]&gt;`
+
+* 例如：`漫画标题 &lt;tag: 漫画标签1&gt;`
+
+* 等价写法：tags.
+
+### 带分类的标签
+在搜索标签的同时指定标签的分类。
+
+* 格式：`&lt;标签分类: 标签1[, 标签2, 标签3...]&gt;`
+
+* 例如：`漫画标题 &lt;语言: 中文, 日文&gt;`
+
+### ID
+通过直接指定漫画ID的方式进行搜索。
+
+* 格式：`&lt;id: 漫画ID&gt;`
+
+* 例如：`&lt;id: 1234&gt;`
+
+* 等价写法：no, num, number.
+
+### 评分
+依据漫画评分进行过滤。
+
+* 格式：`&lt;rating: 评分1[, 评分2, 评分3...]&gt;`
+
+* 例如：`&lt;rating: -1, 4, 5&gt;` (`-1` 表示没有评分)
+
+* 等价写法：ratings, rate, star, stars.
+
+### 与/或
+使用逻辑 与/或 组合不同过滤条件。
+
+* 或格式: `&lt;or: &lt;过滤条件1&gt;&lt;过滤条件2&gt;&lt;过滤条件3&gt;...&gt;`
+
+* 与格式: `&lt;and: &lt;过滤条件1&gt;&lt;过滤条件2&gt;&lt;过滤条件3&gt;...&gt;`
+
+* 例如: `漫画标题 &lt;or: &lt;star: 5&gt; &lt;语言: 中文&gt;&gt;`
+
+### 非 (~)
+只显示不能通过过滤条件的项目。
+
+* 格式：`&lt;~&lt;过滤条件&gt;&gt;`
+
+* 例如：`&lt;~&lt;rating: 1&gt;&gt;` (不显示评分为1星的漫画)
+
+### 全部 (All)
+不进行过滤。只在需要查看仓库中所有项目时使用。
+
+* 格式：`&lt;all&gt;`</value>
   </data>
   <data name="HideAppBarButton.Label" xml:space="preserve">
     <value>隐藏</value>
@@ -304,7 +396,7 @@
     <value>更多</value>
   </data>
   <data name="NewFolder" xml:space="preserve">
-    <value>新建文件夹</value>
+    <value>新文件夹</value>
   </data>
   <data name="NewTab" xml:space="preserve">
     <value>新标签页</value>
@@ -340,13 +432,13 @@
     <value>重新扫描文件</value>
   </data>
   <data name="RescanFilesDetail.Text" xml:space="preserve">
-    <value>提示: 在大多数情况下该操作非必需且可能引起较高的CPU占用，进而减少您的电池使用时间。仅当部分漫画信息被从外部修改时可使用该功能进行数据同步。</value>
+    <value>提示: 在大多数情况下该操作非必需且可能引起较高的CPU占用，进而减少您的电池使用时间。仅当部分漫画信息被从外部修改时使用该功能进行同步。</value>
   </data>
   <data name="SaveHistory.Text" xml:space="preserve">
     <value>记录您的浏览历史</value>
   </data>
   <data name="SearchBox.PlaceholderText" xml:space="preserve">
-    <value>搜索标题、标签、文件夹等</value>
+    <value>在"帮助"中了解如何用过滤条件进行搜索</value>
   </data>
   <data name="SearchResults" xml:space="preserve">
     <value>搜索结果</value>
@@ -361,6 +453,9 @@
     <value>发送反馈</value>
   </data>
   <data name="SettingHeader.Text" xml:space="preserve">
+    <value>设置</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
     <value>设置</value>
   </data>
   <data name="ShowAllButton.Content" xml:space="preserve">

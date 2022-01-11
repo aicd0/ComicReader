@@ -121,7 +121,7 @@
     <value>About</value>
   </data>
   <data name="AboutCopyright" xml:space="preserve">
-    <value>© 2021 $author. All rights reserved.</value>
+    <value>© 2022 $author. All rights reserved.</value>
   </data>
   <data name="AddFolderButton.Content" xml:space="preserve">
     <value>add a folder</value>
@@ -180,6 +180,12 @@
   <data name="ClearAllHistoryButton.Content" xml:space="preserve">
     <value>Clear all</value>
   </data>
+  <data name="ContributionRunAfterLink" xml:space="preserve">
+    <value> to learn how you can contribute to this app.</value>
+  </data>
+  <data name="ContributionRunBeforeLink" xml:space="preserve">
+    <value>$appname is an open source project. Check out on </value>
+  </data>
   <data name="DefaultTags" xml:space="preserve">
     <value>Default tags</value>
   </data>
@@ -216,14 +222,100 @@
   <data name="FilteredBy" xml:space="preserve">
     <value>$count filter(s) applied</value>
   </data>
-  <data name="Finshed" xml:space="preserve">
+  <data name="Finished" xml:space="preserve">
     <value>Finshed</value>
+  </data>
+  <data name="FinishPercentage" xml:space="preserve">
+    <value>$percentage% Completed</value>
   </data>
   <data name="FoldersHeader.Text" xml:space="preserve">
     <value>Folders</value>
   </data>
   <data name="ForwardButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>Go forward</value>
+  </data>
+  <data name="Help" xml:space="preserve">
+    <value>Help</value>
+  </data>
+  <data name="HelpPageMarkdown.Text" xml:space="preserve">
+    <value># How to use filters to search content
+You can use filters in searching to make the search results more accurate.
+
+### Basic usage
+`keyword1 keyword2... &lt;filter1&gt; &lt;filter2&gt;...` (spaces between filters is optional)
+
+We listed a few filters commonly used as below:
+
+### Directory
+Shows items in specific directories.
+
+* Format: `&lt;dir: Directory1[, Directory2, Directory3...]&gt;`
+
+* Example: `MyComicTitle &lt;dir: D:\MyComicFolder&gt;`
+
+* Alternatives: directory, folder, location, path.
+
+### Hidden
+Only shows hidden items.
+
+* Format: `&lt;hidden&gt;`
+
+* Alternatives: hide.
+
+### Tags
+Shows items with specific tags.
+
+* Format: `&lt;tag: Tag1[, Tag2, Tag3...]&gt;`
+
+* Example: `MyComicTitle &lt;tag: MyComicTag&gt;`
+
+* Alternatives: tags.
+
+### Tag &amp; Category
+Specify the category while searching tags.
+
+* Format: `&lt;TagCategory: Tag1[, Tag2, Tag3...]&gt;`
+
+* Example: `MyComicTitle &lt;Language: Chinese, Japanese&gt;`
+
+### ID
+Search with comic ID directly.
+
+* Format: `&lt;id: MyComicId&gt;`
+
+* Example: `&lt;id: 1234&gt;`
+
+* Alternatives: no, num, number.
+
+### Rating
+Search comics with their ratings.
+
+* Format: `&lt;rating: Rating1[, Rating2, Rating3...]&gt;`
+
+* Example: `&lt;rating: -1, 4, 5&gt;` (`-1` represents no rating)
+
+* Alternatives: ratings, rate, star, stars.
+
+### Or/And
+Use logic or/and to combine different filters.
+
+* Format 1: `&lt;or: &lt;Filter1&gt;&lt;Filter2&gt;&lt;Filter3&gt;...&gt;`
+
+* Format 2: `&lt;and: &lt;Filter1&gt;&lt;Filter2&gt;&lt;Filter3&gt;...&gt;`
+
+* Example: `MyComicTitle &lt;or: &lt;star: 5&gt; &lt;Language: Chinese&gt;&gt;`
+
+### Not (~)
+Shows items that DON'T pass the filter.
+
+* Format: `&lt;~&lt;Filter&gt;&gt;`
+
+* Example: `&lt;~&lt;rating: 1&gt;&gt;` (not showing comics with 1 star)
+
+### All
+Filtering nothing. Only used when we need to see all items in the library.
+
+* Format: `&lt;all&gt;`</value>
   </data>
   <data name="HideAppBarButton.Label" xml:space="preserve">
     <value>Hide</value>
@@ -262,7 +354,7 @@
     <value>Add to favorites</value>
   </data>
   <data name="MenuFlyoutComicInfo.Text" xml:space="preserve">
-    <value>Comic information</value>
+    <value>Comic info</value>
   </data>
   <data name="MenuFlyoutCreateNewFolder.Text" xml:space="preserve">
     <value>Create new folder</value>
@@ -346,7 +438,7 @@
     <value>Save browsing history</value>
   </data>
   <data name="SearchBox.PlaceholderText" xml:space="preserve">
-    <value>Search titles, tags, folders, etc.</value>
+    <value>Learn how to use filters in "Help"</value>
   </data>
   <data name="SearchResults" xml:space="preserve">
     <value>Search results</value>
@@ -361,6 +453,9 @@
     <value>Send feedback</value>
   </data>
   <data name="SettingHeader.Text" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
     <value>Settings</value>
   </data>
   <data name="ShowAllButton.Content" xml:space="preserve">
