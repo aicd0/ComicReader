@@ -162,7 +162,7 @@
   <data name="ApplyOnNextLaunch.Text" xml:space="preserve">
     <value>您将在下次应用启动时看到您的更改</value>
   </data>
-  <data name="AppName" xml:space="preserve">
+  <data name="AppDisplayName" xml:space="preserve">
     <value>漫画阅读器</value>
   </data>
   <data name="BackButton.ToolTipService.ToolTip" xml:space="preserve">
@@ -521,5 +521,8 @@
   </data>
   <data name="ZoomOutButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>缩小</value>
+  </data>
+  <data name="AppDescription" xml:space="preserve">
+    <value>漫画阅读器</value>
   </data>
 </root>

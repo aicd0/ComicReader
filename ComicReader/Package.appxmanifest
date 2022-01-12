@@ -4,19 +4,18 @@
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
-  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
-  IgnorableNamespaces="uap mp rescap">
+  IgnorableNamespaces="uap mp">
 
   <Identity
-    Name="94c30a89-3ab2-40a3-b689-d82e918e6c7f"
-    Publisher="CN=stdcn"
-    Version="1.0.0.0" />
+    Name="49915aicd.ComicReaderUWP"
+    Publisher="CN=EDF29702-407F-438D-9326-040AAE6557ED"
+    Version="1.0.2.0" />
 
-  <mp:PhoneIdentity PhoneProductId="94c30a89-3ab2-40a3-b689-d82e918e6c7f" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
+  <mp:PhoneIdentity PhoneProductId="1e81f69a-4700-45d0-8a1b-04de29e5f072" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>Comic Reader</DisplayName>
-    <PublisherDisplayName>wowwowwow</PublisherDisplayName>
+    <DisplayName>Comic Reader UWP</DisplayName>
+    <PublisherDisplayName>aicd</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 
@@ -33,11 +32,10 @@
       Executable="$targetnametoken$.exe"
       EntryPoint="ComicReader.App">
       <uap:VisualElements
-        DisplayName="Comic Reader"
+        DisplayName="ms-resource:AppDisplayName"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png"
-        Description="Comic Reader"
-        BackgroundColor="transparent">
+        BackgroundColor="transparent" Description="ms-resource:AppDescription">
         <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" Square71x71Logo="Assets\SmallTile.png" Square310x310Logo="Assets\LargeTile.png"/>
         <uap:SplashScreen Image="Assets\SplashScreen.png" />
       </uap:VisualElements>

@@ -162,7 +162,7 @@
   <data name="ApplyOnNextLaunch.Text" xml:space="preserve">
     <value>You'll see your change the next time you start the app</value>
   </data>
-  <data name="AppName" xml:space="preserve">
+  <data name="AppDisplayName" xml:space="preserve">
     <value>Comic Reader</value>
   </data>
   <data name="BackButton.ToolTipService.ToolTip" xml:space="preserve">
@@ -521,5 +521,8 @@ Category2: tag4/tag5
   </data>
   <data name="ZoomOutButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>Zoom out</value>
+  </data>
+  <data name="AppDescription" xml:space="preserve">
+    <value>Comic reader</value>
   </data>
 </root>

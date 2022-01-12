@@ -287,7 +287,7 @@ namespace ComicReader.Views
             await UpdateStatistis(db);
 
             // Feedback.
-            string app_name = Utils.C0.TryGetResourceString("AppName");
+            string app_name = Utils.C0.TryGetResourceString("AppDisplayName");
             string contribution_before_link = Utils.C0.TryGetResourceString("ContributionRunBeforeLink");
             contribution_before_link = contribution_before_link.Replace("$appname", app_name);
             ContributionRunBeforeLink.Text = contribution_before_link;
