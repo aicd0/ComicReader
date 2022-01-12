@@ -1,17 +1,18 @@
-﻿<Page x:Class="ComicReader.Views.ReaderPage"
-      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-      xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
-      xmlns:mtuu="using:Microsoft.Toolkit.Uwp.UI"
-      xmlns:mtuuc="using:Microsoft.Toolkit.Uwp.UI.Controls"
-      xmlns:mtuum="using:Microsoft.Toolkit.Uwp.UI.Media"
-      xmlns:controls="using:ComicReader.Controls"
-      xmlns:converters="using:ComicReader.Converters"
-      xmlns:data="using:ComicReader.DesignData"
-      mc:Ignorable="d"
-      NavigationCacheMode="Enabled">
+﻿<Page
+    x:Class="ComicReader.Views.ReaderPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:ComicReader.Controls"
+    xmlns:converters="using:ComicReader.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:data="using:ComicReader.DesignData"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:mtuu="using:Microsoft.Toolkit.Uwp.UI"
+    xmlns:mtuuc="using:Microsoft.Toolkit.Uwp.UI.Controls"
+    xmlns:mtuum="using:Microsoft.Toolkit.Uwp.UI.Media"
+    xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
+    NavigationCacheMode="Enabled"
+    mc:Ignorable="d">
 
     <Page.Resources>
         <ResourceDictionary>
@@ -21,33 +22,72 @@
                 <ResourceDictionary Source="../Resources/Styles/ToggleButton.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- Overwrite the scroll viewer style to enable PointerWheelChanged event. -->
-            <Style x:Key="HorizontalReaderScrollViewerStyle"
-                   TargetType="ScrollViewer">
+            <!--  Overwrite the scroll viewer style to enable PointerWheelChanged event.  -->
+            <Style x:Key="HorizontalReaderScrollViewerStyle" TargetType="ScrollViewer">
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="ScrollViewer">
-                            <Border x:Name="Root"
-                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                    CornerRadius="{TemplateBinding CornerRadius}"
-                                    PointerWheelChanged="OnHorizontalReaderScrollViewerPointerWheelChanged">
+                            <Border
+                                x:Name="Root"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="{TemplateBinding CornerRadius}"
+                                PointerWheelChanged="OnHorizontalReaderScrollViewerPointerWheelChanged">
+                                <Grid Background="{TemplateBinding Background}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+                                    <ScrollContentPresenter
+                                        x:Name="ScrollContentPresenter"
+                                        Grid.RowSpan="2"
+                                        Grid.ColumnSpan="2"
+                                        Margin="{TemplateBinding Padding}"
+                                        ContentTemplate="{TemplateBinding ContentTemplate}" />
+                                    <Grid Grid.RowSpan="2" Grid.ColumnSpan="2" />
+                                    <ScrollBar
+                                        x:Name="VerticalScrollBar"
+                                        Grid.Column="1"
+                                        HorizontalAlignment="Right"
+                                        IsTabStop="False"
+                                        Maximum="{TemplateBinding ScrollableHeight}"
+                                        Orientation="Vertical"
+                                        ViewportSize="{TemplateBinding ViewportHeight}"
+                                        Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}"
+                                        Value="{TemplateBinding VerticalOffset}" />
+                                    <ScrollBar
+                                        x:Name="HorizontalScrollBar"
+                                        Grid.Row="1"
+                                        IsTabStop="False"
+                                        Maximum="{TemplateBinding ScrollableWidth}"
+                                        Orientation="Horizontal"
+                                        ViewportSize="{TemplateBinding ViewportWidth}"
+                                        Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}"
+                                        Value="{TemplateBinding HorizontalOffset}" />
+                                    <Border
+                                        x:Name="ScrollBarSeparator"
+                                        Grid.Row="1"
+                                        Grid.Column="1"
+                                        Background="{ThemeResource ScrollViewerScrollBarSeparatorBackground}"
+                                        Opacity="0" />
+                                </Grid>
                                 <VisualStateManager.VisualStateGroups>
                                     <VisualStateGroup x:Name="ScrollingIndicatorStates">
                                         <VisualStateGroup.Transitions>
-                                            <VisualTransition From="MouseIndicator"
-                                                              To="NoIndicator">
+                                            <VisualTransition From="MouseIndicator" To="NoIndicator">
                                                 <Storyboard>
-                                                    <ObjectAnimationUsingKeyFrames Storyboard.TargetName="VerticalScrollBar"
-                                                                                   Storyboard.TargetProperty="IndicatorMode">
+                                                    <ObjectAnimationUsingKeyFrames Storyboard.TargetName="VerticalScrollBar" Storyboard.TargetProperty="IndicatorMode">
                                                         <DiscreteObjectKeyFrame KeyTime="{ThemeResource ScrollViewerSeparatorContractDelay}">
                                                             <DiscreteObjectKeyFrame.Value>
                                                                 <ScrollingIndicatorMode>None</ScrollingIndicatorMode>
                                                             </DiscreteObjectKeyFrame.Value>
                                                         </DiscreteObjectKeyFrame>
                                                     </ObjectAnimationUsingKeyFrames>
-                                                    <ObjectAnimationUsingKeyFrames Storyboard.TargetName="HorizontalScrollBar"
-                                                                                   Storyboard.TargetProperty="IndicatorMode">
+                                                    <ObjectAnimationUsingKeyFrames Storyboard.TargetName="HorizontalScrollBar" Storyboard.TargetProperty="IndicatorMode">
                                                         <DiscreteObjectKeyFrame KeyTime="{ThemeResource ScrollViewerSeparatorContractDelay}">
                                                             <DiscreteObjectKeyFrame.Value>
                                                                 <ScrollingIndicatorMode>None</ScrollingIndicatorMode>
@@ -56,19 +96,16 @@
                                                     </ObjectAnimationUsingKeyFrames>
                                                 </Storyboard>
                                             </VisualTransition>
-                                            <VisualTransition From="MouseIndicatorFull"
-                                                              To="NoIndicator">
+                                            <VisualTransition From="MouseIndicatorFull" To="NoIndicator">
                                                 <Storyboard>
-                                                    <ObjectAnimationUsingKeyFrames Storyboard.TargetName="VerticalScrollBar"
-                                                                                   Storyboard.TargetProperty="IndicatorMode">
+                                                    <ObjectAnimationUsingKeyFrames Storyboard.TargetName="VerticalScrollBar" Storyboard.TargetProperty="IndicatorMode">
                                                         <DiscreteObjectKeyFrame KeyTime="{ThemeResource ScrollViewerSeparatorContractDelay}">
                                                             <DiscreteObjectKeyFrame.Value>
                                                                 <ScrollingIndicatorMode>None</ScrollingIndicatorMode>
                                                             </DiscreteObjectKeyFrame.Value>
                                                         </DiscreteObjectKeyFrame>
                                                     </ObjectAnimationUsingKeyFrames>
-                                                    <ObjectAnimationUsingKeyFrames Storyboard.TargetName="HorizontalScrollBar"
-                                                                                   Storyboard.TargetProperty="IndicatorMode">
+                                                    <ObjectAnimationUsingKeyFrames Storyboard.TargetName="HorizontalScrollBar" Storyboard.TargetProperty="IndicatorMode">
                                                         <DiscreteObjectKeyFrame KeyTime="{ThemeResource ScrollViewerSeparatorContractDelay}">
                                                             <DiscreteObjectKeyFrame.Value>
                                                                 <ScrollingIndicatorMode>None</ScrollingIndicatorMode>
@@ -77,19 +114,16 @@
                                                     </ObjectAnimationUsingKeyFrames>
                                                 </Storyboard>
                                             </VisualTransition>
-                                            <VisualTransition From="MouseIndicatorFull"
-                                                              To="MouseIndicator">
+                                            <VisualTransition From="MouseIndicatorFull" To="MouseIndicator">
                                                 <Storyboard>
-                                                    <ObjectAnimationUsingKeyFrames Storyboard.TargetName="VerticalScrollBar"
-                                                                                   Storyboard.TargetProperty="IndicatorMode">
+                                                    <ObjectAnimationUsingKeyFrames Storyboard.TargetName="VerticalScrollBar" Storyboard.TargetProperty="IndicatorMode">
                                                         <DiscreteObjectKeyFrame KeyTime="{ThemeResource ScrollViewerSeparatorContractDelay}">
                                                             <DiscreteObjectKeyFrame.Value>
                                                                 <ScrollingIndicatorMode>MouseIndicator</ScrollingIndicatorMode>
                                                             </DiscreteObjectKeyFrame.Value>
                                                         </DiscreteObjectKeyFrame>
                                                     </ObjectAnimationUsingKeyFrames>
-                                                    <ObjectAnimationUsingKeyFrames Storyboard.TargetName="HorizontalScrollBar"
-                                                                                   Storyboard.TargetProperty="IndicatorMode">
+                                                    <ObjectAnimationUsingKeyFrames Storyboard.TargetName="HorizontalScrollBar" Storyboard.TargetProperty="IndicatorMode">
                                                         <DiscreteObjectKeyFrame KeyTime="{ThemeResource ScrollViewerSeparatorContractDelay}">
                                                             <DiscreteObjectKeyFrame.Value>
                                                                 <ScrollingIndicatorMode>MouseIndicator</ScrollingIndicatorMode>
@@ -98,19 +132,16 @@
                                                     </ObjectAnimationUsingKeyFrames>
                                                 </Storyboard>
                                             </VisualTransition>
-                                            <VisualTransition From="TouchIndicator"
-                                                              To="NoIndicator">
+                                            <VisualTransition From="TouchIndicator" To="NoIndicator">
                                                 <Storyboard>
-                                                    <ObjectAnimationUsingKeyFrames Storyboard.TargetName="VerticalScrollBar"
-                                                                                   Storyboard.TargetProperty="IndicatorMode">
+                                                    <ObjectAnimationUsingKeyFrames Storyboard.TargetName="VerticalScrollBar" Storyboard.TargetProperty="IndicatorMode">
                                                         <DiscreteObjectKeyFrame KeyTime="0:0:0.5">
                                                             <DiscreteObjectKeyFrame.Value>
                                                                 <ScrollingIndicatorMode>None</ScrollingIndicatorMode>
                                                             </DiscreteObjectKeyFrame.Value>
                                                         </DiscreteObjectKeyFrame>
                                                     </ObjectAnimationUsingKeyFrames>
-                                                    <ObjectAnimationUsingKeyFrames Storyboard.TargetName="HorizontalScrollBar"
-                                                                                   Storyboard.TargetProperty="IndicatorMode">
+                                                    <ObjectAnimationUsingKeyFrames Storyboard.TargetName="HorizontalScrollBar" Storyboard.TargetProperty="IndicatorMode">
                                                         <DiscreteObjectKeyFrame KeyTime="0:0:0.5">
                                                             <DiscreteObjectKeyFrame.Value>
                                                                 <ScrollingIndicatorMode>None</ScrollingIndicatorMode>
@@ -123,16 +154,14 @@
                                         <VisualState x:Name="NoIndicator" />
                                         <VisualState x:Name="TouchIndicator">
                                             <Storyboard>
-                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="VerticalScrollBar"
-                                                                               Storyboard.TargetProperty="IndicatorMode">
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="VerticalScrollBar" Storyboard.TargetProperty="IndicatorMode">
                                                     <DiscreteObjectKeyFrame KeyTime="0">
                                                         <DiscreteObjectKeyFrame.Value>
                                                             <ScrollingIndicatorMode>TouchIndicator</ScrollingIndicatorMode>
                                                         </DiscreteObjectKeyFrame.Value>
                                                     </DiscreteObjectKeyFrame>
                                                 </ObjectAnimationUsingKeyFrames>
-                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="HorizontalScrollBar"
-                                                                               Storyboard.TargetProperty="IndicatorMode">
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="HorizontalScrollBar" Storyboard.TargetProperty="IndicatorMode">
                                                     <DiscreteObjectKeyFrame KeyTime="0">
                                                         <DiscreteObjectKeyFrame.Value>
                                                             <ScrollingIndicatorMode>TouchIndicator</ScrollingIndicatorMode>
@@ -143,16 +172,14 @@
                                         </VisualState>
                                         <VisualState x:Name="MouseIndicator">
                                             <Storyboard>
-                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="VerticalScrollBar"
-                                                                               Storyboard.TargetProperty="IndicatorMode">
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="VerticalScrollBar" Storyboard.TargetProperty="IndicatorMode">
                                                     <DiscreteObjectKeyFrame KeyTime="0">
                                                         <DiscreteObjectKeyFrame.Value>
                                                             <ScrollingIndicatorMode>MouseIndicator</ScrollingIndicatorMode>
                                                         </DiscreteObjectKeyFrame.Value>
                                                     </DiscreteObjectKeyFrame>
                                                 </ObjectAnimationUsingKeyFrames>
-                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="HorizontalScrollBar"
-                                                                               Storyboard.TargetProperty="IndicatorMode">
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="HorizontalScrollBar" Storyboard.TargetProperty="IndicatorMode">
                                                     <DiscreteObjectKeyFrame KeyTime="0">
                                                         <DiscreteObjectKeyFrame.Value>
                                                             <ScrollingIndicatorMode>MouseIndicator</ScrollingIndicatorMode>
@@ -163,16 +190,14 @@
                                         </VisualState>
                                         <VisualState x:Name="MouseIndicatorFull">
                                             <Storyboard>
-                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="VerticalScrollBar"
-                                                                               Storyboard.TargetProperty="IndicatorMode">
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="VerticalScrollBar" Storyboard.TargetProperty="IndicatorMode">
                                                     <DiscreteObjectKeyFrame KeyTime="0">
                                                         <DiscreteObjectKeyFrame.Value>
                                                             <ScrollingIndicatorMode>MouseIndicator</ScrollingIndicatorMode>
                                                         </DiscreteObjectKeyFrame.Value>
                                                     </DiscreteObjectKeyFrame>
                                                 </ObjectAnimationUsingKeyFrames>
-                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="HorizontalScrollBar"
-                                                                               Storyboard.TargetProperty="IndicatorMode">
+                                                <ObjectAnimationUsingKeyFrames Storyboard.TargetName="HorizontalScrollBar" Storyboard.TargetProperty="IndicatorMode">
                                                     <DiscreteObjectKeyFrame KeyTime="0">
                                                         <DiscreteObjectKeyFrame.Value>
                                                             <ScrollingIndicatorMode>MouseIndicator</ScrollingIndicatorMode>
@@ -184,110 +209,76 @@
                                     </VisualStateGroup>
                                     <VisualStateGroup x:Name="ScrollBarSeparatorStates">
                                         <VisualStateGroup.Transitions>
-                                            <VisualTransition From="ScrollBarSeparatorExpanded"
-                                                              To="ScrollBarSeparatorCollapsed">
+                                            <VisualTransition From="ScrollBarSeparatorExpanded" To="ScrollBarSeparatorCollapsed">
                                                 <Storyboard>
-                                                    <DoubleAnimation BeginTime="{ThemeResource ScrollViewerSeparatorContractBeginTime}"
-                                                                     Duration="{ThemeResource ScrollViewerSeparatorContractDuration}"
-                                                                     Storyboard.TargetName="ScrollBarSeparator"
-                                                                     To="0"
-                                                                     Storyboard.TargetProperty="Opacity" />
+                                                    <DoubleAnimation
+                                                        BeginTime="{ThemeResource ScrollViewerSeparatorContractBeginTime}"
+                                                        Storyboard.TargetName="ScrollBarSeparator"
+                                                        Storyboard.TargetProperty="Opacity"
+                                                        To="0"
+                                                        Duration="{ThemeResource ScrollViewerSeparatorContractDuration}" />
                                                 </Storyboard>
                                             </VisualTransition>
                                         </VisualStateGroup.Transitions>
                                         <VisualState x:Name="ScrollBarSeparatorCollapsed" />
                                         <VisualState x:Name="ScrollBarSeparatorExpanded">
                                             <Storyboard>
-                                                <DoubleAnimation BeginTime="{ThemeResource ScrollViewerSeparatorExpandBeginTime}"
-                                                                 Duration="{ThemeResource ScrollViewerSeparatorExpandDuration}"
-                                                                 Storyboard.TargetName="ScrollBarSeparator"
-                                                                 To="1"
-                                                                 Storyboard.TargetProperty="Opacity" />
+                                                <DoubleAnimation
+                                                    BeginTime="{ThemeResource ScrollViewerSeparatorExpandBeginTime}"
+                                                    Storyboard.TargetName="ScrollBarSeparator"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="1"
+                                                    Duration="{ThemeResource ScrollViewerSeparatorExpandDuration}" />
                                             </Storyboard>
                                         </VisualState>
                                         <VisualState x:Name="ScrollBarSeparatorExpandedWithoutAnimation">
                                             <Storyboard>
-                                                <DoubleAnimation BeginTime="{ThemeResource ScrollViewerSeparatorExpandBeginTime}"
-                                                                 Duration="0"
-                                                                 Storyboard.TargetName="ScrollBarSeparator"
-                                                                 To="1"
-                                                                 Storyboard.TargetProperty="Opacity" />
+                                                <DoubleAnimation
+                                                    BeginTime="{ThemeResource ScrollViewerSeparatorExpandBeginTime}"
+                                                    Storyboard.TargetName="ScrollBarSeparator"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="1"
+                                                    Duration="0" />
                                             </Storyboard>
                                         </VisualState>
                                         <VisualState x:Name="ScrollBarSeparatorCollapsedWithoutAnimation">
                                             <Storyboard>
-                                                <DoubleAnimation BeginTime="{ThemeResource ScrollViewerSeparatorContractBeginTime}"
-                                                                 Duration="0"
-                                                                 Storyboard.TargetName="ScrollBarSeparator"
-                                                                 To="0"
-                                                                 Storyboard.TargetProperty="Opacity" />
+                                                <DoubleAnimation
+                                                    BeginTime="{ThemeResource ScrollViewerSeparatorContractBeginTime}"
+                                                    Storyboard.TargetName="ScrollBarSeparator"
+                                                    Storyboard.TargetProperty="Opacity"
+                                                    To="0"
+                                                    Duration="0" />
                                             </Storyboard>
                                         </VisualState>
                                     </VisualStateGroup>
                                 </VisualStateManager.VisualStateGroups>
-                                <Grid Background="{TemplateBinding Background}">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="*" />
-                                        <RowDefinition Height="Auto" />
-                                    </Grid.RowDefinitions>
-                                    <ScrollContentPresenter x:Name="ScrollContentPresenter"
-                                                            ContentTemplate="{TemplateBinding ContentTemplate}"
-                                                            Grid.ColumnSpan="2"
-                                                            Margin="{TemplateBinding Padding}"
-                                                            Grid.RowSpan="2" />
-                                    <Grid Grid.ColumnSpan="2"
-                                          Grid.RowSpan="2" />
-                                    <ScrollBar x:Name="VerticalScrollBar"
-                                               Grid.Column="1"
-                                               HorizontalAlignment="Right"
-                                               IsTabStop="False"
-                                               Maximum="{TemplateBinding ScrollableHeight}"
-                                               Orientation="Vertical"
-                                               Value="{TemplateBinding VerticalOffset}"
-                                               ViewportSize="{TemplateBinding ViewportHeight}"
-                                               Visibility="{TemplateBinding ComputedVerticalScrollBarVisibility}" />
-                                    <ScrollBar x:Name="HorizontalScrollBar"
-                                               IsTabStop="False"
-                                               Maximum="{TemplateBinding ScrollableWidth}"
-                                               Orientation="Horizontal"
-                                               Grid.Row="1"
-                                               Value="{TemplateBinding HorizontalOffset}"
-                                               ViewportSize="{TemplateBinding ViewportWidth}"
-                                               Visibility="{TemplateBinding ComputedHorizontalScrollBarVisibility}" />
-                                    <Border x:Name="ScrollBarSeparator"
-                                            Background="{ThemeResource ScrollViewerScrollBarSeparatorBackground}"
-                                            Grid.Column="1"
-                                            Opacity="0"
-                                            Grid.Row="1" />
-                                </Grid>
                             </Border>
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
             </Style>
 
-            <!-- Converters -->
+            <!--  Converters  -->
             <converters:BooleanToDoubleConverter x:Key="BooleanToDoubleConverter" />
             <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
 
-            <!-- Shadows -->
-            <mtuum:AttachedCardShadow x:Key="CommonShadow"
-                                      Offset="0"
-                                      Opacity="0.1" />
+            <!--  Shadows  -->
+            <mtuum:AttachedCardShadow
+                x:Key="CommonShadow"
+                Opacity="0.1"
+                Offset="0" />
         </ResourceDictionary>
     </Page.Resources>
 
     <Grid>
-        <SplitView x:Name="InfoPane"
-                   DisplayMode="Overlay"
-                   PanePlacement="Right"
-                   PaneBackground="{ThemeResource SidePaneBackground}">
+        <SplitView
+            x:Name="InfoPane"
+            DisplayMode="Overlay"
+            PaneBackground="{ThemeResource SidePaneBackground}"
+            PanePlacement="Right">
 
-            <!-- Information Pane -->
+            <!--  Information Pane  -->
             <SplitView.Pane>
                 <Grid>
                     <Grid.RowDefinitions>
@@ -295,78 +286,80 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <!-- Information -->
-                    <ScrollViewer Grid.Row="0"
-                                  Padding="15,0,15,0">
+                    <!--  Information  -->
+                    <ScrollViewer Grid.Row="0" Padding="15,0,15,0">
                         <StackPanel Orientation="Vertical">
                             <Grid Height="34" />
 
-                            <!-- Title1 -->
-                            <TextBlock FontSize="20"
-                                       FontWeight="SemiLight"
-                                       IsTextSelectionEnabled="True"
-                                       Text="{x:Bind Shared.ComicTitle1, Mode=OneWay}"
-                                       TextWrapping="Wrap" />
+                            <!--  Title1  -->
+                            <TextBlock
+                                FontSize="20"
+                                FontWeight="SemiLight"
+                                IsTextSelectionEnabled="True"
+                                Text="{x:Bind Shared.ComicTitle1, Mode=OneWay}"
+                                TextWrapping="Wrap" />
 
-                            <!-- Title2 -->
-                            <TextBlock TextWrapping="Wrap"
-                                       FontSize="20"
-                                       FontWeight="SemiLight"
-                                       IsTextSelectionEnabled="True"
-                                       Text="{x:Bind Shared.ComicTitle2, Mode=OneWay}"
-                                       Margin="0,10,0,0"
-                                       Visibility="{x:Bind Shared.IsComicTitle2Visible, Mode=OneWay}" />
+                            <!--  Title2  -->
+                            <TextBlock
+                                Margin="0,10,0,0"
+                                FontSize="20"
+                                FontWeight="SemiLight"
+                                IsTextSelectionEnabled="True"
+                                Text="{x:Bind Shared.ComicTitle2, Mode=OneWay}"
+                                TextWrapping="Wrap"
+                                Visibility="{x:Bind Shared.IsComicTitle2Visible, Mode=OneWay}" />
 
-                            <!-- Rating -->
-                            <muxc:RatingControl Value="{x:Bind Shared.Rating, Mode=TwoWay}"
-                                                ValueChanged="OnRatingControlValueChanged"
-                                                IsEnabled="{x:Bind Shared.NavigationPageShared.NotExternal, Mode=OneWay}"
-                                                HorizontalAlignment="Left"
-                                                IsClearEnabled="True"
-                                                Margin="0,10,0,0" />
+                            <!--  Rating  -->
+                            <muxc:RatingControl
+                                Margin="0,10,0,0"
+                                HorizontalAlignment="Left"
+                                IsClearEnabled="True"
+                                IsEnabled="{x:Bind Shared.NavigationPageShared.NotExternal, Mode=OneWay}"
+                                ValueChanged="OnRatingControlValueChanged"
+                                Value="{x:Bind Shared.Rating, Mode=TwoWay}" />
 
-                            <!-- Directory -->
-                            <TextBlock IsTextSelectionEnabled="True"
-                                       VerticalAlignment="Center"
-                                       Margin="0,20,0,0"
-                                       TextWrapping="Wrap"
-                                       FontSize="13"
-                                       FontWeight="SemiLight"
-                                       Text="{x:Bind Shared.ComicDir, Mode=OneWay}" />
+                            <!--  Directory  -->
+                            <TextBlock
+                                Margin="0,20,0,0"
+                                VerticalAlignment="Center"
+                                FontSize="13"
+                                FontWeight="SemiLight"
+                                IsTextSelectionEnabled="True"
+                                Text="{x:Bind Shared.ComicDir, Mode=OneWay}"
+                                TextWrapping="Wrap" />
 
-                            <!-- Tags -->
-                            <Rectangle Fill="#606060"
-                                       Height="1"
-                                       Margin="0,24,0,10"
-                                       Visibility="{x:Bind Shared.IsComicTagsVisible, Mode=OneWay}" />
-                            <ListView ItemsSource="{x:Bind Shared.ComicTags, Mode=OneWay}"
-                                      SelectionMode="None"
-                                      Margin="0,10,0,0">
+                            <!--  Tags  -->
+                            <Rectangle
+                                Height="1"
+                                Margin="0,24,0,10"
+                                Fill="#606060"
+                                Visibility="{x:Bind Shared.IsComicTagsVisible, Mode=OneWay}" />
+                            <ListView
+                                Margin="0,10,0,0"
+                                ItemsSource="{x:Bind Shared.ComicTags, Mode=OneWay}"
+                                SelectionMode="None">
                                 <ListView.ItemContainerStyle>
                                     <Style TargetType="ListViewItem">
-                                        <Setter Property="HorizontalContentAlignment"
-                                                Value="Stretch" />
-                                        <Setter Property="VerticalContentAlignment"
-                                                Value="Stretch" />
-                                        <Setter Property="Padding"
-                                                Value="0" />
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                        <Setter Property="VerticalContentAlignment" Value="Stretch" />
+                                        <Setter Property="Padding" Value="0" />
                                     </Style>
                                 </ListView.ItemContainerStyle>
                                 <ListView.ItemTemplate>
                                     <DataTemplate x:DataType="data:TagCollectionViewModel">
-                                        <StackPanel Orientation="Vertical"
-                                                    Margin="0,0,0,10">
-                                            <StackPanel Orientation="Horizontal"
-                                                        Margin="5,0,0,4">
-                                                <FontIcon FontFamily="Segoe MDL2 Assets"
-                                                          Glyph="&#xE8EC;"
-                                                          VerticalAlignment="Center"
-                                                          FontSize="12"
-                                                          Margin="0,0,5,0" />
-                                                <TextBlock Text="{x:Bind Name}"
-                                                           VerticalAlignment="Center"
-                                                           Margin="0,0,0,2"
-                                                           FontSize="12" />
+                                        <StackPanel Margin="0,0,0,10" Orientation="Vertical">
+                                            <StackPanel Margin="5,0,0,4" Orientation="Horizontal">
+                                                <FontIcon
+                                                    Margin="0,0,5,0"
+                                                    VerticalAlignment="Center"
+                                                    FontFamily="Segoe MDL2 Assets"
+                                                    FontSize="12"
+                                                    Glyph="&#xE8EC;" />
+                                                <TextBlock
+                                                    Margin="0,0,0,2"
+                                                    VerticalAlignment="Center"
+                                                    FontSize="12"
+                                                    Text="{x:Bind Name}" />
                                             </StackPanel>
                                             <muxc:ItemsRepeater ItemsSource="{x:Bind Tags}">
                                                 <muxc:ItemsRepeater.ItemTemplate>
@@ -375,8 +368,7 @@
                                                     </DataTemplate>
                                                 </muxc:ItemsRepeater.ItemTemplate>
                                                 <muxc:ItemsRepeater.Layout>
-                                                    <mtuuc:WrapLayout VerticalSpacing="5"
-                                                                      HorizontalSpacing="5" />
+                                                    <mtuuc:WrapLayout HorizontalSpacing="5" VerticalSpacing="5" />
                                                 </muxc:ItemsRepeater.Layout>
                                             </muxc:ItemsRepeater>
                                         </StackPanel>
@@ -386,56 +378,60 @@
                         </StackPanel>
                     </ScrollViewer>
 
-                    <!-- Bottom buttons -->
-                    <StackPanel Grid.Row="1"
-                                Orientation="Horizontal"
-                                HorizontalAlignment="Right"
-                                Margin="15,5,15,3">
-                        <AppBarButton x:Uid="EditInfoButton"
-                                      Click="OnEditBtClicked"
-                                      Icon="Edit"
-                                      Width="70"
-                                      IsEnabled="{x:Bind Shared.IsEditable, Mode=OneWay}" />
-                        <AppBarToggleButton x:Name="FavoriteBt"
-                                            x:Uid="FavoriteToggleButton"
-                                            Icon="Favorite"
-                                            Margin="2,0,0,0"
-                                            Width="70"
-                                            IsChecked="{x:Bind Shared.NavigationPageShared.IsFavorite, Mode=OneWay}"
-                                            Checked="OnFavoriteBtChecked"
-                                            Unchecked="OnFavoriteBtUnchecked"
-                                            IsEnabled="{x:Bind Shared.NavigationPageShared.NotExternal, Mode=OneWay}" />
+                    <!--  Bottom buttons  -->
+                    <StackPanel
+                        Grid.Row="1"
+                        Margin="15,5,15,3"
+                        HorizontalAlignment="Right"
+                        Orientation="Horizontal">
+                        <AppBarButton
+                            x:Uid="EditInfoButton"
+                            Width="70"
+                            Click="OnEditBtClicked"
+                            Icon="Edit"
+                            IsEnabled="{x:Bind Shared.IsEditable, Mode=OneWay}" />
+                        <AppBarToggleButton
+                            x:Name="FavoriteBt"
+                            x:Uid="FavoriteToggleButton"
+                            Width="70"
+                            Margin="2,0,0,0"
+                            Checked="OnFavoriteBtChecked"
+                            Icon="Favorite"
+                            IsChecked="{x:Bind Shared.NavigationPageShared.IsFavorite, Mode=OneWay}"
+                            IsEnabled="{x:Bind Shared.NavigationPageShared.NotExternal, Mode=OneWay}"
+                            Unchecked="OnFavoriteBtUnchecked" />
                     </StackPanel>
                 </Grid>
             </SplitView.Pane>
 
-            <!-- Main section -->
+            <!--  Main section  -->
             <Grid>
-                <muxc:ProgressRing IsActive="{x:Bind Shared.IsLoadingRingVisible, Mode=OneWay}"
-                                   HorizontalAlignment="Left"
-                                   VerticalAlignment="Bottom"
-                                   Margin="20" />
+                <muxc:ProgressRing
+                    Margin="20"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Bottom"
+                    IsActive="{x:Bind Shared.IsLoadingRingVisible, Mode=OneWay}" />
 
-                <!-- Reader -->
+                <!--  Reader  -->
                 <Grid Tapped="OnReaderTapped">
                     <Grid x:Name="ManipulationReference" />
 
-                    <!-- Vertical -->
-                    <ScrollViewer x:Name="VerticalReaderScrollViewer"
-                                  ViewChanged="OnVerticalReaderScrollViewerViewChanged"
-                                  IsHitTestVisible="{x:Bind Shared.NavigationPageShared.IsVerticalReaderVisible, Mode=OneWay}"
-                                  Opacity="{x:Bind Shared.NavigationPageShared.IsVerticalReaderVisible, Converter={StaticResource BooleanToDoubleConverter}, Mode=OneWay}"
-                                  HorizontalScrollMode="Enabled"
-                                  HorizontalScrollBarVisibility="Auto"
-                                  Loaded="OnVerticalReaderScrollViewerLoaded"
-                                  ZoomMode="Enabled">
+                    <!--  Vertical  -->
+                    <ScrollViewer
+                        HorizontalScrollBarVisibility="Auto"
+                        HorizontalScrollMode="Enabled"
+                        IsHitTestVisible="{x:Bind Shared.NavigationPageShared.IsVerticalReaderVisible, Mode=OneWay}"
+                        Loaded="OnVerticalReaderScrollViewerLoaded"
+                        Opacity="{x:Bind Shared.NavigationPageShared.IsVerticalReaderVisible, Converter={StaticResource BooleanToDoubleConverter}, Mode=OneWay}"
+                        ViewChanged="OnVerticalReaderScrollViewerViewChanged"
+                        ZoomMode="Enabled">
                         <Grid HorizontalAlignment="Center">
-                            <ListView x:Name="VerticalReaderListView"
-                                      ItemsSource="{x:Bind VerticalReader.DataSource, Mode=OneWay}"
-                                      Loaded="OnVerticalReaderListViewLoaded"
-                                      SelectionMode="None"
-                                      ScrollViewer.VerticalScrollBarVisibility="Disabled"
-                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListView
+                                ItemsSource="{x:Bind VerticalReader.DataSource, Mode=OneWay}"
+                                Loaded="OnVerticalReaderListViewLoaded"
+                                ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                SelectionMode="None">
                                 <ListView.ItemTemplate>
                                     <DataTemplate x:DataType="data:ReaderFrameViewModel">
                                         <controls:ReadeFrame DataContext="{x:Bind}" />
@@ -443,38 +439,40 @@
                                 </ListView.ItemTemplate>
                                 <ListView.ItemContainerStyle>
                                     <Style TargetType="ListViewItem">
-                                        <Setter Property="Padding"
-                                                Value="0" />
+                                        <Setter Property="Padding" Value="0" />
                                     </Style>
                                 </ListView.ItemContainerStyle>
                             </ListView>
-                            <Grid Background="Transparent"
-                                  PointerPressed="OnReaderScrollViewerPointerPressed"
-                                  PointerMoved="OnReaderScrollViewerPointerMoved"
-                                  PointerReleased="OnReaderScrollViewerPointerReleased" />
+                            <Grid
+                                Background="Transparent"
+                                PointerCanceled="OnVerticalReaderPointerCanceled"
+                                PointerCaptureLost="OnVerticalReaderPointerCaptureLost"
+                                PointerMoved="OnVerticalReaderPointerMoved"
+                                PointerPressed="OnVerticalReaderPointerPressed"
+                                PointerReleased="OnVerticalReaderPointerReleased" />
                         </Grid>
                     </ScrollViewer>
 
-                    <!-- Horizontal -->
-                    <ScrollViewer Style="{StaticResource HorizontalReaderScrollViewerStyle}"
-                                  x:Name="HorizontalReaderScrollViewer"
-                                  ViewChanged="OnHorizontalReaderScrollViewerViewChanged"
-                                  IsHitTestVisible="{x:Bind Shared.NavigationPageShared.IsHorizontalReaderVisible, Mode=OneWay}"
-                                  Opacity="{x:Bind Shared.NavigationPageShared.IsHorizontalReaderVisible, Converter={StaticResource BooleanToDoubleConverter}, Mode=OneWay}"
-                                  Loaded="OnHorizontalReaderScrollViewerLoaded"
-                                  ZoomMode="Enabled"
-                                  HorizontalScrollBarVisibility="Auto"
-                                  HorizontalScrollMode="Enabled"
-                                  VerticalScrollBarVisibility="Hidden"
-                                  VerticalScrollMode="Disabled"
-                                  FlowDirection="{x:Bind Shared.ReaderFlowDirection, Mode=OneWay}">
+                    <!--  Horizontal  -->
+                    <ScrollViewer
+                        FlowDirection="{x:Bind Shared.ReaderFlowDirection, Mode=OneWay}"
+                        HorizontalScrollBarVisibility="Auto"
+                        HorizontalScrollMode="Enabled"
+                        IsHitTestVisible="{x:Bind Shared.NavigationPageShared.IsHorizontalReaderVisible, Mode=OneWay}"
+                        Loaded="OnHorizontalReaderScrollViewerLoaded"
+                        Opacity="{x:Bind Shared.NavigationPageShared.IsHorizontalReaderVisible, Converter={StaticResource BooleanToDoubleConverter}, Mode=OneWay}"
+                        Style="{StaticResource HorizontalReaderScrollViewerStyle}"
+                        VerticalScrollBarVisibility="Hidden"
+                        VerticalScrollMode="Disabled"
+                        ViewChanged="OnHorizontalReaderScrollViewerViewChanged"
+                        ZoomMode="Enabled">
                         <Grid VerticalAlignment="Center">
-                            <ListView x:Name="HorizontalReaderListView"
-                                      ItemsSource="{x:Bind HorizontalReader.DataSource, Mode=OneWay}"
-                                      Loaded="OnHorizontalReaderListViewLoaded"
-                                      SelectionMode="None"
-                                      ScrollViewer.VerticalScrollBarVisibility="Disabled"
-                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListView
+                                ItemsSource="{x:Bind HorizontalReader.DataSource, Mode=OneWay}"
+                                Loaded="OnHorizontalReaderListViewLoaded"
+                                ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                SelectionMode="None">
                                 <ListView.ItemTemplate>
                                     <DataTemplate x:DataType="data:ReaderFrameViewModel">
                                         <controls:ReadeFrame DataContext="{x:Bind}" />
@@ -487,35 +485,40 @@
                                 </ListView.ItemsPanel>
                                 <ListView.ItemContainerStyle>
                                     <Style TargetType="ListViewItem">
-                                        <Setter Property="Padding"
-                                                Value="0" />
+                                        <Setter Property="Padding" Value="0" />
                                     </Style>
                                 </ListView.ItemContainerStyle>
                             </ListView>
-                            <Grid Background="Transparent"
-                                  PointerPressed="OnReaderScrollViewerPointerPressed"
-                                  PointerMoved="OnReaderScrollViewerPointerMoved"
-                                  PointerReleased="OnReaderScrollViewerPointerReleased" />
+                            <!--
+                                We have to set ManipulationMode here to disable the default behavior of ScrollViewer
+                                (which steals the pointers from its inner controls)
+                            -->
+                            <Grid
+                                Background="Transparent"
+                                ManipulationMode="All"
+                                PointerCanceled="OnHorizontalReaderPointerCanceled"
+                                PointerCaptureLost="OnHorizontalReaderPointerCaptureLost"
+                                PointerMoved="OnHorizontalReaderPointerMoved"
+                                PointerPressed="OnHorizontalReaderPointerPressed"
+                                PointerReleased="OnHorizontalReaderPointerReleased" />
                         </Grid>
                     </ScrollViewer>
                 </Grid>
 
-                <!-- Grid Preview -->
-                <ScrollViewer IsHitTestVisible="{x:Bind Shared.IsGridViewVisible, Mode=OneWay}"
-                              Opacity="{x:Bind Shared.IsGridViewVisible, Converter={StaticResource BooleanToDoubleConverter}, Mode=OneWay}">
-                    <GridView ItemsSource="{x:Bind PreviewDataSource, Mode=OneWay}"
-                              Padding="10"
-                              HorizontalAlignment="Center"
-                              VerticalAlignment="Center"
-                              SelectionMode="Single"
-                              ItemClick="OnGridViewItemClicked"
-                              IsItemClickEnabled="True">
+                <!--  Grid Preview  -->
+                <ScrollViewer IsHitTestVisible="{x:Bind Shared.IsGridViewVisible, Mode=OneWay}" Opacity="{x:Bind Shared.IsGridViewVisible, Converter={StaticResource BooleanToDoubleConverter}, Mode=OneWay}">
+                    <GridView
+                        Padding="10"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        IsItemClickEnabled="True"
+                        ItemClick="OnGridViewItemClicked"
+                        ItemsSource="{x:Bind PreviewDataSource, Mode=OneWay}"
+                        SelectionMode="Single">
                         <GridView.ItemContainerStyle>
                             <Style TargetType="GridViewItem">
-                                <Setter Property="Margin"
-                                        Value="10" />
-                                <Setter Property="mtuu:Effects.Shadow"
-                                        Value="{StaticResource CommonShadow}" />
+                                <Setter Property="Margin" Value="10" />
+                                <Setter Property="mtuu:Effects.Shadow" Value="{StaticResource CommonShadow}" />
                             </Style>
                         </GridView.ItemContainerStyle>
                         <GridView.ItemTemplate>
@@ -526,23 +529,26 @@
                     </GridView>
                 </ScrollViewer>
 
-                <!-- Bottom Tile -->
-                <Grid x:Name="BottomGrid"
-                      VerticalAlignment="Bottom"
-                      Background="{ThemeResource ReaderBottomTileBackground}"
-                      Height="50"
-                      PointerEntered="OnBottomTilePointerEntered"
-                      PointerExited="OnBottomTilePointerExited"
-                      Opacity="0">
-                    <Rectangle Height="1"
-                               Fill="{ThemeResource ReaderBottomTileBorderBrush}"
-                               VerticalAlignment="Top" />
+                <!--  Bottom Tile  -->
+                <Grid
+                    x:Name="BottomGrid"
+                    Height="50"
+                    VerticalAlignment="Bottom"
+                    Background="{ThemeResource ReaderBottomTileBackground}"
+                    Opacity="0"
+                    PointerEntered="OnBottomTilePointerEntered"
+                    PointerExited="OnBottomTilePointerExited">
+                    <Rectangle
+                        Height="1"
+                        VerticalAlignment="Top"
+                        Fill="{ThemeResource ReaderBottomTileBorderBrush}" />
                     <Grid>
                         <Grid.Resources>
                             <Storyboard x:Name="BottomGridStoryboard">
-                                <DoubleAnimation Storyboard.TargetName="BottomGrid"
-                                                 Storyboard.TargetProperty="Opacity"
-                                                 Duration="0:0:0.2" />
+                                <DoubleAnimation
+                                    Storyboard.TargetName="BottomGrid"
+                                    Storyboard.TargetProperty="Opacity"
+                                    Duration="0:0:0.2" />
                             </Storyboard>
                         </Grid.Resources>
                         <Grid.ColumnDefinitions>
@@ -550,127 +556,127 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0"
-                                    Orientation="Horizontal"
-                                    HorizontalAlignment="Left"
-                                    VerticalAlignment="Center"
-                                    Spacing="5">
+                        <StackPanel
+                            Grid.Column="0"
+                            HorizontalAlignment="Left"
+                            VerticalAlignment="Center"
+                            Orientation="Horizontal"
+                            Spacing="5">
                             <Grid Width="5" />
 
-                            <!-- Pin -->
-                            <ToggleButton Style="{StaticResource ReaderBottomTileToggleButtonStyle}"
-                                          IsChecked="{x:Bind Shared.BottomTilePinned, Mode=TwoWay}"
-                                          ToolTipService.ToolTip="{x:Bind Shared.PinButtonToolTip, Mode=OneWay}">
-                                <FontIcon Glyph="&#xE840;"
-                                          FontSize="20" />
+                            <!--  Pin  -->
+                            <ToggleButton
+                                IsChecked="{x:Bind Shared.BottomTilePinned, Mode=TwoWay}"
+                                Style="{StaticResource ReaderBottomTileToggleButtonStyle}"
+                                ToolTipService.ToolTip="{x:Bind Shared.PinButtonToolTip, Mode=OneWay}">
+                                <FontIcon FontSize="20" Glyph="&#xE840;" />
                             </ToggleButton>
 
-                            <!-- More -->
-                            <Button x:Uid="MoreButton"
-                                    Style="{StaticResource ReaderBottomTileButtonStyle}">
+                            <!--  More  -->
+                            <Button x:Uid="MoreButton" Style="{StaticResource ReaderBottomTileButtonStyle}">
                                 <Button.Flyout>
                                     <MenuFlyout>
-                                        <MenuFlyoutItem x:Uid="MenuFlyoutComicInfo"
-                                                        Click="OnComicInfoClicked">
+                                        <MenuFlyoutItem x:Uid="MenuFlyoutComicInfo" Click="OnComicInfoClicked">
                                             <MenuFlyoutItem.Icon>
-                                                <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                                          Glyph="&#xE946;" />
+                                                <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE946;" />
                                             </MenuFlyoutItem.Icon>
                                         </MenuFlyoutItem>
                                     </MenuFlyout>
                                 </Button.Flyout>
-                                <FontIcon Glyph="&#xE712;"
-                                          FontSize="20" />
+                                <FontIcon FontSize="20" Glyph="&#xE712;" />
                             </Button>
                             <AppBarSeparator />
 
-                            <!-- Zooming -->
-                            <Button x:Uid="ZoomInButton"
-                                    Style="{StaticResource ReaderBottomTileButtonStyle}"
-                                    IsEnabled="{x:Bind Shared.NavigationPageShared.ZoomInEnabled, Mode=OneWay}"
-                                    Click="OnZoomInBtClicked">
-                                <FontIcon Glyph="&#xE8A3;"
-                                          FontSize="20" />
+                            <!--  Zooming  -->
+                            <Button
+                                x:Uid="ZoomInButton"
+                                Click="OnZoomInBtClicked"
+                                IsEnabled="{x:Bind Shared.NavigationPageShared.ZoomInEnabled, Mode=OneWay}"
+                                Style="{StaticResource ReaderBottomTileButtonStyle}">
+                                <FontIcon FontSize="20" Glyph="&#xE8A3;" />
                             </Button>
-                            <Button x:Uid="ZoomOutButton"
-                                    Style="{StaticResource ReaderBottomTileButtonStyle}"
-                                    IsEnabled="{x:Bind Shared.NavigationPageShared.ZoomOutEnabled, Mode=OneWay}"
-                                    Click="OnZoomOutBtClicked">
-                                <FontIcon Glyph="&#xE71F;"
-                                          FontSize="20" />
+                            <Button
+                                x:Uid="ZoomOutButton"
+                                Click="OnZoomOutBtClicked"
+                                IsEnabled="{x:Bind Shared.NavigationPageShared.ZoomOutEnabled, Mode=OneWay}"
+                                Style="{StaticResource ReaderBottomTileButtonStyle}">
+                                <FontIcon FontSize="20" Glyph="&#xE71F;" />
                             </Button>
 
-                            <!-- Orientation toggle -->
+                            <!--  Orientation toggle  -->
                             <Grid>
-                                <Button x:Uid="HorizontalButton"
-                                        Style="{StaticResource ReaderBottomTileButtonStyle}"
-                                        Click="OnSwitchReaderOrientationClicked"
-                                        Visibility="{x:Bind Shared.NavigationPageShared.IsSwitchToHorizontalReaderButtonVisible, Mode=OneWay}"
-                                        IsEnabled="{x:Bind Shared.NavigationPageShared.IsVerticalReaderVisible, Mode=OneWay}">
-                                    <FontIcon Glyph="&#xE89A;"
-                                              FontSize="20" />
+                                <Button
+                                    x:Uid="HorizontalButton"
+                                    Click="OnSwitchReaderOrientationClicked"
+                                    IsEnabled="{x:Bind Shared.NavigationPageShared.IsVerticalReaderVisible, Mode=OneWay}"
+                                    Style="{StaticResource ReaderBottomTileButtonStyle}"
+                                    Visibility="{x:Bind Shared.NavigationPageShared.IsSwitchToHorizontalReaderButtonVisible, Mode=OneWay}">
+                                    <FontIcon FontSize="20" Glyph="&#xE89A;" />
                                 </Button>
-                                <Button x:Uid="VerticalButton"
-                                        Style="{StaticResource ReaderBottomTileButtonStyle}"
-                                        Click="OnSwitchReaderOrientationClicked"
-                                        Visibility="{x:Bind Shared.NavigationPageShared.IsSwitchToVerticalReaderButtonVisible, Mode=OneWay}"
-                                        IsEnabled="{x:Bind Shared.NavigationPageShared.IsHorizontalReaderVisible, Mode=OneWay}">
-                                    <FontIcon Glyph="&#xE7C3;"
-                                              FontSize="20" />
+                                <Button
+                                    x:Uid="VerticalButton"
+                                    Click="OnSwitchReaderOrientationClicked"
+                                    IsEnabled="{x:Bind Shared.NavigationPageShared.IsHorizontalReaderVisible, Mode=OneWay}"
+                                    Style="{StaticResource ReaderBottomTileButtonStyle}"
+                                    Visibility="{x:Bind Shared.NavigationPageShared.IsSwitchToVerticalReaderButtonVisible, Mode=OneWay}">
+                                    <FontIcon FontSize="20" Glyph="&#xE7C3;" />
                                 </Button>
                             </Grid>
 
-                            <!-- Grid preview toggle -->
-                            <ToggleButton x:Uid="AllPagesButton"
-                                          Style="{StaticResource ReaderBottomTileToggleButtonStyle}"
-                                          IsChecked="{x:Bind Shared.NavigationPageShared.IsPreviewButtonToggled, Mode=TwoWay}">
-                                <FontIcon Glyph="&#xF0E2;"
-                                          FontSize="20" />
+                            <!--  Grid preview toggle  -->
+                            <ToggleButton
+                                x:Uid="AllPagesButton"
+                                IsChecked="{x:Bind Shared.NavigationPageShared.IsPreviewButtonToggled, Mode=TwoWay}"
+                                Style="{StaticResource ReaderBottomTileToggleButtonStyle}">
+                                <FontIcon FontSize="20" Glyph="&#xF0E2;" />
                             </ToggleButton>
 
-                            <!-- Add to favorites -->
-                            <Button Style="{StaticResource ReaderBottomTileButtonStyle}"
-                                    IsEnabled="{x:Bind Shared.NavigationPageShared.NotExternal, Mode=OneWay}"
-                                    ToolTipService.ToolTip="{x:Bind Shared.NavigationPageShared.FavoriteButtonToolTip, Mode=OneWay}"
-                                    Click="OnFavoritesBtClicked">
+                            <!--  Add to favorites  -->
+                            <Button
+                                Click="OnFavoritesBtClicked"
+                                IsEnabled="{x:Bind Shared.NavigationPageShared.NotExternal, Mode=OneWay}"
+                                Style="{StaticResource ReaderBottomTileButtonStyle}"
+                                ToolTipService.ToolTip="{x:Bind Shared.NavigationPageShared.FavoriteButtonToolTip, Mode=OneWay}">
                                 <Grid>
-                                    <FontIcon Glyph="&#xE734;"
-                                              FontSize="20"
-                                              Visibility="{x:Bind Shared.NavigationPageShared.IsFavorite, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
-                                    <FontIcon Glyph="&#xE735;"
-                                              FontSize="20"
-                                              Visibility="{x:Bind Shared.NavigationPageShared.IsFavorite, Mode=OneWay}"
-                                              Foreground="DeepSkyBlue" />
+                                    <FontIcon
+                                        FontSize="20"
+                                        Glyph="&#xE734;"
+                                        Visibility="{x:Bind Shared.NavigationPageShared.IsFavorite, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
+                                    <FontIcon
+                                        FontSize="20"
+                                        Foreground="DeepSkyBlue"
+                                        Glyph="&#xE735;"
+                                        Visibility="{x:Bind Shared.NavigationPageShared.IsFavorite, Mode=OneWay}" />
                                 </Grid>
                             </Button>
                         </StackPanel>
 
-                        <!-- Page indicator -->
-                        <TextBlock x:Name="PageIndicator"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"
-                                   FontWeight="Bold"
-                                   Grid.Column="1" />
+                        <!--  Page indicator  -->
+                        <TextBlock
+                            x:Name="PageIndicator"
+                            Grid.Column="1"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            FontWeight="Bold" />
                     </Grid>
                 </Grid>
 
-                <!-- Fullscreen button -->
-                <Grid VerticalAlignment="Bottom"
-                      HorizontalAlignment="Right">
-                    <Button Style="{StaticResource ReaderFullscreenButtonStyle}"
-                            Click="OnFullscreenBtClicked"
-                            Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}">
+                <!--  Fullscreen button  -->
+                <Grid HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                    <Button
+                        Click="OnFullscreenBtClicked"
+                        Style="{StaticResource ReaderFullscreenButtonStyle}"
+                        Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}">
                         <Button.Content>
-                            <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                      Glyph="&#xE740;" />
+                            <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE740;" />
                         </Button.Content>
                     </Button>
-                    <Button Style="{StaticResource ReaderFullscreenButtonStyle}"
-                            Click="OnBackToWindowBtClicked"
-                            Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}">
+                    <Button
+                        Click="OnBackToWindowBtClicked"
+                        Style="{StaticResource ReaderFullscreenButtonStyle}"
+                        Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}">
                         <Button.Content>
-                            <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                      Glyph="&#xE73F;" />
+                            <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE73F;" />
                         </Button.Content>
                     </Button>
                 </Grid>

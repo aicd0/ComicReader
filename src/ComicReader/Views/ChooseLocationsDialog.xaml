@@ -1,13 +1,14 @@
-﻿<ContentDialog x:Class="ComicReader.Views.ChooseLocationsDialog"
-               x:Uid="ChooseLocationDialog"
-               xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-               xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-               xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-               xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-               xmlns:data="using:ComicReader.DesignData"
-               xmlns:converters="using:ComicReader.Converters"
-               mc:Ignorable="d"
-               PrimaryButtonClick="ContentDialogPrimaryButtonClick">
+﻿<ContentDialog
+    x:Class="ComicReader.Views.ChooseLocationsDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converters="using:ComicReader.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:data="using:ComicReader.DesignData"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    x:Uid="ChooseLocationDialog"
+    PrimaryButtonClick="ContentDialogPrimaryButtonClick"
+    mc:Ignorable="d">
 
     <ContentDialog.Resources>
         <ResourceDictionary>
@@ -15,48 +16,52 @@
                 <ResourceDictionary Source="../Resources/Styles/ListViewItem.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- Normal Template -->
-            <DataTemplate x:Key="NormalTemplate"
-                          x:DataType="data:FolderItemViewModel">
-                <Grid x:Uid="RemoveLocationButton"
-                      Background="{ThemeResource SystemAccentColor}"
-                      PointerPressed="RemoveFolderPointerPressed"
-                      Padding="20,10">
+            <!--  Normal Template  -->
+            <DataTemplate x:Key="NormalTemplate" x:DataType="data:FolderItemViewModel">
+                <Grid
+                    x:Uid="RemoveLocationButton"
+                    Padding="20,10"
+                    Background="{ThemeResource SystemAccentColor}"
+                    PointerPressed="RemoveFolderPointerPressed">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0"
-                               Text="{x:Bind Folder}"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center"
-                               TextWrapping="Wrap"
-                               Foreground="White" />
-                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                              Glyph="&#xE894;"
-                              FontSize="14"
-                              Grid.Column="1"
-                              Margin="10,0,0,0"
-                              Foreground="White" />
+                    <TextBlock
+                        Grid.Column="0"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Foreground="White"
+                        Text="{x:Bind Folder}"
+                        TextWrapping="Wrap" />
+                    <FontIcon
+                        Grid.Column="1"
+                        Margin="10,0,0,0"
+                        FontFamily="{StaticResource SymbolThemeFontFamily}"
+                        FontSize="14"
+                        Foreground="White"
+                        Glyph="&#xE894;" />
                 </Grid>
             </DataTemplate>
 
-            <!-- Add New Template -->
-            <DataTemplate x:Key="AddNewTemplate"
-                          x:DataType="data:FolderItemViewModel">
-                <Grid x:Uid="AddLocationButton"
-                      PointerPressed="AddNewPointerPressed"
-                      Background="{ThemeResource SystemAccentColor}">
-                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                              Glyph="&#xE710;"
-                              Foreground="White" />
+            <!--  Add New Template  -->
+            <DataTemplate x:Key="AddNewTemplate" x:DataType="data:FolderItemViewModel">
+                <Grid
+                    x:Uid="AddLocationButton"
+                    Background="{ThemeResource SystemAccentColor}"
+                    PointerPressed="AddNewPointerPressed">
+                    <FontIcon
+                        FontFamily="{StaticResource SymbolThemeFontFamily}"
+                        Foreground="White"
+                        Glyph="&#xE710;" />
                 </Grid>
             </DataTemplate>
 
-            <!-- Template Selectors -->
-            <converters:FolderItemTemplateSelector x:Key="FolderItemTemplateSelector"
-                                                   NormalTemplate="{StaticResource NormalTemplate}"
-                                                   AddNewTemplate="{StaticResource AddNewTemplate}" />
+            <!--  Template Selectors  -->
+            <converters:FolderItemTemplateSelector
+                x:Key="FolderItemTemplateSelector"
+                AddNewTemplate="{StaticResource AddNewTemplate}"
+                NormalTemplate="{StaticResource NormalTemplate}" />
         </ResourceDictionary>
     </ContentDialog.Resources>
 
@@ -64,23 +69,18 @@
         <StackPanel Orientation="Vertical">
             <TextBlock x:Uid="WatchingFolders" />
             <Grid Height="10" />
-            <ListView ItemTemplateSelector="{StaticResource FolderItemTemplateSelector}"
-                      Loaded="ListViewLoaded"
-                      ItemsSource="{x:Bind FolderItemDataSource}">
+            <ListView
+                ItemTemplateSelector="{StaticResource FolderItemTemplateSelector}"
+                ItemsSource="{x:Bind FolderItemDataSource}"
+                Loaded="ListViewLoaded">
                 <ListView.ItemContainerStyle>
                     <Style TargetType="ListViewItem">
-                        <Setter Property="HorizontalContentAlignment"
-                                Value="Stretch" />
-                        <Setter Property="VerticalContentAlignment"
-                                Value="Stretch" />
-                        <Setter Property="Margin"
-                                Value="0,10,0,0" />
-                        <Setter Property="MinHeight"
-                                Value="70" />
-                        <Setter Property="Width"
-                                Value="350" />
-                        <Setter Property="Padding"
-                                Value="0" />
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="VerticalContentAlignment" Value="Stretch" />
+                        <Setter Property="Margin" Value="0,10,0,0" />
+                        <Setter Property="MinHeight" Value="70" />
+                        <Setter Property="Width" Value="350" />
+                        <Setter Property="Padding" Value="0" />
                     </Style>
                 </ListView.ItemContainerStyle>
             </ListView>

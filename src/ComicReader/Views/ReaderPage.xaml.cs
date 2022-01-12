@@ -3,6 +3,10 @@
 //#define DEBUG_LOG_JUMP
 //#define DEBUG_LOG_VIEW_CHANGE
 //#define DEBUG_LOG_UPDATE_PAGE
+#define DEBUG_LOG_MANIPULATION
+#endif
+#if DEBUG_LOG_LOAD || DEBUG_LOG_JUMP || DEBUG_LOG_VIEW_CHANGE || DEBUG_LOG_UPDATE_PAGE || DEBUG_LOG_MANIPULATION
+#define DEBUG_LOG
 #endif
 
 using System;
@@ -11,6 +15,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.Devices.Input;
 using Windows.Foundation;
 using Windows.UI.Core;
 using Windows.UI.Input;
@@ -1021,7 +1026,7 @@ namespace ComicReader.Views
         private int IndexToPage(int index) => Math.Max(index + 1, 1);
 
         //  Others
-#if DEBUG_LOG_LOAD || DEBUG_LOG_JUMP || DEBUG_LOG_VIEW_CHANGE || DEBUG_LOG_UPDATE_PAGE
+#if DEBUG_LOG
         private void _Log(string text)
         {
             if (!IsCurrentReader)
@@ -1725,22 +1730,22 @@ namespace ComicReader.Views
 
         private void OnVerticalReaderScrollViewerLoaded(object sender, RoutedEventArgs e)
         {
-            VerticalReader.ThisScrollViewer = VerticalReaderScrollViewer;
+            VerticalReader.ThisScrollViewer = sender as ScrollViewer;
         }
 
         private void OnVerticalReaderListViewLoaded(object sender, RoutedEventArgs e)
         {
-            VerticalReader.ThisListView = VerticalReaderListView;
+            VerticalReader.ThisListView = sender as ListView;
         }
 
         private void OnHorizontalReaderScrollViewerLoaded(object sender, RoutedEventArgs e)
         {
-            HorizontalReader.ThisScrollViewer = HorizontalReaderScrollViewer;
+            HorizontalReader.ThisScrollViewer = sender as ScrollViewer;
         }
 
         private void OnHorizontalReaderListViewLoaded(object sender, RoutedEventArgs e)
         {
-            HorizontalReader.ThisListView = HorizontalReaderListView;
+            HorizontalReader.ThisListView = sender as ListView;
         }
 
         // Preview
@@ -1763,28 +1768,15 @@ namespace ComicReader.Views
                 reader.SetScrollViewer(null, ctx.Page, use_page_center: true, true);
             });
         }
-        
-        // Manipulating
-        private void OnReaderScrollViewerPointerPressed(object sender, PointerRoutedEventArgs e)
-        {
-            (sender as UIElement).CapturePointer(e.Pointer);
-            m_gesture_recognizer.ProcessDownEvent(e.GetCurrentPoint(ManipulationReference));
-        }
 
-        private void OnReaderScrollViewerPointerMoved(object sender, PointerRoutedEventArgs e)
-        {
-            m_gesture_recognizer.ProcessMoveEvents(e.GetIntermediatePoints(ManipulationReference));
-        }
-
-        private void OnReaderScrollViewerPointerReleased(object sender, PointerRoutedEventArgs e)
-        {
-            m_gesture_recognizer.ProcessUpEvent(e.GetCurrentPoint(ManipulationReference));
-            (sender as UIElement).ReleasePointerCapture(e.Pointer);
-        }
-
+        // Manipulation
         void OnManipulationStarted(object sender, ManipulationStartedEventArgs e)
         {
             // do nothing.
+
+#if DEBUG_LOG_MANIPULATION
+            _Log("Manipulation started");
+#endif
         }
 
         void OnManipulationUpdated(object sender, ManipulationUpdatedEventArgs e)
@@ -1834,6 +1826,95 @@ namespace ComicReader.Views
                     await reader.IncreasePage(1, false);
                 }
             });
+
+#if DEBUG_LOG_MANIPULATION
+            _Log("Manipulation completed");
+#endif
+        }
+
+        private void OnReaderPointerPressed(object sender, PointerRoutedEventArgs e, bool horizontal)
+        {
+            if (horizontal || e.Pointer.PointerDeviceType == PointerDeviceType.Mouse)
+            {
+                (sender as UIElement).CapturePointer(e.Pointer);
+                m_gesture_recognizer.ProcessDownEvent(e.GetCurrentPoint(ManipulationReference));
+#if DEBUG_LOG_MANIPULATION
+                _Log("Pointer pressed");
+#endif
+            }
+        }
+
+        private void OnReaderPointerMoved(object sender, PointerRoutedEventArgs e, bool horizontal)
+        {
+            if (horizontal || e.Pointer.PointerDeviceType == PointerDeviceType.Mouse)
+            {
+                m_gesture_recognizer.ProcessMoveEvents(e.GetIntermediatePoints(ManipulationReference));
+#if DEBUG_LOG_MANIPULATION
+                //_Log("Pointer moved");
+#endif
+            }
+        }
+
+        private void OnReaderPointerReleased(object sender, PointerRoutedEventArgs e, bool horizontal)
+        {
+            if (horizontal || e.Pointer.PointerDeviceType == PointerDeviceType.Mouse)
+            {
+                m_gesture_recognizer.ProcessUpEvent(e.GetCurrentPoint(ManipulationReference));
+                (sender as UIElement).ReleasePointerCapture(e.Pointer);
+#if DEBUG_LOG_MANIPULATION
+                _Log("Pointer released");
+#endif
+            }
+        }
+
+        private void OnVerticalReaderPointerPressed(object sender, PointerRoutedEventArgs e)
+        {
+            OnReaderPointerPressed(sender, e, false);
+        }
+
+        private void OnVerticalReaderPointerMoved(object sender, PointerRoutedEventArgs e)
+        {
+            OnReaderPointerMoved(sender, e, false);
+        }
+
+        private void OnVerticalReaderPointerReleased(object sender, PointerRoutedEventArgs e)
+        {
+            OnReaderPointerReleased(sender, e, false);
+        }
+
+        private void OnVerticalReaderPointerCaptureLost(object sender, PointerRoutedEventArgs e)
+        {
+            OnReaderPointerReleased(sender, e, false);
+        }
+
+        private void OnVerticalReaderPointerCanceled(object sender, PointerRoutedEventArgs e)
+        {
+            OnReaderPointerReleased(sender, e, false);
+        }
+
+        private void OnHorizontalReaderPointerPressed(object sender, PointerRoutedEventArgs e)
+        {
+            OnReaderPointerPressed(sender, e, true);
+        }
+
+        private void OnHorizontalReaderPointerMoved(object sender, PointerRoutedEventArgs e)
+        {
+            OnReaderPointerMoved(sender, e, true);
+        }
+
+        private void OnHorizontalReaderPointerReleased(object sender, PointerRoutedEventArgs e)
+        {
+            OnReaderPointerReleased(sender, e, true);
+        }
+
+        private void OnHorizontalReaderPointerCaptureLost(object sender, PointerRoutedEventArgs e)
+        {
+            OnReaderPointerReleased(sender, e, true);
+        }
+
+        private void OnHorizontalReaderPointerCanceled(object sender, PointerRoutedEventArgs e)
+        {
+            OnReaderPointerReleased(sender, e, true);
         }
 
         // Zooming
@@ -2088,5 +2169,13 @@ namespace ComicReader.Views
         {
             SwitchReaderOrientation();
         }
+
+        // Debug
+#if DEBUG_LOG
+        private void _Log(string text)
+        {
+            System.Diagnostics.Debug.Print("Reader: " + text + ".\n");
+        }
+#endif
     }
 }

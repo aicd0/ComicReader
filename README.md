@@ -1,10 +1,13 @@
-# Comic Reader UWP
-The Comic Reader UWP is a modern Windows app written in C#. You can get the latest version of Comic Reader UWP in the [Microsoft Store](https://www.microsoft.com/store/apps/0).
+# Comic Reader
+The Comic Reader is a modern Windows app written in C#. The app provided basic functionality for comic reading, as well as a few useful funtions such as info searching and editing.
 
-![Comic Reader UWP Screenshot](docs/Images/ComicReaderScreenshot.png)
+Comic Reader ships with new features and bug fixes irregularly. You can get the latest version of Comic Reader in the [Microsoft Store](https://www.microsoft.com/store/apps/0).
+
+![Comic Reader Screenshot](docs/Images/ComicReaderScreenshot.png)
 
 ## Features
-- Vertical mode, horizontal mode and navigation.
+- Vertical and horizontal viewing
+- Fast navigation.
 - Searching and editing titles, tags, ratings.
 - Favorites and history.
 
@@ -19,7 +22,10 @@ Prerequisites:
     ```
     git clone https://github.com/aicd0/ComicReader.git
     ```
-- Open [ComicReader.sln](./ComicReader.sln) in Visual Studio to build and run the Comic Reader UWP app.
+- Open [ComicReader.sln](src/ComicReader.sln) in Visual Studio to build and run the Comic Reader app.
+
+## Contributing
+If Comic Reader is not working properly, please [submit an issue on GitHub](https://github.com/aicd0/ComicReader/issues/new).
 
 ## License
 Licensed under the [MIT License](./LICENSE).

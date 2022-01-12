@@ -1,42 +1,40 @@
-﻿<Page x:Class="ComicReader.Views.FavoritePage"
-      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-      xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
-      xmlns:converters="using:ComicReader.Converters"
-      xmlns:data="using:ComicReader.DesignData"
-      mc:Ignorable="d"
-      Background="Transparent"
-      NavigationCacheMode="Enabled">
+﻿<Page
+    x:Class="ComicReader.Views.FavoritePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converters="using:ComicReader.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:data="using:ComicReader.DesignData"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
+    Background="Transparent"
+    NavigationCacheMode="Enabled"
+    mc:Ignorable="d">
 
     <Page.Resources>
         <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
 
-        <!-- Normal Template -->
-        <DataTemplate x:Key="NormalTemplate"
-                      x:DataType="data:FavoriteItemViewModel">
-            <muxc:TreeViewItem AutomationProperties.Name="{x:Bind Name}"
-                               ItemsSource="{x:Bind Children}"
-                               AllowDrop="{x:Bind AllowDrop}"
-                               IsExpanded="{x:Bind Expanded, Mode=TwoWay}"
-                               VerticalContentAlignment="Stretch"
-                               HorizontalContentAlignment="Stretch"
-                               PointerPressed="MainTreeViewItemPressed">
+        <!--  Normal Template  -->
+        <DataTemplate x:Key="NormalTemplate" x:DataType="data:FavoriteItemViewModel">
+            <muxc:TreeViewItem
+                HorizontalContentAlignment="Stretch"
+                VerticalContentAlignment="Stretch"
+                AllowDrop="{x:Bind AllowDrop}"
+                AutomationProperties.Name="{x:Bind Name}"
+                IsExpanded="{x:Bind Expanded, Mode=TwoWay}"
+                ItemsSource="{x:Bind Children}"
+                PointerPressed="MainTreeViewItemPressed">
                 <muxc:TreeViewItem.ContextFlyout>
                     <MenuFlyout>
-                        <MenuFlyoutItem x:Uid="MenuFlyoutOpenInNewTab"
-                                        Click="OpenInNewTabClick"
-                                        Visibility="{x:Bind IsItem, Mode=OneWay}" />
-                        <MenuFlyoutItem x:Uid="MenuFlyoutCreateNewFolder"
-                                        Click="NewFolderClick" />
-                        <MenuFlyoutItem x:Uid="MenuFlyoutSortByName"
-                                        Click="SortByNameClick" />
-                        <MenuFlyoutItem x:Uid="MenuFlyoutRename"
-                                        Click="RenameClick" />
+                        <MenuFlyoutItem
+                            x:Uid="MenuFlyoutOpenInNewTab"
+                            Click="OpenInNewTabClick"
+                            Visibility="{x:Bind IsItem, Mode=OneWay}" />
+                        <MenuFlyoutItem x:Uid="MenuFlyoutCreateNewFolder" Click="NewFolderClick" />
+                        <MenuFlyoutItem x:Uid="MenuFlyoutSortByName" Click="SortByNameClick" />
+                        <MenuFlyoutItem x:Uid="MenuFlyoutRename" Click="RenameClick" />
                         <MenuFlyoutSeparator />
-                        <MenuFlyoutItem x:Uid="MenuFlyoutDelete"
-                                        Click="DeleteClick" />
+                        <MenuFlyoutItem x:Uid="MenuFlyoutDelete" Click="DeleteClick" />
                     </MenuFlyout>
                 </muxc:TreeViewItem.ContextFlyout>
                 <Grid>
@@ -45,79 +43,83 @@
                         <ColumnDefinition Width="8" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <Grid Height="25"
-                          Grid.Column="0">
+                    <Grid Grid.Column="0" Height="25">
                         <Grid Visibility="{x:Bind IsItem, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}">
-                            <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                      Glyph="&#xED41;"
-                                      FontSize="18"
-                                      Margin="0,4,0,0"
-                                      Visibility="{x:Bind Expanded, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
-                            <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                      Glyph="&#xED43;"
-                                      FontSize="18"
-                                      Margin="0,4,0,0"
-                                      Visibility="{x:Bind Expanded, Mode=OneWay}" />
+                            <FontIcon
+                                Margin="0,4,0,0"
+                                FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                FontSize="18"
+                                Glyph="&#xED41;"
+                                Visibility="{x:Bind Expanded, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
+                            <FontIcon
+                                Margin="0,4,0,0"
+                                FontFamily="{StaticResource SymbolThemeFontFamily}"
+                                FontSize="18"
+                                Glyph="&#xED43;"
+                                Visibility="{x:Bind Expanded, Mode=OneWay}" />
                         </Grid>
-                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}"
-                                  Glyph="&#xE729;"
-                                  FontSize="18"
-                                  Visibility="{x:Bind IsItem, Mode=OneWay}" />
+                        <FontIcon
+                            FontFamily="{StaticResource SymbolThemeFontFamily}"
+                            FontSize="18"
+                            Glyph="&#xE729;"
+                            Visibility="{x:Bind IsItem, Mode=OneWay}" />
                     </Grid>
-                    <TextBlock Text="{x:Bind Name}"
-                               VerticalAlignment="Center"
-                               TextTrimming="CharacterEllipsis"
-                               Grid.Column="2"
-                               ToolTipService.ToolTip="{x:Bind Name}" />
+                    <TextBlock
+                        Grid.Column="2"
+                        VerticalAlignment="Center"
+                        Text="{x:Bind Name}"
+                        TextTrimming="CharacterEllipsis"
+                        ToolTipService.ToolTip="{x:Bind Name}" />
                 </Grid>
             </muxc:TreeViewItem>
         </DataTemplate>
 
-        <!-- Renaming Template -->
-        <DataTemplate x:Key="RenamingTemplate"
-                      x:DataType="data:FavoriteItemViewModel">
-            <muxc:TreeViewItem AutomationProperties.Name="{x:Bind Name}"
-                               ItemsSource="{x:Bind Children}"
-                               IsExpanded="{x:Bind Expanded, Mode=TwoWay}"
-                               VerticalContentAlignment="Stretch"
-                               HorizontalContentAlignment="Stretch"
-                               AllowDrop="False">
-                <Grid Height="25"
-                      Margin="0,2,10,0">
-                    <TextBox Text="{x:Bind EditingName}"
-                             KeyDown="RenameTextBoxKeyDown"
-                             VerticalAlignment="Center"
-                             TextChanged="RenameTextBoxTextChanged"
-                             HorizontalAlignment="Left"
-                             DataContextChanged="RenameTextBoxDataContextChanged" />
+        <!--  Renaming Template  -->
+        <DataTemplate x:Key="RenamingTemplate" x:DataType="data:FavoriteItemViewModel">
+            <muxc:TreeViewItem
+                HorizontalContentAlignment="Stretch"
+                VerticalContentAlignment="Stretch"
+                AllowDrop="False"
+                AutomationProperties.Name="{x:Bind Name}"
+                IsExpanded="{x:Bind Expanded, Mode=TwoWay}"
+                ItemsSource="{x:Bind Children}">
+                <Grid Height="25" Margin="0,2,10,0">
+                    <TextBox
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        DataContextChanged="RenameTextBoxDataContextChanged"
+                        KeyDown="RenameTextBoxKeyDown"
+                        Text="{x:Bind EditingName}"
+                        TextChanged="RenameTextBoxTextChanged" />
                 </Grid>
             </muxc:TreeViewItem>
         </DataTemplate>
 
-        <!-- Template Selectors -->
-        <converters:FavoritesItemTemplateSelector x:Key="FavoritesItemTemplateSelector"
-                                                  NormalTemplate="{StaticResource NormalTemplate}"
-                                                  RenamingTemplate="{StaticResource RenamingTemplate}" />
+        <!--  Template Selectors  -->
+        <converters:FavoritesItemTemplateSelector
+            x:Key="FavoritesItemTemplateSelector"
+            NormalTemplate="{StaticResource NormalTemplate}"
+            RenamingTemplate="{StaticResource RenamingTemplate}" />
     </Page.Resources>
 
     <Grid>
-        <TextBlock x:Uid="NoFavorite"
-                   Visibility="{x:Bind Shared.IsEmpty, Mode=OneWay}"
-                   Margin="0,10"
-                   HorizontalAlignment="Center"
-                   FontWeight="SemiBold" />
-        <muxc:TreeView x:Name="MainTreeView"
-                       ItemInvoked="MainTreeViewItemInvoked"
-                       PointerPressed="MainTreeViewBackgroundPressed"
-                       ItemsSource="{x:Bind DataSource}"
-                       ItemTemplateSelector="{StaticResource FavoritesItemTemplateSelector}"
-                       DragItemsCompleted="MainTreeViewDragItemsCompleted">
+        <TextBlock
+            x:Uid="NoFavorite"
+            Margin="0,10"
+            HorizontalAlignment="Center"
+            FontWeight="SemiBold"
+            Visibility="{x:Bind Shared.IsEmpty, Mode=OneWay}" />
+        <muxc:TreeView
+            x:Name="MainTreeView"
+            DragItemsCompleted="MainTreeViewDragItemsCompleted"
+            ItemInvoked="MainTreeViewItemInvoked"
+            ItemTemplateSelector="{StaticResource FavoritesItemTemplateSelector}"
+            ItemsSource="{x:Bind DataSource}"
+            PointerPressed="MainTreeViewBackgroundPressed">
             <muxc:TreeView.ContextFlyout>
                 <MenuFlyout>
-                    <MenuFlyoutItem x:Uid="MenuFlyoutCreateNewFolder"
-                                    Click="RootNewFolderClick" />
-                    <MenuFlyoutItem x:Uid="MenuFlyoutSortByName"
-                                    Click="RootSortByNameClick" />
+                    <MenuFlyoutItem x:Uid="MenuFlyoutCreateNewFolder" Click="RootNewFolderClick" />
+                    <MenuFlyoutItem x:Uid="MenuFlyoutSortByName" Click="RootSortByNameClick" />
                 </MenuFlyout>
             </muxc:TreeView.ContextFlyout>
         </muxc:TreeView>

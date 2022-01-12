@@ -1,20 +1,21 @@
-﻿<Page x:Class="ComicReader.Views.SettingsPage"
-      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-      xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
-      xmlns:converters="using:ComicReader.Converters"
-      mc:Ignorable="d"
-      Background="{ThemeResource TabViewItemHeaderBackgroundSelected}">
+﻿<Page
+    x:Class="ComicReader.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converters="using:ComicReader.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
+    Background="{ThemeResource TabViewItemHeaderBackgroundSelected}"
+    mc:Ignorable="d">
 
     <Page.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="../Resources/Styles/TextBlock.xaml" />
             </ResourceDictionary.MergedDictionaries>
-            
-            <!-- Converters -->
+
+            <!--  Converters  -->
             <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
         </ResourceDictionary>
     </Page.Resources>
@@ -24,19 +25,21 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <StackPanel Orientation="Horizontal"
-                    Grid.Row="0">
-            <FontIcon FontFamily="Segoe MDL2 Assets"
-                      Glyph="&#xE713;"
-                      Margin="25,6,10,0" />
-            <TextBlock x:Uid="SettingHeader"
-                       FontSize="32"
-                       FontWeight="Light" />
+        <StackPanel Grid.Row="0" Orientation="Horizontal">
+            <FontIcon
+                Margin="25,6,10,0"
+                FontFamily="Segoe MDL2 Assets"
+                Glyph="&#xE713;" />
+            <TextBlock
+                x:Uid="SettingHeader"
+                FontSize="32"
+                FontWeight="Light" />
         </StackPanel>
-        <ScrollViewer VerticalScrollBarVisibility="Auto"
-                      VerticalScrollMode="Auto"
-                      Padding="30,0,25,0"
-                      Grid.Row="1">
+        <ScrollViewer
+            Grid.Row="1"
+            Padding="30,0,25,0"
+            VerticalScrollBarVisibility="Auto"
+            VerticalScrollMode="Auto">
             <Grid Margin="0,0,0,25">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="2*" />
@@ -44,91 +47,83 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Orientation="Vertical"
-                            Grid.Column="0">
-                    <!-- Image Source -->
-                    <TextBlock x:Uid="ImageOnDevice"
-                               Style="{StaticResource SettingsPageSubTitleTextBlock}" />
-                    <Button x:Uid="ChooseLocationButton"
-                            Click="ChooseLocationsClick" />
+                <StackPanel Grid.Column="0" Orientation="Vertical">
+                    <!--  Image Source  -->
+                    <TextBlock x:Uid="ImageOnDevice" Style="{StaticResource SettingsPageSubTitleTextBlock}" />
+                    <Button x:Uid="ChooseLocationButton" Click="ChooseLocationsClick" />
 
-                    <!-- Reader -->
-                    <TextBlock x:Uid="Reader"
-                               Style="{StaticResource SettingsPageSubTitleTextBlock}" />
-                    <TextBlock x:Uid="LeftToRight"
-                               Style="{StaticResource SettingsPageBodyTextBlock}" />
+                    <!--  Reader  -->
+                    <TextBlock x:Uid="Reader" Style="{StaticResource SettingsPageSubTitleTextBlock}" />
+                    <TextBlock x:Uid="LeftToRight" Style="{StaticResource SettingsPageBodyTextBlock}" />
                     <ToggleSwitch IsOn="{x:Bind Shared.ReaderLeftToRight, Mode=TwoWay}" />
 
-                    <!-- History -->
-                    <TextBlock x:Uid="History"
-                               Style="{StaticResource SettingsPageSubTitleTextBlock}" />
-                    <Button x:Uid="ClearAllHistoryButton"
-                            Click="OnHistoryClearAllClicked"
-                            IsEnabled="{x:Bind Shared.IsClearHistoryEnabled, Mode=OneWay}"/>
+                    <!--  History  -->
+                    <TextBlock x:Uid="History" Style="{StaticResource SettingsPageSubTitleTextBlock}" />
+                    <Button
+                        x:Uid="ClearAllHistoryButton"
+                        Click="OnHistoryClearAllClicked"
+                        IsEnabled="{x:Bind Shared.IsClearHistoryEnabled, Mode=OneWay}" />
                     <Grid Height="10" />
-                    <TextBlock x:Uid="SaveHistory"
-                               Style="{StaticResource SettingsPageBodyTextBlock}" />
+                    <TextBlock x:Uid="SaveHistory" Style="{StaticResource SettingsPageBodyTextBlock}" />
                     <ToggleSwitch IsOn="{x:Bind Shared.HistorySaveBrowsingHistory, Mode=TwoWay}" />
 
-                    <!-- Appearance -->
-                    <TextBlock x:Uid="Appearance"
-                               Style="{StaticResource SettingsPageSubTitleTextBlock}" />
-                    <TextBlock x:Uid="ApplyOnNextLaunch"
-                               Visibility="{x:Bind Shared.AppearanceChanged, Mode=OneWay}"
-                               Style="{StaticResource SettingsPageBodyTextBlock}" />
+                    <!--  Appearance  -->
+                    <TextBlock x:Uid="Appearance" Style="{StaticResource SettingsPageSubTitleTextBlock}" />
+                    <TextBlock
+                        x:Uid="ApplyOnNextLaunch"
+                        Style="{StaticResource SettingsPageBodyTextBlock}"
+                        Visibility="{x:Bind Shared.AppearanceChanged, Mode=OneWay}" />
                     <muxc:RadioButtons>
-                        <RadioButton x:Uid="ThemeLight"
-                                     IsChecked="{x:Bind Shared.AppearanceLightChecked, Mode=TwoWay}" />
-                        <RadioButton x:Uid="ThemeDark"
-                                     IsChecked="{x:Bind Shared.AppearanceDarkChecked, Mode=TwoWay}" />
-                        <RadioButton x:Uid="ThemeUseSystemSetting"
-                                     IsChecked="{x:Bind Shared.AppearanceUseSystemSettingChecked, Mode=TwoWay}" />
+                        <RadioButton x:Uid="ThemeLight" IsChecked="{x:Bind Shared.AppearanceLightChecked, Mode=TwoWay}" />
+                        <RadioButton x:Uid="ThemeDark" IsChecked="{x:Bind Shared.AppearanceDarkChecked, Mode=TwoWay}" />
+                        <RadioButton x:Uid="ThemeUseSystemSetting" IsChecked="{x:Bind Shared.AppearanceUseSystemSettingChecked, Mode=TwoWay}" />
                     </muxc:RadioButtons>
 
-                    <!-- Advanced -->
-                    <TextBlock x:Uid="Advanced"
-                               Style="{StaticResource SettingsPageSubTitleTextBlock}" />
+                    <!--  Advanced  -->
+                    <TextBlock x:Uid="Advanced" Style="{StaticResource SettingsPageSubTitleTextBlock}" />
                     <StackPanel Orientation="Horizontal">
-                        <Button x:Uid="RescanFilesButton"
-                                Click="OnRescanFilesClicked"
-                                IsEnabled="{x:Bind Shared.IsRescanning, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}" />
-                        <ProgressRing IsActive="{x:Bind Shared.IsRescanning, Mode=OneWay}"
-                                      VerticalAlignment="Center"
-                                      Margin="20,0,0,0" />
+                        <Button
+                            x:Uid="RescanFilesButton"
+                            Click="OnRescanFilesClicked"
+                            IsEnabled="{x:Bind Shared.IsRescanning, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}" />
+                        <ProgressRing
+                            Margin="20,0,0,0"
+                            VerticalAlignment="Center"
+                            IsActive="{x:Bind Shared.IsRescanning, Mode=OneWay}" />
                     </StackPanel>
                     <Grid Height="8" />
-                    <TextBlock x:Uid="RescanFilesDetail"
-                               Style="{StaticResource SettingsPageBodyTextBlock}"
-                               Foreground="{ThemeResource ForegroundDeepGrey}" />
+                    <TextBlock
+                        x:Uid="RescanFilesDetail"
+                        Foreground="{ThemeResource ForegroundDeepGrey}"
+                        Style="{StaticResource SettingsPageBodyTextBlock}" />
                 </StackPanel>
 
-                <StackPanel Orientation="Vertical"
-                            Grid.Column="2">
-                    <!-- Statistics -->
-                    <TextBlock x:Uid="Statistics"
-                               Style="{StaticResource SettingsPageSubTitleTextBlock}" />
-                    <TextBlock x:Name="StatisticsTextBlock"
-                               Text="Updating..."
-                               Style="{StaticResource SettingsPageBodyTextBlock}" />
+                <StackPanel Grid.Column="2" Orientation="Vertical">
+                    <!--  Statistics  -->
+                    <TextBlock x:Uid="Statistics" Style="{StaticResource SettingsPageSubTitleTextBlock}" />
+                    <TextBlock
+                        x:Name="StatisticsTextBlock"
+                        Style="{StaticResource SettingsPageBodyTextBlock}"
+                        Text="Updating..." />
 
-                    <!-- Feedback -->
-                    <TextBlock x:Uid="Feedback"
-                               Style="{StaticResource SettingsPageSubTitleTextBlock}" />
-                    <TextBlock x:Uid="FeedbackIntroduction"
-                               Style="{StaticResource SettingsPageBodyTextBlock}"/>
-                    <Button x:Uid="SendFeedbackButton"
-                            Margin="0,10,0,0"
-                            Click="OnSendFeedbackButtonClicked" />
+                    <!--  Feedback  -->
+                    <TextBlock x:Uid="Feedback" Style="{StaticResource SettingsPageSubTitleTextBlock}" />
+                    <TextBlock x:Uid="FeedbackIntroduction" Style="{StaticResource SettingsPageBodyTextBlock}" />
+                    <Button
+                        x:Uid="SendFeedbackButton"
+                        Margin="0,10,0,0"
+                        Click="OnSendFeedbackButtonClicked" />
 
-                    <!-- About -->
-                    <TextBlock x:Uid="About"
-                               Style="{StaticResource SettingsPageSubTitleTextBlock}" />
-                    <TextBlock x:Name="AboutBuildVersionControl"
-                               Text="AboutBuildVersion"
-                               Style="{StaticResource SettingsPageBodyTextBlock}" />
-                    <TextBlock x:Name="AboutCopyrightControl"
-                               Text="© AboutCopyright"
-                               Style="{StaticResource SettingsPageBodyTextBlock}" />
+                    <!--  About  -->
+                    <TextBlock x:Uid="About" Style="{StaticResource SettingsPageSubTitleTextBlock}" />
+                    <TextBlock
+                        x:Name="AboutBuildVersionControl"
+                        Style="{StaticResource SettingsPageBodyTextBlock}"
+                        Text="AboutBuildVersion" />
+                    <TextBlock
+                        x:Name="AboutCopyrightControl"
+                        Style="{StaticResource SettingsPageBodyTextBlock}"
+                        Text="© AboutCopyright" />
                     <RichTextBlock Margin="0,8,0,0">
                         <Paragraph>
                             <Run x:Name="ContributionRunBeforeLink" />
@@ -139,12 +134,12 @@
                         </Paragraph>
                     </RichTextBlock>
 
-                    <!-- Disclaimer -->
-                    <TextBlock x:Uid="Disclaimer"
-                               Style="{StaticResource SettingsPageSubTitleTextBlock}" />
-                    <TextBlock Text="THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
-                               Style="{StaticResource SettingsPageBodyTextBlock}"
-                               IsTextSelectionEnabled="True" />
+                    <!--  Disclaimer  -->
+                    <TextBlock x:Uid="Disclaimer" Style="{StaticResource SettingsPageSubTitleTextBlock}" />
+                    <TextBlock
+                        IsTextSelectionEnabled="True"
+                        Style="{StaticResource SettingsPageBodyTextBlock}"
+                        Text="THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE." />
                 </StackPanel>
             </Grid>
         </ScrollViewer>

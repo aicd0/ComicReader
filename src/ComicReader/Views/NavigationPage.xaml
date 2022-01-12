@@ -1,12 +1,13 @@
-﻿<Page x:Class="ComicReader.Views.NavigationPage"
-      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-      xmlns:controls="using:ComicReader.Controls"
-      xmlns:converters="using:ComicReader.Converters"
-      mc:Ignorable="d"
-      Background="{ThemeResource NavigationPageBackground}">
+﻿<Page
+    x:Class="ComicReader.Views.NavigationPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:ComicReader.Controls"
+    xmlns:converters="using:ComicReader.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Background="{ThemeResource NavigationPageBackground}"
+    mc:Ignorable="d">
 
     <Page.Resources>
         <ResourceDictionary>
@@ -26,10 +27,11 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <Grid x:Name="TopTile"
-              VerticalAlignment="Top"
-              Background="{ThemeResource TabViewItemHeaderBackgroundSelected}"
-              Visibility="{x:Bind Shared.MainPageShared.IsFullscreen, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}">
+        <Grid
+            x:Name="TopTile"
+            VerticalAlignment="Top"
+            Background="{ThemeResource TabViewItemHeaderBackgroundSelected}"
+            Visibility="{x:Bind Shared.MainPageShared.IsFullscreen, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}">
 
             <Grid>
                 <Grid>
@@ -39,176 +41,195 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <!-- left buttons -->
-                    <StackPanel HorizontalAlignment="Left"
-                                Orientation="Horizontal"
-                                VerticalAlignment="Center"
-                                Grid.Column="0">
-                        <AppBarButton x:Uid="BackButton"
-                                      Icon="Back"
-                                      Style="{StaticResource NavigationPageTopTileAppBarButton}"
-                                      Click="GoBackClick"
-                                      IsEnabled="{x:Bind ContentFrame.CanGoBack, Mode=OneWay}" />
-                        <AppBarButton x:Uid="ForwardButton"
-                                      Icon="Forward"
-                                      Style="{StaticResource NavigationPageTopTileAppBarButton}"
-                                      Click="GoForwardClick"
-                                      IsEnabled="{x:Bind ContentFrame.CanGoForward, Mode=OneWay}" />
-                        <AppBarButton x:Uid="HomeButton"
-                                      Icon="Home"
-                                      Style="{StaticResource NavigationPageTopTileAppBarButton}"
-                                      Click="HomeClick"
-                                      Visibility="{x:Bind Shared.IsHomePage, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
-                        <AppBarButton x:Uid="RefreshButton"
-                                      Icon="Refresh"
-                                      Style="{StaticResource NavigationPageTopTileAppBarButton}"
-                                      Click="OnRefreshBtClicked"
-                                      Visibility="{x:Bind Shared.IsHomePage, Mode=OneWay}" />
+                    <!--  left buttons  -->
+                    <StackPanel
+                        Grid.Column="0"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal">
+                        <AppBarButton
+                            x:Uid="BackButton"
+                            Click="GoBackClick"
+                            Icon="Back"
+                            IsEnabled="{x:Bind ContentFrame.CanGoBack, Mode=OneWay}"
+                            Style="{StaticResource NavigationPageTopTileAppBarButton}" />
+                        <AppBarButton
+                            x:Uid="ForwardButton"
+                            Click="GoForwardClick"
+                            Icon="Forward"
+                            IsEnabled="{x:Bind ContentFrame.CanGoForward, Mode=OneWay}"
+                            Style="{StaticResource NavigationPageTopTileAppBarButton}" />
+                        <AppBarButton
+                            x:Uid="HomeButton"
+                            Click="HomeClick"
+                            Icon="Home"
+                            Style="{StaticResource NavigationPageTopTileAppBarButton}"
+                            Visibility="{x:Bind Shared.IsHomePage, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
+                        <AppBarButton
+                            x:Uid="RefreshButton"
+                            Click="OnRefreshBtClicked"
+                            Icon="Refresh"
+                            Style="{StaticResource NavigationPageTopTileAppBarButton}"
+                            Visibility="{x:Bind Shared.IsHomePage, Mode=OneWay}" />
                     </StackPanel>
 
-                    <!-- search box -->
-                    <AutoSuggestBox x:Uid="SearchBox"
-                                    Grid.Column="1"
-                                    Margin="15,0,15,0"
-                                    CornerRadius="6"
-                                    VerticalAlignment="Center"
-                                    HorizontalAlignment="Left"
-                                    Style="{StaticResource NavigationPageSearchBoxStyle}"
-                                    TextBoxStyle="{StaticResource NavigationPageSearchBoxTextBoxStyle}"
-                                    x:Name="SearchBox"
-                                    TextChanged="SearchBoxTextChanged"
-                                    QuerySubmitted="SearchBoxQuerySubmitted"
-                                    QueryIcon="Find"
-                                    MinWidth="300"
-                                    Visibility="{x:Bind Shared.IsReaderPage, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
+                    <!--  search box  -->
+                    <AutoSuggestBox
+                        x:Name="SearchBox"
+                        x:Uid="SearchBox"
+                        Grid.Column="1"
+                        MinWidth="300"
+                        Margin="15,0,15,0"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        CornerRadius="6"
+                        QueryIcon="Find"
+                        QuerySubmitted="SearchBoxQuerySubmitted"
+                        Style="{StaticResource NavigationPageSearchBoxStyle}"
+                        TextBoxStyle="{StaticResource NavigationPageSearchBoxTextBoxStyle}"
+                        TextChanged="SearchBoxTextChanged"
+                        Visibility="{x:Bind Shared.IsReaderPage, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
 
-                    <!-- right buttons -->
-                    <StackPanel HorizontalAlignment="Right"
-                                Margin="0,1,0,1"
-                                VerticalAlignment="Center"
-                                Orientation="Horizontal"
-                                Grid.Column="2">
+                    <!--  right buttons  -->
+                    <StackPanel
+                        Grid.Column="2"
+                        Margin="0,1,0,1"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal">
 
-                        <!-- expand favorites pane button -->
-                        <AppBarButton x:Uid="FavoritesButton"
-                                      Click="FavoritesClick"
-                                      Style="{StaticResource NavigationPageTopTileAppBarButton}">
+                        <!--  expand favorites pane button  -->
+                        <AppBarButton
+                            x:Uid="FavoritesButton"
+                            Click="FavoritesClick"
+                            Style="{StaticResource NavigationPageTopTileAppBarButton}">
                             <AppBarButton.Content>
                                 <FontIcon Glyph="&#xE728;" />
                             </AppBarButton.Content>
                         </AppBarButton>
 
-                        <!-- more button -->
-                        <AppBarButton x:Uid="MoreButton"
-                                      Style="{StaticResource NavigationPageTopTileAppBarButton}">
+                        <!--  more button  -->
+                        <AppBarButton x:Uid="MoreButton" Style="{StaticResource NavigationPageTopTileAppBarButton}">
                             <AppBarButton.Content>
                                 <FontIcon Glyph="&#xE712;" />
                             </AppBarButton.Content>
                             <AppBarButton.Flyout>
                                 <MenuFlyout Placement="BottomEdgeAlignedRight">
-                                    <MenuFlyoutItem x:Uid="MenuFlyoutComicInfo"
-                                                    Click="ComicInfoClick"
-                                                    Visibility="{x:Bind Shared.IsReaderPage, Mode=OneWay}">
+                                    <MenuFlyoutItem
+                                        x:Uid="MenuFlyoutComicInfo"
+                                        Click="ComicInfoClick"
+                                        Visibility="{x:Bind Shared.IsReaderPage, Mode=OneWay}">
                                         <MenuFlyoutItem.Icon>
                                             <FontIcon Glyph="&#xE946;" />
                                         </MenuFlyoutItem.Icon>
                                     </MenuFlyoutItem>
                                     <MenuFlyoutSeparator Visibility="{x:Bind Shared.IsReaderPage, Mode=OneWay}" />
-                                    <MenuFlyoutItem x:Uid="MenuFlyoutSettings"
-                                                    Icon="Setting"
-                                                    Click="OnMenuItemSettingsClicked" />
-                                    <MenuFlyoutItem x:Uid="MenuFlyoutHelp"
-                                                    Icon="Help"
-                                                    Click="OnMenuItemHelpClicked" />
+                                    <MenuFlyoutItem
+                                        x:Uid="MenuFlyoutSettings"
+                                        Click="OnMenuItemSettingsClicked"
+                                        Icon="Setting" />
+                                    <MenuFlyoutItem
+                                        x:Uid="MenuFlyoutHelp"
+                                        Click="OnMenuItemHelpClicked"
+                                        Icon="Help" />
                                 </MenuFlyout>
                             </AppBarButton.Flyout>
                         </AppBarButton>
                     </StackPanel>
                 </Grid>
 
-                <!-- center buttons -->
-                <StackPanel Orientation="Horizontal"
-                            HorizontalAlignment="Center"
-                            Visibility="{x:Bind Shared.IsReaderPage, Mode=OneWay}">
+                <!--  center buttons  -->
+                <StackPanel
+                    HorizontalAlignment="Center"
+                    Orientation="Horizontal"
+                    Visibility="{x:Bind Shared.IsReaderPage, Mode=OneWay}">
 
-                    <!-- zoom in/out -->
-                    <AppBarButton x:Uid="ZoomInButton"
-                                  Style="{StaticResource NavigationPageTopTileAppBarButton}"
-                                  IsEnabled="{x:Bind Shared.ZoomInEnabled, Mode=OneWay}"
-                                  Click="ZoomInClick">
+                    <!--  zoom in/out  -->
+                    <AppBarButton
+                        x:Uid="ZoomInButton"
+                        Click="ZoomInClick"
+                        IsEnabled="{x:Bind Shared.ZoomInEnabled, Mode=OneWay}"
+                        Style="{StaticResource NavigationPageTopTileAppBarButton}">
                         <AppBarButton.Content>
                             <FontIcon Glyph="&#xE8A3;" />
                         </AppBarButton.Content>
                     </AppBarButton>
-                    <AppBarButton x:Uid="ZoomOutButton"
-                                  Style="{StaticResource NavigationPageTopTileAppBarButton}"
-                                  IsEnabled="{x:Bind Shared.ZoomOutEnabled, Mode=OneWay}"
-                                  Click="ZoomOutClick">
+                    <AppBarButton
+                        x:Uid="ZoomOutButton"
+                        Click="ZoomOutClick"
+                        IsEnabled="{x:Bind Shared.ZoomOutEnabled, Mode=OneWay}"
+                        Style="{StaticResource NavigationPageTopTileAppBarButton}">
                         <AppBarButton.Content>
                             <FontIcon Glyph="&#xE71F;" />
                         </AppBarButton.Content>
                     </AppBarButton>
 
-                    <!-- Reader orientation -->
+                    <!--  Reader orientation  -->
                     <Grid>
-                        <AppBarButton x:Uid="HorizontalButton"
-                                       Style="{StaticResource NavigationPageTopTileAppBarButton}"
-                                      Click="OnSwitchReaderOrientationClicked"
-                                      Visibility="{x:Bind Shared.IsSwitchToHorizontalReaderButtonVisible, Mode=OneWay}"
-                                      IsEnabled="{x:Bind Shared.IsVerticalReaderVisible, Mode=OneWay}">
+                        <AppBarButton
+                            x:Uid="HorizontalButton"
+                            Click="OnSwitchReaderOrientationClicked"
+                            IsEnabled="{x:Bind Shared.IsVerticalReaderVisible, Mode=OneWay}"
+                            Style="{StaticResource NavigationPageTopTileAppBarButton}"
+                            Visibility="{x:Bind Shared.IsSwitchToHorizontalReaderButtonVisible, Mode=OneWay}">
                             <AppBarButton.Content>
                                 <FontIcon Glyph="&#xE89A;" />
                             </AppBarButton.Content>
                         </AppBarButton>
-                        <AppBarButton x:Uid="VerticalButton"
-                                      Style="{StaticResource NavigationPageTopTileAppBarButton}"
-                                      Click="OnSwitchReaderOrientationClicked"
-                                      Visibility="{x:Bind Shared.IsHorizontalReaderVisible, Mode=OneWay}"
-                                      IsEnabled="{x:Bind Shared.IsHorizontalReaderVisible, Mode=OneWay}">
+                        <AppBarButton
+                            x:Uid="VerticalButton"
+                            Click="OnSwitchReaderOrientationClicked"
+                            IsEnabled="{x:Bind Shared.IsHorizontalReaderVisible, Mode=OneWay}"
+                            Style="{StaticResource NavigationPageTopTileAppBarButton}"
+                            Visibility="{x:Bind Shared.IsHorizontalReaderVisible, Mode=OneWay}">
                             <AppBarButton.Content>
                                 <FontIcon Glyph="&#xE7C3;" />
                             </AppBarButton.Content>
                         </AppBarButton>
                     </Grid>
 
-                    <!-- Reader grid preview toggle -->
-                    <AppBarToggleButton x:Uid="AllPagesButton"
-                                        Style="{StaticResource NavigationPageTopTileAppBarToggleButton}"
-                                        IsChecked="{x:Bind Shared.IsPreviewButtonToggled, Mode=TwoWay}">
+                    <!--  Reader grid preview toggle  -->
+                    <AppBarToggleButton
+                        x:Uid="AllPagesButton"
+                        IsChecked="{x:Bind Shared.IsPreviewButtonToggled, Mode=TwoWay}"
+                        Style="{StaticResource NavigationPageTopTileAppBarToggleButton}">
                         <AppBarToggleButton.Content>
                             <FontIcon Glyph="&#xF0E2;" />
                         </AppBarToggleButton.Content>
                     </AppBarToggleButton>
 
-                    <!-- Add to favorites -->
-                    <AppBarButton Style="{StaticResource NavigationPageTopTileAppBarButton}"
-                                  ToolTipService.ToolTip="{x:Bind Shared.FavoriteButtonToolTip, Mode=OneWay}"
-                                  IsEnabled="{x:Bind Shared.NotExternal, Mode=OneWay}"
-                                  Click="AddToFavoritesClick">
+                    <!--  Add to favorites  -->
+                    <AppBarButton
+                        Click="AddToFavoritesClick"
+                        IsEnabled="{x:Bind Shared.NotExternal, Mode=OneWay}"
+                        Style="{StaticResource NavigationPageTopTileAppBarButton}"
+                        ToolTipService.ToolTip="{x:Bind Shared.FavoriteButtonToolTip, Mode=OneWay}">
                         <AppBarButton.Content>
                             <Grid>
-                                <FontIcon Glyph="&#xE734;"
-                                          Visibility="{x:Bind Shared.IsFavorite, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
-                                <FontIcon Glyph="&#xE735;"
-                                          Visibility="{x:Bind Shared.IsFavorite, Mode=OneWay}"
-                                          Foreground="DeepSkyBlue" />
+                                <FontIcon Glyph="&#xE734;" Visibility="{x:Bind Shared.IsFavorite, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
+                                <FontIcon
+                                    Foreground="DeepSkyBlue"
+                                    Glyph="&#xE735;"
+                                    Visibility="{x:Bind Shared.IsFavorite, Mode=OneWay}" />
                             </Grid>
                         </AppBarButton.Content>
                     </AppBarButton>
                 </StackPanel>
             </Grid>
-            <Rectangle VerticalAlignment="Bottom"
-                       Height="1"
-                       Fill="{ThemeResource NavigationPageTopTileBorderBrush}" />
+            <Rectangle
+                Height="1"
+                VerticalAlignment="Bottom"
+                Fill="{ThemeResource NavigationPageTopTileBorderBrush}" />
         </Grid>
-        <SplitView x:Name="NavigationPageSidePane"
-                   DisplayMode="Overlay"
-                   PanePlacement="Right"
-                   OpenPaneLength="380"
-                   Grid.Row="1"
-                   PaneOpened="SidePaneOpened"
-                   IsPaneOpen="{x:Bind Shared.IsSidePaneOpen, Mode=TwoWay}"
-                   PaneBackground="{ThemeResource SidePaneBackground}">
+        <SplitView
+            x:Name="NavigationPageSidePane"
+            Grid.Row="1"
+            DisplayMode="Overlay"
+            IsPaneOpen="{x:Bind Shared.IsSidePaneOpen, Mode=TwoWay}"
+            OpenPaneLength="380"
+            PaneBackground="{ThemeResource SidePaneBackground}"
+            PaneOpened="SidePaneOpened"
+            PanePlacement="Right">
             <Frame x:Name="ContentFrame" />
             <SplitView.Pane>
                 <controls:SidePane DataContext="{x:Bind}" />
