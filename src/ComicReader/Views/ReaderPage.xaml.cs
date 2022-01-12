@@ -3,7 +3,7 @@
 //#define DEBUG_LOG_JUMP
 //#define DEBUG_LOG_VIEW_CHANGE
 //#define DEBUG_LOG_UPDATE_PAGE
-#define DEBUG_LOG_MANIPULATION
+//#define DEBUG_LOG_MANIPULATION
 #endif
 #if DEBUG_LOG_LOAD || DEBUG_LOG_JUMP || DEBUG_LOG_VIEW_CHANGE || DEBUG_LOG_UPDATE_PAGE || DEBUG_LOG_MANIPULATION
 #define DEBUG_LOG
@@ -36,8 +36,8 @@ namespace ComicReader.Views
 
     public class ReaderModel
     {
-        private const int max_zoom = 250;
-        private const int min_zoom = 90;
+        private const float max_zoom = 250f;
+        private const float min_zoom = 90f;
 
         // Modifiable
         public ObservableCollection<ReaderFrameViewModel> DataSource { get; private set; }
@@ -63,8 +63,8 @@ namespace ComicReader.Views
         public int Page => (int)m_page;
         public double PageReal => m_page;
 
-        private int m_zoom = 90;
-        public int Zoom => m_zoom;
+        private float m_zoom = 90f;
+        public float Zoom => m_zoom;
 
         //  Scroll viewer
         public float ZoomFactor => ThisScrollViewer.ZoomFactor;
@@ -216,10 +216,10 @@ namespace ComicReader.Views
                 DataSource.Add(new ReaderFrameViewModel
                 {
                     Page = IndexToPage(index),
-                    TopPadding = top_padding,
-                    BottomPadding = bottom_padding,
-                    LeftPadding = left_padding,
-                    RightPadding = right_padding,
+                    TopPadding = top_padding ? 10 : 0,
+                    BottomPadding = bottom_padding ? 10 : 0,
+                    LeftPadding = left_padding ? 100 : 0,
+                    RightPadding = right_padding ? 100 : 0,
                     ImageWidth = new_image_width,
                     ImageHeight = new_image_height,
                     OnContainerLoadedAsync = OnContainerLoaded
@@ -245,7 +245,7 @@ namespace ComicReader.Views
             return true;
         }
 
-        public bool SetScrollViewer(int? zoom, double? horizontal_offset, double? vertical_offset, bool disable_animation)
+        public bool SetScrollViewer(float? zoom, double? horizontal_offset, double? vertical_offset, bool disable_animation)
         {
             if (!IsLoaded)
             {
@@ -255,7 +255,7 @@ namespace ComicReader.Views
             return _SetScrollViewer(zoom, horizontal_offset, vertical_offset, null, /* whatever */false, disable_animation);
         }
 
-        public bool SetScrollViewer(int? zoom, double? page, bool use_page_center, bool disable_animation)
+        public bool SetScrollViewer(float? zoom, double? page, bool use_page_center, bool disable_animation)
         {
             if (!IsLoaded)
             {
@@ -548,7 +548,7 @@ namespace ComicReader.Views
             m_page = new_page_int;
         }
 
-        private bool _SetScrollViewer(int? zoom, double? horizontal_offset, double? vertical_offset,
+        private bool _SetScrollViewer(float? zoom, double? horizontal_offset, double? vertical_offset,
             double? page, bool use_page_center, bool disable_animation)
         {
             if (!IsFrameworkLoaded) return false;
@@ -591,50 +591,50 @@ namespace ComicReader.Views
                 return false;
             }
 
-            m_zoom = (int)zoom;
+            m_zoom = zoom.Value;
             m_shared.NavigationPageShared.ZoomInEnabled = m_zoom < max_zoom;
             m_shared.NavigationPageShared.ZoomOutEnabled = m_zoom > min_zoom;
             _AdjustParallelOffset();
             return true;
         }
 
-        private void _SetScrollViewerZoom(ref double? horizontal_offset, ref double? vertical_offset, ref int? zoom, out float? zoom_out)
+        private void _SetScrollViewerZoom(ref double? horizontal_offset, ref double? vertical_offset, ref float? zoom, out float? zoom_factor)
         {
             double? zoom_coefficient_boxed = _ZoomCoefficient();
 
             if (zoom_coefficient_boxed == null)
             {
                 zoom = m_zoom;
-                zoom_out = null;
+                zoom_factor = null;
                 return;
             }
 
             double zoom_coefficient = zoom_coefficient_boxed.Value;
             bool zoom_sat = false;
             bool zoom_null = zoom == null;
-            int zoom_cpy = zoom_null ? (int)(ZoomFactorFinal / zoom_coefficient) : (int)zoom;
+            float zoom_rectified = zoom_null ? (float)(ZoomFactorFinal / zoom_coefficient) : (float)zoom;
 
             // accept an error less than 1
-            if (zoom_cpy - max_zoom > 1)
+            if (zoom_rectified - max_zoom > 1)
             {
                 zoom_sat = true;
-                zoom_cpy = max_zoom;
+                zoom_rectified = max_zoom;
             }
-            else if (min_zoom - zoom_cpy > 1)
+            else if (min_zoom - zoom_rectified > 1)
             {
                 zoom_sat = true;
-                zoom_cpy = min_zoom;
+                zoom_rectified = min_zoom;
             }
 
             if (zoom_null && !zoom_sat)
             {
-                zoom = Math.Abs(zoom_cpy - m_zoom) <= 1 ? m_zoom : zoom_cpy;
-                zoom_out = null;
+                zoom = Math.Abs(zoom_rectified - m_zoom) <= 1 ? m_zoom : zoom_rectified;
+                zoom_factor = null;
                 return;
             }
 
-            zoom = zoom_cpy;
-            zoom_out = (float)(zoom * zoom_coefficient);
+            zoom = zoom_rectified;
+            zoom_factor = (float)(zoom_rectified * zoom_coefficient);
 
             if (horizontal_offset == null)
             {
@@ -647,11 +647,11 @@ namespace ComicReader.Views
             }
 
             horizontal_offset += ThisScrollViewer.ViewportWidth * 0.5;
-            horizontal_offset *= (float)zoom_out / ZoomFactorFinal;
+            horizontal_offset *= (float)zoom_factor / ZoomFactorFinal;
             horizontal_offset -= ThisScrollViewer.ViewportWidth * 0.5;
 
             vertical_offset += ThisScrollViewer.ViewportHeight * 0.5;
-            vertical_offset *= (float)zoom_out / ZoomFactorFinal;
+            vertical_offset *= (float)zoom_factor / ZoomFactorFinal;
             vertical_offset -= ThisScrollViewer.ViewportHeight * 0.5;
 
             horizontal_offset = Math.Max(0.0, horizontal_offset.Value);
@@ -1275,7 +1275,8 @@ namespace ComicReader.Views
             m_gesture_recognizer = new GestureRecognizer();
             m_gesture_recognizer.GestureSettings =
                 GestureSettings.ManipulationTranslateX |
-                GestureSettings.ManipulationTranslateY;
+                GestureSettings.ManipulationTranslateY |
+                GestureSettings.ManipulationScale;
             m_gesture_recognizer.ManipulationStarted += OnManipulationStarted;
             m_gesture_recognizer.ManipulationUpdated += OnManipulationUpdated;
             m_gesture_recognizer.ManipulationCompleted += OnManipulationCompleted;
@@ -1637,7 +1638,7 @@ namespace ComicReader.Views
             
             if (last_reader != null)
             {
-                int zoom = Math.Min(100, last_reader.Zoom);
+                float zoom = Math.Min(100f, last_reader.Zoom);
                 double position = last_reader.PageReal;
 
                 Shared.UpdateReaderUI();
@@ -1790,13 +1791,15 @@ namespace ComicReader.Views
 
             double dx = e.Delta.Translation.X;
             double dy = e.Delta.Translation.Y;
+            float scale = e.Delta.Scale;
 
             if (reader.IsHorizontal && Shared.ReaderFlowDirection == FlowDirection.RightToLeft)
             {
                 dx = -dx;
             }
 
-            reader.SetScrollViewer(null, reader.HorizontalOffsetFinal - dx, reader.VerticalOffsetFinal - dy, false);
+            reader.SetScrollViewer(reader.Zoom * scale,
+                reader.HorizontalOffsetFinal - dx, reader.VerticalOffsetFinal - dy, false);
         }
 
         void OnManipulationCompleted(object sender, ManipulationCompletedEventArgs e)
@@ -1849,6 +1852,7 @@ namespace ComicReader.Views
             if (horizontal || e.Pointer.PointerDeviceType == PointerDeviceType.Mouse)
             {
                 m_gesture_recognizer.ProcessMoveEvents(e.GetIntermediatePoints(ManipulationReference));
+
 #if DEBUG_LOG_MANIPULATION
                 //_Log("Pointer moved");
 #endif

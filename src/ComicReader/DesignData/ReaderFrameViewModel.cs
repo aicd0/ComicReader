@@ -51,10 +51,10 @@ namespace ComicReader.DesignData
         }
 
         public int Page { get; set; } = -1;
-        public bool TopPadding { get; set; } = false;
-        public bool BottomPadding { get; set; } = false;
-        public bool LeftPadding { get; set; } = false;
-        public bool RightPadding { get; set; } = false;
+        public double TopPadding { get; set; } = 0.0;
+        public double BottomPadding { get; set; } = 0.0;
+        public double LeftPadding { get; set; } = 0.0;
+        public double RightPadding { get; set; } = 0.0;
 
         private Thickness? m_Margin = null;
         public Thickness Margin
@@ -64,10 +64,10 @@ namespace ComicReader.DesignData
                 if (m_Margin == null)
                 {
                     m_Margin = new Thickness(
-                        LeftPadding ? 200 : 0,
-                        TopPadding ? 10 : 0,
-                        RightPadding ? 200 : 0,
-                        BottomPadding ? 10 : 0);
+                        LeftPadding,
+                        TopPadding,
+                        RightPadding,
+                        BottomPadding);
                 }
 
                 return m_Margin.Value;
