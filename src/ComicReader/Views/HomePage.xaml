@@ -227,7 +227,7 @@
                             Orientation="Horizontal"
                             Margin="10,0,0,0"
                             HorizontalAlignment="Left"
-                            BorderBrush="#505050"
+                            BorderBrush="{StaticResource ForegroundDeepGrey}"
                             BorderThickness="2"
                             CornerRadius="5"
                             Padding="60,30">

@@ -75,7 +75,7 @@
                                    Grid.Column="2"
                                    HorizontalAlignment="Right"
                                    VerticalAlignment="Center"
-                                   Foreground="{ThemeResource GreyTextForeground}"
+                                   Foreground="{ThemeResource ForegroundDeepGrey}"
                                    Margin="3,0,0,0" />
                     </Grid>
                 </DataTemplate>
