@@ -60,7 +60,7 @@ namespace ComicReader.DesignData
         }
 
         // events
-        public PointerEventHandler OnItemPressed { get; set; }
+        public TappedEventHandler OnItemTapped { get; set; }
         public RoutedEventHandler OnOpenInNewTabClicked { get; set; }
         public RoutedEventHandler OnAddToFavoritesClicked { get; set; }
         public RoutedEventHandler OnRemoveFromFavoritesClicked { get; set; }

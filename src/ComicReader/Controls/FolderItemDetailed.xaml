@@ -1,84 +1,91 @@
-﻿<UserControl x:Class="ComicReader.Controls.FolderItemDetailed"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:converters="using:ComicReader.Converters"
-             mc:Ignorable="d"
-             d:DesignHeight="130"
-             d:DesignWidth="300">
+﻿<UserControl
+    x:Class="ComicReader.Controls.FolderItemDetailed"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:converters="using:ComicReader.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="130"
+    d:DesignWidth="300"
+    mc:Ignorable="d">
 
     <UserControl.Resources>
         <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
     </UserControl.Resources>
 
-    <Grid Height="130"
-          PointerPressed="{x:Bind Ctx.OnItemPressed}">
-        <Grid Visibility="{x:Bind Ctx.IsAddNew}"
-              Background="{ThemeResource SystemAccentColor}">
-            <Grid VerticalAlignment="Bottom"
-                  Height="50"
-                  Padding="10,5">
+    <Grid Height="130" Tapped="{x:Bind Ctx.OnItemTapped}">
+        <Grid Background="{ThemeResource SystemAccentColor}" Visibility="{x:Bind Ctx.IsAddNew}">
+            <Grid
+                Height="50"
+                Padding="10,5"
+                VerticalAlignment="Bottom">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <StackPanel Orientation="Vertical"
-                            Grid.Column="0">
-                    <TextBlock Text="{x:Bind Title}"
-                               TextTrimming="CharacterEllipsis"
-                               FontWeight="SemiBold"
-                               Foreground="White" />
+                <StackPanel Grid.Column="0" Orientation="Vertical">
+                    <TextBlock
+                        FontWeight="SemiBold"
+                        Foreground="White"
+                        Text="{x:Bind Title}"
+                        TextTrimming="CharacterEllipsis" />
                     <Grid Height="3" />
-                    <TextBlock Text="{x:Bind Detail}"
-                               FontSize="12"
-                               TextTrimming="CharacterEllipsis"
-                               Foreground="White" />
+                    <TextBlock
+                        FontSize="12"
+                        Foreground="White"
+                        Text="{x:Bind Detail}"
+                        TextTrimming="CharacterEllipsis" />
                 </StackPanel>
-                <FontIcon Grid.Column="1"
-                          FontFamily="{StaticResource SymbolThemeFontFamily}"
-                          Glyph="{x:Bind Glyph}"
-                          VerticalAlignment="Center"
-                          Foreground="White"
-                          FontSize="23"
-                          Margin="0,0,2,0" />
+                <FontIcon
+                    Grid.Column="1"
+                    Margin="0,0,2,0"
+                    VerticalAlignment="Center"
+                    FontFamily="{StaticResource SymbolThemeFontFamily}"
+                    FontSize="23"
+                    Foreground="White"
+                    Glyph="{x:Bind Glyph}" />
             </Grid>
         </Grid>
-        <Grid Visibility="{x:Bind Ctx.IsAddNew, Converter={StaticResource BooleanToVisibilityNegationConverter}}"
-              Background="{ThemeResource FolderTileBackground}"
-              BorderBrush="{ThemeResource FolderItemBorderBrush}"
-              BorderThickness="1">
+        <Grid
+            Background="{ThemeResource FolderTileBackground}"
+            BorderBrush="{ThemeResource FolderItemBorderBrush}"
+            BorderThickness="1"
+            Visibility="{x:Bind Ctx.IsAddNew, Converter={StaticResource BooleanToVisibilityNegationConverter}}">
             <Grid.ContextFlyout>
                 <MenuFlyout>
-                    <MenuFlyoutItem x:Uid="MenuFlyoutRemoveFromList"
-                                    Icon="Delete"
-                                    Click="{x:Bind Ctx.OnRemoveClicked}" />
+                    <MenuFlyoutItem
+                        x:Uid="MenuFlyoutRemoveFromList"
+                        Click="{x:Bind Ctx.OnRemoveClicked}"
+                        Icon="Delete" />
                 </MenuFlyout>
             </Grid.ContextFlyout>
-            <Grid VerticalAlignment="Bottom"
-                  Height="50"
-                  Padding="10,5"
-                  Background="{ThemeResource FolderTileCoverBackground}">
+            <Grid
+                Height="50"
+                Padding="10,5"
+                VerticalAlignment="Bottom"
+                Background="{ThemeResource FolderTileCoverBackground}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition />
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
-                <StackPanel Orientation="Vertical"
-                            Grid.Column="0">
-                    <TextBlock Text="{x:Bind Title}"
-                               TextTrimming="CharacterEllipsis"
-                               ToolTipService.ToolTip="{x:Bind Title}" />
+                <StackPanel Grid.Column="0" Orientation="Vertical">
+                    <TextBlock
+                        Text="{x:Bind Title}"
+                        TextTrimming="CharacterEllipsis"
+                        ToolTipService.ToolTip="{x:Bind Title}" />
                     <Grid Height="3" />
-                    <TextBlock Text="{x:Bind Detail}"
-                               FontSize="12"
-                               TextTrimming="CharacterEllipsis" />
+                    <TextBlock
+                        FontSize="12"
+                        Text="{x:Bind Detail}"
+                        TextTrimming="CharacterEllipsis" />
                 </StackPanel>
-                <FontIcon Grid.Column="1"
-                          FontFamily="{StaticResource SymbolThemeFontFamily}"
-                          Glyph="{x:Bind Glyph}"
-                          VerticalAlignment="Center"
-                          FontSize="23"
-                          Margin="0,0,2,0" />
+                <FontIcon
+                    Grid.Column="1"
+                    Margin="0,0,2,0"
+                    VerticalAlignment="Center"
+                    FontFamily="{StaticResource SymbolThemeFontFamily}"
+                    FontSize="23"
+                    Glyph="{x:Bind Glyph}" />
             </Grid>
         </Grid>
     </Grid>

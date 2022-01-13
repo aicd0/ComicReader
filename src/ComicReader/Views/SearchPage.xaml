@@ -71,7 +71,9 @@
                     SelectionMode="{x:Bind Shared.ComicItemSelectionMode, Mode=OneWay}">
                     <GridView.ItemTemplate>
                         <DataTemplate x:DataType="data:ComicItemViewModel">
-                            <controls:ComicItemHorizontal IsContextFlyoutEnabled="{x:Bind IsSelectMode, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}" Tapped="OnComicItemTapped" />
+                            <controls:ComicItemHorizontal
+                                IsContextFlyoutEnabled="{x:Bind IsSelectMode, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}"
+                                Tapped="OnComicItemControlTapped"/>
                         </DataTemplate>
                     </GridView.ItemTemplate>
                 </GridView>

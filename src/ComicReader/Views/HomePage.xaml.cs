@@ -195,7 +195,7 @@ namespace ComicReader.Views
 
             model.IsFavorite = FavoriteDataManager.FromIdNoLock(comic.Id) != null;
 
-            model.OnItemPressed = OnComicItemPressed;
+            model.OnItemTapped = OnComicItemTapped;
             model.OnOpenInNewTabClicked = OnOpenInNewTabClicked;
             model.OnAddToFavoritesClicked = OnAddToFavoritesClicked;
             model.OnRemoveFromFavoritesClicked = OnRemoveFromFavoritesClicked;
@@ -345,7 +345,7 @@ namespace ComicReader.Views
                 {
                     new FolderItemViewModel
                     {
-                        OnItemPressed = FolderItemPressed,
+                        OnItemTapped = OnFolderItemTapped,
                         IsAddNew = true
                     }
                 };
@@ -356,7 +356,7 @@ namespace ComicReader.Views
                 {
                     FolderItemViewModel item = new FolderItemViewModel
                     {
-                        OnItemPressed = FolderItemPressed,
+                        OnItemTapped = OnFolderItemTapped,
                         OnRemoveClicked = FolderItemRemoveClick,
                         Folder = folder,
                         IsAddNew = false
@@ -391,16 +391,9 @@ namespace ComicReader.Views
             MainPage.Current.LoadTab(null, Utils.Tab.PageType.Reader, item.Comic);
         }
 
-        private void OnComicItemPressed(object sender, PointerRoutedEventArgs e)
+        private void OnComicItemTapped(object sender, TappedRoutedEventArgs e)
         {
             ComicItemViewModel item = (ComicItemViewModel)((Grid)sender).DataContext;
-            PointerPoint pt = e.GetCurrentPoint((UIElement)sender);
-
-            if (!pt.Properties.IsLeftButtonPressed)
-            {
-                return;
-            }
-
             MainPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Reader, item.Comic);
         }
 
@@ -450,15 +443,8 @@ namespace ComicReader.Views
             });
         }
 
-        private void FolderItemPressed(object sender, PointerRoutedEventArgs e)
+        private void OnFolderItemTapped(object sender, TappedRoutedEventArgs e)
         {
-            PointerPoint pt = e.GetCurrentPoint((UIElement)sender);
-
-            if (!pt.Properties.IsLeftButtonPressed)
-            {
-                return;
-            }
-
             FolderItemViewModel item = (FolderItemViewModel)((Grid)sender).DataContext;
 
             if (item.IsAddNew)

@@ -467,7 +467,7 @@ namespace ComicReader.Views
                 IsFavorite = await FavoriteDataManager.FromId(comic.Id) != null,
                 IsSelectMode = Shared.IsSelectMode,
 
-                OnItemPressed = OnComicItemPressed,
+                OnItemTapped = OnComicItemTapped,
                 OnOpenInNewTabClicked = OnOpenInNewTabClicked,
                 OnAddToFavoritesClicked = OnAddToFavoritesClicked,
                 OnRemoveFromFavoritesClicked = OnRemoveFromFavoritesClicked,
@@ -549,20 +549,13 @@ namespace ComicReader.Views
             }
         }
 
-        private void OnComicItemPressed(object sender, PointerRoutedEventArgs e)
+        private void OnComicItemTapped(object sender, TappedRoutedEventArgs e)
         {
             Utils.C0.Run(async delegate
             {
                 LockContext db = new LockContext();
 
                 if (Shared.IsSelectMode)
-                {
-                    return;
-                }
-
-                PointerPoint pt = e.GetCurrentPoint((UIElement)sender);
-
-                if (!pt.Properties.IsLeftButtonPressed)
                 {
                     return;
                 }
@@ -660,11 +653,6 @@ namespace ComicReader.Views
         private void OnScrollViewerTapped(object sender, TappedRoutedEventArgs e)
         {
             SetSelectMode(false);
-        }
-
-        private void OnComicItemTapped(object sender, TappedRoutedEventArgs e)
-        {
-            e.Handled = true;
         }
 
         private void OnGridViewSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -812,6 +800,11 @@ namespace ComicReader.Views
 
                 await StartSearch(db);
             });
+        }
+
+        private void OnComicItemControlTapped(object sender, TappedRoutedEventArgs e)
+        {
+            e.Handled = true;
         }
     }
 }

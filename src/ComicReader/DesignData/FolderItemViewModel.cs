@@ -16,7 +16,7 @@ namespace ComicReader.DesignData
         public bool IsAddNew { get; set; }
 
         // events
-        public PointerEventHandler OnItemPressed { get; set; }
+        public TappedEventHandler OnItemTapped { get; set; }
         public RoutedEventHandler OnRemoveClicked { get; set; }
 
         // methods
