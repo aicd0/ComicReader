@@ -16,6 +16,7 @@
                             <SolidColorBrush x:Key="ComicItemBackgroundPointerOver" Color="#3D3D3D" />
                             <SolidColorBrush x:Key="ComicItemBorderBrush" Color="#3A3A3A" />
                             <SolidColorBrush x:Key="ForegroundDeepGrey" Color="#858585" />
+                            <SolidColorBrush x:Key="ForegroundLightGrey" Color="#858585" />
                             <SolidColorBrush x:Key="FolderItemBorderBrush" Color="#444444" />
                             <SolidColorBrush x:Key="FolderTileBackground" Color="#2F2F2F" />
                             <SolidColorBrush x:Key="FolderTileCoverBackground" Color="#363636" />
@@ -40,6 +41,7 @@
                             <SolidColorBrush x:Key="ComicItemBackgroundPointerOver" Color="#F0F0F0" />
                             <SolidColorBrush x:Key="ComicItemBorderBrush" Color="#FDE8ED" />
                             <SolidColorBrush x:Key="ForegroundDeepGrey" Color="#858585" />
+                            <SolidColorBrush x:Key="ForegroundLightGrey" Color="#D0D0D0" />
                             <SolidColorBrush x:Key="FolderItemBorderBrush" Color="#EBE9ED" />
                             <SolidColorBrush x:Key="FolderTileBackground" Color="#ADACAE" />
                             <SolidColorBrush x:Key="FolderTileCoverBackground" Color="#FFFFFF" />
@@ -64,6 +66,7 @@
                             <SolidColorBrush x:Key="ComicItemBackgroundPointerOver" Color="#F0F0F0" />
                             <SolidColorBrush x:Key="ComicItemBorderBrush" Color="#FDE8ED" />
                             <SolidColorBrush x:Key="ForegroundDeepGrey" Color="#858585" />
+                            <SolidColorBrush x:Key="ForegroundLightGrey" Color="#D0D0D0" />
                             <SolidColorBrush x:Key="FolderItemBorderBrush" Color="#EBE9ED" />
                             <SolidColorBrush x:Key="FolderTileBackground" Color="#ADACAE" />
                             <SolidColorBrush x:Key="FolderTileCoverBackground" Color="#FFFFFF" />

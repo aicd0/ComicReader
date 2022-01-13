@@ -198,7 +198,7 @@
                 </Grid>
                 <Grid Height="10" />
                 <!--
-                    Do NOT attach Visibility property to mtuuc:AdaptiveGridView as this
+                    DO NOT attach Visibility property to mtuuc:AdaptiveGridView as this
                     will result in a layout error (Probably a bug from API).
                 -->
                 <mtuuc:AdaptiveGridView
@@ -221,7 +221,7 @@
                     Margin="10,0,0,0"
                     Padding="60,30"
                     HorizontalAlignment="Left"
-                    BorderBrush="{StaticResource ForegroundDeepGrey}"
+                    BorderBrush="{StaticResource ForegroundLightGrey}"
                     BorderThickness="2"
                     CornerRadius="5"
                     Orientation="Horizontal"
