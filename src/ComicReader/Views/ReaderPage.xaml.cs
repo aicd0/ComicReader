@@ -1157,14 +1157,14 @@ namespace ComicReader.Views
         public bool IsLoading = true;
         public bool IsReaderVertical = true;
 
-        private bool m_IsLoadingRingVisible = false;
-        public bool IsLoadingRingVisible
+        private bool m_IsLoadingTextBlockVisible = false;
+        public bool IsLoadingTextBlockVisible
         {
-            get => m_IsLoadingRingVisible;
+            get => m_IsLoadingTextBlockVisible;
             set
             {
-                m_IsLoadingRingVisible = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsLoadingRingVisible"));
+                m_IsLoadingTextBlockVisible = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsLoadingTextBlockVisible"));
             }
         }
 
@@ -1186,7 +1186,7 @@ namespace ComicReader.Views
             bool vertical_reader_visible = reader_visible && IsReaderVertical;
             bool horizontal_reader_visible = reader_visible && !vertical_reader_visible;
 
-            IsLoadingRingVisible = IsLoading;
+            IsLoadingTextBlockVisible = IsLoading;
             IsGridViewVisible = grid_view_visible;
             NavigationPageShared.IsSwitchToVerticalReaderButtonVisible = !IsReaderVertical;
             NavigationPageShared.IsSwitchToHorizontalReaderButtonVisible = IsReaderVertical;

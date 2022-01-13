@@ -525,4 +525,7 @@
   <data name="AppDescription" xml:space="preserve">
     <value>漫画阅读器</value>
   </data>
+  <data name="ReaderLoading.Text" xml:space="preserve">
+    <value>阅读器加载中</value>
+  </data>
 </root>

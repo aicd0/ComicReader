@@ -525,4 +525,7 @@ Category2: tag4/tag5
   <data name="AppDescription" xml:space="preserve">
     <value>Comic reader</value>
   </data>
+  <data name="ReaderLoading.Text" xml:space="preserve">
+    <value>The reader is loading</value>
+  </data>
 </root>

@@ -406,11 +406,12 @@
 
             <!--  Main section  -->
             <Grid>
-                <muxc:ProgressRing
-                    Margin="20"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Bottom"
-                    IsActive="{x:Bind Shared.IsLoadingRingVisible, Mode=OneWay}" />
+                <TextBlock
+                    x:Uid="ReaderLoading"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Foreground="{ThemeResource ForegroundDeepGrey}"
+                    Visibility="{x:Bind Shared.IsLoadingTextBlockVisible, Mode=OneWay}" />
 
                 <!--  Reader  -->
                 <Grid Tapped="OnReaderTapped">
