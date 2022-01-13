@@ -1,12 +1,12 @@
 # Comic Reader
 The Comic Reader is a modern Windows app written in C#. The app provided basic functionality for comic reading, as well as a few useful funtions such as info searching and editing.
 
-Comic Reader ships with new features and bug fixes irregularly. You can get the latest version of Comic Reader in the [Microsoft Store](https://www.microsoft.com/store/apps/0).
+Comic Reader irregularly ships with new features and bug fixes. You can get the latest version of Comic Reader in the [Microsoft Store](https://www.microsoft.com/store/apps/9NS9FG32DCP5).
 
 ![Comic Reader Screenshot](docs/Images/ComicReaderScreenshot.png)
 
 ## Features
-- Vertical and horizontal viewing
+- Vertical and horizontal reading mode.
 - Fast navigation.
 - Searching and editing titles, tags, ratings.
 - Favorites and history.
