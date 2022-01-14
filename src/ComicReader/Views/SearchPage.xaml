@@ -71,9 +71,7 @@
                     SelectionMode="{x:Bind Shared.ComicItemSelectionMode, Mode=OneWay}">
                     <GridView.ItemTemplate>
                         <DataTemplate x:DataType="data:ComicItemViewModel">
-                            <controls:ComicItemHorizontal
-                                IsContextFlyoutEnabled="{x:Bind IsSelectMode, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}"
-                                Tapped="OnComicItemControlTapped"/>
+                            <controls:ComicItemHorizontal IsContextFlyoutEnabled="{x:Bind IsSelectMode, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}" Tapped="OnComicItemControlTapped" />
                         </DataTemplate>
                     </GridView.ItemTemplate>
                 </GridView>
@@ -102,43 +100,47 @@
         </StackPanel>
 
         <!--  Command Bar  -->
-        <StackPanel
-            Padding="6,0"
+        <Grid
             VerticalAlignment="Bottom"
-            Background="#2D2D2D"
-            Orientation="Horizontal"
+            Background="{ThemeResource CommandBarBackground}"
             Visibility="{x:Bind Shared.IsSelectMode, Mode=OneWay}">
-            <AppBarToggleButton
-                x:Uid="SelectAllAppBarButton"
-                Icon="SelectAll"
-                IsChecked="{x:Bind Shared.IsCommandBarSelectAllToggled, Mode=TwoWay}" />
-            <AppBarSeparator />
-            <AppBarButton
-                x:Uid="FavoriteAppBarButton"
-                Click="CommandBarFavoriteClicked"
-                Icon="Favorite"
-                IsEnabled="{x:Bind Shared.IsCommandBarFavoriteEnabled, Mode=OneWay}" />
-            <AppBarButton
-                x:Uid="UnFavoriteAppBarButton"
-                Click="CommandBarUnFavoriteClicked"
-                Icon="UnFavorite"
-                IsEnabled="{x:Bind Shared.IsCommandBarUnFavoriteEnabled, Mode=OneWay}" />
-            <AppBarButton
-                x:Uid="HideAppBarButton"
-                Click="CommandBarHideClicked"
-                IsEnabled="{x:Bind Shared.IsCommandBarHideEnabled, Mode=OneWay}">
-                <AppBarButton.Icon>
-                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE8FF;" />
-                </AppBarButton.Icon>
-            </AppBarButton>
-            <AppBarButton
-                x:Uid="UnhideAppBarButton"
-                Click="CommandBarUnhideClicked"
-                IsEnabled="{x:Bind Shared.IsCommandBarUnHideEnabled, Mode=OneWay}">
-                <AppBarButton.Icon>
-                    <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE7B3;" />
-                </AppBarButton.Icon>
-            </AppBarButton>
-        </StackPanel>
+            <StackPanel Margin="6,0" Orientation="Horizontal">
+                <AppBarToggleButton
+                    x:Uid="SelectAllAppBarButton"
+                    Icon="SelectAll"
+                    IsChecked="{x:Bind Shared.IsCommandBarSelectAllToggled, Mode=TwoWay}" />
+                <AppBarSeparator />
+                <AppBarButton
+                    x:Uid="FavoriteAppBarButton"
+                    Click="CommandBarFavoriteClicked"
+                    Icon="Favorite"
+                    IsEnabled="{x:Bind Shared.IsCommandBarFavoriteEnabled, Mode=OneWay}" />
+                <AppBarButton
+                    x:Uid="UnFavoriteAppBarButton"
+                    Click="CommandBarUnFavoriteClicked"
+                    Icon="UnFavorite"
+                    IsEnabled="{x:Bind Shared.IsCommandBarUnFavoriteEnabled, Mode=OneWay}" />
+                <AppBarButton
+                    x:Uid="HideAppBarButton"
+                    Click="CommandBarHideClicked"
+                    IsEnabled="{x:Bind Shared.IsCommandBarHideEnabled, Mode=OneWay}">
+                    <AppBarButton.Icon>
+                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE8FF;" />
+                    </AppBarButton.Icon>
+                </AppBarButton>
+                <AppBarButton
+                    x:Uid="UnhideAppBarButton"
+                    Click="CommandBarUnhideClicked"
+                    IsEnabled="{x:Bind Shared.IsCommandBarUnHideEnabled, Mode=OneWay}">
+                    <AppBarButton.Icon>
+                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE7B3;" />
+                    </AppBarButton.Icon>
+                </AppBarButton>
+            </StackPanel>
+            <Rectangle
+                Height="1"
+                VerticalAlignment="Top"
+                Fill="{ThemeResource CommandBarBorderBrush}" />
+        </Grid>
     </Grid>
 </Page>

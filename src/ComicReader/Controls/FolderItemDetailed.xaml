@@ -25,7 +25,6 @@
                 </Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0" Orientation="Vertical">
                     <TextBlock
-                        FontWeight="SemiBold"
                         Foreground="White"
                         Text="{x:Bind Title}"
                         TextTrimming="CharacterEllipsis" />
@@ -46,11 +45,7 @@
                     Glyph="{x:Bind Glyph}" />
             </Grid>
         </Grid>
-        <Grid
-            Background="{ThemeResource FolderTileBackground}"
-            BorderBrush="{ThemeResource FolderItemBorderBrush}"
-            BorderThickness="1"
-            Visibility="{x:Bind Ctx.IsAddNew, Converter={StaticResource BooleanToVisibilityNegationConverter}}">
+        <Grid Background="{ThemeResource FolderTileBackground}" Visibility="{x:Bind Ctx.IsAddNew, Converter={StaticResource BooleanToVisibilityNegationConverter}}">
             <Grid.ContextFlyout>
                 <MenuFlyout>
                     <MenuFlyoutItem
@@ -76,8 +71,10 @@
                     <Grid Height="3" />
                     <TextBlock
                         FontSize="12"
+                        Foreground="{ThemeResource ForegroundDeepGrey}"
                         Text="{x:Bind Detail}"
-                        TextTrimming="CharacterEllipsis" />
+                        TextTrimming="CharacterEllipsis"
+                        ToolTipService.ToolTip="{x:Bind Detail}" />
                 </StackPanel>
                 <FontIcon
                     Grid.Column="1"

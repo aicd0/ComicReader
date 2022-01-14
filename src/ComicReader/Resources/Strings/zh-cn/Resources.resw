@@ -528,4 +528,7 @@
   <data name="ReaderLoading.Text" xml:space="preserve">
     <value>阅读器加载中</value>
   </data>
+  <data name="DebugMode.Text" xml:space="preserve">
+    <value>调试模式</value>
+  </data>
 </root>

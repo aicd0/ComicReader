@@ -528,4 +528,7 @@ Category2: tag4/tag5
   <data name="ReaderLoading.Text" xml:space="preserve">
     <value>The reader is loading</value>
   </data>
+  <data name="DebugMode.Text" xml:space="preserve">
+    <value>Debug mode</value>
+  </data>
 </root>

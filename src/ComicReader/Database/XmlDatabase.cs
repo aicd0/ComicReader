@@ -1,6 +1,4 @@
-﻿//#define DEBUG_LOG_SAVE
-
-using Microsoft.Data.Sqlite;
+﻿using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -104,9 +102,7 @@ namespace ComicReader.Database
 
         private static async RawTask _Save(XmlDatabaseItem item)
         {
-#if DEBUG_LOG_SAVE
-            System.Diagnostics.Debug.Print("Saving: " + item.ToString() + "\n");
-#endif
+            Utils.Debug.Log("Saving: " + item.ToString());
 
             switch (item)
             {

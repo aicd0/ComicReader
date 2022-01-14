@@ -11,6 +11,10 @@ namespace ComicReader.Utils
 {
     public class Win32IO
     {
+        // System Error Codes
+        // https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes--0-499-?redirectedfrom=MSDN
+        internal const int ERROR_ACCESS_DENIED = 5;
+
         internal const int FIND_FIRST_EX_CASE_SENSITIVE = 1;
         internal const int FIND_FIRST_EX_LARGE_FETCH = 2;
         internal const int FIND_FIRST_EX_ON_DISK_ENTRIES_ONLY = 4;
@@ -85,20 +89,12 @@ namespace ComicReader.Utils
             uint dwFlagsAndAttributes,
             SafeFileHandle hTemplateFile);
 
-        // SubFoldersDeep
-        public class SubFoldersDeepSearchContextNode
+        // SubFolderDeep
+        public class SubFolderDeepContext
         {
-            public List<string> Paths = new List<string>();
-            public int Index = 0;
-
-            public string CurrentPath => Paths[Index];
-        }
-
-        public class SubFoldersDeepSearchContext
-        {
-            public SubFoldersDeepSearchContext(string path)
+            public SubFolderDeepContext(string path)
             {
-                Nodes.Add(new SubFoldersDeepSearchContextNode
+                Nodes.Add(new Node
                 {
                     Paths = new List<string> { path }
                 });
@@ -115,91 +111,113 @@ namespace ComicReader.Utils
                 }
             }
 
-            public List<SubFoldersDeepSearchContextNode> Nodes = new List<SubFoldersDeepSearchContextNode>();
-            readonly internal FindExInfoLevel FindInfoLevel;
-            readonly internal FIndexSearchOps IndexSearchOps = FIndexSearchOps.FindExSearchNameMatch;
-            public readonly int AdditionalFlags;
-            public int _FolderScanned = 0;
-        };
-
-        public static bool SubFoldersDeep(SubFoldersDeepSearchContext ctx, out List<string> results, uint min_step)
-        {
-            results = new List<string>();
-
-            if (ctx.Nodes.Count == 0)
+            private class Node
             {
+                public List<string> Paths = new List<string>();
+                public int Index = 0;
+
+                public string CurrentPath => Paths[Index];
+            }
+
+            public List<string> NoAccessFolders { get; private set; } = new List<string>();
+
+            private List<Node> Nodes = new List<Node>();
+            private readonly FindExInfoLevel FindInfoLevel;
+            private readonly FIndexSearchOps IndexSearchOps = FIndexSearchOps.FindExSearchNameMatch;
+            private readonly int AdditionalFlags;
+            private int FolderScanned = 0;
+
+            public bool Search(List<string> results, uint min_step)
+            {
+                results.Clear();
+
+                if (Nodes.Count == 0)
+                {
+                    return false;
+                }
+
+                FolderScanned = 0;
+
+                bool not_end = _Search(min_step, results);
+
+                if (results.Count > 0)
+                {
+                    return true;
+                }
+
+                return not_end;
+            }
+
+            private bool _Search(uint min_step, List<string> results, int depth = 0)
+            {
+                if (Nodes.Count <= depth)
+                {
+                    // Visit current node.
+                    string path_raw = Nodes[Nodes.Count - 1].CurrentPath;
+                    string path = path_raw + "\\";
+                    IntPtr h_file = FindFirstFileExFromApp(path + "*", FindInfoLevel,
+                        out _, IndexSearchOps, IntPtr.Zero, AdditionalFlags);
+
+                    if (h_file.ToInt64() == -1)
+                    {
+                        int error_code = Marshal.GetLastWin32Error();
+                        Utils.Debug.Log("Failed to access '" + path_raw + "', error code " + error_code.ToString() + ".");
+
+                        if (error_code == ERROR_ACCESS_DENIED)
+                        {
+                            NoAccessFolders.Add(path_raw);
+                        }
+
+                        return false;
+                    }
+
+                    int i_begin = results.Count;
+                    FindNextFile(h_file, out _);
+
+                    while (FindNextFile(h_file, out WIN32_FIND_DATA find_data))
+                    {
+                        if (((FileAttributes)find_data.dwFileAttributes & FileAttributes.Directory) == FileAttributes.Directory)
+                        {
+                            results.Add(path + find_data.cFileName);
+                        }
+                    }
+
+                    FindClose(h_file);
+                    int i_end = results.Count;
+                    int item_count = i_end - i_begin;
+
+                    if (item_count == 0)
+                    {
+                        return false;
+                    }
+
+                    Nodes.Add(new Node
+                    {
+                        Paths = results.GetRange(i_begin, item_count)
+                    });
+                }
+
+                // Search deeper.
+                while (Nodes[depth].Index < Nodes[depth].Paths.Count)
+                {
+                    // Exit if min_step is reached.
+                    if (FolderScanned + results.Count >= min_step)
+                    {
+                        return true;
+                    }
+
+                    if (_Search(min_step, results, depth + 1))
+                    {
+                        return true;
+                    }
+
+                    Nodes[depth].Index++;
+                    FolderScanned++;
+                }
+
+                Nodes.RemoveAt(Nodes.Count - 1);
                 return false;
             }
-
-            ctx._FolderScanned = 0;
-
-            bool not_end = _SubFoldersDeep(ctx, min_step, results);
-
-            if (results.Count > 0)
-            {
-                return true;
-            }
-
-            return not_end;
-        }
-
-        private static bool _SubFoldersDeep(SubFoldersDeepSearchContext ctx, uint min_step, List<string> results, int depth = 0)
-        {
-            if (ctx.Nodes.Count <= depth)
-            {
-                // Visit current node.
-                string path = ctx.Nodes[ctx.Nodes.Count - 1].CurrentPath + "\\";
-                IntPtr h_file = FindFirstFileExFromApp(path + "*", ctx.FindInfoLevel,
-                    out _, ctx.IndexSearchOps, IntPtr.Zero, ctx.AdditionalFlags);
-
-                if (h_file.ToInt64() == -1)
-                {
-                    return false;
-                }
-
-                int i_begin = results.Count;
-                FindNextFile(h_file, out _);
-                while (FindNextFile(h_file, out WIN32_FIND_DATA find_data))
-                {
-                    if (((FileAttributes)find_data.dwFileAttributes & FileAttributes.Directory) == FileAttributes.Directory)
-                    {
-                        results.Add(path + find_data.cFileName);
-                    }
-                }
-                FindClose(h_file);
-                int i_end = results.Count;
-
-                if (i_begin == i_end)
-                {
-                    return false;
-                }
-
-                ctx.Nodes.Add(new SubFoldersDeepSearchContextNode
-                {
-                    Paths = results.GetRange(i_begin, i_end - i_begin)
-                });
-            }
-
-            // Search deeper.
-            while (ctx.Nodes[depth].Index < ctx.Nodes[depth].Paths.Count)
-            {
-                // Exit if min_step is reached.
-                if (ctx._FolderScanned + results.Count >= min_step)
-                {
-                    return true;
-                }
-
-                if (_SubFoldersDeep(ctx, min_step, results, depth + 1))
-                {
-                    return true;
-                }
-
-                ctx.Nodes[depth].Index++;
-                ctx._FolderScanned++;
-            }
-
-            ctx.Nodes.RemoveAt(ctx.Nodes.Count - 1);
-            return false;
         }
 
         // SubFiles

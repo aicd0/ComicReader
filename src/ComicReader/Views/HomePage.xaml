@@ -146,7 +146,7 @@
             <DataTemplate x:Key="FolderItemNormalTemplate" x:DataType="data:FolderItemViewModel">
                 <controls:FolderItemDetailed
                     Title="{x:Bind Folder}"
-                    Detail=""
+                    Detail="{x:Bind Path}"
                     Glyph="&#xE8B7;" />
             </DataTemplate>
 

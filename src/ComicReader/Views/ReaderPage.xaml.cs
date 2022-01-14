@@ -1034,7 +1034,7 @@ namespace ComicReader.Views
                 return;
             }
 
-            System.Diagnostics.Debug.Print("Reader: " + text + ".\n");
+            Utils.Debug.Log("Reader: " + text + ".");
         }
 #endif
     }
@@ -2178,7 +2178,7 @@ namespace ComicReader.Views
 #if DEBUG_LOG
         private void _Log(string text)
         {
-            System.Diagnostics.Debug.Print("Reader: " + text + ".\n");
+            Utils.Debug.Log("Reader: " + text + ".");
         }
 #endif
     }

@@ -112,7 +112,20 @@ namespace ComicReader.Utils
             return path.ToLower();
         }
 
-        public static string FilenameFromPath(string path)
+        /// <summary>
+        /// Case sensitive. You might need to lower both strings before calling this function.
+        /// </summary>
+        public static bool PathContain(string base_path, string child_path)
+        {
+            if (base_path.Length > child_path.Length)
+            {
+                return false;
+            }
+
+            return child_path.Substring(0, base_path.Length).Equals(base_path);
+        }
+
+        public static string ItemNameFromPath(string path)
         {
             int i = path.LastIndexOf('\\');
 

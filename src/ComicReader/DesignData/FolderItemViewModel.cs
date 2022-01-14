@@ -13,6 +13,7 @@ namespace ComicReader.DesignData
     public class FolderItemViewModel
     {
         public string Folder { get; set; }
+        public string Path { get; set; }
         public bool IsAddNew { get; set; }
 
         // events
@@ -32,7 +33,7 @@ namespace ComicReader.DesignData
                 return true;
             }
 
-            return a.Folder == b.Folder;
+            return a.Path == b.Path;
         };
     }
 }

@@ -497,6 +497,8 @@ namespace ComicReader.Database
             await m_update_lock.WaitAsync();
             try
             {
+                Utils.Debug.Log("Updating comics (lazy_load=" + lazy_load.ToString() + ")");
+
                 if (!lazy_load)
                 {
                     IsRescanning = true;
@@ -504,7 +506,7 @@ namespace ComicReader.Database
                 }
 
                 // Get all folder path of comics in the database.
-                List<string> all_dir_in_lib = new List<string>();
+                List<string> dir_in_lib = new List<string>();
 
                 {
                     SqliteCommand command = SqliteDatabaseManager.NewCommand();
@@ -516,7 +518,7 @@ namespace ComicReader.Database
 
                     while (query.Read())
                     {
-                        all_dir_in_lib.Add(query.GetString(0));
+                        dir_in_lib.Add(query.GetString(0));
                     }
                     ComicDataManager.ReleaseLock(db); // Lock off.
                 }
@@ -532,31 +534,37 @@ namespace ComicReader.Database
                 XmlDatabaseManager.ReleaseLock();
 
                 // Get all subfolders in root folders.
-                var all_dir = new List<string>();
+                var dir_exist = new List<string>();
+                var dir_ignore = new List<string>();
                 Utils.Stopwatch watch = new Utils.Stopwatch();
                 watch.Start();
 
                 foreach (string folder_path in root_folders)
                 {
+                    Utils.Debug.Log("Scanning root folder '" + folder_path + "'.");
+
                     StorageFolder root_folder = await Utils.C0.TryGetFolder(folder_path);
 
                     // Remove unreachable folders from database.
                     if (root_folder == null)
                     {
+                        Utils.Debug.Log("Failed to get folder '" + folder_path + "', skipped.");
+
                         await XmlDatabaseManager.WaitLock();
                         XmlDatabase.Settings.ComicFolders.Remove(folder_path);
                         XmlDatabaseManager.ReleaseLock();
                         continue;
                     }
 
-                    var ctx = new Utils.Win32IO.SubFoldersDeepSearchContext(folder_path);
+                    var ctx = new Utils.Win32IO.SubFolderDeepContext(folder_path);
                     bool initial_loop = true;
+                    List<string> dir_found = new List<string>();
 
-                    while (Utils.Win32IO.SubFoldersDeep(ctx, out List<string> dirs, 500))
+                    while (ctx.Search(dir_found, 500))
                     {
                         if (initial_loop)
                         {
-                            dirs.Add(folder_path);
+                            dir_found.Add(folder_path);
                             initial_loop = false;
                         }
 
@@ -566,18 +574,20 @@ namespace ComicReader.Database
                             return new TaskResult(TaskException.Cancellation);
                         }
 
-                        if (dirs.Count == 0)
+                        Utils.Debug.Log("Scanning " + dir_found.Count.ToString() + " folders.");
+
+                        if (dir_found.Count == 0)
                         {
                             continue;
                         }
 
-                        all_dir.AddRange(dirs);
+                        dir_exist.AddRange(dir_found);
                         
                         // Generate a task queue for updating.
                         var queue = new List<KeyValuePair<string, bool>>();
 
                         // Get folders added.
-                        List<string> dir_added = Utils.C3<string, string, string>.Except(dirs, all_dir_in_lib,
+                        List<string> dir_added = Utils.C3<string, string, string>.Except(dir_found, dir_in_lib,
                             Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
                             new Utils.C1<string>.DefaultEqualityComparer()).ToList();
 
@@ -590,7 +600,7 @@ namespace ComicReader.Database
 
                         if (!lazy_load)
                         {
-                            List<string> dir_kept = Utils.C3<string, string, string>.Intersect(dirs, all_dir_in_lib,
+                            List<string> dir_kept = Utils.C3<string, string, string>.Intersect(dir_found, dir_in_lib,
                                 Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
                                 new Utils.C1<string>.DefaultEqualityComparer()).ToList();
 
@@ -620,16 +630,43 @@ namespace ComicReader.Database
                             }
                         }
                     }
+
+                    foreach (string dir in ctx.NoAccessFolders)
+                    {
+                        dir_ignore.Add(dir.ToLower());
+                    }
                 }
 
-                // Get folders removed.
-                List<string> dir_removed = Utils.C3<string, string, string>.Except(all_dir_in_lib, all_dir,
+                // Get removed folders.
+                List<string> dir_removed = Utils.C3<string, string, string>.Except(dir_in_lib, dir_exist,
                     Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
                     new Utils.C1<string>.DefaultEqualityComparer()).ToList();
 
-                // remove items from database.
+                // Remove folders from database.
                 foreach (string dir in dir_removed)
                 {
+                    // Skip if the directory is in ignoring list.
+                    string dir_lower = dir.ToLower();
+                    bool ignore = false;
+
+                    foreach (string base_dir in dir_ignore)
+                    {
+                        if (Utils.StringUtils.PathContain(base_dir, dir_lower))
+                        {
+                            ignore = true;
+                            break;
+                        }
+                    }
+
+                    if (ignore)
+                    {
+                        Utils.Debug.Log("Folder '" + dir + "' ignored.");
+                        continue;
+                    }
+
+                    // Remove.
+                    Utils.Debug.Log("Removing folder '" + dir + "'.");
+
                     await RemoveWithDirectory(db, dir);
 
                     if (watch.LapSpan().TotalSeconds > 1.5)
@@ -643,6 +680,8 @@ namespace ComicReader.Database
             }
             finally
             {
+                Utils.Debug.Log("Comic update stopped.");
+
                 IsRescanning = false;
                 OnUpdated?.Invoke(db);
                 m_update_lock.Release();
@@ -651,13 +690,15 @@ namespace ComicReader.Database
 
         private static async Task _AddOrUpdateFolder(LockContext db, string path, bool update)
         {
+            Utils.Debug.Log("Updating folder '" + path + "' (update=" + update.ToString() + ").");
+
             List<string> file_names = Utils.Win32IO.SubFiles(path, "*");
             bool info_file_exist = false;
 
             for (int i = file_names.Count - 1; i >= 0; i--)
             {
                 string file_path = file_names[i];
-                string filename = Utils.StringUtils.FilenameFromPath(file_path).ToLower();
+                string filename = Utils.StringUtils.ItemNameFromPath(file_path).ToLower();
 
                 if (filename == ComicInfoFileName)
                 {

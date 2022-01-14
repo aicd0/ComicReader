@@ -24,6 +24,8 @@ namespace ComicReader.Database
     {
         public static async RawTask Init()
         {
+            Utils.Debug.Log("Initializing database");
+
             await SqliteDatabaseManager.Init();
             await XmlDatabaseManager.Load();
 

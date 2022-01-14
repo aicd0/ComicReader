@@ -337,7 +337,6 @@ namespace ComicReader.Views
         public async Task UpdateFolders()
         {
             await m_update_folder_lock.WaitAsync();
-
             try
             {
                 // Add to folder item source.
@@ -352,13 +351,14 @@ namespace ComicReader.Views
 
                 await XmlDatabaseManager.WaitLock();
 
-                foreach (string folder in XmlDatabase.Settings.ComicFolders)
+                foreach (string path in XmlDatabase.Settings.ComicFolders)
                 {
                     FolderItemViewModel item = new FolderItemViewModel
                     {
                         OnItemTapped = OnFolderItemTapped,
                         OnRemoveClicked = FolderItemRemoveClick,
-                        Folder = folder,
+                        Folder = Utils.StringUtils.ItemNameFromPath(path),
+                        Path = path,
                         IsAddNew = false
                     };
 
@@ -453,7 +453,7 @@ namespace ComicReader.Views
             }
             else
             {
-                MainPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Search, "<dir:" + item.Folder + ">");
+                MainPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Search, "<dir: " + item.Path + ">");
             }
         }
 
@@ -462,7 +462,7 @@ namespace ComicReader.Views
             Utils.C0.Run(async delegate
             {
                 FolderItemViewModel item = (FolderItemViewModel)((MenuFlyoutItem)sender).DataContext;
-                await SettingDataManager.RemoveComicFolder(item.Folder, final: true);
+                await SettingDataManager.RemoveComicFolder(item.Path, final: true);
                 await UpdateFolders();
                 Utils.TaskQueueManager.AppendTask(
                     ComicDataManager.UpdateSealed(lazy_load: true), "");

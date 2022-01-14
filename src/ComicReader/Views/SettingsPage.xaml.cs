@@ -174,6 +174,18 @@ namespace ComicReader.Views
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("AppearanceChanged"));
             }
         }
+
+        private bool m_AdvancedDebugMode;
+        public bool AdvancedDebugMode
+        {
+            get => m_AdvancedDebugMode;
+            set
+            {
+                m_AdvancedDebugMode = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("AdvancedDebugMode"));
+                OnSettingsChanged?.Invoke();
+            }
+        }
     }
 
     public sealed partial class SettingsPage : Page
@@ -275,6 +287,7 @@ namespace ComicReader.Views
             Shared.ReaderLeftToRight = XmlDatabase.Settings.LeftToRight;
             Shared.IsClearHistoryEnabled = XmlDatabase.History.Items.Count > 0;
             Shared.HistorySaveBrowsingHistory = XmlDatabase.Settings.SaveHistory;
+            Shared.AdvancedDebugMode = XmlDatabase.Settings.DebugMode;
 
             XmlDatabaseManager.ReleaseLock();
             
@@ -359,6 +372,7 @@ namespace ComicReader.Views
 
             XmlDatabase.Settings.LeftToRight = Shared.ReaderLeftToRight;
             XmlDatabase.Settings.SaveHistory = Shared.HistorySaveBrowsingHistory;
+            XmlDatabase.Settings.DebugMode = Shared.AdvancedDebugMode;
 
             XmlDatabaseManager.ReleaseLock();
             Utils.TaskQueueManager.AppendTask(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));

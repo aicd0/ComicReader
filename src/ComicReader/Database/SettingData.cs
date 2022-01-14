@@ -21,6 +21,7 @@ namespace ComicReader.Database
         public List<string> ComicFolders = new List<string>();
         public bool LeftToRight = false;
         public bool SaveHistory = true;
+        public bool DebugMode = false;
 
         // serialization
         public override string FileName => "Settings";
@@ -38,35 +39,36 @@ namespace ComicReader.Database
     }
     class SettingDataManager
     {
-        public static async RawTask AddComicFolder(string folder, bool final)
+        public static async RawTask AddComicFolder(StorageFolder folder, bool final)
         {
             await XmlDatabaseManager.WaitLock();
             try
             {
-                string folder_lower = folder.ToLower();
+                string path = folder.Path;
+                string path_lower = path.ToLower();
                 bool folder_inserted = false;
 
-                foreach (string old_folder in XmlDatabase.Settings.ComicFolders)
+                foreach (string old_path in XmlDatabase.Settings.ComicFolders)
                 {
-                    string old_folder_lower = old_folder.ToLower();
+                    string old_path_lower = old_path.ToLower();
 
-                    if (folder_lower.Length > old_folder_lower.Length)
+                    if (path_lower.Length > old_path_lower.Length)
                     {
-                        if (folder_lower.Substring(0, old_folder_lower.Length).Equals(old_folder_lower))
+                        if (path_lower.Substring(0, old_path_lower.Length).Equals(old_path_lower))
                         {
                             return new TaskResult(TaskException.ItemExists);
                         }
                     }
-                    else if (folder_lower.Length < old_folder_lower.Length)
+                    else if (path_lower.Length < old_path_lower.Length)
                     {
-                        if (old_folder_lower.Substring(0, folder_lower.Length).Equals(folder_lower))
+                        if (old_path_lower.Substring(0, path_lower.Length).Equals(path_lower))
                         {
-                            XmlDatabase.Settings.ComicFolders[XmlDatabase.Settings.ComicFolders.IndexOf(old_folder)] = folder;
+                            XmlDatabase.Settings.ComicFolders[XmlDatabase.Settings.ComicFolders.IndexOf(old_path)] = path;
                             folder_inserted = true;
                             break;
                         }
                     }
-                    else if (folder_lower.Equals(old_folder_lower))
+                    else if (path_lower.Equals(old_path_lower))
                     {
                         return new TaskResult(TaskException.ItemExists);
                     }
@@ -74,8 +76,10 @@ namespace ComicReader.Database
 
                 if (!folder_inserted)
                 {
-                    XmlDatabase.Settings.ComicFolders.Add(folder);
+                    XmlDatabase.Settings.ComicFolders.Add(path);
                 }
+
+                Utils.C0.AddToFutureAccessList(folder);
             }
             finally
             {
@@ -91,10 +95,13 @@ namespace ComicReader.Database
             return new TaskResult();
         }
 
-        public static async Task RemoveComicFolder(string folder, bool final)
+        public static async Task RemoveComicFolder(string path, bool final)
         {
             await XmlDatabaseManager.WaitLock();
-            _ = XmlDatabase.Settings.ComicFolders.Remove(folder);
+            _ = XmlDatabase.Settings.ComicFolders.Remove(path);
+
+            string token = Utils.StringUtils.TokenFromPath(path);
+            Utils.C0.RemoveFromFutureAccessList(token);
             XmlDatabaseManager.ReleaseLock();
 
             if (final)
@@ -115,16 +122,8 @@ namespace ComicReader.Database
                 return false;
             }
 
-            TaskResult res = await AddComicFolder(folder.Path, true);
-
-            if (res.ExceptionType != TaskException.Success)
-            {
-                return false;
-            }
-
-            StorageApplicationPermissions.FutureAccessList.AddOrReplace(
-                Utils.StringUtils.TokenFromPath(folder.Path), folder);
-            return true;
+            TaskResult r = await AddComicFolder(folder, true);
+            return r.Successful;
         }
     }
 }

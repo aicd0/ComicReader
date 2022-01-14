@@ -76,44 +76,57 @@ namespace ComicReader.Utils
         {
             System.Diagnostics.Debug.Assert(path.Length != 0);
 
-            string token_form = StringUtils.TokenFromPath(path);
+            string token = StringUtils.TokenFromPath(path);
             List<string> useless_tokens = new List<string>();
             StorageFolder result = null;
 
             foreach (AccessListEntry entry in StorageApplicationPermissions.FutureAccessList.Entries)
             {
-                string token = entry.Token;
+                string base_token = entry.Token;
 
-                if (token.Length > token_form.Length)
+                if (!Utils.StringUtils.PathContain(base_token, token))
                 {
                     continue;
                 }
 
-                if (!token_form.Substring(0, token.Length).Equals(token))
-                {
-                    continue;
-                }
+                StorageFolder permitted_folder = await
+                    StorageApplicationPermissions.FutureAccessList.GetFolderAsync(base_token);
 
-                StorageFolder permit_folder = await
-                    StorageApplicationPermissions.FutureAccessList.GetFolderAsync(token);
-
-                if (!StringUtils.TokenFromPath(permit_folder.Path).Equals(token))
+                if (!StringUtils.TokenFromPath(permitted_folder.Path).Equals(base_token))
                 {
                     // Remove the entry if folder path has changed.
-                    useless_tokens.Add(token);
+                    useless_tokens.Add(base_token);
                     continue;
                 }
 
-                result = await TryGetFolder(permit_folder, path);
+                result = await TryGetFolder(permitted_folder, path);
                 break;
             }
 
-            foreach (string token in useless_tokens)
+            foreach (string useless_token in useless_tokens)
             {
-                StorageApplicationPermissions.FutureAccessList.Remove(token);
+                Utils.C0.RemoveFromFutureAccessList(useless_token);
             }
 
             return result;
+        }
+
+        public static void AddToFutureAccessList(IStorageItem item)
+        {
+            string token = Utils.StringUtils.TokenFromPath(item.Path);
+            StorageApplicationPermissions.FutureAccessList.AddOrReplace(token, item);
+            Utils.Debug.Log("Added '" + token + "' to future access list.");
+        }
+
+        public static void RemoveFromFutureAccessList(string token)
+        {
+            if (!StorageApplicationPermissions.FutureAccessList.ContainsItem(token))
+            {
+                return;
+            }
+
+            StorageApplicationPermissions.FutureAccessList.Remove(token);
+            Utils.Debug.Log("Removed '" + token + "' from future access list.");
         }
 
         public static async Task<StorageFolder> TryGetFolder(StorageFolder base_folder, string path)

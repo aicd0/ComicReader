@@ -59,7 +59,7 @@ namespace ComicReader.Utils
 #if DEBUG_LOG_EVERYTHING
         private static void _Log(string text)
         {
-            System.Diagnostics.Debug.Print("Image Loader: " + text + ".\n");
+            Utils.Debug.Log("Image Loader: " + text + ".");
         }
 #endif
 
