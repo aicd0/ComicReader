@@ -96,10 +96,10 @@
                         x:Uid="RescanFilesDetail"
                         Foreground="{ThemeResource ForegroundDeepGrey}"
                         Style="{StaticResource SettingsPageBodyTextBlock}" />
-                    <Grid Height="10"/>
-                    <TextBlock x:Uid="DebugMode" Style="{StaticResource SettingsPageBodyTextBlock}"/>
+                    <Grid Height="10" />
+                    <TextBlock x:Uid="DebugMode" Style="{StaticResource SettingsPageBodyTextBlock}" />
                     <ToggleSwitch IsOn="{x:Bind Shared.AdvancedDebugMode, Mode=TwoWay}" />
-                    
+
                 </StackPanel>
 
                 <StackPanel Grid.Column="2" Orientation="Vertical">
@@ -128,7 +128,7 @@
                         x:Name="AboutCopyrightControl"
                         Style="{StaticResource SettingsPageBodyTextBlock}"
                         Text="© AboutCopyright" />
-                    <RichTextBlock Margin="0,8,0,0">
+                    <RichTextBlock Margin="0,8,0,0" IsTextSelectionEnabled="False">
                         <Paragraph>
                             <Run x:Name="ContributionRunBeforeLink" />
                             <Hyperlink NavigateUri="https://github.com/aicd0/ComicReader">

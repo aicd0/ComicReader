@@ -79,10 +79,7 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <Grid Grid.Row="1" Padding="20,35">
-                <Grid
-                    Height="{StaticResource ComicItemVerticalImageHeight}"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center">
+                <Grid Height="{StaticResource ComicItemVerticalImageHeight}">
                     <Grid
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
@@ -93,35 +90,11 @@
                         <Border CornerRadius="5">
                             <Image Source="{x:Bind Ctx.Image}" />
                         </Border>
-                        <Grid
-                            Width="26"
-                            Height="26"
-                            Margin="2"
-                            HorizontalAlignment="Right"
-                            VerticalAlignment="Bottom"
-                            Visibility="{x:Bind Ctx.IsFavorite}">
-                            <Border CornerRadius="5">
-                                <Border.Background>
-                                    <muxm:AcrylicBrush
-                                        BackgroundSource="Backdrop"
-                                        TintColor="DarkViolet"
-                                        TintLuminosityOpacity="0.8"
-                                        TintOpacity="0.0" />
-                                </Border.Background>
-                            </Border>
-                            <FontIcon
-                                FontSize="14"
-                                Foreground="SkyBlue"
-                                Glyph="&#xE735;" />
-                        </Grid>
                     </Grid>
                 </Grid>
             </Grid>
             <Grid Grid.Row="2" Padding="10">
-                <StackPanel
-                    Grid.Row="0"
-                    Orientation="Vertical"
-                    Spacing="3">
+                <StackPanel Orientation="Vertical" Spacing="3">
                     <TextBlock
                         FontFamily="Segoe UI"
                         FontSize="14"
@@ -131,6 +104,7 @@
                         TextTrimming="CharacterEllipsis"
                         TextWrapping="Wrap"
                         ToolTipService.ToolTip="{x:Bind Ctx.Title}" />
+
                     <StackPanel Margin="0,5,0,0" Orientation="Horizontal">
                         <Viewbox
                             Height="20"
@@ -148,6 +122,15 @@
                             Text="{x:Bind Ctx.Progress}" />
                     </StackPanel>
                 </StackPanel>
+                <Grid
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Bottom"
+                    Visibility="{x:Bind Ctx.IsFavorite}">
+                    <FontIcon
+                        FontSize="14"
+                        Foreground="DeepSkyBlue"
+                        Glyph="&#xE735;" />
+                </Grid>
             </Grid>
         </Grid>
 

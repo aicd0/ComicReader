@@ -5,7 +5,7 @@ using Windows.UI.Xaml.Data;
 namespace ComicReader.Converters
 {
     /// <summary>
-    /// Value converter that translates true to 0.0 and false to 1.0.
+    /// Value converter that translates true to 1.0 and false to 0.0.
     /// </summary>
     public class BooleanToDoubleConverter : IValueConverter
     {
@@ -29,7 +29,7 @@ namespace ComicReader.Converters
     }
 
     /// <summary>
-    /// Value converter that translates false to 1.0 and true to 0.0.
+    /// Value converter that translates true to 0.0 and false to 1.0.
     /// </summary>
     public class BooleanToDoubleNegationConverter : IValueConverter
     {

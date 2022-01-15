@@ -181,7 +181,7 @@
                             Click="OnSwitchReaderOrientationClicked"
                             IsEnabled="{x:Bind Shared.IsHorizontalReaderVisible, Mode=OneWay}"
                             Style="{StaticResource NavigationPageTopTileAppBarButton}"
-                            Visibility="{x:Bind Shared.IsHorizontalReaderVisible, Mode=OneWay}">
+                            Visibility="{x:Bind Shared.IsSwitchToVerticalReaderButtonVisible, Mode=OneWay}">
                             <AppBarButton.Content>
                                 <FontIcon Glyph="&#xE7C3;" />
                             </AppBarButton.Content>

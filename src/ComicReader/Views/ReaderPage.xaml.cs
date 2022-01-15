@@ -2043,7 +2043,7 @@ namespace ComicReader.Views
         private void OnInfoPaneTagClicked(object sender, RoutedEventArgs e)
         {
             TagViewModel ctx = (TagViewModel)((Button)sender).DataContext;
-            MainPage.Current.LoadTab(null, Utils.Tab.PageType.Search, "<tag:" + ctx.Tag + ">");
+            MainPage.Current.LoadTab(null, Utils.Tab.PageType.Search, "<tag: " + ctx.Tag + ">");
         }
 
         private void OnEditBtClicked(object sender, RoutedEventArgs e)

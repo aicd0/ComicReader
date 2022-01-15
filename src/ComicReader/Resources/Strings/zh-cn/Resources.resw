@@ -432,7 +432,7 @@
     <value>重新扫描文件</value>
   </data>
   <data name="RescanFilesDetail.Text" xml:space="preserve">
-    <value>提示: 在大多数情况下该操作非必需且可能引起较高的CPU占用，进而减少您的电池使用时间。仅当部分漫画信息被从外部修改时使用该功能进行同步。</value>
+    <value>提示：当部分漫画缺失或信息错误时，通过重新扫描文件可能解决问题。如果您的文件较多，该操作将引起较高的CPU占用，进而减少您的电池使用时间。</value>
   </data>
   <data name="SaveHistory.Text" xml:space="preserve">
     <value>记录您的浏览历史</value>

@@ -432,7 +432,7 @@ Filtering nothing. Only used when we need to see all items in the library.
     <value>Rescan files</value>
   </data>
   <data name="RescanFilesDetail.Text" xml:space="preserve">
-    <value>NOTICE: In most cases this operation is unnecessary and could lead to high CPU occupation which may drain your battery quickly. Use this function only when you need to update some comic information that‘s been modified externally.</value>
+    <value>NOTICE: If you encountered issues such as comic missing or incorrect information, rescan files may resolve the issues. This operation could cause high CPU occupation especially if you have a large set of files, and may drain your battery quickly.</value>
   </data>
   <data name="SaveHistory.Text" xml:space="preserve">
     <value>Save browsing history</value>
