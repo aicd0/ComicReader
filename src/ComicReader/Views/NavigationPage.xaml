@@ -18,6 +18,8 @@
                 <ResourceDictionary Source="../Resources/Styles/TextBox.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
+            <!--  Converters  -->
+            <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
             <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
         </ResourceDictionary>
     </Page.Resources>
@@ -201,7 +203,7 @@
                     <!--  Add to favorites  -->
                     <AppBarButton
                         Click="AddToFavoritesClick"
-                        IsEnabled="{x:Bind Shared.NotExternal, Mode=OneWay}"
+                        IsEnabled="{x:Bind Shared.IsExternal, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}"
                         Style="{StaticResource NavigationPageTopTileAppBarButton}"
                         ToolTipService.ToolTip="{x:Bind Shared.FavoriteButtonToolTip, Mode=OneWay}">
                         <AppBarButton.Content>

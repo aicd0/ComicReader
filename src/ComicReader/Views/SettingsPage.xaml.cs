@@ -427,8 +427,7 @@ namespace ComicReader.Views
         private void OnRescanFilesClicked(object sender, RoutedEventArgs e)
         {
             Shared.IsRescanning = true;
-            Utils.TaskQueueManager.AppendTask(
-                ComicDataManager.UpdateSealed(lazy_load: false), "", Utils.TaskQueueManager.EmptyQueue());
+            Utils.TaskQueueManager.NewTask(ComicDataManager.UpdateSealed(lazy_load: false));
         }
     }
 }

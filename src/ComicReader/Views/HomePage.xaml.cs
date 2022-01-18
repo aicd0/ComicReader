@@ -464,8 +464,7 @@ namespace ComicReader.Views
                 FolderItemViewModel item = (FolderItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 await SettingDataManager.RemoveComicFolder(item.Path, final: true);
                 await UpdateFolders();
-                Utils.TaskQueueManager.AppendTask(
-                    ComicDataManager.UpdateSealed(lazy_load: true), "");
+                Utils.TaskQueueManager.NewTask(ComicDataManager.UpdateSealed(lazy_load: true));
             });
         }
 
@@ -476,7 +475,7 @@ namespace ComicReader.Views
 
         private void OnRefreshBtClicked(object sender, RoutedEventArgs e)
         {
-            Shared.NavigationPageShared.RefreshPage();
+            Utils.TaskQueueManager.NewTask(ComicDataManager.UpdateSealed(lazy_load: true));
         }
     }
 }

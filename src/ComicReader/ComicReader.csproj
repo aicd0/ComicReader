@@ -167,6 +167,7 @@
     <Compile Include="DesignData\HistoryViewModel.cs" />
     <Compile Include="DesignData\ReaderFrameViewModel.cs" />
     <Compile Include="DesignData\TagViewModel.cs" />
+    <Compile Include="Utils\AppInfoProvider.cs" />
     <Compile Include="Utils\Debug.cs" />
     <Compile Include="Utils\ImageLoader.cs" />
     <Compile Include="Utils\Stopwatch.cs" />

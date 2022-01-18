@@ -153,14 +153,14 @@ namespace ComicReader.Views
             }
         }
 
-        private bool m_NotExternal;
-        public bool NotExternal
+        private bool m_IsExternal;
+        public bool IsExternal
         {
-            get => m_NotExternal;
+            get => m_IsExternal;
             set
             {
-                m_NotExternal = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("NotExternal"));
+                m_IsExternal = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsExternal"));
             }
         }
 

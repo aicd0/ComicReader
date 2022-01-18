@@ -260,6 +260,7 @@
             </Style>
 
             <!--  Converters  -->
+            <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
             <converters:BooleanToDoubleConverter x:Key="BooleanToDoubleConverter" />
             <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
 
@@ -314,8 +315,8 @@
                                 Margin="0,10,0,0"
                                 HorizontalAlignment="Left"
                                 IsClearEnabled="True"
-                                IsEnabled="{x:Bind Shared.NavigationPageShared.NotExternal, Mode=OneWay}"
                                 ValueChanged="OnRatingControlValueChanged"
+                                Visibility="{x:Bind Shared.NavigationPageShared.IsExternal, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}"
                                 Value="{x:Bind Shared.Rating, Mode=TwoWay}" />
 
                             <!--  Directory  -->
@@ -398,7 +399,7 @@
                             Checked="OnFavoriteBtChecked"
                             Icon="Favorite"
                             IsChecked="{x:Bind Shared.NavigationPageShared.IsFavorite, Mode=OneWay}"
-                            IsEnabled="{x:Bind Shared.NavigationPageShared.NotExternal, Mode=OneWay}"
+                            IsEnabled="{x:Bind Shared.NavigationPageShared.IsExternal, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}"
                             Unchecked="OnFavoriteBtUnchecked" />
                     </StackPanel>
                 </Grid>
@@ -635,7 +636,7 @@
                             <!--  Add to favorites  -->
                             <Button
                                 Click="OnFavoritesBtClicked"
-                                IsEnabled="{x:Bind Shared.NavigationPageShared.NotExternal, Mode=OneWay}"
+                                IsEnabled="{x:Bind Shared.NavigationPageShared.IsExternal, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}"
                                 Style="{StaticResource ReaderBottomTileButtonStyle}"
                                 ToolTipService.ToolTip="{x:Bind Shared.NavigationPageShared.FavoriteButtonToolTip, Mode=OneWay}">
                                 <Grid>

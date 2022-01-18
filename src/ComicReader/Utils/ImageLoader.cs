@@ -215,11 +215,10 @@ namespace ComicReader.Utils
 
             // Not all the images are successfully loaded, most likely that some of the
             // files or directories has been renamed, moved or deleted. We trigger a
-            // DatabaseManager.Update() here to sync the changes.
+            // ComicDataManager._Update() here to sync the changes.
             if (trig_update)
             {
-                Utils.TaskQueueManager.AppendTask(ComicDataManager.UpdateSealed(lazy_load: true), "",
-                    Utils.TaskQueueManager.EmptyQueue());
+                Utils.TaskQueueManager.NewTask(ComicDataManager.UpdateSealed(lazy_load: true));
             }
         }
     }

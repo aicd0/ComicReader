@@ -1346,7 +1346,7 @@ namespace ComicReader.Views
                 tab_id.Type = Utils.Tab.PageType.Reader;
 
                 ComicData comic = (ComicData)tab_id.RequestArgs;
-                tab_id.Tab.Header = comic.Title1;
+                tab_id.Tab.Header = comic.Title;
                 tab_id.Tab.IconSource = new muxc.SymbolIconSource { Symbol = Symbol.Document };
                 await LoadComic(db, comic);
             });
@@ -1568,12 +1568,22 @@ namespace ComicReader.Views
         {
             System.Diagnostics.Debug.Assert(m_comic != null);
 
-            Shared.NavigationPageShared.NotExternal = !m_comic.IsExternal;
-            Shared.ComicTitle1 = m_comic.Title1;
-            Shared.ComicTitle2 = m_comic.Title2;
+            Shared.NavigationPageShared.IsExternal = m_comic.IsExternal;
+
+            if (m_comic.Title1.Length == 0)
+            {
+                Shared.ComicTitle1 = m_comic.Title;
+            }
+            else
+            {
+                Shared.ComicTitle1 = m_comic.Title1;
+                Shared.ComicTitle2 = m_comic.Title2;
+            }
+
             Shared.ComicDir = m_comic.Directory;
             Shared.IsEditable = !(m_comic.IsExternal && m_comic.InfoFile == null);
             Shared.Progress = "";
+
             LoadComicTag();
 
             if (!m_comic.IsExternal)

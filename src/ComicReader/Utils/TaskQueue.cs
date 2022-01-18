@@ -59,6 +59,17 @@ namespace ComicReader.Utils
             };
         }
 
+        public static void NewTask(Func<Task<TaskResult>, TaskResult> ope)
+        {
+            NewTask(ope, "");
+        }
+
+        public static void NewTask(Func<Task<TaskResult>, TaskResult> ope,
+            string prompt)
+        {
+            AppendTask(ope, prompt, EmptyQueue());
+        }
+
         public static void AppendTask(Func<Task<TaskResult>, TaskResult> ope)
         {
             AppendTask(ope, "");

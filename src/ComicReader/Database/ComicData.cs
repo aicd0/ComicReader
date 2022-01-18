@@ -304,7 +304,7 @@ namespace ComicReader.Database
 
     class ComicDataManager
     {
-        private const string ComicInfoFileName = "info.txt";
+        public const string ComicInfoFileName = "info.txt";
 
         // Subscriptions.
         public static Action<LockContext> OnUpdated;
@@ -705,9 +705,7 @@ namespace ComicReader.Database
                     info_file_exist = true;
                 }
 
-                string ext = Utils.StringUtils.FilenameExtensionFromFilename(filename);
-
-                if (ext != "jpg" && ext != "jpeg" && ext != "png" && ext != "bmp")
+                if (!Utils.AppInfoProvider.IsSupportedFileType(filename))
                 {
                     file_names.RemoveAt(i);
                 }
@@ -817,9 +815,9 @@ namespace ComicReader.Database
 
         private static async RawTask SaveInfoFile(ComicData comic)
         {
-            TaskResult res = await CompleteInfoFile(comic, true);
+            TaskResult r = await CompleteInfoFile(comic, true);
 
-            if (res.ExceptionType != TaskException.Success)
+            if (!r.Successful)
             {
                 return new TaskResult(TaskException.Failure);
             }
@@ -926,19 +924,27 @@ namespace ComicReader.Database
 
         public static async RawTask UpdateInfo(ComicData comic)
         {
-            string path = comic.Directory + "\\" + ComicInfoFileName;
-            string text;
+            string info_text;
 
-            try
+            if (comic.InfoFile != null)
             {
-                text = await Utils.Win32IO.ReadFileFromPath(path);
+                info_text = await FileIO.ReadTextAsync(comic.InfoFile);
             }
-            catch (FileNotFoundException)
+            else
             {
-                return new TaskResult(TaskException.FileNotExists);
+                string path = comic.Directory + "\\" + ComicInfoFileName;
+
+                try
+                {
+                    info_text = await Utils.Win32IO.ReadFileFromPath(path);
+                }
+                catch (IOException)
+                {
+                    return new TaskResult(TaskException.Failure);
+                }
             }
 
-            ParseInfo(text, comic);
+            ParseInfo(info_text, comic);
             return new TaskResult();
         }
 
@@ -1003,14 +1009,18 @@ namespace ComicReader.Database
             }
 
             // Load all images.
-            QueryOptions queryOptions = new QueryOptions
+            QueryOptions query_options = new QueryOptions
             {
                 FolderDepth = FolderDepth.Shallow,
-                IndexerOption = IndexerOption.UseIndexerWhenAvailable,
-                FileTypeFilter = { ".jpg", ".jpeg", ".png", ".bmp" }
+                IndexerOption = IndexerOption.UseIndexerWhenAvailable
             };
 
-            var query = comic.Folder.CreateFileQueryWithOptions(queryOptions);
+            foreach (string type in Utils.AppInfoProvider.SupportedFileType)
+            {
+                query_options.FileTypeFilter.Add(type);
+            }
+
+            var query = comic.Folder.CreateFileQueryWithOptions(query_options);
             var img_files = await query.GetFilesAsync();
 
             if (img_files.Count == 0)

@@ -268,7 +268,7 @@ namespace ComicReader.Utils
             
             if (h.IsInvalid)
             {
-                throw new FileNotFoundException();
+                throw new IOException();
             }
 
             using (FileStream stream = new FileStream(h, FileAccess.Read))

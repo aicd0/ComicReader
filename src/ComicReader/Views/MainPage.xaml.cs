@@ -112,13 +112,12 @@ namespace ComicReader.Views
 
                 foreach (StorageFile file in all_files)
                 {
-                    if (file.Name.ToLower().Equals("info.txt"))
+                    if (file.Name.ToLower().Equals(ComicDataManager.ComicInfoFileName))
                     {
                         comic.InfoFile = file;
-                        await ComicDataManager.UpdateInfo(comic);
+                        _ = await ComicDataManager.UpdateInfo(comic);
                     }
-                    else if (file.FileType == ".jpg" || file.FileType == ".jpeg" ||
-                        file.FileType == ".png" || file.FileType == ".bmp")
+                    else if (Utils.AppInfoProvider.IsSupportedFileType(file.FileType))
                     {
                         comic.ImageFiles.Add(file);
                     }

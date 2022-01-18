@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
 using Windows.ApplicationModel.Core;
@@ -40,8 +41,11 @@ namespace ComicReader
             CoreApplication.EnablePrelaunch(true);
         }
 
-        private void Startup(bool prelaunch_activated, ApplicationExecutionState state)
+        private async Task Startup(bool prelaunch_activated, ApplicationExecutionState state)
         {
+            // Initialize the database.
+            await DatabaseManager.Init();
+
             Frame rootFrame = Window.Current.Content as Frame;
 
             if (rootFrame == null)
@@ -95,10 +99,7 @@ namespace ComicReader
         {
             Utils.C0.Run(async delegate
             {
-                // Initialize the database.
-                await DatabaseManager.Init();
-
-                Startup(args.PrelaunchActivated, args.PreviousExecutionState);
+                await Startup(args.PrelaunchActivated, args.PreviousExecutionState);
             });
         }
 
@@ -116,9 +117,12 @@ namespace ComicReader
 
         protected override void OnFileActivated(FileActivatedEventArgs args)
         {
-            base.OnFileActivated(args);
-            Startup(false, args.PreviousExecutionState);
-            Utils.TaskQueueManager.AppendTask(Views.MainPage.Current.OnFileActivatedSealed(args));
+            Utils.C0.Run(async delegate
+            {
+                base.OnFileActivated(args);
+                await Startup(false, args.PreviousExecutionState);
+                Utils.TaskQueueManager.AppendTask(Views.MainPage.Current.OnFileActivatedSealed(args));
+            });
         }
     }
 }
