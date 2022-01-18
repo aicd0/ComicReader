@@ -531,6 +531,9 @@
   <data name="DebugMode.Text" xml:space="preserve">
     <value>调试模式</value>
   </data>
+  <data name="PrivacyPolicy.Text" xml:space="preserve">
+    <value>隐私策略</value>
+  </data>
   <data name="UntitledCollection" xml:space="preserve">
     <value>未命名图片集</value>
   </data>

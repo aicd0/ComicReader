@@ -117,6 +117,15 @@
                         x:Uid="SendFeedbackButton"
                         Margin="0,10,0,0"
                         Click="OnSendFeedbackButtonClicked" />
+                    <RichTextBlock Margin="0,8,0,0" IsTextSelectionEnabled="False">
+                        <Paragraph>
+                            <Run x:Name="ContributionRunBeforeLink" />
+                            <Hyperlink NavigateUri="https://github.com/aicd0/ComicReader">
+                                <Run Text="GitHub" />
+                            </Hyperlink>
+                            <Run x:Name="ContributionRunAfterLink" />
+                        </Paragraph>
+                    </RichTextBlock>
 
                     <!--  About  -->
                     <TextBlock x:Uid="About" Style="{StaticResource SettingsPageSubTitleTextBlock}" />
@@ -128,13 +137,12 @@
                         x:Name="AboutCopyrightControl"
                         Style="{StaticResource SettingsPageBodyTextBlock}"
                         Text="© AboutCopyright" />
-                    <RichTextBlock Margin="0,8,0,0" IsTextSelectionEnabled="False">
+                    <Grid Height="8" />
+                    <RichTextBlock IsTextSelectionEnabled="False">
                         <Paragraph>
-                            <Run x:Name="ContributionRunBeforeLink" />
-                            <Hyperlink NavigateUri="https://github.com/aicd0/ComicReader">
-                                <Run Text="GitHub" />
+                            <Hyperlink NavigateUri="https://github.com/aicd0/ComicReader/blob/master/privacy-policy.md">
+                                <Run x:Uid="PrivacyPolicy" />
                             </Hyperlink>
-                            <Run x:Name="ContributionRunAfterLink" />
                         </Paragraph>
                     </RichTextBlock>
 

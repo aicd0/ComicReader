@@ -534,4 +534,7 @@ Category2: tag4/tag5
   <data name="UntitledCollection" xml:space="preserve">
     <value>Untitled Collection</value>
   </data>
+  <data name="PrivacyPolicy.Text" xml:space="preserve">
+    <value>Privacy Policy</value>
+  </data>
 </root>
