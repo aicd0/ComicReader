@@ -357,12 +357,7 @@ namespace ComicReader.Views
                 // start searching
                 Shared.IsLoading = true;
                 Shared.UpdateUI();
-
-                if (!await SearchMain(db, keywords, filter))
-                {
-                    return;
-                }
-
+                await SearchMain(db, keywords, filter);
                 m_match_index = 0;
                 Shared.IsLoading = false;
 
@@ -390,7 +385,7 @@ namespace ComicReader.Views
             public int Similarity = 0;
         }
 
-        private async Task<bool> SearchMain(LockContext db, List<string> keywords, Utils.Search.Filter filter)
+        private async Task SearchMain(LockContext db, List<string> keywords, Utils.Search.Filter filter)
         {
             for (int i = 0; i < keywords.Count; ++i)
             {
@@ -403,6 +398,7 @@ namespace ComicReader.Views
             command.CommandText = "SELECT " + ComicData.Field.Id + "," +
                 ComicData.Field.Title1 + "," + ComicData.Field.Title2 + " FROM " +
                 SqliteDatabaseManager.ComicTable;
+
             await ComicDataManager.WaitLock(db); // Lock on.
             SqliteDataReader query = await command.ExecuteReaderAsync();
 
@@ -433,6 +429,9 @@ namespace ComicReader.Views
                 });
             }
 
+            query.Close();
+            command.Dispose();
+
             List<long> all = new List<long>(keyword_matched.Count);
 
             foreach (Match match in keyword_matched)
@@ -450,7 +449,6 @@ namespace ComicReader.Views
 
             // Sort by similarity.
             m_matches = m_matches.OrderByDescending(x => x.Similarity).ToList();
-            return true;
         }
 
         private async Task<ComicItemViewModel> ComicDataToViewModel(ComicData comic)

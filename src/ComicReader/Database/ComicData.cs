@@ -55,6 +55,21 @@ namespace ComicReader.Database
 
     public class ComicData
     {
+        // Resources
+        private static string m_UntitledCollectionString = null;
+        private static string UntitledCollectionString
+        {
+            get
+            {
+                if (m_UntitledCollectionString == null)
+                {
+                    m_UntitledCollectionString = Utils.C0.TryGetResourceString("UntitledCollection");
+                }
+
+                return m_UntitledCollectionString;
+            }
+        }
+
         // Non-blob fields.
         public long Id { get; private set; }
         public string Title1 = "";
@@ -120,7 +135,7 @@ namespace ComicReader.Database
 
         // Not in database.
         public string Title => Title1.Length == 0 ?
-            (Title2.Length == 0 ? "Untitled Collection" : Title2) :
+            (Title2.Length == 0 ? UntitledCollectionString : Title2) :
             (Title2.Length == 0 ? Title1 : Title1 + " - " + Title2);
         public bool IsExternal = false;
         public StorageFolder Folder = null;
@@ -244,21 +259,36 @@ namespace ComicReader.Database
         private async Task Save(LockContext db, List<SqlKey> keys, bool save_tags)
         {
             await ComicDataManager.WaitLock(db); // Lock on.
-            if (Id < 0)
+            try
             {
-                await _Insert(db);
-            }
-            else
-            {
+                if (Id < 0)
+                {
+                    await _Insert(db);
+                    return;
+                }
+
+                if (keys.Count == 0)
+                {
+                    return;
+                }
+
                 SqlKey id = new SqlKey(Field.Id, Id);
-                await SqliteDatabaseManager.Update(db, SqliteDatabaseManager.ComicTable, id, keys);
+                bool r = await SqliteDatabaseManager.Update(db, SqliteDatabaseManager.ComicTable, id, keys);
+
+                if (!r)
+                {
+                    return;
+                }
 
                 if (save_tags)
                 {
                     await _SaveTags(db);
                 }
             }
-            ComicDataManager.ReleaseLock(db); // Lock off.
+            finally
+            {
+                ComicDataManager.ReleaseLock(db); // Lock off.
+            }
         }
 
         public async Task Save(LockContext db)
@@ -313,20 +343,21 @@ namespace ComicReader.Database
         public static bool IsRescanning { get; private set; } = false;
 
         // Resources.
-        private static string m_default_tags = "";
-        private static string DefaultTags
+        private static string m_DefaultTagsString = null;
+        private static string DefaultTagsString
         {
             get
             {
-                if (m_default_tags.Length == 0)
+                if (m_DefaultTagsString == null)
                 {
                     Utils.C0.Sync(delegate
                     {
-                        m_default_tags = Utils.C0.TryGetResourceString("DefaultTags");
+                        m_DefaultTagsString = Utils.C0.TryGetResourceString("DefaultTags");
                     }).Wait();
                 }
-                return m_default_tags;
-            } 
+
+                return m_DefaultTagsString;
+            }
         }
 
         // Locks.
@@ -766,7 +797,7 @@ namespace ComicReader.Database
             {
                 TagData default_tag = new TagData
                 {
-                    Name = DefaultTags,
+                    Name = DefaultTagsString,
                     Tags = tags.Skip(1).ToHashSet(),
                 };
 

@@ -143,17 +143,19 @@ namespace ComicReader.Database
             return rowid;
         }
 
-        public static async Task Update(LockContext db, string table, SqlKey primary_key, List<SqlKey> keys)
+        public static async Task<bool> Update(LockContext db, string table, SqlKey primary_key, List<SqlKey> keys)
         {
             if (keys.Count == 0)
             {
-                return;
+                throw new ArgumentException();
             }
+
+            // Generate the command.
+            SqliteCommand command = NewCommand();
+            _ = command.Parameters.AddWithValue("@" + primary_key.Name, primary_key.Value);
 
             List<string> fields = new List<string>();
             var blobs = new List<KeyValuePair<string, MemoryStream>>();
-            SqliteCommand command = NewCommand();
-            command.Parameters.AddWithValue("@" + primary_key.Name, primary_key.Value);
 
             foreach (SqlKey key in keys)
             {
@@ -178,30 +180,43 @@ namespace ComicReader.Database
             command.CommandText = "UPDATE " + table + " SET " +
                 string.Join(',', fields) + condition;
 
+            // Execute the command.
             await ComicDataManager.WaitLock(db); // Lock on.
-            command.ExecuteNonQuery();
-
-            // Copy to blobs.
-            if (blobs.Count > 0)
+            try
             {
-                command.CommandText = "SELECT rowid FROM " + table + condition + " LIMIT 1";
-                long rowid = (long)command.ExecuteScalar();
+                int rows_updated = command.ExecuteNonQuery();
 
-                foreach (var pairs in blobs)
+                if (rows_updated == 0)
                 {
-                    MemoryStream input_stream = pairs.Value;
-                    input_stream.Seek(0, SeekOrigin.Begin);
+                    return false;
+                }
 
-                    using (SqliteBlob write_stream = new SqliteBlob(
-                        m_connection, table, pairs.Key, rowid))
+                // Copy to blobs.
+                if (blobs.Count > 0)
+                {
+                    command.CommandText = "SELECT rowid FROM " + table + condition + " LIMIT 1";
+                    long rowid = (long)command.ExecuteScalar();
+
+                    foreach (var pairs in blobs)
                     {
-                        await input_stream.CopyToAsync(write_stream);
+                        MemoryStream input_stream = pairs.Value;
+                        input_stream.Seek(0, SeekOrigin.Begin);
+
+                        using (SqliteBlob write_stream = new SqliteBlob(
+                            m_connection, table, pairs.Key, rowid))
+                        {
+                            await input_stream.CopyToAsync(write_stream);
+                        }
                     }
                 }
-            }
-            ComicDataManager.ReleaseLock(db); // Lock off.
 
-            command.Dispose();
+                return true;
+            }
+            finally
+            {
+                command.Dispose();
+                ComicDataManager.ReleaseLock(db); // Lock off.
+            }
         }
     }
 }

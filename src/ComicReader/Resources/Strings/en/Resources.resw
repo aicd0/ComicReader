@@ -531,4 +531,7 @@ Category2: tag4/tag5
   <data name="DebugMode.Text" xml:space="preserve">
     <value>Debug mode</value>
   </data>
+  <data name="UntitledCollection" xml:space="preserve">
+    <value>Untitled Collection</value>
+  </data>
 </root>
