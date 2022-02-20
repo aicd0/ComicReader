@@ -28,7 +28,6 @@
             Visibility="{x:Bind Shared.IsEmpty, Mode=OneWay}" />
         <ListView
             x:Name="MainListView"
-            Margin="0,0,0,0"
             IsItemClickEnabled="True"
             ItemClick="MainListViewItemClick"
             ItemContainerStyle="{StaticResource HistoryPageItem}"
@@ -41,7 +40,7 @@
             </ListView.ItemsPanel>
             <ListView.ItemTemplate>
                 <DataTemplate x:DataType="data:HistoryItemViewModel">
-                    <Grid Padding="12,0,10,0">
+                    <Grid Padding="12,0,10,0" Background="Transparent">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
