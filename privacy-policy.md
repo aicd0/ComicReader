@@ -7,4 +7,4 @@ This application does not collect or transmit personally identifiable informatio
 ## More Information
 We may update our Privacy Policy from time to time. Thus, you are advised to review this document periodically for any changes. We will notify you of any changes by posting the new Privacy Policy in this document. These changes are effective immediately after they are posted in this document.
 
-If you would like to report any violations of this policy, please contact us through https://github.com/aicd0/ComicReader.
+If you would like to report any violations of this policy, please contact us through comic_reader_uwp@163.com.
