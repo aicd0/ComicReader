@@ -426,6 +426,7 @@
                         Loaded="OnVerticalReaderScrollViewerLoaded"
                         Opacity="{x:Bind Shared.NavigationPageShared.IsVerticalReaderVisible, Converter={StaticResource BooleanToDoubleConverter}, Mode=OneWay}"
                         ViewChanged="OnVerticalReaderScrollViewerViewChanged"
+                        SizeChanged="OnVerticalReaderScrollViewerSizeChanged"
                         ZoomMode="Enabled">
                         <Grid HorizontalAlignment="Center">
                             <ListView
@@ -467,6 +468,7 @@
                         VerticalScrollBarVisibility="Hidden"
                         VerticalScrollMode="Disabled"
                         ViewChanged="OnHorizontalReaderScrollViewerViewChanged"
+                        SizeChanged="OnHorizontalReaderScrollViewerSizeChanged"
                         ZoomMode="Enabled">
                         <Grid VerticalAlignment="Center">
                             <ListView

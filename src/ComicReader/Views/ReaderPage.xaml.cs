@@ -411,6 +411,11 @@ namespace ComicReader.Views
             return true;
         }
 
+        public void OnSizeChanged()
+        {
+            _AdjustPadding();
+        }
+
         // Internal functions
         //  Controlling
         private double? _ZoomCoefficient()
@@ -769,13 +774,19 @@ namespace ComicReader.Views
 
         private void _AdjustPadding()
         {
-            if (!IsFrameworkLoaded) return;
+            if (!IsFrameworkLoaded)
+            {
+                return;
+            }
 
             double? zoom_coefficient_boxed = _ZoomCoefficient();
             if (zoom_coefficient_boxed == null) return;
             double zoom_coefficient = zoom_coefficient_boxed.Value;
 
-            if (DataSource[0].Container == null || DataSource[DataSource.Count - 1].Container == null) return;
+            if (DataSource[0].Container == null || DataSource[DataSource.Count - 1].Container == null)
+            {
+                return;
+            }
 
 #if DEBUG_LOG_JUMP
             _Log("Adjusting padding");
@@ -1702,6 +1713,11 @@ namespace ComicReader.Views
             });
         }
 
+        private void OnReaderScrollViewerSizeChanged(ReaderModel control, SizeChangedEventArgs e)
+        {
+            control.OnSizeChanged();
+        }
+
         private void OnHorizontalReaderScrollViewerPointerWheelChanged(object sender, PointerRoutedEventArgs e)
         {
             Utils.C0.Run(async delegate
@@ -1737,6 +1753,16 @@ namespace ComicReader.Views
         private void OnHorizontalReaderScrollViewerViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
         {
             OnReaderScrollViewerViewChanged(HorizontalReader, e);
+        }
+
+        private void OnVerticalReaderScrollViewerSizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            OnReaderScrollViewerSizeChanged(VerticalReader, e);
+        }
+
+        private void OnHorizontalReaderScrollViewerSizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            OnReaderScrollViewerSizeChanged(HorizontalReader, e);
         }
 
         private void OnVerticalReaderScrollViewerLoaded(object sender, RoutedEventArgs e)
@@ -1781,7 +1807,7 @@ namespace ComicReader.Views
         }
 
         // Manipulation
-        void OnManipulationStarted(object sender, ManipulationStartedEventArgs e)
+        private void OnManipulationStarted(object sender, ManipulationStartedEventArgs e)
         {
             // do nothing.
 
@@ -1790,7 +1816,7 @@ namespace ComicReader.Views
 #endif
         }
 
-        void OnManipulationUpdated(object sender, ManipulationUpdatedEventArgs e)
+        private void OnManipulationUpdated(object sender, ManipulationUpdatedEventArgs e)
         {
             ReaderModel reader = GetCurrentReader();
 
@@ -1812,7 +1838,7 @@ namespace ComicReader.Views
                 reader.HorizontalOffsetFinal - dx, reader.VerticalOffsetFinal - dy, false);
         }
 
-        void OnManipulationCompleted(object sender, ManipulationCompletedEventArgs e)
+        private void OnManipulationCompleted(object sender, ManipulationCompletedEventArgs e)
         {
             Utils.C0.Run(async delegate
             {
