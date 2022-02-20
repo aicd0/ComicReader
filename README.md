@@ -25,7 +25,7 @@ Prerequisites:
 - Open [ComicReader.sln](src/ComicReader.sln) in Visual Studio to build and run the Comic Reader app.
 
 ## Contributing
-If Comic Reader is not working properly, please [submit an issue on GitHub](https://github.com/aicd0/ComicReader/issues/new).
+If Comic Reader is not working properly, please [submit an issue on GitHub](https://github.com/aicd0/ComicReader/issues/new). If you have any suggestions about Comic Reader or want to add some new features to it, please contact us through comic_reader_uwp@163.com.
 
 ## License
 Licensed under the [MIT License](./LICENSE).
