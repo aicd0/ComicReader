@@ -94,6 +94,8 @@ namespace ComicReader.Utils
         {
             public SubFolderDeepContext(string path)
             {
+                path = Utils.StringUtils.ToPathNoTail(path);
+
                 Nodes.Add(new Node
                 {
                     Paths = new List<string> { path }
@@ -172,12 +174,16 @@ namespace ComicReader.Utils
                     }
 
                     int i_begin = results.Count;
-                    FindNextFile(h_file, out _);
 
                     while (FindNextFile(h_file, out WIN32_FIND_DATA find_data))
                     {
                         if (((FileAttributes)find_data.dwFileAttributes & FileAttributes.Directory) == FileAttributes.Directory)
                         {
+                            if (find_data.cFileName == "..")
+                            {
+                                continue;
+                            }
+
                             results.Add(path + find_data.cFileName);
                         }
                     }
@@ -249,11 +255,15 @@ namespace ComicReader.Utils
                 return results;
             }
 
-            FindNextFile(h_file, out _);
             while (FindNextFile(h_file, out WIN32_FIND_DATA find_data))
             {
                 if (((FileAttributes)find_data.dwFileAttributes & FileAttributes.Directory) != FileAttributes.Directory)
                 {
+                    if (find_data.cFileName == "..")
+                    {
+                        continue;
+                    }
+
                     string fullpath = path + find_data.cFileName;
                     results.Add(fullpath);
                 }

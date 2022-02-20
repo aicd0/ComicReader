@@ -148,5 +148,20 @@ namespace ComicReader.Utils
 
             return filename.Substring(i + 1);
         }
+
+        public static string ToPathNoTail(string path)
+        {
+            if (path.Length == 0)
+            {
+                return path;
+            }
+
+            if (path[path.Length - 1] == '\\')
+            {
+                return path.Substring(0, path.Length - 1);
+            }
+
+            return path;
+        }
     }
 }

@@ -77,7 +77,7 @@ namespace ComicReader.Utils
             System.Diagnostics.Debug.Assert(path.Length != 0);
 
             string token = StringUtils.TokenFromPath(path);
-            List<string> useless_tokens = new List<string>();
+            List<string> out_of_date_tokens = new List<string>();
             StorageFolder result = null;
 
             foreach (AccessListEntry entry in StorageApplicationPermissions.FutureAccessList.Entries)
@@ -94,8 +94,8 @@ namespace ComicReader.Utils
 
                 if (!StringUtils.TokenFromPath(permitted_folder.Path).Equals(base_token))
                 {
-                    // Remove the entry if folder path has changed.
-                    useless_tokens.Add(base_token);
+                    // Remove entry if the folder path has changed.
+                    out_of_date_tokens.Add(base_token);
                     continue;
                 }
 
@@ -103,9 +103,9 @@ namespace ComicReader.Utils
                 break;
             }
 
-            foreach (string useless_token in useless_tokens)
+            foreach (string out_of_date_token in out_of_date_tokens)
             {
-                Utils.C0.RemoveFromFutureAccessList(useless_token);
+                Utils.C0.RemoveFromFutureAccessList(out_of_date_token);
             }
 
             return result;
@@ -131,12 +131,14 @@ namespace ComicReader.Utils
 
         public static async Task<StorageFolder> TryGetFolder(StorageFolder base_folder, string path)
         {
-            if (base_folder.Path.Length > path.Length)
+            string base_path = Utils.StringUtils.ToPathNoTail(base_folder.Path);
+
+            if (base_path.Length > path.Length)
             {
                 return null;
             }
 
-            string rest_path = path.Substring(base_folder.Path.Length);
+            string rest_path = path.Substring(base_path.Length);
 
             if (rest_path.Length <= 1)
             {
