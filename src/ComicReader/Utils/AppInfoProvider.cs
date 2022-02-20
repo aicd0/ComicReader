@@ -8,7 +8,7 @@ namespace ComicReader.Utils
 {
     public class AppInfoProvider
     {
-        public static readonly List<string> SupportedFileType = new List<string>{
+        public static readonly List<string> SupportedFileTypes = new List<string>{
             ".jpg",
             ".jpeg",
             ".png",

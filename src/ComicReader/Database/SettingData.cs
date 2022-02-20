@@ -21,7 +21,11 @@ namespace ComicReader.Database
         public List<string> ComicFolders = new List<string>();
         public bool LeftToRight = false;
         public bool SaveHistory = true;
+#if DEBUG
+        public bool DebugMode = true;
+#else
         public bool DebugMode = false;
+#endif
 
         // serialization
         public override string FileName => "Settings";

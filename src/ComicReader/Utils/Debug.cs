@@ -16,7 +16,6 @@ namespace ComicReader.Utils
         private const string LogFileName = "log.txt";
 
         private static StorageFolder LogFolder => ApplicationData.Current.LocalFolder;
-        private static StorageFile LogFile = null;
         private static readonly Utils.TaskQueue LogQueue = Utils.TaskQueueManager.EmptyQueue();
 
         public static void Log(string content, bool verbose = true)
@@ -36,21 +35,20 @@ namespace ComicReader.Utils
 
         private static async RawTask _Log(string content, bool verbose)
         {
-            if (LogFile == null)
+            StorageFile log_file;
+
+            try
             {
-                try
-                {
-                    LogFile = await LogFolder.CreateFileAsync(LogFileName, CreationCollisionOption.OpenIfExists);
-                }
-                catch (Exception)
-                {
-                    return new TaskResult(TaskException.Failure);
-                }
+                log_file = await LogFolder.CreateFileAsync(LogFileName, CreationCollisionOption.OpenIfExists);
+            }
+            catch (Exception)
+            {
+                return new TaskResult(TaskException.Failure);
             }
 
             string timestamp = "[" + DateTimeOffset.Now.ToString("G") + "]";
             content += "\n";
-            await FileIO.AppendTextAsync(LogFile, timestamp + " " + content);
+            await FileIO.AppendTextAsync(log_file, timestamp + " " + content);
 
             if (verbose)
             {

@@ -254,7 +254,8 @@ namespace ComicReader.Utils
             {
                 if (((FileAttributes)find_data.dwFileAttributes & FileAttributes.Directory) != FileAttributes.Directory)
                 {
-                    results.Add(path + find_data.cFileName);
+                    string fullpath = path + find_data.cFileName;
+                    results.Add(fullpath);
                 }
             }
             FindClose(h_file);

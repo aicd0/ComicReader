@@ -17,7 +17,6 @@ namespace ComicReader.Database
     using TaskResult = Utils.TaskResult;
     using TaskException = Utils.TaskException;
     
-    [Serializable]
     public class TagData
     {
         public string Name;
@@ -676,7 +675,7 @@ namespace ComicReader.Database
                 // Remove folders from database.
                 foreach (string dir in dir_removed)
                 {
-                    // Skip if the directory is in ignoring list.
+                    // Skip directories in ignoring list.
                     string dir_lower = dir.ToLower();
                     bool ignore = false;
 
@@ -691,13 +690,11 @@ namespace ComicReader.Database
 
                     if (ignore)
                     {
-                        Utils.Debug.Log("Folder '" + dir + "' ignored.");
                         continue;
                     }
 
                     // Remove.
                     Utils.Debug.Log("Removing folder '" + dir + "'.");
-
                     await RemoveWithDirectory(db, dir);
 
                     if (watch.LapSpan().TotalSeconds > 1.5)
@@ -724,6 +721,7 @@ namespace ComicReader.Database
             Utils.Debug.Log("Updating folder '" + path + "' (update=" + update.ToString() + ").");
 
             List<string> file_names = Utils.Win32IO.SubFiles(path, "*");
+            Utils.Debug.Log(file_names.Count.ToString() + " images found.");
             bool info_file_exist = false;
 
             for (int i = file_names.Count - 1; i >= 0; i--)
@@ -1039,20 +1037,23 @@ namespace ComicReader.Database
                 }
             }
 
+            Utils.Debug.Log("Retrieving images for '" + comic.Folder.Path + "'.");
+
             // Load all images.
             QueryOptions query_options = new QueryOptions
             {
                 FolderDepth = FolderDepth.Shallow,
-                IndexerOption = IndexerOption.UseIndexerWhenAvailable
+                IndexerOption = IndexerOption.DoNotUseIndexer, // UseIndexerWhenAvailable may fail.
             };
 
-            foreach (string type in Utils.AppInfoProvider.SupportedFileType)
+            foreach (string type in Utils.AppInfoProvider.SupportedFileTypes)
             {
                 query_options.FileTypeFilter.Add(type);
             }
 
             var query = comic.Folder.CreateFileQueryWithOptions(query_options);
             var img_files = await query.GetFilesAsync();
+            Utils.Debug.Log("Adding " + img_files.Count.ToString() + " images.");
 
             if (img_files.Count == 0)
             {
