@@ -157,7 +157,7 @@
         </Style>
     </Page.Resources>
 
-    <Grid KeyDown="OnMainPageKeyDown" SizeChanged="OnRootGridSizeChanged">
+    <Grid KeyDown="OnKeyDown" SizeChanged="OnRootGridSizeChanged">
         <muxc:TabView
             x:Name="RootTabView"
             VerticalAlignment="Stretch"

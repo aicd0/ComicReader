@@ -58,7 +58,7 @@ namespace ComicReader.Views
             InitializeComponent();
         }
 
-        // file activation
+        // File activation
         public SealedTask OnFileActivatedSealed(FileActivatedEventArgs args)
         {
             return delegate (Task<Utils.TaskResult> _t)
@@ -133,7 +133,7 @@ namespace ComicReader.Views
             });
         }
 
-        // new tab
+        // New tab
         private bool TrySwitchToTab(Utils.Tab.PageType type, object args)
         {
             if (type != Utils.Tab.PageType.Reader &&
@@ -238,7 +238,7 @@ namespace ComicReader.Views
             }
         }
 
-        // tabview
+        // TabView
         private void OnAddTabButtonClicked(muxc.TabView sender, object args)
         {
             LoadTab(null, Utils.Tab.PageType.Home);
@@ -284,7 +284,7 @@ namespace ComicReader.Views
             LoadTab(null, Utils.Tab.PageType.Home);
         }
 
-        // background tasks indication
+        // Background tasks
         public void SetRootToolTip(string text)
         {
             if (RootToolTip == null)
@@ -338,7 +338,7 @@ namespace ComicReader.Views
             m_tab_container_grid = sender as Grid;
         }
 
-        // fullscreen
+        // Fullscreen
         public void UpdateFullscreenMode()
         {
             // make IsFullscreen consistent with the actual state.
@@ -365,16 +365,17 @@ namespace ComicReader.Views
             return true;
         }
 
-        public void ExitFullscreen()
+        public bool ExitFullscreen()
         {
             if (!Shared.IsFullscreen)
             {
-                return;
+                return false;
             }
 
             ApplicationView.GetForCurrentView().ExitFullScreenMode();
             Shared.IsFullscreen = false;
             SetTabViewVisibility(true);
+            return true;
         }
 
         private void OnRootGridSizeChanged(object sender, SizeChangedEventArgs e)
@@ -382,11 +383,24 @@ namespace ComicReader.Views
             UpdateFullscreenMode();
         }
 
-        private void OnMainPageKeyDown(object sender, KeyRoutedEventArgs e)
+        // Keys
+        private void OnKeyDown(object sender, KeyRoutedEventArgs e)
         {
-            if (e.Key == Windows.System.VirtualKey.Escape)
+            bool handled = true;
+
+            switch (e.Key)
             {
-                ExitFullscreen();
+                case Windows.System.VirtualKey.Escape:
+                    handled = ExitFullscreen();
+                    break;
+                default:
+                    handled = false;
+                    break;
+            }
+
+            if (handled)
+            {
+                e.Handled = true;
             }
         }
     }

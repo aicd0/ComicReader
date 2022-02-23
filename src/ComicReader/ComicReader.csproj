@@ -147,6 +147,9 @@
     <Compile Include="Controls\ReaderPreviewImage.xaml.cs">
       <DependentUpon>ReaderPreviewImage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Controls\SettingExpander.xaml.cs">
+      <DependentUpon>SettingExpander.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Controls\TagButton.xaml.cs">
       <DependentUpon>TagButton.xaml</DependentUpon>
     </Compile>
@@ -305,6 +308,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Controls\ReaderPreviewImage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Controls\SettingExpander.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

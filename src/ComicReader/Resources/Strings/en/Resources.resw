@@ -138,7 +138,7 @@
   <data name="AddToFavorites" xml:space="preserve">
     <value>Add to favorites</value>
   </data>
-  <data name="Advanced.Text" xml:space="preserve">
+  <data name="AdvancedExpander.Header" xml:space="preserve">
     <value>Advanced</value>
   </data>
   <data name="AllComics" xml:space="preserve">
@@ -156,7 +156,7 @@
   <data name="AllPagesButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>All pages</value>
   </data>
-  <data name="Appearance.Text" xml:space="preserve">
+  <data name="AppearanceExpander.Header" xml:space="preserve">
     <value>Appearance</value>
   </data>
   <data name="ApplyOnNextLaunch.Text" xml:space="preserve">
@@ -320,7 +320,7 @@ Filtering nothing. Only used when we need to see all items in the library.
   <data name="HideAppBarButton.Label" xml:space="preserve">
     <value>Hide</value>
   </data>
-  <data name="History.Text" xml:space="preserve">
+  <data name="HistoryExpander.Header" xml:space="preserve">
     <value>History</value>
   </data>
   <data name="HomeButton.ToolTipService.ToolTip" xml:space="preserve">
@@ -332,7 +332,7 @@ Filtering nothing. Only used when we need to see all items in the library.
   <data name="HorizontalButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>Horizontal</value>
   </data>
-  <data name="ImageOnDevice.Text" xml:space="preserve">
+  <data name="ImageLocationExpander.Header" xml:space="preserve">
     <value>Images on this device</value>
   </data>
   <data name="LeftToRight.Text" xml:space="preserve">
@@ -416,7 +416,7 @@ Filtering nothing. Only used when we need to see all items in the library.
   <data name="Pin" xml:space="preserve">
     <value>Pin</value>
   </data>
-  <data name="Reader.Text" xml:space="preserve">
+  <data name="ReaderExpander.Header" xml:space="preserve">
     <value>Reader</value>
   </data>
   <data name="RefreshButton.ToolTipService.ToolTip" xml:space="preserve">
@@ -468,8 +468,7 @@ Filtering nothing. Only used when we need to see all items in the library.
     <value>Statistics</value>
   </data>
   <data name="TagIntroduction.Message" xml:space="preserve">
-    <value>You can add tags to your comic to make it easier to manage your library. For example:
-
+    <value>You can add tags to your comic to make your library easier to manage. For example:
 Category1: tag1/tag2/tag3
 Category2: tag4/tag5
 ...</value>
@@ -536,5 +535,20 @@ Category2: tag4/tag5
   </data>
   <data name="PrivacyPolicy.Text" xml:space="preserve">
     <value>Privacy Policy</value>
+  </data>
+  <data name="AdvancedExpander.Detail" xml:space="preserve">
+    <value>Rescan files, developer settings</value>
+  </data>
+  <data name="AppearanceExpander.Detail" xml:space="preserve">
+    <value>Select which app theme to display</value>
+  </data>
+  <data name="HistoryExpander.Detail" xml:space="preserve">
+    <value>Clear history, choose whether to save your browsing history</value>
+  </data>
+  <data name="ImageLocationExpander.Detail" xml:space="preserve">
+    <value>Choose where we look for images</value>
+  </data>
+  <data name="ReaderExpander.Detail" xml:space="preserve">
+    <value>Reading direction</value>
   </data>
 </root>

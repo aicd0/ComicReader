@@ -2,6 +2,7 @@
     x:Class="ComicReader.Views.SettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:ComicReader.Controls"
     xmlns:converters="using:ComicReader.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -47,59 +48,89 @@
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 
-                <StackPanel Grid.Column="0" Orientation="Vertical">
+                <StackPanel
+                    Grid.Column="0"
+                    Margin="0,25,0,0"
+                    Orientation="Vertical"
+                    Spacing="5">
+
                     <!--  Image Source  -->
-                    <TextBlock x:Uid="ImageOnDevice" Style="{StaticResource SettingsPageSubTitleTextBlock}" />
-                    <Button x:Uid="ChooseLocationButton" Click="ChooseLocationsClick" />
+                    <controls:SettingExpander
+                        x:Uid="ImageLocationExpander"
+                        Glyph="&#xEB9F;"
+                        IsExpanded="True">
+                        <controls:SettingExpander.InnerContent>
+                            <Button x:Uid="ChooseLocationButton" Click="ChooseLocationsClick" />
+                        </controls:SettingExpander.InnerContent>
+                    </controls:SettingExpander>
 
                     <!--  Reader  -->
-                    <TextBlock x:Uid="Reader" Style="{StaticResource SettingsPageSubTitleTextBlock}" />
-                    <TextBlock x:Uid="LeftToRight" Style="{StaticResource SettingsPageBodyTextBlock}" />
-                    <ToggleSwitch IsOn="{x:Bind Shared.ReaderLeftToRight, Mode=TwoWay}" />
+                    <controls:SettingExpander x:Uid="ReaderExpander" Glyph="&#xE736;">
+                        <controls:SettingExpander.InnerContent>
+                            <StackPanel Orientation="Vertical">
+                                <TextBlock x:Uid="LeftToRight" Style="{StaticResource SettingsPageBodyTextBlock}" />
+                                <ToggleSwitch IsOn="{x:Bind Shared.ReaderLeftToRight, Mode=TwoWay}" />
+                            </StackPanel>
+                        </controls:SettingExpander.InnerContent>
+                    </controls:SettingExpander>
 
                     <!--  History  -->
-                    <TextBlock x:Uid="History" Style="{StaticResource SettingsPageSubTitleTextBlock}" />
-                    <Button
-                        x:Uid="ClearAllHistoryButton"
-                        Click="OnHistoryClearAllClicked"
-                        IsEnabled="{x:Bind Shared.IsClearHistoryEnabled, Mode=OneWay}" />
-                    <Grid Height="10" />
-                    <TextBlock x:Uid="SaveHistory" Style="{StaticResource SettingsPageBodyTextBlock}" />
-                    <ToggleSwitch IsOn="{x:Bind Shared.HistorySaveBrowsingHistory, Mode=TwoWay}" />
+                    <controls:SettingExpander x:Uid="HistoryExpander" Glyph="&#xE81C;">
+                        <controls:SettingExpander.InnerContent>
+                            <StackPanel Orientation="Vertical">
+                                <Button
+                                    x:Uid="ClearAllHistoryButton"
+                                    Click="OnHistoryClearAllClicked"
+                                    IsEnabled="{x:Bind Shared.IsClearHistoryEnabled, Mode=OneWay}" />
+                                <Grid Height="10" />
+                                <TextBlock x:Uid="SaveHistory" Style="{StaticResource SettingsPageBodyTextBlock}" />
+                                <ToggleSwitch IsOn="{x:Bind Shared.HistorySaveBrowsingHistory, Mode=TwoWay}" />
+                            </StackPanel>
+                        </controls:SettingExpander.InnerContent>
+                    </controls:SettingExpander>
 
                     <!--  Appearance  -->
-                    <TextBlock x:Uid="Appearance" Style="{StaticResource SettingsPageSubTitleTextBlock}" />
-                    <TextBlock
-                        x:Uid="ApplyOnNextLaunch"
-                        Style="{StaticResource SettingsPageBodyTextBlock}"
-                        Visibility="{x:Bind Shared.AppearanceChanged, Mode=OneWay}" />
-                    <muxc:RadioButtons>
-                        <RadioButton x:Uid="ThemeLight" IsChecked="{x:Bind Shared.AppearanceLightChecked, Mode=TwoWay}" />
-                        <RadioButton x:Uid="ThemeDark" IsChecked="{x:Bind Shared.AppearanceDarkChecked, Mode=TwoWay}" />
-                        <RadioButton x:Uid="ThemeUseSystemSetting" IsChecked="{x:Bind Shared.AppearanceUseSystemSettingChecked, Mode=TwoWay}" />
-                    </muxc:RadioButtons>
+                    <controls:SettingExpander x:Uid="AppearanceExpander" Glyph="&#xE790;">
+                        <controls:SettingExpander.InnerContent>
+                            <StackPanel Orientation="Vertical">
+                                <TextBlock
+                                    x:Uid="ApplyOnNextLaunch"
+                                    Style="{StaticResource SettingsPageBodyTextBlock}"
+                                    Visibility="{x:Bind Shared.AppearanceChanged, Mode=OneWay}" />
+                                <muxc:RadioButtons>
+                                    <RadioButton x:Uid="ThemeLight" IsChecked="{x:Bind Shared.AppearanceLightChecked, Mode=TwoWay}" />
+                                    <RadioButton x:Uid="ThemeDark" IsChecked="{x:Bind Shared.AppearanceDarkChecked, Mode=TwoWay}" />
+                                    <RadioButton x:Uid="ThemeUseSystemSetting" IsChecked="{x:Bind Shared.AppearanceUseSystemSettingChecked, Mode=TwoWay}" />
+                                </muxc:RadioButtons>
+                            </StackPanel>
+                        </controls:SettingExpander.InnerContent>
+                    </controls:SettingExpander>
 
                     <!--  Advanced  -->
-                    <TextBlock x:Uid="Advanced" Style="{StaticResource SettingsPageSubTitleTextBlock}" />
-                    <StackPanel Orientation="Horizontal">
-                        <Button
-                            x:Uid="RescanFilesButton"
-                            Click="OnRescanFilesClicked"
-                            IsEnabled="{x:Bind Shared.IsRescanning, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}" />
-                        <ProgressRing
-                            Margin="20,0,0,0"
-                            VerticalAlignment="Center"
-                            IsActive="{x:Bind Shared.IsRescanning, Mode=OneWay}" />
-                    </StackPanel>
-                    <Grid Height="8" />
-                    <TextBlock
-                        x:Uid="RescanFilesDetail"
-                        Foreground="{ThemeResource ForegroundDeepGrey}"
-                        Style="{StaticResource SettingsPageBodyTextBlock}" />
-                    <Grid Height="10" />
-                    <TextBlock x:Uid="DebugMode" Style="{StaticResource SettingsPageBodyTextBlock}" />
-                    <ToggleSwitch IsOn="{x:Bind Shared.AdvancedDebugMode, Mode=TwoWay}" />
-
+                    <controls:SettingExpander x:Uid="AdvancedExpander" Glyph="&#xEC7A;">
+                        <controls:SettingExpander.InnerContent>
+                            <StackPanel Orientation="Vertical">
+                                <StackPanel Orientation="Horizontal">
+                                    <Button
+                                        x:Uid="RescanFilesButton"
+                                        Click="OnRescanFilesClicked"
+                                        IsEnabled="{x:Bind Shared.IsRescanning, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}" />
+                                    <ProgressRing
+                                        Margin="20,0,0,0"
+                                        VerticalAlignment="Center"
+                                        IsActive="{x:Bind Shared.IsRescanning, Mode=OneWay}" />
+                                </StackPanel>
+                                <Grid Height="8" />
+                                <TextBlock
+                                    x:Uid="RescanFilesDetail"
+                                    Foreground="{ThemeResource ForegroundDeepGrey}"
+                                    Style="{StaticResource SettingsPageBodyTextBlock}" />
+                                <Grid Height="10" />
+                                <TextBlock x:Uid="DebugMode" Style="{StaticResource SettingsPageBodyTextBlock}" />
+                                <ToggleSwitch IsOn="{x:Bind Shared.AdvancedDebugMode, Mode=TwoWay}" />
+                            </StackPanel>
+                        </controls:SettingExpander.InnerContent>
+                    </controls:SettingExpander>
                 </StackPanel>
 
                 <StackPanel Grid.Column="2" Orientation="Vertical">

@@ -272,7 +272,7 @@
         </ResourceDictionary>
     </Page.Resources>
 
-    <Grid>
+    <Grid KeyDown="OnKeyDown">
         <SplitView
             x:Name="InfoPane"
             DisplayMode="Overlay"

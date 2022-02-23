@@ -2210,6 +2210,27 @@ namespace ComicReader.Views
             SwitchReaderOrientation();
         }
 
+        // Keys
+        private void OnKeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            //bool handled = true;
+
+            //switch (e.Key)
+            //{
+            //    case Windows.System.VirtualKey.PageUp:
+            //        handled = ExitFullscreen();
+            //        break;
+            //    default:
+            //        handled = false;
+            //        break;
+            //}
+
+            //if (handled)
+            //{
+            //    e.Handled = true;
+            //}
+        }
+
         // Debug
 #if DEBUG_LOG
         private void _Log(string text)
