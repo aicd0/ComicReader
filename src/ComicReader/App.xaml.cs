@@ -24,7 +24,7 @@ namespace ComicReader
 {
     sealed partial class App : Application
     {
-        bool m_window_setup = false;
+        private bool m_window_setup = false;
 
         public App()
         {

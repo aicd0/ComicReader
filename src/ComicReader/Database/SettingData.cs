@@ -18,6 +18,7 @@ namespace ComicReader.Database
 
     public class SettingData : XmlData
     {
+        public int DatabaseVersion = -1;
         public List<string> ComicFolders = new List<string>();
         public bool LeftToRight = false;
         public bool SaveHistory = true;
@@ -41,6 +42,7 @@ namespace ComicReader.Database
 
         public override void Unpack() { }
     }
+
     class SettingDataManager
     {
         public static async RawTask AddComicFolder(StorageFolder folder, bool final)

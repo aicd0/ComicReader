@@ -47,6 +47,7 @@
               <uap:FileType>.jpeg</uap:FileType>
               <uap:FileType>.png</uap:FileType>
               <uap:FileType>.bmp</uap:FileType>
+              <uap:FileType>.zip</uap:FileType>
             </uap:SupportedFileTypes>
             <uap:EditFlags OpenIsSafe="true"/>
           </uap:FileTypeAssociation>

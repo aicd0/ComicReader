@@ -399,7 +399,7 @@ namespace ComicReader.Views
                 ComicData.Field.Title1 + "," + ComicData.Field.Title2 + " FROM " +
                 SqliteDatabaseManager.ComicTable;
 
-            await ComicDataManager.WaitLock(db); // Lock on.
+            await ComicData.Manager.WaitLock(db); // Lock on.
             SqliteDataReader query = await command.ExecuteReaderAsync();
 
             while (query.Read())
@@ -440,7 +440,7 @@ namespace ComicReader.Views
             }
 
             List<long> filter_matched = filter.Match(all);
-            ComicDataManager.ReleaseLock(db); // Lock off.
+            ComicData.Manager.ReleaseLock(db); // Lock off.
 
             // Intersect two.
             m_matches = Utils.C3<Match, long, long>.Intersect(keyword_matched, filter_matched,
@@ -493,7 +493,7 @@ namespace ComicReader.Views
                     }
 
                     Match match = m_matches[m_match_index];
-                    ComicData comic = await ComicDataManager.FromId(db, match.Id);
+                    ComicData comic = await ComicData.Manager.FromId(db, match.Id);
 
                     ComicItemViewModel item = await ComicDataToViewModel(comic);
                     Shared.SearchResults.Add(item);
@@ -559,7 +559,7 @@ namespace ComicReader.Views
                 }
 
                 ComicItemViewModel item = (ComicItemViewModel)((FrameworkElement)sender).DataContext;
-                ComicData comic = await ComicDataManager.FromId(db, item.Comic.Id);
+                ComicData comic = await ComicData.Manager.FromId(db, item.Comic.Id);
                 MainPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Reader, comic);
             });
         }
@@ -611,7 +611,7 @@ namespace ComicReader.Views
             {
                 LockContext db = new LockContext();
                 ComicItemViewModel ctx = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-                await ComicDataManager.Unhide(db, ctx.Comic);
+                await ComicData.Manager.Unhide(db, ctx.Comic);
                 await StartSearch(db);
             });
         }
@@ -622,7 +622,7 @@ namespace ComicReader.Views
             {
                 LockContext db = new LockContext();
                 ComicItemViewModel ctx = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-                await ComicDataManager.Hide(db, ctx.Comic);
+                await ComicData.Manager.Hide(db, ctx.Comic);
                 await StartSearch(db);
             });
         }
@@ -770,7 +770,7 @@ namespace ComicReader.Views
                         continue;
                     }
 
-                    await ComicDataManager.Hide(db, model.Comic);
+                    await ComicData.Manager.Hide(db, model.Comic);
                 }
 
                 await StartSearch(db);
@@ -793,7 +793,7 @@ namespace ComicReader.Views
                         continue;
                     }
 
-                    await ComicDataManager.Unhide(db, model.Comic);
+                    await ComicData.Manager.Unhide(db, model.Comic);
                 }
 
                 await StartSearch(db);

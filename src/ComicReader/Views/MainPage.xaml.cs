@@ -65,65 +65,68 @@ namespace ComicReader.Views
         {
             LockContext db = new LockContext();
 
-            string dir = args.Files[0].Path;
+            StorageFile target_file = (StorageFile)args.Files[0];
 
-            for (int p = dir.Length - 1; p >= 0; --p)
+            if (!Utils.AppInfoProvider.IsSupportedFileExtension(target_file.FileType))
             {
-                if (dir[p] == '\\')
-                {
-                    dir = dir.Substring(0, p);
-                    break;
-                }
+                return;
             }
 
-            ComicData comic = await ComicDataManager.FromDirectory(db, dir);
-
-            if (comic == null)
+            string dir = target_file.Path;
+            
+            if (Utils.AppInfoProvider.IsSupportedArchiveExtension(target_file.FileType))
             {
-                comic = new ComicData();
-                comic.IsExternal = true;
-                comic.Directory = dir;
-                List<StorageFile> all_files = new List<StorageFile>();
-                StorageFileQueryResult neighboring_file_query =
-                    args.NeighboringFilesQuery;
+                // Not implemented yet.
+            }
+            else if (Utils.AppInfoProvider.IsSupportedImageExtension(target_file.FileType))
+            {
+                dir = Utils.StringUtils.ParentPathFromPath(dir);
+                ComicData comic = await ComicData.Manager.FromLocation(db, dir);
 
-                if (neighboring_file_query != null)
+                if (comic == null)
                 {
-                    var files = await args.NeighboringFilesQuery.GetFilesAsync();
-                    all_files = files.ToList();
-                }
-                else
-                {
-                    foreach (IStorageItem item in args.Files)
+                    StorageFile info_file = null;
+                    List<StorageFile> all_files = new List<StorageFile>();
+                    List<StorageFile> img_files = new List<StorageFile>();
+                    StorageFileQueryResult neighboring_file_query =
+                        args.NeighboringFilesQuery;
+
+                    if (neighboring_file_query != null)
                     {
-                        if (item is StorageFile file)
+                        var files = await args.NeighboringFilesQuery.GetFilesAsync();
+                        all_files = files.ToList();
+                    }
+                    else
+                    {
+                        foreach (IStorageItem item in args.Files)
                         {
-                            all_files.Add(file);
+                            if (item is StorageFile file)
+                            {
+                                all_files.Add(file);
+                            }
                         }
                     }
+
+                    foreach (StorageFile file in all_files)
+                    {
+                        if (file.Name.ToLower().Equals(ComicData.Manager.ComicInfoFileName))
+                        {
+                            info_file = file;
+                        }
+                        else if (Utils.AppInfoProvider.IsSupportedImageExtension(file.FileType))
+                        {
+                            img_files.Add(file);
+                        }
+                    }
+
+                    comic = await ComicFolderData.FromExternal(dir, img_files, info_file);
                 }
 
-                foreach (StorageFile file in all_files)
+                await Utils.C0.Sync(delegate
                 {
-                    if (file.Name.ToLower().Equals(ComicDataManager.ComicInfoFileName))
-                    {
-                        comic.InfoFile = file;
-                        _ = await ComicDataManager.UpdateInfo(comic);
-                    }
-                    else if (Utils.AppInfoProvider.IsSupportedFileType(file.FileType))
-                    {
-                        comic.ImageFiles.Add(file);
-                    }
-                }
-
-                all_files.OrderBy(x => x.DisplayName,
-                    new Utils.StringUtils.FileNameComparer());
+                    LoadTab(null, Utils.Tab.PageType.Reader, comic);
+                });
             }
-
-            await Utils.C0.Sync(delegate
-            {
-                LoadTab(null, Utils.Tab.PageType.Reader, comic);
-            });
         }
 
         // New tab

@@ -314,7 +314,7 @@ namespace ComicReader.Views
 
                 if (item.Type == FavoriteNodeType.Item)
                 {
-                    ComicData comic = await ComicDataManager.FromId(db, item.Id);
+                    ComicData comic = await ComicData.Manager.FromId(db, item.Id);
 
                     if (comic == null)
                     {
@@ -441,7 +441,7 @@ namespace ComicReader.Views
                 LockContext db = new LockContext();
 
                 FavoriteItemViewModel item = (FavoriteItemViewModel)((MenuFlyoutItem)sender).DataContext;
-                ComicData comic = await ComicDataManager.FromId(db, item.Id);
+                ComicData comic = await ComicData.Manager.FromId(db, item.Id);
                 MainPage.Current.LoadTab(null, Utils.Tab.PageType.Reader, comic);
             });
         }

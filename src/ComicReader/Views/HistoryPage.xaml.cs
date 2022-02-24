@@ -132,7 +132,7 @@ namespace ComicReader.Views
 
         private async Task OpenItem(LockContext db, HistoryItemViewModel item, bool new_tab)
         {
-            ComicData comic = await ComicDataManager.FromId(db, item.Id);
+            ComicData comic = await ComicData.Manager.FromId(db, item.Id);
 
             if (comic == null)
             {

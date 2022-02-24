@@ -50,16 +50,17 @@ namespace ComicReader.Database
             // Create comic table.
             command.CommandText = "CREATE TABLE IF NOT EXISTS " + ComicTable + " (" +
                 ComicData.Field.Id + " INTEGER PRIMARY KEY AUTOINCREMENT," + // 0
-                ComicData.Field.Title1 + " TEXT," + // 1
-                ComicData.Field.Title2 + " TEXT," + // 2
-                ComicData.Field.Directory + " TEXT NOT NULL," + // 3
-                ComicData.Field.Hidden + " BOOLEAN NOT NULL," + // 4
-                ComicData.Field.Rating + " INTEGER NOT NULL," + // 5
-                ComicData.Field.Progress + " INTEGER NOT NULL," + // 6
-                ComicData.Field.LastVisit + " TIMESTAMP NOT NULL," + // 7
-                ComicData.Field.LastPosition + " REAL NOT NULL," + // 8
-                ComicData.Field.CoverFileName + " TEXT," + // 9
-                ComicData.Field.ImageAspectRatios + " BLOB)"; // 10
+                ComicData.Field.Type + " INTEGER NOT NULL," + // 1
+                ComicData.Field.Location + " TEXT NOT NULL," + // 2
+                ComicData.Field.Title1 + " TEXT," + // 3
+                ComicData.Field.Title2 + " TEXT," + // 4
+                ComicData.Field.Hidden + " BOOLEAN NOT NULL," + // 5
+                ComicData.Field.Rating + " INTEGER NOT NULL," + // 6
+                ComicData.Field.Progress + " INTEGER NOT NULL," + // 7
+                ComicData.Field.LastVisit + " TIMESTAMP NOT NULL," + // 8
+                ComicData.Field.LastPosition + " REAL NOT NULL," + // 9
+                ComicData.Field.ImageAspectRatios + " BLOB," + // 10
+                ComicData.Field.CoverFileName + " TEXT)"; // 11
             command.ExecuteNonQuery();
 
             // Create tag category table.
@@ -89,7 +90,7 @@ namespace ComicReader.Database
             return m_connection.CreateCommand();
         }
 
-        public static async Task<long> Insert(LockContext db, string table, List<SqlKey> keys)
+        public static async Task<long> Insert(string table, List<SqlKey> keys)
         {
             List<string> field_names = new List<string>();
             List<string> field_vals = new List<string>();
@@ -122,7 +123,6 @@ namespace ComicReader.Database
                 string.Join(',', field_vals) + ");" +
                 "SELECT LAST_INSERT_ROWID();";
 
-            await ComicDataManager.WaitLock(db); // Lock on.
             long rowid = (long)command.ExecuteScalar();
             command.Dispose();
 
@@ -138,12 +138,11 @@ namespace ComicReader.Database
                     await input_stream.CopyToAsync(write_stream);
                 }
             }
-            ComicDataManager.ReleaseLock(db); // Lock off.
 
             return rowid;
         }
 
-        public static async Task<bool> Update(LockContext db, string table, SqlKey primary_key, List<SqlKey> keys)
+        public static async Task<bool> Update(string table, SqlKey primary_key, List<SqlKey> keys)
         {
             if (keys.Count == 0)
             {
@@ -181,7 +180,6 @@ namespace ComicReader.Database
                 string.Join(',', fields) + condition;
 
             // Execute the command.
-            await ComicDataManager.WaitLock(db); // Lock on.
             try
             {
                 int rows_updated = command.ExecuteNonQuery();
@@ -215,7 +213,6 @@ namespace ComicReader.Database
             finally
             {
                 command.Dispose();
-                ComicDataManager.ReleaseLock(db); // Lock off.
             }
         }
     }

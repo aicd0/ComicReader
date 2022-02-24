@@ -47,12 +47,12 @@ namespace ComicReader.Views
                 text += "Title2: " + Title2TextBox.Text + "\n";
                 text += TagTextBox.Text;
 
-                ComicDataManager.ParseInfo(text, m_comic);
+                m_comic.ParseInfo(text);
                 await m_comic.SaveBasic(db);
                 await m_comic.SaveTags(db);
 
                 Utils.TaskQueueManager.AppendTask(
-                    ComicDataManager.SaveInfoFileSealed(m_comic), "Saving...");
+                    m_comic.SaveInfoFileSealed(), "Saving...");
             });
         }
 
@@ -65,7 +65,7 @@ namespace ComicReader.Views
         {
             Title1TextBox.Text = m_comic.Title1;
             Title2TextBox.Text = m_comic.Title2;
-            TagTextBox.Text = ComicDataManager.TagString(m_comic);
+            TagTextBox.Text = m_comic.TagString();
         }
 
         private void OnShowTagInfoButtonClicked(object sender, RoutedEventArgs e)

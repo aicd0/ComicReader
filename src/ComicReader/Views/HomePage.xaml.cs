@@ -120,12 +120,12 @@ namespace ComicReader.Views
         {
             Shared.NavigationPageShared = (NavigationPageShared)shared;
 
-            ComicDataManager.OnUpdated += OnComicDataUpdated;
+            ComicData.Manager.OnUpdated += OnComicDataUpdated;
         }
 
         private void OnTabUnregister()
         {
-            ComicDataManager.OnUpdated -= OnComicDataUpdated;
+            ComicData.Manager.OnUpdated -= OnComicDataUpdated;
         }
 
         private void OnTabUpdate()
@@ -248,7 +248,7 @@ namespace ComicReader.Views
                 command.CommandText = "SELECT " + ComicData.Field.Id + "," + ComicData.Field.LastVisit +
                     " FROM " + SqliteDatabaseManager.ComicTable;
 
-                await ComicDataManager.WaitLock(db); // Lock on.
+                await ComicData.Manager.WaitLock(db); // Lock on.
                 SqliteDataReader query = await command.ExecuteReaderAsync();
                 var records = new List<_Record>();
 
@@ -269,7 +269,7 @@ namespace ComicReader.Views
 
                 for (int i = 0; comic_items.Count < 16 && i < records.Count; ++i)
                 {
-                    ComicData comic = await ComicDataManager.FromId(db, records[i].Id);
+                    ComicData comic = await ComicData.Manager.FromId(db, records[i].Id);
                     
                     if (comic == null)
                     {
@@ -286,7 +286,7 @@ namespace ComicReader.Views
 
                     comic_items.Add(model);
                 }
-                ComicDataManager.ReleaseLock(db); // Lock off.
+                ComicData.Manager.ReleaseLock(db); // Lock off.
 
                 // Save results.
                 Utils.C1<ComicItemViewModel>.UpdateCollection(ComicItemSource, comic_items,
@@ -423,7 +423,7 @@ namespace ComicReader.Views
             {
                 LockContext db = new LockContext();
                 ComicItemViewModel item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-                await ComicDataManager.Hide(db, item.Comic);
+                await ComicData.Manager.Hide(db, item.Comic);
                 await UpdateLibrary(db);
             });
         }
@@ -439,7 +439,7 @@ namespace ComicReader.Views
 
                 await UpdateFolders();
                 Utils.TaskQueueManager.AppendTask(
-                    ComicDataManager.UpdateSealed(lazy_load: true), "");
+                    ComicData.Manager.UpdateSealed(lazy_load: true), "");
             });
         }
 
@@ -464,7 +464,7 @@ namespace ComicReader.Views
                 FolderItemViewModel item = (FolderItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 await SettingDataManager.RemoveComicFolder(item.Path, final: true);
                 await UpdateFolders();
-                Utils.TaskQueueManager.NewTask(ComicDataManager.UpdateSealed(lazy_load: true));
+                Utils.TaskQueueManager.NewTask(ComicData.Manager.UpdateSealed(lazy_load: true));
             });
         }
 
@@ -475,7 +475,7 @@ namespace ComicReader.Views
 
         private void OnRefreshBtClicked(object sender, RoutedEventArgs e)
         {
-            Utils.TaskQueueManager.NewTask(ComicDataManager.UpdateSealed(lazy_load: true));
+            Utils.TaskQueueManager.NewTask(ComicData.Manager.UpdateSealed(lazy_load: true));
         }
     }
 }

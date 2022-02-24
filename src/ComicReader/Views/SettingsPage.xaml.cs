@@ -232,12 +232,12 @@ namespace ComicReader.Views
         {
             Shared.MainPageShared = (MainPageShared)shared;
 
-            ComicDataManager.OnUpdated += OnComicDataUpdated;
+            ComicData.Manager.OnUpdated += OnComicDataUpdated;
         }
 
         private void OnTabUnregister()
         {
-            ComicDataManager.OnUpdated -= OnComicDataUpdated;
+            ComicData.Manager.OnUpdated -= OnComicDataUpdated;
         }
 
         private void OnTabUpdate()
@@ -337,9 +337,9 @@ namespace ComicReader.Views
             SqliteCommand command = SqliteDatabaseManager.NewCommand();
             command.CommandText = "SELECT COUNT(*) FROM " + SqliteDatabaseManager.ComicTable;
 
-            await ComicDataManager.WaitLock(db);
+            await ComicData.Manager.WaitLock(db);
             long comic_count = (long)command.ExecuteScalar();
-            ComicDataManager.ReleaseLock(db);
+            ComicData.Manager.ReleaseLock(db);
 
             string total_comic_string = Utils.C0.TryGetResourceString("TotalComics");
             StatisticsTextBlock.Text = total_comic_string +
@@ -348,7 +348,7 @@ namespace ComicReader.Views
 
         private void UpdateRescanStatus()
         {
-            Shared.IsRescanning = ComicDataManager.IsRescanning;
+            Shared.IsRescanning = ComicData.Manager.IsRescanning;
         }
 
         private async Task Save()
@@ -427,7 +427,7 @@ namespace ComicReader.Views
         private void OnRescanFilesClicked(object sender, RoutedEventArgs e)
         {
             Shared.IsRescanning = true;
-            Utils.TaskQueueManager.NewTask(ComicDataManager.UpdateSealed(lazy_load: false));
+            Utils.TaskQueueManager.NewTask(ComicData.Manager.UpdateSealed(lazy_load: false));
         }
     }
 }

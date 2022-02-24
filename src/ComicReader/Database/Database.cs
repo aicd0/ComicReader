@@ -28,10 +28,28 @@ namespace ComicReader.Database
 
             await SqliteDatabaseManager.Init();
             await XmlDatabaseManager.Load();
+            await Update();
+            Utils.TaskQueueManager.AppendTask(ComicData.Manager.UpdateSealed(lazy_load: true));
+            return new TaskResult();
+        }
 
-            Utils.TaskQueueManager.AppendTask(
-                ComicDataManager.UpdateSealed(lazy_load: true));
+        public static async RawTask Update()
+        {
+            int old_version = XmlDatabase.Settings.DatabaseVersion;
 
+            switch (old_version)
+            {
+                case -1:
+
+                case 1:
+                    break;
+                default:
+                    System.Diagnostics.Debug.Assert(false);
+                    return new TaskResult(TaskException.Failure);
+            }
+
+            XmlDatabase.Settings.DatabaseVersion = 1;
+            Utils.TaskQueueManager.AppendTask(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
             return new TaskResult();
         }
     }

@@ -57,7 +57,7 @@ namespace ComicReader.Views
         public bool IsHorizontal => !IsVertical;
         public bool IsOnePage { get; private set; }
         public bool IsTwoPages => !IsOnePage;
-        public int Pages => Comic.ImageFiles.Count;
+        public int Pages => Comic.ImageCount;
 
         private double m_page = 0.0;
         public int Page => (int)m_page;
@@ -1376,7 +1376,7 @@ namespace ComicReader.Views
         public static string PageUniqueString(object args)
         {
             ComicData comic = (ComicData)args;
-            return "Reader/" + comic.Directory;
+            return "Reader/" + comic.Location;
         }
 
         // Utilities
@@ -1403,7 +1403,7 @@ namespace ComicReader.Views
 
             if (m_comic != null)
             {
-                image_count = m_comic.ImageFiles.Count.ToString();
+                image_count = m_comic.ImageCount.ToString();
             }
 
             PageIndicator.Text = control.Page.ToString() + " / " + image_count;
@@ -1413,11 +1413,11 @@ namespace ComicReader.Views
         {
             int progress;
 
-            if (m_comic.ImageFiles.Count == 0)
+            if (m_comic.ImageCount == 0)
             {
                 progress = 0;
             }
-            else if (control.Page == m_comic.ImageFiles.Count)
+            else if (control.Page == m_comic.ImageCount)
             {
                 progress = 100;
             }
@@ -1432,9 +1432,7 @@ namespace ComicReader.Views
             }
 
             Shared.Progress = progress.ToString() + "%";
-            m_comic.Progress = progress;
-            m_comic.LastPosition = control.PageReal;
-            await m_comic.SaveBasic(db);
+            await m_comic.SaveProgress(db, progress, control.PageReal);
         }
 
         // Loading
@@ -1476,12 +1474,11 @@ namespace ComicReader.Views
                 // Add to history
                 await HistoryDataManager.Add(m_comic.Id, m_comic.Title1, true);
 
-                // Update "last visit".
-                m_comic.LastVisit = DateTimeOffset.Now;
-                await m_comic.SaveBasic(db);
+                // Update visit time.
+                await m_comic.SaveLastVisit(db, DateTimeOffset.Now);
 
                 // Update image files.
-                await ComicDataManager.UpdateImages(db, m_comic);
+                await m_comic.UpdateImages(db);
 
                 // Set initial page.
                 reader.InitialPage = m_comic.LastPosition;
@@ -1529,7 +1526,7 @@ namespace ComicReader.Views
             save_timer.Start();
             ComicData comic = m_comic; // Stores locally.
 
-            for (int i = 0; i < comic.ImageFiles.Count; ++i)
+            for (int i = 0; i < comic.ImageCount; ++i)
             {
                 int index = i; // Stores locally.
                 int page = i + 1; // Stores locally.
@@ -1561,7 +1558,7 @@ namespace ComicReader.Views
                         }
 
                         // Save for each 5 sec.
-                        if (save_timer.LapSpan().TotalSeconds > 5.0 || index == comic.ImageFiles.Count - 1)
+                        if (save_timer.LapSpan().TotalSeconds > 5.0 || index == comic.ImageCount - 1)
                         {
                             await comic.SaveImageAspectRatios(db);
                             save_timer.Lap();
@@ -1604,8 +1601,8 @@ namespace ComicReader.Views
                 Shared.ComicTitle2 = m_comic.Title2;
             }
 
-            Shared.ComicDir = m_comic.Directory;
-            Shared.IsEditable = !(m_comic.IsExternal && m_comic.InfoFile == null);
+            Shared.ComicDir = m_comic.Location;
+            Shared.IsEditable = m_comic.IsEditable;
             Shared.Progress = "";
 
             LoadComicTag();
@@ -2084,8 +2081,7 @@ namespace ComicReader.Views
             Utils.C0.Run(async delegate
             {
                 LockContext db = new LockContext();
-                m_comic.Rating = (int)sender.Value;
-                await m_comic.SaveBasic(db);
+                await m_comic.SaveRating(db, (int)sender.Value);
             });
         }
 

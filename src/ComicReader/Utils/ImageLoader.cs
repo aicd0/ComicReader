@@ -104,10 +104,9 @@ namespace ComicReader.Utils
                 // Lazy load.
                 ComicData comic = token.Comic;
 
-                if (comic.ImageFiles.Count <= token.Index)
+                if (comic.ImageCount <= token.Index)
                 {
-                    TaskResult r = await ComicDataManager.UpdateImages(
-                        db, comic, cover: token.Index == 0);
+                    TaskResult r = await comic.UpdateImages(db, cover: token.Index == 0);
 
                     // Skip tokens whose comic folder cannot be reached.
                     if (!r.Successful)
@@ -124,7 +123,7 @@ namespace ComicReader.Utils
                         continue;
                     }
 
-                    if (comic.ImageFiles.Count <= token.Index)
+                    if (comic.ImageCount <= token.Index)
                     {
 #if DEBUG_LOG_EVERYTHING
                         _Log("Index " + token.Index.ToString() + " skipped because image files not enough");
@@ -134,17 +133,12 @@ namespace ComicReader.Utils
                     }
                 }
 
-                StorageFile image_file = comic.ImageFiles[token.Index];
-                IRandomAccessStream stream;
+                IRandomAccessStream stream = await comic.GetImageStream(token.Index);
 
-                try
-                {
-                    stream = await image_file.OpenAsync(FileAccessMode.Read);
-                }
-                catch (FileNotFoundException)
+                if (stream == null)
                 {
 #if DEBUG_LOG_EVERYTHING
-                    _Log("Index " + token.Index.ToString() + " skipped because file not found");
+                    _Log("Failed to get img stream " + token.Index.ToString() + ", skipped");
 #endif
                     trig_update = true;
                     continue;
@@ -215,10 +209,10 @@ namespace ComicReader.Utils
 
             // Not all the images are successfully loaded, most likely that some of the
             // files or directories has been renamed, moved or deleted. We trigger a
-            // ComicDataManager._Update() here to sync the changes.
+            // ComicData.Manager._Update() here to sync the changes.
             if (trig_update)
             {
-                Utils.TaskQueueManager.NewTask(ComicDataManager.UpdateSealed(lazy_load: true));
+                Utils.TaskQueueManager.NewTask(ComicData.Manager.UpdateSealed(lazy_load: true));
             }
         }
     }
