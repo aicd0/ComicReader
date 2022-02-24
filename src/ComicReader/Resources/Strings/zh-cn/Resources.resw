@@ -551,4 +551,28 @@
   <data name="ReaderExpander.Detail" xml:space="preserve">
     <value>设置阅读方向</value>
   </data>
+  <data name="HotkeyPreviousPage.Header" xml:space="preserve">
+    <value>跳转到上一页</value>
+  </data>
+  <data name="HotkeyNextPage.Header" xml:space="preserve">
+    <value>跳转到下一页</value>
+  </data>
+  <data name="KeyboardShortcutsExpander.Detail" xml:space="preserve">
+    <value>查看所有热键</value>
+  </data>
+  <data name="KeyboardShortcutsExpander.Header" xml:space="preserve">
+    <value>热键</value>
+  </data>
+  <data name="HotkeyEnterFullscreen.Header" xml:space="preserve">
+    <value>进入全屏模式</value>
+  </data>
+  <data name="HotkeyExitFullscreen.Header" xml:space="preserve">
+    <value>退出全屏模式</value>
+  </data>
+  <data name="HotkeyFirstPage.Header" xml:space="preserve">
+    <value>跳转到第一页</value>
+  </data>
+  <data name="HotkeyLastPage.Header" xml:space="preserve">
+    <value>跳转到最后一页</value>
+  </data>
 </root>

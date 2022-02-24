@@ -12,6 +12,7 @@
                 <ResourceDictionary>
                     <ResourceDictionary.ThemeDictionaries>
                         <ResourceDictionary x:Key="Default">
+                            <SolidColorBrush x:Key="ComicInfoSeparatorForeground" Color="#404040" />
                             <SolidColorBrush x:Key="ComicItemBackground" Color="#3A3A3A" />
                             <SolidColorBrush x:Key="ComicItemBackgroundPointerOver" Color="#3D3D3D" />
                             <SolidColorBrush x:Key="ComicItemBorderBrush" Color="#3A3A3A" />
@@ -21,8 +22,13 @@
                             <SolidColorBrush x:Key="FolderTileCoverBackground" Color="#363636" />
                             <SolidColorBrush x:Key="NavigationPageBackground" Color="#282828" />
                             <SolidColorBrush x:Key="NavigationPageTopTileBorderBrush" Color="#000000" />
-                            <SolidColorBrush x:Key="ReaderBottomTileBackground" Color="#303030" />
-                            <SolidColorBrush x:Key="ReaderBottomTileBorderBrush" Color="#303030" />
+                            <muxm:AcrylicBrush
+                                x:Key="ReaderBottomTileBackground"
+                                BackgroundSource="Backdrop"
+                                TintColor="MidnightBlue"
+                                TintLuminosityOpacity="0.6"
+                                TintOpacity="0.0" />
+                            <SolidColorBrush x:Key="ReaderBottomTileButtonFillForeground" Color="{ThemeResource SystemAccentColorLight2}" />
                             <muxm:AcrylicBrush
                                 x:Key="SidePaneBackground"
                                 BackgroundSource="Backdrop"
@@ -38,6 +44,7 @@
                             <SolidColorBrush x:Key="CommandBarBorderBrush" Color="#1C1C1C" />
                         </ResourceDictionary>
                         <ResourceDictionary x:Key="Light">
+                            <SolidColorBrush x:Key="ComicInfoSeparatorForeground" Color="#D0D0D0" />
                             <SolidColorBrush x:Key="ComicItemBackground" Color="#FDFDFD" />
                             <SolidColorBrush x:Key="ComicItemBackgroundPointerOver" Color="#F0F0F0" />
                             <SolidColorBrush x:Key="ComicItemBorderBrush" Color="#FDE8ED" />
@@ -47,8 +54,13 @@
                             <SolidColorBrush x:Key="FolderTileCoverBackground" Color="#FFFFFF" />
                             <SolidColorBrush x:Key="NavigationPageBackground" Color="#FAF8FC" />
                             <SolidColorBrush x:Key="NavigationPageTopTileBorderBrush" Color="#E6E3EA" />
-                            <SolidColorBrush x:Key="ReaderBottomTileBackground" Color="#FFFFFF" />
-                            <SolidColorBrush x:Key="ReaderBottomTileBorderBrush" Color="#CACACA" />
+                            <muxm:AcrylicBrush
+                                x:Key="ReaderBottomTileBackground"
+                                BackgroundSource="Backdrop"
+                                TintColor="#FFFFFF"
+                                TintLuminosityOpacity="0.6"
+                                TintOpacity="0.0" />
+                            <SolidColorBrush x:Key="ReaderBottomTileButtonFillForeground" Color="{ThemeResource SystemAccentColorDark1}" />
                             <muxm:AcrylicBrush
                                 x:Key="SidePaneBackground"
                                 BackgroundSource="Backdrop"
@@ -64,6 +76,7 @@
                             <SolidColorBrush x:Key="CommandBarBorderBrush" Color="#EBEBEB" />
                         </ResourceDictionary>
                         <ResourceDictionary x:Key="HighContrast">
+                            <SolidColorBrush x:Key="ComicInfoSeparatorForeground" Color="#505050" />
                             <SolidColorBrush x:Key="ComicItemBackground" Color="#FDFDFD" />
                             <SolidColorBrush x:Key="ComicItemBackgroundPointerOver" Color="#F0F0F0" />
                             <SolidColorBrush x:Key="ComicItemBorderBrush" Color="#FDE8ED" />
@@ -74,13 +87,8 @@
                             <SolidColorBrush x:Key="NavigationPageBackground" Color="#FAF8FC" />
                             <SolidColorBrush x:Key="NavigationPageTopTileBorderBrush" Color="#E6E3EA" />
                             <SolidColorBrush x:Key="ReaderBottomTileBackground" Color="#FFFFFF" />
-                            <SolidColorBrush x:Key="ReaderBottomTileBorderBrush" Color="#CACACA" />
-                            <muxm:AcrylicBrush
-                                x:Key="SidePaneBackground"
-                                BackgroundSource="Backdrop"
-                                TintColor="#FFFFFF"
-                                TintLuminosityOpacity="0.85"
-                                TintOpacity="0.0" />
+                            <SolidColorBrush x:Key="ReaderBottomTileButtonFillForeground" Color="{ThemeResource SystemAccentColorDark2}" />
+                            <SolidColorBrush x:Key="SidePaneBackground" Color="#FFFFFF" />
                             <SolidColorBrush x:Key="SidePaneBorderBrush" Color="#E6E3EA" />
                             <SolidColorBrush x:Key="TabViewItemHeaderBackgroundSelected" Color="#FAF8FC" />
                             <SolidColorBrush x:Key="TagButtonBackground" Color="#DADADA" />

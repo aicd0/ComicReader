@@ -12,7 +12,7 @@
     <muxc:Expander
         HorizontalAlignment="Stretch"
         VerticalAlignment="Top"
-        HorizontalContentAlignment="Left"
+        HorizontalContentAlignment="Stretch"
         Content="{x:Bind InnerContent}"
         ExpandDirection="Down"
         IsExpanded="{x:Bind IsExpanded}">

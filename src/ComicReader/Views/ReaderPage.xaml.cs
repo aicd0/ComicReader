@@ -1,7 +1,7 @@
 ﻿#if DEBUG
 //#define DEBUG_LOG_LOAD
-//#define DEBUG_LOG_JUMP
-//#define DEBUG_LOG_VIEW_CHANGE
+#define DEBUG_LOG_JUMP
+#define DEBUG_LOG_VIEW_CHANGE
 //#define DEBUG_LOG_UPDATE_PAGE
 //#define DEBUG_LOG_MANIPULATION
 #endif
@@ -549,7 +549,8 @@ namespace ComicReader.Views
                 return;
             }
 
-            SetScrollViewer(null, new_page, use_page_center: true, disable_animation);
+            float? zoom = Zoom > 101f ? 100f : (float?)null;
+            SetScrollViewer(zoom, new_page, use_page_center: true, disable_animation);
             m_page = new_page_int;
         }
 
@@ -681,55 +682,69 @@ namespace ComicReader.Views
             return true;
         }
 
-        private bool _AdjustParallelOffset()
+        private void _AdjustParallelOffset()
         {
             if (DataSource.Count == 0)
             {
-                return false;
+                return;
             }
 
 #if DEBUG_LOG_JUMP
             _Log("Adjusting offset");
 #endif
 
-            if (DataSource[0].Container == null)
-            {
-                return false;
-            }
-
-            double space = PaddingStartFinal * ZoomFactorFinal - ParallelOffsetFinal;
+            double? movement_forward = null;
+            double? movement_backward = null;
             double screen_center_offset = ViewportParallelLength * 0.5 + ParallelOffsetFinal;
-            double image_center_offset = (PaddingStartFinal + FrameParallelLength(0) * 0.5) * ZoomFactorFinal;
-            double image_center_to_screen_center = image_center_offset - screen_center_offset;
-            double movement_forward = Math.Min(space, image_center_to_screen_center);
 
-            if (movement_forward > 0)
+            if (DataSource[0].Container != null)
             {
-                double parallel_offset = ParallelOffsetFinal + movement_forward;
-                return _ChangeView(null, HorizontalVal(parallel_offset, null),
+                double space = PaddingStartFinal * ZoomFactorFinal - ParallelOffsetFinal;
+                double image_center_offset = (PaddingStartFinal + FrameParallelLength(0) * 0.5) * ZoomFactorFinal;
+                double image_center_to_screen_center = image_center_offset - screen_center_offset;
+                movement_forward = Math.Min(space, image_center_to_screen_center);
+            }
+
+            if (DataSource[DataSource.Count - 1].Container != null)
+            {
+                double space = PaddingEndFinal * ZoomFactorFinal - (ExtentParallelLengthFinal
+                    - ParallelOffsetFinal - ViewportParallelLength);
+                double image_center_offset = ExtentParallelLengthFinal - (PaddingEndFinal
+                    + FrameParallelLength(DataSource.Count - 1) * 0.5) * ZoomFactorFinal;
+                double image_center_to_screen_center = screen_center_offset - image_center_offset;
+                movement_backward = Math.Min(space, image_center_to_screen_center);
+            }
+
+            if (movement_forward.HasValue && movement_backward.HasValue)
+            {
+                if (movement_forward.Value >= 0 && movement_backward.Value >= 0)
+                {
+                    return;
+                }
+
+                if (movement_forward.Value <= 0 && movement_backward.Value <= 0)
+                {
+                    return;
+                }
+
+                if (movement_forward.Value + movement_backward.Value >= 0)
+                {
+                    return;
+                }
+            }
+
+            if (movement_forward.HasValue && movement_forward.Value > 0)
+            {
+                double parallel_offset = ParallelOffsetFinal + movement_forward.Value;
+                _ChangeView(null, HorizontalVal(parallel_offset, null),
                     VerticalVal(parallel_offset, null), false);
             }
-
-            if (DataSource[DataSource.Count - 1].Container == null)
+            else if (movement_backward.HasValue && movement_backward.Value > 0)
             {
-                return false;
-            }
-
-            space = PaddingEndFinal * ZoomFactorFinal - (ExtentParallelLengthFinal
-                - ParallelOffsetFinal - ViewportParallelLength);
-            image_center_offset = ExtentParallelLengthFinal - (PaddingEndFinal
-                + FrameParallelLength(DataSource.Count - 1) * 0.5) * ZoomFactorFinal;
-            image_center_to_screen_center = screen_center_offset - image_center_offset;
-            double movement_backward = Math.Min(space, image_center_to_screen_center);
-
-            if (movement_backward > 0)
-            {
-                double parallel_offset = ParallelOffsetFinal - movement_backward;
-                return _ChangeView(null, HorizontalVal(parallel_offset, null),
+                double parallel_offset = ParallelOffsetFinal - movement_backward.Value;
+                _ChangeView(null, HorizontalVal(parallel_offset, null),
                     VerticalVal(parallel_offset, null), false);
             }
-
-            return false;
         }
 
         private bool _ChangeView(float? zoom_factor, double? horizontal_offset, double? vertical_offset, bool disable_animation)
@@ -1250,10 +1265,10 @@ namespace ComicReader.Views
         private GestureRecognizer m_gesture_recognizer;
 
         // Bottom Tile
-        private bool m_bottom_tile_showed;
-        private bool m_bottom_tile_hold;
-        private bool m_bottom_tile_pointer_in;
-        private int m_bottom_tile_exit_requests;
+        private bool m_bottom_tile_showed = false;
+        private bool m_bottom_tile_hold = false;
+        private bool m_bottom_tile_pointer_in = false;
+        private DateTimeOffset m_bottom_tile_hide_request_time = DateTimeOffset.Now;
 
         // Locks
         private Utils.CancellationLock m_load_image_lock = new Utils.CancellationLock();
@@ -1291,11 +1306,6 @@ namespace ComicReader.Views
             m_gesture_recognizer.ManipulationStarted += OnManipulationStarted;
             m_gesture_recognizer.ManipulationUpdated += OnManipulationUpdated;
             m_gesture_recognizer.ManipulationCompleted += OnManipulationCompleted;
-
-            m_bottom_tile_showed = false;
-            m_bottom_tile_hold = false;
-            m_bottom_tile_pointer_in = true;
-            m_bottom_tile_exit_requests = 0;
             
             InitializeComponent();
         }
@@ -1317,8 +1327,8 @@ namespace ComicReader.Views
         {
             Shared.NavigationPageShared = (NavigationPageShared)shared;
 
+            Shared.NavigationPageShared.OnKeyDown += OnKeyDown;
             Shared.NavigationPageShared.OnSwitchFavorites += OnSwitchFavorites;
-            Shared.NavigationPageShared.MainPageShared.OnExitFullscreenMode += BottomGridForceHide;
             Shared.NavigationPageShared.OnZoomIn += ZoomIn;
             Shared.NavigationPageShared.OnZoomOut += ZoomOut;
             Shared.NavigationPageShared.OnSwitchReaderOrientation += SwitchReaderOrientation;
@@ -1331,8 +1341,8 @@ namespace ComicReader.Views
 
         private void OnTabUnregister()
         {
+            Shared.NavigationPageShared.OnKeyDown -= OnKeyDown;
             Shared.NavigationPageShared.OnSwitchFavorites -= OnSwitchFavorites;
-            Shared.NavigationPageShared.MainPageShared.OnExitFullscreenMode -= BottomGridForceHide;
             Shared.NavigationPageShared.OnZoomIn -= ZoomIn;
             Shared.NavigationPageShared.OnZoomOut -= ZoomOut;
             Shared.NavigationPageShared.OnSwitchReaderOrientation -= SwitchReaderOrientation;
@@ -1396,7 +1406,7 @@ namespace ComicReader.Views
                 image_count = m_comic.ImageFiles.Count.ToString();
             }
 
-            PageIndicator.Text = control.Page.ToString() + " of " + image_count;
+            PageIndicator.Text = control.Page.ToString() + " / " + image_count;
         }
 
         private async Task UpdateProgress(LockContext db, ReaderModel control)
@@ -1449,6 +1459,9 @@ namespace ComicReader.Views
             {
                 Shared.IsLoading = false;
                 Shared.UpdateReaderUI();
+                UpdatePage(reader);
+                BottomTileShow();
+                BottomTileHide(5000);
             };
 
             m_comic = comic;
@@ -2102,21 +2115,34 @@ namespace ComicReader.Views
         }
 
         // Fullscreen
-        private void OnFullscreenBtClicked(object sender, RoutedEventArgs e)
+        private void EnterFullscreen()
         {
             MainPage.Current.EnterFullscreen();
+            BottomTileShow();
+            BottomTileHide(5000);
+        }
+
+        private void ExitFullscreen()
+        {
+            MainPage.Current.ExitFullscreen();
+            BottomTileShow();
+            BottomTileHide(5000);
+        }
+
+        private void OnFullscreenBtClicked(object sender, RoutedEventArgs e)
+        {
+            EnterFullscreen();
         }
 
         private void OnBackToWindowBtClicked(object sender, RoutedEventArgs e)
         {
-            MainPage.Current.ExitFullscreen();
-            Shared.BottomTilePinned = false;
+            ExitFullscreen();
         }
 
         // Bottom Tile
         private void BottomTileShow()
         {
-            if (m_bottom_tile_showed || !Shared.NavigationPageShared.MainPageShared.IsFullscreen)
+            if (m_bottom_tile_showed)
             {
                 return;
             }
@@ -2126,8 +2152,29 @@ namespace ComicReader.Views
             m_bottom_tile_showed = true;
         }
 
-        private void BottomTileHide()
+        private void BottomTileHide(int timeout)
         {
+            m_bottom_tile_hide_request_time = DateTimeOffset.Now;
+
+            if (timeout > 0)
+            {
+                _ = Task.Run(() =>
+                {
+                    Task.Delay(timeout + 1).Wait();
+
+                    if ((DateTimeOffset.Now - m_bottom_tile_hide_request_time).TotalMilliseconds < timeout)
+                    {
+                        return;
+                    }
+
+                    _ = Utils.C0.Sync(delegate
+                    {
+                        BottomTileHide(0);
+                    });
+                });
+                return;
+            }
+
             if (!m_bottom_tile_showed || Shared.BottomTilePinned
                 || m_bottom_tile_hold || m_bottom_tile_pointer_in)
             {
@@ -2155,7 +2202,7 @@ namespace ComicReader.Views
             }
             else
             {
-                BottomTileHide();
+                BottomTileHide(0);
             }
         }
 
@@ -2167,6 +2214,11 @@ namespace ComicReader.Views
             }
         }
 
+        private void OnPinButtonClick(object sender, RoutedEventArgs e)
+        {
+            Shared.BottomTilePinned = !Shared.BottomTilePinned;
+        }
+
         private void OnBottomTilePointerEntered(object sender, PointerRoutedEventArgs e)
         {
             m_bottom_tile_pointer_in = true;
@@ -2175,29 +2227,14 @@ namespace ComicReader.Views
 
         private void OnBottomTilePointerExited(object sender, PointerRoutedEventArgs e)
         {
+            m_bottom_tile_pointer_in = false;
+
             if (!m_bottom_tile_showed || m_bottom_tile_hold)
             {
                 return;
             }
 
-            m_bottom_tile_pointer_in = false;
-
-            _ = Task.Run(() =>
-            {
-                _ = Interlocked.Increment(ref m_bottom_tile_exit_requests);
-                Task.Delay(1000).Wait();
-                int r = Interlocked.Decrement(ref m_bottom_tile_exit_requests);
-
-                if (!m_bottom_tile_showed || m_bottom_tile_pointer_in || r != 0)
-                {
-                    return;
-                }
-
-                _ = Utils.C0.Sync(delegate
-                {
-                    BottomTileHide();
-                });
-            });
+            BottomTileHide(3000);
         }
 
         private void OnReaderTapped(object sender, TappedRoutedEventArgs e)
@@ -2213,22 +2250,91 @@ namespace ComicReader.Views
         // Keys
         private void OnKeyDown(object sender, KeyRoutedEventArgs e)
         {
-            //bool handled = true;
+            ReaderModel reader = GetCurrentReader();
 
-            //switch (e.Key)
-            //{
-            //    case Windows.System.VirtualKey.PageUp:
-            //        handled = ExitFullscreen();
-            //        break;
-            //    default:
-            //        handled = false;
-            //        break;
-            //}
+            if (reader == null)
+            {
+                return;
+            }
 
-            //if (handled)
-            //{
-            //    e.Handled = true;
-            //}
+            Utils.C0.Run(async delegate
+            {
+
+                bool handled = true;
+
+                switch (e.Key)
+                {
+                    case Windows.System.VirtualKey.Right:
+                        if (reader.IsHorizontal && !XmlDatabase.Settings.LeftToRight)
+                        {
+                            await reader.IncreasePage(-1, false);
+                        }
+                        else
+                        {
+                            await reader.IncreasePage(1, false);
+                        }
+                        break;
+
+                    case Windows.System.VirtualKey.Left:
+                        if (reader.IsHorizontal && !XmlDatabase.Settings.LeftToRight)
+                        {
+                            await reader.IncreasePage(1, false);
+                        }
+                        else
+                        {
+                            await reader.IncreasePage(-1, false);
+                        }
+                        break;
+
+                    case Windows.System.VirtualKey.Up:
+                        await reader.IncreasePage(-1, false);
+                        break;
+
+                    case Windows.System.VirtualKey.Down:
+                        await reader.IncreasePage(1, false);
+                        break;
+
+                    case Windows.System.VirtualKey.PageUp:
+                        await reader.IncreasePage(-1, false);
+                        break;
+
+                    case Windows.System.VirtualKey.PageDown:
+                        await reader.IncreasePage(1, false);
+                        break;
+
+                    case Windows.System.VirtualKey.Home:
+                        reader.SetScrollViewer(null, 1, use_page_center: true, true);
+                        break;
+
+                    case Windows.System.VirtualKey.End:
+                        reader.SetScrollViewer(null, reader.Pages, use_page_center: true, true);
+                        break;
+
+                    case Windows.System.VirtualKey.Space:
+                        await reader.IncreasePage(1, false);
+                        break;
+
+                    case Windows.System.VirtualKey.F:
+                        if (Shared.NavigationPageShared.MainPageShared.IsFullscreen)
+                        {
+                            ExitFullscreen();
+                        }
+                        else
+                        {
+                            EnterFullscreen();
+                        }
+                        break;
+
+                    default:
+                        handled = false;
+                        break;
+                }
+
+                if (handled)
+                {
+                    e.Handled = true;
+                }
+            });
         }
 
         // Debug

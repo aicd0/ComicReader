@@ -266,17 +266,11 @@ namespace ComicReader.Database
                     return;
                 }
 
-                if (keys.Count == 0)
+                if (keys.Count > 0)
                 {
-                    return;
-                }
-
-                SqlKey id = new SqlKey(Field.Id, Id);
-                bool r = await SqliteDatabaseManager.Update(db, SqliteDatabaseManager.ComicTable, id, keys);
-
-                if (!r)
-                {
-                    return;
+                    SqlKey id = new SqlKey(Field.Id, Id);
+                    bool r = await SqliteDatabaseManager.Update(db, SqliteDatabaseManager.ComicTable, id, keys);
+                    System.Diagnostics.Debug.Assert(r);
                 }
 
                 if (save_tags)

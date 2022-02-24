@@ -2,6 +2,7 @@
 using System.ComponentModel;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Navigation;
 
 namespace ComicReader.Views
@@ -70,6 +71,8 @@ namespace ComicReader.Views
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsSidePaneOpen"));
             }
         }
+
+        public Action<object, KeyRoutedEventArgs> OnKeyDown;
 
         #region ReaderPage
         private bool? m_IsPreviewButtonToggled = null;
@@ -381,6 +384,11 @@ namespace ComicReader.Views
         private void OnSwitchReaderOrientationClicked(object sender, RoutedEventArgs e)
         {
             Shared.OnSwitchReaderOrientation?.Invoke();
+        }
+
+        private void OnKeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            Shared.OnKeyDown?.Invoke(sender, e);
         }
     }
 }

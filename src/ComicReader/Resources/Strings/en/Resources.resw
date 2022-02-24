@@ -551,4 +551,28 @@ Category2: tag4/tag5
   <data name="ReaderExpander.Detail" xml:space="preserve">
     <value>Reading direction</value>
   </data>
+  <data name="HotkeyPreviousPage.Header" xml:space="preserve">
+    <value>Go to previous page</value>
+  </data>
+  <data name="HotkeyNextPage.Header" xml:space="preserve">
+    <value>Go to next page</value>
+  </data>
+  <data name="KeyboardShortcutsExpander.Detail" xml:space="preserve">
+    <value>Check all keyboard shortcuts</value>
+  </data>
+  <data name="KeyboardShortcutsExpander.Header" xml:space="preserve">
+    <value>Keyboard shortcuts</value>
+  </data>
+  <data name="HotkeyEnterFullscreen.Header" xml:space="preserve">
+    <value>Enter fullscreen mode</value>
+  </data>
+  <data name="HotkeyExitFullscreen.Header" xml:space="preserve">
+    <value>Exit fullscreen mode</value>
+  </data>
+  <data name="HotkeyFirstPage.Header" xml:space="preserve">
+    <value>Go to first page</value>
+  </data>
+  <data name="HotkeyLastPage.Header" xml:space="preserve">
+    <value>Go to last page</value>
+  </data>
 </root>

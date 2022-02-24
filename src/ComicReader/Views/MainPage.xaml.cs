@@ -30,15 +30,8 @@ namespace ComicReader.Views
             {
                 m_IsFullscreen = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsFullscreen"));
-                
-                if (m_IsFullscreen == false)
-                {
-                    OnExitFullscreenMode?.Invoke();
-                }
             }
         }
-
-        public Action OnExitFullscreenMode;
     }
 
     public sealed partial class MainPage : Page

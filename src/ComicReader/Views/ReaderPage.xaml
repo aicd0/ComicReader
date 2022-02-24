@@ -272,7 +272,7 @@
         </ResourceDictionary>
     </Page.Resources>
 
-    <Grid KeyDown="OnKeyDown">
+    <Grid>
         <SplitView
             x:Name="InfoPane"
             DisplayMode="Overlay"
@@ -314,14 +314,20 @@
                             <muxc:RatingControl
                                 Margin="0,10,0,0"
                                 HorizontalAlignment="Left"
+                                FontFamily="Segoe Fluent Icons"
                                 IsClearEnabled="True"
                                 ValueChanged="OnRatingControlValueChanged"
                                 Visibility="{x:Bind Shared.NavigationPageShared.IsExternal, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}"
                                 Value="{x:Bind Shared.Rating, Mode=TwoWay}" />
 
+                            <Rectangle
+                                Height="1"
+                                Margin="0,18"
+                                Fill="{ThemeResource ComicInfoSeparatorForeground}" />
+
                             <!--  Directory  -->
                             <TextBlock
-                                Margin="0,20,0,0"
+                                Margin="0,0,0,0"
                                 VerticalAlignment="Center"
                                 FontSize="13"
                                 FontWeight="SemiLight"
@@ -332,11 +338,12 @@
                             <!--  Tags  -->
                             <Rectangle
                                 Height="1"
-                                Margin="0,24,0,10"
-                                Fill="#606060"
+                                Margin="0,20"
+                                Fill="{ThemeResource ComicInfoSeparatorForeground}"
                                 Visibility="{x:Bind Shared.IsComicTagsVisible, Mode=OneWay}" />
+
                             <ListView
-                                Margin="0,10,0,0"
+                                Margin="0,0,0,0"
                                 ItemsSource="{x:Bind Shared.ComicTags, Mode=OneWay}"
                                 SelectionMode="None">
                                 <ListView.ItemContainerStyle>
@@ -349,15 +356,15 @@
                                 <ListView.ItemTemplate>
                                     <DataTemplate x:DataType="data:TagCollectionViewModel">
                                         <StackPanel Margin="0,0,0,10" Orientation="Vertical">
-                                            <StackPanel Margin="5,0,0,4" Orientation="Horizontal">
+                                            <StackPanel Margin="5,0,0,5" Orientation="Horizontal">
                                                 <FontIcon
-                                                    Margin="0,0,5,0"
+                                                    Margin="0,0,7,0"
                                                     VerticalAlignment="Center"
                                                     FontFamily="Segoe MDL2 Assets"
                                                     FontSize="12"
                                                     Glyph="&#xE8EC;" />
                                                 <TextBlock
-                                                    Margin="0,0,0,2"
+                                                    Margin="0,0,0,1"
                                                     VerticalAlignment="Center"
                                                     FontSize="12"
                                                     Text="{x:Bind Name}" />
@@ -422,16 +429,18 @@
                     <ScrollViewer
                         HorizontalScrollBarVisibility="Auto"
                         HorizontalScrollMode="Enabled"
+                        IsEnabled="{x:Bind Shared.NavigationPageShared.IsVerticalReaderVisible, Mode=OneWay}"
                         IsHitTestVisible="{x:Bind Shared.NavigationPageShared.IsVerticalReaderVisible, Mode=OneWay}"
                         Loaded="OnVerticalReaderScrollViewerLoaded"
                         Opacity="{x:Bind Shared.NavigationPageShared.IsVerticalReaderVisible, Converter={StaticResource BooleanToDoubleConverter}, Mode=OneWay}"
-                        ViewChanged="OnVerticalReaderScrollViewerViewChanged"
                         SizeChanged="OnVerticalReaderScrollViewerSizeChanged"
+                        ViewChanged="OnVerticalReaderScrollViewerViewChanged"
                         ZoomMode="Enabled">
                         <Grid HorizontalAlignment="Center">
                             <ListView
                                 ItemsSource="{x:Bind VerticalReader.DataSource, Mode=OneWay}"
                                 Loaded="OnVerticalReaderListViewLoaded"
+                                PreviewKeyDown="OnKeyDown"
                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                 ScrollViewer.VerticalScrollBarVisibility="Disabled"
                                 SelectionMode="None">
@@ -461,19 +470,21 @@
                         FlowDirection="{x:Bind Shared.ReaderFlowDirection, Mode=OneWay}"
                         HorizontalScrollBarVisibility="Auto"
                         HorizontalScrollMode="Enabled"
+                        IsEnabled="{x:Bind Shared.NavigationPageShared.IsHorizontalReaderVisible, Mode=OneWay}"
                         IsHitTestVisible="{x:Bind Shared.NavigationPageShared.IsHorizontalReaderVisible, Mode=OneWay}"
                         Loaded="OnHorizontalReaderScrollViewerLoaded"
                         Opacity="{x:Bind Shared.NavigationPageShared.IsHorizontalReaderVisible, Converter={StaticResource BooleanToDoubleConverter}, Mode=OneWay}"
+                        SizeChanged="OnHorizontalReaderScrollViewerSizeChanged"
                         Style="{StaticResource HorizontalReaderScrollViewerStyle}"
                         VerticalScrollBarVisibility="Hidden"
                         VerticalScrollMode="Disabled"
                         ViewChanged="OnHorizontalReaderScrollViewerViewChanged"
-                        SizeChanged="OnHorizontalReaderScrollViewerSizeChanged"
                         ZoomMode="Enabled">
                         <Grid VerticalAlignment="Center">
                             <ListView
                                 ItemsSource="{x:Bind HorizontalReader.DataSource, Mode=OneWay}"
                                 Loaded="OnHorizontalReaderListViewLoaded"
+                                PreviewKeyDown="OnKeyDown"
                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                 ScrollViewer.VerticalScrollBarVisibility="Disabled"
                                 SelectionMode="None">
@@ -536,16 +547,17 @@
                 <!--  Bottom Tile  -->
                 <Grid
                     x:Name="BottomGrid"
-                    Height="50"
+                    Height="48"
+                    Margin="0,0,0,20"
+                    Padding="5,0,20,0"
+                    HorizontalAlignment="Center"
                     VerticalAlignment="Bottom"
                     Background="{ThemeResource ReaderBottomTileBackground}"
+                    BorderThickness="0"
+                    CornerRadius="24"
                     Opacity="0"
                     PointerEntered="OnBottomTilePointerEntered"
                     PointerExited="OnBottomTilePointerExited">
-                    <Rectangle
-                        Height="1"
-                        VerticalAlignment="Top"
-                        Fill="{ThemeResource ReaderBottomTileBorderBrush}" />
                     <Grid>
                         <Grid.Resources>
                             <Storyboard x:Name="BottomGridStoryboard">
@@ -555,29 +567,41 @@
                                     Duration="0:0:0.2" />
                             </Storyboard>
                         </Grid.Resources>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
+
                         <StackPanel
-                            Grid.Column="0"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Center"
-                            Orientation="Horizontal"
-                            Spacing="5">
+                            Orientation="Horizontal">
                             <Grid Width="5" />
 
                             <!--  Pin  -->
-                            <ToggleButton
-                                IsChecked="{x:Bind Shared.BottomTilePinned, Mode=TwoWay}"
-                                Style="{StaticResource ReaderBottomTileToggleButtonStyle}"
+                            <Button
+                                Click="OnPinButtonClick"
+                                Style="{StaticResource ReaderBottomTileButtonStyle}"
                                 ToolTipService.ToolTip="{x:Bind Shared.PinButtonToolTip, Mode=OneWay}">
-                                <FontIcon FontSize="20" Glyph="&#xE840;" />
-                            </ToggleButton>
+                                <Grid>
+                                    <FontIcon
+                                        FontSize="15"
+                                        Glyph="&#xE840;"
+                                        Visibility="{x:Bind Shared.BottomTilePinned, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
+                                    <FontIcon
+                                        FontSize="15"
+                                        Foreground="{ThemeResource ReaderBottomTileButtonFillForeground}"
+                                        Glyph="&#xE840;"
+                                        Visibility="{x:Bind Shared.BottomTilePinned, Mode=OneWay}" />
+                                    <FontIcon
+                                        FontSize="15"
+                                        Foreground="{ThemeResource ReaderBottomTileButtonFillForeground}"
+                                        Glyph="&#xE842;"
+                                        Visibility="{x:Bind Shared.BottomTilePinned, Mode=OneWay}" />
+                                </Grid>
+                            </Button>
 
                             <!--  More  -->
-                            <Button x:Uid="MoreButton" Style="{StaticResource ReaderBottomTileButtonStyle}">
+                            <Button
+                                x:Uid="MoreButton"
+                                Style="{StaticResource ReaderBottomTileButtonStyle}"
+                                Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}">
                                 <Button.Flyout>
                                     <MenuFlyout>
                                         <MenuFlyoutItem x:Uid="MenuFlyoutComicInfo" Click="OnComicInfoClicked">
@@ -587,35 +611,38 @@
                                         </MenuFlyoutItem>
                                     </MenuFlyout>
                                 </Button.Flyout>
-                                <FontIcon FontSize="20" Glyph="&#xE712;" />
+                                <FontIcon FontSize="15" Glyph="&#xE712;" />
                             </Button>
-                            <AppBarSeparator />
+
+                            <AppBarSeparator Margin="2.5,0" Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}" />
 
                             <!--  Zooming  -->
                             <Button
                                 x:Uid="ZoomInButton"
                                 Click="OnZoomInBtClicked"
                                 IsEnabled="{x:Bind Shared.NavigationPageShared.ZoomInEnabled, Mode=OneWay}"
-                                Style="{StaticResource ReaderBottomTileButtonStyle}">
-                                <FontIcon FontSize="20" Glyph="&#xE8A3;" />
+                                Style="{StaticResource ReaderBottomTileButtonStyle}"
+                                Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}">
+                                <FontIcon FontSize="15" Glyph="&#xE8A3;" />
                             </Button>
                             <Button
                                 x:Uid="ZoomOutButton"
                                 Click="OnZoomOutBtClicked"
                                 IsEnabled="{x:Bind Shared.NavigationPageShared.ZoomOutEnabled, Mode=OneWay}"
-                                Style="{StaticResource ReaderBottomTileButtonStyle}">
-                                <FontIcon FontSize="20" Glyph="&#xE71F;" />
+                                Style="{StaticResource ReaderBottomTileButtonStyle}"
+                                Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}">
+                                <FontIcon FontSize="15" Glyph="&#xE71F;" />
                             </Button>
 
                             <!--  Orientation toggle  -->
-                            <Grid>
+                            <Grid Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}">
                                 <Button
                                     x:Uid="HorizontalButton"
                                     Click="OnSwitchReaderOrientationClicked"
                                     IsEnabled="{x:Bind Shared.NavigationPageShared.IsVerticalReaderVisible, Mode=OneWay}"
                                     Style="{StaticResource ReaderBottomTileButtonStyle}"
                                     Visibility="{x:Bind Shared.NavigationPageShared.IsSwitchToHorizontalReaderButtonVisible, Mode=OneWay}">
-                                    <FontIcon FontSize="20" Glyph="&#xE89A;" />
+                                    <FontIcon FontSize="15" Glyph="&#xE89A;" />
                                 </Button>
                                 <Button
                                     x:Uid="VerticalButton"
@@ -623,7 +650,7 @@
                                     IsEnabled="{x:Bind Shared.NavigationPageShared.IsHorizontalReaderVisible, Mode=OneWay}"
                                     Style="{StaticResource ReaderBottomTileButtonStyle}"
                                     Visibility="{x:Bind Shared.NavigationPageShared.IsSwitchToVerticalReaderButtonVisible, Mode=OneWay}">
-                                    <FontIcon FontSize="20" Glyph="&#xE7C3;" />
+                                    <FontIcon FontSize="15" Glyph="&#xE7C3;" />
                                 </Button>
                             </Grid>
 
@@ -631,8 +658,9 @@
                             <ToggleButton
                                 x:Uid="AllPagesButton"
                                 IsChecked="{x:Bind Shared.NavigationPageShared.IsPreviewButtonToggled, Mode=TwoWay}"
-                                Style="{StaticResource ReaderBottomTileToggleButtonStyle}">
-                                <FontIcon FontSize="20" Glyph="&#xF0E2;" />
+                                Style="{StaticResource ReaderBottomTileToggleButtonStyle}"
+                                Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}">
+                                <FontIcon FontSize="15" Glyph="&#xF0E2;" />
                             </ToggleButton>
 
                             <!--  Add to favorites  -->
@@ -640,28 +668,32 @@
                                 Click="OnFavoritesBtClicked"
                                 IsEnabled="{x:Bind Shared.NavigationPageShared.IsExternal, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}"
                                 Style="{StaticResource ReaderBottomTileButtonStyle}"
-                                ToolTipService.ToolTip="{x:Bind Shared.NavigationPageShared.FavoriteButtonToolTip, Mode=OneWay}">
+                                ToolTipService.ToolTip="{x:Bind Shared.NavigationPageShared.FavoriteButtonToolTip, Mode=OneWay}"
+                                Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}">
                                 <Grid>
                                     <FontIcon
-                                        FontSize="20"
+                                        FontSize="15"
                                         Glyph="&#xE734;"
                                         Visibility="{x:Bind Shared.NavigationPageShared.IsFavorite, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
                                     <FontIcon
-                                        FontSize="20"
-                                        Foreground="DeepSkyBlue"
+                                        FontSize="15"
+                                        Foreground="{ThemeResource ReaderBottomTileButtonFillForeground}"
                                         Glyph="&#xE735;"
                                         Visibility="{x:Bind Shared.NavigationPageShared.IsFavorite, Mode=OneWay}" />
                                 </Grid>
                             </Button>
-                        </StackPanel>
 
-                        <!--  Page indicator  -->
-                        <TextBlock
-                            x:Name="PageIndicator"
-                            Grid.Column="1"
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            FontWeight="Bold" />
+                            <!--  Page indicator  -->
+                            <AppBarSeparator Margin="2.5,0" />
+
+                            <TextBlock
+                                x:Name="PageIndicator"
+                                Margin="12.5,0,0,2"
+                                VerticalAlignment="Center"
+                                FontSize="14"
+                                FontWeight="SemiBold"
+                                Text="? / ?" />
+                        </StackPanel>
                     </Grid>
                 </Grid>
 

@@ -141,6 +141,9 @@
     <Compile Include="Controls\FolderItemDetailed.xaml.cs">
       <DependentUpon>FolderItemDetailed.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Controls\HotkeyInfo.xaml.cs">
+      <DependentUpon>HotkeyInfo.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Controls\ReaderFrame.xaml.cs">
       <DependentUpon>ReaderFrame.xaml</DependentUpon>
     </Compile>
@@ -300,6 +303,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Controls\FolderItemDetailed.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Controls\HotkeyInfo.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

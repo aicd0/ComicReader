@@ -128,7 +128,7 @@
                     Visibility="{x:Bind Ctx.IsFavorite}">
                     <FontIcon
                         FontSize="14"
-                        Foreground="DeepSkyBlue"
+                        Foreground="{ThemeResource SystemAccentColor}"
                         Glyph="&#xE735;" />
                 </Grid>
             </Grid>

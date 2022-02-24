@@ -7,6 +7,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Background="{ThemeResource NavigationPageBackground}"
+    KeyDown="OnKeyDown"
     mc:Ignorable="d">
 
     <Page.Resources>
@@ -43,7 +44,7 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
 
-                    <!--  left buttons  -->
+                    <!--  Left buttons  -->
                     <StackPanel
                         Grid.Column="0"
                         HorizontalAlignment="Left"
@@ -75,7 +76,7 @@
                             Visibility="{x:Bind Shared.IsHomePage, Mode=OneWay}" />
                     </StackPanel>
 
-                    <!--  search box  -->
+                    <!--  Search box  -->
                     <AutoSuggestBox
                         x:Name="SearchBox"
                         x:Uid="SearchBox"
@@ -92,7 +93,7 @@
                         TextChanged="SearchBoxTextChanged"
                         Visibility="{x:Bind Shared.IsReaderPage, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
 
-                    <!--  right buttons  -->
+                    <!--  Right buttons  -->
                     <StackPanel
                         Grid.Column="2"
                         Margin="0,1,0,1"
@@ -100,7 +101,7 @@
                         VerticalAlignment="Center"
                         Orientation="Horizontal">
 
-                        <!--  expand favorites pane button  -->
+                        <!--  Expand favorites pane button  -->
                         <AppBarButton
                             x:Uid="FavoritesButton"
                             Click="FavoritesClick"
@@ -110,7 +111,7 @@
                             </AppBarButton.Content>
                         </AppBarButton>
 
-                        <!--  more button  -->
+                        <!--  More button  -->
                         <AppBarButton x:Uid="MoreButton" Style="{StaticResource NavigationPageTopTileAppBarButton}">
                             <AppBarButton.Content>
                                 <FontIcon Glyph="&#xE712;" />
@@ -140,13 +141,13 @@
                     </StackPanel>
                 </Grid>
 
-                <!--  center buttons  -->
+                <!--  Center buttons  -->
                 <StackPanel
                     HorizontalAlignment="Center"
                     Orientation="Horizontal"
                     Visibility="{x:Bind Shared.IsReaderPage, Mode=OneWay}">
 
-                    <!--  zoom in/out  -->
+                    <!--  Zoom in/out  -->
                     <AppBarButton
                         x:Uid="ZoomInButton"
                         Click="ZoomInClick"
@@ -210,7 +211,7 @@
                             <Grid>
                                 <FontIcon Glyph="&#xE734;" Visibility="{x:Bind Shared.IsFavorite, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
                                 <FontIcon
-                                    Foreground="DeepSkyBlue"
+                                    Foreground="{ThemeResource SystemAccentColor}"
                                     Glyph="&#xE735;"
                                     Visibility="{x:Bind Shared.IsFavorite, Mode=OneWay}" />
                             </Grid>

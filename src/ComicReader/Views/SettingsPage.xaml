@@ -26,6 +26,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
+
         <StackPanel Grid.Row="0" Orientation="Horizontal">
             <FontIcon
                 Margin="25,6,10,0"
@@ -36,6 +37,7 @@
                 FontSize="32"
                 FontWeight="Light" />
         </StackPanel>
+
         <ScrollViewer
             Grid.Row="1"
             Padding="30,0,25,0"
@@ -44,11 +46,16 @@
             <Grid Margin="0,0,0,25">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="2*" />
-                    <ColumnDefinition Width="50" />
-                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition x:Name="ColumnMiddle" Width="50" />
+                    <ColumnDefinition x:Name="ColumnRight" Width="*" />
                 </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
 
                 <StackPanel
+                    Grid.Row="0"
                     Grid.Column="0"
                     Margin="0,25,0,0"
                     Orientation="Vertical"
@@ -65,7 +72,10 @@
                     </controls:SettingExpander>
 
                     <!--  Reader  -->
-                    <controls:SettingExpander x:Uid="ReaderExpander" Glyph="&#xE736;">
+                    <controls:SettingExpander
+                        x:Uid="ReaderExpander"
+                        Glyph="&#xE736;"
+                        IsExpanded="True">
                         <controls:SettingExpander.InnerContent>
                             <StackPanel Orientation="Vertical">
                                 <TextBlock x:Uid="LeftToRight" Style="{StaticResource SettingsPageBodyTextBlock}" />
@@ -75,7 +85,10 @@
                     </controls:SettingExpander>
 
                     <!--  History  -->
-                    <controls:SettingExpander x:Uid="HistoryExpander" Glyph="&#xE81C;">
+                    <controls:SettingExpander
+                        x:Uid="HistoryExpander"
+                        Glyph="&#xE81C;"
+                        IsExpanded="True">
                         <controls:SettingExpander.InnerContent>
                             <StackPanel Orientation="Vertical">
                                 <Button
@@ -106,6 +119,26 @@
                         </controls:SettingExpander.InnerContent>
                     </controls:SettingExpander>
 
+                    <!--  Keyboard shortcuts  -->
+                    <controls:SettingExpander x:Uid="KeyboardShortcutsExpander" Glyph="&#xE92E;">
+                        <controls:SettingExpander.InnerContent>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="1000*" MaxWidth="300" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Grid.Column="0" Orientation="Vertical">
+                                    <controls:HotkeyInfo Key="Space/Page Down" x:Uid="HotkeyNextPage" />
+                                    <controls:HotkeyInfo Key="Page Up" x:Uid="HotkeyPreviousPage" />
+                                    <controls:HotkeyInfo Key="Home" x:Uid="HotkeyFirstPage" />
+                                    <controls:HotkeyInfo Key="End" x:Uid="HotkeyLastPage" />
+                                    <controls:HotkeyInfo Key="F" x:Uid="HotkeyEnterFullscreen" />
+                                    <controls:HotkeyInfo Key="Esc/F" x:Uid="HotkeyExitFullscreen" />
+                                </StackPanel>
+                            </Grid>
+                        </controls:SettingExpander.InnerContent>
+                    </controls:SettingExpander>
+
                     <!--  Advanced  -->
                     <controls:SettingExpander x:Uid="AdvancedExpander" Glyph="&#xEC7A;">
                         <controls:SettingExpander.InnerContent>
@@ -133,7 +166,11 @@
                     </controls:SettingExpander>
                 </StackPanel>
 
-                <StackPanel Grid.Column="2" Orientation="Vertical">
+                <StackPanel
+                    x:Name="RightColumnContent"
+                    Grid.Row="0"
+                    Grid.Column="2"
+                    Orientation="Vertical">
                     <!--  Statistics  -->
                     <TextBlock x:Uid="Statistics" Style="{StaticResource SettingsPageSubTitleTextBlock}" />
                     <TextBlock
@@ -186,5 +223,27 @@
                 </StackPanel>
             </Grid>
         </ScrollViewer>
+
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup x:Name="LayoutVisualStates">
+                <VisualState x:Name="LargeWideView">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowHeight="0" MinWindowWidth="820" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters />
+                </VisualState>
+                <VisualState x:Name="SideVisible">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowHeight="0" MinWindowWidth="0" />
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="ColumnMiddle.Width" Value="0" />
+                        <Setter Target="ColumnRight.Width" Value="0" />
+                        <Setter Target="RightColumnContent.(Grid.Column)" Value="0" />
+                        <Setter Target="RightColumnContent.(Grid.Row)" Value="1" />
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
     </Grid>
 </Page>

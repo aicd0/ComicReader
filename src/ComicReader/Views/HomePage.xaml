@@ -167,6 +167,8 @@
     <Grid>
         <ScrollViewer>
             <StackPanel Margin="35,10" Orientation="Vertical">
+                
+                <!--  Library  -->
                 <Grid Height="10" />
                 <Grid>
                     <Grid.ColumnDefinitions>
@@ -199,7 +201,7 @@
                 <Grid Height="10" />
                 <!--
                     DO NOT attach Visibility property to mtuuc:AdaptiveGridView as this
-                    will result in a layout error (Probably a bug from API).
+                    will result in a layout error (probably a bug from API).
                 -->
                 <mtuuc:AdaptiveGridView
                     DesiredWidth="160"
@@ -240,6 +242,8 @@
                     <HyperlinkButton x:Uid="HomePageRefreshButton" Click="OnRefreshBtClicked" />
                     <TextBlock x:Uid="LibraryEmptyPart3" VerticalAlignment="Center" />
                 </StackPanel>
+                
+                <!--  Folders  -->
                 <Grid Height="50" />
                 <TextBlock
                     x:Uid="FoldersHeader"
