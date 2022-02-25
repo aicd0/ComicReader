@@ -46,6 +46,7 @@ namespace ComicReader
             // Initialize the database.
             await DatabaseManager.Init();
 
+            // Perform usual startup.
             Frame rootFrame = Window.Current.Content as Frame;
 
             if (rootFrame == null)
@@ -68,13 +69,11 @@ namespace ComicReader
             if (!m_window_setup)
             {
                 m_window_setup = true;
-
                 float minWindowWidth = (float)(double)Resources["AppMinWindowWidth"];
                 float minWindowHeight = (float)(double)Resources["AppMinWindowHeight"];
                 Size minWindowSize = SizeHelper.FromDimensions(minWindowWidth, minWindowHeight);
-
-                ApplicationView appView = ApplicationView.GetForCurrentView();
                 ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
+                ApplicationView appView = ApplicationView.GetForCurrentView();
 
                 if (!localSettings.Values.ContainsKey("VeryFirstLaunch"))
                 {

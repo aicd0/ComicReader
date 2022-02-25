@@ -111,6 +111,27 @@ namespace ComicReader.Utils
             return result;
         }
 
+        public static async Task<StorageFile> TryGetFile(string path)
+        {
+            string folder_path = Utils.StringUtils.ParentPathFromPath(path);
+            StorageFolder folder = await Utils.C0.TryGetFolder(folder_path);
+
+            if (folder == null)
+            {
+                return null;
+            }
+
+            string filename = Utils.StringUtils.ItemNameFromPath(path);
+            IStorageItem item = await folder.TryGetItemAsync(filename);
+
+            if (item == null || !item.IsOfType(StorageItemTypes.File))
+            {
+                return null;
+            }
+
+            return (StorageFile)item;
+        }
+
         public static void AddToFutureAccessList(IStorageItem item)
         {
             string token = Utils.StringUtils.TokenFromPath(item.Path);

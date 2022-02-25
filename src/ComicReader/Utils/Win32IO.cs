@@ -90,13 +90,13 @@ namespace ComicReader.Utils
             SafeFileHandle hTemplateFile);
 
         // SubFolderDeep
-        public class SubFolderDeepContext
+        public class SubItemDeepContext
         {
-            public SubFolderDeepContext(string path)
+            public SubItemDeepContext(string path)
             {
                 path = Utils.StringUtils.ToPathNoTail(path);
 
-                Nodes.Add(new Node
+                m_nodes.Add(new Node
                 {
                     Paths = new List<string> { path }
                 });
@@ -121,41 +121,48 @@ namespace ComicReader.Utils
                 public string CurrentPath => Paths[Index];
             }
 
+            public List<string> Folders { get; private set; } = new List<string>();
+            public List<string> Files { get; private set; } = new List<string>();
             public List<string> NoAccessFolders { get; private set; } = new List<string>();
+            public int ItemFound => Folders.Count + Files.Count;
 
-            private List<Node> Nodes = new List<Node>();
+            private bool m_initial_search = true;
+            private List<Node> m_nodes = new List<Node>();
             private readonly FindExInfoLevel FindInfoLevel;
             private readonly FIndexSearchOps IndexSearchOps = FIndexSearchOps.FindExSearchNameMatch;
             private readonly int AdditionalFlags;
-            private int FolderScanned = 0;
 
-            public bool Search(List<string> results, uint min_step)
+            public bool Search(uint item_count)
             {
-                results.Clear();
-
-                if (Nodes.Count == 0)
+                if (m_nodes.Count == 0)
                 {
                     return false;
                 }
 
-                FolderScanned = 0;
+                Folders.Clear();
+                Files.Clear();
 
-                bool not_end = _Search(min_step, results);
-
-                if (results.Count > 0)
+                if (m_initial_search)
                 {
-                    return true;
+                    System.Diagnostics.Debug.Assert(m_nodes.Count == 1);
+                    m_initial_search = false;
+
+                    foreach (string path in m_nodes[0].Paths)
+                    {
+                        Folders.Add(path);
+                    }
                 }
 
-                return not_end;
+                bool not_end = InternalSearch(item_count);
+                return ItemFound > 0 || not_end;
             }
 
-            private bool _Search(uint min_step, List<string> results, int depth = 0)
+            private bool InternalSearch(uint item_count, int depth = 0)
             {
-                if (Nodes.Count <= depth)
+                if (m_nodes.Count <= depth)
                 {
                     // Visit current node.
-                    string path_raw = Nodes[Nodes.Count - 1].CurrentPath;
+                    string path_raw = m_nodes[m_nodes.Count - 1].CurrentPath;
                     string path = path_raw + "\\";
                     IntPtr h_file = FindFirstFileExFromApp(path + "*", FindInfoLevel,
                         out _, IndexSearchOps, IntPtr.Zero, AdditionalFlags);
@@ -173,10 +180,12 @@ namespace ComicReader.Utils
                         return false;
                     }
 
-                    int i_begin = results.Count;
+                    List<string> folders = new List<string>();
 
                     while (FindNextFile(h_file, out WIN32_FIND_DATA find_data))
                     {
+                        string item = path + find_data.cFileName;
+
                         if (((FileAttributes)find_data.dwFileAttributes & FileAttributes.Directory) == FileAttributes.Directory)
                         {
                             if (find_data.cFileName == "..")
@@ -184,44 +193,46 @@ namespace ComicReader.Utils
                                 continue;
                             }
 
-                            results.Add(path + find_data.cFileName);
+                            folders.Add(item);
+                            Folders.Add(item);
+                        }
+                        else
+                        {
+                            Files.Add(item);
                         }
                     }
 
                     FindClose(h_file);
-                    int i_end = results.Count;
-                    int item_count = i_end - i_begin;
 
-                    if (item_count == 0)
+                    if (folders.Count == 0)
                     {
                         return false;
                     }
 
-                    Nodes.Add(new Node
+                    m_nodes.Add(new Node
                     {
-                        Paths = results.GetRange(i_begin, item_count)
+                        Paths = folders
                     });
                 }
 
                 // Search deeper.
-                while (Nodes[depth].Index < Nodes[depth].Paths.Count)
+                while (m_nodes[depth].Index < m_nodes[depth].Paths.Count)
                 {
                     // Exit if min_step is reached.
-                    if (FolderScanned + results.Count >= min_step)
+                    if (ItemFound >= item_count)
                     {
                         return true;
                     }
 
-                    if (_Search(min_step, results, depth + 1))
+                    if (InternalSearch(item_count, depth + 1))
                     {
                         return true;
                     }
 
-                    Nodes[depth].Index++;
-                    FolderScanned++;
+                    m_nodes[depth].Index++;
                 }
 
-                Nodes.RemoveAt(Nodes.Count - 1);
+                m_nodes.RemoveAt(m_nodes.Count - 1);
                 return false;
             }
         }
@@ -259,11 +270,6 @@ namespace ComicReader.Utils
             {
                 if (((FileAttributes)find_data.dwFileAttributes & FileAttributes.Directory) != FileAttributes.Directory)
                 {
-                    if (find_data.cFileName == "..")
-                    {
-                        continue;
-                    }
-
                     string fullpath = path + find_data.cFileName;
                     results.Add(fullpath);
                 }

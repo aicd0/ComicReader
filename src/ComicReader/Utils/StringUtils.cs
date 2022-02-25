@@ -149,7 +149,7 @@ namespace ComicReader.Utils
             return path.Substring(0, i);
         }
 
-        public static string FilenameExtensionFromFilename(string filename)
+        public static string ExtensionFromFilename(string filename)
         {
             int i = filename.LastIndexOf('.');
 
@@ -159,6 +159,18 @@ namespace ComicReader.Utils
             }
 
             return filename.Substring(i);
+        }
+
+        public static string DisplayNameFromFilename(string filename)
+        {
+            int i = filename.LastIndexOf('.');
+
+            if (i == -1)
+            {
+                return filename;
+            }
+
+            return filename.Substring(0, i);
         }
 
         public static string ToPathNoTail(string path)

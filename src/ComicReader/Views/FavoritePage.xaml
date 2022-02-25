@@ -61,7 +61,7 @@
                         <FontIcon
                             FontFamily="{StaticResource SymbolThemeFontFamily}"
                             FontSize="18"
-                            Glyph="&#xE729;"
+                            Glyph="&#xF5ED;"
                             Visibility="{x:Bind IsItem, Mode=OneWay}" />
                     </Grid>
                     <TextBlock

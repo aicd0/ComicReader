@@ -1,7 +1,7 @@
 ﻿#if DEBUG
 //#define DEBUG_LOG_LOAD
-#define DEBUG_LOG_JUMP
-#define DEBUG_LOG_VIEW_CHANGE
+//#define DEBUG_LOG_JUMP
+//#define DEBUG_LOG_VIEW_CHANGE
 //#define DEBUG_LOG_UPDATE_PAGE
 //#define DEBUG_LOG_MANIPULATION
 #endif
@@ -1417,7 +1417,8 @@ namespace ComicReader.Views
             {
                 progress = 0;
             }
-            else if (control.Page == m_comic.ImageCount)
+            else if (control.Page >= m_comic.ImageCount ||
+                control.IsTwoPages && control.Page + 1 >= m_comic.ImageCount)
             {
                 progress = 100;
             }
@@ -1426,11 +1427,7 @@ namespace ComicReader.Views
                 progress = (int)((float)control.Page / control.Pages * 100);
             }
 
-            if (progress > 100)
-            {
-                progress = 100;
-            }
-
+            progress = Math.Min(progress, 100);
             Shared.Progress = progress.ToString() + "%";
             await m_comic.SaveProgress(db, progress, control.PageReal);
         }
@@ -1471,11 +1468,11 @@ namespace ComicReader.Views
             // Additional procedures for comics in the library.
             if (!m_comic.IsExternal)
             {
+                // Mark as read.
+                await m_comic.SetAsRead(db);
+
                 // Add to history
                 await HistoryDataManager.Add(m_comic.Id, m_comic.Title1, true);
-
-                // Update visit time.
-                await m_comic.SaveLastVisit(db, DateTimeOffset.Now);
 
                 // Update image files.
                 await m_comic.UpdateImages(db);

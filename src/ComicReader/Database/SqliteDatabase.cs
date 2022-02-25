@@ -215,5 +215,12 @@ namespace ComicReader.Database
                 command.Dispose();
             }
         }
+
+        // For backward compability.
+        public static async Task<bool> IsDatabaseExist()
+        {
+            IStorageItem item = await DatabaseFolder.TryGetItemAsync(DatabaseFileName);
+            return item != null;
+        }
     }
 }

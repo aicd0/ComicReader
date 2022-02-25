@@ -22,9 +22,14 @@ namespace ComicReader.Database
 
     public class DatabaseManager
     {
+        public static bool DatabaseFirstInit { get; private set; }
+
         public static async RawTask Init()
         {
             Utils.Debug.Log("Initializing database");
+
+            // For backward compability.
+            DatabaseFirstInit = !await SqliteDatabaseManager.IsDatabaseExist();
 
             await SqliteDatabaseManager.Init();
             await XmlDatabaseManager.Load();
@@ -35,17 +40,23 @@ namespace ComicReader.Database
 
         public static async RawTask Update()
         {
+            await Task.Run(() => { });
             int old_version = XmlDatabase.Settings.DatabaseVersion;
 
             switch (old_version)
             {
                 case -1:
+                    if (DatabaseFirstInit)
+                    {
+                        break;
+                    }
 
+                    goto case 1;
                 case 1:
                     break;
                 default:
                     System.Diagnostics.Debug.Assert(false);
-                    return new TaskResult(TaskException.Failure);
+                    break;
             }
 
             XmlDatabase.Settings.DatabaseVersion = 1;

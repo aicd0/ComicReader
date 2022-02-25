@@ -44,7 +44,7 @@ namespace ComicReader.Utils
             }
         }
 
-        public static bool IsSupportedArchiveExtension(string extension)
+        public static bool IsSupportedComicExtension(string extension)
         {
             switch (extension.ToLower())
             {

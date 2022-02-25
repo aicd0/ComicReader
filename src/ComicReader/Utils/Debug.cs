@@ -25,15 +25,23 @@ namespace ComicReader.Utils
                 return;
             }
 
-            Utils.TaskQueueManager.AppendTask(LogSealed(content, verbose), "", LogQueue);
+            string timestamp = "[" + DateTimeOffset.Now.ToString("G") + "]";
+            content = timestamp + " " + content + "\n";
+
+            if (verbose)
+            {
+                System.Diagnostics.Debug.Print(content);
+            }
+
+            Utils.TaskQueueManager.AppendTask(LogSealed(content), "", LogQueue);
         }
 
-        private static SealedTask LogSealed(string content, bool verbose)
+        private static SealedTask LogSealed(string content)
         {
-            return (RawTask _) => _Log(content, verbose).Result;
+            return (RawTask _) => _Log(content).Result;
         }
 
-        private static async RawTask _Log(string content, bool verbose)
+        private static async RawTask _Log(string content)
         {
             StorageFile log_file;
 
@@ -46,15 +54,7 @@ namespace ComicReader.Utils
                 return new TaskResult(TaskException.Failure);
             }
 
-            string timestamp = "[" + DateTimeOffset.Now.ToString("G") + "]";
-            content += "\n";
-            await FileIO.AppendTextAsync(log_file, timestamp + " " + content);
-
-            if (verbose)
-            {
-                System.Diagnostics.Debug.Print(content);
-            }
-
+            await FileIO.AppendTextAsync(log_file, content);
             return new TaskResult();
         }
     }

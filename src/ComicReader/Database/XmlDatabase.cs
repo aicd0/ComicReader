@@ -79,10 +79,10 @@ namespace ComicReader.Database
 
             IRandomAccessStream stream = await (file as StorageFile).OpenAsync(FileAccessMode.Read);
             XmlSerializer serializer = new XmlSerializer(obj.GetType());
-            //serializer.UnknownAttribute += (object x, XmlAttributeEventArgs y) => throw new Exception();
-            //serializer.UnknownElement += (object x, XmlElementEventArgs y) => throw new Exception();
-            //serializer.UnknownNode += (object x, XmlNodeEventArgs y) => throw new Exception();
-            //serializer.UnreferencedObject += (object x, UnreferencedObjectEventArgs y) => throw new Exception();
+            serializer.UnknownAttribute += (object x, XmlAttributeEventArgs y) => Log("UnknownAttribute: " + y.ToString());
+            serializer.UnknownElement += (object x, XmlElementEventArgs y) => Log("UnknownElement: " + y.ToString());
+            serializer.UnknownNode += (object x, XmlNodeEventArgs y) => Log("UnknownNode: " + y.ToString());
+            serializer.UnreferencedObject += (object x, UnreferencedObjectEventArgs y) => Log("UnreferencedObject: " + y.ToString());
 
             try
             {
@@ -136,6 +136,11 @@ namespace ComicReader.Database
 
             stream.Dispose();
             ReleaseLock();
+        }
+
+        private static void Log(string content)
+        {
+            Utils.Debug.Log("XmlDatabase: " + content);
         }
     }
 }

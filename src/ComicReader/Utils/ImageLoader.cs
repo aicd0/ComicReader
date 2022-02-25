@@ -1,5 +1,5 @@
 ﻿#if DEBUG
-//#define DEBUG_LOG_EVERYTHING
+//#define DEBUG_LOG_LOAD
 #endif
 
 using System;
@@ -15,6 +15,9 @@ using ComicReader.Database;
 
 namespace ComicReader.Utils
 {
+    using RawTask = Task<Utils.TaskResult>;
+    using SealedTask = Func<Task<Utils.TaskResult>, Utils.TaskResult>;
+
     public class ImageLoaderToken
     {
         public ComicData Comic;
@@ -56,20 +59,18 @@ namespace ComicReader.Utils
 
     public class ImageLoader
     {
-#if DEBUG_LOG_EVERYTHING
         private static void _Log(string text)
         {
-            Utils.Debug.Log("Image Loader: " + text + ".");
+            Utils.Debug.Log("Image Loader: " + text);
         }
-#endif
 
-        public static async Task Load(LockContext db,
+        public static async RawTask Load(LockContext db,
             IEnumerable<ImageLoaderToken> tokens, ImageConstrain max_width,
             ImageConstrain max_height, Utils.CancellationLock cancellation_lock)
         {
             List<ImageLoaderToken> tokens_cpy = new List<ImageLoaderToken>(tokens);
 
-#if DEBUG_LOG_EVERYTHING
+#if DEBUG_LOG_LOAD
             _Log("Loading " + tokens_cpy.Count.ToString() + " images");
 #endif
 
@@ -82,20 +83,16 @@ namespace ComicReader.Utils
             double raw_pixels_per_view_pixel = 0.0;
             double frame_ratio = 0.0;
             bool first_token = true;
-            bool trig_update = false;
+            bool all_token_success = true;
 
-#if DEBUG_LOG_EVERYTHING
-            int token_i = 0;
-#endif
-
-            for (; tokens_cpy.Count > 0;)
+            for (int token_processed = 0; tokens_cpy.Count > 0; ++token_processed)
             {
                 if (cancellation_lock.CancellationRequested)
                 {
-#if DEBUG_LOG_EVERYTHING
+#if DEBUG_LOG_LOAD
                     _Log("Task cancelled");
 #endif
-                    return;
+                    return new TaskResult(TaskException.Cancellation);
                 }
 
                 ImageLoaderToken token = tokens_cpy.First();
@@ -111,50 +108,63 @@ namespace ComicReader.Utils
                     // Skip tokens whose comic folder cannot be reached.
                     if (!r.Successful)
                     {
-#if DEBUG_LOG_EVERYTHING
-                        _Log("Token " + token_i.ToString() + " (idx=" + token.Index.ToString() + ") skipped because failed to get its folder");
+                        _Log("Skipped token " + token.Index.ToString() + "(" + token_processed.ToString() + "), failed to reach folder");
                         int token_before = tokens_cpy.Count;
-#endif
                         tokens_cpy.RemoveAll(x => x.Comic == comic);
-#if DEBUG_LOG_EVERYTHING
                         _Log((tokens_cpy.Count - token_before).ToString() + " tokens with same comic were removed.");
-#endif
-                        trig_update = true;
+                        all_token_success = false;
                         continue;
                     }
 
                     if (comic.ImageCount <= token.Index)
                     {
-#if DEBUG_LOG_EVERYTHING
-                        _Log("Index " + token.Index.ToString() + " skipped because image files not enough");
-#endif
-                        trig_update = true;
+                        _Log("Skipped image " + token.Index.ToString() + ", index out of range");
+                        all_token_success = false;
                         continue;
                     }
                 }
 
-                IRandomAccessStream stream = await comic.GetImageStream(token.Index);
-
-                if (stream == null)
-                {
-#if DEBUG_LOG_EVERYTHING
-                    _Log("Failed to get img stream " + token.Index.ToString() + ", skipped");
-#endif
-                    trig_update = true;
-                    continue;
-                }
-
                 BitmapImage image = null;
-                Task task = null;
 
-                await Utils.C0.Sync(delegate
+                using (IRandomAccessStream stream = await comic.GetImageStream(token.Index))
                 {
-                    image = new BitmapImage();
-                    task = image.SetSourceAsync(stream).AsTask();
-                });
+                    if (stream == null)
+                    {
+                        _Log("Failed to get img stream " + token.Index.ToString() + ", skipped");
+                        all_token_success = false;
+                        continue;
+                    }
 
-                await task.AsAsyncAction();
-                stream.Dispose();
+                    bool img_load_success = true;
+
+                    // IMPORTANT: Use TaskCompletionSource to guarantee all async tasks
+                    // in Sync block has completed.
+                    TaskCompletionSource<bool> completion_src = new TaskCompletionSource<bool>();
+
+                    await Utils.C0.Sync(async delegate
+                    {
+                        image = new BitmapImage();
+
+                        try
+                        {
+                            await image.SetSourceAsync(stream).AsTask();
+                        }
+                        catch (Exception e)
+                        {
+                            img_load_success = false;
+                            _Log("Skipped token " + token.Index.ToString() + ", image corrupted. Exception: " + e.ToString());
+                        }
+
+                        completion_src.SetResult(true);
+                    });
+
+                    await completion_src.Task;
+
+                    if (!img_load_success)
+                    {
+                        continue;
+                    }
+                }
 
                 await Utils.C0.Sync(delegate
                 {
@@ -196,24 +206,22 @@ namespace ComicReader.Utils
                     }
 
                     token.Callback?.Invoke(image);
-#if DEBUG_LOG_EVERYTHING
+#if DEBUG_LOG_LOAD
                     _Log("Token " + token_i.ToString() + " (idx=" + token.Index.ToString() + ") loaded");
-                    token_i++;
 #endif
                 });
             }
 
-#if DEBUG_LOG_EVERYTHING
+#if DEBUG_LOG_LOAD
             _Log("All tokens loaded (trig_update=" + trig_update.ToString() + ")");
 #endif
 
-            // Not all the images are successfully loaded, most likely that some of the
-            // files or directories has been renamed, moved or deleted. We trigger a
-            // ComicData.Manager._Update() here to sync the changes.
-            if (trig_update)
+            if (!all_token_success)
             {
-                Utils.TaskQueueManager.NewTask(ComicData.Manager.UpdateSealed(lazy_load: true));
+                return new TaskResult(TaskException.Failure);
             }
+
+            return new TaskResult();
         }
     }
 }

@@ -56,12 +56,12 @@ namespace ComicReader.Views
         {
             return delegate (Task<Utils.TaskResult> _t)
             {
-                _OnFileActivatedAsync(args).Wait();
+                OnFileActivatedUnsealed(args).Wait();
                 return new Utils.TaskResult();
             };
         }
 
-        private async Task _OnFileActivatedAsync(FileActivatedEventArgs args)
+        private async Task OnFileActivatedUnsealed(FileActivatedEventArgs args)
         {
             LockContext db = new LockContext();
 
@@ -72,16 +72,30 @@ namespace ComicReader.Views
                 return;
             }
 
-            string dir = target_file.Path;
-            
-            if (Utils.AppInfoProvider.IsSupportedArchiveExtension(target_file.FileType))
+            ComicData comic = null;
+
+            if (Utils.AppInfoProvider.IsSupportedComicExtension(target_file.FileType))
             {
-                // Not implemented yet.
+                comic = await ComicData.Manager.FromLocation(db, target_file.Path);
+
+                if (comic == null)
+                {
+                    switch (target_file.FileType.ToLower())
+                    {
+                        case ".zip":
+                            comic = await ComicZipData.FromExternal(db, target_file);
+                            break;
+                        default:
+                            System.Diagnostics.Debug.Assert(false);
+                            break;
+                    }
+                }
             }
             else if (Utils.AppInfoProvider.IsSupportedImageExtension(target_file.FileType))
             {
+                string dir = target_file.Path;
                 dir = Utils.StringUtils.ParentPathFromPath(dir);
-                ComicData comic = await ComicData.Manager.FromLocation(db, dir);
+                comic = await ComicData.Manager.FromLocation(db, dir);
 
                 if (comic == null)
                 {
@@ -121,12 +135,18 @@ namespace ComicReader.Views
 
                     comic = await ComicFolderData.FromExternal(dir, img_files, info_file);
                 }
-
-                await Utils.C0.Sync(delegate
-                {
-                    LoadTab(null, Utils.Tab.PageType.Reader, comic);
-                });
             }
+
+            if (comic == null)
+            {
+                System.Diagnostics.Debug.Assert(false);
+                return;
+            }
+
+            await Utils.C0.Sync(delegate
+            {
+                LoadTab(null, Utils.Tab.PageType.Reader, comic);
+            });
         }
 
         // New tab
