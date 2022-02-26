@@ -475,6 +475,11 @@ namespace ComicReader.Views
 
         private void OnRefreshBtClicked(object sender, RoutedEventArgs e)
         {
+            RefreshPage();
+        }
+
+        public static void RefreshPage()
+        {
             Utils.TaskQueueManager.NewTask(ComicData.Manager.UpdateSealed(lazy_load: true));
         }
     }

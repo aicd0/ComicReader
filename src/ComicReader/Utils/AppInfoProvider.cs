@@ -10,9 +10,11 @@ namespace ComicReader.Utils
     {
         public static readonly List<string> SupportedImageTypes = new List<string>{
             ".jpg",
+            ".jpe",
             ".jpeg",
             ".png",
             ".bmp",
+            ".gif",
         };
 
         public static bool IsSupportedFileExtension(string extension)
@@ -20,9 +22,11 @@ namespace ComicReader.Utils
             switch (extension.ToLower())
             {
                 case ".jpg":
+                case ".jpe":
                 case ".jpeg":
                 case ".png":
                 case ".bmp":
+                case ".gif":
                 case ".zip":
                     return true;
                 default:
@@ -35,9 +39,11 @@ namespace ComicReader.Utils
             switch (extension.ToLower())
             {
                 case ".jpg":
+                case ".jpe":
                 case ".jpeg":
                 case ".png":
                 case ".bmp":
+                case ".gif":
                     return true;
                 default:
                     return false;

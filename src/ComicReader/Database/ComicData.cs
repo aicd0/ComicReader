@@ -1,14 +1,11 @@
 ﻿using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.IO.Compression;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Storage;
-using Windows.Storage.Search;
 using Windows.Storage.Streams;
 
 namespace ComicReader.Database
@@ -714,7 +711,7 @@ namespace ComicReader.Database
                 await m_update_lock.WaitAsync();
                 try
                 {
-                    Utils.Debug.Log("Updating comics (lazy_load=" + lazy_load.ToString() + ")");
+                    Log("Updating comics" + (lazy_load ? " (lazy load)" : ""));
 
                     if (!lazy_load)
                     {
@@ -758,13 +755,13 @@ namespace ComicReader.Database
 
                     foreach (string folder_path in root_folders)
                     {
-                        Utils.Debug.Log("Scanning folder '" + folder_path + "'");
+                        Log("Scanning folder '" + folder_path + "'");
                         StorageFolder root_folder = await Utils.C0.TryGetFolder(folder_path);
 
                         // Remove unreachable folders from database.
                         if (root_folder == null)
                         {
-                            Utils.Debug.Log("Failed to reach folder '" + folder_path + "', skipped");
+                            Log("Failed to reach folder '" + folder_path + "', skipped");
                             await XmlDatabaseManager.WaitLock();
                             XmlDatabase.Settings.ComicFolders.Remove(folder_path);
                             XmlDatabaseManager.ReleaseLock();
@@ -775,7 +772,7 @@ namespace ComicReader.Database
 
                         while (ctx.Search(1024))
                         {
-                            Utils.Debug.Log("Scanning " + ctx.ItemFound.ToString() + " items.");
+                            Log("Scanning " + ctx.ItemFound.ToString() + " items.");
                             List<string> folder_scanned = ctx.Folders;
                             List<string> file_scanned = new List<string>();
 
@@ -919,7 +916,7 @@ namespace ComicReader.Database
                         }
 
                         // Remove.
-                        Utils.Debug.Log("Removing item '" + loc + "'");
+                        Log("Removing item '" + loc + "'");
                         await RemoveWithLocation(db, loc);
 
                         if (watch.LapSpan().TotalSeconds > 1.5)
@@ -933,7 +930,7 @@ namespace ComicReader.Database
                 }
                 finally
                 {
-                    Utils.Debug.Log("Comic update completed");
+                    Log("Comic update completed");
                     IsRescanning = false;
                     OnUpdated?.Invoke(db);
                     m_update_lock.Release();
@@ -942,7 +939,7 @@ namespace ComicReader.Database
 
             protected static async Task InternalUpdateComicFile(LockContext db, string location, bool is_exist)
             {
-                Utils.Debug.Log((is_exist ? "Updat" : "Add") + "ing comic '" + location + "'");
+                Log((is_exist ? "Updat" : "Add") + "ing comic '" + location + "'");
                 string filename = Utils.StringUtils.ItemNameFromPath(location).ToLower();
                 string extension = Utils.StringUtils.ExtensionFromFilename(filename);
 
@@ -969,596 +966,10 @@ namespace ComicReader.Database
                 await comic.SaveBasic(db);
             }
         };
+
+        protected static void Log(string content)
+        {
+            Utils.Debug.Log("ComicData: " + content);
+        }
     };
-
-    public class ComicFolderData : ComicData
-    {
-        private StorageFolder Folder = null;
-        private StorageFile InfoFile = null;
-        private List<StorageFile> ImageFiles = new List<StorageFile>();
-        public override int ImageCount => ImageFiles.Count;
-        public override bool IsEditable => !(IsExternal && InfoFile == null);
-
-        private ComicFolderData(bool is_external) :
-            base(ComicType.Folder, is_external) {}
-
-        public static ComicData FromDatabase(string location)
-        {
-            return new ComicFolderData(false)
-            {
-                Location = location,
-            };
-        }
-
-        public static async Task<ComicData> FromExternal(string directory, List<StorageFile> image_files, StorageFile info_file)
-        {
-            image_files.OrderBy(x => x.DisplayName,
-                new Utils.StringUtils.FileNameComparer());
-
-            ComicFolderData comic = new ComicFolderData(true)
-            {
-                Location = directory,
-                ImageFiles = image_files,
-                InfoFile = info_file
-            };
-
-            if (info_file != null)
-            {
-                await comic.UpdateInfo();
-            }
-
-            return comic;
-        }
-
-        private async RawTask CompleteFolder()
-        {
-            if (Folder != null)
-            {
-                return new TaskResult();
-            }
-
-            if (Location == null)
-            {
-                return new TaskResult(TaskException.InvalidParameters);
-            }
-
-            StorageFolder folder = await Utils.C0.TryGetFolder(Location);
-
-            if (folder == null)
-            {
-                return new TaskResult(TaskException.NoPermission);
-            }
-
-            Folder = folder;
-            return new TaskResult();
-        }
-
-        private async RawTask CompleteInfoFile(bool create_if_not_exists)
-        {
-            if (InfoFile != null)
-            {
-                return new TaskResult();
-            }
-
-            if (IsExternal)
-            {
-                return create_if_not_exists ?
-                    new TaskResult(TaskException.NoPermission) :
-                    new TaskResult(TaskException.FileNotExists);
-            }
-
-            TaskResult res = await CompleteFolder();
-
-            System.Diagnostics.Debug.Assert(res.ExceptionType == TaskException.Success);
-
-            IStorageItem item = await Folder.TryGetItemAsync(Manager.ComicInfoFileName);
-
-            if (item == null)
-            {
-                if (!create_if_not_exists)
-                {
-                    return new TaskResult(TaskException.FileNotExists);
-                }
-
-                InfoFile = await Folder.CreateFileAsync(Manager.ComicInfoFileName, CreationCollisionOption.FailIfExists);
-                return new TaskResult();
-            }
-
-            if (!(item is StorageFile))
-            {
-                return new TaskResult(TaskException.NameCollision);
-            }
-
-            InfoFile = (StorageFile)item;
-            return new TaskResult();
-        }
-
-        public override async RawTask UpdateInfo()
-        {
-            string info_text;
-
-            if (InfoFile != null)
-            {
-                info_text = await FileIO.ReadTextAsync(InfoFile);
-            }
-            else
-            {
-                string path = Location + "\\" + Manager.ComicInfoFileName;
-
-                try
-                {
-                    info_text = await Utils.Win32IO.ReadFileFromPath(path);
-                }
-                catch (IOException)
-                {
-                    return new TaskResult(TaskException.Failure);
-                }
-            }
-
-            ParseInfo(info_text);
-            return new TaskResult();
-        }
-
-        protected override async RawTask SaveInfoFile()
-        {
-            TaskResult r = await CompleteInfoFile(true);
-
-            if (!r.Successful)
-            {
-                return r;
-            }
-
-            string text = InfoString();
-            IBuffer buffer = Utils.C0.GetBufferFromString(text);
-            await FileIO.WriteBufferAsync(InfoFile, buffer);
-            return new TaskResult();
-        }
-
-        public override async RawTask UpdateImages(LockContext db, bool cover = false)
-        {
-            // Try complete comic folder.
-            await XmlDatabaseManager.WaitLock();
-            try
-            {
-                TaskResult res = await CompleteFolder();
-
-                if (!res.Successful)
-                {
-                    return new TaskResult(TaskException.NoPermission);
-                }
-            }
-            finally
-            {
-                XmlDatabaseManager.ReleaseLock();
-            }
-
-            // Try load cover on cover=true.
-            if (cover && CoverFileName.Length > 0)
-            {
-                IStorageItem item = await Folder.TryGetItemAsync(CoverFileName);
-
-                if (item != null && item.IsOfType(StorageItemTypes.File))
-                {
-                    StorageFile cover_file = (StorageFile)item;
-                    ImageFiles.Clear();
-                    ImageFiles.Add(cover_file);
-                    return new TaskResult();
-                }
-            }
-
-            Utils.Debug.Log("Retrieving images for '" + Folder.Path + "'.");
-
-            // Load all images.
-            QueryOptions query_options = new QueryOptions
-            {
-                FolderDepth = FolderDepth.Shallow,
-                IndexerOption = IndexerOption.DoNotUseIndexer, // UseIndexerWhenAvailable may fail.
-            };
-
-            foreach (string type in Utils.AppInfoProvider.SupportedImageTypes)
-            {
-                query_options.FileTypeFilter.Add(type);
-            }
-
-            var query = Folder.CreateFileQueryWithOptions(query_options);
-            var img_files = await query.GetFilesAsync();
-            Utils.Debug.Log("Adding " + img_files.Count.ToString() + " images.");
-
-            if (img_files.Count == 0)
-            {
-                return new TaskResult(TaskException.EmptySet);
-            }
-
-            // Sort by display name.
-            ImageFiles = img_files.OrderBy(x => x.DisplayName,
-                new Utils.StringUtils.FileNameComparer()).ToList();
-
-            CoverFileName = ImageFiles[0].Name;
-            await SaveBasic(db);
-            return new TaskResult();
-        }
-
-        public override async Task<IRandomAccessStream> GetImageStream(int index)
-        {
-            try
-            {
-                return await ImageFiles[index].OpenAsync(FileAccessMode.Read);
-            }
-            catch (FileNotFoundException)
-            {
-                return null;
-            }
-        }
-
-        public static async Task Update(LockContext db, string location, bool is_exist)
-        {
-            Utils.Debug.Log((is_exist ? "Updat" : "Add") + "ing folder '" + location + "'");
-            List<string> filenames = Utils.Win32IO.SubFiles(location, "*");
-            Utils.Debug.Log(filenames.Count.ToString() + " files found.");
-            bool info_file_exist = false;
-
-            for (int i = filenames.Count - 1; i >= 0; i--)
-            {
-                string file_path = filenames[i];
-                string filename = Utils.StringUtils.ItemNameFromPath(file_path).ToLower();
-                string extension = Utils.StringUtils.ExtensionFromFilename(filename);
-
-                if (filename == Manager.ComicInfoFileName)
-                {
-                    info_file_exist = true;
-                }
-
-                if (!Utils.AppInfoProvider.IsSupportedImageExtension(extension))
-                {
-                    filenames.RemoveAt(i);
-                }
-            }
-
-            if (filenames.Count == 0)
-            {
-                if (is_exist)
-                {
-                    await Manager.RemoveWithLocation(db, location);
-                }
-                return;
-            }
-
-            // Update or create a new one.
-            ComicData comic;
-
-            if (is_exist)
-            {
-                comic = await Manager.FromLocation(db, location);
-            }
-            else
-            {
-                comic = FromDatabase(location);
-            }
-
-            if (comic == null)
-            {
-                return;
-            }
-
-            if (info_file_exist)
-            {
-                // Load comic info locally.
-                TaskResult r = await comic.UpdateInfo();
-
-                if (r.Successful)
-                {
-                    await comic.SaveAll(db);
-                    return;
-                }
-            }
-
-            if (is_exist)
-            {
-                return;
-            }
-
-            comic.SetAsDefaultInfo();
-            await comic.SaveAll(db);
-        }
-    }
-
-    public class ComicZipData : ComicData
-    {
-        private StorageFile Archive;
-        private List<string> Entries = new List<string>();
-        public override int ImageCount => Entries.Count;
-        public override bool IsEditable => true;
-
-        private ComicZipData(bool is_external) :
-            base(ComicType.Zip, is_external) {}
-
-        public static ComicData FromDatabase(string location)
-        {
-            return new ComicZipData(false)
-            {
-                Location = location,
-            };
-        }
-
-        public static async Task<ComicData> FromExternal(LockContext db, StorageFile file)
-        {
-            ComicZipData comic = new ComicZipData(true)
-            {
-                Location = file.Path,
-                Archive = file,
-            };
-
-            await comic.UpdateImages(db);
-            return comic;
-        }
-
-        private async RawTask CompleteArchive()
-        {
-            if (Archive != null)
-            {
-                return new TaskResult();
-            }
-
-            if (Location == null)
-            {
-                return new TaskResult(TaskException.InvalidParameters);
-            }
-
-            StorageFile file = await Utils.C0.TryGetFile(Location);
-
-            if (file == null)
-            {
-                return new TaskResult(TaskException.NoPermission);
-            }
-
-            Archive = file;
-            return new TaskResult();
-        }
-
-        public override async RawTask UpdateInfo()
-        {
-            TaskResult r = await CompleteArchive();
-
-            if (!r.Successful)
-            {
-                return r;
-            }
-
-            string info_text;
-
-            using (Stream stream = await Archive.OpenStreamForReadAsync())
-            using (ZipArchive archive = new ZipArchive(stream))
-            {
-                ZipArchiveEntry info_entry = null;
-
-                foreach (ZipArchiveEntry entry in archive.Entries)
-                {
-                    if (entry.FullName.Contains('/'))
-                    {
-                        continue;
-                    }
-
-                    if (entry.FullName.ToLower().Equals(Manager.ComicInfoFileName))
-                    {
-                        info_entry = entry;
-                        break;
-                    }
-                }
-
-                if (info_entry == null)
-                {
-                    return new TaskResult(TaskException.Failure);
-                }
-
-                using (StreamReader reader = new StreamReader(info_entry.Open()))
-                {
-                    info_text = await reader.ReadToEndAsync();
-                }
-            }
-
-            ParseInfo(info_text);
-            return new TaskResult();
-        }
-
-        protected override async RawTask SaveInfoFile()
-        {
-            TaskResult r = await CompleteArchive();
-
-            if (!r.Successful)
-            {
-                return r;
-            }
-
-            string text = InfoString();
-
-            using (IRandomAccessStream stream = await Archive.OpenAsync(FileAccessMode.ReadWrite))
-            using (ZipArchive archive = new ZipArchive(stream.AsStream(), ZipArchiveMode.Update))
-            {
-                ZipArchiveEntry info_entry = null;
-
-                foreach (ZipArchiveEntry entry in archive.Entries)
-                {
-                    if (entry.FullName.Contains('/'))
-                    {
-                        continue;
-                    }
-
-                    if (entry.FullName.ToLower().Equals(Manager.ComicInfoFileName))
-                    {
-                        info_entry = entry;
-                        break;
-                    }
-                }
-
-                if (info_entry != null)
-                {
-                    info_entry.Delete();
-                }
-
-                info_entry = archive.CreateEntry(Manager.ComicInfoFileName);
-
-                using (StreamWriter writer = new StreamWriter(info_entry.Open()))
-                {
-                    await writer.WriteAsync(text);
-                }
-            }
-
-            return new TaskResult();
-        }
-
-        public override async RawTask UpdateImages(LockContext db, bool cover = false)
-        {
-            TaskResult r = await CompleteArchive();
-
-            if (!r.Successful)
-            {
-                return r;
-            }
-
-            Entries.Clear();
-
-            using (Stream stream = await Archive.OpenStreamForReadAsync())
-            using (ZipArchive archive = new ZipArchive(stream))
-            {
-                foreach (ZipArchiveEntry entry in archive.Entries)
-                {
-                    if (entry.FullName.Contains('/'))
-                    {
-                        continue;
-                    }
-
-                    string extension = Utils.StringUtils.ExtensionFromFilename(entry.FullName);
-
-                    if (!Utils.AppInfoProvider.IsSupportedImageExtension(extension))
-                    {
-                        continue;
-                    }
-
-                    Entries.Add(entry.FullName);
-
-                    if (cover)
-                    {
-                        break;
-                    }
-                }
-            }
-
-            return new TaskResult();
-        }
-
-        public override async Task<IRandomAccessStream> GetImageStream(int index)
-        {
-            if (index >= Entries.Count)
-            {
-                System.Diagnostics.Debug.Assert(false);
-                return null;
-            }
-
-            using (Stream stream = await Archive.OpenStreamForReadAsync())
-            using (ZipArchive archive = new ZipArchive(stream))
-            {
-                ZipArchiveEntry entry = archive.GetEntry(Entries[index]);
-
-                // Create a .NET memory stream.
-                var mem_stream = new MemoryStream();
-                
-                // Convert the stream to the memory stream, because a memory stream supports seeking.
-                await entry.Open().CopyToAsync(mem_stream);
-
-                // Set the start position.
-                mem_stream.Position = 0;
-                
-                return mem_stream.AsRandomAccessStream();
-            }
-        }
-
-        public static async Task Update(LockContext db, string location, bool is_exist)
-        {
-            StorageFile archive_file = await Utils.C0.TryGetFile(location);
-
-            if (archive_file == null)
-            {
-                Utils.Debug.Log("Failed to open '" + location + "', no permission");
-                return;
-            }
-
-            Stream stream = await archive_file.OpenStreamForReadAsync();
-            ZipArchive archive = new ZipArchive(stream);
-
-            List<string> filenames = new List<string>();
-            bool info_file_exist = false;
-
-            foreach (ZipArchiveEntry entry in archive.Entries)
-            {
-                string filename = entry.FullName;
-
-                if (filename.IndexOf('/') != -1)
-                {
-                    continue;
-                }
-
-                if (filename == Manager.ComicInfoFileName)
-                {
-                    info_file_exist = true;
-                }
-
-                string extension = Utils.StringUtils.ExtensionFromFilename(filename);
-
-                if (!Utils.AppInfoProvider.IsSupportedImageExtension(extension))
-                {
-                    continue;
-                }
-
-                filenames.Add(filename);
-            }
-
-            Utils.Debug.Log(filenames.Count.ToString() + " images found.");
-
-            if (filenames.Count == 0)
-            {
-                if (is_exist)
-                {
-                    await Manager.RemoveWithLocation(db, location);
-                }
-                return;
-            }
-
-            // Update or create a new one.
-            ComicData comic;
-
-            if (is_exist)
-            {
-                comic = await Manager.FromLocation(db, location);
-            }
-            else
-            {
-                comic = FromDatabase(location);
-            }
-
-            if (comic == null)
-            {
-                return;
-            }
-
-            if (info_file_exist)
-            {
-                // Load comic info locally.
-                TaskResult r = await comic.UpdateInfo();
-
-                if (r.Successful)
-                {
-                    await comic.SaveAll(db);
-                    return;
-                }
-            }
-
-            if (is_exist)
-            {
-                return;
-            }
-
-            comic.SetAsDefaultInfo();
-            await comic.SaveAll(db);
-        }
-    }
 }

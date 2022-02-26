@@ -326,7 +326,14 @@ namespace ComicReader.Views
 
         private void OnRefreshBtClicked(object sender, RoutedEventArgs e)
         {
-            RefreshPage();
+            if (Shared.IsHomePage)
+            {
+                HomePage.RefreshPage();
+            }
+            else
+            {
+                RefreshPage();
+            }
         }
 
         private void GoBackClick(object sender, RoutedEventArgs e)

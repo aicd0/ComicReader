@@ -162,6 +162,8 @@
     <Compile Include="Converters\FavoritesItemTemplateSelector.cs" />
     <Compile Include="Converters\FolderItemTemplateSelector.cs" />
     <Compile Include="Converters\SearchResultItemContainerStyleSelector.cs" />
+    <Compile Include="Database\ComicFolderData.cs" />
+    <Compile Include="Database\ComicZipData.cs" />
     <Compile Include="Database\SettingData.cs" />
     <Compile Include="Database\ComicData.cs" />
     <Compile Include="Database\FavoriteData.cs" />

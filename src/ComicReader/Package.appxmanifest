@@ -9,7 +9,7 @@
   <Identity
     Name="49915aicd.ComicReaderUWP"
     Publisher="CN=EDF29702-407F-438D-9326-040AAE6557ED"
-    Version="1.1.1.0" />
+    Version="1.1.2.0" />
 
   <mp:PhoneIdentity PhoneProductId="1e81f69a-4700-45d0-8a1b-04de29e5f072" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
@@ -44,9 +44,11 @@
           <uap:FileTypeAssociation Name="images">
             <uap:SupportedFileTypes>
               <uap:FileType>.jpg</uap:FileType>
+              <uap:FileType>.jpe</uap:FileType>
               <uap:FileType>.jpeg</uap:FileType>
               <uap:FileType>.png</uap:FileType>
               <uap:FileType>.bmp</uap:FileType>
+              <uap:FileType>.gif</uap:FileType>
               <uap:FileType>.zip</uap:FileType>
             </uap:SupportedFileTypes>
             <uap:EditFlags OpenIsSafe="true"/>

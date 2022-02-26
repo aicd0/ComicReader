@@ -18,6 +18,7 @@ namespace ComicReader.Utils
         NameCollision,
         NoPermission,
         Success,
+        UnknownEnum,
     }
 
     public class TaskResult

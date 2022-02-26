@@ -98,9 +98,10 @@ namespace ComicReader.Database
             return new TaskResult();
         }
 
-        public static SealedTask SaveSealed(XmlDatabaseItem item) => (RawTask _) => _Save(item).Result;
+        public static SealedTask SaveSealed(XmlDatabaseItem item) =>
+            (RawTask _) => SaveUnsealed(item).Result;
 
-        private static async RawTask _Save(XmlDatabaseItem item)
+        public static async RawTask SaveUnsealed(XmlDatabaseItem item)
         {
             Utils.Debug.Log("Saving: " + item.ToString());
 

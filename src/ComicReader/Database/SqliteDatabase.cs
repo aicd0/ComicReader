@@ -42,46 +42,43 @@ namespace ComicReader.Database
             await DatabaseFolder.CreateFileAsync(DatabaseFileName, CreationCollisionOption.OpenIfExists);
 
             // Build connection.
-            SqliteConnection connection =
-                new SqliteConnection($"Filename={DatabasePath}");
+            SqliteConnection connection = new SqliteConnection($"Filename={DatabasePath}");
             connection.Open();
-            SqliteCommand command = connection.CreateCommand();
-
-            // Create comic table.
-            command.CommandText = "CREATE TABLE IF NOT EXISTS " + ComicTable + " (" +
-                ComicData.Field.Id + " INTEGER PRIMARY KEY AUTOINCREMENT," + // 0
-                ComicData.Field.Type + " INTEGER NOT NULL," + // 1
-                ComicData.Field.Location + " TEXT NOT NULL," + // 2
-                ComicData.Field.Title1 + " TEXT," + // 3
-                ComicData.Field.Title2 + " TEXT," + // 4
-                ComicData.Field.Hidden + " BOOLEAN NOT NULL," + // 5
-                ComicData.Field.Rating + " INTEGER NOT NULL," + // 6
-                ComicData.Field.Progress + " INTEGER NOT NULL," + // 7
-                ComicData.Field.LastVisit + " TIMESTAMP NOT NULL," + // 8
-                ComicData.Field.LastPosition + " REAL NOT NULL," + // 9
-                ComicData.Field.ImageAspectRatios + " BLOB," + // 10
-                ComicData.Field.CoverFileName + " TEXT)"; // 11
-            command.ExecuteNonQuery();
-
-            // Create tag category table.
-            command.CommandText = "CREATE TABLE IF NOT EXISTS " + TagCategoryTable + " (" +
-                ComicData.Field.TagCategory.Id + " INTEGER PRIMARY KEY AUTOINCREMENT," + // 0
-                ComicData.Field.TagCategory.Name + " TEXT," + // 1
-                ComicData.Field.TagCategory.ComicId + " INTEGER REFERENCES " + ComicTable + "(" + ComicData.Field.Id + ") ON DELETE CASCADE)"; // 2
-            command.ExecuteNonQuery();
-
-            // Create tag table.
-            command.CommandText = "CREATE TABLE IF NOT EXISTS " + TagTable + " (" +
-                ComicData.Field.Tag.Content + " TEXT," + // 0
-                ComicData.Field.Tag.ComicId + " INTEGER NOT NULL," + // 1
-                ComicData.Field.Tag.TagCategoryId + " INTEGER REFERENCES " + TagCategoryTable + "(" + ComicData.Field.TagCategory.Id + ") ON DELETE CASCADE)"; // 2
-            command.ExecuteNonQuery();
-            
-            // Cleanups.
-            command.Dispose();
-
-            // Enable database.
             m_connection = connection;
+
+            // Create tables.
+            using (SqliteCommand command = NewCommand())
+            {
+                // Create comic table.
+                command.CommandText = "CREATE TABLE IF NOT EXISTS " + ComicTable + " (" +
+                    ComicData.Field.Id + " INTEGER PRIMARY KEY AUTOINCREMENT," + // 0
+                    ComicData.Field.Type + " INTEGER NOT NULL," + // 1
+                    ComicData.Field.Location + " TEXT NOT NULL," + // 2
+                    ComicData.Field.Title1 + " TEXT," + // 3
+                    ComicData.Field.Title2 + " TEXT," + // 4
+                    ComicData.Field.Hidden + " BOOLEAN NOT NULL," + // 5
+                    ComicData.Field.Rating + " INTEGER NOT NULL," + // 6
+                    ComicData.Field.Progress + " INTEGER NOT NULL," + // 7
+                    ComicData.Field.LastVisit + " TIMESTAMP NOT NULL," + // 8
+                    ComicData.Field.LastPosition + " REAL NOT NULL," + // 9
+                    ComicData.Field.ImageAspectRatios + " BLOB," + // 10
+                    ComicData.Field.CoverFileName + " TEXT)"; // 11
+                await command.ExecuteNonQueryAsync();
+
+                // Create tag category table.
+                command.CommandText = "CREATE TABLE IF NOT EXISTS " + TagCategoryTable + " (" +
+                    ComicData.Field.TagCategory.Id + " INTEGER PRIMARY KEY AUTOINCREMENT," + // 0
+                    ComicData.Field.TagCategory.Name + " TEXT," + // 1
+                    ComicData.Field.TagCategory.ComicId + " INTEGER REFERENCES " + ComicTable + "(" + ComicData.Field.Id + ") ON DELETE CASCADE)"; // 2
+                await command.ExecuteNonQueryAsync();
+
+                // Create tag table.
+                command.CommandText = "CREATE TABLE IF NOT EXISTS " + TagTable + " (" +
+                    ComicData.Field.Tag.Content + " TEXT," + // 0
+                    ComicData.Field.Tag.ComicId + " INTEGER NOT NULL," + // 1
+                    ComicData.Field.Tag.TagCategoryId + " INTEGER REFERENCES " + TagCategoryTable + "(" + ComicData.Field.TagCategory.Id + ") ON DELETE CASCADE)"; // 2
+                await command.ExecuteNonQueryAsync();
+            }
         }
 
         public static SqliteCommand NewCommand()
@@ -214,6 +211,15 @@ namespace ComicReader.Database
             {
                 command.Dispose();
             }
+        }
+
+        public static async Task<bool> IsTableExist(string table)
+        {
+            SqliteCommand command = NewCommand();
+            command.CommandText = "select count(*) from sqlite_master where type='table' and name='$table'";
+            command.Parameters.AddWithValue("$table", table);
+            long count = (long)await command.ExecuteScalarAsync();
+            return count > 0;
         }
 
         // For backward compability.
