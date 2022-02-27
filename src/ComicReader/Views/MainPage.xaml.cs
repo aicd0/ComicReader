@@ -67,7 +67,7 @@ namespace ComicReader.Views
 
             StorageFile target_file = (StorageFile)args.Files[0];
 
-            if (!Utils.AppInfoProvider.IsSupportedFileExtension(target_file.FileType))
+            if (!Utils.AppInfoProvider.IsSupportedExternalFileExtension(target_file.FileType))
             {
                 return;
             }

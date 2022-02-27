@@ -49,6 +49,9 @@
               <uap:FileType>.png</uap:FileType>
               <uap:FileType>.bmp</uap:FileType>
               <uap:FileType>.gif</uap:FileType>
+              <uap:FileType>.tif</uap:FileType>
+              <uap:FileType>.tiff</uap:FileType>
+              <uap:FileType>.webp</uap:FileType>
               <uap:FileType>.zip</uap:FileType>
             </uap:SupportedFileTypes>
             <uap:EditFlags OpenIsSafe="true"/>

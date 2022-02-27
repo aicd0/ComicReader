@@ -200,7 +200,7 @@ namespace ComicReader.Database
                 IndexerOption = IndexerOption.DoNotUseIndexer, // UseIndexerWhenAvailable may fail.
             };
 
-            foreach (string type in Utils.AppInfoProvider.SupportedImageTypes)
+            foreach (string type in Utils.AppInfoProvider.SupportedImageExtensions)
             {
                 query_options.FileTypeFilter.Add(type);
             }
