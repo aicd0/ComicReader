@@ -185,11 +185,11 @@ namespace ComicReader.Views
             {
                 if (IsFavorite)
                 {
-                    return Utils.C0.TryGetResourceString("RemoveFromFavorites");
+                    return Utils.StringResourceProvider.GetResourceString("RemoveFromFavorites");
                 }
                 else
                 {
-                    return Utils.C0.TryGetResourceString("AddToFavorites");
+                    return Utils.StringResourceProvider.GetResourceString("AddToFavorites");
                 }
             }
         }

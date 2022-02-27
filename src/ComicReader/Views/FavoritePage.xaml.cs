@@ -207,7 +207,7 @@ namespace ComicReader.Views
         private void CreateNewFolder(ObservableCollection<FavoriteItemViewModel> folder, FavoriteItemViewModel parent)
         {
             string folderName;
-            string new_folder_string = Utils.C0.TryGetResourceString("NewFolder");
+            string new_folder_string = Utils.StringResourceProvider.GetResourceString("NewFolder");
 
             for (int folderIndex = 1; folderIndex < 65536; ++folderIndex)
             {

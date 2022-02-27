@@ -144,7 +144,7 @@ namespace ComicReader.Database
             {
                 if (m_UntitledCollectionString == null)
                 {
-                    m_UntitledCollectionString = Utils.C0.TryGetResourceString("UntitledCollection");
+                    m_UntitledCollectionString = Utils.StringResourceProvider.GetResourceString("UntitledCollection");
                 }
 
                 return m_UntitledCollectionString;
@@ -406,8 +406,8 @@ namespace ComicReader.Database
         }
 
         // Info.
-        public SealedTask SaveInfoFileSealed() =>
-            (RawTask _) => SaveInfoFile().Result;
+        public SealedTask SaveToInfoFileSealed() =>
+            (RawTask _) => SaveToInfoFile().Result;
 
         public string TagString()
         {
@@ -484,9 +484,9 @@ namespace ComicReader.Database
             }
         }
 
-        public abstract RawTask UpdateInfo();
+        public abstract RawTask LoadFromInfoFile();
 
-        protected abstract RawTask SaveInfoFile();
+        protected abstract RawTask SaveToInfoFile();
 
         public abstract RawTask UpdateImages(LockContext db, bool cover = false);
 
@@ -512,7 +512,7 @@ namespace ComicReader.Database
                     {
                         Utils.C0.Sync(delegate
                         {
-                            m_DefaultTagsString = Utils.C0.TryGetResourceString("DefaultTags");
+                            m_DefaultTagsString = Utils.StringResourceProvider.GetResourceString("DefaultTags");
                         }).Wait();
                     }
 
@@ -694,10 +694,8 @@ namespace ComicReader.Database
                 ComicData.Manager.ReleaseLock(db);
             }
 
-            public static SealedTask UpdateSealed(bool lazy_load)
-            {
-                return (RawTask _) => UpdateUnsealed(new LockContext(), lazy_load).Result;
-            }
+            public static SealedTask UpdateSealed(bool lazy_load) =>
+                (RawTask _) => UpdateUnsealed(new LockContext(), lazy_load).Result;
 
             private struct UpdateItemInfo
             {
@@ -756,7 +754,7 @@ namespace ComicReader.Database
                     foreach (string folder_path in root_folders)
                     {
                         Log("Scanning folder '" + folder_path + "'");
-                        StorageFolder root_folder = await Utils.C0.TryGetFolder(folder_path);
+                        StorageFolder root_folder = await Utils.Storage.TryGetFolder(folder_path);
 
                         // Remove unreachable folders from database.
                         if (root_folder == null)

@@ -23,16 +23,16 @@ namespace ComicReader.Utils.Search
 
             if (unique_string == "<~hidden>")
             {
-                return Utils.C0.TryGetResourceString("AllComics");
+                return Utils.StringResourceProvider.GetResourceString("AllComics");
             }
             else if (unique_string == "<hidden>")
             {
-                return Utils.C0.TryGetResourceString("AllHidden");
+                return Utils.StringResourceProvider.GetResourceString("AllHidden");
             }
             else if (m_subfilters.Count == 2 && m_subfilters[0] is SubFilterDirectory && m_subfilters[1].UniqueString == "~hidden")
             {
                 string dir = (m_subfilters[0] as SubFilterDirectory).Directory;
-                string format_string = Utils.C0.TryGetResourceString("AllComicsIn");
+                string format_string = Utils.StringResourceProvider.GetResourceString("AllComicsIn");
                 format_string = format_string.Replace("$path", dir);
                 return format_string;
             }
@@ -55,7 +55,7 @@ namespace ComicReader.Utils.Search
                 return "";
             }
 
-            string format_string = Utils.C0.TryGetResourceString("FilteredBy");
+            string format_string = Utils.StringResourceProvider.GetResourceString("FilteredBy");
             format_string = format_string.Replace("$count", cpy.Count.ToString());
             string res = format_string + ": ";
 

@@ -70,11 +70,11 @@ namespace ComicReader.Database
         [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
         private static async RawTask _Load(XmlData obj)
         {
-            object file = await Utils.C0.TryGetFile(DatabaseFolder, obj.FileName);
+            object file = await Utils.Storage.TryGetFile(DatabaseFolder, obj.FileName);
 
             if (file == null)
             {
-                return new TaskResult(TaskException.FileNotExists);
+                return new TaskResult(TaskException.FileNotFound);
             }
 
             IRandomAccessStream stream = await (file as StorageFile).OpenAsync(FileAccessMode.Read);

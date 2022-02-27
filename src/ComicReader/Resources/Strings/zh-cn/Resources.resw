@@ -521,7 +521,7 @@
   <data name="AppDescription" xml:space="preserve">
     <value>漫画阅读器</value>
   </data>
-  <data name="ReaderLoading.Text" xml:space="preserve">
+  <data name="ReaderStatusLoading" xml:space="preserve">
     <value>阅读器加载中</value>
   </data>
   <data name="DebugMode.Text" xml:space="preserve">
@@ -574,5 +574,8 @@
   </data>
   <data name="HotkeyLastPage.Header" xml:space="preserve">
     <value>跳转到最后一页</value>
+  </data>
+  <data name="ReaderStatusError" xml:space="preserve">
+    <value>加载时发生错误</value>
   </data>
 </root>

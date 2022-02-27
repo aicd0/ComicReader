@@ -52,35 +52,6 @@ namespace ComicReader.Views
     {
         public HomePageShared Shared { get; set; } = new HomePageShared();
 
-        // Resources.
-        private string m_string_finished = null;
-        private string StringFinished
-        {
-            get
-            {
-                if (m_string_finished == null)
-                {
-                    m_string_finished = Utils.C0.TryGetResourceString("Finished");
-                }
-
-                return m_string_finished;
-            }
-        }
-
-        private string m_string_unread = null;
-        private string StringUnread
-        {
-            get
-            {
-                if (m_string_unread == null)
-                {
-                    m_string_unread = Utils.C0.TryGetResourceString("Unread");
-                }
-
-                return m_string_unread;
-            }
-        }
-
         private Utils.ObservableCollectionPlus<ComicItemViewModel> ComicItemSource
             = new Utils.ObservableCollectionPlus<ComicItemViewModel>();
         public ObservableCollection<FolderItemViewModel> FolderItemDataSource { get; set; }
@@ -139,7 +110,7 @@ namespace ComicReader.Views
         private void OnTabStart(Utils.Tab.TabIdentifier tab_id)
         {
             Shared.NavigationPageShared.CurrentPageType = Utils.Tab.PageType.Home;
-            tab_id.Tab.Header = Utils.C0.TryGetResourceString("NewTab");
+            tab_id.Tab.Header = Utils.StringResourceProvider.GetResourceString("NewTab");
             tab_id.Tab.IconSource = new muxc.SymbolIconSource() { Symbol = Symbol.Document };
             Shared.NavigationPageShared.SetSearchBox("");
         }
@@ -182,11 +153,11 @@ namespace ComicReader.Views
 
             if (comic.Progress < 0)
             {
-                model.Progress = StringUnread;
+                model.Progress = Utils.StringResourceProvider.GetResourceString("Unread");
             }
             else if (comic.Progress >= 100)
             {
-                model.Progress = StringFinished;
+                model.Progress = Utils.StringResourceProvider.GetResourceString("Finished");
             }
             else
             {

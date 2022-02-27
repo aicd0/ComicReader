@@ -179,6 +179,8 @@
     <Compile Include="Utils\Debug.cs" />
     <Compile Include="Utils\ImageLoader.cs" />
     <Compile Include="Utils\Stopwatch.cs" />
+    <Compile Include="Utils\Storage.cs" />
+    <Compile Include="Utils\StringResourceProvider.cs" />
     <Compile Include="Utils\Win32IO.cs" />
     <Compile Include="Utils\TabManager.cs" />
     <Compile Include="DesignData\FolderItemViewModel.cs" />

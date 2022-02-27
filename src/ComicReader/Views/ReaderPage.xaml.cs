@@ -5,9 +5,6 @@
 //#define DEBUG_LOG_UPDATE_PAGE
 //#define DEBUG_LOG_MANIPULATION
 #endif
-#if DEBUG_LOG_LOAD || DEBUG_LOG_JUMP || DEBUG_LOG_VIEW_CHANGE || DEBUG_LOG_UPDATE_PAGE || DEBUG_LOG_MANIPULATION
-#define DEBUG_LOG
-#endif
 
 using System;
 using System.Collections.Generic;
@@ -32,7 +29,9 @@ using ComicReader.DesignData;
 namespace ComicReader.Views
 {
     using RawTask = Task<Utils.TaskResult>;
+    using SealedTask = Func<Task<Utils.TaskResult>, Utils.TaskResult>;
     using TaskResult = Utils.TaskResult;
+    using TaskException = Utils.TaskException;
 
     public class ReaderModel
     {
@@ -182,7 +181,7 @@ namespace ComicReader.Views
 
             _SyncFinalVal();
 #if DEBUG_LOG_LOAD
-            _Log("========== Reset ==========");
+            Log("========== Reset ==========");
 #endif
         }
 
@@ -293,7 +292,7 @@ namespace ComicReader.Views
                 {
                     await Utils.C0.WaitFor(() => IsFrameworkLoaded);
 #if DEBUG_LOG_LOAD
-                    _Log("Framework loaded");
+                    Log("Framework loaded");
 #endif
                 }
 
@@ -308,7 +307,7 @@ namespace ComicReader.Views
 
                     IsFrameworkReady = true;
 #if DEBUG_LOG_LOAD
-                    _Log("Framework ready");
+                    Log("Framework ready");
 #endif
                 }
 
@@ -322,7 +321,7 @@ namespace ComicReader.Views
 
                     IsLastPageLoaded = true;
 #if DEBUG_LOG_LOAD
-                    _Log("Last page loaded");
+                    Log("Last page loaded");
 #endif
                 }
 
@@ -334,7 +333,7 @@ namespace ComicReader.Views
 #if DEBUG_LOG_LOAD
                     if (IsInitialPageReached)
                     {
-                        _Log("Initial page reached");
+                        Log("Initial page reached");
                     }
 #endif
                 }
@@ -346,7 +345,7 @@ namespace ComicReader.Views
                         await _UpdateImages(db);
                         IsImageUpdateSucceeded = true;
 #if DEBUG_LOG_LOAD
-                        _Log("Image updated");
+                        Log("Image updated");
 #endif
                     }
                 }
@@ -356,7 +355,7 @@ namespace ComicReader.Views
                 {
                     IsLoaded = true;
 #if DEBUG_LOG_LOAD
-                    _Log("Reader loaded");
+                    Log("Reader loaded");
 #endif
                     OnLoaded?.Invoke();
                 }
@@ -399,7 +398,7 @@ namespace ComicReader.Views
                     _IncreasePage(0, false);
                 }
 #if DEBUG_LOG_VIEW_CHANGE
-                _Log("ViewChanged:"
+                Log("ViewChanged:"
                     + " Z=" + ZoomFactorFinal.ToString()
                     + ",H=" + HorizontalOffsetFinal.ToString()
                     + ",V=" + VerticalOffsetFinal.ToString()
@@ -560,7 +559,7 @@ namespace ComicReader.Views
             if (!IsFrameworkLoaded) return false;
 
 #if DEBUG_LOG_JUMP
-            _Log("ParamIn: "
+            Log("ParamIn: "
                 + "Z=" + zoom.ToString()
                 + ",H=" + horizontal_offset.ToString()
                 + ",V=" + vertical_offset.ToString()
@@ -577,7 +576,7 @@ namespace ComicReader.Views
             }
 
 #if DEBUG_LOG_JUMP
-            _Log("ParamSetPage: "
+            Log("ParamSetPage: "
                 + "H=" + horizontal_offset.ToString()
                 + ",V=" + vertical_offset.ToString());
 #endif
@@ -585,7 +584,7 @@ namespace ComicReader.Views
             _SetScrollViewerZoom(ref horizontal_offset, ref vertical_offset, ref zoom, out float? zoom_out);
 
 #if DEBUG_LOG_JUMP
-            _Log("ParamSetZoom: "
+            Log("ParamSetZoom: "
                 + "Z=" + zoom.ToString()
                 + ",Zo=" + zoom_out.ToString()
                 + ",H=" + horizontal_offset.ToString()
@@ -690,7 +689,7 @@ namespace ComicReader.Views
             }
 
 #if DEBUG_LOG_JUMP
-            _Log("Adjusting offset");
+            Log("Adjusting offset");
 #endif
 
             double? movement_forward = null;
@@ -777,7 +776,7 @@ namespace ComicReader.Views
             ThisScrollViewer.ChangeView(HorizontalOffsetFinal, VerticalOffsetFinal, ZoomFactorFinal, m_disable_animation_final);
 
 #if DEBUG_LOG_JUMP
-            _Log("Commit:"
+            Log("Commit:"
                 + " Z=" + ZoomFactorFinal.ToString()
                 + ",H=" + HorizontalOffsetFinal.ToString()
                 + ",V=" + VerticalOffsetFinal.ToString()
@@ -804,7 +803,7 @@ namespace ComicReader.Views
             }
 
 #if DEBUG_LOG_JUMP
-            _Log("Adjusting padding");
+            Log("Adjusting padding");
 #endif
 
             double zoom_factor = min_zoom * zoom_coefficient;
@@ -901,7 +900,7 @@ namespace ComicReader.Views
 
                 m_page = res;
 #if DEBUG_LOG_UPDATE_PAGE
-                _Log("Page updated (" +
+                Log("Page updated (" +
                     "Page=" + m_page.ToString() +
                     ",UseF=" + use_final.ToString() +
                     ",PO=" + parallel_offset.ToString() +
@@ -919,7 +918,7 @@ namespace ComicReader.Views
         private async Task _UpdateImages(LockContext db, bool remove_out_of_view = true)
         {
 #if DEBUG_LOG_LOAD
-            _Log("Updating images (page " + Page.ToString() + ")");
+            Log("Updating images (page " + Page.ToString() + ")");
 #endif
             await m_update_image_lock.WaitAsync();
             try
@@ -1052,17 +1051,22 @@ namespace ComicReader.Views
         private int IndexToPage(int index) => Math.Max(index + 1, 1);
 
         //  Others
-#if DEBUG_LOG
-        private void _Log(string text)
+        private void Log(string text)
         {
             if (!IsCurrentReader)
             {
                 return;
             }
 
-            Utils.Debug.Log("Reader: " + text + ".");
+            Utils.Debug.Log("Reader: " + text);
         }
-#endif
+    }
+
+    public enum ReaderStatusEnum
+    {
+        Loading,
+        Error,
+        Working,
     }
 
     public class ReaderPageShared : INotifyPropertyChanged
@@ -1180,17 +1184,28 @@ namespace ComicReader.Views
         }
 
         // reader
-        public bool IsLoading = true;
+        public ReaderStatusEnum ReaderStatus = ReaderStatusEnum.Loading;
         public bool IsReaderVertical = true;
 
-        private bool m_IsLoadingTextBlockVisible = false;
-        public bool IsLoadingTextBlockVisible
+        private string m_ReaderStatusText = "";
+        public string ReaderStatusText
         {
-            get => m_IsLoadingTextBlockVisible;
+            get => m_ReaderStatusText;
             set
             {
-                m_IsLoadingTextBlockVisible = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsLoadingTextBlockVisible"));
+                m_ReaderStatusText = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ReaderStatusText"));
+            }
+        }
+
+        private bool m_IsReaderStatusTextBlockVisible = false;
+        public bool IsReaderStatusTextBlockVisible
+        {
+            get => m_IsReaderStatusTextBlockVisible;
+            set
+            {
+                m_IsReaderStatusTextBlockVisible = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsReaderStatusTextBlockVisible"));
             }
         }
 
@@ -1207,12 +1222,30 @@ namespace ComicReader.Views
 
         public void UpdateReaderUI()
         {
-            bool grid_view_visible = !IsLoading && NavigationPageShared.IsPreviewButtonToggled;
-            bool reader_visible = !IsLoading && !grid_view_visible;
+            bool is_working = ReaderStatus == ReaderStatusEnum.Working;
+            bool grid_view_visible = is_working && NavigationPageShared.IsPreviewButtonToggled;
+            bool reader_visible = is_working && !grid_view_visible;
             bool vertical_reader_visible = reader_visible && IsReaderVertical;
             bool horizontal_reader_visible = reader_visible && !vertical_reader_visible;
 
-            IsLoadingTextBlockVisible = IsLoading;
+            IsReaderStatusTextBlockVisible = !is_working;
+
+            if (IsReaderStatusTextBlockVisible)
+            {
+                switch (ReaderStatus)
+                {
+                    case ReaderStatusEnum.Loading:
+                        ReaderStatusText = Utils.StringResourceProvider.GetResourceString("ReaderStatusLoading");
+                        break;
+                    case ReaderStatusEnum.Error:
+                        ReaderStatusText = Utils.StringResourceProvider.GetResourceString("ReaderStatusError");
+                        break;
+                    default:
+                        System.Diagnostics.Debug.Assert(false);
+                        break;
+                }
+            }
+
             IsGridViewVisible = grid_view_visible;
             NavigationPageShared.IsSwitchToVerticalReaderButtonVisible = !IsReaderVertical;
             NavigationPageShared.IsSwitchToHorizontalReaderButtonVisible = IsReaderVertical;
@@ -1240,11 +1273,11 @@ namespace ComicReader.Views
             {
                 if (BottomTilePinned)
                 {
-                    return Utils.C0.TryGetResourceString("Unpin");
+                    return Utils.StringResourceProvider.GetResourceString("Unpin");
                 }
                 else
                 {
-                    return Utils.C0.TryGetResourceString("Pin");
+                    return Utils.StringResourceProvider.GetResourceString("Pin");
                 }
             }
         }
@@ -1440,7 +1473,7 @@ namespace ComicReader.Views
                 return;
             }
 
-            Shared.IsLoading = true;
+            Shared.ReaderStatus = ReaderStatusEnum.Loading;
             Shared.UpdateReaderUI();
 
             VerticalReader.Reset();
@@ -1452,7 +1485,7 @@ namespace ComicReader.Views
 
             reader.OnLoaded = () =>
             {
-                Shared.IsLoading = false;
+                Shared.ReaderStatus = ReaderStatusEnum.Working;
                 Shared.UpdateReaderUI();
                 UpdatePage(reader);
                 BottomTileShow();
@@ -1475,7 +1508,15 @@ namespace ComicReader.Views
                 await HistoryDataManager.Add(m_comic.Id, m_comic.Title1, true);
 
                 // Update image files.
-                await m_comic.UpdateImages(db);
+                TaskResult r = await m_comic.UpdateImages(db);
+
+                if (!r.Successful)
+                {
+                    Log("Failed to load images of '" + m_comic.Location + "', exception: " + r.ExceptionType.ToString());
+                    Shared.ReaderStatus = ReaderStatusEnum.Error;
+                    Shared.UpdateReaderUI();
+                    return;
+                }
 
                 // Set initial page.
                 reader.InitialPage = m_comic.LastPosition;
@@ -1489,21 +1530,14 @@ namespace ComicReader.Views
                 }
             }
 
-            Utils.TaskQueueManager.AppendTask(delegate (RawTask _t)
-            {
-                // Stop loading if failed to retrieve image folder.
-                if (!_t.Result.Successful)
-                {
-                    return _t.Result;
-                }
-
-                return LoadImagesAsync(db).Result;
-            }, "", m_load_image_queue);
-
+            Utils.TaskQueueManager.AppendTask(LoadImagesSealed(), "", m_load_image_queue);
             await LoadComicInfo();
         }
 
-        private async RawTask LoadImagesAsync(LockContext db)
+        private SealedTask LoadImagesSealed() =>
+            (RawTask _) => LoadImagesUnsealed(new LockContext()).Result;
+
+        private async RawTask LoadImagesUnsealed(LockContext db)
         {
             await m_load_image_lock.WaitAsync();
 
@@ -1819,7 +1853,7 @@ namespace ComicReader.Views
             // do nothing.
 
 #if DEBUG_LOG_MANIPULATION
-            _Log("Manipulation started");
+            Log("Manipulation started");
 #endif
         }
 
@@ -1874,7 +1908,7 @@ namespace ComicReader.Views
             });
 
 #if DEBUG_LOG_MANIPULATION
-            _Log("Manipulation completed");
+            Log("Manipulation completed");
 #endif
         }
 
@@ -1885,7 +1919,7 @@ namespace ComicReader.Views
                 (sender as UIElement).CapturePointer(e.Pointer);
                 m_gesture_recognizer.ProcessDownEvent(e.GetCurrentPoint(ManipulationReference));
 #if DEBUG_LOG_MANIPULATION
-                _Log("Pointer pressed");
+                Log("Pointer pressed");
 #endif
             }
         }
@@ -1895,9 +1929,8 @@ namespace ComicReader.Views
             if (horizontal || e.Pointer.PointerDeviceType == PointerDeviceType.Mouse)
             {
                 m_gesture_recognizer.ProcessMoveEvents(e.GetIntermediatePoints(ManipulationReference));
-
 #if DEBUG_LOG_MANIPULATION
-                //_Log("Pointer moved");
+                //Log("Pointer moved");
 #endif
             }
         }
@@ -1909,7 +1942,7 @@ namespace ComicReader.Views
                 m_gesture_recognizer.ProcessUpEvent(e.GetCurrentPoint(ManipulationReference));
                 (sender as UIElement).ReleasePointerCapture(e.Pointer);
 #if DEBUG_LOG_MANIPULATION
-                _Log("Pointer released");
+                Log("Pointer released");
 #endif
             }
         }
@@ -2331,11 +2364,9 @@ namespace ComicReader.Views
         }
 
         // Debug
-#if DEBUG_LOG
-        private void _Log(string text)
+        private void Log(string text)
         {
-            Utils.Debug.Log("Reader: " + text + ".");
+            Utils.Debug.Log("ReaderPage: " + text + ".");
         }
-#endif
     }
 }

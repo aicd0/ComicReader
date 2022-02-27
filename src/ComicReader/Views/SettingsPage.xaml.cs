@@ -251,7 +251,7 @@ namespace ComicReader.Views
 
         private void OnTabStart(Utils.Tab.TabIdentifier tab_id)
         {
-            m_tab_manager.TabId.Tab.Header = Utils.C0.TryGetResourceString("Settings");
+            m_tab_manager.TabId.Tab.Header = Utils.StringResourceProvider.GetResourceString("Settings");
             m_tab_manager.TabId.Tab.IconSource =
                 new muxc.SymbolIconSource() { Symbol = Symbol.Setting };
         }
@@ -300,18 +300,18 @@ namespace ComicReader.Views
             await UpdateStatistis(db);
 
             // Feedback.
-            string app_name = Utils.C0.TryGetResourceString("AppDisplayName");
-            string contribution_before_link = Utils.C0.TryGetResourceString("ContributionRunBeforeLink");
+            string app_name = Utils.StringResourceProvider.GetResourceString("AppDisplayName");
+            string contribution_before_link = Utils.StringResourceProvider.GetResourceString("ContributionRunBeforeLink");
             contribution_before_link = contribution_before_link.Replace("$appname", app_name);
             ContributionRunBeforeLink.Text = contribution_before_link;
-            ContributionRunAfterLink.Text = Utils.C0.TryGetResourceString("ContributionRunAfterLink");
+            ContributionRunAfterLink.Text = Utils.StringResourceProvider.GetResourceString("ContributionRunAfterLink");
 
             // About.
             PackageVersion version = Package.Current.Id.Version;
             AboutBuildVersionControl.Text = app_name + " " + version.Major + "." + version.Minor + "." + version.Build + "." + version.Revision;
 
             string author = "aicd0";
-            string about_copyright = Utils.C0.TryGetResourceString("AboutCopyright");
+            string about_copyright = Utils.StringResourceProvider.GetResourceString("AboutCopyright");
             about_copyright = about_copyright.Replace("$author", author);
             AboutCopyrightControl.Text = about_copyright;
         }
@@ -341,7 +341,7 @@ namespace ComicReader.Views
             long comic_count = (long)command.ExecuteScalar();
             ComicData.Manager.ReleaseLock(db);
 
-            string total_comic_string = Utils.C0.TryGetResourceString("TotalComics");
+            string total_comic_string = Utils.StringResourceProvider.GetResourceString("TotalComics");
             StatisticsTextBlock.Text = total_comic_string +
                 comic_count.ToString("#,#0", CultureInfo.InvariantCulture);
         }

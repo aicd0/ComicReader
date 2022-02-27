@@ -415,11 +415,11 @@
             <!--  Main section  -->
             <Grid>
                 <TextBlock
-                    x:Uid="ReaderLoading"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Foreground="{ThemeResource ForegroundDeepGrey}"
-                    Visibility="{x:Bind Shared.IsLoadingTextBlockVisible, Mode=OneWay}" />
+                    Text="{x:Bind Shared.ReaderStatusText, Mode=OneWay}"
+                    Visibility="{x:Bind Shared.IsReaderStatusTextBlockVisible, Mode=OneWay}" />
 
                 <!--  Reader  -->
                 <Grid Tapped="OnReaderTapped">

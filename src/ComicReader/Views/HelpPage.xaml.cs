@@ -45,7 +45,7 @@ namespace ComicReader.Views
 
         private void OnTabStart(Utils.Tab.TabIdentifier tab_id)
         {
-            m_tab_manager.TabId.Tab.Header = Utils.C0.TryGetResourceString("Help");
+            m_tab_manager.TabId.Tab.Header = Utils.StringResourceProvider.GetResourceString("Help");
             m_tab_manager.TabId.Tab.IconSource =
                 new muxc.SymbolIconSource() { Symbol = Symbol.Help };
         }

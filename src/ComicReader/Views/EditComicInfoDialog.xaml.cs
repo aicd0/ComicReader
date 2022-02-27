@@ -52,7 +52,7 @@ namespace ComicReader.Views
                 await m_comic.SaveTags(db);
 
                 Utils.TaskQueueManager.AppendTask(
-                    m_comic.SaveInfoFileSealed(), "Saving...");
+                    m_comic.SaveToInfoFileSealed(), "Saving...");
             });
         }
 

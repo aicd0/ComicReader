@@ -524,7 +524,7 @@ Category2: tag4/tag5
   <data name="AppDescription" xml:space="preserve">
     <value>Comic reader</value>
   </data>
-  <data name="ReaderLoading.Text" xml:space="preserve">
+  <data name="ReaderStatusLoading" xml:space="preserve">
     <value>The reader is loading</value>
   </data>
   <data name="DebugMode.Text" xml:space="preserve">
@@ -574,5 +574,8 @@ Category2: tag4/tag5
   </data>
   <data name="HotkeyLastPage.Header" xml:space="preserve">
     <value>Go to last page</value>
+  </data>
+  <data name="ReaderStatusError" xml:space="preserve">
+    <value>An error occured while loading</value>
   </data>
 </root>

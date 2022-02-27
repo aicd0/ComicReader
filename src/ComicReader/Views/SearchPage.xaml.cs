@@ -209,35 +209,6 @@ namespace ComicReader.Views
     {
         private SearchPageShared Shared { get; set; }
 
-        // Resources.
-        private string m_string_finished = null;
-        private string StringFinished
-        {
-            get
-            {
-                if (m_string_finished == null)
-                {
-                    m_string_finished = Utils.C0.TryGetResourceString("Finished");
-                }
-
-                return m_string_finished;
-            }
-        }
-
-        private string m_string_finish_percentage = null;
-        private string StringFinishPercentage
-        {
-            get
-            {
-                if (m_string_finish_percentage == null)
-                {
-                    m_string_finish_percentage = Utils.C0.TryGetResourceString("FinishPercentage");
-                }
-
-                return m_string_finish_percentage;
-            }
-        }
-
         private Utils.Tab.TabManager m_tab_manager;
         private List<Match> m_matches = new List<Match>();
         private int m_match_index = 0;
@@ -335,7 +306,7 @@ namespace ComicReader.Views
                 {
                     string keyword_combined = Utils.StringUtils.Join(" ", keywords);
                     title_text = "\"" + keyword_combined + "\"";
-                    tab_title = Utils.C0.TryGetResourceString("SearchResultsOf");
+                    tab_title = Utils.StringResourceProvider.GetResourceString("SearchResultsOf");
                     tab_title = tab_title.Replace("$keyword", keyword_combined);
                 }
                 else if (filter_brief.Length != 0)
@@ -346,8 +317,8 @@ namespace ComicReader.Views
                 }
                 else
                 {
-                    title_text = Utils.C0.TryGetResourceString("AllMatchedResults");
-                    tab_title = Utils.C0.TryGetResourceString("SearchResults");
+                    title_text = Utils.StringResourceProvider.GetResourceString("AllMatchedResults");
+                    tab_title = Utils.StringResourceProvider.GetResourceString("SearchResults");
                 }
 
                 // update tab header
@@ -365,7 +336,7 @@ namespace ComicReader.Views
                 Shared.Title = title_text;
                 Shared.FilterDetails = filter_details;
 
-                string no_results = Utils.C0.TryGetResourceString("NoResults");
+                string no_results = Utils.StringResourceProvider.GetResourceString("NoResults");
                 no_results = no_results.Replace("$keyword", keyword);
 
                 Shared.NoResultText = no_results;
@@ -453,15 +424,32 @@ namespace ComicReader.Views
 
         private async Task<ComicItemViewModel> ComicDataToViewModel(ComicData comic)
         {
+            string progress;
+
+            if (comic.Progress >= 0)
+            {
+                if (comic.Progress >= 100)
+                {
+                    progress = Utils.StringResourceProvider.GetResourceString("Finished");
+                }
+                else
+                {
+                    progress = Utils.StringResourceProvider.GetResourceString("FinishPercentage")
+                        .Replace("$percentage", comic.Progress.ToString());
+                }
+            }
+            else
+            {
+                progress = "";
+            }
+
             return new ComicItemViewModel
             {
                 Comic = comic,
                 Title = comic.Title,
                 Detail = "#" + comic.Id,
                 Rating = comic.Rating,
-                Progress = comic.Progress < 0 ? "" :
-                            (comic.Progress >= 100 ? StringFinished :
-                             StringFinishPercentage.Replace("$percentage", comic.Progress.ToString())),
+                Progress = progress,
                 IsFavorite = await FavoriteDataManager.FromId(comic.Id) != null,
                 IsSelectMode = Shared.IsSelectMode,
 

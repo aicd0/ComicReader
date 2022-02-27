@@ -85,7 +85,7 @@ namespace ComicReader.Database
                     XmlDatabase.Settings.ComicFolders.Add(path);
                 }
 
-                Utils.C0.AddToFutureAccessList(folder);
+                Utils.Storage.AddToFutureAccessList(folder);
             }
             finally
             {
@@ -107,7 +107,7 @@ namespace ComicReader.Database
             _ = XmlDatabase.Settings.ComicFolders.Remove(path);
 
             string token = Utils.StringUtils.TokenFromPath(path);
-            Utils.C0.RemoveFromFutureAccessList(token);
+            Utils.Storage.RemoveFromFutureAccessList(token);
             XmlDatabaseManager.ReleaseLock();
 
             if (final)

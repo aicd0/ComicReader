@@ -56,7 +56,7 @@ namespace ComicReader.Database
                 return new TaskResult(TaskException.InvalidParameters);
             }
 
-            StorageFile file = await Utils.C0.TryGetFile(Location);
+            StorageFile file = await Utils.Storage.TryGetFile(Location);
 
             if (file == null)
             {
@@ -67,7 +67,7 @@ namespace ComicReader.Database
             return new TaskResult();
         }
 
-        public override async RawTask UpdateInfo()
+        public override async RawTask LoadFromInfoFile()
         {
             TaskResult r = await CompleteArchive();
 
@@ -112,7 +112,7 @@ namespace ComicReader.Database
             return new TaskResult();
         }
 
-        protected override async RawTask SaveInfoFile()
+        protected override async RawTask SaveToInfoFile()
         {
             TaskResult r = await CompleteArchive();
 
@@ -226,7 +226,7 @@ namespace ComicReader.Database
 
         public static async Task Update(LockContext db, string location, bool is_exist)
         {
-            StorageFile archive_file = await Utils.C0.TryGetFile(location);
+            StorageFile archive_file = await Utils.Storage.TryGetFile(location);
 
             if (archive_file == null)
             {
@@ -295,7 +295,7 @@ namespace ComicReader.Database
             if (info_file_exist)
             {
                 // Load comic info locally.
-                TaskResult r = await comic.UpdateInfo();
+                TaskResult r = await comic.LoadFromInfoFile();
 
                 if (r.Successful)
                 {

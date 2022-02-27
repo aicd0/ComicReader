@@ -12,7 +12,7 @@ namespace ComicReader.Utils
         Cancellation,
         EmptySet,
         Failure,
-        FileNotExists,
+        FileNotFound,
         InvalidParameters,
         ItemExists,
         NameCollision,
