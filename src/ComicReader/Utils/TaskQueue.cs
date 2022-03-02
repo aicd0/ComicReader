@@ -17,7 +17,10 @@ namespace ComicReader.Utils
         ItemExists,
         NameCollision,
         NoPermission,
+        NotImplemented,
+        NotSupported,
         Success,
+        Unknown,
         UnknownEnum,
     }
 

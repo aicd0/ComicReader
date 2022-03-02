@@ -16,9 +16,17 @@ namespace ComicReader.Database
 
     public class ComicFolderData : ComicData
     {
+        private string CoverFileName
+        {
+            get => ExtendedString1;
+            set => ExtendedString1 = value;
+        }
+
         private StorageFolder Folder = null;
         private StorageFile InfoFile = null;
         private List<StorageFile> ImageFiles = new List<StorageFile>();
+        private bool ImageUpdated = false;
+
         public override int ImageCount => ImageFiles.Count;
         public override bool IsEditable => !(IsExternal && InfoFile == null);
 
@@ -42,7 +50,8 @@ namespace ComicReader.Database
             {
                 Location = directory,
                 ImageFiles = image_files,
-                InfoFile = info_file
+                InfoFile = info_file,
+                ImageUpdated = true,
             };
 
             if (info_file != null)
@@ -136,7 +145,7 @@ namespace ComicReader.Database
             }
             catch (Exception e)
             {
-                Log("Failed to access '" + InfoFile.Path + "'. Exception: " + e.ToString());
+                Log("Failed to access '" + InfoFile.Path + "'. " + e.ToString());
                 return new TaskResult(TaskException.Failure);
             }
 
@@ -162,69 +171,91 @@ namespace ComicReader.Database
             }
             catch (Exception e)
             {
-                Log("Failed to access '" + InfoFile.Path + "'. Exception: " + e.ToString());
+                Log("Failed to access '" + InfoFile.Path + "'. " + e.ToString());
                 return new TaskResult(TaskException.Failure);
             }
 
             return new TaskResult();
         }
 
-        public override async RawTask UpdateImages(LockContext db, bool cover = false)
+        public override async RawTask UpdateImages(LockContext db, bool cover, bool reload)
         {
-            TaskResult r = await SetFolder();
-
-            if (!r.Successful)
+            if (reload)
             {
-                return r;
+                ImageUpdated = false;
             }
 
-            // Try load cover on cover=true.
-            if (cover && CoverFileName.Length > 0)
+            if (!ImageUpdated)
             {
-                IStorageItem item = await Folder.TryGetItemAsync(CoverFileName);
+                TaskResult r = await SetFolder();
 
-                if (item != null && item.IsOfType(StorageItemTypes.File))
+                if (!r.Successful)
                 {
-                    StorageFile cover_file = (StorageFile)item;
-                    ImageFiles.Clear();
-                    ImageFiles.Add(cover_file);
-                    return new TaskResult();
+                    return r;
                 }
+
+                if (cover && CoverFileName.Length > 0)
+                {
+                    // Load the cover only.
+                    IStorageItem item = await Folder.TryGetItemAsync(CoverFileName);
+
+                    if (item is StorageFile)
+                    {
+                        StorageFile cover_file = (StorageFile)item;
+
+                        if (ImageFiles.Count == 0)
+                        {
+                            ImageFiles.Add(cover_file);
+                        }
+                        else
+                        {
+                            ImageFiles[0] = cover_file;
+                        }
+
+                        return new TaskResult();
+                    }
+                }
+
+                Log("Retrieving images in '" + Location + "'");
+
+                // Load all images.
+                QueryOptions query_options = new QueryOptions
+                {
+                    FolderDepth = FolderDepth.Shallow,
+                    IndexerOption = IndexerOption.DoNotUseIndexer, // The results from UseIndexerWhenAvailable are incomplete.
+                };
+
+                foreach (string type in Utils.AppInfoProvider.SupportedImageExtensions)
+                {
+                    query_options.FileTypeFilter.Add(type);
+                }
+
+                var query = Folder.CreateFileQueryWithOptions(query_options);
+                var img_files = await query.GetFilesAsync();
+
+                // Sort by display name.
+                ImageFiles = img_files.OrderBy(x => x.DisplayName,
+                    new Utils.StringUtils.FileNameComparer()).ToList();
+
+                if (ImageFiles.Count > 0 && CoverFileName != ImageFiles[0].Name)
+                {
+                    CoverFileName = ImageFiles[0].Name;
+                    await SaveExtendedString1(db);
+                }
+
+                Log(img_files.Count.ToString() + " images added.");
+                ImageUpdated = true;
             }
 
-            Log("Retrieving images for '" + Folder.Path + "'.");
-
-            // Load all images.
-            QueryOptions query_options = new QueryOptions
-            {
-                FolderDepth = FolderDepth.Shallow,
-                IndexerOption = IndexerOption.DoNotUseIndexer, // The results from UseIndexerWhenAvailable are incomplete.
-            };
-
-            foreach (string type in Utils.AppInfoProvider.SupportedImageExtensions)
-            {
-                query_options.FileTypeFilter.Add(type);
-            }
-
-            var query = Folder.CreateFileQueryWithOptions(query_options);
-            var img_files = await query.GetFilesAsync();
-            Log("Adding " + img_files.Count.ToString() + " images.");
-
-            if (img_files.Count == 0)
+            if (ImageFiles.Count == 0)
             {
                 return new TaskResult(TaskException.EmptySet);
             }
 
-            // Sort by display name.
-            ImageFiles = img_files.OrderBy(x => x.DisplayName,
-                new Utils.StringUtils.FileNameComparer()).ToList();
-
-            CoverFileName = ImageFiles[0].Name;
-            await SaveBasic(db);
             return new TaskResult();
         }
 
-        public override async Task<IRandomAccessStream> GetImageStream(int index)
+        public override async Task<IRandomAccessStream> GetImageStream(LockContext db, int index)
         {
             if (index >= ImageFiles.Count)
             {
@@ -238,80 +269,9 @@ namespace ComicReader.Database
             }
             catch (Exception e)
             {
-                Log("Failed to access '" + ImageFiles[index].Path + "'. Exception: " + e.ToString());
+                Log("Failed to access '" + ImageFiles[index].Path + "'. " + e.ToString());
                 return null;
             }
-        }
-
-        public static async Task Update(LockContext db, string location, bool is_exist)
-        {
-            Log((is_exist ? "Updat" : "Add") + "ing folder '" + location + "'");
-            List<string> filenames = Utils.Win32IO.SubFiles(location, "*");
-            Log(filenames.Count.ToString() + " files found.");
-            bool info_file_exist = false;
-
-            for (int i = filenames.Count - 1; i >= 0; i--)
-            {
-                string file_path = filenames[i];
-                string filename = Utils.StringUtils.ItemNameFromPath(file_path).ToLower();
-                string extension = Utils.StringUtils.ExtensionFromFilename(filename);
-
-                if (filename == Manager.ComicInfoFileName)
-                {
-                    info_file_exist = true;
-                }
-
-                if (!Utils.AppInfoProvider.IsSupportedImageExtension(extension))
-                {
-                    filenames.RemoveAt(i);
-                }
-            }
-
-            if (filenames.Count == 0)
-            {
-                if (is_exist)
-                {
-                    await Manager.RemoveWithLocation(db, location);
-                }
-                return;
-            }
-
-            // Update or create a new one.
-            ComicData comic;
-
-            if (is_exist)
-            {
-                comic = await Manager.FromLocation(db, location);
-            }
-            else
-            {
-                comic = FromDatabase(location);
-            }
-
-            if (comic == null)
-            {
-                return;
-            }
-
-            if (info_file_exist)
-            {
-                // Load comic info locally.
-                TaskResult r = await comic.LoadFromInfoFile();
-
-                if (r.Successful)
-                {
-                    await comic.SaveAll(db);
-                    return;
-                }
-            }
-
-            if (is_exist)
-            {
-                return;
-            }
-
-            comic.SetAsDefaultInfo();
-            await comic.SaveAll(db);
         }
     }
 }

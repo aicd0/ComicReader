@@ -73,7 +73,7 @@ namespace ComicReader.Database
             public const string LastVisit = "last_visit";
             public const string LastPosition = "last_pos";
             public const string ImageAspectRatios = "image_aspect_ratios";
-            public const string CoverFileName = "cover_file_name";
+            public const string ExtendedString1 = "cover_file_name";
 
             // Field tag category.
             public class TagCategory
@@ -102,7 +102,7 @@ namespace ComicReader.Database
         private SqlKey KeyLastVisit => new SqlKey(Field.LastVisit, LastVisit);
         private SqlKey KeyLastPosition => new SqlKey(Field.LastPosition, LastPosition);
         private SqlKey KeyImageAspectRatios => new SqlKey(Field.ImageAspectRatios, ImageAspectRatios, blob: true);
-        private SqlKey KeyCoverFileName => new SqlKey(Field.CoverFileName, CoverFileName);
+        private SqlKey KeyExtendedString1 => new SqlKey(Field.ExtendedString1, ExtendedString1);
 
         private List<SqlKey> AllFields => new List<SqlKey>
         {
@@ -116,12 +116,12 @@ namespace ComicReader.Database
             KeyLastVisit,
             KeyLastPosition,
             KeyImageAspectRatios,
-            KeyCoverFileName,
+            KeyExtendedString1,
         };
 
         // Local fields.
         public long Id { get; private set; }
-        private ComicType Type;
+        private ComicType Type { get; set; }
         public string Location { get; protected set; } = "";
         public string Title1 { get; protected set; } = "";
         public string Title2 { get; protected set; } = "";
@@ -130,30 +130,39 @@ namespace ComicReader.Database
         public int Progress { get; protected set; } = -1;
         public DateTimeOffset LastVisit { get; protected set; } = DateTimeOffset.MinValue;
         public double LastPosition { get; protected set; } = 0.0;
-        public List<double> ImageAspectRatios = new List<double>();
-        protected string CoverFileName = "";
+        public List<double> ImageAspectRatios { get; set; } = new List<double>();
+        protected string ExtendedString1 { get; set; } = "";
 
         // Foriegn fields.
         public List<TagData> Tags = new List<TagData>();
 
         // Not in database.
-        private static string m_UntitledCollectionString = null;
-        protected static string UntitledCollectionString
+        public string Title
         {
             get
             {
-                if (m_UntitledCollectionString == null)
+                if (Title1.Length == 0)
                 {
-                    m_UntitledCollectionString = Utils.StringResourceProvider.GetResourceString("UntitledCollection");
+                    if (Title2.Length == 0)
+                    {
+                        return Utils.StringResourceProvider.GetResourceString("UntitledCollection");
+                    }
+                    else
+                    {
+                        return Title2;
+                    }
                 }
-
-                return m_UntitledCollectionString;
+                else if (Title2.Length == 0)
+                {
+                    return Title1;
+                }
+                else
+                {
+                    return Title1 + " - " + Title2;
+                }
             }
         }
 
-        public string Title => Title1.Length == 0 ?
-            (Title2.Length == 0 ? UntitledCollectionString : Title2) :
-            (Title2.Length == 0 ? Title1 : Title1 + " - " + Title2);
         public bool IsExternal { get; private set; }
         public abstract bool IsEditable { get; }
         public abstract int ImageCount { get; }
@@ -166,9 +175,8 @@ namespace ComicReader.Database
         }
 
         private void From(long id, string title1, string title2, bool hidden,
-            int rating, int progress, DateTimeOffset last_visit,
-            double last_position, string cover_file_name, List<TagData> tags,
-            List<double> image_aspect_ratios)
+            int rating, int progress, DateTimeOffset last_visit, double last_position,
+            List<double> image_aspect_ratios, string extended_string_1, List<TagData> tags)
         {
             Id = id;
             Title1 = title1;
@@ -179,7 +187,7 @@ namespace ComicReader.Database
             LastVisit = last_visit;
             LastPosition = last_position;
             ImageAspectRatios = image_aspect_ratios;
-            CoverFileName = cover_file_name;
+            ExtendedString1 = extended_string_1;
             Tags = tags;
         }
 
@@ -309,7 +317,7 @@ namespace ComicReader.Database
                 KeyProgress,
                 KeyLastVisit,
                 KeyLastPosition,
-                KeyCoverFileName,
+                KeyExtendedString1,
             };
 
             await Save(db, fields, save_tags: false);
@@ -367,6 +375,16 @@ namespace ComicReader.Database
             List<SqlKey> fields = new List<SqlKey>
             {
                 KeyRating,
+            };
+
+            await Save(db, fields, save_tags: false);
+        }
+
+        public async Task SaveExtendedString1(LockContext db)
+        {
+            List<SqlKey> fields = new List<SqlKey>
+            {
+                KeyExtendedString1,
             };
 
             await Save(db, fields, save_tags: false);
@@ -488,9 +506,9 @@ namespace ComicReader.Database
 
         protected abstract RawTask SaveToInfoFile();
 
-        public abstract RawTask UpdateImages(LockContext db, bool cover = false);
+        public abstract RawTask UpdateImages(LockContext db, bool cover, bool reload);
 
-        public abstract Task<IRandomAccessStream> GetImageStream(int index);
+        public abstract Task<IRandomAccessStream> GetImageStream(LockContext db, int index);
 
         public class Manager
         {
@@ -561,7 +579,7 @@ namespace ComicReader.Database
                 int progress = query.GetInt32(7);
                 DateTimeOffset last_visit = query.GetDateTimeOffset(8);
                 double last_position = query.GetDouble(9);
-                string cover_file_name = query.GetString(11);
+                string extended_string_1 = query.GetString(11);
 
                 // Tags
                 List<TagData> tags = new List<TagData>();
@@ -627,7 +645,7 @@ namespace ComicReader.Database
                         comic = ComicFolderData.FromDatabase(location);
                         break;
                     case ComicType.Zip:
-                        comic = ComicZipData.FromDatabase(location);
+                        comic = ComicArchiveData.FromDatabase(location);
                         break;
                     default:
                         System.Diagnostics.Debug.Assert(false);
@@ -635,8 +653,8 @@ namespace ComicReader.Database
                 }
 
                 comic.From(id, title1, title2, hidden, rating, progress,
-                    last_visit, last_position, cover_file_name, tags,
-                    image_aspect_ratios);
+                    last_visit, last_position, image_aspect_ratios,
+                    extended_string_1, tags);
 
                 // Post-procedures.
                 if (reset_image_aspect_ratios)
@@ -700,7 +718,7 @@ namespace ComicReader.Database
             private struct UpdateItemInfo
             {
                 public string Location;
-                public bool IsFolder;
+                public bool IsArchive;
                 public bool IsExist;
             };
 
@@ -766,91 +784,75 @@ namespace ComicReader.Database
                             continue;
                         }
 
-                        var ctx = new Utils.Win32IO.SubItemDeepContext(folder_path);
+                        var ctx = new Utils.StorageItemSearchEngine.SearchContext(folder_path);
 
-                        while (ctx.Search(1024))
+                        while (await ctx.Search(1024))
                         {
                             Log("Scanning " + ctx.ItemFound.ToString() + " items.");
-                            List<string> folder_scanned = ctx.Folders;
-                            List<string> file_scanned = new List<string>();
+                            Dictionary<string, bool> loc_scanned_dict = new Dictionary<string, bool>();
 
-                            foreach (string loc in ctx.Files)
+                            foreach (string file_path in ctx.Files)
                             {
-                                string filename = Utils.StringUtils.ItemNameFromPath(loc);
+                                string filename = Utils.StringUtils.ItemNameFromPath(file_path);
                                 string extension = Utils.StringUtils.ExtensionFromFilename(filename);
                                 
-                                if (Utils.AppInfoProvider.IsSupportedComicExtension(extension))
+                                if (Utils.AppInfoProvider.IsSupportedImageExtension(extension))
                                 {
-                                    file_scanned.Add(loc);
+                                    string loc = Utils.StringUtils.ParentLocationFromLocation(file_path);
+
+                                    if (!loc_scanned_dict.ContainsKey(loc))
+                                    {
+                                        loc_scanned_dict[loc] = file_path.Contains(Utils.ArchiveAccess.FileSeperator);
+                                    }
                                 }
                             }
 
-                            loc_in_lib.AddRange(folder_scanned);
-                            loc_in_lib.AddRange(file_scanned);
+                            List<string> loc_scanned = new List<string>();
+
+                            foreach (var item in loc_scanned_dict)
+                            {
+                                loc_scanned.Add(item.Key);
+                            }
+
+                            loc_in_lib.AddRange(loc_scanned);
+
+                            foreach (string dir in ctx.NoAccessItems)
+                            {
+                                loc_ignore.Add(dir.ToLower());
+                            }
 
                             // Generate a task queue for updating.
                             var queue = new List<UpdateItemInfo>();
 
                             // Get folders added.
-                            List<string> folder_added = Utils.C3<string, string, string>.Except(
-                                folder_scanned, loc_exist,
+                            List<string> loc_added = Utils.C3<string, string, string>.Except(
+                                loc_scanned, loc_exist,
                                 Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
                                 new Utils.C1<string>.DefaultEqualityComparer()).ToList();
 
-                            foreach (string loc in folder_added)
+                            foreach (string loc in loc_added)
                             {
                                 queue.Add(new UpdateItemInfo
                                 {
                                     Location = loc,
-                                    IsFolder = true,
-                                    IsExist = false,
-                                });
-                            }
-
-                            // Get files added.
-                            List<string> file_added = Utils.C3<string, string, string>.Except(
-                                file_scanned, loc_exist,
-                                Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
-                                new Utils.C1<string>.DefaultEqualityComparer()).ToList();
-
-                            foreach (string loc in file_added)
-                            {
-                                queue.Add(new UpdateItemInfo
-                                {
-                                    Location = loc,
-                                    IsFolder = false,
+                                    IsArchive = loc_scanned_dict[loc],
                                     IsExist = false,
                                 });
                             }
 
                             if (!lazy_load)
                             {
-                                List<string> folder_kept = Utils.C3<string, string, string>.Intersect(
-                                    folder_scanned, loc_exist,
+                                List<string> loc_kept = Utils.C3<string, string, string>.Intersect(
+                                    loc_scanned, loc_exist,
                                     Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
                                     new Utils.C1<string>.DefaultEqualityComparer()).ToList();
 
-                                foreach (string loc in folder_kept)
+                                foreach (string loc in loc_kept)
                                 {
                                     queue.Add(new UpdateItemInfo
                                     {
                                         Location = loc,
-                                        IsFolder = true,
-                                        IsExist = true,
-                                    });
-                                }
-
-                                List<string> file_kept = Utils.C3<string, string, string>.Intersect(
-                                    file_scanned, loc_exist,
-                                    Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
-                                    new Utils.C1<string>.DefaultEqualityComparer()).ToList();
-
-                                foreach (string loc in file_kept)
-                                {
-                                    queue.Add(new UpdateItemInfo
-                                    {
-                                        Location = loc,
-                                        IsFolder = false,
+                                        IsArchive = loc_scanned_dict[loc],
                                         IsExist = true,
                                     });
                                 }
@@ -864,14 +866,7 @@ namespace ComicReader.Database
                                     return new TaskResult(TaskException.Cancellation);
                                 }
 
-                                if (info.IsFolder)
-                                {
-                                    await ComicFolderData.Update(db, info.Location, info.IsExist);
-                                }
-                                else
-                                {
-                                    await InternalUpdateComicFile(db, info.Location, info.IsExist);
-                                }
+                                await InternalUpdateComic(db, info.Location, info.IsArchive, info.IsExist);
 
                                 if (watch.LapSpan().TotalSeconds > 1.5)
                                 {
@@ -879,11 +874,6 @@ namespace ComicReader.Database
                                     watch.Lap();
                                 }
                             }
-                        }
-
-                        foreach (string dir in ctx.NoAccessFolders)
-                        {
-                            loc_ignore.Add(dir.ToLower());
                         }
                     }
 
@@ -935,21 +925,50 @@ namespace ComicReader.Database
                 }
             }
 
-            protected static async Task InternalUpdateComicFile(LockContext db, string location, bool is_exist)
+            protected static async Task InternalUpdateComic(LockContext db, string location, bool is_archive, bool is_exist)
             {
                 Log((is_exist ? "Updat" : "Add") + "ing comic '" + location + "'");
-                string filename = Utils.StringUtils.ItemNameFromPath(location).ToLower();
-                string extension = Utils.StringUtils.ExtensionFromFilename(filename);
 
-                switch (extension)
+                // Update or create a new one.
+                ComicData comic;
+
+                if (is_exist)
                 {
-                    case ".zip":
-                        await ComicZipData.Update(db, location, is_exist);
-                        break;
-                    default:
-                        System.Diagnostics.Debug.Assert(false);
-                        return;
+                    comic = await Manager.FromLocation(db, location);
                 }
+                else
+                {
+                    if (is_archive)
+                    {
+                        comic = ComicArchiveData.FromDatabase(location);
+                    }
+                    else
+                    {
+                        comic = ComicFolderData.FromDatabase(location);
+                    }
+                }
+
+                if (comic == null)
+                {
+                    return;
+                }
+
+                // Load comic info locally.
+                TaskResult r = await comic.LoadFromInfoFile();
+
+                if (r.Successful)
+                {
+                    await comic.SaveAll(db);
+                    return;
+                }
+
+                if (is_exist)
+                {
+                    return;
+                }
+
+                comic.SetAsDefaultInfo();
+                await comic.SaveAll(db);
             }
 
             public static async Task Hide(LockContext db, ComicData comic)

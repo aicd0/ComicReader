@@ -96,7 +96,7 @@ namespace ComicReader.Utils
             {
                 path = Utils.StringUtils.ToPathNoTail(path);
 
-                m_nodes.Add(new Node
+                m_stack.Add(new Node
                 {
                     Paths = new List<string> { path }
                 });
@@ -127,27 +127,28 @@ namespace ComicReader.Utils
             public int ItemFound => Folders.Count + Files.Count;
 
             private bool m_initial_search = true;
-            private List<Node> m_nodes = new List<Node>();
+            private List<Node> m_stack = new List<Node>();
             private readonly FindExInfoLevel FindInfoLevel;
             private readonly FIndexSearchOps IndexSearchOps = FIndexSearchOps.FindExSearchNameMatch;
             private readonly int AdditionalFlags;
 
             public bool Search(uint item_count)
             {
-                if (m_nodes.Count == 0)
+                if (m_stack.Count == 0)
                 {
                     return false;
                 }
 
                 Folders.Clear();
                 Files.Clear();
+                NoAccessFolders.Clear();
 
                 if (m_initial_search)
                 {
-                    System.Diagnostics.Debug.Assert(m_nodes.Count == 1);
+                    System.Diagnostics.Debug.Assert(m_stack.Count == 1);
                     m_initial_search = false;
 
-                    foreach (string path in m_nodes[0].Paths)
+                    foreach (string path in m_stack[0].Paths)
                     {
                         Folders.Add(path);
                     }
@@ -159,10 +160,10 @@ namespace ComicReader.Utils
 
             private bool InternalSearch(uint item_count, int depth = 0)
             {
-                if (m_nodes.Count <= depth)
+                if (depth >= m_stack.Count)
                 {
                     // Visit current node.
-                    string path_raw = m_nodes[m_nodes.Count - 1].CurrentPath;
+                    string path_raw = m_stack[m_stack.Count - 1].CurrentPath;
                     string path = path_raw + "\\";
                     IntPtr h_file = FindFirstFileExFromApp(path + "*", FindInfoLevel,
                         out _, IndexSearchOps, IntPtr.Zero, AdditionalFlags);
@@ -209,14 +210,14 @@ namespace ComicReader.Utils
                         return false;
                     }
 
-                    m_nodes.Add(new Node
+                    m_stack.Add(new Node
                     {
                         Paths = folders
                     });
                 }
 
                 // Search deeper.
-                while (m_nodes[depth].Index < m_nodes[depth].Paths.Count)
+                while (m_stack[depth].Index < m_stack[depth].Paths.Count)
                 {
                     // Exit if min_step is reached.
                     if (ItemFound >= item_count)
@@ -229,10 +230,10 @@ namespace ComicReader.Utils
                         return true;
                     }
 
-                    m_nodes[depth].Index++;
+                    m_stack[depth].Index++;
                 }
 
-                m_nodes.RemoveAt(m_nodes.Count - 1);
+                m_stack.RemoveAt(m_stack.Count - 1);
                 return false;
             }
         }

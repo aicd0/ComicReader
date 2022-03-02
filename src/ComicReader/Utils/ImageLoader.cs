@@ -103,7 +103,7 @@ namespace ComicReader.Utils
 
                 if (comic.ImageCount <= token.Index)
                 {
-                    TaskResult r = await comic.UpdateImages(db, cover: token.Index == 0);
+                    TaskResult r = await comic.UpdateImages(db, cover: token.Index == 0, reload: false);
 
                     // Skip tokens whose comic folder cannot be reached.
                     if (!r.Successful)
@@ -115,18 +115,11 @@ namespace ComicReader.Utils
                         all_token_success = false;
                         continue;
                     }
-
-                    if (comic.ImageCount <= token.Index)
-                    {
-                        _Log("Skipped image " + token.Index.ToString() + ", index out of range");
-                        all_token_success = false;
-                        continue;
-                    }
                 }
 
                 BitmapImage image = null;
 
-                using (IRandomAccessStream stream = await comic.GetImageStream(token.Index))
+                using (IRandomAccessStream stream = await comic.GetImageStream(db, token.Index))
                 {
                     if (stream == null)
                     {
@@ -135,6 +128,7 @@ namespace ComicReader.Utils
                         continue;
                     }
 
+                    stream.Seek(0);
                     bool img_load_success = true;
 
                     // IMPORTANT: Use TaskCompletionSource to guarantee all async tasks
@@ -152,7 +146,7 @@ namespace ComicReader.Utils
                         catch (Exception e)
                         {
                             img_load_success = false;
-                            _Log("Skipped token " + token.Index.ToString() + ", image corrupted. Exception: " + e.ToString());
+                            _Log("Skipped token " + token.Index.ToString() + ", image corrupted. " + e.ToString());
                         }
 
                         completion_src.SetResult(true);

@@ -1508,11 +1508,11 @@ namespace ComicReader.Views
                 await HistoryDataManager.Add(m_comic.Id, m_comic.Title1, true);
 
                 // Update image files.
-                TaskResult r = await m_comic.UpdateImages(db);
+                TaskResult r = await m_comic.UpdateImages(db, cover: false, reload: true);
 
                 if (!r.Successful)
                 {
-                    Log("Failed to load images of '" + m_comic.Location + "', exception: " + r.ExceptionType.ToString());
+                    Log("Failed to load images of '" + m_comic.Location + "'. " + r.ExceptionType.ToString());
                     Shared.ReaderStatus = ReaderStatusEnum.Error;
                     Shared.UpdateReaderUI();
                     return;

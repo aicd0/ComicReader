@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
@@ -93,6 +94,12 @@ namespace ComicReader.Utils
                 return CryptographicBuffer.ConvertStringToBinary(
                     _string, BinaryStringEncoding.Utf8);
             }
+        }
+
+        public static Stream GetStreamFromString(string text)
+        {
+            IBuffer buffer = GetBufferFromString(text);
+            return WindowsRuntimeBufferExtensions.AsStream(buffer);
         }
     }
 

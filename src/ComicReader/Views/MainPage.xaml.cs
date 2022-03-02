@@ -83,7 +83,7 @@ namespace ComicReader.Views
                     switch (target_file.FileType.ToLower())
                     {
                         case ".zip":
-                            comic = await ComicZipData.FromExternal(db, target_file);
+                            comic = ComicArchiveData.FromExternal(target_file);
                             break;
                         default:
                             System.Diagnostics.Debug.Assert(false);
@@ -94,7 +94,7 @@ namespace ComicReader.Views
             else if (Utils.AppInfoProvider.IsSupportedImageExtension(target_file.FileType))
             {
                 string dir = target_file.Path;
-                dir = Utils.StringUtils.ParentPathFromPath(dir);
+                dir = Utils.StringUtils.ParentLocationFromLocation(dir);
                 comic = await ComicData.Manager.FromLocation(db, dir);
 
                 if (comic == null)

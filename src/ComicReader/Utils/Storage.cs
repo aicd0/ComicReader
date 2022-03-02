@@ -52,7 +52,7 @@ namespace ComicReader.Utils
 
         public static async Task<StorageFile> TryGetFile(string path)
         {
-            string folder_path = Utils.StringUtils.ParentPathFromPath(path);
+            string folder_path = Utils.StringUtils.ParentLocationFromLocation(path);
             StorageFolder folder = await Utils.Storage.TryGetFolder(folder_path);
 
             if (folder == null)

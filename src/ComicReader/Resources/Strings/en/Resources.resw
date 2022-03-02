@@ -522,7 +522,7 @@ Category2: tag4/tag5
     <value>Zoom out</value>
   </data>
   <data name="AppDescription" xml:space="preserve">
-    <value>Comic reader</value>
+    <value>Comic Reader</value>
   </data>
   <data name="ReaderStatusLoading" xml:space="preserve">
     <value>The reader is loading</value>
@@ -577,5 +577,8 @@ Category2: tag4/tag5
   </data>
   <data name="ReaderStatusError" xml:space="preserve">
     <value>An error occured while loading</value>
+  </data>
+  <data name="AppStoreName" xml:space="preserve">
+    <value>Comic Reader UWP</value>
   </data>
 </root>

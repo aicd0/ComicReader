@@ -163,7 +163,7 @@
     <Compile Include="Converters\FolderItemTemplateSelector.cs" />
     <Compile Include="Converters\SearchResultItemContainerStyleSelector.cs" />
     <Compile Include="Database\ComicFolderData.cs" />
-    <Compile Include="Database\ComicZipData.cs" />
+    <Compile Include="Database\ComicArchiveData.cs" />
     <Compile Include="Database\SettingData.cs" />
     <Compile Include="Database\ComicData.cs" />
     <Compile Include="Database\FavoriteData.cs" />
@@ -176,7 +176,9 @@
     <Compile Include="DesignData\ReaderFrameViewModel.cs" />
     <Compile Include="DesignData\TagViewModel.cs" />
     <Compile Include="Utils\AppInfoProvider.cs" />
+    <Compile Include="Utils\ArchiveAccess.cs" />
     <Compile Include="Utils\Debug.cs" />
+    <Compile Include="Utils\StorageItemSearchEngine.cs" />
     <Compile Include="Utils\ImageLoader.cs" />
     <Compile Include="Utils\Stopwatch.cs" />
     <Compile Include="Utils\Storage.cs" />

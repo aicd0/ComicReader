@@ -24,6 +24,10 @@ namespace ComicReader.Utils
             ".zip",
         };
 
+        public static readonly HashSet<string> SupportedArchiveExtensions = new HashSet<string>{
+            ".zip",
+        };
+
         private static HashSet<string> m_SupportedExternalFileExtensions = null;
         public static HashSet<string> SupportedExternalFileExtensions {
             get
@@ -51,6 +55,11 @@ namespace ComicReader.Utils
         public static bool IsSupportedComicExtension(string extension)
         {
             return SupportedComicExtensions.Contains(extension.ToLower());
+        }
+
+        public static bool IsSupportedArchiveExtension(string extension)
+        {
+            return SupportedArchiveExtensions.Contains(extension.ToLower());
         }
     }
 }

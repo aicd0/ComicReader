@@ -578,4 +578,7 @@
   <data name="ReaderStatusError" xml:space="preserve">
     <value>加载时发生错误</value>
   </data>
+  <data name="AppStoreName" xml:space="preserve">
+    <value>漫画阅读器 UWP</value>
+  </data>
 </root>

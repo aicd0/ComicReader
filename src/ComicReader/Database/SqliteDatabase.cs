@@ -62,7 +62,7 @@ namespace ComicReader.Database
                     ComicData.Field.LastVisit + " TIMESTAMP NOT NULL," + // 8
                     ComicData.Field.LastPosition + " REAL NOT NULL," + // 9
                     ComicData.Field.ImageAspectRatios + " BLOB," + // 10
-                    ComicData.Field.CoverFileName + " TEXT)"; // 11
+                    ComicData.Field.ExtendedString1 + " TEXT)"; // 11
                 await command.ExecuteNonQueryAsync();
 
                 // Create tag category table.

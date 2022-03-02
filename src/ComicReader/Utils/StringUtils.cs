@@ -1,18 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
-using Windows.UI.Xaml;
-using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
-using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
-using Windows.UI.Xaml.Navigation;
 
 namespace ComicReader.Utils
 {
@@ -137,16 +126,22 @@ namespace ComicReader.Utils
             return path.Substring(i + 1);
         }
 
-        public static string ParentPathFromPath(string path)
+        public static string ParentLocationFromLocation(string location)
         {
-            int i = path.LastIndexOf('\\');
+            int i = location.LastIndexOf('\\');
 
             if (i == -1)
             {
                 return "";
             }
 
-            return path.Substring(0, i);
+            if (i > 0 && location[i - 1] == '\\')
+            {
+                i--;
+            }
+
+            return location.Substring(0, i);
+
         }
 
         public static string ExtensionFromFilename(string filename)
@@ -186,6 +181,20 @@ namespace ComicReader.Utils
             }
 
             return path;
+        }
+
+        public static string RandomFileName(int length)
+        {
+            const string symbols = "0123456789abcdefghijklmnopqrstuvwxyz";
+            Random random = new Random();
+            string res = "";
+
+            for (int i = 0; i < length; ++i)
+            {
+                res += symbols[random.Next(symbols.Length)];
+            }
+
+            return res;
         }
     }
 }
