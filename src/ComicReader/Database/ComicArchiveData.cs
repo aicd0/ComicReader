@@ -40,17 +40,6 @@ namespace ComicReader.Database
             };
         }
 
-        public static ComicData FromExternal(StorageFile file)
-        {
-            ComicArchiveData comic = new ComicArchiveData(true)
-            {
-                Location = file.Path,
-                Archive = file,
-            };
-
-            return comic;
-        }
-
         private async RawTask SetArchive()
         {
             if (Archive != null)

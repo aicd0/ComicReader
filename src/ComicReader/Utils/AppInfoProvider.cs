@@ -20,10 +20,6 @@ namespace ComicReader.Utils
             ".webp",
         };
 
-        public static readonly HashSet<string> SupportedComicExtensions = new HashSet<string>{
-            ".zip",
-        };
-
         public static readonly HashSet<string> SupportedArchiveExtensions = new HashSet<string>{
             ".zip",
         };
@@ -36,7 +32,6 @@ namespace ComicReader.Utils
                 {
                     m_SupportedExternalFileExtensions = new HashSet<string>();
                     m_SupportedExternalFileExtensions.UnionWith(SupportedImageExtensions);
-                    m_SupportedExternalFileExtensions.UnionWith(SupportedComicExtensions);
                 }
                 return m_SupportedExternalFileExtensions;
             }
@@ -50,11 +45,6 @@ namespace ComicReader.Utils
         public static bool IsSupportedImageExtension(string extension)
         {
             return SupportedImageExtensions.Contains(extension.ToLower());
-        }
-
-        public static bool IsSupportedComicExtension(string extension)
-        {
-            return SupportedComicExtensions.Contains(extension.ToLower());
         }
 
         public static bool IsSupportedArchiveExtension(string extension)

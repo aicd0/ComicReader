@@ -73,25 +73,8 @@ namespace ComicReader.Views
             }
 
             ComicData comic = null;
-
-            if (Utils.AppInfoProvider.IsSupportedComicExtension(target_file.FileType))
-            {
-                comic = await ComicData.Manager.FromLocation(db, target_file.Path);
-
-                if (comic == null)
-                {
-                    switch (target_file.FileType.ToLower())
-                    {
-                        case ".zip":
-                            comic = ComicArchiveData.FromExternal(target_file);
-                            break;
-                        default:
-                            System.Diagnostics.Debug.Assert(false);
-                            break;
-                    }
-                }
-            }
-            else if (Utils.AppInfoProvider.IsSupportedImageExtension(target_file.FileType))
+            
+            if (Utils.AppInfoProvider.IsSupportedImageExtension(target_file.FileType))
             {
                 string dir = target_file.Path;
                 dir = Utils.StringUtils.ParentLocationFromLocation(dir);
@@ -139,7 +122,6 @@ namespace ComicReader.Views
 
             if (comic == null)
             {
-                System.Diagnostics.Debug.Assert(false);
                 return;
             }
 
