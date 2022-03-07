@@ -11,11 +11,31 @@ namespace ComicReader.Utils
 {
     public class Storage
     {
+        private static Dictionary<string, StorageFolder> FolderResources = new Dictionary<string, StorageFolder>();
+        private static Dictionary<string, StorageFile> FileResources = new Dictionary<string, StorageFile>();
+
+        public static void AddTrustedFolder(StorageFolder folder)
+        {
+            string token = Utils.StringUtils.TokenFromPath(folder.Path);
+            FolderResources[token] = folder;
+        }
+
+        public static void AddTrustedFile(StorageFile file)
+        {
+            string token = Utils.StringUtils.TokenFromPath(file.Path);
+            FileResources[token] = file;
+        }
+
         public static async Task<StorageFolder> TryGetFolder(string path)
         {
             System.Diagnostics.Debug.Assert(path.Length != 0);
-
             string token = StringUtils.TokenFromPath(path);
+
+            if (FolderResources.ContainsKey(token))
+            {
+                return FolderResources[token];
+            }
+
             List<string> out_of_date_tokens = new List<string>();
             StorageFolder result = null;
 
@@ -47,11 +67,23 @@ namespace ComicReader.Utils
                 Utils.Storage.RemoveFromFutureAccessList(out_of_date_token);
             }
 
+            if (result != null)
+            {
+                FolderResources[token] = result;
+            }
+
             return result;
         }
 
         public static async Task<StorageFile> TryGetFile(string path)
         {
+            string token = Utils.StringUtils.TokenFromPath(path);
+
+            if (FileResources.ContainsKey(token))
+            {
+                return FileResources[token];
+            }
+
             string folder_path = Utils.StringUtils.ParentLocationFromLocation(path);
             StorageFolder folder = await Utils.Storage.TryGetFolder(folder_path);
 
@@ -68,7 +100,9 @@ namespace ComicReader.Utils
                 return null;
             }
 
-            return (StorageFile)item;
+            StorageFile file = (StorageFile)item;
+            FileResources[token] = file;
+            return file;
         }
 
         public static void AddToFutureAccessList(IStorageItem item)

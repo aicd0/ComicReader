@@ -5,21 +5,22 @@ using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Windows.Storage;
 
 namespace ComicReader.Utils.StorageItemSearchEngine
 {
+    public enum PathType
+    {
+        Folder,
+        File,
+    }
+
     public class SearchContext
     {
         public List<string> Folders { get; private set; } = new List<string>();
         public List<string> Files { get; private set; } = new List<string>();
         public List<string> NoAccessItems { get; private set; } = new List<string>();
         public int ItemFound => Folders.Count + Files.Count;
-
-        private enum PathType
-        {
-            Folder,
-            File,
-        }
 
         private class PathInfo
         {
@@ -41,12 +42,12 @@ namespace ComicReader.Utils.StorageItemSearchEngine
         private List<Node> m_stack = new List<Node>();
         private int m_max_depth;
 
-        public SearchContext(string folder_path, int max_depth = -1)
+        public SearchContext(string path, PathType type, int max_depth = -1)
         {
             PathInfo path_info = new PathInfo
             {
-                Type = PathType.Folder,
-                Path = folder_path,
+                Type = type,
+                Path = path,
             };
 
             m_stack.Add(new Node
@@ -62,15 +63,16 @@ namespace ComicReader.Utils.StorageItemSearchEngine
 
         public async Task<bool> Search(int min_items)
         {
-            return await Task.Run(delegate {
+            return await Task.Run(delegate
+            {
+                Folders.Clear();
+                Files.Clear();
+                NoAccessItems.Clear();
+
                 if (m_stack.Count == 0)
                 {
                     return false;
                 }
-
-                Folders.Clear();
-                Files.Clear();
-                NoAccessItems.Clear();
 
                 if (m_initial_search)
                 {
@@ -98,24 +100,34 @@ namespace ComicReader.Utils.StorageItemSearchEngine
                 List<string> folders = new List<string>();
                 List<string> files = new List<string>();
                 List<string> no_access_items = new List<string>();
-                path_info.Ctx.Search(folders, files, no_access_items, min_items - ItemFound);
-                Folders.AddRange(folders);
-                Files.AddRange(files);
-                NoAccessItems.AddRange(no_access_items);
+                bool not_finish = true;
 
-                foreach (string file in files)
+                while (min_items > ItemFound && not_finish)
                 {
-                    string filename = StringUtils.ItemNameFromPath(file);
-                    string extension = StringUtils.ExtensionFromFilename(filename);
+                    not_finish = path_info.Ctx.Search(folders, files, no_access_items, min_items - ItemFound);
+                    Folders.AddRange(folders);
+                    Files.AddRange(files);
+                    NoAccessItems.AddRange(no_access_items);
 
-                    if (AppInfoProvider.IsSupportedArchiveExtension(extension))
+                    foreach (string file in files)
                     {
-                        path_info.SubItems.Add(new PathInfo
+                        string filename = StringUtils.ItemNameFromPath(file);
+                        string extension = StringUtils.ExtensionFromFilename(filename);
+
+                        if (AppInfoProvider.IsSupportedArchiveExtension(extension))
                         {
-                            Path = file,
-                            Type = PathType.File,
-                        });
+                            path_info.SubItems.Add(new PathInfo
+                            {
+                                Path = file,
+                                Type = PathType.File,
+                            });
+                        }
                     }
+                }
+
+                if (not_finish)
+                {
+                    return true;
                 }
 
                 if (path_info.SubItems.Count == 0)

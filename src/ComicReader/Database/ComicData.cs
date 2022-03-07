@@ -284,8 +284,7 @@ namespace ComicReader.Database
                 if (keys.Count > 0)
                 {
                     SqlKey id = new SqlKey(Field.Id, Id);
-                    bool r = await SqliteDatabaseManager.Update(SqliteDatabaseManager.ComicTable, id, keys);
-                    System.Diagnostics.Debug.Assert(r);
+                    await SqliteDatabaseManager.Update(SqliteDatabaseManager.ComicTable, id, keys);
                 }
 
                 if (save_tags)
@@ -784,7 +783,7 @@ namespace ComicReader.Database
                             continue;
                         }
 
-                        var ctx = new Utils.StorageItemSearchEngine.SearchContext(folder_path);
+                        var ctx = new Utils.StorageItemSearchEngine.SearchContext(folder_path, Utils.StorageItemSearchEngine.PathType.Folder);
 
                         while (await ctx.Search(1024))
                         {

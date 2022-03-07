@@ -134,14 +134,14 @@ namespace ComicReader.Utils
 
             public bool Search(uint item_count)
             {
+                Folders.Clear();
+                Files.Clear();
+                NoAccessFolders.Clear();
+
                 if (m_stack.Count == 0)
                 {
                     return false;
                 }
-
-                Folders.Clear();
-                Files.Clear();
-                NoAccessFolders.Clear();
 
                 if (m_initial_search)
                 {

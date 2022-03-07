@@ -32,6 +32,7 @@ namespace ComicReader.Utils
                 {
                     m_SupportedExternalFileExtensions = new HashSet<string>();
                     m_SupportedExternalFileExtensions.UnionWith(SupportedImageExtensions);
+                    m_SupportedExternalFileExtensions.UnionWith(SupportedArchiveExtensions);
                 }
                 return m_SupportedExternalFileExtensions;
             }

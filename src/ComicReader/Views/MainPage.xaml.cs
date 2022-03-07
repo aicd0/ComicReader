@@ -74,7 +74,16 @@ namespace ComicReader.Views
 
             ComicData comic = null;
             
-            if (Utils.AppInfoProvider.IsSupportedImageExtension(target_file.FileType))
+            if (Utils.AppInfoProvider.IsSupportedArchiveExtension(target_file.FileType))
+            {
+                comic = await ComicData.Manager.FromLocation(db, target_file.Path);
+
+                if (comic == null)
+                {
+                    comic = await ComicArchiveData.FromExternal(db, target_file);
+                }
+            }
+            else if (Utils.AppInfoProvider.IsSupportedImageExtension(target_file.FileType))
             {
                 string dir = target_file.Path;
                 dir = Utils.StringUtils.ParentLocationFromLocation(dir);

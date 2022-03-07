@@ -27,7 +27,7 @@ namespace ComicReader.Database
 
         private StorageFolder CacheFolder => ApplicationData.Current.LocalCacheFolder;
         public override int ImageCount => Entries.Count;
-        public override bool IsEditable => true;
+        public override bool IsEditable => !IsExternal;
 
         private ComicArchiveData(bool is_external) :
             base(ComicType.Zip, is_external) { }
@@ -38,6 +38,21 @@ namespace ComicReader.Database
             {
                 Location = location,
             };
+        }
+
+        public static async Task<ComicData> FromExternal(LockContext db, StorageFile archive)
+        {
+            Utils.Storage.AddTrustedFile(archive);
+
+            ComicArchiveData comic = new ComicArchiveData(true)
+            {
+                Archive = archive,
+                Location = archive.Path,
+            };
+
+            await comic.LoadFromInfoFile();
+            await comic.UpdateImages(db, cover: false, reload: true);
+            return comic;
         }
 
         private async RawTask SetArchive()
@@ -66,6 +81,7 @@ namespace ComicReader.Database
 
         private string GetSubPathFromFilename(string filename)
         {
+            System.Diagnostics.Debug.Assert(!IsExternal);
             string sub_path = Utils.ArchiveAccess.GetSubPath(Location);
 
             if (sub_path.Length == 0)
@@ -88,7 +104,47 @@ namespace ComicReader.Database
             }
 
             string info_text;
-            string sub_path = GetSubPathFromFilename(Manager.ComicInfoFileName);
+            string sub_path = null;
+
+            if (IsExternal)
+            {
+                var ctx = new Utils.StorageItemSearchEngine.SearchContext(Location, Utils.StorageItemSearchEngine.PathType.File);
+                string base_path = Utils.ArchiveAccess.GetBasePath(Location) + Utils.ArchiveAccess.FileSeperator;
+
+                while (await ctx.Search(512))
+                {
+                    foreach (string filepath in ctx.Files)
+                    {
+                        if (filepath.Length <= base_path.Length)
+                        {
+                            System.Diagnostics.Debug.Assert(false);
+                            continue;
+                        }
+
+                        string filename = Utils.StringUtils.ItemNameFromPath(filepath);
+                        
+                        if (filename.Equals(Manager.ComicInfoFileName))
+                        {
+                            sub_path = filepath.Substring(base_path.Length);
+                            break;
+                        }
+                    }
+
+                    if (sub_path != null)
+                    {
+                        break;
+                    }
+                }
+
+                if (sub_path == null)
+                {
+                    return new TaskResult(TaskException.FileNotFound);
+                }
+            }
+            else
+            {
+                sub_path = GetSubPathFromFilename(Manager.ComicInfoFileName);
+            }
 
             using (Stream stream = await Utils.ArchiveAccess.TryGetFileStream(Archive, sub_path))
             {
@@ -142,29 +198,57 @@ namespace ComicReader.Database
                 Log("Retrieving images in '" + Location + "'");
 
                 // Load entries.
-                string sub_path = Utils.ArchiveAccess.GetSubPath(Location);
-                List<string> subfiles = new List<string>();
-                r = await Utils.ArchiveAccess.TryGetSubFiles(Archive, sub_path, subfiles);
-
-                if (!r.Successful)
-                {
-                    return r;
-                }
-
                 List<string> entries = new List<string>();
 
-                foreach (string subfile in subfiles)
+                if (IsExternal)
                 {
-                    string extension = Utils.StringUtils.ExtensionFromFilename(subfile);
+                    var ctx = new Utils.StorageItemSearchEngine.SearchContext(Location, Utils.StorageItemSearchEngine.PathType.File);
+                    string base_path = Utils.ArchiveAccess.GetBasePath(Location) + Utils.ArchiveAccess.FileSeperator;
 
-                    if (!Utils.AppInfoProvider.IsSupportedImageExtension(extension))
+                    while (await ctx.Search(512))
                     {
-                        continue;
+                        foreach (string filepath in ctx.Files)
+                        {
+                            if (filepath.Length <= base_path.Length)
+                            {
+                                System.Diagnostics.Debug.Assert(false);
+                                continue;
+                            }
+
+                            string filename = Utils.StringUtils.ItemNameFromPath(filepath);
+                            string extension = Utils.StringUtils.ExtensionFromFilename(filename);
+
+                            if (Utils.AppInfoProvider.IsSupportedImageExtension(extension))
+                            {
+                                entries.Add(filepath.Substring(base_path.Length));
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    string sub_path = Utils.ArchiveAccess.GetSubPath(Location);
+                    List<string> subfiles = new List<string>();
+                    r = await Utils.ArchiveAccess.TryGetSubFiles(Archive, sub_path, subfiles);
+
+                    if (!r.Successful)
+                    {
+                        return r;
                     }
 
-                    entries.Add(subfile);
+                    foreach (string subfile in subfiles)
+                    {
+                        string extension = Utils.StringUtils.ExtensionFromFilename(subfile);
+
+                        if (!Utils.AppInfoProvider.IsSupportedImageExtension(extension))
+                        {
+                            continue;
+                        }
+
+                        entries.Add(subfile);
+                    }
                 }
-                
+
                 Entries = entries.OrderBy(x => x, new Utils.StringUtils.FileNameComparer()).ToList();
                 ImageUpdated = true;
             }
@@ -203,6 +287,11 @@ namespace ComicReader.Database
 
         private async RawTask CreateCoverCache(LockContext db, IRandomAccessStream stream, string extension)
         {
+            if (IsExternal)
+            {
+                return new TaskResult(TaskException.NotSupported);
+            }
+
             StorageFile cache_file;
             string cover_file_name = Utils.StringUtils.RandomFileName(16) + extension;
 
@@ -262,7 +351,17 @@ namespace ComicReader.Database
                 return null;
             }
 
-            string sub_path = GetSubPathFromFilename(Entries[index]);
+            string sub_path;
+
+            if (IsExternal)
+            {
+                sub_path = Entries[index];
+            }
+            else
+            {
+                sub_path = GetSubPathFromFilename(Entries[index]);
+            }
+
             Stream stream = await Utils.ArchiveAccess.TryGetFileStream(Archive, sub_path);
 
             if (stream == null)

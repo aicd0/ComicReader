@@ -98,8 +98,8 @@ namespace ComicReader.Utils
 
                 if (prompt.Length != 0)
                 {
-                // generate a token and add the prompt to m_task_prompts
-                if (m_task_prompts.Count == 0)
+                    // generate a token and add the prompt to m_task_prompts
+                    if (m_task_prompts.Count == 0)
                     {
                         m_next_token = 0;
                     }
