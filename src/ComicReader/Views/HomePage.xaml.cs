@@ -3,9 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
 using System.Threading.Tasks;
-using Windows.UI.Input;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
@@ -386,8 +384,8 @@ namespace ComicReader.Views
             {
                 LockContext db = new LockContext();
                 ComicItemViewModel item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-                ComicData.Manager.Hide(item.Comic);
-                await UpdateLibrary(db);
+                await item.Comic.SaveHiddenAsync(db, true);
+                ComicItemSource.Remove(item);
             });
         }
 

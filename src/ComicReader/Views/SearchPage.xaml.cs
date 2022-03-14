@@ -599,7 +599,7 @@ namespace ComicReader.Views
             {
                 LockContext db = new LockContext();
                 ComicItemViewModel ctx = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-                ComicData.Manager.Unhide(ctx.Comic);
+                await ctx.Comic.SaveHiddenAsync(db, false);
                 await StartSearch(db);
             });
         }
@@ -610,7 +610,7 @@ namespace ComicReader.Views
             {
                 LockContext db = new LockContext();
                 ComicItemViewModel ctx = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-                ComicData.Manager.Hide(ctx.Comic);
+                await ctx.Comic.SaveHiddenAsync(db, true);
                 await StartSearch(db);
             });
         }
@@ -758,7 +758,7 @@ namespace ComicReader.Views
                         continue;
                     }
 
-                    ComicData.Manager.Hide(model.Comic);
+                    await model.Comic.SaveHiddenAsync(db, true);
                 }
 
                 await StartSearch(db);
@@ -781,7 +781,7 @@ namespace ComicReader.Views
                         continue;
                     }
 
-                    ComicData.Manager.Unhide(model.Comic);
+                    await model.Comic.SaveHiddenAsync(db, false);
                 }
 
                 await StartSearch(db);

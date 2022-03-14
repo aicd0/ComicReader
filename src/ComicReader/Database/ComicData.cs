@@ -331,7 +331,7 @@ namespace ComicReader.Database
             Utils.TaskQueueManager.AppendTask(SaveSealed(fields, save_tags: false), "", SaveQueue);
         }
 
-        public void SaveHidden(bool hidden)
+        public async Task SaveHiddenAsync(LockContext db, bool hidden)
         {
             Hidden = hidden;
 
@@ -340,7 +340,7 @@ namespace ComicReader.Database
                 KeyHidden,
             };
 
-            Utils.TaskQueueManager.AppendTask(SaveSealed(fields, save_tags: false), "", SaveQueue);
+            await SaveUnsealed(db, fields, save_tags: false);
         }
 
         public void SaveRating(int rating)
@@ -1035,16 +1035,6 @@ namespace ComicReader.Database
 
                 comic.SetAsDefaultInfo();
                 comic.SaveAll();
-            }
-
-            public static void Hide(ComicData comic)
-            {
-                comic.SaveHidden(true);
-            }
-
-            public static void Unhide(ComicData comic)
-            {
-                comic.SaveHidden(false);
             }
         };
 

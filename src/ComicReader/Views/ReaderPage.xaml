@@ -314,7 +314,6 @@
                             <muxc:RatingControl
                                 Margin="0,10,0,0"
                                 HorizontalAlignment="Left"
-                                FontFamily="Segoe Fluent Icons"
                                 IsClearEnabled="True"
                                 ValueChanged="OnRatingControlValueChanged"
                                 Visibility="{x:Bind Shared.NavigationPageShared.IsExternal, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}"
