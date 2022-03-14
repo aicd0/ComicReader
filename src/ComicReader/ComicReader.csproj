@@ -164,6 +164,7 @@
     <Compile Include="Converters\SearchResultItemContainerStyleSelector.cs" />
     <Compile Include="Database\ComicFolderData.cs" />
     <Compile Include="Database\ComicArchiveData.cs" />
+    <Compile Include="Database\ComicPdfData.cs" />
     <Compile Include="Database\SettingData.cs" />
     <Compile Include="Database\ComicData.cs" />
     <Compile Include="Database\FavoriteData.cs" />

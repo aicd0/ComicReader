@@ -53,6 +53,7 @@
               <uap:FileType>.tiff</uap:FileType>
               <uap:FileType>.webp</uap:FileType>
               <uap:FileType>.zip</uap:FileType>
+              <uap:FileType>.pdf</uap:FileType>
             </uap:SupportedFileTypes>
             <uap:EditFlags OpenIsSafe="true"/>
           </uap:FileTypeAssociation>

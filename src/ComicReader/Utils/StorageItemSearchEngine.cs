@@ -104,6 +104,9 @@ namespace ComicReader.Utils.StorageItemSearchEngine
 
                 while (min_items > ItemFound && not_finish)
                 {
+                    folders.Clear();
+                    files.Clear();
+                    no_access_items.Clear();
                     not_finish = path_info.Ctx.Search(folders, files, no_access_items, min_items - ItemFound);
                     Folders.AddRange(folders);
                     Files.AddRange(files);

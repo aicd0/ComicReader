@@ -173,12 +173,6 @@ namespace ComicReader.Views
             model.OnHideClicked = OnHideComicClicked;
         }
 
-        class _Record
-        {
-            public long Id;
-            public DateTimeOffset LastVisit;
-        }
-
         private void OnComicDataUpdated(LockContext db)
         {
             // IMPORTANT: Use TaskCompletionSource to guarantee all async tasks
@@ -216,45 +210,43 @@ namespace ComicReader.Views
 
                 // command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.ComicTable +
                 //     " ORDER BY " + ComicData.Field.LastVisit + " DESC";
-                command.CommandText = "SELECT " + ComicData.Field.Id + "," + ComicData.Field.LastVisit +
+                command.CommandText = "SELECT " + ComicData.Field.Id + "," +
+                    ComicData.Field.Hidden + "," + ComicData.Field.LastVisit +
                     " FROM " + SqliteDatabaseManager.ComicTable;
 
                 await ComicData.Manager.WaitLock(db); // Lock on.
                 SqliteDataReader query = await command.ExecuteReaderAsync();
-                var records = new List<_Record>();
+                var records = new Utils.FixedHeap<Tuple<long, DateTimeOffset>>(16,
+                    (Tuple<long, DateTimeOffset> x, Tuple<long, DateTimeOffset> y) => { return x.Item2.CompareTo(y.Item2); });
 
                 while (query.Read())
                 {
-                    records.Add(new _Record
-                    {
-                        Id = query.GetInt64(0),
-                        LastVisit = query.GetDateTime(1),
-                    });
-                }
+                    bool hidden = query.GetBoolean(1);
 
-                // Sort the data using LastVisit descending.
-                records = records.OrderByDescending((_Record x) => x.LastVisit).ToList();
+                    if (!hidden)
+                    {
+                        records.Add(new Tuple<long, DateTimeOffset>
+                        (
+                            query.GetInt64(0),
+                            query.GetDateTime(2)
+                        ));
+                    }
+                }
                 
                 // Convert to view models.
                 var comic_items = new List<ComicItemViewModel>();
 
-                for (int i = 0; comic_items.Count < 16 && i < records.Count; ++i)
+                foreach (Tuple<long, DateTimeOffset> record in records.GetSorted())
                 {
-                    ComicData comic = await ComicData.Manager.FromId(db, records[i].Id);
+                    ComicData comic = await ComicData.Manager.FromId(db, record.Item1);
                     
                     if (comic == null)
                     {
                         continue;
                     }
 
-                    if (comic.Hidden)
-                    {
-                        continue;
-                    }
-
                     ComicItemViewModel model = new ComicItemViewModel();
                     ComicDataToViewModel(comic, model);
-
                     comic_items.Add(model);
                 }
                 ComicData.Manager.ReleaseLock(db); // Lock off.
@@ -394,7 +386,7 @@ namespace ComicReader.Views
             {
                 LockContext db = new LockContext();
                 ComicItemViewModel item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-                await ComicData.Manager.Hide(db, item.Comic);
+                ComicData.Manager.Hide(item.Comic);
                 await UpdateLibrary(db);
             });
         }

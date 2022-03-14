@@ -78,6 +78,7 @@ namespace ComicReader.Views
             }
             set
             {
+                _FillFinalVal();
                 m_zoom_factor_final = value;
             }
         }
@@ -113,6 +114,21 @@ namespace ComicReader.Views
             {
                 _FillFinalVal();
                 m_vertical_offset_final = value;
+            }
+        }
+
+        private bool m_disable_animation_final;
+        public bool DisableAnimationFinal
+        {
+            get
+            {
+                _FillFinalVal();
+                return m_disable_animation_final;
+            }
+            set
+            {
+                _FillFinalVal();
+                m_disable_animation_final = value;
             }
         }
 
@@ -154,7 +170,6 @@ namespace ComicReader.Views
 
         private ReaderPageShared m_shared;
         private bool m_final_value_set = false;
-        private bool m_disable_animation_final;
         private Utils.CancellationLock m_update_image_lock = new Utils.CancellationLock();
 
         public ReaderModel(ReaderPageShared shared, bool is_vertical)
@@ -397,6 +412,7 @@ namespace ComicReader.Views
                     // Stick our view to the center of two pages.
                     _IncreasePage(0, false);
                 }
+
 #if DEBUG_LOG_VIEW_CHANGE
                 Log("ViewChanged:"
                     + " Z=" + ZoomFactorFinal.ToString()
@@ -770,17 +786,17 @@ namespace ComicReader.Views
 
             if (disable_animation)
             {
-                m_disable_animation_final = true;
+                DisableAnimationFinal = true;
             }
 
-            ThisScrollViewer.ChangeView(HorizontalOffsetFinal, VerticalOffsetFinal, ZoomFactorFinal, m_disable_animation_final);
+            ThisScrollViewer.ChangeView(HorizontalOffsetFinal, VerticalOffsetFinal, ZoomFactorFinal, DisableAnimationFinal);
 
 #if DEBUG_LOG_JUMP
             Log("Commit:"
                 + " Z=" + ZoomFactorFinal.ToString()
                 + ",H=" + HorizontalOffsetFinal.ToString()
                 + ",V=" + VerticalOffsetFinal.ToString()
-                + ",D=" + m_disable_animation_final);
+                + ",D=" + DisableAnimationFinal.ToString());
 #endif
 
             return true;
@@ -899,6 +915,7 @@ namespace ComicReader.Views
                 }
 
                 m_page = res;
+
 #if DEBUG_LOG_UPDATE_PAGE
                 Log("Page updated (" +
                     "Page=" + m_page.ToString() +
@@ -907,6 +924,7 @@ namespace ComicReader.Views
                     ",ZF=" + zoom_factor.ToString() +
                     ",O=" + current_offset.ToString() + ")");
 #endif
+
                 return true;
             }
             finally
@@ -920,6 +938,7 @@ namespace ComicReader.Views
 #if DEBUG_LOG_LOAD
             Log("Updating images (page " + Page.ToString() + ")");
 #endif
+
             await m_update_image_lock.WaitAsync();
             try
             {
@@ -1442,7 +1461,7 @@ namespace ComicReader.Views
             PageIndicator.Text = control.Page.ToString() + " / " + image_count;
         }
 
-        private async Task UpdateProgress(LockContext db, ReaderModel control)
+        private void UpdateProgress(ReaderModel control, bool save)
         {
             int progress;
 
@@ -1462,7 +1481,11 @@ namespace ComicReader.Views
 
             progress = Math.Min(progress, 100);
             Shared.Progress = progress.ToString() + "%";
-            await m_comic.SaveProgress(db, progress, control.PageReal);
+
+            if (save)
+            {
+                m_comic.SaveProgress(progress, control.PageReal);
+            }
         }
 
         // Loading
@@ -1502,13 +1525,13 @@ namespace ComicReader.Views
             if (!m_comic.IsExternal)
             {
                 // Mark as read.
-                await m_comic.SetAsRead(db);
+                m_comic.SetAsRead();
 
                 // Add to history
                 await HistoryDataManager.Add(m_comic.Id, m_comic.Title1, true);
 
                 // Update image files.
-                TaskResult r = await m_comic.UpdateImages(db, cover: false, reload: true);
+                TaskResult r = await m_comic.UpdateImages(db, cover_only: false, reload: true);
 
                 if (!r.Successful)
                 {
@@ -1566,7 +1589,7 @@ namespace ComicReader.Views
                 {
                     Comic = comic,
                     Index = index,
-                    Callback = async (BitmapImage img) =>
+                    Callback = (BitmapImage img) =>
                     {
                         // Save image aspect ratio info.
                         double image_aspect_ratio = (double)img.PixelWidth / img.PixelHeight;
@@ -1591,7 +1614,7 @@ namespace ComicReader.Views
                         // Save for each 5 sec.
                         if (save_timer.LapSpan().TotalSeconds > 5.0 || index == comic.ImageCount - 1)
                         {
-                            await comic.SaveImageAspectRatios(db);
+                            comic.SaveImageAspectRatios();
                             save_timer.Lap();
                         }
 
@@ -1748,7 +1771,7 @@ namespace ComicReader.Views
                 if (await control.OnViewChanged(db, !e.IsIntermediate))
                 {
                     UpdatePage(control);
-                    await UpdateProgress(db, control);
+                    UpdateProgress(control, save: !e.IsIntermediate);
                     BottomTileSetHold(false);
                 }
             });
@@ -2108,11 +2131,7 @@ namespace ComicReader.Views
 
         private void OnRatingControlValueChanged(muxc.RatingControl sender, object args)
         {
-            Utils.C0.Run(async delegate
-            {
-                LockContext db = new LockContext();
-                await m_comic.SaveRating(db, (int)sender.Value);
-            });
+            m_comic.SaveRating((int)sender.Value);
         }
 
         private void OnInfoPaneTagClicked(object sender, RoutedEventArgs e)

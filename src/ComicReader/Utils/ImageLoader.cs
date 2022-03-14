@@ -103,15 +103,15 @@ namespace ComicReader.Utils
 
                 if (comic.ImageCount <= token.Index)
                 {
-                    TaskResult r = await comic.UpdateImages(db, cover: token.Index == 0, reload: false);
+                    TaskResult r = await comic.UpdateImages(db, cover_only: token.Index == 0, reload: false);
 
                     // Skip tokens whose comic folder cannot be reached.
                     if (!r.Successful)
                     {
-                        _Log("Skipped token " + token.Index.ToString() + "(" + token_processed.ToString() + "), failed to reach folder");
+                        _Log("Token " + token.Index.ToString() + "(" + token_processed.ToString() + ") skipped, failed to update comic images");
                         int token_before = tokens_cpy.Count;
                         tokens_cpy.RemoveAll(x => x.Comic == comic);
-                        _Log((tokens_cpy.Count - token_before).ToString() + " tokens with same comic were removed.");
+                        _Log((tokens_cpy.Count - token_before).ToString() + " tokens with the same comic were removed.");
                         all_token_success = false;
                         continue;
                     }

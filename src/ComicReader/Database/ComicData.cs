@@ -53,7 +53,8 @@ namespace ComicReader.Database
     public enum ComicType : int
     {
         Folder = 1,
-        Zip = 2,
+        Archive = 2,
+        PDF = 3,
     }
 
     public abstract class ComicData
@@ -167,6 +168,9 @@ namespace ComicReader.Database
         public abstract bool IsEditable { get; }
         public abstract int ImageCount { get; }
 
+        protected bool ImageUpdated = false;
+        private static Utils.TaskQueue SaveQueue = Utils.TaskQueueManager.EmptyQueue();
+
         protected ComicData(ComicType type, bool is_external)
         {
             Id = -1;
@@ -265,11 +269,14 @@ namespace ComicReader.Database
             await InternalSaveTags(db, remove_old: false);
         }
 
-        private async Task Save(LockContext db, List<SqlKey> keys, bool save_tags)
+        private SealedTask SaveSealed(List<SqlKey> keys, bool save_tags) =>
+            (RawTask _) => SaveUnsealed(new LockContext(), keys, save_tags).Result;
+
+        private async RawTask SaveUnsealed(LockContext db, List<SqlKey> keys, bool save_tags)
         {
             if (IsExternal)
             {
-                return;
+                return new TaskResult();
             }
 
             await ComicData.Manager.WaitLock(db); // Lock on.
@@ -278,7 +285,7 @@ namespace ComicReader.Database
                 if (Id < 0)
                 {
                     await InternalInsert(db);
-                    return;
+                    return new TaskResult();
                 }
 
                 if (keys.Count > 0)
@@ -291,6 +298,8 @@ namespace ComicReader.Database
                 {
                     await InternalSaveTags(db);
                 }
+
+                return new TaskResult();
             }
             finally
             {
@@ -298,12 +307,12 @@ namespace ComicReader.Database
             }
         }
 
-        public async Task SaveAll(LockContext db)
+        public void SaveAll()
         {
-            await Save(db, AllFields, save_tags: true);
+            Utils.TaskQueueManager.AppendTask(SaveSealed(AllFields, save_tags: true), "", SaveQueue);
         }
 
-        public async Task SaveBasic(LockContext db)
+        public void SaveBasic()
         {
             List<SqlKey> fields = new List<SqlKey>
             {
@@ -319,27 +328,34 @@ namespace ComicReader.Database
                 KeyExtendedString1,
             };
 
-            await Save(db, fields, save_tags: false);
+            Utils.TaskQueueManager.AppendTask(SaveSealed(fields, save_tags: false), "", SaveQueue);
         }
 
-        public async Task SaveTags(LockContext db)
+        public void SaveHidden(bool hidden)
         {
-            List<SqlKey> fields = new List<SqlKey>();
+            Hidden = hidden;
 
-            await Save(db, fields, save_tags: true);
-        }
-
-        public async Task SaveImageAspectRatios(LockContext db)
-        {
             List<SqlKey> fields = new List<SqlKey>
             {
-                KeyImageAspectRatios,
+                KeyHidden,
             };
 
-            await Save(db, fields, save_tags: false);
+            Utils.TaskQueueManager.AppendTask(SaveSealed(fields, save_tags: false), "", SaveQueue);
         }
 
-        public async Task SaveProgress(LockContext db, int progress, double last_position)
+        public void SaveRating(int rating)
+        {
+            Rating = rating;
+
+            List<SqlKey> fields = new List<SqlKey>
+            {
+                KeyRating,
+            };
+
+            Utils.TaskQueueManager.AppendTask(SaveSealed(fields, save_tags: false), "", SaveQueue);
+        }
+
+        public void SaveProgress(int progress, double last_position)
         {
             Progress = progress;
             LastPosition = last_position;
@@ -350,10 +366,10 @@ namespace ComicReader.Database
                 KeyLastPosition,
             };
 
-            await Save(db, fields, save_tags: false);
+            Utils.TaskQueueManager.AppendTask(SaveSealed(fields, save_tags: false), "", SaveQueue);
         }
 
-        public async Task SetAsRead(LockContext db)
+        public void SetAsRead()
         {
             LastVisit = DateTimeOffset.Now;
             Progress = Math.Max(Progress, 0);
@@ -364,65 +380,78 @@ namespace ComicReader.Database
                 KeyLastVisit,
             };
 
-            await Save(db, fields, save_tags: false);
+            Utils.TaskQueueManager.AppendTask(SaveSealed(fields, save_tags: false), "", SaveQueue);
         }
 
-        public async Task SaveRating(LockContext db, int rating)
+        public void SaveImageAspectRatios()
         {
-            Rating = rating;
-
             List<SqlKey> fields = new List<SqlKey>
             {
-                KeyRating,
+                KeyImageAspectRatios,
             };
 
-            await Save(db, fields, save_tags: false);
+            Utils.TaskQueueManager.AppendTask(SaveSealed(fields, save_tags: false), "", SaveQueue);
         }
 
-        public async Task SaveExtendedString1(LockContext db)
+        public void SaveExtendedString1()
         {
             List<SqlKey> fields = new List<SqlKey>
             {
                 KeyExtendedString1,
             };
 
-            await Save(db, fields, save_tags: false);
+            Utils.TaskQueueManager.AppendTask(SaveSealed(fields, save_tags: false), "", SaveQueue);
         }
 
+        public void SaveTags()
+        {
+            List<SqlKey> fields = new List<SqlKey>();
+            Utils.TaskQueueManager.AppendTask(SaveSealed(fields, save_tags: true), "", SaveQueue);
+        }
+
+        // Info.
         public void SetAsDefaultInfo()
         {
             Title1 = "";
             Title2 = "";
             Tags.Clear();
 
-            List<string> tags = Location.Split("\\").ToList();
+            List<string> sub_paths = Location.Split(Utils.ArchiveAccess.FileSeperator).ToList();
+            List<string> tags = new List<string>();
 
-            if (tags.Count == 0)
+            foreach (string path in sub_paths)
             {
-                System.Diagnostics.Debug.Assert(false);
-                return;
+                List<string> sub_tags = path.Split('\\').ToList();
+
+                if (sub_tags.Count == 0)
+                {
+                    continue;
+                }
+
+                if (Type != ComicType.Folder)
+                {
+                    sub_tags[sub_tags.Count - 1] = Utils.StringUtils.DisplayNameFromFilename(sub_tags[sub_tags.Count - 1]);
+                }
+
+                tags.AddRange(sub_tags);
             }
 
-            if (Type != ComicType.Folder)
+            if (tags.Count <= 1)
             {
-                tags[tags.Count - 1] = Utils.StringUtils.DisplayNameFromFilename(tags[tags.Count - 1]);
+                return;
             }
 
             Title1 = tags[tags.Count - 1];
 
-            if (tags.Count > 1)
+            TagData default_tag = new TagData
             {
-                TagData default_tag = new TagData
-                {
-                    Name = Manager.DefaultTagsString,
-                    Tags = tags.Skip(1).ToHashSet(),
-                };
+                Name = Manager.DefaultTagsString,
+                Tags = tags.Skip(1).ToHashSet(),
+            };
 
-                Tags.Add(default_tag);
-            }
+            Tags.Add(default_tag);
         }
 
-        // Info.
         public SealedTask SaveToInfoFileSealed() =>
             (RawTask _) => SaveToInfoFile().Result;
 
@@ -501,11 +530,52 @@ namespace ComicReader.Database
             }
         }
 
+        private static ComicData FromDatabase(ComicType type, string location)
+        {
+            switch (type)
+            {
+                case ComicType.Folder:
+                    return ComicFolderData.FromDatabase(location);
+                case ComicType.Archive:
+                    return ComicArchiveData.FromDatabase(location);
+                case ComicType.PDF:
+                    return ComicPdfData.FromDatabase(location);
+                default:
+                    System.Diagnostics.Debug.Assert(false);
+                    return null;
+            }
+        }
+
+        public async RawTask UpdateImages(LockContext db, bool cover_only, bool reload)
+        {
+            if (reload)
+            {
+                ImageUpdated = false;
+            }
+
+            if (!ImageUpdated)
+            {
+                TaskResult r = await ReloadImages(db, cover_only);
+
+                if (!r.Successful)
+                {
+                    return r;
+                }
+            }
+
+            if (!cover_only && ImageCount == 0)
+            {
+                return new TaskResult(TaskException.EmptySet);
+            }
+
+            return new TaskResult();
+        }
+
+        protected abstract RawTask ReloadImages(LockContext db, bool cover_only);
+
         public abstract RawTask LoadFromInfoFile();
 
         protected abstract RawTask SaveToInfoFile();
-
-        public abstract RawTask UpdateImages(LockContext db, bool cover, bool reload);
 
         public abstract Task<IRandomAccessStream> GetImageStream(LockContext db, int index);
 
@@ -583,43 +653,43 @@ namespace ComicReader.Database
                 // Tags
                 List<TagData> tags = new List<TagData>();
 
-                SqliteCommand tag_category_command = SqliteDatabaseManager.NewCommand();
-                tag_category_command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.TagCategoryTable +
-                    " WHERE " + ComicData.Field.TagCategory.ComicId + "=" + id.ToString();
-
-                await ComicData.Manager.WaitLock(db);
-                SqliteDataReader tag_category_query = tag_category_command.ExecuteReader();
-                ComicData.Manager.ReleaseLock(db);
-
-                while (tag_category_query.Read())
+                using (SqliteCommand tag_category_command = SqliteDatabaseManager.NewCommand())
                 {
-                    long tag_category_id = tag_category_query.GetInt64(0);
-                    string name = tag_category_query.GetString(1);
-
-                    TagData tag_data = new TagData
-                    {
-                        Name = name
-                    };
-
-                    SqliteCommand tag_command = SqliteDatabaseManager.NewCommand();
-                    tag_command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.TagTable +
-                        " WHERE " + ComicData.Field.Tag.TagCategoryId + "=" + tag_category_id.ToString();
+                    tag_category_command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.TagCategoryTable +
+                        " WHERE " + ComicData.Field.TagCategory.ComicId + "=" + id.ToString();
 
                     await ComicData.Manager.WaitLock(db);
-                    SqliteDataReader tag_query = tag_command.ExecuteReader();
+                    SqliteDataReader tag_category_query = tag_category_command.ExecuteReader();
                     ComicData.Manager.ReleaseLock(db);
 
-                    while (tag_query.Read())
+                    while (tag_category_query.Read())
                     {
-                        string tag = tag_query.GetString(0);
-                        tag_data.Tags.Add(tag);
+                        long tag_category_id = tag_category_query.GetInt64(0);
+                        string name = tag_category_query.GetString(1);
+
+                        TagData tag_data = new TagData
+                        {
+                            Name = name
+                        };
+
+                        SqliteCommand tag_command = SqliteDatabaseManager.NewCommand();
+                        tag_command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.TagTable +
+                            " WHERE " + ComicData.Field.Tag.TagCategoryId + "=" + tag_category_id.ToString();
+
+                        await ComicData.Manager.WaitLock(db);
+                        SqliteDataReader tag_query = tag_command.ExecuteReader();
+                        ComicData.Manager.ReleaseLock(db);
+
+                        while (tag_query.Read())
+                        {
+                            string tag = tag_query.GetString(0);
+                            tag_data.Tags.Add(tag);
+                        }
+
+                        tags.Add(tag_data);
+                        tag_command.Dispose();
                     }
-
-                    tags.Add(tag_data);
-                    tag_command.Dispose();
                 }
-
-                tag_category_command.Dispose();
 
                 // ImageAspectRatios
                 bool reset_image_aspect_ratios = false;
@@ -636,19 +706,10 @@ namespace ComicReader.Database
                 }
 
                 // Create an instance of ComicData.
-                ComicData comic;
-
-                switch (type)
+                ComicData comic = FromDatabase(type, location);
+                if (comic == null)
                 {
-                    case ComicType.Folder:
-                        comic = ComicFolderData.FromDatabase(location);
-                        break;
-                    case ComicType.Zip:
-                        comic = ComicArchiveData.FromDatabase(location);
-                        break;
-                    default:
-                        System.Diagnostics.Debug.Assert(false);
-                        return null;
+                    return null;
                 }
 
                 comic.From(id, title1, title2, hidden, rating, progress,
@@ -658,7 +719,7 @@ namespace ComicReader.Database
                 // Post-procedures.
                 if (reset_image_aspect_ratios)
                 {
-                    await comic.SaveImageAspectRatios(db);
+                    comic.SaveImageAspectRatios();
                 }
 
                 return comic;
@@ -717,7 +778,7 @@ namespace ComicReader.Database
             private struct UpdateItemInfo
             {
                 public string Location;
-                public bool IsArchive;
+                public ComicType ItemType;
                 public bool IsExist;
             };
 
@@ -788,12 +849,12 @@ namespace ComicReader.Database
                         while (await ctx.Search(1024))
                         {
                             Log("Scanning " + ctx.ItemFound.ToString() + " items.");
-                            Dictionary<string, bool> loc_scanned_dict = new Dictionary<string, bool>();
+                            var loc_scanned_dict = new Dictionary<string, ComicType>();
 
                             foreach (string file_path in ctx.Files)
                             {
                                 string filename = Utils.StringUtils.ItemNameFromPath(file_path);
-                                string extension = Utils.StringUtils.ExtensionFromFilename(filename);
+                                string extension = Utils.StringUtils.ExtensionFromFilename(filename).ToLower();
                                 
                                 if (Utils.AppInfoProvider.IsSupportedImageExtension(extension))
                                 {
@@ -801,7 +862,20 @@ namespace ComicReader.Database
 
                                     if (!loc_scanned_dict.ContainsKey(loc))
                                     {
-                                        loc_scanned_dict[loc] = file_path.Contains(Utils.ArchiveAccess.FileSeperator);
+                                        loc_scanned_dict[loc] =
+                                            file_path.Contains(Utils.ArchiveAccess.FileSeperator) ?
+                                            ComicType.Archive : ComicType.Folder;
+                                    }
+                                }
+                                else
+                                {
+                                    switch (extension)
+                                    {
+                                        case ".pdf":
+                                            loc_scanned_dict[file_path] = ComicType.PDF;
+                                            break;
+                                        default:
+                                            break;
                                     }
                                 }
                             }
@@ -834,7 +908,7 @@ namespace ComicReader.Database
                                 queue.Add(new UpdateItemInfo
                                 {
                                     Location = loc,
-                                    IsArchive = loc_scanned_dict[loc],
+                                    ItemType = loc_scanned_dict[loc],
                                     IsExist = false,
                                 });
                             }
@@ -851,7 +925,7 @@ namespace ComicReader.Database
                                     queue.Add(new UpdateItemInfo
                                     {
                                         Location = loc,
-                                        IsArchive = loc_scanned_dict[loc],
+                                        ItemType = loc_scanned_dict[loc],
                                         IsExist = true,
                                     });
                                 }
@@ -865,7 +939,7 @@ namespace ComicReader.Database
                                     return new TaskResult(TaskException.Cancellation);
                                 }
 
-                                await InternalUpdateComic(db, info.Location, info.IsArchive, info.IsExist);
+                                await InternalUpdateComic(db, info.Location, info.ItemType, info.IsExist);
 
                                 if (watch.LapSpan().TotalSeconds > 1.5)
                                 {
@@ -924,7 +998,7 @@ namespace ComicReader.Database
                 }
             }
 
-            protected static async Task InternalUpdateComic(LockContext db, string location, bool is_archive, bool is_exist)
+            protected static async Task InternalUpdateComic(LockContext db, string location, ComicType type, bool is_exist)
             {
                 Log((is_exist ? "Updat" : "Add") + "ing comic '" + location + "'");
 
@@ -937,14 +1011,7 @@ namespace ComicReader.Database
                 }
                 else
                 {
-                    if (is_archive)
-                    {
-                        comic = ComicArchiveData.FromDatabase(location);
-                    }
-                    else
-                    {
-                        comic = ComicFolderData.FromDatabase(location);
-                    }
+                    comic = FromDatabase(type, location);
                 }
 
                 if (comic == null)
@@ -957,7 +1024,7 @@ namespace ComicReader.Database
 
                 if (r.Successful)
                 {
-                    await comic.SaveAll(db);
+                    comic.SaveAll();
                     return;
                 }
 
@@ -967,19 +1034,17 @@ namespace ComicReader.Database
                 }
 
                 comic.SetAsDefaultInfo();
-                await comic.SaveAll(db);
+                comic.SaveAll();
             }
 
-            public static async Task Hide(LockContext db, ComicData comic)
+            public static void Hide(ComicData comic)
             {
-                comic.Hidden = true;
-                await comic.SaveBasic(db);
+                comic.SaveHidden(true);
             }
 
-            public static async Task Unhide(LockContext db, ComicData comic)
+            public static void Unhide(ComicData comic)
             {
-                comic.Hidden = false;
-                await comic.SaveBasic(db);
+                comic.SaveHidden(false);
             }
         };
 

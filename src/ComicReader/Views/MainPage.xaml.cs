@@ -74,7 +74,23 @@ namespace ComicReader.Views
 
             ComicData comic = null;
             
-            if (Utils.AppInfoProvider.IsSupportedArchiveExtension(target_file.FileType))
+            if (Utils.AppInfoProvider.IsSupportedDocumentExtension(target_file.FileType))
+            {
+                comic = await ComicData.Manager.FromLocation(db, target_file.Path);
+
+                if (comic == null)
+                {
+                    switch (target_file.FileType.ToLower())
+                    {
+                        case ".pdf":
+                            comic = await ComicPdfData.FromExternal(db, target_file);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+            else if (Utils.AppInfoProvider.IsSupportedArchiveExtension(target_file.FileType))
             {
                 comic = await ComicData.Manager.FromLocation(db, target_file.Path);
 

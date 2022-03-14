@@ -179,7 +179,7 @@ namespace ComicReader.Database
             // Execute the command.
             try
             {
-                int rows_updated = command.ExecuteNonQuery();
+                int rows_updated = await command.ExecuteNonQueryAsync();
 
                 if (rows_updated == 0)
                 {

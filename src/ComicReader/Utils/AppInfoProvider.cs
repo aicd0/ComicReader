@@ -24,6 +24,10 @@ namespace ComicReader.Utils
             ".zip",
         };
 
+        public static readonly HashSet<string> SupportedDocumentExtensions = new HashSet<string>{
+            ".pdf",
+        };
+
         private static HashSet<string> m_SupportedExternalFileExtensions = null;
         public static HashSet<string> SupportedExternalFileExtensions {
             get
@@ -33,6 +37,7 @@ namespace ComicReader.Utils
                     m_SupportedExternalFileExtensions = new HashSet<string>();
                     m_SupportedExternalFileExtensions.UnionWith(SupportedImageExtensions);
                     m_SupportedExternalFileExtensions.UnionWith(SupportedArchiveExtensions);
+                    m_SupportedExternalFileExtensions.UnionWith(SupportedDocumentExtensions);
                 }
                 return m_SupportedExternalFileExtensions;
             }
@@ -51,6 +56,11 @@ namespace ComicReader.Utils
         public static bool IsSupportedArchiveExtension(string extension)
         {
             return SupportedArchiveExtensions.Contains(extension.ToLower());
+        }
+
+        public static bool IsSupportedDocumentExtension(string extension)
+        {
+            return SupportedDocumentExtensions.Contains(extension.ToLower());
         }
     }
 }

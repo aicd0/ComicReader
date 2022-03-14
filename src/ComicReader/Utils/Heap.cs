@@ -7,45 +7,45 @@ using System.Threading.Tasks;
 
 namespace ComicReader.Utils
 {
-    public class MinHeap<T> : IEnumerable<T>
+    public class FixedHeap<T>
     {
-        private readonly T[] Container;
-        private readonly int Capacity;
-        private int Count;
-        private readonly Func<T, T, int> CompareFunc;
+        public int Count => m_container.Count;
 
-        public MinHeap(int capacity, Func<T, T, int> cmp_func)
+        private readonly List<T> m_container;
+        private readonly int m_capacity;
+        private readonly Comparison<T> m_comparison;
+
+        public FixedHeap(int capacity, Comparison<T> comparer)
         {
-            Container = new T[capacity + 1];
-            Capacity = capacity;
-            Count = 0;
-            CompareFunc = cmp_func;
+            m_container = new List<T>(capacity);
+            m_capacity = capacity;
+            m_comparison = comparer;
         }
 
         public void Add(T item)
         {
-            if (Count >= Capacity)
+            if (Count >= m_capacity)
             {
-                if (CompareFunc(item, Container[1]) <= 0)
+                if (m_comparison(item, m_container[0]) <= 0)
                 {
                     return;
                 }
 
-                Container[1] = item;
-                int i = 1;
-                int il = 2;
-                int ir = 3;
+                m_container[0] = item;
+                int i = 0;
+                int il = 1;
+                int ir = 2;
 
                 while (true)
                 {
                     int i_min = i;
 
-                    if (il <= Count && CompareFunc(Container[il], item) < 0)
+                    if (il < Count && m_comparison(m_container[il], item) < 0)
                     {
                         i_min = il;
                     }
 
-                    if (ir <= Count && CompareFunc(Container[ir], Container[i_min]) < 0)
+                    if (ir < Count && m_comparison(m_container[ir], m_container[i_min]) < 0)
                     {
                         i_min = ir;
                     }
@@ -55,43 +55,35 @@ namespace ComicReader.Utils
                         break;
                     }
 
-                    Container[i] = Container[i_min];
-                    Container[i_min] = item;
+                    m_container[i] = m_container[i_min];
+                    m_container[i_min] = item;
                     i = i_min;
-                    il = i * 2;
-                    ir = i * 2 + 1;
+                    il = i * 2 + 1;
+                    ir = il + 1;
                 }
             }
             else
             {
-                ++Count;
-                Container[Count] = item;
-                int i = Count;
-                int ip = i / 2;
+                m_container.Add(item);
+                int i = Count - 1;
+                int ip = (i - 1) / 2;
 
-                while (ip >= 1 && CompareFunc(Container[i], Container[ip]) < 0)
+                while (ip >= 0 && m_comparison(m_container[i], m_container[ip]) < 0)
                 {
-                    Container[i] = Container[ip];
-                    Container[ip] = item;
+                    m_container[i] = m_container[ip];
+                    m_container[ip] = item;
                     i = ip;
-                    ip = i / 2;
+                    ip = (i - 1) / 2;
                 }
             }
         }
 
-        public IEnumerator<T> GetEnumerator()
+        public List<T> GetSorted()
         {
-            IEnumerable<T> e = Container.Skip(1);
-            if (Count < Capacity)
-            {
-                e = e.SkipLast(Capacity - Count);
-            }
-            return e.GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
+            List<T> cpy = new List<T>(m_container);
+            cpy.Sort(m_comparison);
+            cpy.Reverse();
+            return cpy;
         }
     }
 }

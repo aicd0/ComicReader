@@ -120,8 +120,7 @@
                         Opacity="0.6"
                         Text="{x:Bind Ctx.Detail}"
                         TextTrimming="CharacterEllipsis"
-                        TextWrapping="WrapWholeWords"
-                        ToolTipService.ToolTip="{x:Bind Ctx.Detail}" />
+                        TextWrapping="WrapWholeWords" />
                 </Grid>
             </Grid>
             <Grid

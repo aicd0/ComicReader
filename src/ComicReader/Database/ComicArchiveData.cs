@@ -23,14 +23,13 @@ namespace ComicReader.Database
 
         private StorageFile Archive;
         private List<string> Entries = new List<string>();
-        private bool ImageUpdated = false;
 
         private StorageFolder CacheFolder => ApplicationData.Current.LocalCacheFolder;
         public override int ImageCount => Entries.Count;
         public override bool IsEditable => !IsExternal;
 
         private ComicArchiveData(bool is_external) :
-            base(ComicType.Zip, is_external) { }
+            base(ComicType.Archive, is_external) { }
 
         public static ComicData FromDatabase(string location)
         {
@@ -46,12 +45,13 @@ namespace ComicReader.Database
 
             ComicArchiveData comic = new ComicArchiveData(true)
             {
+                Title1 = archive.DisplayName,
                 Archive = archive,
                 Location = archive.Path,
             };
 
             await comic.LoadFromInfoFile();
-            await comic.UpdateImages(db, cover: false, reload: true);
+            await comic.UpdateImages(db, cover_only: false, reload: true);
             return comic;
         }
 
@@ -168,96 +168,82 @@ namespace ComicReader.Database
             return Task.FromResult(new TaskResult(TaskException.NotSupported));
         }
 
-        public override async RawTask UpdateImages(LockContext db, bool cover, bool reload)
+        protected override async RawTask ReloadImages(LockContext db, bool cover_only)
         {
-            if (reload)
+            TaskResult r = await SetArchive();
+
+            if (!r.Successful)
             {
-                ImageUpdated = false;
+                return r;
             }
 
-            if (!ImageUpdated)
+            if (cover_only && CoverFileName.Length > 0)
             {
-                TaskResult r = await SetArchive();
+                // Load the cover only.
+                IStorageItem item = await CacheFolder.TryGetItemAsync(CoverFileName);
+
+                if (item is StorageFile)
+                {
+                    return new TaskResult();
+                }
+            }
+
+            Log("Retrieving images in '" + Location + "'");
+
+            // Load entries.
+            List<string> entries = new List<string>();
+
+            if (IsExternal)
+            {
+                var ctx = new Utils.StorageItemSearchEngine.SearchContext(Location, Utils.StorageItemSearchEngine.PathType.File);
+                string base_path = Utils.ArchiveAccess.GetBasePath(Location) + Utils.ArchiveAccess.FileSeperator;
+
+                while (await ctx.Search(512))
+                {
+                    foreach (string filepath in ctx.Files)
+                    {
+                        if (filepath.Length <= base_path.Length)
+                        {
+                            System.Diagnostics.Debug.Assert(false);
+                            continue;
+                        }
+
+                        string filename = Utils.StringUtils.ItemNameFromPath(filepath);
+                        string extension = Utils.StringUtils.ExtensionFromFilename(filename);
+
+                        if (Utils.AppInfoProvider.IsSupportedImageExtension(extension))
+                        {
+                            entries.Add(filepath.Substring(base_path.Length));
+                        }
+                    }
+                }
+            }
+            else
+            {
+                string sub_path = Utils.ArchiveAccess.GetSubPath(Location);
+                List<string> subfiles = new List<string>();
+                r = await Utils.ArchiveAccess.TryGetSubFiles(Archive, sub_path, subfiles);
 
                 if (!r.Successful)
                 {
                     return r;
                 }
 
-                if (cover && CoverFileName.Length > 0)
+                foreach (string subfile in subfiles)
                 {
-                    // Load the cover only.
-                    IStorageItem item = await CacheFolder.TryGetItemAsync(CoverFileName);
+                    string extension = Utils.StringUtils.ExtensionFromFilename(subfile);
 
-                    if (item is StorageFile)
+                    if (!Utils.AppInfoProvider.IsSupportedImageExtension(extension))
                     {
-                        return new TaskResult();
+                        continue;
                     }
+
+                    entries.Add(subfile);
                 }
-
-                Log("Retrieving images in '" + Location + "'");
-
-                // Load entries.
-                List<string> entries = new List<string>();
-
-                if (IsExternal)
-                {
-                    var ctx = new Utils.StorageItemSearchEngine.SearchContext(Location, Utils.StorageItemSearchEngine.PathType.File);
-                    string base_path = Utils.ArchiveAccess.GetBasePath(Location) + Utils.ArchiveAccess.FileSeperator;
-
-                    while (await ctx.Search(512))
-                    {
-                        foreach (string filepath in ctx.Files)
-                        {
-                            if (filepath.Length <= base_path.Length)
-                            {
-                                System.Diagnostics.Debug.Assert(false);
-                                continue;
-                            }
-
-                            string filename = Utils.StringUtils.ItemNameFromPath(filepath);
-                            string extension = Utils.StringUtils.ExtensionFromFilename(filename);
-
-                            if (Utils.AppInfoProvider.IsSupportedImageExtension(extension))
-                            {
-                                entries.Add(filepath.Substring(base_path.Length));
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    string sub_path = Utils.ArchiveAccess.GetSubPath(Location);
-                    List<string> subfiles = new List<string>();
-                    r = await Utils.ArchiveAccess.TryGetSubFiles(Archive, sub_path, subfiles);
-
-                    if (!r.Successful)
-                    {
-                        return r;
-                    }
-
-                    foreach (string subfile in subfiles)
-                    {
-                        string extension = Utils.StringUtils.ExtensionFromFilename(subfile);
-
-                        if (!Utils.AppInfoProvider.IsSupportedImageExtension(extension))
-                        {
-                            continue;
-                        }
-
-                        entries.Add(subfile);
-                    }
-                }
-
-                Entries = entries.OrderBy(x => x, new Utils.StringUtils.FileNameComparer()).ToList();
-                ImageUpdated = true;
             }
 
-            if (Entries.Count == 0)
-            {
-                return new TaskResult(TaskException.EmptySet);
-            }
-
+            Entries = entries.OrderBy(x => x, new Utils.StringUtils.FileNameComparer()).ToList();
+            ImageUpdated = true;
             return new TaskResult();
         }
 
@@ -285,7 +271,7 @@ namespace ComicReader.Database
             return cover_file;
         }
 
-        private async RawTask CreateCoverCache(LockContext db, IRandomAccessStream stream, string extension)
+        private async RawTask CreateCoverCache(IRandomAccessStream stream, string extension)
         {
             if (IsExternal)
             {
@@ -321,7 +307,7 @@ namespace ComicReader.Database
 
             await RandomAccessStream.CopyAndCloseAsync(stream, cache_stream);
             CoverFileName = cover_file_name;
-            await SaveExtendedString1(db);
+            SaveExtendedString1();
             return new TaskResult();
         }
 
@@ -374,7 +360,7 @@ namespace ComicReader.Database
 
             if (index == 0)
             {
-                await CreateCoverCache(db, win_stream, Utils.StringUtils.ExtensionFromFilename(sub_path));
+                await CreateCoverCache(win_stream, Utils.StringUtils.ExtensionFromFilename(sub_path));
             }
 
             return win_stream;

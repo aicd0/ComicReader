@@ -62,20 +62,14 @@
                     Spacing="5">
 
                     <!--  Image Source  -->
-                    <controls:SettingExpander
-                        x:Uid="ImageLocationExpander"
-                        Glyph="&#xEB9F;"
-                        IsExpanded="True">
+                    <controls:SettingExpander x:Uid="ImageLocationExpander" Glyph="&#xEB9F;">
                         <controls:SettingExpander.InnerContent>
                             <Button x:Uid="ChooseLocationButton" Click="ChooseLocationsClick" />
                         </controls:SettingExpander.InnerContent>
                     </controls:SettingExpander>
 
                     <!--  Reader  -->
-                    <controls:SettingExpander
-                        x:Uid="ReaderExpander"
-                        Glyph="&#xE736;"
-                        IsExpanded="True">
+                    <controls:SettingExpander x:Uid="ReaderExpander" Glyph="&#xE736;">
                         <controls:SettingExpander.InnerContent>
                             <StackPanel Orientation="Vertical">
                                 <TextBlock x:Uid="LeftToRight" Style="{StaticResource SettingsPageBodyTextBlock}" />
@@ -85,10 +79,7 @@
                     </controls:SettingExpander>
 
                     <!--  History  -->
-                    <controls:SettingExpander
-                        x:Uid="HistoryExpander"
-                        Glyph="&#xE81C;"
-                        IsExpanded="True">
+                    <controls:SettingExpander x:Uid="HistoryExpander" Glyph="&#xE81C;">
                         <controls:SettingExpander.InnerContent>
                             <StackPanel Orientation="Vertical">
                                 <Button

@@ -25,7 +25,6 @@ namespace ComicReader.Database
         private StorageFolder Folder = null;
         private StorageFile InfoFile = null;
         private List<StorageFile> ImageFiles = new List<StorageFile>();
-        private bool ImageUpdated = false;
 
         public override int ImageCount => ImageFiles.Count;
         public override bool IsEditable => !(IsExternal && InfoFile == null);
@@ -178,80 +177,66 @@ namespace ComicReader.Database
             return new TaskResult();
         }
 
-        public override async RawTask UpdateImages(LockContext db, bool cover, bool reload)
+        protected override async RawTask ReloadImages(LockContext db, bool cover_only)
         {
-            if (reload)
+            TaskResult r = await SetFolder();
+
+            if (!r.Successful)
             {
-                ImageUpdated = false;
+                return r;
             }
 
-            if (!ImageUpdated)
+            if (cover_only && CoverFileName.Length > 0)
             {
-                TaskResult r = await SetFolder();
+                // Load the cover only.
+                IStorageItem item = await Folder.TryGetItemAsync(CoverFileName);
 
-                if (!r.Successful)
+                if (item is StorageFile)
                 {
-                    return r;
-                }
+                    StorageFile cover_file = (StorageFile)item;
 
-                if (cover && CoverFileName.Length > 0)
-                {
-                    // Load the cover only.
-                    IStorageItem item = await Folder.TryGetItemAsync(CoverFileName);
-
-                    if (item is StorageFile)
+                    if (ImageFiles.Count == 0)
                     {
-                        StorageFile cover_file = (StorageFile)item;
-
-                        if (ImageFiles.Count == 0)
-                        {
-                            ImageFiles.Add(cover_file);
-                        }
-                        else
-                        {
-                            ImageFiles[0] = cover_file;
-                        }
-
-                        return new TaskResult();
+                        ImageFiles.Add(cover_file);
                     }
+                    else
+                    {
+                        ImageFiles[0] = cover_file;
+                    }
+
+                    return new TaskResult();
                 }
-
-                Log("Retrieving images in '" + Location + "'");
-
-                // Load all images.
-                QueryOptions query_options = new QueryOptions
-                {
-                    FolderDepth = FolderDepth.Shallow,
-                    IndexerOption = IndexerOption.DoNotUseIndexer, // The results from UseIndexerWhenAvailable are incomplete.
-                };
-
-                foreach (string type in Utils.AppInfoProvider.SupportedImageExtensions)
-                {
-                    query_options.FileTypeFilter.Add(type);
-                }
-
-                var query = Folder.CreateFileQueryWithOptions(query_options);
-                var img_files = await query.GetFilesAsync();
-
-                // Sort by display name.
-                ImageFiles = img_files.OrderBy(x => x.DisplayName,
-                    new Utils.StringUtils.FileNameComparer()).ToList();
-
-                if (ImageFiles.Count > 0 && CoverFileName != ImageFiles[0].Name)
-                {
-                    CoverFileName = ImageFiles[0].Name;
-                    await SaveExtendedString1(db);
-                }
-
-                Log(img_files.Count.ToString() + " images added.");
-                ImageUpdated = true;
             }
 
-            if (ImageFiles.Count == 0)
+            Log("Retrieving images in '" + Location + "'");
+
+            // Load all images.
+            QueryOptions query_options = new QueryOptions
             {
-                return new TaskResult(TaskException.EmptySet);
+                FolderDepth = FolderDepth.Shallow,
+                IndexerOption = IndexerOption.DoNotUseIndexer, // The results from UseIndexerWhenAvailable are incomplete.
+            };
+
+            foreach (string type in Utils.AppInfoProvider.SupportedImageExtensions)
+            {
+                query_options.FileTypeFilter.Add(type);
             }
 
+            var query = Folder.CreateFileQueryWithOptions(query_options);
+            var img_files = await query.GetFilesAsync();
+
+            // Sort by display name.
+            ImageFiles = img_files.OrderBy(x => x.DisplayName,
+                new Utils.StringUtils.FileNameComparer()).ToList();
+
+            if (ImageFiles.Count > 0 && CoverFileName != ImageFiles[0].Name)
+            {
+                CoverFileName = ImageFiles[0].Name;
+                SaveExtendedString1();
+            }
+
+            Log(img_files.Count.ToString() + " images added.");
+            ImageUpdated = true;
             return new TaskResult();
         }
 

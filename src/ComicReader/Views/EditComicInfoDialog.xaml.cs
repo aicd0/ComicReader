@@ -38,18 +38,16 @@ namespace ComicReader.Views
         private void ContentDialogPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
         {
             // Done
-            Utils.C0.Run(async delegate
+            Utils.C0.Run(delegate
             {
-                LockContext db = new LockContext();
-
                 string text = "";
                 text += "Title1: " + Title1TextBox.Text + "\n";
                 text += "Title2: " + Title2TextBox.Text + "\n";
                 text += TagTextBox.Text;
 
                 m_comic.ParseInfo(text);
-                await m_comic.SaveBasic(db);
-                await m_comic.SaveTags(db);
+                m_comic.SaveBasic();
+                m_comic.SaveTags();
 
                 Utils.TaskQueueManager.AppendTask(
                     m_comic.SaveToInfoFileSealed(), "Saving...");
