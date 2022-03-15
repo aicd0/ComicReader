@@ -15,16 +15,9 @@ namespace ComicReader.Database
 
     public class ComicArchiveData : ComicData
     {
-        private string CoverFileName
-        {
-            get => ExtendedString1;
-            set => ExtendedString1 = value;
-        }
-
         private StorageFile Archive;
         private List<string> Entries = new List<string>();
 
-        private StorageFolder CacheFolder => ApplicationData.Current.LocalCacheFolder;
         public override int ImageCount => Entries.Count;
         public override bool IsEditable => !IsExternal;
 
@@ -168,29 +161,13 @@ namespace ComicReader.Database
             return Task.FromResult(new TaskResult(TaskException.NotSupported));
         }
 
-        protected override async RawTask ReloadImages(LockContext db, bool cover_only)
+        protected override async RawTask ReloadImages(LockContext db)
         {
             TaskResult r = await SetArchive();
-
-            if (!r.Successful)
-            {
-                return r;
-            }
-
-            if (cover_only && CoverFileName.Length > 0)
-            {
-                // Load the cover only.
-                IStorageItem item = await CacheFolder.TryGetItemAsync(CoverFileName);
-
-                if (item is StorageFile)
-                {
-                    return new TaskResult();
-                }
-            }
-
-            Log("Retrieving images in '" + Location + "'");
+            if (!r.Successful) return r;
 
             // Load entries.
+            Log("Retrieving images in '" + Location + "'");
             List<string> entries = new List<string>();
 
             if (IsExternal)
@@ -243,111 +220,18 @@ namespace ComicReader.Database
             }
 
             Entries = entries.OrderBy(x => x, new Utils.StringUtils.FileNameComparer()).ToList();
-            ImageUpdated = true;
             return new TaskResult();
         }
 
-        private async Task<StorageFile> TryGetCover()
+        protected override async Task<IRandomAccessStream> InternalGetImageStream(int index)
         {
-            if (CoverFileName.Length == 0)
-            {
-                return null;
-            }
-
-            IStorageItem item = await CacheFolder.TryGetItemAsync(CoverFileName);
-
-            if (!(item is StorageFile))
-            {
-                return null;
-            }
-            
-            StorageFile cover_file = (StorageFile)item;
-
-            if (!Utils.AppInfoProvider.IsSupportedImageExtension(cover_file.FileType))
-            {
-                return null;
-            }
-
-            return cover_file;
-        }
-
-        private async RawTask CreateCoverCache(IRandomAccessStream stream, string extension)
-        {
-            if (IsExternal)
-            {
-                return new TaskResult(TaskException.NotSupported);
-            }
-
-            StorageFile cache_file;
-            string cover_file_name = Utils.StringUtils.RandomFileName(16) + extension;
-
-            try
-            {
-                cache_file = await CacheFolder.CreateFileAsync(
-                    cover_file_name, CreationCollisionOption.ReplaceExisting);
-            }
-            catch (Exception e)
-            {
-                Log("Failed to create cache. " + e.ToString());
-                return new TaskResult(TaskException.Failure);
-            }
-
-            IRandomAccessStream cache_stream;
-
-            try
-            {
-                cache_stream = await cache_file.OpenAsync(FileAccessMode.ReadWrite);
-            }
-            catch (Exception e)
-            {
-                Log("Failed to access cache. " + e.ToString());
-                await cache_file.DeleteAsync();
-                return new TaskResult(TaskException.Failure);
-            }
-
-            await RandomAccessStream.CopyAndCloseAsync(stream, cache_stream);
-            CoverFileName = cover_file_name;
-            SaveExtendedString1();
-            return new TaskResult();
-        }
-
-        public override async Task<IRandomAccessStream> GetImageStream(LockContext db, int index)
-        {
-            if (index == 0)
-            {
-                StorageFile cover_file = await TryGetCover();
-
-                if (cover_file != null)
-                {
-                    try
-                    {
-                        return await cover_file.OpenAsync(FileAccessMode.Read);
-                    }
-                    catch (Exception e)
-                    {
-                        Log("Failed to access cover cache '" + cover_file.Path +
-                            "', load from archive instead. " + e.ToString());
-                    }
-                }
-            }
-
             if (index >= Entries.Count)
             {
                 Log("Image index " + index.ToString() + " out of boundary " + Entries.Count.ToString());
                 return null;
             }
 
-            string sub_path;
-
-            if (IsExternal)
-            {
-                sub_path = Entries[index];
-            }
-            else
-            {
-                sub_path = GetSubPathFromFilename(Entries[index]);
-            }
-
+            string sub_path = IsExternal ? Entries[index] : GetSubPathFromFilename(Entries[index]);
             Stream stream = await Utils.ArchiveAccess.TryGetFileStream(Archive, sub_path);
 
             if (stream == null)
@@ -357,12 +241,6 @@ namespace ComicReader.Database
             }
 
             IRandomAccessStream win_stream = stream.AsRandomAccessStream();
-
-            if (index == 0)
-            {
-                await CreateCoverCache(win_stream, Utils.StringUtils.ExtensionFromFilename(sub_path));
-            }
-
             return win_stream;
         }
     }

@@ -2,9 +2,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Runtime.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.Graphics.Imaging;
 using Windows.Storage;
 using Windows.Storage.Streams;
 
@@ -74,7 +76,7 @@ namespace ComicReader.Database
             public const string LastVisit = "last_visit";
             public const string LastPosition = "last_pos";
             public const string ImageAspectRatios = "image_aspect_ratios";
-            public const string ExtendedString1 = "cover_file_name";
+            public const string CoverFileCache = "cover_file_name";
 
             // Field tag category.
             public class TagCategory
@@ -103,7 +105,7 @@ namespace ComicReader.Database
         private SqlKey KeyLastVisit => new SqlKey(Field.LastVisit, LastVisit);
         private SqlKey KeyLastPosition => new SqlKey(Field.LastPosition, LastPosition);
         private SqlKey KeyImageAspectRatios => new SqlKey(Field.ImageAspectRatios, ImageAspectRatios, blob: true);
-        private SqlKey KeyExtendedString1 => new SqlKey(Field.ExtendedString1, ExtendedString1);
+        private SqlKey KeyCoverFileCache => new SqlKey(Field.CoverFileCache, CoverFileCache);
 
         private List<SqlKey> AllFields => new List<SqlKey>
         {
@@ -117,7 +119,7 @@ namespace ComicReader.Database
             KeyLastVisit,
             KeyLastPosition,
             KeyImageAspectRatios,
-            KeyExtendedString1,
+            KeyCoverFileCache,
         };
 
         // Local fields.
@@ -132,7 +134,7 @@ namespace ComicReader.Database
         public DateTimeOffset LastVisit { get; protected set; } = DateTimeOffset.MinValue;
         public double LastPosition { get; protected set; } = 0.0;
         public List<double> ImageAspectRatios { get; set; } = new List<double>();
-        protected string ExtendedString1 { get; set; } = "";
+        protected string CoverFileCache { get; set; } = "";
 
         // Foriegn fields.
         public List<TagData> Tags = new List<TagData>();
@@ -167,8 +169,9 @@ namespace ComicReader.Database
         public bool IsExternal { get; private set; }
         public abstract bool IsEditable { get; }
         public abstract int ImageCount { get; }
+        protected StorageFolder CacheFolder => ApplicationData.Current.LocalCacheFolder;
 
-        protected bool ImageUpdated = false;
+        private bool ImageUpdated = false;
         private static Utils.TaskQueue SaveQueue = Utils.TaskQueueManager.EmptyQueue();
 
         protected ComicData(ComicType type, bool is_external)
@@ -180,7 +183,7 @@ namespace ComicReader.Database
 
         private void From(long id, string title1, string title2, bool hidden,
             int rating, int progress, DateTimeOffset last_visit, double last_position,
-            List<double> image_aspect_ratios, string extended_string_1, List<TagData> tags)
+            List<double> image_aspect_ratios, string cover_file_cache, List<TagData> tags)
         {
             Id = id;
             Title1 = title1;
@@ -191,7 +194,7 @@ namespace ComicReader.Database
             LastVisit = last_visit;
             LastPosition = last_position;
             ImageAspectRatios = image_aspect_ratios;
-            ExtendedString1 = extended_string_1;
+            CoverFileCache = cover_file_cache;
             Tags = tags;
         }
 
@@ -307,9 +310,9 @@ namespace ComicReader.Database
             }
         }
 
-        public void SaveAll()
+        public async Task SaveAllAsync(LockContext db)
         {
-            Utils.TaskQueueManager.AppendTask(SaveSealed(AllFields, save_tags: true), "", SaveQueue);
+            await SaveUnsealed(db, AllFields, save_tags: true);
         }
 
         public void SaveBasic()
@@ -325,7 +328,7 @@ namespace ComicReader.Database
                 KeyProgress,
                 KeyLastVisit,
                 KeyLastPosition,
-                KeyExtendedString1,
+                KeyCoverFileCache,
             };
 
             Utils.TaskQueueManager.AppendTask(SaveSealed(fields, save_tags: false), "", SaveQueue);
@@ -393,11 +396,11 @@ namespace ComicReader.Database
             Utils.TaskQueueManager.AppendTask(SaveSealed(fields, save_tags: false), "", SaveQueue);
         }
 
-        public void SaveExtendedString1()
+        public void SaveCoverFileCache()
         {
             List<SqlKey> fields = new List<SqlKey>
             {
-                KeyExtendedString1,
+                KeyCoverFileCache,
             };
 
             Utils.TaskQueueManager.AppendTask(SaveSealed(fields, save_tags: false), "", SaveQueue);
@@ -409,7 +412,7 @@ namespace ComicReader.Database
             Utils.TaskQueueManager.AppendTask(SaveSealed(fields, save_tags: true), "", SaveQueue);
         }
 
-        // Info.
+        // Info
         public void SetAsDefaultInfo()
         {
             Title1 = "";
@@ -530,6 +533,7 @@ namespace ComicReader.Database
             }
         }
 
+        // Interface
         private static ComicData FromDatabase(ComicType type, string location)
         {
             switch (type)
@@ -546,38 +550,121 @@ namespace ComicReader.Database
             }
         }
 
+        protected virtual async RawTask CreateCoverCache()
+        {
+            double req_width = 300.0;
+            double req_height = 300.0;
+
+            IRandomAccessStream stream = await InternalGetImageStream(0);
+            var decoder = await BitmapDecoder.CreateAsync(stream);
+            var resized_stream = new InMemoryRandomAccessStream();
+            BitmapEncoder encoder = await BitmapEncoder.CreateForTranscodingAsync(resized_stream, decoder);
+
+            double width_ratio = req_width / decoder.PixelWidth;
+            double height_ratio = req_height / decoder.PixelHeight;
+            double scale_ratio = Math.Min(width_ratio, height_ratio);
+            if (req_width == 0) scale_ratio = height_ratio;
+            if (req_height == 0) scale_ratio = width_ratio;
+            scale_ratio = Math.Min(1.0, scale_ratio);
+            uint aspect_height = (uint)Math.Floor(decoder.PixelHeight * scale_ratio);
+            uint aspect_width = (uint)Math.Floor(decoder.PixelWidth * scale_ratio);
+
+            encoder.BitmapTransform.InterpolationMode = BitmapInterpolationMode.Fant;
+            encoder.BitmapTransform.ScaledHeight = aspect_height;
+            encoder.BitmapTransform.ScaledWidth = aspect_width;
+
+            await encoder.FlushAsync();
+            resized_stream.Seek(0);
+            var out_buffer = new byte[resized_stream.Size];
+            await resized_stream.ReadAsync(out_buffer.AsBuffer(), (uint)resized_stream.Size, InputStreamOptions.None);
+
+            string filename = Utils.StringUtils.RandomFileName(16) + ".jpg";
+
+            StorageFile sample_file;
+            try
+            {
+                sample_file = await CacheFolder.CreateFileAsync(filename, CreationCollisionOption.ReplaceExisting);
+            }
+            catch (Exception e)
+            {
+                Log("Failed to create cache. " + e.ToString());
+                return new TaskResult(TaskException.Failure);
+            }
+
+            await FileIO.WriteBytesAsync(sample_file, out_buffer);
+            CoverFileCache = filename;
+            SaveCoverFileCache();
+            return new TaskResult();
+        }
+
+        protected virtual async Task<StorageFile> GetCoverCache()
+        {
+            if (IsExternal) return null;
+            if (CoverFileCache.Length == 0) return null;
+            IStorageItem item = await CacheFolder.TryGetItemAsync(CoverFileCache);
+            if (!(item is StorageFile)) return null;
+            return (StorageFile)item;
+        }
+
         public async RawTask UpdateImages(LockContext db, bool cover_only, bool reload)
         {
-            if (reload)
+            if (reload) ImageUpdated = false;
+
+            if (cover_only)
             {
-                ImageUpdated = false;
+                if (await GetCoverCache() != null)
+                {
+                    return new TaskResult();
+                }
             }
 
             if (!ImageUpdated)
             {
-                TaskResult r = await ReloadImages(db, cover_only);
-
-                if (!r.Successful)
-                {
-                    return r;
-                }
+                TaskResult r = await ReloadImages(db);
+                if (!r.Successful) return r;
+                ImageUpdated = true;
             }
 
-            if (!cover_only && ImageCount == 0)
+            if (ImageCount == 0) return new TaskResult(TaskException.EmptySet);
+
+            if (cover_only && !IsExternal)
             {
-                return new TaskResult(TaskException.EmptySet);
+                await CreateCoverCache();
             }
 
             return new TaskResult();
         }
 
-        protected abstract RawTask ReloadImages(LockContext db, bool cover_only);
+        protected abstract RawTask ReloadImages(LockContext db);
 
         public abstract RawTask LoadFromInfoFile();
 
         protected abstract RawTask SaveToInfoFile();
 
-        public abstract Task<IRandomAccessStream> GetImageStream(LockContext db, int index);
+        public async Task<IRandomAccessStream> GetImageStream(LockContext db, int index)
+        {
+            if (index < 0)
+            {
+                StorageFile cover_file = await GetCoverCache();
+
+                if (cover_file != null)
+                {
+                    try
+                    {
+                        return await cover_file.OpenAsync(FileAccessMode.Read);
+                    }
+                    catch (Exception e)
+                    {
+                        Log("Failed to access cover cache '" + cover_file.Path +
+                            "', load from file instead. " + e.ToString());
+                    }
+                }
+            }
+
+            return await InternalGetImageStream(Math.Max(0, index));
+        }
+
+        protected abstract Task<IRandomAccessStream> InternalGetImageStream(int index);
 
         public class Manager
         {
@@ -941,7 +1028,7 @@ namespace ComicReader.Database
 
                                 await InternalUpdateComic(db, info.Location, info.ItemType, info.IsExist);
 
-                                if (watch.LapSpan().TotalSeconds > 1.5)
+                                if (watch.LapSpan().TotalSeconds > 2)
                                 {
                                     OnUpdated?.Invoke(db);
                                     watch.Lap();
@@ -980,7 +1067,7 @@ namespace ComicReader.Database
                         Log("Removing item '" + loc + "'");
                         await RemoveWithLocation(db, loc);
 
-                        if (watch.LapSpan().TotalSeconds > 1.5)
+                        if (watch.LapSpan().TotalSeconds > 2)
                         {
                             OnUpdated?.Invoke(db);
                             watch.Lap();
@@ -1024,17 +1111,13 @@ namespace ComicReader.Database
 
                 if (r.Successful)
                 {
-                    comic.SaveAll();
-                    return;
+                    await comic.SaveAllAsync(db);
                 }
-
-                if (is_exist)
+                else if (!is_exist)
                 {
-                    return;
+                    comic.SetAsDefaultInfo();
+                    await comic.SaveAllAsync(db);
                 }
-
-                comic.SetAsDefaultInfo();
-                comic.SaveAll();
             }
         };
 

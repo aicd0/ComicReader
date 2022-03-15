@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.Storage;
@@ -16,12 +15,6 @@ namespace ComicReader.Database
 
     public class ComicFolderData : ComicData
     {
-        private string CoverFileName
-        {
-            get => ExtendedString1;
-            set => ExtendedString1 = value;
-        }
-
         private StorageFolder Folder = null;
         private StorageFile InfoFile = null;
         private List<StorageFile> ImageFiles = new List<StorageFile>();
@@ -50,7 +43,6 @@ namespace ComicReader.Database
                 Location = directory,
                 ImageFiles = image_files,
                 InfoFile = info_file,
-                ImageUpdated = true,
             };
 
             if (info_file != null)
@@ -177,40 +169,33 @@ namespace ComicReader.Database
             return new TaskResult();
         }
 
-        protected override async RawTask ReloadImages(LockContext db, bool cover_only)
+        protected override RawTask CreateCoverCache()
+        {
+            if (ImageCount == 0)
+                return Task.FromResult(new TaskResult(TaskException.Failure));
+            CoverFileCache = ImageFiles[0].Name;
+            return Task.FromResult(new TaskResult());
+        }
+
+        protected override async Task<StorageFile> GetCoverCache()
+        {
+            if (CoverFileCache.Length == 0) return null;
+
+            TaskResult r = await SetFolder();
+            if (!r.Successful) return null;
+
+            IStorageItem item = await Folder.TryGetItemAsync(CoverFileCache);
+            if (!(item is StorageFile)) return null;
+            return (StorageFile)item;
+        }
+
+        protected override async RawTask ReloadImages(LockContext db)
         {
             TaskResult r = await SetFolder();
-
-            if (!r.Successful)
-            {
-                return r;
-            }
-
-            if (cover_only && CoverFileName.Length > 0)
-            {
-                // Load the cover only.
-                IStorageItem item = await Folder.TryGetItemAsync(CoverFileName);
-
-                if (item is StorageFile)
-                {
-                    StorageFile cover_file = (StorageFile)item;
-
-                    if (ImageFiles.Count == 0)
-                    {
-                        ImageFiles.Add(cover_file);
-                    }
-                    else
-                    {
-                        ImageFiles[0] = cover_file;
-                    }
-
-                    return new TaskResult();
-                }
-            }
-
-            Log("Retrieving images in '" + Location + "'");
+            if (!r.Successful) return r;
 
             // Load all images.
+            Log("Retrieving images in '" + Location + "'");
             QueryOptions query_options = new QueryOptions
             {
                 FolderDepth = FolderDepth.Shallow,
@@ -229,18 +214,17 @@ namespace ComicReader.Database
             ImageFiles = img_files.OrderBy(x => x.DisplayName,
                 new Utils.StringUtils.FileNameComparer()).ToList();
 
-            if (ImageFiles.Count > 0 && CoverFileName != ImageFiles[0].Name)
+            if (ImageFiles.Count > 0 && CoverFileCache != ImageFiles[0].Name)
             {
-                CoverFileName = ImageFiles[0].Name;
-                SaveExtendedString1();
+                CoverFileCache = ImageFiles[0].Name;
+                SaveCoverFileCache();
             }
 
             Log(img_files.Count.ToString() + " images added.");
-            ImageUpdated = true;
             return new TaskResult();
         }
 
-        public override async Task<IRandomAccessStream> GetImageStream(LockContext db, int index)
+        protected override async Task<IRandomAccessStream> InternalGetImageStream(int index)
         {
             if (index >= ImageFiles.Count)
             {

@@ -271,7 +271,7 @@ namespace ComicReader.Views
                     image_loader_tokens.Add(new Utils.ImageLoaderToken
                     {
                         Comic = item.Comic,
-                        Index = 0,
+                        Index = -1,
                         Callback = (BitmapImage img) =>
                         {
                             item.Image = img;

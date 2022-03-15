@@ -37,7 +37,7 @@
                 </StackPanel>
                 <FontIcon
                     Grid.Column="1"
-                    Margin="0,0,2,0"
+                    Margin="3,0,2,0"
                     VerticalAlignment="Center"
                     FontFamily="{StaticResource SymbolThemeFontFamily}"
                     FontSize="23"
@@ -78,7 +78,7 @@
                 </StackPanel>
                 <FontIcon
                     Grid.Column="1"
-                    Margin="0,0,2,0"
+                    Margin="3,0,2,0"
                     VerticalAlignment="Center"
                     FontFamily="{StaticResource SymbolThemeFontFamily}"
                     FontSize="23"

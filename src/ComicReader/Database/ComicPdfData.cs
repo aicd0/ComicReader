@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Windows.Data.Pdf;
 using Windows.Storage;
@@ -76,16 +73,9 @@ namespace ComicReader.Database
 
         private async RawTask SetDocument()
         {
-            if (ThisDocument != null)
-            {
-                return new TaskResult();
-            }
-
+            if (ThisDocument != null) return new TaskResult();
             TaskResult r = await SetFile();
-            if (!r.Successful)
-            {
-                return r;
-            }
+            if (!r.Successful) return r;
 
             try
             {
@@ -98,10 +88,8 @@ namespace ComicReader.Database
                 {
                     case WrongPassword:
                         return new TaskResult(TaskException.IncorrectPassword);
-
                     case GenericFail:
                         return new TaskResult(TaskException.FileCorrupted);
-
                     default:
                         return new TaskResult(TaskException.Failure);
                 }
@@ -125,26 +113,17 @@ namespace ComicReader.Database
             return Task.FromResult(new TaskResult(TaskException.NotSupported));
         }
 
-        protected override async RawTask ReloadImages(LockContext db, bool cover_only)
+        protected override async RawTask ReloadImages(LockContext db)
         {
             TaskResult r = await SetDocument();
-
-            if (!r.Successful)
-            {
-                return r;
-            }
-
-            ImageUpdated = true;
+            if (!r.Successful) return r;
             return new TaskResult();
         }
 
-        public override async Task<IRandomAccessStream> GetImageStream(LockContext db, int index)
+        protected override async Task<IRandomAccessStream> InternalGetImageStream(int index)
         {
             TaskResult r = await SetDocument();
-            if (!r.Successful)
-            {
-                return null;
-            }
+            if (!r.Successful) return null;
 
             if (index >= ImageCount)
             {
