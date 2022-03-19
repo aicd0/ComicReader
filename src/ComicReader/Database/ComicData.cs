@@ -935,6 +935,12 @@ namespace ComicReader.Database
 
                         while (await ctx.Search(1024))
                         {
+                            // Cancel this task if more requests have come in.
+                            if (m_update_lock.CancellationRequested)
+                            {
+                                return new TaskResult(TaskException.Cancellation);
+                            }
+
                             Log("Scanning " + ctx.ItemFound.ToString() + " items.");
                             var loc_scanned_dict = new Dictionary<string, ComicType>();
 
@@ -1018,21 +1024,28 @@ namespace ComicReader.Database
                                 }
                             }
 
-                            foreach (UpdateItemInfo info in queue)
+                            await WaitLock(db);
+                            try
                             {
-                                // Cancel this task if more requests have come in.
-                                if (m_update_lock.CancellationRequested)
+                                using (var transaction = SqliteDatabaseManager.NewTransaction())
                                 {
-                                    return new TaskResult(TaskException.Cancellation);
-                                }
+                                    foreach (UpdateItemInfo info in queue)
+                                    {
+                                        await InternalUpdateComic(db, info.Location, info.ItemType, info.IsExist);
+                                    }
 
-                                await InternalUpdateComic(db, info.Location, info.ItemType, info.IsExist);
-
-                                if (watch.LapSpan().TotalSeconds > 2)
-                                {
-                                    OnUpdated?.Invoke(db);
-                                    watch.Lap();
+                                    transaction.Commit();
                                 }
+                            }
+                            finally
+                            {
+                                ReleaseLock(db);
+                            }
+
+                            if (watch.LapSpan().TotalSeconds > 2)
+                            {
+                                OnUpdated?.Invoke(db);
+                                watch.Lap();
                             }
                         }
                     }
@@ -1042,36 +1055,43 @@ namespace ComicReader.Database
                         Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
                         new Utils.C1<string>.DefaultEqualityComparer()).ToList();
 
-                    // Remove folders from database.
-                    foreach (string loc in loc_removed)
+                    await WaitLock(db);
+                    try
                     {
-                        // Skip directories in ignoring list.
-                        string loc_lower = loc.ToLower();
-                        bool ignore = false;
-
-                        foreach (string base_loc in loc_ignore)
+                        using (var transaction = SqliteDatabaseManager.NewTransaction())
                         {
-                            if (Utils.StringUtils.PathContain(base_loc, loc_lower))
+                            // Remove folders from database.
+                            foreach (string loc in loc_removed)
                             {
-                                ignore = true;
-                                break;
+                                // Skip directories in ignoring list.
+                                string loc_lower = loc.ToLower();
+                                bool ignore = false;
+
+                                foreach (string base_loc in loc_ignore)
+                                {
+                                    if (Utils.StringUtils.PathContain(base_loc, loc_lower))
+                                    {
+                                        ignore = true;
+                                        break;
+                                    }
+                                }
+
+                                if (ignore)
+                                {
+                                    continue;
+                                }
+
+                                // Remove.
+                                Log("Removing item '" + loc + "'");
+                                await RemoveWithLocation(db, loc);
                             }
-                        }
 
-                        if (ignore)
-                        {
-                            continue;
+                            transaction.Commit();
                         }
-
-                        // Remove.
-                        Log("Removing item '" + loc + "'");
-                        await RemoveWithLocation(db, loc);
-
-                        if (watch.LapSpan().TotalSeconds > 2)
-                        {
-                            OnUpdated?.Invoke(db);
-                            watch.Lap();
-                        }
+                    }
+                    finally
+                    {
+                        ReleaseLock(db);
                     }
 
                     return new TaskResult();

@@ -87,41 +87,49 @@ namespace ComicReader.Database
             return m_connection.CreateCommand();
         }
 
+        public static SqliteTransaction NewTransaction()
+        {
+            System.Diagnostics.Debug.Assert(m_connection != null);
+            return m_connection.BeginTransaction();
+        }
+
         public static async Task<long> Insert(string table, List<SqlKey> keys)
         {
             List<string> field_names = new List<string>();
             List<string> field_vals = new List<string>();
             var blobs = new List<KeyValuePair<string, MemoryStream>>();
-            SqliteCommand command = NewCommand();
+            long rowid;
 
-            foreach (SqlKey key in keys)
+            using (SqliteCommand command = NewCommand())
             {
-                field_names.Add(key.Name);
-
-                if (key.IsBlob)
+                foreach (SqlKey key in keys)
                 {
-                    MemoryStream stream = Utils.C0.SerializeToMemoryStream(key.Value);
-                    blobs.Add(new KeyValuePair<string, MemoryStream>(key.Name, stream));
+                    field_names.Add(key.Name);
 
-                    string param = "$len_" + key.Name;
-                    field_vals.Add("zeroblob(" + param + ")");
-                    command.Parameters.AddWithValue(param, stream.Length);
+                    if (key.IsBlob)
+                    {
+                        MemoryStream stream = Utils.C0.SerializeToMemoryStream(key.Value);
+                        blobs.Add(new KeyValuePair<string, MemoryStream>(key.Name, stream));
+
+                        string param = "$len_" + key.Name;
+                        field_vals.Add("zeroblob(" + param + ")");
+                        command.Parameters.AddWithValue(param, stream.Length);
+                    }
+                    else
+                    {
+                        string param = "@" + key.Name;
+                        field_vals.Add(param);
+                        command.Parameters.AddWithValue(param, key.Value);
+                    }
                 }
-                else
-                {
-                    string param = "@" + key.Name;
-                    field_vals.Add(param);
-                    command.Parameters.AddWithValue(param, key.Value);
-                }
+
+                command.CommandText = "INSERT INTO " + table + " (" +
+                    string.Join(',', field_names) + ") VALUES (" +
+                    string.Join(',', field_vals) + ");" +
+                    "SELECT LAST_INSERT_ROWID();";
+
+                rowid = (long)command.ExecuteScalar();
             }
-
-            command.CommandText = "INSERT INTO " + table + " (" +
-                string.Join(',', field_names) + ") VALUES (" +
-                string.Join(',', field_vals) + ");" +
-                "SELECT LAST_INSERT_ROWID();";
-
-            long rowid = (long)command.ExecuteScalar();
-            command.Dispose();
 
             // Copy to blobs.
             foreach (var pairs in blobs)
