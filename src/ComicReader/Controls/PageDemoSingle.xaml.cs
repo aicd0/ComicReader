@@ -17,27 +17,25 @@ using Windows.UI.Xaml.Navigation;
 
 namespace ComicReader.Controls
 {
-    public sealed partial class HotkeyInfo : UserControl
+    public sealed partial class PageDemoSingle : UserControl
     {
-        public HotkeyInfo()
+        public PageDemoSingle()
         {
             this.InitializeComponent();
         }
-        
+
         public string Header
         {
-            get { return (string)GetValue(HeaderProperty); }
-            set { SetValue(HeaderProperty, value); }
+            get
+            {
+                return (string)GetValue(HeaderProperty);
+            }
+            set
+            {
+                SetValue(HeaderProperty, value);
+            }
         }
         public static readonly DependencyProperty HeaderProperty =
-            DependencyProperty.Register(nameof(Header), typeof(string), typeof(HotkeyInfo), new PropertyMetadata(null));
-        
-        public string Key
-        {
-            get { return (string)GetValue(KeyProperty); }
-            set { SetValue(KeyProperty, value); }
-        }
-        public static readonly DependencyProperty KeyProperty =
-            DependencyProperty.Register(nameof(Key), typeof(string), typeof(HotkeyInfo), new PropertyMetadata(null));
+            DependencyProperty.Register(nameof(Header), typeof(string), typeof(PageDemoSingle), new PropertyMetadata(null));
     }
 }

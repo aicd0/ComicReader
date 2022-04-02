@@ -78,37 +78,15 @@ namespace ComicReader.Views
         private bool? m_IsPreviewButtonToggled = null;
         public bool IsPreviewButtonToggled
         {
-            get => m_IsPreviewButtonToggled != null && m_IsPreviewButtonToggled.Value;
+            get => m_IsPreviewButtonToggled.HasValue && m_IsPreviewButtonToggled.Value;
             set
             {
-                if (m_IsPreviewButtonToggled == null || m_IsPreviewButtonToggled.Value != value)
+                if (!m_IsPreviewButtonToggled.HasValue || m_IsPreviewButtonToggled.Value != value)
                 {
                     m_IsPreviewButtonToggled = value;
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsPreviewButtonToggled"));
                     OnPreviewModeChanged?.Invoke();
                 }
-            }
-        }
-
-        private bool m_IsSwitchToVerticalReaderButtonVisible = false;
-        public bool IsSwitchToVerticalReaderButtonVisible
-        {
-            get => m_IsSwitchToVerticalReaderButtonVisible;
-            set
-            {
-                m_IsSwitchToVerticalReaderButtonVisible = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsSwitchToVerticalReaderButtonVisible"));
-            }
-        }
-
-        private bool m_IsSwitchToHorizontalReaderButtonVisible = false;
-        public bool IsSwitchToHorizontalReaderButtonVisible
-        {
-            get => m_IsSwitchToHorizontalReaderButtonVisible;
-            set
-            {
-                m_IsSwitchToHorizontalReaderButtonVisible = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsSwitchToHorizontalReaderButtonVisible"));
             }
         }
 
@@ -194,10 +172,10 @@ namespace ComicReader.Views
             }
         }
 
+        public DesignData.ReaderSettingViewModel ReaderSettings = new DesignData.ReaderSettingViewModel();
         public Action OnSwitchFavorites;
         public Action OnZoomIn;
         public Action OnZoomOut;
-        public Action OnSwitchReaderOrientation;
         public Action OnPreviewModeChanged;
         public Action OnExpandComicInfoPane;
         #endregion
@@ -386,11 +364,6 @@ namespace ComicReader.Views
                     await HistoryPage.Current.Update();
                 }
             });
-        }
-
-        private void OnSwitchReaderOrientationClicked(object sender, RoutedEventArgs e)
-        {
-            Shared.OnSwitchReaderOrientation?.Invoke();
         }
 
         private void OnKeyDown(object sender, KeyRoutedEventArgs e)

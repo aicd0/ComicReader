@@ -62,14 +62,20 @@
                     Spacing="5">
 
                     <!--  Image Source  -->
-                    <controls:SettingExpander x:Uid="ImageLocationExpander" Glyph="&#xEB9F;">
+                    <controls:SettingExpander
+                        x:Uid="ImageLocationExpander"
+                        Glyph="&#xEB9F;"
+                        IsExpanded="True">
                         <controls:SettingExpander.InnerContent>
                             <Button x:Uid="ChooseLocationButton" Click="ChooseLocationsClick" />
                         </controls:SettingExpander.InnerContent>
                     </controls:SettingExpander>
 
                     <!--  Reader  -->
-                    <controls:SettingExpander x:Uid="ReaderExpander" Glyph="&#xE736;">
+                    <controls:SettingExpander
+                        x:Uid="ReaderExpander"
+                        Glyph="&#xE736;"
+                        IsExpanded="True">
                         <controls:SettingExpander.InnerContent>
                             <StackPanel Orientation="Vertical">
                                 <TextBlock x:Uid="LeftToRight" Style="{StaticResource SettingsPageBodyTextBlock}" />
@@ -79,7 +85,10 @@
                     </controls:SettingExpander>
 
                     <!--  History  -->
-                    <controls:SettingExpander x:Uid="HistoryExpander" Glyph="&#xE81C;">
+                    <controls:SettingExpander
+                        x:Uid="HistoryExpander"
+                        Glyph="&#xE81C;"
+                        IsExpanded="True">
                         <controls:SettingExpander.InnerContent>
                             <StackPanel Orientation="Vertical">
                                 <Button
@@ -94,7 +103,10 @@
                     </controls:SettingExpander>
 
                     <!--  Appearance  -->
-                    <controls:SettingExpander x:Uid="AppearanceExpander" Glyph="&#xE790;">
+                    <controls:SettingExpander
+                        x:Uid="AppearanceExpander"
+                        Glyph="&#xE790;"
+                        IsExpanded="True">
                         <controls:SettingExpander.InnerContent>
                             <StackPanel Orientation="Vertical">
                                 <TextBlock
@@ -111,7 +123,10 @@
                     </controls:SettingExpander>
 
                     <!--  Keyboard shortcuts  -->
-                    <controls:SettingExpander x:Uid="KeyboardShortcutsExpander" Glyph="&#xE92E;">
+                    <controls:SettingExpander
+                        x:Uid="KeyboardShortcutsExpander"
+                        Glyph="&#xE92E;"
+                        IsExpanded="True">
                         <controls:SettingExpander.InnerContent>
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -131,7 +146,10 @@
                     </controls:SettingExpander>
 
                     <!--  Advanced  -->
-                    <controls:SettingExpander x:Uid="AdvancedExpander" Glyph="&#xEC7A;">
+                    <controls:SettingExpander
+                        x:Uid="AdvancedExpander"
+                        Glyph="&#xEC7A;"
+                        IsExpanded="True">
                         <controls:SettingExpander.InnerContent>
                             <StackPanel Orientation="Vertical">
                                 <StackPanel Orientation="Horizontal">

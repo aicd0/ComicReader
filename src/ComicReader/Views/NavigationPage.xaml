@@ -167,40 +167,6 @@
                         </AppBarButton.Content>
                     </AppBarButton>
 
-                    <!--  Reader orientation  -->
-                    <Grid>
-                        <AppBarButton
-                            x:Uid="HorizontalButton"
-                            Click="OnSwitchReaderOrientationClicked"
-                            IsEnabled="{x:Bind Shared.IsVerticalReaderVisible, Mode=OneWay}"
-                            Style="{StaticResource NavigationPageTopTileAppBarButton}"
-                            Visibility="{x:Bind Shared.IsSwitchToHorizontalReaderButtonVisible, Mode=OneWay}">
-                            <AppBarButton.Content>
-                                <FontIcon Glyph="&#xE89A;" />
-                            </AppBarButton.Content>
-                        </AppBarButton>
-                        <AppBarButton
-                            x:Uid="VerticalButton"
-                            Click="OnSwitchReaderOrientationClicked"
-                            IsEnabled="{x:Bind Shared.IsHorizontalReaderVisible, Mode=OneWay}"
-                            Style="{StaticResource NavigationPageTopTileAppBarButton}"
-                            Visibility="{x:Bind Shared.IsSwitchToVerticalReaderButtonVisible, Mode=OneWay}">
-                            <AppBarButton.Content>
-                                <FontIcon Glyph="&#xE7C3;" />
-                            </AppBarButton.Content>
-                        </AppBarButton>
-                    </Grid>
-
-                    <!--  Reader grid preview toggle  -->
-                    <AppBarToggleButton
-                        x:Uid="AllPagesButton"
-                        IsChecked="{x:Bind Shared.IsPreviewButtonToggled, Mode=TwoWay}"
-                        Style="{StaticResource NavigationPageTopTileAppBarToggleButton}">
-                        <AppBarToggleButton.Content>
-                            <FontIcon Glyph="&#xF0E2;" />
-                        </AppBarToggleButton.Content>
-                    </AppBarToggleButton>
-
                     <!--  Add to favorites  -->
                     <AppBarButton
                         Click="AddToFavoritesClick"
@@ -216,6 +182,28 @@
                                     Visibility="{x:Bind Shared.IsFavorite, Mode=OneWay}" />
                             </Grid>
                         </AppBarButton.Content>
+                    </AppBarButton>
+
+                    <!--  Reader grid preview toggle  -->
+                    <AppBarToggleButton
+                        x:Uid="AllPagesButton"
+                        IsChecked="{x:Bind Shared.IsPreviewButtonToggled, Mode=TwoWay}"
+                        Style="{StaticResource NavigationPageTopTileAppBarToggleButton}">
+                        <AppBarToggleButton.Content>
+                            <FontIcon Glyph="&#xF0E2;" />
+                        </AppBarToggleButton.Content>
+                    </AppBarToggleButton>
+
+                    <!--  Reader settings  -->
+                    <AppBarButton Style="{StaticResource NavigationPageTopTileAppBarButton}">
+                        <AppBarButton.Content>
+                            <FontIcon Glyph="&#xE713;" />
+                        </AppBarButton.Content>
+                        <AppBarButton.Flyout>
+                            <Flyout>
+                                <controls:ReaderSettingPanel DataContext="{x:Bind Shared.ReaderSettings}" />
+                            </Flyout>
+                        </AppBarButton.Flyout>
                     </AppBarButton>
                 </StackPanel>
             </Grid>

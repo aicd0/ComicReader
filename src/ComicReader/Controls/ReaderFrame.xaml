@@ -10,10 +10,15 @@
 
     <Grid DataContextChanged="OnFrameDataContextChanged" SizeChanged="OnFrameSizeChanged">
         <Grid
-            Width="{x:Bind Ctx.ImageWidth, Mode=OneWay}"
-            Height="{x:Bind Ctx.ImageHeight, Mode=OneWay}"
-            Margin="{x:Bind Ctx.Margin}">
-            <Image Source="{x:Bind Ctx.ImageSource, Mode=OneWay}" Visibility="{x:Bind Ctx.IsImageVisible, Mode=OneWay}" />
+            Width="{x:Bind Ctx.FrameWidth, Mode=OneWay}"
+            Height="{x:Bind Ctx.FrameHeight, Mode=OneWay}"
+            Margin="{x:Bind Ctx.FrameMargin, Mode=OneWay}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Image Grid.Column="0" Source="{x:Bind Ctx.ImageL, Mode=OneWay}" />
+            <Image Grid.Column="1" Source="{x:Bind Ctx.ImageR, Mode=OneWay}" />
         </Grid>
     </Grid>
 </UserControl>

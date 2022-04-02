@@ -144,11 +144,20 @@
     <Compile Include="Controls\HotkeyInfo.xaml.cs">
       <DependentUpon>HotkeyInfo.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Controls\PageDemoDual.xaml.cs">
+      <DependentUpon>PageDemoDual.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\PageDemoSingle.xaml.cs">
+      <DependentUpon>PageDemoSingle.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Controls\ReaderFrame.xaml.cs">
       <DependentUpon>ReaderFrame.xaml</DependentUpon>
     </Compile>
     <Compile Include="Controls\ReaderPreviewImage.xaml.cs">
       <DependentUpon>ReaderPreviewImage.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\ReaderSettingPanel.xaml.cs">
+      <DependentUpon>ReaderSettingPanel.xaml</DependentUpon>
     </Compile>
     <Compile Include="Controls\SettingExpander.xaml.cs">
       <DependentUpon>SettingExpander.xaml</DependentUpon>
@@ -175,6 +184,8 @@
     <Compile Include="DesignData\FavoriteItemViewModel.cs" />
     <Compile Include="DesignData\HistoryViewModel.cs" />
     <Compile Include="DesignData\ReaderFrameViewModel.cs" />
+    <Compile Include="DesignData\ReaderImagePreviewViewModel.cs" />
+    <Compile Include="DesignData\ReaderSettingViewModel.cs" />
     <Compile Include="DesignData\TagViewModel.cs" />
     <Compile Include="Utils\AppInfoProvider.cs" />
     <Compile Include="Utils\ArchiveAccess.cs" />
@@ -317,11 +328,23 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Controls\PageDemoDual.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Controls\PageDemoSingle.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Controls\ReaderFrame.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Controls\ReaderPreviewImage.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Controls\ReaderSettingPanel.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

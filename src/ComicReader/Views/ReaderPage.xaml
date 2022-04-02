@@ -23,7 +23,7 @@
             </ResourceDictionary.MergedDictionaries>
 
             <!--  Overwrite the scroll viewer style to enable PointerWheelChanged event.  -->
-            <Style x:Key="HorizontalReaderScrollViewerStyle" TargetType="ScrollViewer">
+            <Style x:Key="ReaderScrollViewerStyle" TargetType="ScrollViewer">
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="ScrollViewer">
@@ -32,7 +32,7 @@
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="{TemplateBinding CornerRadius}"
-                                PointerWheelChanged="OnHorizontalReaderScrollViewerPointerWheelChanged">
+                                PointerWheelChanged="OnReaderScrollViewerPointerWheelChanged">
                                 <Grid Background="{TemplateBinding Background}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
@@ -433,6 +433,7 @@
                         Loaded="OnVerticalReaderScrollViewerLoaded"
                         Opacity="{x:Bind Shared.NavigationPageShared.IsVerticalReaderVisible, Converter={StaticResource BooleanToDoubleConverter}, Mode=OneWay}"
                         SizeChanged="OnVerticalReaderScrollViewerSizeChanged"
+                        Style="{StaticResource ReaderScrollViewerStyle}"
                         ViewChanged="OnVerticalReaderScrollViewerViewChanged"
                         ZoomMode="Enabled">
                         <Grid HorizontalAlignment="Center">
@@ -451,6 +452,7 @@
                                 <ListView.ItemContainerStyle>
                                     <Style TargetType="ListViewItem">
                                         <Setter Property="Padding" Value="0" />
+                                        <Setter Property="HorizontalAlignment" Value="Center" />
                                     </Style>
                                 </ListView.ItemContainerStyle>
                             </ListView>
@@ -466,7 +468,7 @@
 
                     <!--  Horizontal  -->
                     <ScrollViewer
-                        FlowDirection="{x:Bind Shared.ReaderFlowDirection, Mode=OneWay}"
+                        FlowDirection="{x:Bind Shared.NavigationPageShared.ReaderSettings.PageFlowDirection, Mode=OneWay}"
                         HorizontalScrollBarVisibility="Auto"
                         HorizontalScrollMode="Enabled"
                         IsEnabled="{x:Bind Shared.NavigationPageShared.IsHorizontalReaderVisible, Mode=OneWay}"
@@ -474,7 +476,7 @@
                         Loaded="OnHorizontalReaderScrollViewerLoaded"
                         Opacity="{x:Bind Shared.NavigationPageShared.IsHorizontalReaderVisible, Converter={StaticResource BooleanToDoubleConverter}, Mode=OneWay}"
                         SizeChanged="OnHorizontalReaderScrollViewerSizeChanged"
-                        Style="{StaticResource HorizontalReaderScrollViewerStyle}"
+                        Style="{StaticResource ReaderScrollViewerStyle}"
                         VerticalScrollBarVisibility="Hidden"
                         VerticalScrollMode="Disabled"
                         ViewChanged="OnHorizontalReaderScrollViewerViewChanged"
@@ -489,7 +491,7 @@
                                 SelectionMode="None">
                                 <ListView.ItemTemplate>
                                     <DataTemplate x:DataType="data:ReaderFrameViewModel">
-                                        <controls:ReadeFrame DataContext="{x:Bind}" />
+                                        <controls:ReadeFrame DataContext="{x:Bind}" FlowDirection="LeftToRight" />
                                     </DataTemplate>
                                 </ListView.ItemTemplate>
                                 <ListView.ItemsPanel>
@@ -505,7 +507,7 @@
                             </ListView>
                             <!--
                                 We have to set ManipulationMode here to disable the default behavior of ScrollViewer
-                                (which steals the pointers from its inner controls)
+                                (which steals pointers from its inner controls)
                             -->
                             <Grid
                                 Background="Transparent"
@@ -536,7 +538,7 @@
                             </Style>
                         </GridView.ItemContainerStyle>
                         <GridView.ItemTemplate>
-                            <DataTemplate x:DataType="data:ReaderFrameViewModel">
+                            <DataTemplate x:DataType="data:ReaderImagePreviewViewModel">
                                 <controls:ReaderPreviewImage DataContext="{x:Bind}" />
                             </DataTemplate>
                         </GridView.ItemTemplate>
@@ -633,35 +635,6 @@
                                 <FontIcon FontSize="15" Glyph="&#xE71F;" />
                             </Button>
 
-                            <!--  Orientation toggle  -->
-                            <Grid Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}">
-                                <Button
-                                    x:Uid="HorizontalButton"
-                                    Click="OnSwitchReaderOrientationClicked"
-                                    IsEnabled="{x:Bind Shared.NavigationPageShared.IsVerticalReaderVisible, Mode=OneWay}"
-                                    Style="{StaticResource ReaderBottomTileButtonStyle}"
-                                    Visibility="{x:Bind Shared.NavigationPageShared.IsSwitchToHorizontalReaderButtonVisible, Mode=OneWay}">
-                                    <FontIcon FontSize="15" Glyph="&#xE89A;" />
-                                </Button>
-                                <Button
-                                    x:Uid="VerticalButton"
-                                    Click="OnSwitchReaderOrientationClicked"
-                                    IsEnabled="{x:Bind Shared.NavigationPageShared.IsHorizontalReaderVisible, Mode=OneWay}"
-                                    Style="{StaticResource ReaderBottomTileButtonStyle}"
-                                    Visibility="{x:Bind Shared.NavigationPageShared.IsSwitchToVerticalReaderButtonVisible, Mode=OneWay}">
-                                    <FontIcon FontSize="15" Glyph="&#xE7C3;" />
-                                </Button>
-                            </Grid>
-
-                            <!--  Grid preview toggle  -->
-                            <ToggleButton
-                                x:Uid="AllPagesButton"
-                                IsChecked="{x:Bind Shared.NavigationPageShared.IsPreviewButtonToggled, Mode=TwoWay}"
-                                Style="{StaticResource ReaderBottomTileToggleButtonStyle}"
-                                Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}">
-                                <FontIcon FontSize="15" Glyph="&#xF0E2;" />
-                            </ToggleButton>
-
                             <!--  Add to favorites  -->
                             <Button
                                 Click="OnFavoritesBtClicked"
@@ -680,6 +653,25 @@
                                         Glyph="&#xE735;"
                                         Visibility="{x:Bind Shared.NavigationPageShared.IsFavorite, Mode=OneWay}" />
                                 </Grid>
+                            </Button>
+
+                            <!--  Grid preview toggle  -->
+                            <ToggleButton
+                                x:Uid="AllPagesButton"
+                                IsChecked="{x:Bind Shared.NavigationPageShared.IsPreviewButtonToggled, Mode=TwoWay}"
+                                Style="{StaticResource ReaderBottomTileToggleButtonStyle}"
+                                Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}">
+                                <FontIcon FontSize="15" Glyph="&#xF0E2;" />
+                            </ToggleButton>
+
+                            <!--  Reader settings  -->
+                            <Button Style="{StaticResource ReaderBottomTileButtonStyle}" Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}">
+                                <Button.Flyout>
+                                    <Flyout>
+                                        <controls:ReaderSettingPanel DataContext="{x:Bind Shared.NavigationPageShared.ReaderSettings}" />
+                                    </Flyout>
+                                </Button.Flyout>
+                                <FontIcon FontSize="15" Glyph="&#xE713;" />
                             </Button>
 
                             <!--  Page indicator  -->

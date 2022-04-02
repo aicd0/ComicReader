@@ -414,7 +414,7 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                Uri uri = new Uri(@"https://github.com/aicd0/ComicReader/issues/new");
+                Uri uri = new Uri(@"https://github.com/aicd0/ComicReader/issues/new/choose");
                 bool success = await Windows.System.Launcher.LaunchUriAsync(uri);
 
                 if (!success)

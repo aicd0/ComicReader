@@ -14,68 +14,68 @@ namespace ComicReader.DesignData
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private BitmapImage m_ImageSource = null;
-        public BitmapImage ImageSource
+        private BitmapImage m_ImageL = null;
+        public BitmapImage ImageL
         {
-            get => m_ImageSource;
+            get => m_ImageL;
             set
             {
-                m_ImageSource = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ImageSource"));
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsImageVisible"));
+                m_ImageL = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ImageL"));
             }
         }
 
-        public bool IsImageVisible => ImageSource != null;
-
-        private double m_ImageWidth = 0.0;
-        public double ImageWidth
+        private BitmapImage m_ImageR = null;
+        public BitmapImage ImageR
         {
-            get => m_ImageWidth;
+            get => m_ImageR;
             set
             {
-                m_ImageWidth = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ImageWidth"));
+                m_ImageR = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ImageR"));
             }
         }
 
-        private double m_ImageHeight = 0.0;
-        public double ImageHeight
+        private double m_FrameWidth = 0.0;
+        public double FrameWidth
         {
-            get => m_ImageHeight;
+            get => m_FrameWidth;
             set
             {
-                m_ImageHeight = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ImageHeight"));
+                m_FrameWidth = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("FrameWidth"));
             }
         }
 
-        public int Page { get; set; } = -1;
-        public double TopPadding { get; set; } = 0.0;
-        public double BottomPadding { get; set; } = 0.0;
-        public double LeftPadding { get; set; } = 0.0;
-        public double RightPadding { get; set; } = 0.0;
-
-        private Thickness? m_Margin = null;
-        public Thickness Margin
+        private double m_FrameHeight = 0.0;
+        public double FrameHeight
         {
-            get
+            get => m_FrameHeight;
+            set
             {
-                if (m_Margin == null)
-                {
-                    m_Margin = new Thickness(
-                        LeftPadding,
-                        TopPadding,
-                        RightPadding,
-                        BottomPadding);
-                }
-
-                return m_Margin.Value;
+                m_FrameHeight = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("FrameHeight"));
             }
         }
 
+        private Thickness m_FrameMargin = new Thickness(0.0, 0.0, 0.0, 0.0);
+        public Thickness FrameMargin
+        {
+            get => m_FrameMargin;
+            set
+            {
+                m_FrameMargin = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("FrameMargin"));
+            }
+        }
+
+        public int PageL { get; set; } = -1;
+        public int PageR { get; set; } = -1;
         public double Width => Container.ActualWidth;
         public double Height => Container.ActualHeight;
+        public bool Dual { get; set; } = false;
+        public bool IsReady => Dual ? Math.Min(PageL, PageR) > 0 : Math.Max(PageL, PageR) > 0;
+
         public Grid Container = null;
         public Func<ReaderFrameViewModel, Task> OnContainerLoadedAsync;
     };

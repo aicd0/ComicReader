@@ -12,18 +12,16 @@ using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
-using ComicReader.DesignData;
 
 namespace ComicReader.Controls
 {
-    public sealed partial class ReaderPreviewImage : UserControl
+    public sealed partial class ReaderSettingPanel : UserControl
     {
-        public ReaderImagePreviewViewModel Ctx => DataContext as ReaderImagePreviewViewModel;
+        public DesignData.ReaderSettingViewModel Ctx => DataContext as DesignData.ReaderSettingViewModel;
 
-        public ReaderPreviewImage()
+        public ReaderSettingPanel()
         {
-            InitializeComponent();
-            DataContextChanged += (s, e) => Bindings.Update();
+            this.InitializeComponent();
         }
     }
 }

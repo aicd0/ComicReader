@@ -17,25 +17,11 @@ namespace ComicReader.Controls
 
         private void TryLoad(Grid container)
         {
-            if (m_loaded)
-            {
-                return;
-            }
-
-            if (Ctx == null)
-            {
-                return;
-            }
-
-            if (container == null)
-            {
-                return;
-            }
-
-            if (container.ActualWidth < 0.1 || container.ActualHeight < 0.1)
-            {
-                return;
-            }
+            if (m_loaded) return;
+            if (Ctx == null) return;
+            if (!Ctx.IsReady) return;
+            if (container == null) return;
+            if (container.ActualWidth < 0.1 || container.ActualHeight < 0.1) return;
 
             m_loaded = true;
             Ctx.Container = container;
