@@ -20,12 +20,19 @@ namespace ComicReader.Database
     {
         public int DatabaseVersion = -1;
         public List<string> ComicFolders = new List<string>();
+        public bool VerticalReading = true;
         public bool LeftToRight = false;
+        public bool VerticalContinuous = true;
+        public bool HorizontalContinuous = false;
+        public DesignData.PageArrangementEnum VerticalPageArrangement = DesignData.PageArrangementEnum.Single;
+        public DesignData.PageArrangementEnum HorizontalPageArrangement = DesignData.PageArrangementEnum.DualCoverMirror;
         public bool SaveHistory = true;
+
+        public bool DebugMode =
 #if DEBUG
-        public bool DebugMode = true;
+        true;
 #else
-        public bool DebugMode = false;
+        false;
 #endif
 
         // serialization

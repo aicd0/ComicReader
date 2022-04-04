@@ -78,8 +78,7 @@
                         IsExpanded="True">
                         <controls:SettingExpander.InnerContent>
                             <StackPanel Orientation="Vertical">
-                                <TextBlock x:Uid="LeftToRight" Style="{StaticResource SettingsPageBodyTextBlock}" />
-                                <ToggleSwitch IsOn="{x:Bind Shared.ReaderLeftToRight, Mode=TwoWay}" />
+                                <controls:ReaderSettingPanel DataContext="{x:Bind Shared.ReaderSettings}" />
                             </StackPanel>
                         </controls:SettingExpander.InnerContent>
                     </controls:SettingExpander>
@@ -165,7 +164,7 @@
                                 <Grid Height="8" />
                                 <TextBlock
                                     x:Uid="RescanFilesDetail"
-                                    Foreground="{ThemeResource ForegroundDeepGrey}"
+                                    Foreground="{ThemeResource ForegroundGrey2}"
                                     Style="{StaticResource SettingsPageBodyTextBlock}" />
                                 <Grid Height="10" />
                                 <TextBlock x:Uid="DebugMode" Style="{StaticResource SettingsPageBodyTextBlock}" />

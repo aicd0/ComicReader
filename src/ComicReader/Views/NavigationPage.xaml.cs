@@ -11,9 +11,6 @@ namespace ComicReader.Views
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public Action RefreshPage;
-        public Action<string> SetSearchBox;
-
         private MainPageShared m_MainPageShared;
         public MainPageShared MainPageShared
         {
@@ -73,8 +70,9 @@ namespace ComicReader.Views
         }
 
         public Action<object, KeyRoutedEventArgs> OnKeyDown;
+        public Action RefreshPage;
+        public Action<string> SetSearchBox;
 
-        #region ReaderPage
         private bool? m_IsPreviewButtonToggled = null;
         public bool IsPreviewButtonToggled
         {
@@ -172,13 +170,13 @@ namespace ComicReader.Views
             }
         }
 
-        public DesignData.ReaderSettingViewModel ReaderSettings = new DesignData.ReaderSettingViewModel();
+        public DesignData.ReaderSettingViewModel ReaderSettings => MainPageShared.ReaderSettings;
+
         public Action OnSwitchFavorites;
         public Action OnZoomIn;
         public Action OnZoomOut;
         public Action OnPreviewModeChanged;
         public Action OnExpandComicInfoPane;
-        #endregion
     }
 
     public sealed partial class NavigationPage : Page

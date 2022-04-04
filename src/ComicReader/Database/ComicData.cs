@@ -199,7 +199,7 @@ namespace ComicReader.Database
         }
 
         // Saving.
-        private async Task InternalSaveTags(LockContext db, bool remove_old = true)
+        private async Task InternalSaveTagsNoLock(LockContext db, bool remove_old = true)
         {
             if (remove_old)
             {
@@ -220,9 +220,7 @@ namespace ComicReader.Database
                     new SqlKey(Field.TagCategory.ComicId, Id),
                 };
 
-                await ComicData.Manager.WaitLock(db);
                 long rowid = await SqliteDatabaseManager.Insert(SqliteDatabaseManager.TagCategoryTable, tag_category_fields);
-                ComicData.Manager.ReleaseLock(db);
 
                 // Retrieve ID from inserted row.
                 SqliteCommand command = SqliteDatabaseManager.NewCommand();
@@ -241,35 +239,28 @@ namespace ComicReader.Database
                         new SqlKey(Field.Tag.TagCategoryId, tag_category_id),
                     };
 
-                    await ComicData.Manager.WaitLock(db);
                     _ = await SqliteDatabaseManager.Insert(SqliteDatabaseManager.TagTable, tag_fields);
-                    ComicData.Manager.ReleaseLock(db);
                 }
             }
         }
 
-        private async Task InternalInsert(LockContext db)
+        private async Task InternalInsertNoLock(LockContext db)
         {
             // Insert to comic table.
-            await ComicData.Manager.WaitLock(db);
             long rowid = await SqliteDatabaseManager.Insert(SqliteDatabaseManager.ComicTable, AllFields);
-            ComicData.Manager.ReleaseLock(db);
 
             // Retrieve ID from inserted row.
             SqliteCommand command = SqliteDatabaseManager.NewCommand();
             command.CommandText = "SELECT " + Field.Id + " FROM " +
                 SqliteDatabaseManager.ComicTable + " WHERE ROWID=$rowid";
             command.Parameters.AddWithValue("$rowid", rowid);
-
-            await ComicData.Manager.WaitLock(db);
             Id = (long)command.ExecuteScalar();
-            ComicData.Manager.ReleaseLock(db);
 
             // Cleanups.
             command.Dispose();
 
             // Insert tags.
-            await InternalSaveTags(db, remove_old: false);
+            await InternalSaveTagsNoLock(db, remove_old: false);
         }
 
         private SealedTask SaveSealed(List<SqlKey> keys, bool save_tags) =>
@@ -287,7 +278,7 @@ namespace ComicReader.Database
             {
                 if (Id < 0)
                 {
-                    await InternalInsert(db);
+                    await InternalInsertNoLock(db);
                     return new TaskResult();
                 }
 
@@ -299,7 +290,7 @@ namespace ComicReader.Database
 
                 if (save_tags)
                 {
-                    await InternalSaveTags(db);
+                    await InternalSaveTagsNoLock(db);
                 }
 
                 return new TaskResult();
@@ -722,6 +713,55 @@ namespace ComicReader.Database
                 }
             }
 
+            public static async Task<T> CommandBlock<T>(LockContext db, Func<SqliteCommand, Task<T>> op)
+            {
+                await WaitLock(db);
+                try
+                {
+                    using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
+                    {
+                        return await op(command);
+                    }
+                }
+                finally
+                {
+                    ReleaseLock(db);
+                }
+            }
+
+            public static async Task CommandBlock(LockContext db, Func<SqliteCommand, Task> op)
+            {
+                await WaitLock(db);
+                try
+                {
+                    using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
+                    {
+                        await op(command);
+                    }
+                }
+                finally
+                {
+                    ReleaseLock(db);
+                }
+            }
+
+            public static async Task TransactionBlock(LockContext db, Func<Task> op)
+            {
+                await WaitLock(db);
+                try
+                {
+                    using (var transaction = SqliteDatabaseManager.NewTransaction())
+                    {
+                        await op();
+                        transaction.Commit();
+                    }
+                }
+                finally
+                {
+                    ReleaseLock(db);
+                }
+            }
+
             public static async Task<ComicData> From(LockContext db, SqliteDataReader query)
             {
                 // Directly imported fields.
@@ -740,43 +780,45 @@ namespace ComicReader.Database
                 // Tags
                 List<TagData> tags = new List<TagData>();
 
-                using (SqliteCommand tag_category_command = SqliteDatabaseManager.NewCommand())
+                await CommandBlock(db, async delegate (SqliteCommand command)
                 {
-                    tag_category_command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.TagCategoryTable +
+                    List<long> tag_category_ids = new List<long>();
+
+                    command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.TagCategoryTable +
                         " WHERE " + ComicData.Field.TagCategory.ComicId + "=" + id.ToString();
 
-                    await ComicData.Manager.WaitLock(db);
-                    SqliteDataReader tag_category_query = tag_category_command.ExecuteReader();
-                    ComicData.Manager.ReleaseLock(db);
-
-                    while (tag_category_query.Read())
+                    using (SqliteDataReader tag_category_query = await command.ExecuteReaderAsync())
                     {
-                        long tag_category_id = tag_category_query.GetInt64(0);
-                        string name = tag_category_query.GetString(1);
-
-                        TagData tag_data = new TagData
+                        while (tag_category_query.Read())
                         {
-                            Name = name
-                        };
+                            long tag_category_id = tag_category_query.GetInt64(0);
+                            string name = tag_category_query.GetString(1);
 
-                        SqliteCommand tag_command = SqliteDatabaseManager.NewCommand();
-                        tag_command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.TagTable +
-                            " WHERE " + ComicData.Field.Tag.TagCategoryId + "=" + tag_category_id.ToString();
+                            TagData tag_data = new TagData
+                            {
+                                Name = name
+                            };
 
-                        await ComicData.Manager.WaitLock(db);
-                        SqliteDataReader tag_query = tag_command.ExecuteReader();
-                        ComicData.Manager.ReleaseLock(db);
-
-                        while (tag_query.Read())
-                        {
-                            string tag = tag_query.GetString(0);
-                            tag_data.Tags.Add(tag);
+                            tags.Add(tag_data);
+                            tag_category_ids.Add(tag_category_id);
                         }
-
-                        tags.Add(tag_data);
-                        tag_command.Dispose();
                     }
-                }
+
+                    for (int i = 0; i < tags.Count; ++i)
+                    {
+                        command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.TagTable +
+                            " WHERE " + ComicData.Field.Tag.TagCategoryId + "=" + tag_category_ids[i].ToString();
+
+                        using (SqliteDataReader tag_query = await command.ExecuteReaderAsync())
+                        {
+                            while (tag_query.Read())
+                            {
+                                string tag = tag_query.GetString(0);
+                                _ = tags[i].Tags.Add(tag);
+                            }
+                        }
+                    }
+                });
 
                 // ImageAspectRatios
                 bool reset_image_aspect_ratios = false;
@@ -814,14 +856,12 @@ namespace ComicReader.Database
 
             private static async Task<ComicData> From(LockContext db, string col, object entry)
             {
-                SqliteCommand command = SqliteDatabaseManager.NewCommand();
-                command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.ComicTable +
-                    " WHERE " + col + "=@entry LIMIT 1";
-                command.Parameters.AddWithValue("@entry", entry);
-
-                await ComicData.Manager.WaitLock(db);
-                try
+                return await CommandBlock(db, async delegate (SqliteCommand command)
                 {
+                    command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.ComicTable +
+                        " WHERE " + col + "=@entry LIMIT 1";
+                    command.Parameters.AddWithValue("@entry", entry);
+
                     SqliteDataReader query = command.ExecuteReader();
 
                     if (!query.Read())
@@ -830,11 +870,7 @@ namespace ComicReader.Database
                     }
 
                     return await From(db, query);
-                }
-                finally
-                {
-                    ComicData.Manager.ReleaseLock(db);
-                }
+                });
             }
 
             public static async Task<ComicData> FromId(LockContext db, long id)
@@ -849,14 +885,13 @@ namespace ComicReader.Database
 
             public static async Task RemoveWithLocation(LockContext db, string location)
             {
-                SqliteCommand command = SqliteDatabaseManager.NewCommand();
-                command.CommandText = "DELETE FROM " + SqliteDatabaseManager.ComicTable +
-                    " WHERE " + ComicData.Field.Location + " LIKE @pattern";
-                command.Parameters.AddWithValue("@pattern", location + "%");
-
-                await ComicData.Manager.WaitLock(db);
-                command.ExecuteNonQuery();
-                ComicData.Manager.ReleaseLock(db);
+                await CommandBlock(db, async delegate (SqliteCommand command)
+                {
+                    command.CommandText = "DELETE FROM " + SqliteDatabaseManager.ComicTable +
+                        " WHERE " + ComicData.Field.Location + " LIKE @pattern";
+                    command.Parameters.AddWithValue("@pattern", location + "%");
+                    await command.ExecuteNonQueryAsync();
+                });
             }
 
             public static SealedTask UpdateSealed(bool lazy_load) =>
@@ -884,30 +919,27 @@ namespace ComicReader.Database
 
                     // Fetch all locations in the database.
                     List<string> loc_exist = new List<string>();
+
+                    await CommandBlock(db, async delegate (SqliteCommand command)
                     {
-                        SqliteCommand command = SqliteDatabaseManager.NewCommand();
                         command.CommandText = "SELECT " + ComicData.Field.Location +
                             " FROM " + SqliteDatabaseManager.ComicTable;
-
-                        await ComicData.Manager.WaitLock(db); // Lock on.
                         SqliteDataReader query = await command.ExecuteReaderAsync();
 
                         while (query.Read())
                         {
                             loc_exist.Add(query.GetString(0));
                         }
-                        ComicData.Manager.ReleaseLock(db); // Lock off.
-                    }
+                    });
 
                     // Get all root folders from setting.
                     List<string> root_folders = new List<string>(XmlDatabase.Settings.ComicFolders.Count);
-                    await XmlDatabaseManager.WaitLock();
 
+                    await XmlDatabaseManager.WaitLock();
                     foreach (string folder_path in XmlDatabase.Settings.ComicFolders)
                     {
                         root_folders.Add(folder_path);
                     }
-
                     XmlDatabaseManager.ReleaseLock();
 
                     // Get all subfolders in root folders.
@@ -1024,23 +1056,13 @@ namespace ComicReader.Database
                                 }
                             }
 
-                            await WaitLock(db);
-                            try
+                            await TransactionBlock(db, async delegate
                             {
-                                using (var transaction = SqliteDatabaseManager.NewTransaction())
+                                foreach (UpdateItemInfo info in queue)
                                 {
-                                    foreach (UpdateItemInfo info in queue)
-                                    {
-                                        await InternalUpdateComic(db, info.Location, info.ItemType, info.IsExist);
-                                    }
-
-                                    transaction.Commit();
+                                    await InternalUpdateComic(db, info.Location, info.ItemType, info.IsExist);
                                 }
-                            }
-                            finally
-                            {
-                                ReleaseLock(db);
-                            }
+                            });
 
                             if (watch.LapSpan().TotalSeconds > 2)
                             {
@@ -1055,44 +1077,34 @@ namespace ComicReader.Database
                         Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
                         new Utils.C1<string>.DefaultEqualityComparer()).ToList();
 
-                    await WaitLock(db);
-                    try
+                    await TransactionBlock(db, async delegate
                     {
-                        using (var transaction = SqliteDatabaseManager.NewTransaction())
+                        // Remove folders from database.
+                        foreach (string loc in loc_removed)
                         {
-                            // Remove folders from database.
-                            foreach (string loc in loc_removed)
+                            // Skip directories in ignoring list.
+                            string loc_lower = loc.ToLower();
+                            bool ignore = false;
+
+                            foreach (string base_loc in loc_ignore)
                             {
-                                // Skip directories in ignoring list.
-                                string loc_lower = loc.ToLower();
-                                bool ignore = false;
-
-                                foreach (string base_loc in loc_ignore)
+                                if (Utils.StringUtils.PathContain(base_loc, loc_lower))
                                 {
-                                    if (Utils.StringUtils.PathContain(base_loc, loc_lower))
-                                    {
-                                        ignore = true;
-                                        break;
-                                    }
+                                    ignore = true;
+                                    break;
                                 }
-
-                                if (ignore)
-                                {
-                                    continue;
-                                }
-
-                                // Remove.
-                                Log("Removing item '" + loc + "'");
-                                await RemoveWithLocation(db, loc);
                             }
 
-                            transaction.Commit();
+                            if (ignore)
+                            {
+                                continue;
+                            }
+
+                            // Remove.
+                            Log("Removing item '" + loc + "'");
+                            await RemoveWithLocation(db, loc);
                         }
-                    }
-                    finally
-                    {
-                        ReleaseLock(db);
-                    }
+                    });
 
                     return new TaskResult();
                 }

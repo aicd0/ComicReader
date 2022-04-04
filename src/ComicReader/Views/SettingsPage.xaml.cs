@@ -38,18 +38,6 @@ namespace ComicReader.Views
 
         public Action OnSettingsChanged;
 
-        private bool m_ReaderLeftToRight;
-        public bool ReaderLeftToRight
-        {
-            get => m_ReaderLeftToRight;
-            set
-            {
-                m_ReaderLeftToRight = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ReaderLeftToRight"));
-                OnSettingsChanged?.Invoke();
-            }
-        }
-
         private bool m_IsRescanning = true;
         public bool IsRescanning
         {
@@ -186,6 +174,8 @@ namespace ComicReader.Views
                 OnSettingsChanged?.Invoke();
             }
         }
+
+        public DesignData.ReaderSettingViewModel ReaderSettings => MainPageShared.ReaderSettings;
     }
 
     public sealed partial class SettingsPage : Page
@@ -284,7 +274,6 @@ namespace ComicReader.Views
             // From Xml.
             await XmlDatabaseManager.WaitLock();
 
-            Shared.ReaderLeftToRight = XmlDatabase.Settings.LeftToRight;
             Shared.IsClearHistoryEnabled = XmlDatabase.History.Items.Count > 0;
             Shared.HistorySaveBrowsingHistory = XmlDatabase.Settings.SaveHistory;
             Shared.AdvancedDebugMode = XmlDatabase.Settings.DebugMode;
@@ -310,7 +299,7 @@ namespace ComicReader.Views
             PackageVersion version = Package.Current.Id.Version;
             AboutBuildVersionControl.Text = app_name + " " + version.Major + "." + version.Minor + "." + version.Build + "." + version.Revision;
 
-            string author = "aicd0";
+            string author = "x_x";
             string about_copyright = Utils.StringResourceProvider.GetResourceString("AboutCopyright");
             about_copyright = about_copyright.Replace("$author", author);
             AboutCopyrightControl.Text = about_copyright;
@@ -334,16 +323,15 @@ namespace ComicReader.Views
 
         private async Task UpdateStatistis(LockContext db)
         {
-            SqliteCommand command = SqliteDatabaseManager.NewCommand();
-            command.CommandText = "SELECT COUNT(*) FROM " + SqliteDatabaseManager.ComicTable;
+            await ComicData.Manager.CommandBlock(db, async delegate (SqliteCommand command)
+            {
+                command.CommandText = "SELECT COUNT(*) FROM " + SqliteDatabaseManager.ComicTable;
+                long comic_count = (long)await command.ExecuteScalarAsync();
 
-            await ComicData.Manager.WaitLock(db);
-            long comic_count = (long)command.ExecuteScalar();
-            ComicData.Manager.ReleaseLock(db);
-
-            string total_comic_string = Utils.StringResourceProvider.GetResourceString("TotalComics");
-            StatisticsTextBlock.Text = total_comic_string +
-                comic_count.ToString("#,#0", CultureInfo.InvariantCulture);
+                string total_comic_string = Utils.StringResourceProvider.GetResourceString("TotalComics");
+                StatisticsTextBlock.Text = total_comic_string +
+                    comic_count.ToString("#,#0", CultureInfo.InvariantCulture);
+            });
         }
 
         private void UpdateRescanStatus()
@@ -353,7 +341,7 @@ namespace ComicReader.Views
 
         private async Task Save()
         {
-            // to local settings
+            // To local settings.
             if (Shared.Appearance == AppearanceSetting.Light)
             {
                 ApplicationData.Current.LocalSettings.Values[AppearanceKey] = (int)ApplicationTheme.Light;
@@ -367,10 +355,9 @@ namespace ComicReader.Views
                 ApplicationData.Current.LocalSettings.Values.Remove(AppearanceKey);
             }
 
-            // to database
+            // To database.
             await XmlDatabaseManager.WaitLock();
 
-            XmlDatabase.Settings.LeftToRight = Shared.ReaderLeftToRight;
             XmlDatabase.Settings.SaveHistory = Shared.HistorySaveBrowsingHistory;
             XmlDatabase.Settings.DebugMode = Shared.AdvancedDebugMode;
 

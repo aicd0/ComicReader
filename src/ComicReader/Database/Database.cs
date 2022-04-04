@@ -102,9 +102,11 @@ namespace ComicReader.Database
 
         private static async Task ExecuteCommands(List<string> commands)
         {
-            SqliteCommand command = SqliteDatabaseManager.NewCommand();
-            command.CommandText = string.Join(';', commands) + ";";
-            await command.ExecuteNonQueryAsync();
+            using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
+            {
+                command.CommandText = string.Join(';', commands) + ";";
+                await command.ExecuteNonQueryAsync();
+            }
         }
 
         private static void Log(string content)

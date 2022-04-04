@@ -18,11 +18,18 @@ namespace ComicReader.Utils
     using RawTask = Task<Utils.TaskResult>;
     using SealedTask = Func<Task<Utils.TaskResult>, Utils.TaskResult>;
 
+    public enum ImageConstrainOption
+    {
+        None,
+        SameAsFirstImage
+    }
+
     public class ImageLoaderToken
     {
         public ComicData Comic;
         public int Index;
         public Action<BitmapImage> Callback;
+        public Func<BitmapImage, Task> CallbackAsync;
     }
 
     public class ImageConstrain
@@ -49,12 +56,6 @@ namespace ComicReader.Utils
                 Option = opt
             };
         }
-    }
-
-    public enum ImageConstrainOption
-    {
-        None,
-        SameAsFirstImage
     }
 
     public class ImageLoader
@@ -156,50 +157,64 @@ namespace ComicReader.Utils
                     }
                 }
 
-                await Utils.C0.Sync(delegate
                 {
-                    if (first_token)
+                    TaskCompletionSource<bool> completion_src = new TaskCompletionSource<bool>();
+
+                    await Utils.C0.Sync(async delegate
                     {
-                        first_token = false;
-
-                        if (max_width.Option == ImageConstrainOption.SameAsFirstImage)
+                        if (first_token)
                         {
-                            max_width.Val = image.PixelWidth;
+                            first_token = false;
+
+                            if (max_width.Option == ImageConstrainOption.SameAsFirstImage)
+                            {
+                                max_width.Val = image.PixelWidth;
+                            }
+
+                            if (max_height.Option == ImageConstrainOption.SameAsFirstImage)
+                            {
+                                max_height.Val = image.PixelHeight;
+                            }
+
+                            raw_pixels_per_view_pixel = DisplayInformation.GetForCurrentView().RawPixelsPerViewPixel;
+                            frame_ratio = max_width.Val / max_height.Val;
                         }
 
-                        if (max_height.Option == ImageConstrainOption.SameAsFirstImage)
+                        if (!use_origin_size)
                         {
-                            max_height.Val = image.PixelHeight;
+                            double image_ratio = (double)image.PixelWidth / image.PixelHeight;
+                            double image_height;
+                            double image_width;
+                            if (image_ratio > frame_ratio)
+                            {
+                                image_width = max_width.Val * raw_pixels_per_view_pixel;
+                                image_height = image_width / image_ratio;
+                            }
+                            else
+                            {
+                                image_height = max_height.Val * raw_pixels_per_view_pixel;
+                                image_width = image_height * image_ratio;
+                            }
+                            image.DecodePixelHeight = (int)image_height;
+                            image.DecodePixelWidth = (int)image_width;
                         }
 
-                        raw_pixels_per_view_pixel = DisplayInformation.GetForCurrentView().RawPixelsPerViewPixel;
-                        frame_ratio = max_width.Val / max_height.Val;
-                    }
+                        token.Callback?.Invoke(image);
 
-                    if (!use_origin_size)
-                    {
-                        double image_ratio = (double)image.PixelWidth / image.PixelHeight;
-                        double image_height;
-                        double image_width;
-                        if (image_ratio > frame_ratio)
+                        if (token.CallbackAsync != null)
                         {
-                            image_width = max_width.Val * raw_pixels_per_view_pixel;
-                            image_height = image_width / image_ratio;
+                            await token.CallbackAsync(image);
                         }
-                        else
-                        {
-                            image_height = max_height.Val * raw_pixels_per_view_pixel;
-                            image_width = image_height * image_ratio;
-                        }
-                        image.DecodePixelHeight = (int)image_height;
-                        image.DecodePixelWidth = (int)image_width;
-                    }
 
-                    token.Callback?.Invoke(image);
 #if DEBUG_LOG_LOAD
-                    _Log("Token " + token_i.ToString() + " (idx=" + token.Index.ToString() + ") loaded");
+                        _Log("Token " + token_i.ToString() + " (idx=" + token.Index.ToString() + ") loaded");
 #endif
-                });
+
+                        completion_src.SetResult(true);
+                    });
+
+                    await completion_src.Task;
+                }
             }
 
 #if DEBUG_LOG_LOAD

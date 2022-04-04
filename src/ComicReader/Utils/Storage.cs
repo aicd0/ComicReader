@@ -48,8 +48,18 @@ namespace ComicReader.Utils
                     continue;
                 }
 
-                StorageFolder permitted_folder = await
-                    StorageApplicationPermissions.FutureAccessList.GetFolderAsync(base_token);
+                StorageFolder permitted_folder = null;
+
+                try
+                {
+                    permitted_folder = await StorageApplicationPermissions.FutureAccessList.GetFolderAsync(base_token);
+                }
+                catch (Exception e)
+                {
+                    Log("Failed to access folder through token '" + base_token + "'. " + e.ToString());
+                    out_of_date_tokens.Add(base_token);
+                    continue;
+                }
 
                 if (!StringUtils.TokenFromPath(permitted_folder.Path).Equals(base_token))
                 {
@@ -164,6 +174,11 @@ namespace ComicReader.Utils
             }
 
             return (StorageFile)item;
+        }
+
+        private static void Log(string text)
+        {
+            Utils.Debug.Log("Storage: " + text);
         }
     }
 }

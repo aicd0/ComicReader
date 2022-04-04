@@ -167,7 +167,7 @@
     <Grid>
         <ScrollViewer>
             <StackPanel Margin="35,10" Orientation="Vertical">
-                
+
                 <!--  Library  -->
                 <Grid Height="10" />
                 <Grid>
@@ -223,7 +223,7 @@
                     Margin="10,0,0,0"
                     Padding="60,30"
                     HorizontalAlignment="Left"
-                    BorderBrush="{StaticResource ForegroundLightGrey}"
+                    BorderBrush="{ThemeResource ForegroundGrey1}"
                     BorderThickness="2"
                     CornerRadius="5"
                     Orientation="Horizontal"
@@ -242,7 +242,7 @@
                     <HyperlinkButton x:Uid="HomePageRefreshButton" Click="OnRefreshBtClicked" />
                     <TextBlock x:Uid="LibraryEmptyPart3" VerticalAlignment="Center" />
                 </StackPanel>
-                
+
                 <!--  Folders  -->
                 <Grid Height="50" />
                 <TextBlock

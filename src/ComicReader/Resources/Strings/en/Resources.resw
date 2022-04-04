@@ -432,7 +432,7 @@ Filtering nothing. Only used when we need to see all items in the library.
     <value>Rescan files</value>
   </data>
   <data name="RescanFilesDetail.Text" xml:space="preserve">
-    <value>NOTICE: If you encountered issues such as comic missing or incorrect information, rescan files may resolve the issues. This operation could cause high CPU occupation especially if you have a large set of files, and may drain your battery quickly.</value>
+    <value>NOTICE: If there are missing comics or inconsist comic info, rescanning files may resolve the problems. Notice that in some cases this could lead to high CPU occupation which may drain your battery quickly.</value>
   </data>
   <data name="SaveHistory.Text" xml:space="preserve">
     <value>Save browsing history</value>
@@ -462,7 +462,7 @@ Filtering nothing. Only used when we need to see all items in the library.
     <value>Show all</value>
   </data>
   <data name="ShowHiddenButton.Content" xml:space="preserve">
-    <value>Show hidden items</value>
+    <value>Show hidden</value>
   </data>
   <data name="Statistics.Text" xml:space="preserve">
     <value>Statistics</value>
@@ -549,7 +549,7 @@ Category2: tag4/tag5
     <value>Choose where we look for images</value>
   </data>
   <data name="ReaderExpander.Detail" xml:space="preserve">
-    <value>Reading direction</value>
+    <value>Customize your reader</value>
   </data>
   <data name="HotkeyPreviousPage.Header" xml:space="preserve">
     <value>Go to previous page</value>
@@ -580,5 +580,20 @@ Category2: tag4/tag5
   </data>
   <data name="AppStoreName" xml:space="preserve">
     <value>Comic Reader UWP</value>
+  </data>
+  <data name="ContinuousModeButton.Label" xml:space="preserve">
+    <value>Continuous mode</value>
+  </data>
+  <data name="HorizontalModeButton.Label" xml:space="preserve">
+    <value>Horizontal mode</value>
+  </data>
+  <data name="LeftToRightButton.Label" xml:space="preserve">
+    <value>Left to right</value>
+  </data>
+  <data name="RightToLeftButton.Label" xml:space="preserve">
+    <value>Right to left</value>
+  </data>
+  <data name="VerticalModeButton.Label" xml:space="preserve">
+    <value>Vertical mode</value>
   </data>
 </root>

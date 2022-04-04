@@ -80,7 +80,7 @@
                             HorizontalAlignment="Right"
                             VerticalAlignment="Center"
                             FontSize="13"
-                            Foreground="{ThemeResource ForegroundDeepGrey}"
+                            Foreground="{ThemeResource ForegroundGrey2}"
                             Text="{x:Bind Time}" />
                     </Grid>
                 </DataTemplate>

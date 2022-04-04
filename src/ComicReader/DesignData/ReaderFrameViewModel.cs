@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Threading.Tasks;
+using System.Threading;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
@@ -73,10 +73,44 @@ namespace ComicReader.DesignData
         public int PageR { get; set; } = -1;
         public double Width => Container.ActualWidth;
         public double Height => Container.ActualHeight;
-        public bool Dual { get; set; } = false;
-        public bool IsReady => Dual ? Math.Min(PageL, PageR) > 0 : Math.Max(PageL, PageR) > 0;
+        public bool Ready { get; set; } = false;
+
+        private bool EvalReady()
+        {
+            if (Container == null)
+            {
+                return false;
+            }
+
+            double desired_width = FrameWidth + FrameMargin.Left + FrameMargin.Right;
+            double desired_height = FrameHeight + FrameMargin.Top + FrameMargin.Bottom;
+
+            if (Math.Abs(Container.ActualWidth - desired_width) > 5.0)
+            {
+                return false;
+            }
+
+            if (Math.Abs(Container.ActualHeight - desired_height) > 5.0)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public void NotifyReady()
+        {
+            lock (this)
+            {
+                Ready = EvalReady();
+
+                if (Ready)
+                {
+                    Monitor.Pulse(this);
+                }
+            }
+        }
 
         public Grid Container = null;
-        public Func<ReaderFrameViewModel, Task> OnContainerLoadedAsync;
     };
 }

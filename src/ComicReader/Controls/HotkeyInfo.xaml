@@ -13,7 +13,7 @@
         <TextBlock HorizontalAlignment="Left" Text="{x:Bind Header}" />
         <TextBlock
             HorizontalAlignment="Right"
-            Foreground="{ThemeResource ForegroundDeepGrey}"
+            Foreground="{ThemeResource ForegroundGrey2}"
             Text="{x:Bind Key}" />
     </Grid>
 </UserControl>

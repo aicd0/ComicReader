@@ -1,9 +1,9 @@
 ﻿#if DEBUG
-#define DEBUG_LOG_LOAD
-#define DEBUG_LOG_JUMP
-#define DEBUG_LOG_VIEW_CHANGE
-#define DEBUG_LOG_UPDATE_PAGE
-#define DEBUG_LOG_MANIPULATION
+//#define DEBUG_LOG_LOAD
+//#define DEBUG_LOG_JUMP
+//#define DEBUG_LOG_VIEW_CHANGE
+//#define DEBUG_LOG_UPDATE_PAGE
+//#define DEBUG_LOG_MANIPULATION
 #endif
 
 using System;
@@ -33,1146 +33,6 @@ namespace ComicReader.Views
     using TaskResult = Utils.TaskResult;
     using TaskException = Utils.TaskException;
 
-    public class ReaderModel
-    {
-        private const float max_zoom = 250f;
-        private const float min_zoom = 90f;
-
-        // Modifiable
-        public ObservableCollection<ReaderFrameViewModel> DataSource { get; private set; }
-            = new ObservableCollection<ReaderFrameViewModel>();
-        public ComicData Comic { get; set; } = null;
-        public ScrollViewer ThisScrollViewer;
-        public ListView ThisListView;
-        public double InitialPage { private get; set; } = 0.0;
-
-        public Action OnLoaded;
-
-        // Observable
-        //  Common
-        public bool IsLoaded { get; private set; } = false;
-        public bool IsCurrentReader => m_shared.NavigationPageShared.ReaderSettings.IsVertical == IsVertical;
-        public bool IsVertical { get; private set; }
-        public bool IsHorizontal => !IsVertical;
-        public int Pages => Comic.ImageCount;
-        public bool IsLastPage => PageToFrame(Page, out _, out _) >= DataSource.Count - 1;
-        public bool IsContinuous => IsVertical ?
-            m_shared.NavigationPageShared.ReaderSettings.IsVerticalContinuous :
-            m_shared.NavigationPageShared.ReaderSettings.IsHorizontalContinuous;
-        public PageArrangementEnum PageArrangement => IsVertical ?
-            m_shared.NavigationPageShared.ReaderSettings.VerticalPageArrangement :
-            m_shared.NavigationPageShared.ReaderSettings.HorizontalPageArrangement;
-
-        private double m_page = 0.0;
-        public int Page => (int)m_page;
-        public double PageReal => m_page;
-
-        private float m_zoom = 90f;
-        public float Zoom => m_zoom;
-
-        //  Scroll viewer
-        public float ZoomFactor => ThisScrollViewer.ZoomFactor;
-
-        private float m_zoom_factor_final;
-        public float ZoomFactorFinal
-        {
-            get
-            {
-                _FillFinalVal();
-                return m_zoom_factor_final;
-            }
-            set
-            {
-                _FillFinalVal();
-                m_zoom_factor_final = value;
-            }
-        }
-
-        public double HorizontalOffset => ThisScrollViewer.HorizontalOffset;
-
-        private double m_horizontal_offset_final;
-        public double HorizontalOffsetFinal
-        {
-            get
-            {
-                _FillFinalVal();
-                return m_horizontal_offset_final;
-            }
-            set
-            {
-                _FillFinalVal();
-                m_horizontal_offset_final = value;
-            }
-        }
-
-        public double VerticalOffset => ThisScrollViewer.VerticalOffset;
-
-        private double m_vertical_offset_final;
-        public double VerticalOffsetFinal
-        {
-            get
-            {
-                _FillFinalVal();
-                return m_vertical_offset_final;
-            }
-            set
-            {
-                _FillFinalVal();
-                m_vertical_offset_final = value;
-            }
-        }
-
-        private bool m_disable_animation_final;
-        public bool DisableAnimationFinal
-        {
-            get
-            {
-                _FillFinalVal();
-                return m_disable_animation_final;
-            }
-            set
-            {
-                _FillFinalVal();
-                m_disable_animation_final = value;
-            }
-        }
-
-        public double ParallelOffset => IsVertical ? VerticalOffset : HorizontalOffset;
-        public double ParallelOffsetFinal => IsVertical ? VerticalOffsetFinal : HorizontalOffsetFinal;
-        public double ViewportParallelLength => IsVertical ? ThisScrollViewer.ViewportHeight : ThisScrollViewer.ViewportWidth;
-        public double ViewportPerpendicularLength => IsVertical ? ThisScrollViewer.ViewportWidth : ThisScrollViewer.ViewportHeight;
-        public double ExtentParallelLength => IsVertical ? ThisScrollViewer.ExtentHeight : ThisScrollViewer.ExtentWidth;
-        public double ExtentParallelLengthFinal => FinalVal(ExtentParallelLength);
-        public double FrameParallelLength(int i) => IsVertical ? DataSource[i].Height : DataSource[i].Width;
-
-        //  List view
-        private double m_padding_start_final;
-        public double PaddingStartFinal
-        {
-            get
-            {
-                _FillFinalVal();
-                return m_padding_start_final;
-            }
-        }
-
-        private double m_padding_end_final;
-        public double PaddingEndFinal
-        {
-            get
-            {
-                _FillFinalVal();
-                return m_padding_end_final;
-            }
-        }
-
-        // Reader state
-        private bool IsFrameworkLoaded => ThisScrollViewer != null && ThisListView != null;
-        private bool IsFrameworkReady = false;
-        private bool IsLastPageLoaded = false;
-        private bool IsInitialPageReached = false;
-        private bool IsImageUpdateSucceeded = false;
-
-        private ReaderPageShared m_shared;
-        private bool m_final_value_set = false;
-        private Utils.CancellationLock m_update_image_lock = new Utils.CancellationLock();
-
-        public ReaderModel(ReaderPageShared shared, bool is_vertical)
-        {
-            m_shared = shared;
-            IsVertical = is_vertical;
-        }
-
-        // Modifiers
-        public void Reset()
-        {
-            IsLoaded = false;
-            IsFrameworkReady = false;
-            IsLastPageLoaded = false;
-            IsInitialPageReached = false;
-            IsImageUpdateSucceeded = false;
-
-            Comic = null;
-            InitialPage = 0.0;
-            OnLoaded = null;
-            DataSource.Clear();
-
-            _SyncFinalVal();
-#if DEBUG_LOG_LOAD
-            Log("========== Reset ==========");
-#endif
-        }
-
-        /// <summary>
-        /// Add or update DataSource with index and image aspect ratio. Index has to be<br/>
-        /// continuous. As a new item is added to DataSource, the reader will start loading<br/>
-        /// it automatically. Make sure to set everything up before the initial call to this<br/>
-        /// function.
-        /// </summary>
-        /// <param name="index"></param>
-        /// <param name="image_aspect_ratio"></param>
-        public int UpdateFrame(int image_index)
-        {
-            if (image_index >= Comic.ImageAspectRatios.Count) return -1;
-            double aspect_ratio = Comic.ImageAspectRatios[image_index];
-
-            int frame_idx = PageToFrame(image_index + 1, out bool left_side, out int neighbor);
-            if (frame_idx < 0) return -1;
-
-            if (neighbor != -1)
-            {
-                int neighbor_idx = neighbor - 1;
-
-                if (neighbor_idx >= 0 && neighbor_idx < Comic.ImageAspectRatios.Count)
-                {
-                    aspect_ratio += Comic.ImageAspectRatios[neighbor_idx];
-                }
-            }
-
-            while (frame_idx >= DataSource.Count)
-            {
-                DataSource.Add(new ReaderFrameViewModel());
-            }
-
-            int page = image_index + 1;
-            bool dual = neighbor != -1;
-
-            double default_width = 500.0;
-            double default_height = 300.0;
-            if (dual) default_width *= 2;
-
-            double frame_width = IsVertical ? default_width : default_height * aspect_ratio;
-            double frame_height = IsVertical ? default_width / aspect_ratio : default_height;
-            double vertical_padding = IsVertical ? 10 : 0;
-            double horizontal_padding = IsHorizontal ? 100 : 0;
-
-            ReaderFrameViewModel item = DataSource[frame_idx];
-            item.FrameWidth = frame_width;
-            item.FrameHeight = frame_height;
-            item.FrameMargin = new Thickness(horizontal_padding, vertical_padding, horizontal_padding, vertical_padding);
-            item.Dual = dual;
-            
-            if (left_side)
-            {
-                if (item.PageL != page)
-                {
-                    item.PageL = page;
-                    item.ImageL = null;
-                }
-
-                if (!dual)
-                {
-                    item.PageR = -1;
-                    item.ImageR = null;
-                }
-            }
-            else
-            {
-                if (item.PageR != page)
-                {
-                    item.PageR = page;
-                    item.ImageR = null;
-                }
-
-                if (!dual)
-                {
-                    item.PageL = -1;
-                    item.ImageL = null;
-                }
-            }
-
-            item.OnContainerLoadedAsync = OnContainerLoaded;
-            return frame_idx;
-        }
-
-        // Controlling
-        public async Task<bool> IncreaseFrame(int increment, bool disable_animation)
-        {
-            if (!await _UpdatePage(true))
-            {
-                return false;
-            }
-
-            _IncreaseFrame(increment, disable_animation);
-            return true;
-        }
-
-        public bool SetScrollViewer(float? zoom, double? horizontal_offset, double? vertical_offset, bool disable_animation)
-        {
-            if (!IsLoaded)
-            {
-                return false;
-            }
-
-            return _SetScrollViewer(zoom, horizontal_offset, vertical_offset, null, /* whatever */false, disable_animation);
-        }
-
-        public bool SetScrollViewer(float? zoom, double? page, bool use_page_center, bool disable_animation)
-        {
-            if (!IsLoaded)
-            {
-                return false;
-            }
-
-            return _SetScrollViewer(zoom, null, null, page, use_page_center, disable_animation);
-        }
-
-        public async Task<bool> UpdateImage(LockContext db, bool use_final)
-        {
-            if (!await _UpdatePage(use_final))
-            {
-                return false;
-            }
-
-            await _UpdateImages(db);
-            return true;
-        }
-
-        // Events
-        private Utils.CancellationLock m_container_loaded_lock = new Utils.CancellationLock();
-        public async Task OnContainerLoaded(ReaderFrameViewModel ctx)
-        {
-            LockContext db = new LockContext();
-
-            System.Diagnostics.Debug.Assert(ctx != null);
-            System.Diagnostics.Debug.Assert(ctx.Container != null);
-
-            await m_container_loaded_lock.WaitAsync();
-            try
-            {
-                // Wait until the framework was fully loaded.
-                if (!IsFrameworkLoaded)
-                {
-                    await Utils.C0.WaitFor(() => IsFrameworkLoaded);
-#if DEBUG_LOG_LOAD
-                    Log("Framework loaded");
-#endif
-                }
-
-                // Initialize the framework if first page was loaded.
-                if (!IsFrameworkReady && (ctx.PageL == 1 || ctx.PageR == 1))
-                {
-                    await Utils.C0.Sync(delegate
-                    {
-                        SetScrollViewer(m_zoom, null, null, true);
-                        _AdjustPadding();
-                    });
-
-                    IsFrameworkReady = true;
-#if DEBUG_LOG_LOAD
-                    Log("Framework ready");
-#endif
-                }
-
-                // Update margin if last page was loaded.
-                if (!IsLastPageLoaded && (ctx.PageL == Pages || ctx.PageR == Pages))
-                {
-                    await Utils.C0.Sync(delegate
-                    {
-                        _AdjustPadding();
-                    });
-
-                    IsLastPageLoaded = true;
-#if DEBUG_LOG_LOAD
-                    Log("Last page loaded");
-#endif
-                }
-
-                // Check if the initial page was loaded.
-                if (!IsInitialPageReached && IsFrameworkReady)
-                {
-                    // Try jump to the initial page.
-                    IsInitialPageReached = _SetScrollViewer(null, null, null, InitialPage, false, true);
-#if DEBUG_LOG_LOAD
-                    if (IsInitialPageReached)
-                    {
-                        Log("Initial page reached");
-                    }
-#endif
-                }
-
-                if (!IsImageUpdateSucceeded && IsInitialPageReached)
-                {
-                    if (await _UpdatePage(true))
-                    {
-                        await _UpdateImages(db);
-                        IsImageUpdateSucceeded = true;
-#if DEBUG_LOG_LOAD
-                        Log("Image updated");
-#endif
-                    }
-                }
-
-                // Check if the reader was loaded.
-                if (!IsLoaded && IsInitialPageReached)
-                {
-                    IsLoaded = true;
-#if DEBUG_LOG_LOAD
-                    Log("Reader loaded");
-#endif
-                    OnLoaded?.Invoke();
-                }
-            }
-            finally
-            {
-                m_container_loaded_lock.Release();
-            }
-        }
-
-        public async Task<bool> OnViewChanged(LockContext db, bool final)
-        {
-            if (!IsLoaded)
-            {
-                return false;
-            }
-
-            if (!IsCurrentReader)
-            {
-                // Clear images.
-                await _UpdateImages(db);
-                return false;
-            }
-
-            if (!await _UpdatePage(false))
-            {
-                return false;
-            }
-
-            if (final)
-            {
-                _SyncFinalVal();
-
-                // Notify the scroll viewer to update its inner states.
-                SetScrollViewer(null, null, null, false);
-
-                if (!IsContinuous && Zoom <= 100)
-                {
-                    // Stick our view to the center of two pages.
-                    _IncreaseFrame(0, false);
-                }
-
-#if DEBUG_LOG_VIEW_CHANGE
-                Log("ViewChanged:"
-                    + " Z=" + ZoomFactorFinal.ToString()
-                    + ",H=" + HorizontalOffsetFinal.ToString()
-                    + ",V=" + VerticalOffsetFinal.ToString()
-                    + ",P=" + PageReal.ToString());
-#endif
-            }
-
-            await _UpdateImages(db, final);
-            return true;
-        }
-
-        public void OnSizeChanged()
-        {
-            _AdjustPadding();
-        }
-
-        public void OnPageArrangementChangedEventSealed()
-        {
-            Utils.C0.Run(async delegate
-            {
-                var db = new LockContext();
-
-                // Update DataSource.
-                int max_frame = -1;
-
-                for (int i = 0; i < Pages; ++i)
-                {
-                    max_frame = Math.Max(UpdateFrame(i), max_frame);
-                }
-
-                if (max_frame == -1) return;
-
-                for (int i = DataSource.Count - 1; i > max_frame; --i)
-                {
-                    DataSource.RemoveAt(i);
-                }
-
-                // Update images.
-                await _UpdateImages(db);
-            });
-        }
-
-        // Internal functions
-        //  Controlling
-        private double? _ZoomCoefficient()
-        {
-            if (DataSource.Count == 0)
-            {
-                return null;
-            }
-
-            int frame_idx = PageToFrame(Page, out _, out _);
-            if (frame_idx < 0 || frame_idx >= DataSource.Count) frame_idx = 0;
-
-            double viewport_width = ThisScrollViewer.ViewportWidth;
-            double viewport_height = ThisScrollViewer.ViewportHeight;
-            double frame_width = DataSource[frame_idx].FrameWidth;
-            double frame_height = DataSource[frame_idx].FrameHeight;
-
-            double viewport_ratio = viewport_width / viewport_height;
-            double image_ratio = frame_width / frame_height;
-            return 0.01 * (viewport_ratio > image_ratio ?
-                viewport_height / frame_height :
-                viewport_width / frame_width);
-        }
-
-        private double? _PageOffset(int page, bool use_page_center)
-        {
-            page = Math.Max(1, page);
-            page = Math.Min(Pages, page);
-            int frame_idx = PageToFrame(page, out _, out _);
-            if (frame_idx >= DataSource.Count || frame_idx < 0) return null;
-
-            ReaderFrameViewModel item = DataSource[frame_idx];
-            Grid container = item.Container;
-            if (container == null) return null;
-
-            var frame_transform = container.TransformToVisual(ThisListView);
-            Point frame_position = frame_transform.TransformPoint(new Point(0.0, 0.0));
-            double parallel_offset = IsVertical ? frame_position.Y : frame_position.X;
-
-            if (m_shared.NavigationPageShared.ReaderSettings.IsLeftToRight)
-            {
-                if (use_page_center)
-                {
-                    parallel_offset += IsVertical ?
-                        item.FrameMargin.Top + item.FrameHeight * 0.5 :
-                        item.FrameMargin.Left + item.FrameWidth * 0.5;
-                }
-            }
-            else
-            {
-                if (use_page_center)
-                {
-                    parallel_offset -= IsVertical ?
-                        item.FrameMargin.Top + item.FrameHeight * 0.5 :
-                        item.FrameMargin.Left + item.FrameWidth * 0.5;
-                }
-                else
-                {
-                    parallel_offset -= IsVertical ?
-                        item.FrameMargin.Top + item.FrameHeight + item.FrameMargin.Bottom :
-                        item.FrameMargin.Left + item.FrameWidth + item.FrameMargin.Right;
-                }
-            }
-
-            return parallel_offset;
-        }
-
-        private double? _PageOffsetTransformed(double page, bool use_page_center)
-        {
-            page = Math.Max(1.0, page);
-            page = Math.Min(Pages, page);
-
-            int page_int = (int)page;
-            double page_frac = page - page_int;
-
-            double offset;
-
-            // Calculate parallel offset of this page.
-            double? this_offset = _PageOffset(page_int, use_page_center);
-
-            if (!this_offset.HasValue)
-            {
-                return null;
-            }
-
-            offset = this_offset.Value;
-
-            // Calculate parallel offset of next page and mix with this page.
-            double? _next_offset = _PageOffset(page_int + 1, use_page_center);
-
-            if (_next_offset.HasValue)
-            {
-                offset += page_frac * (_next_offset.Value - this_offset.Value);
-            }
-
-            offset = offset * ZoomFactorFinal - ViewportParallelLength * 0.5;
-            offset = Math.Max(0.0, offset);
-            return offset;
-        }
-
-        private void _IncreaseFrame(int increment, bool disable_animation)
-        {
-            if (DataSource.Count == 0) return;
-
-            int frame_idx = PageToFrame(Page, out _, out _);
-            frame_idx += increment;
-            frame_idx = Math.Min(DataSource.Count - 1, frame_idx);
-            frame_idx = Math.Max(0, frame_idx);
-
-            var item = DataSource[frame_idx];
-            int page = Math.Max(item.PageL, item.PageR);
-
-            double? new_parallel_offset = _PageOffsetTransformed(page, use_page_center: true);
-
-            if (new_parallel_offset == null || Math.Abs(new_parallel_offset.Value - ParallelOffsetFinal) < 1.0)
-            {
-                // IMPORTANT: Ignore the request if target offset is really close to the current offset,
-                // or else it could stuck in a dead loop. (See reference in OnScrollViewerViewChanged())
-                return;
-            }
-
-            float? zoom = Zoom > 101f ? 100f : (float?)null;
-            SetScrollViewer(zoom, page, use_page_center: true, disable_animation);
-            m_page = page;
-        }
-
-        private bool _SetScrollViewer(float? zoom, double? horizontal_offset, double? vertical_offset,
-            double? page, bool use_page_center, bool disable_animation)
-        {
-            if (!IsFrameworkLoaded) return false;
-
-#if DEBUG_LOG_JUMP
-            Log("ParamIn: "
-                + "Z=" + zoom.ToString()
-                + ",H=" + horizontal_offset.ToString()
-                + ",V=" + vertical_offset.ToString()
-                + ",P=" + page.ToString()
-                + ",Pc=" + use_page_center.ToString()
-                + ",D=" + disable_animation.ToString());
-#endif
-
-            bool r = _SetScrollViewerPage(page, use_page_center, ref horizontal_offset, ref vertical_offset);
-
-            if (!r)
-            {
-                return false;
-            }
-
-#if DEBUG_LOG_JUMP
-            Log("ParamSetPage: "
-                + "H=" + horizontal_offset.ToString()
-                + ",V=" + vertical_offset.ToString());
-#endif
-
-            _SetScrollViewerZoom(ref horizontal_offset, ref vertical_offset, ref zoom, out float? zoom_out);
-
-#if DEBUG_LOG_JUMP
-            Log("ParamSetZoom: "
-                + "Z=" + zoom.ToString()
-                + ",Zo=" + zoom_out.ToString()
-                + ",H=" + horizontal_offset.ToString()
-                + ",V=" + vertical_offset.ToString());
-#endif
-            
-            if (!_ChangeView(zoom_out, horizontal_offset, vertical_offset, disable_animation))
-            {
-                return false;
-            }
-
-            m_zoom = zoom.Value;
-            m_shared.NavigationPageShared.ZoomInEnabled = m_zoom < max_zoom;
-            m_shared.NavigationPageShared.ZoomOutEnabled = m_zoom > min_zoom;
-            _AdjustParallelOffset();
-            return true;
-        }
-
-        private void _SetScrollViewerZoom(ref double? horizontal_offset, ref double? vertical_offset, ref float? zoom, out float? zoom_factor)
-        {
-            double? zoom_coefficient_boxed = _ZoomCoefficient();
-
-            if (zoom_coefficient_boxed == null)
-            {
-                zoom = m_zoom;
-                zoom_factor = null;
-                return;
-            }
-
-            double zoom_coefficient = zoom_coefficient_boxed.Value;
-            bool zoom_sat = false;
-            bool zoom_null = zoom == null;
-            float zoom_rectified = zoom_null ? (float)(ZoomFactorFinal / zoom_coefficient) : (float)zoom;
-
-            // accept an error less than 1
-            if (zoom_rectified - max_zoom > 1)
-            {
-                zoom_sat = true;
-                zoom_rectified = max_zoom;
-            }
-            else if (min_zoom - zoom_rectified > 1)
-            {
-                zoom_sat = true;
-                zoom_rectified = min_zoom;
-            }
-
-            if (zoom_null && !zoom_sat)
-            {
-                zoom = Math.Abs(zoom_rectified - m_zoom) <= 1 ? m_zoom : zoom_rectified;
-                zoom_factor = null;
-                return;
-            }
-
-            zoom = zoom_rectified;
-            zoom_factor = (float)(zoom_rectified * zoom_coefficient);
-
-            if (horizontal_offset == null)
-            {
-                horizontal_offset = HorizontalOffsetFinal;
-            }
-
-            if (vertical_offset == null)
-            {
-                vertical_offset = VerticalOffsetFinal;
-            }
-
-            horizontal_offset += ThisScrollViewer.ViewportWidth * 0.5;
-            horizontal_offset *= (float)zoom_factor / ZoomFactorFinal;
-            horizontal_offset -= ThisScrollViewer.ViewportWidth * 0.5;
-
-            vertical_offset += ThisScrollViewer.ViewportHeight * 0.5;
-            vertical_offset *= (float)zoom_factor / ZoomFactorFinal;
-            vertical_offset -= ThisScrollViewer.ViewportHeight * 0.5;
-
-            horizontal_offset = Math.Max(0.0, horizontal_offset.Value);
-            vertical_offset = Math.Max(0.0, vertical_offset.Value);
-        }
-
-        private bool _SetScrollViewerPage(double? page, bool use_page_center, ref double? horizontal_offset, ref double? vertical_offset)
-        {
-            if (page == null)
-            {
-                return true;
-            }
-
-            double? parallel_offset = _PageOffsetTransformed(page.Value, use_page_center);
-
-            if (parallel_offset == null)
-            {
-                return false;
-            }
-
-            ConvertOffset(ref horizontal_offset, ref vertical_offset, parallel_offset, null);
-            return true;
-        }
-
-        private void _AdjustParallelOffset()
-        {
-            if (DataSource.Count == 0)
-            {
-                return;
-            }
-
-#if DEBUG_LOG_JUMP
-            Log("Adjusting offset");
-#endif
-
-            double? movement_forward = null;
-            double? movement_backward = null;
-            double screen_center_offset = ViewportParallelLength * 0.5 + ParallelOffsetFinal;
-
-            if (DataSource[0].Container != null)
-            {
-                double space = PaddingStartFinal * ZoomFactorFinal - ParallelOffsetFinal;
-                double image_center_offset = (PaddingStartFinal + FrameParallelLength(0) * 0.5) * ZoomFactorFinal;
-                double image_center_to_screen_center = image_center_offset - screen_center_offset;
-                movement_forward = Math.Min(space, image_center_to_screen_center);
-            }
-
-            if (DataSource[DataSource.Count - 1].Container != null)
-            {
-                double space = PaddingEndFinal * ZoomFactorFinal - (ExtentParallelLengthFinal
-                    - ParallelOffsetFinal - ViewportParallelLength);
-                double image_center_offset = ExtentParallelLengthFinal - (PaddingEndFinal
-                    + FrameParallelLength(DataSource.Count - 1) * 0.5) * ZoomFactorFinal;
-                double image_center_to_screen_center = screen_center_offset - image_center_offset;
-                movement_backward = Math.Min(space, image_center_to_screen_center);
-            }
-
-            if (movement_forward.HasValue && movement_backward.HasValue)
-            {
-                if (movement_forward.Value >= 0 && movement_backward.Value >= 0)
-                {
-                    return;
-                }
-
-                if (movement_forward.Value <= 0 && movement_backward.Value <= 0)
-                {
-                    return;
-                }
-
-                if (movement_forward.Value + movement_backward.Value >= 0)
-                {
-                    return;
-                }
-            }
-
-            if (movement_forward.HasValue && movement_forward.Value > 0)
-            {
-                double parallel_offset = ParallelOffsetFinal + movement_forward.Value;
-                _ChangeView(null, HorizontalVal(parallel_offset, null),
-                    VerticalVal(parallel_offset, null), false);
-            }
-            else if (movement_backward.HasValue && movement_backward.Value > 0)
-            {
-                double parallel_offset = ParallelOffsetFinal - movement_backward.Value;
-                _ChangeView(null, HorizontalVal(parallel_offset, null),
-                    VerticalVal(parallel_offset, null), false);
-            }
-        }
-
-        private bool _ChangeView(float? zoom_factor, double? horizontal_offset, double? vertical_offset, bool disable_animation)
-        {
-            if (horizontal_offset == null && vertical_offset == null && zoom_factor == null)
-            {
-                return true;
-            }
-
-            if (horizontal_offset != null)
-            {
-                HorizontalOffsetFinal = horizontal_offset.Value;
-            }
-
-            if (vertical_offset != null)
-            {
-                VerticalOffsetFinal = vertical_offset.Value;
-            }
-
-            if (zoom_factor != null)
-            {
-                ZoomFactorFinal = zoom_factor.Value;
-            }
-
-            if (disable_animation)
-            {
-                DisableAnimationFinal = true;
-            }
-
-            ThisScrollViewer.ChangeView(HorizontalOffsetFinal, VerticalOffsetFinal, ZoomFactorFinal, DisableAnimationFinal);
-
-#if DEBUG_LOG_JUMP
-            Log("Commit:"
-                + " Z=" + ZoomFactorFinal.ToString()
-                + ",H=" + HorizontalOffsetFinal.ToString()
-                + ",V=" + VerticalOffsetFinal.ToString()
-                + ",D=" + DisableAnimationFinal.ToString());
-#endif
-
-            return true;
-        }
-
-        private void _AdjustPadding()
-        {
-            if (!IsFrameworkLoaded)
-            {
-                return;
-            }
-
-            double? zoom_coefficient_boxed = _ZoomCoefficient();
-            if (zoom_coefficient_boxed == null) return;
-            double zoom_coefficient = zoom_coefficient_boxed.Value;
-
-            if (DataSource[0].Container == null || DataSource[DataSource.Count - 1].Container == null)
-            {
-                return;
-            }
-
-#if DEBUG_LOG_JUMP
-            Log("Adjusting padding");
-#endif
-
-            double zoom_factor = min_zoom * zoom_coefficient;
-            double inner_length = ViewportParallelLength / zoom_factor;
-            double new_start = (inner_length - FrameParallelLength(0)) / 2;
-            double new_end = (inner_length - FrameParallelLength(DataSource.Count - 1)) / 2;
-
-            new_start = Math.Max(0.0, new_start);
-            new_end = Math.Max(0.0, new_end);
-
-            _FillFinalVal();
-            m_padding_start_final = new_start;
-            m_padding_end_final = new_end;
-
-            if (IsVertical)
-            {
-                ThisListView.Padding = new Thickness(0.0, new_start, 0.0, new_end);
-            }
-            else
-            {
-                ThisListView.Padding = new Thickness(new_start, 0.0, new_end, 0.0);
-            }
-        }
-
-        private Utils.CancellationLock m_update_page_lock = new Utils.CancellationLock();
-        private async Task<bool> _UpdatePage(bool use_final)
-        {
-            if (!IsFrameworkLoaded)
-            {
-                return false;
-            }
-
-            await m_update_page_lock.WaitAsync();
-            try
-            {
-                double parallel_offset = use_final ? ParallelOffsetFinal : ParallelOffset;
-                double zoom_factor = use_final ? ZoomFactorFinal : ZoomFactor;
-                double current_offset = (parallel_offset + ViewportParallelLength * 0.5) / zoom_factor;
-
-                // Use binary search to locate the current page.
-                if (DataSource.Count == 0)
-                {
-                    return false;
-                }
-
-                int begin = 0;
-                int end = DataSource.Count - 1;
-
-                while (begin < end)
-                {
-                    if (m_update_page_lock.CancellationRequested)
-                    {
-                        return false;
-                    }
-
-                    int i = (begin + end + 1) / 2;
-                    var item = DataSource[i];
-                    int p = Math.Max(item.PageL, item.PageR);
-                    if (p <= 0) return false;
-                    double? page_offset = _PageOffset(p, use_page_center: false);
-
-                    if (!page_offset.HasValue)
-                    {
-                        return false;
-                    }
-
-                    if (page_offset.Value < current_offset)
-                    {
-                        begin = i;
-                    }
-                    else
-                    {
-                        end = i - 1;
-                    }
-                }
-
-                int frame_idx = begin;
-                var frame = DataSource[frame_idx];
-                int page = Math.Max(frame.PageL, frame.PageR);
-
-                double? this_offset = _PageOffset(page, use_page_center: false);
-                double? next_offset = _PageOffset(page + 1, use_page_center: false);
-                double res;
-
-                if (this_offset.HasValue && next_offset.HasValue &&
-                    this_offset.Value < current_offset && current_offset <= next_offset.Value)
-                {
-                    res = page + (current_offset - this_offset.Value) / (next_offset.Value - this_offset.Value);
-                }
-                else
-                {
-                    res = page;
-                }
-
-                m_page = res;
-
-#if DEBUG_LOG_UPDATE_PAGE
-                Log("Page updated (" +
-                    "Page=" + m_page.ToString() +
-                    ",UseF=" + use_final.ToString() +
-                    ",PO=" + parallel_offset.ToString() +
-                    ",ZF=" + zoom_factor.ToString() +
-                    ",O=" + current_offset.ToString() + ")");
-#endif
-
-                return true;
-            }
-            finally
-            {
-                m_update_page_lock.Release();
-            }
-        }
-
-        private async Task _UpdateImages(LockContext db, bool remove_out_of_view = true)
-        {
-#if DEBUG_LOG_LOAD
-            Log("Updating images (page " + Page.ToString() + ")");
-#endif
-
-            await m_update_image_lock.WaitAsync();
-            try
-            {
-                if (!IsCurrentReader)
-                {
-                    foreach (ReaderFrameViewModel m in DataSource)
-                    {
-                        m.ImageL = null;
-                        m.ImageR = null;
-                    }
-
-                    return;
-                }
-
-                var img_loader_tokens = new List<Utils.ImageLoaderToken>();
-                int page_begin = Math.Max(Page - 5, 1);
-                int page_end = Math.Min(Page + 10, Pages);
-                int idx_begin = PageToFrame(page_begin, out _, out _);
-                int idx_end = PageToFrame(page_end, out _, out _);
-                idx_end = Math.Min(DataSource.Count - 1, idx_end);
-                
-                for (int i = idx_begin; i <= idx_end; ++i)
-                {
-                    ReaderFrameViewModel m = DataSource[i]; // Stores locally.
-
-                    if (m.ImageL == null && m.PageL > 0)
-                    {
-                        img_loader_tokens.Add(new Utils.ImageLoaderToken
-                        {
-                            Index = m.PageL - 1,
-                            Comic = Comic,
-                            Callback = (BitmapImage img) =>
-                            {
-                                m.ImageL = img;
-                            }
-                        });
-                    }
-
-                    if (m.ImageR == null && m.PageR > 0)
-                    {
-                        img_loader_tokens.Add(new Utils.ImageLoaderToken
-                        {
-                            Index = m.PageR - 1,
-                            Comic = Comic,
-                            Callback = (BitmapImage img) =>
-                            {
-                                m.ImageR = img;
-                            }
-                        });
-                    }
-                }
-
-                await Utils.ImageLoader.Load(db, img_loader_tokens,
-                    double.PositiveInfinity, double.PositiveInfinity,
-                    m_update_image_lock);
-
-                if (remove_out_of_view)
-                {
-                    for (int i = 0; i < DataSource.Count; ++i)
-                    {
-                        ReaderFrameViewModel m = DataSource[i];
-
-                        if ((m.PageL < page_begin || m.PageL > page_end) && m.ImageL != null)
-                        {
-                            m.ImageL = null;
-                        }
-
-                        if ((m.PageR < page_begin || m.PageR > page_end) && m.ImageR != null)
-                        {
-                            m.ImageR = null;
-                        }
-                    }
-                }
-            }
-            finally
-            {
-                m_update_image_lock.Release();
-            }
-        }
-
-        //  State management
-        private void _FillFinalVal()
-        {
-            if (!IsFrameworkLoaded)
-            {
-                return;
-            }
-
-            if (m_final_value_set)
-            {
-                return;
-            }
-
-            m_padding_start_final = IsVertical ? ThisListView.Padding.Top : ThisListView.Padding.Left;
-            m_padding_end_final = IsVertical ? ThisListView.Padding.Bottom : ThisListView.Padding.Right;
-            m_horizontal_offset_final = HorizontalOffset;
-            m_vertical_offset_final = VerticalOffset;
-            m_zoom_factor_final = ZoomFactor;
-            m_disable_animation_final = false;
-            m_final_value_set = true;
-        }
-
-        private void _SyncFinalVal()
-        {
-            m_final_value_set = false;
-        }
-
-        //  Conversions
-        private void ConvertOffset(ref double? to_horizontal, ref double? to_vertical, double? from_parallel, double? from_perpendicular)
-        {
-            if (IsVertical)
-            {
-                if (from_parallel != null)
-                {
-                    to_vertical = from_parallel;
-                }
-
-                if (from_perpendicular != null)
-                {
-                    to_horizontal = from_perpendicular;
-                }
-            }
-            else
-            {
-                if (from_parallel != null)
-                {
-                    to_horizontal = from_parallel;
-                }
-
-                if (from_perpendicular != null)
-                {
-                    to_vertical = from_perpendicular;
-                }
-            }
-        }
-
-        private double? HorizontalVal(double? parallel_val, double? perpendicular_val) => IsVertical ? perpendicular_val : parallel_val;
-        private double? VerticalVal(double? parallel_val, double? perpendicular_val) => IsVertical ? parallel_val : perpendicular_val;
-        private double FinalVal(double val) => val / ZoomFactor * ZoomFactorFinal;
-
-        private int PageToFrame(int page, out bool left_side, out int neighbor)
-        {
-            switch (PageArrangement)
-            {
-                case PageArrangementEnum.Single:
-                    left_side = true;
-                    neighbor = -1;
-                    return page - 1;
-                case PageArrangementEnum.DualCover:
-                    left_side = page == 1 || page % 2 == 0;
-                    neighbor = (page > 1 && (Pages % 2 == 1 || page < Pages)) ? (left_side ? page + 1 : page - 1) : -1;
-                    return page / 2;
-                case PageArrangementEnum.DualCoverMirror:
-                    left_side = page == Pages || page % 2 == 1;
-                    neighbor = (page > 1 && (Pages % 2 == 1 || page < Pages)) ? (left_side ? page - 1 : page + 1) : -1;
-                    return page / 2;
-                case PageArrangementEnum.DualNoCover:
-                    left_side = page % 2 == 1;
-                    neighbor = (Pages % 2 == 0 || page < Pages) ? (left_side ? page + 1 : page - 1) : -1;
-                    return (page - 1) / 2;
-                case PageArrangementEnum.DualNoCoverMirror:
-                    left_side = page == Pages || page % 2 == 0;
-                    neighbor = (Pages % 2 == 0 || page < Pages) ? (left_side ? page - 1 : page + 1) : -1;
-                    return (page - 1) / 2;
-                default:
-                    System.Diagnostics.Debug.Assert(false);
-                    goto case PageArrangementEnum.Single;
-            }
-        }
-
-        //  Others
-        private void Log(string text)
-        {
-            if (!IsCurrentReader)
-            {
-                return;
-            }
-
-            Utils.Debug.Log("Reader: " + text);
-        }
-    }
-
     public enum ReaderStatusEnum
     {
         Loading,
@@ -1195,7 +55,7 @@ namespace ComicReader.Views
             }
         }
 
-        // comic info
+        // Comic info
         private string m_ComicTitle1;
         public string ComicTitle1
         {
@@ -1257,7 +117,7 @@ namespace ComicReader.Views
             }
         }
 
-        // read record
+        // Reading record
         private double m_Rating;
         public double Rating
         {
@@ -1283,8 +143,17 @@ namespace ComicReader.Views
             }
         }
 
-        // reader
-        public ReaderStatusEnum ReaderStatus = ReaderStatusEnum.Loading;
+        // Reader
+        private ReaderStatusEnum m_ReaderStatus = ReaderStatusEnum.Loading;
+        public ReaderStatusEnum ReaderStatus
+        {
+            get => m_ReaderStatus;
+            set
+            {
+                m_ReaderStatus = value;
+                UpdateReaderUI();
+            }
+        }
 
         private string m_ReaderStatusText = "";
         public string ReaderStatusText
@@ -1319,12 +188,14 @@ namespace ComicReader.Views
             }
         }
 
+        public DesignData.ReaderSettingViewModel ReaderSettings => NavigationPageShared.ReaderSettings;
+
         public void UpdateReaderUI()
         {
             bool is_working = ReaderStatus == ReaderStatusEnum.Working;
             bool grid_view_visible = is_working && NavigationPageShared.IsPreviewButtonToggled;
             bool reader_visible = is_working && !grid_view_visible;
-            bool vertical_reader_visible = reader_visible && NavigationPageShared.ReaderSettings.IsVertical;
+            bool vertical_reader_visible = reader_visible && ReaderSettings.IsVertical;
             bool horizontal_reader_visible = reader_visible && !vertical_reader_visible;
 
             IsReaderStatusTextBlockVisible = !is_working;
@@ -1350,7 +221,7 @@ namespace ComicReader.Views
             NavigationPageShared.IsHorizontalReaderVisible = horizontal_reader_visible;
         }
 
-        // bottom tile
+        // Bottom tile
         private bool m_BottomTilePinned = false;
         public bool BottomTilePinned
         {
@@ -1380,6 +251,1271 @@ namespace ComicReader.Views
         }
 
         public Action BottomTilePinnedChanged;
+    }
+
+    public class ReaderModel
+    {
+        // Constants
+        private const float max_zoom = 250f;
+        private const float min_zoom = 90f;
+
+        // Modifier - Configurations
+        public ComicData Comic { get; set; } = null;
+        public double InitialPage { private get; set; } = 0.0;
+
+        public ScrollViewer ThisScrollViewer;
+        public ListView ThisListView;
+
+        public Action OnLoaded;
+
+        // Modifier - General
+        public ReaderModel(ReaderPageShared shared, bool is_vertical)
+        {
+            m_shared = shared;
+            IsVertical = is_vertical;
+        }
+
+        public void Reset()
+        {
+            IsLoaded = false;
+            IsFrameworkReady = false;
+            IsLastPageLoaded = false;
+            IsInitialPageReached = false;
+            IsImageUpdateSucceeded = false;
+
+            Comic = null;
+            InitialPage = 0.0;
+            OnLoaded = null;
+            DataSource.Clear();
+
+            SyncFinalVal();
+#if DEBUG_LOG_LOAD
+            Log("========== Reset ==========");
+#endif
+        }
+
+        private Utils.CancellationLock m_lock_update_frame = new Utils.CancellationLock();
+        /// <summary>
+        /// Add or update DataSource with index and image aspect ratio. Index has to be<br/>
+        /// continuous. As a new item is added to DataSource, the reader will start loading<br/>
+        /// it automatically. Make sure to set everything up before the initial call to this<br/>
+        /// function.
+        /// </summary>
+        /// <param name="index"></param>
+        /// <param name="image_aspect_ratio"></param>
+        public async Task<int> UpdateFrame(int image_index)
+        {
+            await m_lock_update_frame.WaitAsync();
+            try
+            {
+                if (image_index >= Comic.ImageAspectRatios.Count)
+                {
+                    return -1;
+                }
+
+                double aspect_ratio = Comic.ImageAspectRatios[image_index];
+
+                int frame_idx = PageToFrame(image_index + 1, out bool left_side, out int neighbor);
+
+                if (frame_idx < 0)
+                {
+                    return -1;
+                }
+
+                if (neighbor != -1)
+                {
+                    int neighbor_idx = neighbor - 1;
+
+                    if (neighbor_idx >= 0 && neighbor_idx < Comic.ImageAspectRatios.Count)
+                    {
+                        aspect_ratio += Comic.ImageAspectRatios[neighbor_idx];
+                    }
+                }
+
+                while (frame_idx >= DataSource.Count)
+                {
+                    DataSource.Add(new ReaderFrameViewModel());
+                }
+
+                int page = image_index + 1;
+                bool dual = neighbor != -1;
+
+                double default_width = 500.0;
+                double default_height = 300.0;
+                double default_vertical_padding = 10.0;
+                double default_horizontal_padding = 100.0;
+
+                if (dual)
+                {
+                    default_width *= 2;
+                }
+
+                if (IsContinuous)
+                {
+                    default_horizontal_padding = 10.0;
+                }
+
+                double frame_width = IsVertical ? default_width : default_height * aspect_ratio;
+                double frame_height = IsVertical ? default_width / aspect_ratio : default_height;
+                double vertical_padding = IsVertical ? default_vertical_padding : 0;
+                double horizontal_padding = IsHorizontal ? default_horizontal_padding : 0;
+
+                ReaderFrameViewModel item = DataSource[frame_idx];
+                item.Ready = false; // reset item state
+                item.FrameWidth = frame_width;
+                item.FrameHeight = frame_height;
+                item.FrameMargin = new Thickness(horizontal_padding, vertical_padding, horizontal_padding, vertical_padding);
+
+                if (left_side)
+                {
+                    if (item.PageL != page)
+                    {
+                        item.PageL = page;
+                        item.ImageL = null;
+                    }
+
+                    if (!dual)
+                    {
+                        item.PageR = -1;
+                        item.ImageR = null;
+                    }
+                }
+                else
+                {
+                    if (item.PageR != page)
+                    {
+                        item.PageR = page;
+                        item.ImageR = null;
+                    }
+
+                    if (!dual)
+                    {
+                        item.PageL = -1;
+                        item.ImageL = null;
+                    }
+                }
+
+                // Wait for the frame to be ready.
+                item.NotifyReady();
+
+                await Task.Run(delegate
+                {
+                    lock (item)
+                    {
+                        while (!item.Ready)
+                        {
+                            _ = Monitor.Wait(item);
+                        }
+                    }
+                });
+
+                await OnContainerLoaded(item);
+                return frame_idx;
+            }
+            finally
+            {
+                m_lock_update_frame.Release();
+            }
+        }
+
+        // Modifier - Manipulation
+        public async Task<bool> MoveFrame(int increment, bool disable_animation)
+        {
+            if (!await UpdatePage(true))
+            {
+                return false;
+            }
+
+            InternalMoveFrame(increment, disable_animation);
+            return true;
+        }
+
+        public bool SetScrollViewer(float? zoom, double? parallel_offset, bool disable_animation)
+        {
+            if (!IsLoaded)
+            {
+                return false;
+            }
+
+            double? horizontal_offset = IsHorizontal ? parallel_offset : null;
+            double? vertical_offset = IsVertical ? parallel_offset : null;
+            return InternalSetScrollViewer(zoom, horizontal_offset, vertical_offset, disable_animation);
+        }
+
+        public bool SetScrollViewer(float? zoom, double? page, bool use_page_center, bool disable_animation)
+        {
+            if (!IsLoaded)
+            {
+                return false;
+            }
+
+            return InternalSetScrollViewer(zoom, page, use_page_center, disable_animation);
+        }
+
+        public bool SetScrollViewer(float? zoom, double? horizontal_offset, double? vertical_offset, bool disable_animation)
+        {
+            if (!IsLoaded)
+            {
+                return false;
+            }
+
+            return InternalSetScrollViewer(zoom, horizontal_offset, vertical_offset, disable_animation);
+        }
+
+        public async Task<bool> UpdateImages(LockContext db, bool use_final)
+        {
+            if (!await UpdatePage(use_final))
+            {
+                return false;
+            }
+
+            await InternalUpdateImages(db);
+            return true;
+        }
+
+        // Modifier - Events
+        private Utils.CancellationLock m_lock_container_loaded = new Utils.CancellationLock();
+        public async Task OnContainerLoaded(ReaderFrameViewModel ctx)
+        {
+            LockContext db = new LockContext();
+
+            System.Diagnostics.Debug.Assert(ctx != null);
+            System.Diagnostics.Debug.Assert(ctx.Container != null);
+
+            await m_lock_container_loaded.WaitAsync();
+            try
+            {
+                // Wait until the framework was fully loaded.
+                if (!IsFrameworkLoaded)
+                {
+                    await Utils.C0.WaitFor(() => IsFrameworkLoaded);
+#if DEBUG_LOG_LOAD
+                    Log("Framework loaded");
+#endif
+                }
+
+                // Initialize the framework if first page was loaded.
+                if (!IsFrameworkReady && (ctx.PageL == 1 || ctx.PageR == 1))
+                {
+                    await Utils.C0.Sync(delegate
+                    {
+                        SetScrollViewer(m_zoom, null, true);
+                        AdjustPadding();
+                    });
+
+                    IsFrameworkReady = true;
+#if DEBUG_LOG_LOAD
+                    Log("Framework ready");
+#endif
+                }
+
+                // Update margin if last page was loaded.
+                if (!IsLastPageLoaded && (ctx.PageL == Pages || ctx.PageR == Pages))
+                {
+                    await Utils.C0.Sync(delegate
+                    {
+                        AdjustPadding();
+                    });
+
+                    IsLastPageLoaded = true;
+#if DEBUG_LOG_LOAD
+                    Log("Last page loaded");
+#endif
+                }
+
+                // Check if the initial page was loaded.
+                if (!IsInitialPageReached && IsFrameworkReady)
+                {
+                    // Try jump to the initial page.
+                    IsInitialPageReached = InternalSetScrollViewer(null, InitialPage, false, true);
+#if DEBUG_LOG_LOAD
+                    if (IsInitialPageReached)
+                    {
+                        Log("Initial page reached");
+                    }
+#endif
+                }
+
+                if (!IsImageUpdateSucceeded && IsInitialPageReached)
+                {
+                    if (await UpdatePage(true))
+                    {
+                        await InternalUpdateImages(db);
+                        IsImageUpdateSucceeded = true;
+#if DEBUG_LOG_LOAD
+                        Log("Image updated");
+#endif
+                    }
+                }
+
+                // Check if the reader was loaded.
+                if (!IsLoaded && IsInitialPageReached)
+                {
+                    IsLoaded = true;
+#if DEBUG_LOG_LOAD
+                    Log("Reader loaded");
+#endif
+                    OnLoaded?.Invoke();
+                }
+            }
+            finally
+            {
+                m_lock_container_loaded.Release();
+            }
+        }
+
+        public async Task<bool> OnViewChanged(LockContext db, bool final)
+        {
+            if (!IsLoaded)
+            {
+                return false;
+            }
+
+            if (!IsCurrentReader)
+            {
+                // Clear images.
+                await InternalUpdateImages(db);
+                return false;
+            }
+
+            if (!await UpdatePage(false))
+            {
+                return false;
+            }
+
+            if (final)
+            {
+                SyncFinalVal();
+
+                // Notify the scroll viewer to update its inner states.
+                SetScrollViewer(null, null, false);
+
+                if (!IsContinuous && Zoom <= 100)
+                {
+                    // Stick our view to the center of two pages.
+                    InternalMoveFrame(0, false);
+                }
+
+#if DEBUG_LOG_VIEW_CHANGE
+                Log("ViewChanged:"
+                    + " Z=" + ZoomFactorFinal.ToString()
+                    + ",H=" + HorizontalOffsetFinal.ToString()
+                    + ",V=" + VerticalOffsetFinal.ToString()
+                    + ",P=" + PageReal.ToString());
+#endif
+            }
+
+            await InternalUpdateImages(db, final);
+            return true;
+        }
+
+        public void OnSizeChanged()
+        {
+            AdjustPadding();
+        }
+
+        private Utils.CancellationLock m_lock_page_rearrange = new Utils.CancellationLock();
+        public void PageRearrangeEventSealed()
+        {
+            Utils.C0.Run(async delegate
+            {
+                var db = new LockContext();
+
+                await m_lock_page_rearrange.WaitAsync();
+                try
+                {
+                    // Set reader status to Loading.
+                    m_shared.ReaderStatus = ReaderStatusEnum.Loading;
+
+                    // Save previous states.
+                    double page = PageReal;
+                    float zoom = Math.Min(Zoom, 100f);
+
+                    // Update DataSource.
+                    int max_frame = -1;
+
+                    for (int i = 0; i < Pages; ++i)
+                    {
+                        if (m_lock_page_rearrange.CancellationRequested)
+                        {
+                            return;
+                        }
+
+                        int frame = await UpdateFrame(i);
+                        max_frame = Math.Max(frame, max_frame);
+                    }
+
+                    if (max_frame == -1)
+                    {
+                        return;
+                    }
+
+                    for (int i = DataSource.Count - 1; i > max_frame; --i)
+                    {
+                        DataSource.RemoveAt(i);
+                    }
+
+                    // Update padding.
+                    AdjustPadding();
+
+                    // Jump to previous page.
+                    SetScrollViewer(zoom, page, use_page_center: false, true);
+
+                    // Update images.
+                    await UpdateImages(db, true);
+
+                    // Recover reader status.
+                    m_shared.ReaderStatus = ReaderStatusEnum.Working;
+                }
+                finally
+                {
+                    m_lock_page_rearrange.Release();
+                }
+            });
+        }
+
+        // Observer - General
+        public ObservableCollection<ReaderFrameViewModel> DataSource { get; private set; } = new ObservableCollection<ReaderFrameViewModel>();
+        public bool IsLoaded { get; private set; } = false;
+        public bool IsCurrentReader => m_shared.ReaderSettings.IsVertical == IsVertical;
+        public bool IsVertical { get; private set; }
+        public bool IsHorizontal => !IsVertical;
+        public int Pages => Comic.ImageCount;
+        public bool IsLastPage => PageToFrame(Page, out _, out _) >= DataSource.Count - 1;
+        public bool IsContinuous => IsVertical ?
+            m_shared.ReaderSettings.IsVerticalContinuous :
+            m_shared.ReaderSettings.IsHorizontalContinuous;
+        public PageArrangementEnum PageArrangement => IsVertical ?
+            m_shared.ReaderSettings.VerticalPageArrangement :
+            m_shared.ReaderSettings.HorizontalPageArrangement;
+
+        private double m_page = 0.0;
+        public int Page => (int)m_page;
+        public double PageReal => m_page;
+
+        private float m_zoom = 90f;
+        public float Zoom => m_zoom;
+
+        // Observer - Scroll Viewer
+        public float ZoomFactor => ThisScrollViewer.ZoomFactor;
+
+        private float m_zoom_factor_final;
+        public float ZoomFactorFinal
+        {
+            get
+            {
+                FillFinalVal();
+                return m_zoom_factor_final;
+            }
+            set
+            {
+                FillFinalVal();
+                m_zoom_factor_final = value;
+            }
+        }
+
+        public double HorizontalOffset => ThisScrollViewer.HorizontalOffset;
+
+        private double m_horizontal_offset_final;
+        public double HorizontalOffsetFinal
+        {
+            get
+            {
+                FillFinalVal();
+                return m_horizontal_offset_final;
+            }
+            set
+            {
+                FillFinalVal();
+                m_horizontal_offset_final = value;
+            }
+        }
+
+        public double VerticalOffset => ThisScrollViewer.VerticalOffset;
+
+        private double m_vertical_offset_final;
+        public double VerticalOffsetFinal
+        {
+            get
+            {
+                FillFinalVal();
+                return m_vertical_offset_final;
+            }
+            set
+            {
+                FillFinalVal();
+                m_vertical_offset_final = value;
+            }
+        }
+
+        private bool m_disable_animation_final;
+        public bool DisableAnimationFinal
+        {
+            get
+            {
+                FillFinalVal();
+                return m_disable_animation_final;
+            }
+            set
+            {
+                FillFinalVal();
+                m_disable_animation_final = value;
+            }
+        }
+
+        public double ParallelOffset => IsVertical ? VerticalOffset : HorizontalOffset;
+        public double ParallelOffsetFinal => IsVertical ? VerticalOffsetFinal : HorizontalOffsetFinal;
+        public double ViewportParallelLength => IsVertical ? ThisScrollViewer.ViewportHeight : ThisScrollViewer.ViewportWidth;
+        public double ViewportPerpendicularLength => IsVertical ? ThisScrollViewer.ViewportWidth : ThisScrollViewer.ViewportHeight;
+        public double ExtentParallelLength => IsVertical ? ThisScrollViewer.ExtentHeight : ThisScrollViewer.ExtentWidth;
+        public double ExtentParallelLengthFinal => FinalVal(ExtentParallelLength);
+        public double FrameParallelLength(int i) => IsVertical ? DataSource[i].Height : DataSource[i].Width;
+
+        // Observer - List View
+        private double m_padding_start_final;
+        public double PaddingStartFinal
+        {
+            get
+            {
+                FillFinalVal();
+                return m_padding_start_final;
+            }
+        }
+
+        private double m_padding_end_final;
+        public double PaddingEndFinal
+        {
+            get
+            {
+                FillFinalVal();
+                return m_padding_end_final;
+            }
+        }
+
+        // Internal - Variables
+        private ReaderPageShared m_shared;
+        private bool m_final_value_set = false;
+
+        // Internal - Loader States
+        private bool IsFrameworkLoaded => ThisScrollViewer != null && ThisListView != null;
+        private bool IsFrameworkReady { get; set; } = false;
+        private bool IsLastPageLoaded { get; set; } = false;
+        private bool IsInitialPageReached { get; set; } = false;
+        private bool IsImageUpdateSucceeded { get; set; } = false;
+
+        // Internal - General
+        private double? ZoomCoefficient()
+        {
+            if (DataSource.Count == 0)
+            {
+                return null;
+            }
+
+            int frame_idx = PageToFrame(Page, out _, out _);
+            if (frame_idx < 0 || frame_idx >= DataSource.Count) frame_idx = 0;
+
+            double viewport_width = ThisScrollViewer.ViewportWidth;
+            double viewport_height = ThisScrollViewer.ViewportHeight;
+            double frame_width = DataSource[frame_idx].FrameWidth;
+            double frame_height = DataSource[frame_idx].FrameHeight;
+
+            double viewport_ratio = viewport_width / viewport_height;
+            double image_ratio = frame_width / frame_height;
+            return 0.01 * (viewport_ratio > image_ratio ?
+                viewport_height / frame_height :
+                viewport_width / frame_width);
+        }
+
+        private double? PageOffsetRaw(int page, bool use_page_center)
+        {
+            page = Math.Max(1, page);
+            page = Math.Min(Pages, page);
+            int frame = PageToFrame(page, out _, out _);
+            double? parallel_offset = FrameOffsetRaw(frame, use_page_center);
+
+            if (!parallel_offset.HasValue)
+            {
+                return null;
+            }
+
+            return parallel_offset;
+        }
+
+        private double? PageOffset(double page, bool use_page_center)
+        {
+            page = Math.Max(1.0, page);
+            page = Math.Min(Pages, page);
+
+            int page_int = (int)page;
+            double page_frac = page - page_int;
+
+            // Calculate parallel offset of this page.
+            double? this_offset = PageOffsetRaw(page_int, use_page_center);
+
+            if (!this_offset.HasValue)
+            {
+                return null;
+            }
+
+            double offset = this_offset.Value;
+
+            // Calculate parallel offset of next page and mix with this page.
+            double? _next_offset = PageOffsetRaw(page_int + 1, use_page_center);
+
+            if (_next_offset.HasValue)
+            {
+                offset += page_frac * (_next_offset.Value - this_offset.Value);
+            }
+            else if (page_frac > 0.05)
+            {
+                return null;
+            }
+
+            offset = offset * ZoomFactorFinal - ViewportParallelLength * 0.5;
+            offset = Math.Max(0.0, offset);
+            return offset;
+        }
+
+        private double? FrameOffsetRaw(int frame, bool use_frame_center)
+        {
+            if (frame < 0 || frame >= DataSource.Count)
+            {
+                return null;
+            }
+
+            var item = DataSource[frame];
+            Grid container = item.Container;
+
+            if (container == null)
+            {
+                return null;
+            }
+
+            var frame_transform = container.TransformToVisual(ThisListView);
+            Point frame_position = frame_transform.TransformPoint(new Point(0.0, 0.0));
+            double parallel_offset = IsVertical ? frame_position.Y : frame_position.X;
+
+            bool left_to_right = m_shared.ReaderSettings.IsLeftToRight;
+
+            if (IsHorizontal && !left_to_right)
+            {
+                parallel_offset -= item.FrameMargin.Left + item.FrameWidth + item.FrameMargin.Right;
+            }
+
+            if (use_frame_center)
+            {
+                parallel_offset += IsVertical ?
+                    item.FrameMargin.Top + item.FrameHeight * 0.5 :
+                    item.FrameMargin.Left + item.FrameWidth * 0.5;
+            }
+
+            return parallel_offset;
+        }
+
+        private double? FrameOffset(double frame, bool use_frame_center)
+        {
+            frame = Math.Max(0, frame);
+            frame = Math.Min(DataSource.Count - 1, frame);
+
+            int frame_int = (int)frame;
+            double frame_frac = frame - frame_int;
+
+            // Calculate parallel offset of this page.
+            double? this_offset = FrameOffsetRaw(frame_int, use_frame_center);
+
+            if (!this_offset.HasValue)
+            {
+                return null;
+            }
+
+            double offset = this_offset.Value;
+
+            // Calculate parallel offset of next page and mix with this page.
+            double? _next_offset = PageOffsetRaw(frame_int + 1, use_frame_center);
+
+            if (_next_offset.HasValue)
+            {
+                offset += frame_frac * (_next_offset.Value - this_offset.Value);
+            }
+
+            offset = offset * ZoomFactorFinal - ViewportParallelLength * 0.5;
+            offset = Math.Max(0.0, offset);
+            return offset;
+        }
+
+        private void InternalMoveFrame(int increment, bool disable_animation)
+        {
+            if (DataSource.Count == 0) return;
+
+            int frame = PageToFrame(Page, out _, out _);
+            frame += increment;
+            frame = Math.Min(DataSource.Count - 1, frame);
+            frame = Math.Max(0, frame);
+
+            double? new_parallel_offset = FrameOffset(frame, use_frame_center: true);
+
+            if (new_parallel_offset == null || Math.Abs(new_parallel_offset.Value - ParallelOffsetFinal) < 1.0)
+            {
+                // IMPORTANT: Ignore the request if target offset is really close to the current offset,
+                // or else it could stuck in a dead loop. (See reference in OnScrollViewerViewChanged())
+                return;
+            }
+
+            float? zoom = Zoom > 101f ? 100f : (float?)null;
+            SetScrollViewer(zoom, new_parallel_offset, disable_animation);
+        }
+
+        private bool InternalSetScrollViewer(float? zoom, double? page, bool use_page_center, bool disable_animation)
+        {
+            double? horizontal_offset = null;
+            double? vertical_offset = null;
+
+            if (page.HasValue)
+            {
+                double? parallel_offset = PageOffset(page.Value, use_page_center);
+
+                if (!parallel_offset.HasValue)
+                {
+                    return false;
+                }
+
+                ConvertOffset(ref horizontal_offset, ref vertical_offset, parallel_offset, null);
+            }
+
+            return InternalSetScrollViewer(zoom, horizontal_offset, vertical_offset, disable_animation);
+        }
+
+        private bool InternalSetScrollViewer(float? zoom, double? horizontal_offset, double? vertical_offset, bool disable_animation)
+        {
+            if (!IsFrameworkLoaded)
+            {
+                return false;
+            }
+
+#if DEBUG_LOG_JUMP
+            Log("ParamIn: "
+                + "Z=" + zoom.ToString()
+                + ",H=" + horizontal_offset.ToString()
+                + ",V=" + vertical_offset.ToString()
+                + ",D=" + disable_animation.ToString());
+#endif
+
+            SetScrollViewerZoom(ref horizontal_offset, ref vertical_offset, ref zoom, out float? zoom_out);
+
+#if DEBUG_LOG_JUMP
+            Log("ParamSetZoom: "
+                + "Z=" + zoom.ToString()
+                + ",Zo=" + zoom_out.ToString()
+                + ",H=" + horizontal_offset.ToString()
+                + ",V=" + vertical_offset.ToString());
+#endif
+            
+            if (!ChangeView(zoom_out, horizontal_offset, vertical_offset, disable_animation))
+            {
+                return false;
+            }
+
+            m_zoom = zoom.Value;
+            m_shared.NavigationPageShared.ZoomInEnabled = m_zoom < max_zoom;
+            m_shared.NavigationPageShared.ZoomOutEnabled = m_zoom > min_zoom;
+            AdjustParallelOffset();
+            return true;
+        }
+
+        private void SetScrollViewerZoom(ref double? horizontal_offset, ref double? vertical_offset, ref float? zoom, out float? zoom_factor)
+        {
+            double? zoom_coefficient_boxed = ZoomCoefficient();
+
+            if (zoom_coefficient_boxed == null)
+            {
+                zoom = m_zoom;
+                zoom_factor = null;
+                return;
+            }
+
+            double zoom_coefficient = zoom_coefficient_boxed.Value;
+            bool zoom_sat = false;
+            bool zoom_null = zoom == null;
+            float zoom_rectified = zoom_null ? (float)(ZoomFactorFinal / zoom_coefficient) : (float)zoom;
+
+            // accept an error less than 1
+            if (zoom_rectified - max_zoom > 1)
+            {
+                zoom_sat = true;
+                zoom_rectified = max_zoom;
+            }
+            else if (min_zoom - zoom_rectified > 1)
+            {
+                zoom_sat = true;
+                zoom_rectified = min_zoom;
+            }
+
+            if (zoom_null && !zoom_sat)
+            {
+                zoom = Math.Abs(zoom_rectified - m_zoom) <= 1 ? m_zoom : zoom_rectified;
+                zoom_factor = null;
+                return;
+            }
+
+            zoom = zoom_rectified;
+            zoom_factor = (float)(zoom_rectified * zoom_coefficient);
+
+            if (horizontal_offset == null)
+            {
+                horizontal_offset = HorizontalOffsetFinal;
+            }
+
+            if (vertical_offset == null)
+            {
+                vertical_offset = VerticalOffsetFinal;
+            }
+
+            horizontal_offset += ThisScrollViewer.ViewportWidth * 0.5;
+            horizontal_offset *= (float)zoom_factor / ZoomFactorFinal;
+            horizontal_offset -= ThisScrollViewer.ViewportWidth * 0.5;
+
+            vertical_offset += ThisScrollViewer.ViewportHeight * 0.5;
+            vertical_offset *= (float)zoom_factor / ZoomFactorFinal;
+            vertical_offset -= ThisScrollViewer.ViewportHeight * 0.5;
+
+            horizontal_offset = Math.Max(0.0, horizontal_offset.Value);
+            vertical_offset = Math.Max(0.0, vertical_offset.Value);
+        }
+
+        private bool ChangeView(float? zoom_factor, double? horizontal_offset, double? vertical_offset, bool disable_animation)
+        {
+            if (horizontal_offset == null && vertical_offset == null && zoom_factor == null)
+            {
+                return true;
+            }
+
+            if (horizontal_offset != null)
+            {
+                HorizontalOffsetFinal = horizontal_offset.Value;
+            }
+
+            if (vertical_offset != null)
+            {
+                VerticalOffsetFinal = vertical_offset.Value;
+            }
+
+            if (zoom_factor != null)
+            {
+                ZoomFactorFinal = zoom_factor.Value;
+            }
+
+            if (disable_animation)
+            {
+                DisableAnimationFinal = true;
+            }
+
+            ThisScrollViewer.ChangeView(HorizontalOffsetFinal, VerticalOffsetFinal, ZoomFactorFinal, DisableAnimationFinal);
+
+#if DEBUG_LOG_JUMP
+            Log("Commit:"
+                + " Z=" + ZoomFactorFinal.ToString()
+                + ",H=" + HorizontalOffsetFinal.ToString()
+                + ",V=" + VerticalOffsetFinal.ToString()
+                + ",D=" + DisableAnimationFinal.ToString());
+#endif
+
+            return true;
+        }
+
+        private void AdjustParallelOffset()
+        {
+            if (DataSource.Count == 0)
+            {
+                return;
+            }
+
+#if DEBUG_LOG_JUMP
+            Log("Adjusting offset");
+#endif
+
+            double? movement_forward = null;
+            double? movement_backward = null;
+            double screen_center_offset = ViewportParallelLength * 0.5 + ParallelOffsetFinal;
+
+            if (DataSource[0].Container != null)
+            {
+                double space = PaddingStartFinal * ZoomFactorFinal - ParallelOffsetFinal;
+                double image_center_offset = (PaddingStartFinal + FrameParallelLength(0) * 0.5) * ZoomFactorFinal;
+                double image_center_to_screen_center = image_center_offset - screen_center_offset;
+                movement_forward = Math.Min(space, image_center_to_screen_center);
+            }
+
+            if (DataSource[DataSource.Count - 1].Container != null)
+            {
+                double space = PaddingEndFinal * ZoomFactorFinal - (ExtentParallelLengthFinal
+                    - ParallelOffsetFinal - ViewportParallelLength);
+                double image_center_offset = ExtentParallelLengthFinal - (PaddingEndFinal
+                    + FrameParallelLength(DataSource.Count - 1) * 0.5) * ZoomFactorFinal;
+                double image_center_to_screen_center = screen_center_offset - image_center_offset;
+                movement_backward = Math.Min(space, image_center_to_screen_center);
+            }
+
+            if (movement_forward.HasValue && movement_backward.HasValue)
+            {
+                if (movement_forward.Value >= 0 && movement_backward.Value >= 0)
+                {
+                    return;
+                }
+
+                if (movement_forward.Value <= 0 && movement_backward.Value <= 0)
+                {
+                    return;
+                }
+
+                if (movement_forward.Value + movement_backward.Value >= 0)
+                {
+                    return;
+                }
+            }
+
+            if (movement_forward.HasValue && movement_forward.Value > 0)
+            {
+                double parallel_offset = ParallelOffsetFinal + movement_forward.Value;
+                ChangeView(null, HorizontalVal(parallel_offset, null),
+                    VerticalVal(parallel_offset, null), false);
+            }
+            else if (movement_backward.HasValue && movement_backward.Value > 0)
+            {
+                double parallel_offset = ParallelOffsetFinal - movement_backward.Value;
+                ChangeView(null, HorizontalVal(parallel_offset, null),
+                    VerticalVal(parallel_offset, null), false);
+            }
+        }
+
+        private void AdjustPadding()
+        {
+            if (!IsFrameworkLoaded)
+            {
+                return;
+            }
+
+            double? zoom_coefficient_boxed = ZoomCoefficient();
+            if (zoom_coefficient_boxed == null) return;
+            double zoom_coefficient = zoom_coefficient_boxed.Value;
+
+            if (DataSource[0].Container == null || DataSource[DataSource.Count - 1].Container == null)
+            {
+                return;
+            }
+
+#if DEBUG_LOG_JUMP
+            Log("Adjusting padding");
+#endif
+
+            double zoom_factor = min_zoom * zoom_coefficient;
+            double inner_length = ViewportParallelLength / zoom_factor;
+            double new_start = (inner_length - FrameParallelLength(0)) / 2;
+            double new_end = (inner_length - FrameParallelLength(DataSource.Count - 1)) / 2;
+
+            new_start = Math.Max(0.0, new_start);
+            new_end = Math.Max(0.0, new_end);
+
+            FillFinalVal();
+            m_padding_start_final = new_start;
+            m_padding_end_final = new_end;
+
+            if (IsVertical)
+            {
+                ThisListView.Padding = new Thickness(0.0, new_start, 0.0, new_end);
+            }
+            else
+            {
+                ThisListView.Padding = new Thickness(new_start, 0.0, new_end, 0.0);
+            }
+        }
+
+        private Utils.CancellationLock m_lock_update_page = new Utils.CancellationLock();
+        private async Task<bool> UpdatePage(bool use_final)
+        {
+            if (!IsFrameworkLoaded)
+            {
+                return false;
+            }
+
+            await m_lock_update_page.WaitAsync();
+            try
+            {
+                double parallel_offset = use_final ? ParallelOffsetFinal : ParallelOffset;
+                double zoom_factor = use_final ? ZoomFactorFinal : ZoomFactor;
+                double current_offset = (parallel_offset + ViewportParallelLength * 0.5) / zoom_factor;
+
+                // Use binary search to locate the current page.
+                if (DataSource.Count == 0)
+                {
+                    return false;
+                }
+
+                int begin = 0;
+                int end = DataSource.Count - 1;
+
+                while (begin < end)
+                {
+                    if (m_lock_update_page.CancellationRequested)
+                    {
+                        return false;
+                    }
+
+                    int i = (begin + end + 1) / 2;
+                    var item = DataSource[i];
+                    int p = Math.Max(item.PageL, item.PageR);
+                    if (p <= 0) return false;
+                    double? page_offset = PageOffsetRaw(p, use_page_center: false);
+
+                    if (!page_offset.HasValue)
+                    {
+                        return false;
+                    }
+
+                    if (page_offset.Value < current_offset)
+                    {
+                        begin = i;
+                    }
+                    else
+                    {
+                        end = i - 1;
+                    }
+                }
+
+                int frame_idx = begin;
+                var frame = DataSource[frame_idx];
+                int page = Math.Max(frame.PageL, frame.PageR);
+
+                double? this_offset = PageOffsetRaw(page, use_page_center: false);
+                double? next_offset = PageOffsetRaw(page + 1, use_page_center: false);
+                double res;
+
+                if (this_offset.HasValue && next_offset.HasValue &&
+                    this_offset.Value < current_offset && current_offset <= next_offset.Value)
+                {
+                    res = page + (current_offset - this_offset.Value) / (next_offset.Value - this_offset.Value);
+                }
+                else
+                {
+                    res = page;
+                }
+
+                m_page = res;
+
+#if DEBUG_LOG_UPDATE_PAGE
+                Log("Page updated (" +
+                    "Page=" + m_page.ToString() +
+                    ",UseF=" + use_final.ToString() +
+                    ",PO=" + parallel_offset.ToString() +
+                    ",ZF=" + zoom_factor.ToString() +
+                    ",O=" + current_offset.ToString() + ")");
+#endif
+
+                return true;
+            }
+            finally
+            {
+                m_lock_update_page.Release();
+            }
+        }
+
+        private Utils.CancellationLock m_lock_update_images = new Utils.CancellationLock();
+        private async Task InternalUpdateImages(LockContext db, bool remove_out_of_view = true)
+        {
+#if DEBUG_LOG_LOAD
+            Log("Updating images (page " + Page.ToString() + ")");
+#endif
+
+            await m_lock_update_images.WaitAsync();
+            try
+            {
+                if (!IsCurrentReader)
+                {
+                    foreach (ReaderFrameViewModel m in DataSource)
+                    {
+                        m.ImageL = null;
+                        m.ImageR = null;
+                    }
+
+                    return;
+                }
+
+                var img_loader_tokens = new List<Utils.ImageLoaderToken>();
+                int page_begin = Math.Max(Page - 5, 1);
+                int page_end = Math.Min(Page + 10, Pages);
+                int idx_begin = PageToFrame(page_begin, out _, out _);
+                int idx_end = PageToFrame(page_end, out _, out _);
+                idx_end = Math.Min(DataSource.Count - 1, idx_end);
+                
+                for (int i = idx_begin; i <= idx_end; ++i)
+                {
+                    ReaderFrameViewModel m = DataSource[i]; // Stores locally.
+
+                    if (m.ImageL == null && m.PageL > 0)
+                    {
+                        img_loader_tokens.Add(new Utils.ImageLoaderToken
+                        {
+                            Index = m.PageL - 1,
+                            Comic = Comic,
+                            Callback = (BitmapImage img) =>
+                            {
+                                m.ImageL = img;
+                            }
+                        });
+                    }
+
+                    if (m.ImageR == null && m.PageR > 0)
+                    {
+                        img_loader_tokens.Add(new Utils.ImageLoaderToken
+                        {
+                            Index = m.PageR - 1,
+                            Comic = Comic,
+                            Callback = (BitmapImage img) =>
+                            {
+                                m.ImageR = img;
+                            }
+                        });
+                    }
+                }
+
+                await Utils.ImageLoader.Load(db, img_loader_tokens,
+                    double.PositiveInfinity, double.PositiveInfinity,
+                    m_lock_update_images);
+
+                if (remove_out_of_view)
+                {
+                    for (int i = 0; i < DataSource.Count; ++i)
+                    {
+                        ReaderFrameViewModel m = DataSource[i];
+
+                        if ((m.PageL < page_begin || m.PageL > page_end) && m.ImageL != null)
+                        {
+                            m.ImageL = null;
+                        }
+
+                        if ((m.PageR < page_begin || m.PageR > page_end) && m.ImageR != null)
+                        {
+                            m.ImageR = null;
+                        }
+                    }
+                }
+            }
+            finally
+            {
+                m_lock_update_images.Release();
+            }
+        }
+
+        // Internal - Final Value
+        private void FillFinalVal()
+        {
+            if (!IsFrameworkLoaded)
+            {
+                return;
+            }
+
+            if (m_final_value_set)
+            {
+                return;
+            }
+
+            m_padding_start_final = IsVertical ? ThisListView.Padding.Top : ThisListView.Padding.Left;
+            m_padding_end_final = IsVertical ? ThisListView.Padding.Bottom : ThisListView.Padding.Right;
+            m_horizontal_offset_final = HorizontalOffset;
+            m_vertical_offset_final = VerticalOffset;
+            m_zoom_factor_final = ZoomFactor;
+            m_disable_animation_final = false;
+            m_final_value_set = true;
+        }
+
+        private void SyncFinalVal()
+        {
+            m_final_value_set = false;
+        }
+
+        // Internal - Conversions
+        private void ConvertOffset(ref double? to_horizontal, ref double? to_vertical, double? from_parallel, double? from_perpendicular)
+        {
+            if (IsVertical)
+            {
+                if (from_parallel != null)
+                {
+                    to_vertical = from_parallel;
+                }
+
+                if (from_perpendicular != null)
+                {
+                    to_horizontal = from_perpendicular;
+                }
+            }
+            else
+            {
+                if (from_parallel != null)
+                {
+                    to_horizontal = from_parallel;
+                }
+
+                if (from_perpendicular != null)
+                {
+                    to_vertical = from_perpendicular;
+                }
+            }
+        }
+
+        private double? HorizontalVal(double? parallel_val, double? perpendicular_val)
+        {
+            return IsVertical ? perpendicular_val : parallel_val;
+        }
+
+        private double? VerticalVal(double? parallel_val, double? perpendicular_val)
+        {
+            return IsVertical ? parallel_val : perpendicular_val;
+        }
+
+        private double FinalVal(double val)
+        {
+            return val / ZoomFactor * ZoomFactorFinal;
+        }
+
+        private int PageToFrame(int page, out bool left_side, out int neighbor)
+        {
+            switch (PageArrangement)
+            {
+                case PageArrangementEnum.Single:
+                    left_side = true;
+                    neighbor = -1;
+                    return page - 1;
+                case PageArrangementEnum.DualCover:
+                    left_side = page == 1 || page % 2 == 0;
+                    neighbor = (page > 1 && (Pages % 2 == 1 || page < Pages)) ? (left_side ? page + 1 : page - 1) : -1;
+                    return page / 2;
+                case PageArrangementEnum.DualCoverMirror:
+                    left_side = page == Pages || page % 2 == 1;
+                    neighbor = (page > 1 && (Pages % 2 == 1 || page < Pages)) ? (left_side ? page - 1 : page + 1) : -1;
+                    return page / 2;
+                case PageArrangementEnum.DualNoCover:
+                    left_side = page % 2 == 1;
+                    neighbor = (Pages % 2 == 0 || page < Pages) ? (left_side ? page + 1 : page - 1) : -1;
+                    return (page - 1) / 2;
+                case PageArrangementEnum.DualNoCoverMirror:
+                    left_side = page == Pages || page % 2 == 0;
+                    neighbor = (Pages % 2 == 0 || page < Pages) ? (left_side ? page - 1 : page + 1) : -1;
+                    return (page - 1) / 2;
+                default:
+                    System.Diagnostics.Debug.Assert(false);
+                    goto case PageArrangementEnum.Single;
+            }
+        }
+
+        // Internal - Debug
+        private void Log(string text)
+        {
+            if (!IsCurrentReader)
+            {
+                return;
+            }
+
+            Utils.Debug.Log("Reader: " + text);
+        }
     }
 
     public sealed partial class ReaderPage : Page
@@ -1432,6 +1568,7 @@ namespace ComicReader.Views
             m_gesture_recognizer.GestureSettings =
                 GestureSettings.ManipulationTranslateX |
                 GestureSettings.ManipulationTranslateY |
+                GestureSettings.ManipulationTranslateInertia |
                 GestureSettings.ManipulationScale;
             m_gesture_recognizer.ManipulationStarted += OnManipulationStarted;
             m_gesture_recognizer.ManipulationUpdated += OnManipulationUpdated;
@@ -1463,11 +1600,14 @@ namespace ComicReader.Views
             Shared.NavigationPageShared.OnZoomOut += ZoomOut;
             Shared.NavigationPageShared.OnPreviewModeChanged += Shared.UpdateReaderUI;
             Shared.NavigationPageShared.OnExpandComicInfoPane += ExpandInfoPane;
-            Shared.NavigationPageShared.ReaderSettings.OnVerticalChanged += OnReaderSwitched;
-            Shared.NavigationPageShared.ReaderSettings.OnVerticalPageArrangementChanged += VerticalReader.OnPageArrangementChangedEventSealed;
-            Shared.NavigationPageShared.ReaderSettings.OnHorizontalPageArrangementChanged += HorizontalReader.OnPageArrangementChangedEventSealed;
+            Shared.ReaderSettings.OnVerticalChanged += OnReaderSwitched;
+            Shared.ReaderSettings.OnContinuousChanged += OnReaderContinuousChanged;
+            Shared.ReaderSettings.OnHorizontalContinuousChanged += HorizontalReader.PageRearrangeEventSealed;
+            Shared.ReaderSettings.OnVerticalPageArrangementChanged += VerticalReader.PageRearrangeEventSealed;
+            Shared.ReaderSettings.OnHorizontalPageArrangementChanged += HorizontalReader.PageRearrangeEventSealed;
 
             Shared.NavigationPageShared.IsPreviewButtonToggled = false;
+            OnReaderContinuousChanged();
             Shared.UpdateReaderUI();
         }
 
@@ -1479,14 +1619,20 @@ namespace ComicReader.Views
             Shared.NavigationPageShared.OnZoomOut -= ZoomOut;
             Shared.NavigationPageShared.OnPreviewModeChanged -= Shared.UpdateReaderUI;
             Shared.NavigationPageShared.OnExpandComicInfoPane -= ExpandInfoPane;
-            Shared.NavigationPageShared.ReaderSettings.OnVerticalChanged -= OnReaderSwitched;
-            Shared.NavigationPageShared.ReaderSettings.OnVerticalPageArrangementChanged -= VerticalReader.OnPageArrangementChangedEventSealed;
-            Shared.NavigationPageShared.ReaderSettings.OnHorizontalPageArrangementChanged -= HorizontalReader.OnPageArrangementChangedEventSealed;
+            Shared.ReaderSettings.OnVerticalChanged -= OnReaderSwitched;
+            Shared.ReaderSettings.OnContinuousChanged -= OnReaderContinuousChanged;
+            Shared.ReaderSettings.OnHorizontalContinuousChanged -= HorizontalReader.PageRearrangeEventSealed;
+            Shared.ReaderSettings.OnVerticalPageArrangementChanged -= VerticalReader.PageRearrangeEventSealed;
+            Shared.ReaderSettings.OnHorizontalPageArrangementChanged -= HorizontalReader.PageRearrangeEventSealed;
         }
 
         private void OnTabUpdate()
         {
-            Shared.BottomTilePinned = false;
+            Utils.C0.Run(async delegate
+            {
+                Shared.BottomTilePinned = false;
+                await LoadComicInfo();
+            });
         }
 
         private void OnTabStart(Utils.Tab.TabIdentifier tab_id)
@@ -1511,62 +1657,6 @@ namespace ComicReader.Views
             return "Reader/" + comic.Location;
         }
 
-        // Utilities
-        private ReaderModel GetCurrentReader()
-        {
-            if (Shared.NavigationPageShared.ReaderSettings.IsVertical)
-            {
-                return VerticalReader;
-            }
-            else
-            {
-                return HorizontalReader;
-            }
-        }
-
-        private void UpdatePage(ReaderModel control)
-        {
-            if (PageIndicator == null)
-            {
-                return;
-            }
-
-            string image_count = "?";
-
-            if (m_comic != null)
-            {
-                image_count = m_comic.ImageCount.ToString();
-            }
-
-            PageIndicator.Text = control.Page.ToString() + " / " + image_count;
-        }
-
-        private void UpdateProgress(ReaderModel control, bool save)
-        {
-            int progress;
-
-            if (m_comic.ImageCount == 0)
-            {
-                progress = 0;
-            }
-            else if (control.IsLastPage)
-            {
-                progress = 100;
-            }
-            else
-            {
-                progress = (int)((float)control.Page / control.Pages * 100);
-            }
-
-            progress = Math.Min(progress, 100);
-            Shared.Progress = progress.ToString() + "%";
-
-            if (save)
-            {
-                m_comic.SaveProgress(progress, control.PageReal);
-            }
-        }
-
         // Load
         private async Task LoadComic(LockContext db, ComicData comic)
         {
@@ -1576,7 +1666,6 @@ namespace ComicReader.Views
             }
 
             Shared.ReaderStatus = ReaderStatusEnum.Loading;
-            Shared.UpdateReaderUI();
 
             VerticalReader.Reset();
             HorizontalReader.Reset();
@@ -1587,7 +1676,6 @@ namespace ComicReader.Views
             reader.OnLoaded = () =>
             {
                 Shared.ReaderStatus = ReaderStatusEnum.Working;
-                Shared.UpdateReaderUI();
                 UpdatePage(reader);
                 BottomTileShow();
                 BottomTileHide(5000);
@@ -1615,27 +1703,27 @@ namespace ComicReader.Views
                 {
                     Log("Failed to load images of '" + m_comic.Location + "'. " + r.ExceptionType.ToString());
                     Shared.ReaderStatus = ReaderStatusEnum.Error;
-                    Shared.UpdateReaderUI();
                     return;
                 }
 
                 // Set initial page.
                 reader.InitialPage = m_comic.LastPosition;
 
-                // Call UpdateDataSource() to load frames into readers.
+                // Load frames.
                 for (int i = 0; i < m_comic.ImageAspectRatios.Count; ++i)
                 {
-                    VerticalReader.UpdateFrame(i);
-                    HorizontalReader.UpdateFrame(i);
+                    await VerticalReader.UpdateFrame(i);
+                    await HorizontalReader.UpdateFrame(i);
                 }
+
+                await reader.UpdateImages(db, true);
             }
 
             Utils.TaskQueueManager.AppendTask(LoadImagesSealed(), "", m_load_image_queue);
             await LoadComicInfo();
         }
 
-        private SealedTask LoadImagesSealed() =>
-            (RawTask _) => LoadImagesUnsealed(new LockContext()).Result;
+        private SealedTask LoadImagesSealed() => (RawTask _) => LoadImagesUnsealed(new LockContext()).Result;
 
         private async RawTask LoadImagesUnsealed(LockContext db)
         {
@@ -1653,9 +1741,9 @@ namespace ComicReader.Views
             });
 
             var preview_img_loader_tokens = new List<Utils.ImageLoaderToken>();
+            ComicData comic = m_comic; // Stores locally.
             Utils.Stopwatch save_timer = new Utils.Stopwatch();
             save_timer.Start();
-            ComicData comic = m_comic; // Stores locally.
 
             for (int i = 0; i < comic.ImageCount; ++i)
             {
@@ -1666,7 +1754,7 @@ namespace ComicReader.Views
                 {
                     Comic = comic,
                     Index = index,
-                    Callback = (BitmapImage img) =>
+                    CallbackAsync = async (BitmapImage img) => 
                     {
                         // Save image aspect ratio info.
                         double image_aspect_ratio = (double)img.PixelWidth / img.PixelHeight;
@@ -1703,8 +1791,8 @@ namespace ComicReader.Views
                         });
 
                         // Update reader frames.
-                        VerticalReader.UpdateFrame(index);
-                        HorizontalReader.UpdateFrame(index);
+                        await VerticalReader.UpdateFrame(index);
+                        await HorizontalReader.UpdateFrame(index);
                     }
                 });
             }
@@ -1718,7 +1806,10 @@ namespace ComicReader.Views
 
         private async Task LoadComicInfo()
         {
-            System.Diagnostics.Debug.Assert(m_comic != null);
+            if (m_comic == null)
+            {
+                return;
+            }
 
             Shared.NavigationPageShared.IsExternal = m_comic.IsExternal;
 
@@ -1776,36 +1867,102 @@ namespace ComicReader.Views
             Shared.ComicTags = new_collection;
         }
 
+        // Utilities
+        private ReaderModel GetCurrentReader()
+        {
+            if (Shared.ReaderSettings.IsVertical)
+            {
+                return VerticalReader;
+            }
+            else
+            {
+                return HorizontalReader;
+            }
+        }
+
+        private void UpdatePage(ReaderModel control)
+        {
+            if (PageIndicator == null)
+            {
+                return;
+            }
+
+            string image_count = "?";
+
+            if (m_comic != null)
+            {
+                image_count = m_comic.ImageCount.ToString();
+            }
+
+            PageIndicator.Text = control.Page.ToString() + " / " + image_count;
+        }
+
+        private void UpdateProgress(ReaderModel control, bool save)
+        {
+            int progress;
+
+            if (m_comic.ImageCount == 0)
+            {
+                progress = 0;
+            }
+            else if (control.IsLastPage)
+            {
+                progress = 100;
+            }
+            else
+            {
+                progress = (int)((float)control.Page / control.Pages * 100);
+            }
+
+            progress = Math.Min(progress, 100);
+            Shared.Progress = progress.ToString() + "%";
+
+            if (save)
+            {
+                m_comic.SaveProgress(progress, control.PageReal);
+            }
+        }
+
         // Reader
         public void OnReaderSwitched()
         {
             Utils.C0.Run(async delegate
             {
                 LockContext db = new LockContext();
-                ReaderModel reader = GetCurrentReader();
 
+                ReaderModel reader = GetCurrentReader();
                 System.Diagnostics.Debug.Assert(reader != null);
-                if (reader == null) return;
+
+                if (reader == null)
+                {
+                    return;
+                }
 
                 ReaderModel last_reader = reader.IsVertical ? HorizontalReader : VerticalReader;
-
                 System.Diagnostics.Debug.Assert(last_reader != null);
-                if (last_reader == null) return;
+
+                if (last_reader == null)
+                {
+                    return;
+                }
 
                 System.Diagnostics.Debug.Assert(reader.IsCurrentReader);
                 System.Diagnostics.Debug.Assert(!last_reader.IsCurrentReader);
 
+                double page = last_reader.PageReal;
                 float zoom = Math.Min(100f, last_reader.Zoom);
-                double position = last_reader.PageReal;
-
-                Shared.UpdateReaderUI();
-                await last_reader.UpdateImage(db, false);
 
                 await Utils.C0.WaitFor(() => reader.IsLoaded, 1000);
-                reader.SetScrollViewer(zoom, position, use_page_center: false, true);
-
-                await reader.UpdateImage(db, true);
+                reader.SetScrollViewer(zoom, page, use_page_center: false, true);
+                await reader.UpdateImages(db, true);
+                Shared.UpdateReaderUI();
+                await last_reader.UpdateImages(db, false);
             });
+        }
+
+        private void OnReaderContinuousChanged()
+        {
+            m_gesture_recognizer.AutoProcessInertia = Shared.ReaderSettings.IsContinuous;
         }
 
         private void OnReaderScrollViewerViewChanged(ReaderModel control, ScrollViewerViewChangedEventArgs e)
@@ -1840,7 +1997,7 @@ namespace ComicReader.Views
 
                 PointerPoint pt = e.GetCurrentPoint(null);
                 int delta = -pt.Properties.MouseWheelDelta / 120;
-                await reader.IncreaseFrame(delta, false);
+                await reader.MoveFrame(delta, false);
 
                 // Set e.Handled to true to suppress the default behavior of scroll viewer (which will override ours)
                 e.Handled = true;
@@ -1931,7 +2088,7 @@ namespace ComicReader.Views
             double dy = e.Delta.Translation.Y;
             float scale = e.Delta.Scale;
 
-            if (reader.IsHorizontal && !Shared.NavigationPageShared.ReaderSettings.IsLeftToRight)
+            if (reader.IsHorizontal && !Shared.ReaderSettings.IsLeftToRight)
             {
                 dx = -dx;
             }
@@ -1946,116 +2103,121 @@ namespace ComicReader.Views
             {
                 ReaderModel reader = GetCurrentReader();
 
-                if (reader == null || reader.IsVertical || reader.Zoom > 105)
+                if (reader == null || reader.IsContinuous || reader.Zoom > 105)
                 {
                     return;
                 }
 
-                double velocity = e.Velocities.Linear.X;
+                double velocity = reader.IsVertical ? e.Velocities.Linear.Y : e.Velocities.Linear.X;
 
-                if (!Shared.NavigationPageShared.ReaderSettings.IsLeftToRight)
+                if (reader.IsHorizontal && !Shared.ReaderSettings.IsLeftToRight)
                 {
                     velocity = -velocity;
                 }
 
                 if (velocity > 1.0)
                 {
-                    await reader.IncreaseFrame(-1, false);
+                    await reader.MoveFrame(-1, false);
                 }
                 else if (velocity < -1.0)
                 {
-                    await reader.IncreaseFrame(1, false);
+                    await reader.MoveFrame(1, false);
                 }
+
+#if DEBUG_LOG_MANIPULATION
+                Log("Manipulation completed, V=" + velocity.ToString());
+#endif
             });
+        }
+
+        private void OnReaderPointerPressed(object sender, PointerRoutedEventArgs e)
+        {
+            (sender as UIElement).CapturePointer(e.Pointer);
+            m_gesture_recognizer.ProcessDownEvent(e.GetCurrentPoint(ManipulationReference));
 
 #if DEBUG_LOG_MANIPULATION
-            Log("Manipulation completed");
+            Log("Pointer pressed");
 #endif
         }
 
-        private void OnReaderPointerPressed(object sender, PointerRoutedEventArgs e, bool horizontal)
+        private void OnReaderPointerMoved(object sender, PointerRoutedEventArgs e)
         {
-            if (horizontal || e.Pointer.PointerDeviceType == PointerDeviceType.Mouse)
-            {
-                (sender as UIElement).CapturePointer(e.Pointer);
-                m_gesture_recognizer.ProcessDownEvent(e.GetCurrentPoint(ManipulationReference));
+            m_gesture_recognizer.ProcessMoveEvents(e.GetIntermediatePoints(ManipulationReference));
 #if DEBUG_LOG_MANIPULATION
-                Log("Pointer pressed");
+            //Log("Pointer moved");
 #endif
-            }
         }
 
-        private void OnReaderPointerMoved(object sender, PointerRoutedEventArgs e, bool horizontal)
+        private void OnReaderPointerReleased(object sender, PointerRoutedEventArgs e)
         {
-            if (horizontal || e.Pointer.PointerDeviceType == PointerDeviceType.Mouse)
+            m_gesture_recognizer.ProcessUpEvent(e.GetCurrentPoint(ManipulationReference));
+            (sender as UIElement).ReleasePointerCapture(e.Pointer);
+
+            if (!m_gesture_recognizer.AutoProcessInertia)
             {
-                m_gesture_recognizer.ProcessMoveEvents(e.GetIntermediatePoints(ManipulationReference));
-#if DEBUG_LOG_MANIPULATION
-                //Log("Pointer moved");
-#endif
+                m_gesture_recognizer.CompleteGesture();
             }
+
+#if DEBUG_LOG_MANIPULATION
+            Log("Pointer released");
+#endif
         }
 
-        private void OnReaderPointerReleased(object sender, PointerRoutedEventArgs e, bool horizontal)
+        private void OnReaderPointerCaptureLost(object sender, PointerRoutedEventArgs e)
         {
-            if (horizontal || e.Pointer.PointerDeviceType == PointerDeviceType.Mouse)
-            {
-                m_gesture_recognizer.ProcessUpEvent(e.GetCurrentPoint(ManipulationReference));
-                (sender as UIElement).ReleasePointerCapture(e.Pointer);
 #if DEBUG_LOG_MANIPULATION
-                Log("Pointer released");
+            Log("Pointer capture lost");
 #endif
-            }
         }
 
         private void OnVerticalReaderPointerPressed(object sender, PointerRoutedEventArgs e)
         {
-            OnReaderPointerPressed(sender, e, false);
+            OnReaderPointerPressed(sender, e);
         }
 
         private void OnVerticalReaderPointerMoved(object sender, PointerRoutedEventArgs e)
         {
-            OnReaderPointerMoved(sender, e, false);
+            OnReaderPointerMoved(sender, e);
         }
 
         private void OnVerticalReaderPointerReleased(object sender, PointerRoutedEventArgs e)
         {
-            OnReaderPointerReleased(sender, e, false);
+            OnReaderPointerReleased(sender, e);
         }
 
         private void OnVerticalReaderPointerCaptureLost(object sender, PointerRoutedEventArgs e)
         {
-            OnReaderPointerReleased(sender, e, false);
+            OnReaderPointerCaptureLost(sender, e);
         }
 
         private void OnVerticalReaderPointerCanceled(object sender, PointerRoutedEventArgs e)
         {
-            OnReaderPointerReleased(sender, e, false);
+            OnReaderPointerReleased(sender, e);
         }
 
         private void OnHorizontalReaderPointerPressed(object sender, PointerRoutedEventArgs e)
         {
-            OnReaderPointerPressed(sender, e, true);
+            OnReaderPointerPressed(sender, e);
         }
 
         private void OnHorizontalReaderPointerMoved(object sender, PointerRoutedEventArgs e)
         {
-            OnReaderPointerMoved(sender, e, true);
+            OnReaderPointerMoved(sender, e);
         }
 
         private void OnHorizontalReaderPointerReleased(object sender, PointerRoutedEventArgs e)
         {
-            OnReaderPointerReleased(sender, e, true);
-        }
-
-        private void OnHorizontalReaderPointerCaptureLost(object sender, PointerRoutedEventArgs e)
-        {
-            OnReaderPointerReleased(sender, e, true);
+            OnReaderPointerReleased(sender, e);
         }
 
         private void OnHorizontalReaderPointerCanceled(object sender, PointerRoutedEventArgs e)
         {
-            OnReaderPointerReleased(sender, e, true);
+            OnReaderPointerReleased(sender, e);
+        }
+
+        private void OnHorizontalReaderPointerCaptureLost(object sender, PointerRoutedEventArgs e)
+        {
+            OnReaderPointerCaptureLost(sender, e);
         }
 
         // Zooming
@@ -2337,47 +2499,46 @@ namespace ComicReader.Views
 
             Utils.C0.Run(async delegate
             {
-
                 bool handled = true;
 
                 switch (e.Key)
                 {
                     case Windows.System.VirtualKey.Right:
-                        if (reader.IsHorizontal && !Shared.NavigationPageShared.ReaderSettings.IsLeftToRight)
+                        if (reader.IsHorizontal && !Shared.ReaderSettings.IsLeftToRight)
                         {
-                            await reader.IncreaseFrame(-1, false);
+                            await reader.MoveFrame(-1, false);
                         }
                         else
                         {
-                            await reader.IncreaseFrame(1, false);
+                            await reader.MoveFrame(1, false);
                         }
                         break;
 
                     case Windows.System.VirtualKey.Left:
-                        if (reader.IsHorizontal && !Shared.NavigationPageShared.ReaderSettings.IsLeftToRight)
+                        if (reader.IsHorizontal && !Shared.ReaderSettings.IsLeftToRight)
                         {
-                            await reader.IncreaseFrame(1, false);
+                            await reader.MoveFrame(1, false);
                         }
                         else
                         {
-                            await reader.IncreaseFrame(-1, false);
+                            await reader.MoveFrame(-1, false);
                         }
                         break;
 
                     case Windows.System.VirtualKey.Up:
-                        await reader.IncreaseFrame(-1, false);
+                        await reader.MoveFrame(-1, false);
                         break;
 
                     case Windows.System.VirtualKey.Down:
-                        await reader.IncreaseFrame(1, false);
+                        await reader.MoveFrame(1, false);
                         break;
 
                     case Windows.System.VirtualKey.PageUp:
-                        await reader.IncreaseFrame(-1, false);
+                        await reader.MoveFrame(-1, false);
                         break;
 
                     case Windows.System.VirtualKey.PageDown:
-                        await reader.IncreaseFrame(1, false);
+                        await reader.MoveFrame(1, false);
                         break;
 
                     case Windows.System.VirtualKey.Home:
@@ -2389,7 +2550,7 @@ namespace ComicReader.Views
                         break;
 
                     case Windows.System.VirtualKey.Space:
-                        await reader.IncreaseFrame(1, false);
+                        await reader.MoveFrame(1, false);
                         break;
 
                     case Windows.System.VirtualKey.F:

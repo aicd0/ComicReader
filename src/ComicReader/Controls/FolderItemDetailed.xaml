@@ -71,7 +71,7 @@
                     <Grid Height="3" />
                     <TextBlock
                         FontSize="12"
-                        Foreground="{ThemeResource ForegroundDeepGrey}"
+                        Foreground="{ThemeResource ForegroundGrey2}"
                         Text="{x:Bind Detail}"
                         TextTrimming="CharacterEllipsis"
                         ToolTipService.ToolTip="{x:Bind Detail}" />

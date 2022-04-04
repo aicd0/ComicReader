@@ -21,7 +21,7 @@
                 <Setter Property="TabNavigation" Value="Local" />
                 <Setter Property="IsHoldingEnabled" Value="True" />
                 <Setter Property="Padding" Value="50,8" />
-                <Setter Property="Margin" Value="-50,-2" />
+                <Setter Property="Margin" Value="-50,-3" />
                 <Setter Property="HorizontalContentAlignment" Value="Left" />
                 <Setter Property="VerticalContentAlignment" Value="Center" />
                 <Setter Property="MinWidth" Value="{ThemeResource ListViewItemMinWidth}" />
@@ -50,14 +50,14 @@
                                 FocusSecondaryBorderBrush="{ThemeResource ListViewItemFocusSecondaryBorderBrush}"
                                 FocusVisualMargin="{TemplateBinding FocusVisualMargin}"
                                 PlaceholderBackground="{ThemeResource ListViewItemPlaceholderBackground}"
-                                PointerOverBackground="#505050"
+                                PointerOverBackground="{ThemeResource ListViewItemPointerOverBackground1}"
                                 PointerOverForeground="{ThemeResource ListViewItemForegroundPointerOver}"
-                                PressedBackground="#555555"
+                                PressedBackground="{ThemeResource ListViewItemPressedBackground1}"
                                 ReorderHintOffset="{ThemeResource ListViewItemReorderHintThemeOffset}"
-                                SelectedBackground="#5680CC"
-                                SelectedForeground="{ThemeResource ListViewItemForegroundSelected}"
-                                SelectedPointerOverBackground="SteelBlue"
-                                SelectedPressedBackground="SteelBlue"
+                                SelectedBackground="{ThemeResource SystemAccentColorLight1}"
+                                SelectedForeground="White"
+                                SelectedPointerOverBackground="{ThemeResource SystemAccentColorLight1}"
+                                SelectedPressedBackground="{ThemeResource SystemAccentColor}"
                                 SelectionCheckMarkVisualEnabled="{ThemeResource ListViewItemSelectionCheckMarkVisualEnabled}">
                                 <VisualStateManager.VisualStateGroups>
                                     <VisualStateGroup x:Name="CommonStates">
@@ -127,16 +127,20 @@
 
                     <!--  Vertical/Horizontal  -->
                     <AppBarButton
+                        x:Uid="VerticalModeButton"
+                        Width="68"
                         Click="{x:Bind Ctx.OnSetHorizontal}"
-                        Label="Vertical mode"
+                        IsCompact="False"
                         Visibility="{x:Bind Ctx.IsVertical, Mode=OneWay}">
                         <Grid>
                             <FontIcon Glyph="&#xE7C3;" />
                         </Grid>
                     </AppBarButton>
                     <AppBarButton
+                        x:Uid="HorizontalModeButton"
+                        Width="68"
                         Click="{x:Bind Ctx.OnSetVertical}"
-                        Label="Horizontal mode"
+                        IsCompact="False"
                         Visibility="{x:Bind Ctx.IsVertical, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}">
                         <Grid>
                             <FontIcon Glyph="&#xEF6B;" />
@@ -145,16 +149,20 @@
 
                     <!--  Flow Direction  -->
                     <AppBarButton
+                        x:Uid="LeftToRightButton"
+                        Width="68"
                         Click="{x:Bind Ctx.OnSetRightToLeft}"
-                        Label="Left to right"
+                        IsCompact="False"
                         Visibility="{x:Bind Ctx.IsLeftToRightVisible, Mode=OneWay}">
                         <Grid>
                             <FontIcon Glyph="&#xEBE7;" />
                         </Grid>
                     </AppBarButton>
                     <AppBarButton
+                        x:Uid="RightToLeftButton"
+                        Width="68"
                         Click="{x:Bind Ctx.OnSetLeftToRight}"
-                        Label="Right to left"
+                        IsCompact="False"
                         Visibility="{x:Bind Ctx.IsRightToLeftVisible, Mode=OneWay}">
                         <Grid>
                             <FontIcon Glyph="&#xEC52;" />
@@ -164,10 +172,12 @@
 
                 <!--  Continuous reading  -->
                 <AppBarToggleButton
+                    x:Uid="ContinuousModeButton"
                     Grid.Column="2"
+                    Width="68"
                     Icon="AlignCenter"
                     IsChecked="{x:Bind Ctx.IsContinuous, Mode=TwoWay}"
-                    Label="Continuous reading" />
+                    IsCompact="False" />
             </Grid>
             <Grid Height="15" />
             <ListView
@@ -180,7 +190,7 @@
                 <ListViewItem Style="{StaticResource PageArrangementListViewItemStyle}">
                     <StackPanel
                         Margin="3"
-                        FlowDirection="{x:Bind Ctx.PageFlowDirection, Mode=OneWay}"
+                        FlowDirection="{x:Bind Ctx.DemoPageFlowDirection, Mode=OneWay}"
                         Orientation="Horizontal"
                         Spacing="6">
                         <controls:PageDemoSingle Header="1" />
@@ -195,7 +205,7 @@
                 <ListViewItem Style="{StaticResource PageArrangementListViewItemStyle}">
                     <StackPanel
                         Margin="3"
-                        FlowDirection="{x:Bind Ctx.PageFlowDirection, Mode=OneWay}"
+                        FlowDirection="{x:Bind Ctx.DemoPageFlowDirection, Mode=OneWay}"
                         Orientation="Horizontal"
                         Spacing="13">
                         <controls:PageDemoSingle Header="1" />
@@ -214,7 +224,7 @@
                 <ListViewItem Style="{StaticResource PageArrangementListViewItemStyle}">
                     <StackPanel
                         Margin="3"
-                        FlowDirection="{x:Bind Ctx.PageFlowDirection, Mode=OneWay}"
+                        FlowDirection="{x:Bind Ctx.DemoPageFlowDirection, Mode=OneWay}"
                         Orientation="Horizontal"
                         Spacing="13">
                         <controls:PageDemoSingle Header="1" />
@@ -233,7 +243,7 @@
                 <ListViewItem Style="{StaticResource PageArrangementListViewItemStyle}">
                     <StackPanel
                         Margin="3"
-                        FlowDirection="{x:Bind Ctx.PageFlowDirection, Mode=OneWay}"
+                        FlowDirection="{x:Bind Ctx.DemoPageFlowDirection, Mode=OneWay}"
                         Orientation="Horizontal"
                         Spacing="13">
                         <controls:PageDemoDual
@@ -252,7 +262,7 @@
                 <ListViewItem Style="{StaticResource PageArrangementListViewItemStyle}">
                     <StackPanel
                         Margin="3"
-                        FlowDirection="{x:Bind Ctx.PageFlowDirection, Mode=OneWay}"
+                        FlowDirection="{x:Bind Ctx.DemoPageFlowDirection, Mode=OneWay}"
                         Orientation="Horizontal"
                         Spacing="13">
                         <controls:PageDemoDual

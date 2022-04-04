@@ -21,7 +21,6 @@
             VerticalAlignment="Center"
             FontSize="20"
             FontWeight="SemiBold"
-            Foreground="#FFFFFF"
             Text="{x:Bind Header}" />
     </Grid>
 </UserControl>

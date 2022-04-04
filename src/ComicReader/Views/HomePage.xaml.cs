@@ -197,39 +197,41 @@ namespace ComicReader.Views
                 }
 
                 // Get recent visited comics.
-                SqliteCommand command = SqliteDatabaseManager.NewCommand();
-
-                // Use ORDER BY here will cause a crush (especially for a large result set)
-                // due to https://github.com/dotnet/efcore/issues/20044.
-                // Switch from Microsoft.Data.Sqlite to SQLitePCLRaw.bundle_winsqlite3 will
-                // solve the issue but the app then cannot not be built in Release mode.
-                // (See https://github.com/ericsink/SQLitePCL.raw/issues/346)
-                // A workaround here is to sort the data manually.
-
-                // command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.ComicTable +
-                //     " ORDER BY " + ComicData.Field.LastVisit + " DESC";
-                command.CommandText = "SELECT " + ComicData.Field.Id + "," +
-                    ComicData.Field.Hidden + "," + ComicData.Field.LastVisit +
-                    " FROM " + SqliteDatabaseManager.ComicTable;
-
-                await ComicData.Manager.WaitLock(db); // Lock on.
-                SqliteDataReader query = await command.ExecuteReaderAsync();
                 var records = new Utils.FixedHeap<Tuple<long, DateTimeOffset>>(16,
                     (Tuple<long, DateTimeOffset> x, Tuple<long, DateTimeOffset> y) => { return x.Item2.CompareTo(y.Item2); });
 
-                while (query.Read())
+                await ComicData.Manager.CommandBlock(db, async delegate (SqliteCommand command)
                 {
-                    bool hidden = query.GetBoolean(1);
+                    // Use ORDER BY here will cause a crush (especially for a large result set)
+                    // due to https://github.com/dotnet/efcore/issues/20044.
+                    // Switch from Microsoft.Data.Sqlite to SQLitePCLRaw.bundle_winsqlite3 will
+                    // solve the issue but the app then cannot not be built in Release mode.
+                    // (See https://github.com/ericsink/SQLitePCL.raw/issues/346)
+                    // A workaround here is to sort the data manually.
 
-                    if (!hidden)
+                    // command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.ComicTable +
+                    //     " ORDER BY " + ComicData.Field.LastVisit + " DESC";
+                    command.CommandText = "SELECT " + ComicData.Field.Id + "," +
+                        ComicData.Field.Hidden + "," + ComicData.Field.LastVisit +
+                        " FROM " + SqliteDatabaseManager.ComicTable;
+
+                    using (SqliteDataReader query = await command.ExecuteReaderAsync())
                     {
-                        records.Add(new Tuple<long, DateTimeOffset>
-                        (
-                            query.GetInt64(0),
-                            query.GetDateTime(2)
-                        ));
+                        while (query.Read())
+                        {
+                            bool hidden = query.GetBoolean(1);
+
+                            if (!hidden)
+                            {
+                                records.Add(new Tuple<long, DateTimeOffset>
+                                (
+                                    query.GetInt64(0),
+                                    query.GetDateTime(2)
+                                ));
+                            }
+                        }
                     }
-                }
+                });
                 
                 // Convert to view models.
                 var comic_items = new List<ComicItemViewModel>();
@@ -247,7 +249,6 @@ namespace ComicReader.Views
                     ComicDataToViewModel(comic, model);
                     comic_items.Add(model);
                 }
-                ComicData.Manager.ReleaseLock(db); // Lock off.
 
                 // Save results.
                 Utils.C1<ComicItemViewModel>.UpdateCollection(ComicItemSource, comic_items,

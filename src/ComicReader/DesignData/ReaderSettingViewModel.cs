@@ -32,10 +32,15 @@ namespace ComicReader.DesignData
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsVertical"));
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsLeftToRightVisible"));
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsRightToLeftVisible"));
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsRightToLeftVisible"));
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsContinuous"));
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("PageArrangementIndex"));
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("PageFlowDirection"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("DemoPageFlowDirection"));
+
+                if (IsVerticalContinuous != IsHorizontalContinuous)
+                {
+                    OnContinuousChanged?.Invoke();
+                }
+
                 OnVerticalChanged?.Invoke();
             }
         }
@@ -60,6 +65,7 @@ namespace ComicReader.DesignData
             set
             {
                 m_IsLeftToRight = value;
+                PageFlowDirection = value ? FlowDirection.LeftToRight : FlowDirection.RightToLeft;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsLeftToRightVisible"));
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsRightToLeftVisible"));
                 OnFlowDirectionChanged?.Invoke();
@@ -69,20 +75,48 @@ namespace ComicReader.DesignData
         public void OnSetLeftToRight(object sender, RoutedEventArgs e)
         {
             IsLeftToRight = true;
-            PageFlowDirection = FlowDirection.LeftToRight;
         }
 
         public void OnSetRightToLeft(object sender, RoutedEventArgs e)
         {
             IsLeftToRight = false;
-            PageFlowDirection = FlowDirection.RightToLeft;
         }
 
         private bool? m_IsVerticalContinuous = null;
-        private bool? m_IsHorizontalContinuous = null;
+        public bool IsVerticalContinuous
+        {
+            get => m_IsVerticalContinuous.HasValue && m_IsVerticalContinuous.Value;
+            set
+            {
+                m_IsVerticalContinuous = value;
 
-        public bool IsVerticalContinuous => m_IsVerticalContinuous.HasValue && m_IsVerticalContinuous.Value;
-        public bool IsHorizontalContinuous => m_IsHorizontalContinuous.HasValue && m_IsHorizontalContinuous.Value;
+                if (IsVertical)
+                {
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsContinuous"));
+                }
+
+                OnContinuousChanged?.Invoke();
+                OnVerticalContinuousChanged?.Invoke();
+            }
+        }
+
+        private bool? m_IsHorizontalContinuous = null;
+        public bool IsHorizontalContinuous
+        {
+            get => m_IsHorizontalContinuous.HasValue && m_IsHorizontalContinuous.Value;
+            set
+            {
+                m_IsHorizontalContinuous = value;
+
+                if (!IsVertical)
+                {
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsContinuous"));
+                }
+
+                OnContinuousChanged?.Invoke();
+                OnHorizontalContinuousChanged?.Invoke();
+            }
+        }
 
         public bool IsContinuous
         {
@@ -97,28 +131,52 @@ namespace ComicReader.DesignData
                 {
                     if (!m_IsVerticalContinuous.HasValue || m_IsVerticalContinuous.Value != value)
                     {
-                        m_IsVerticalContinuous = value;
-                        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsContinuous"));
-                        OnVerticalContinuousChanged?.Invoke();
+                        IsVerticalContinuous = value;
                     }
                 }
                 else
                 {
                     if (!m_IsHorizontalContinuous.HasValue || m_IsHorizontalContinuous.Value != value)
                     {
-                        m_IsHorizontalContinuous = value;
-                        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsContinuous"));
-                        OnHorizontalContinuousChanged?.Invoke();
+                        IsHorizontalContinuous = value;
                     }
                 }
             }
         }
 
         private PageArrangementEnum m_VerticalPageArrangement = PageArrangementEnum.Single;
-        private PageArrangementEnum m_HorizontalPageArrangement = PageArrangementEnum.DualCover;
+        public PageArrangementEnum VerticalPageArrangement
+        {
+            get => m_VerticalPageArrangement;
+            set
+            {
+                m_VerticalPageArrangement = value;
 
-        public PageArrangementEnum VerticalPageArrangement => m_VerticalPageArrangement;
-        public PageArrangementEnum HorizontalPageArrangement => m_HorizontalPageArrangement;
+                if (IsVertical)
+                {
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("PageArrangementIndex"));
+                }
+
+                OnVerticalPageArrangementChanged?.Invoke();
+            }
+        }
+
+        private PageArrangementEnum m_HorizontalPageArrangement = PageArrangementEnum.DualCover;
+        public PageArrangementEnum HorizontalPageArrangement
+        {
+            get => m_HorizontalPageArrangement;
+            set
+            {
+                m_HorizontalPageArrangement = value;
+
+                if (!IsVertical)
+                {
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("PageArrangementIndex"));
+                }
+
+                OnHorizontalPageArrangementChanged?.Invoke();
+            }
+        }
 
         public PageArrangementEnum PageArrangement
         {
@@ -129,18 +187,14 @@ namespace ComicReader.DesignData
                 {
                     if (m_VerticalPageArrangement != value)
                     {
-                        m_VerticalPageArrangement = value;
-                        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("PageArrangementIndex"));
-                        OnVerticalPageArrangementChanged?.Invoke();
+                        VerticalPageArrangement = value;
                     }
                 }
                 else
                 {
                     if (m_HorizontalPageArrangement != value)
                     {
-                        m_HorizontalPageArrangement = value;
-                        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("PageArrangementIndex"));
-                        OnHorizontalPageArrangementChanged?.Invoke();
+                        HorizontalPageArrangement = value;
                     }
                 }
             }
@@ -201,16 +255,20 @@ namespace ComicReader.DesignData
         private FlowDirection m_PageFlowDirection = FlowDirection.LeftToRight;
         public FlowDirection PageFlowDirection
         {
-            get => m_IsVertical ? FlowDirection.LeftToRight : m_PageFlowDirection;
+            get => m_PageFlowDirection;
             set
             {
                 m_PageFlowDirection = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("PageFlowDirection"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("DemoPageFlowDirection"));
             }
         }
 
+        public FlowDirection DemoPageFlowDirection => m_IsVertical ? FlowDirection.LeftToRight : m_PageFlowDirection;
+
         public Action OnVerticalChanged;
         public Action OnFlowDirectionChanged;
+        public Action OnContinuousChanged;
         public Action OnVerticalContinuousChanged;
         public Action OnHorizontalContinuousChanged;
         public Action OnVerticalPageArrangementChanged;

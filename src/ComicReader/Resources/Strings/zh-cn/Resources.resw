@@ -429,7 +429,7 @@
     <value>重新扫描文件</value>
   </data>
   <data name="RescanFilesDetail.Text" xml:space="preserve">
-    <value>提示：当部分漫画缺失或信息错误时，通过重新扫描文件可能解决问题。如果您的文件较多，该操作将引起较高的CPU占用，进而减少您的电池使用时间。</value>
+    <value>提示：当出现部分漫画缺失或信息不一致时，重新扫描文件可能解决问题。在某些情况下，该操作可能导致较高的CPU占用率，进而缩短您的电池使用时间。</value>
   </data>
   <data name="SaveHistory.Text" xml:space="preserve">
     <value>记录您的浏览历史</value>
@@ -549,7 +549,7 @@
     <value>此设备上的图片</value>
   </data>
   <data name="ReaderExpander.Detail" xml:space="preserve">
-    <value>设置阅读方向</value>
+    <value>自定义阅读器</value>
   </data>
   <data name="HotkeyPreviousPage.Header" xml:space="preserve">
     <value>跳转到上一页</value>
@@ -580,5 +580,20 @@
   </data>
   <data name="AppStoreName" xml:space="preserve">
     <value>漫画阅读器 UWP</value>
+  </data>
+  <data name="ContinuousModeButton.Label" xml:space="preserve">
+    <value>连续模式</value>
+  </data>
+  <data name="HorizontalModeButton.Label" xml:space="preserve">
+    <value>横向翻页</value>
+  </data>
+  <data name="LeftToRightButton.Label" xml:space="preserve">
+    <value>自左向右</value>
+  </data>
+  <data name="RightToLeftButton.Label" xml:space="preserve">
+    <value>自右向左</value>
+  </data>
+  <data name="VerticalModeButton.Label" xml:space="preserve">
+    <value>纵向翻页</value>
   </data>
 </root>

@@ -57,7 +57,7 @@
                         Margin="0,2,0,0"
                         FontSize="14"
                         FontWeight="Normal"
-                        Foreground="{ThemeResource ForegroundDeepGrey}"
+                        Foreground="{ThemeResource ForegroundGrey2}"
                         Text="{x:Bind Shared.FilterDetails, Mode=OneWay}"
                         TextWrapping="Wrap"
                         Visibility="{x:Bind Shared.FilterDetailsVisible, Mode=OneWay}" />
