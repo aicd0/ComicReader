@@ -440,7 +440,7 @@
                         ZoomMode="Enabled">
                         <Grid HorizontalAlignment="Center">
                             <ListView
-                                ItemsSource="{x:Bind VerticalReader.DataSource, Mode=OneWay}"
+                                ItemsSource="{x:Bind VerticalReader.Frames, Mode=OneWay}"
                                 Loaded="OnVerticalReaderListViewLoaded"
                                 PreviewKeyDown="OnKeyDown"
                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
@@ -490,7 +490,7 @@
                         ZoomMode="Enabled">
                         <Grid VerticalAlignment="Center">
                             <ListView
-                                ItemsSource="{x:Bind HorizontalReader.DataSource, Mode=OneWay}"
+                                ItemsSource="{x:Bind HorizontalReader.Frames, Mode=OneWay}"
                                 Loaded="OnHorizontalReaderListViewLoaded"
                                 PreviewKeyDown="OnKeyDown"
                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"

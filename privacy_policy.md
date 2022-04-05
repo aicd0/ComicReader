@@ -1,7 +1,7 @@
 # Comic Reader UWP Privacy Policy
 This privacy statement explains the personal data this app processes, how this app processes it, and for what purposes.
 
-## Personal information
+## Personal Information
 This application does not collect or transmit personally identifiable information about you. No personal information is used, stored, secured or disclosed by services this application works with.
 
 ## More Information

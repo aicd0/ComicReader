@@ -14,7 +14,7 @@ namespace ComicReader.Controls
             InitializeComponent();
         }
 
-        private void NotifyReady()
+        private void Notify()
         {
             if (Ctx == null)
             {
@@ -27,7 +27,7 @@ namespace ComicReader.Controls
             }
 
             Ctx.Container = MainFrame;
-            Ctx.NotifyReady();
+            Ctx.Notify();
         }
 
         private void OnFrameDataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
@@ -35,17 +35,17 @@ namespace ComicReader.Controls
             // Notify binding changes.
             Bindings.Update();
 
-            NotifyReady();
+            Notify();
         }
 
         private void OnFrameLoaded(object sender, RoutedEventArgs e)
         {
-            NotifyReady();
+            Notify();
         }
 
         private void OnFrameSizeChanged(object sender, SizeChangedEventArgs e)
         {
-            NotifyReady();
+            Notify();
         }
     }
 }

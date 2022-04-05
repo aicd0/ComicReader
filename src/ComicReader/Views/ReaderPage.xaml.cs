@@ -1,5 +1,5 @@
-﻿#if DEBUG
-//#define DEBUG_LOG_LOAD
+﻿#define DEBUG_LOG_LOAD
+#if DEBUG
 //#define DEBUG_LOG_JUMP
 //#define DEBUG_LOG_VIEW_CHANGE
 //#define DEBUG_LOG_UPDATE_PAGE
@@ -261,7 +261,7 @@ namespace ComicReader.Views
 
         // Modifier - Configurations
         public ComicData Comic { get; set; } = null;
-        public double InitialPage { private get; set; } = 0.0;
+        public double InitialPage { get; set; } = 0.0;
 
         public ScrollViewer ThisScrollViewer;
         public ListView ThisListView;
@@ -277,18 +277,28 @@ namespace ComicReader.Views
 
         public void Reset()
         {
-            IsLoaded = false;
-            IsFrameworkReady = false;
-            IsLastPageLoaded = false;
-            IsInitialPageReached = false;
-            IsImageUpdateSucceeded = false;
-
             Comic = null;
             InitialPage = 0.0;
             OnLoaded = null;
-            DataSource.Clear();
+
+            for (int i = 0; i < Frames.Count; ++i)
+            {
+                ReaderFrameViewModel item = Frames[i];
+                item.Notify(cancel: true);
+                item.PageL = -1;
+                item.PageR = -1;
+                item.ImageL = null;
+                item.ImageR = null;
+            }
+
+            Loaded = false;
+            LoadedFirstPage = false;
+            LoadedLastPage = false;
+            LoadedInitialPage = false;
+            LoadedImages = false;
 
             SyncFinalVal();
+
 #if DEBUG_LOG_LOAD
             Log("========== Reset ==========");
 #endif
@@ -296,21 +306,21 @@ namespace ComicReader.Views
 
         private Utils.CancellationLock m_lock_update_frame = new Utils.CancellationLock();
         /// <summary>
-        /// Add or update DataSource with index and image aspect ratio. Index has to be<br/>
-        /// continuous. As a new item is added to DataSource, the reader will start loading<br/>
+        /// Add or update Frames with index and image aspect ratio. Index has to be<br/>
+        /// continuous. As a new item is added to Frames, the reader will start loading<br/>
         /// it automatically. Make sure to set everything up before the initial call to this<br/>
         /// function.
         /// </summary>
         /// <param name="index"></param>
         /// <param name="image_aspect_ratio"></param>
-        public async Task<int> UpdateFrame(int image_index)
+        public async Task UpdateFrame(int image_index)
         {
             await m_lock_update_frame.WaitAsync();
             try
             {
                 if (image_index >= Comic.ImageAspectRatios.Count)
                 {
-                    return -1;
+                    return;
                 }
 
                 double aspect_ratio = Comic.ImageAspectRatios[image_index];
@@ -319,7 +329,7 @@ namespace ComicReader.Views
 
                 if (frame_idx < 0)
                 {
-                    return -1;
+                    return;
                 }
 
                 if (neighbor != -1)
@@ -332,9 +342,9 @@ namespace ComicReader.Views
                     }
                 }
 
-                while (frame_idx >= DataSource.Count)
+                while (frame_idx >= Frames.Count)
                 {
-                    DataSource.Add(new ReaderFrameViewModel());
+                    Frames.Add(new ReaderFrameViewModel());
                 }
 
                 int page = image_index + 1;
@@ -360,8 +370,7 @@ namespace ComicReader.Views
                 double vertical_padding = IsVertical ? default_vertical_padding : 0;
                 double horizontal_padding = IsHorizontal ? default_horizontal_padding : 0;
 
-                ReaderFrameViewModel item = DataSource[frame_idx];
-                item.Ready = false; // reset item state
+                ReaderFrameViewModel item = Frames[frame_idx];
                 item.FrameWidth = frame_width;
                 item.FrameHeight = frame_height;
                 item.FrameMargin = new Thickness(horizontal_padding, vertical_padding, horizontal_padding, vertical_padding);
@@ -396,21 +405,56 @@ namespace ComicReader.Views
                 }
 
                 // Wait for the frame to be ready.
-                item.NotifyReady();
+                item.Reset();
+                item.Notify();
 
-                await Task.Run(delegate
+                if (!item.Processed)
                 {
-                    lock (item)
+                    await Task.Run(delegate
                     {
-                        while (!item.Ready)
+                        lock (item)
                         {
-                            _ = Monitor.Wait(item);
+                            while (!item.Processed)
+                            {
+                                _ = Monitor.Wait(item);
+                            }
                         }
-                    }
-                });
+                    });
+                }
+
+                if (!item.Ready)
+                {
+                    return;
+                }
 
                 await OnContainerLoaded(item);
-                return frame_idx;
+            }
+            finally
+            {
+                m_lock_update_frame.Release();
+            }
+        }
+
+        public async Task CompleteFrameUpdate()
+        {
+            await m_lock_update_frame.WaitAsync();
+            try
+            {
+                for (int i = Frames.Count - 1; i >= 0; --i)
+                {
+                    ReaderFrameViewModel frame = Frames[i];
+
+                    if (frame.PageL == -1 && frame.PageR == -1)
+                    {
+                        Frames.RemoveAt(i);
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+
+                AdjustPadding();
             }
             finally
             {
@@ -430,9 +474,9 @@ namespace ComicReader.Views
             return true;
         }
 
-        public bool SetScrollViewer(float? zoom, double? parallel_offset, bool disable_animation)
+        public bool SetScrollViewer1(float? zoom, double? parallel_offset, bool disable_animation)
         {
-            if (!IsLoaded)
+            if (!Loaded)
             {
                 return false;
             }
@@ -442,19 +486,19 @@ namespace ComicReader.Views
             return InternalSetScrollViewer(zoom, horizontal_offset, vertical_offset, disable_animation);
         }
 
-        public bool SetScrollViewer(float? zoom, double? page, bool use_page_center, bool disable_animation)
+        public bool SetScrollViewer2(float? zoom, double? page, bool disable_animation)
         {
-            if (!IsLoaded)
+            if (!Loaded)
             {
                 return false;
             }
 
-            return InternalSetScrollViewer(zoom, page, use_page_center, disable_animation);
+            return InternalSetScrollViewer(zoom, page, disable_animation);
         }
 
         public bool SetScrollViewer(float? zoom, double? horizontal_offset, double? vertical_offset, bool disable_animation)
         {
-            if (!IsLoaded)
+            if (!Loaded)
             {
                 return false;
             }
@@ -479,83 +523,97 @@ namespace ComicReader.Views
         {
             LockContext db = new LockContext();
 
-            System.Diagnostics.Debug.Assert(ctx != null);
-            System.Diagnostics.Debug.Assert(ctx.Container != null);
+            if (ctx == null || ctx.Container == null)
+            {
+                System.Diagnostics.Debug.Assert(false);
+                return;
+            } 
 
             await m_lock_container_loaded.WaitAsync();
             try
             {
                 // Wait until the framework was fully loaded.
-                if (!IsFrameworkLoaded)
+                if (!LoadedFramework)
                 {
-                    await Utils.C0.WaitFor(() => IsFrameworkLoaded);
+                    await Utils.C0.WaitFor(() => LoadedFramework, 5000);
+
+                    if (!LoadedFramework)
+                    {
+                        return;
+                    }
+
 #if DEBUG_LOG_LOAD
                     Log("Framework loaded");
 #endif
                 }
 
                 // Initialize the framework if first page was loaded.
-                if (!IsFrameworkReady && (ctx.PageL == 1 || ctx.PageR == 1))
+                if (!LoadedFirstPage && (ctx.PageL == 1 || ctx.PageR == 1))
                 {
                     await Utils.C0.Sync(delegate
                     {
-                        SetScrollViewer(m_zoom, null, true);
+                        SetScrollViewer1(m_zoom, null, true);
                         AdjustPadding();
                     });
 
-                    IsFrameworkReady = true;
+                    LoadedFirstPage = true;
+
 #if DEBUG_LOG_LOAD
-                    Log("Framework ready");
+                    Log("First page loaded");
 #endif
                 }
 
                 // Update margin if last page was loaded.
-                if (!IsLastPageLoaded && (ctx.PageL == Pages || ctx.PageR == Pages))
+                if (!LoadedLastPage && (ctx.PageL == PageCount || ctx.PageR == PageCount))
                 {
                     await Utils.C0.Sync(delegate
                     {
                         AdjustPadding();
                     });
 
-                    IsLastPageLoaded = true;
+                    LoadedLastPage = true;
+
 #if DEBUG_LOG_LOAD
                     Log("Last page loaded");
 #endif
                 }
 
                 // Check if the initial page was loaded.
-                if (!IsInitialPageReached && IsFrameworkReady)
+                if (!LoadedInitialPage && LoadedFirstPage)
                 {
                     // Try jump to the initial page.
-                    IsInitialPageReached = InternalSetScrollViewer(null, InitialPage, false, true);
+                    LoadedInitialPage = InternalSetScrollViewer(null, InitialPage, true);
+
 #if DEBUG_LOG_LOAD
-                    if (IsInitialPageReached)
+                    if (LoadedInitialPage)
                     {
-                        Log("Initial page reached");
+                        Log("Initial page loaded");
                     }
 #endif
                 }
 
-                if (!IsImageUpdateSucceeded && IsInitialPageReached)
+                if (!LoadedImages && LoadedInitialPage)
                 {
                     if (await UpdatePage(true))
                     {
                         await InternalUpdateImages(db);
-                        IsImageUpdateSucceeded = true;
+                        LoadedImages = true;
+
 #if DEBUG_LOG_LOAD
-                        Log("Image updated");
+                        Log("Images loaded");
 #endif
                     }
                 }
 
                 // Check if the reader was loaded.
-                if (!IsLoaded && IsInitialPageReached)
+                if (!Loaded && LoadedInitialPage)
                 {
-                    IsLoaded = true;
+                    Loaded = true;
+                    OnLoaded?.Invoke();
+
 #if DEBUG_LOG_LOAD
                     Log("Reader loaded");
 #endif
-                    OnLoaded?.Invoke();
                 }
             }
             finally
@@ -566,7 +624,7 @@ namespace ComicReader.Views
 
         public async Task<bool> OnViewChanged(LockContext db, bool final)
         {
-            if (!IsLoaded)
+            if (!Loaded)
             {
                 return false;
             }
@@ -588,7 +646,7 @@ namespace ComicReader.Views
                 SyncFinalVal();
 
                 // Notify the scroll viewer to update its inner states.
-                SetScrollViewer(null, null, false);
+                SetScrollViewer1(null, null, false);
 
                 if (!IsContinuous && Zoom <= 100)
                 {
@@ -631,35 +689,24 @@ namespace ComicReader.Views
                     double page = PageReal;
                     float zoom = Math.Min(Zoom, 100f);
 
-                    // Update DataSource.
-                    int max_frame = -1;
-
-                    for (int i = 0; i < Pages; ++i)
+                    // Update Frames.
+                    for (int i = 0; i < PageCount; ++i)
                     {
                         if (m_lock_page_rearrange.CancellationRequested)
                         {
                             return;
                         }
 
-                        int frame = await UpdateFrame(i);
-                        max_frame = Math.Max(frame, max_frame);
+                        await UpdateFrame(i);
                     }
 
-                    if (max_frame == -1)
-                    {
-                        return;
-                    }
-
-                    for (int i = DataSource.Count - 1; i > max_frame; --i)
-                    {
-                        DataSource.RemoveAt(i);
-                    }
-
-                    // Update padding.
-                    AdjustPadding();
+                    await CompleteFrameUpdate();
 
                     // Jump to previous page.
-                    SetScrollViewer(zoom, page, use_page_center: false, true);
+                    // DO NOT disable animation here or else TransformToVisual (which will be
+                    // called later in OnViewChanged) will give erroneous results.
+                    // Still don't know why. Been stuck here for 4h.
+                    SetScrollViewer2(zoom, page, false);
 
                     // Update images.
                     await UpdateImages(db, true);
@@ -675,13 +722,10 @@ namespace ComicReader.Views
         }
 
         // Observer - General
-        public ObservableCollection<ReaderFrameViewModel> DataSource { get; private set; } = new ObservableCollection<ReaderFrameViewModel>();
-        public bool IsLoaded { get; private set; } = false;
         public bool IsCurrentReader => m_shared.ReaderSettings.IsVertical == IsVertical;
         public bool IsVertical { get; private set; }
         public bool IsHorizontal => !IsVertical;
-        public int Pages => Comic.ImageCount;
-        public bool IsLastPage => PageToFrame(Page, out _, out _) >= DataSource.Count - 1;
+        public bool IsLastPage => PageToFrame(Page, out _, out _) >= Frames.Count - 1;
         public bool IsContinuous => IsVertical ?
             m_shared.ReaderSettings.IsVerticalContinuous :
             m_shared.ReaderSettings.IsHorizontalContinuous;
@@ -689,8 +733,14 @@ namespace ComicReader.Views
             m_shared.ReaderSettings.VerticalPageArrangement :
             m_shared.ReaderSettings.HorizontalPageArrangement;
 
+        // Observer - Frames
+        public ObservableCollection<ReaderFrameViewModel> Frames { get; private set; } = new ObservableCollection<ReaderFrameViewModel>();
+        
+        // Observer - Pages
+        public int PageCount => Comic.ImageCount;
+
         private double m_page = 0.0;
-        public int Page => (int)m_page;
+        public int Page => (int)Math.Round(m_page);
         public double PageReal => m_page;
 
         private float m_zoom = 90f;
@@ -769,7 +819,7 @@ namespace ComicReader.Views
         public double ViewportPerpendicularLength => IsVertical ? ThisScrollViewer.ViewportWidth : ThisScrollViewer.ViewportHeight;
         public double ExtentParallelLength => IsVertical ? ThisScrollViewer.ExtentHeight : ThisScrollViewer.ExtentWidth;
         public double ExtentParallelLengthFinal => FinalVal(ExtentParallelLength);
-        public double FrameParallelLength(int i) => IsVertical ? DataSource[i].Height : DataSource[i].Width;
+        public double FrameParallelLength(int i) => IsVertical ? Frames[i].Height : Frames[i].Width;
 
         // Observer - List View
         private double m_padding_start_final;
@@ -797,27 +847,32 @@ namespace ComicReader.Views
         private bool m_final_value_set = false;
 
         // Internal - Loader States
-        private bool IsFrameworkLoaded => ThisScrollViewer != null && ThisListView != null;
-        private bool IsFrameworkReady { get; set; } = false;
-        private bool IsLastPageLoaded { get; set; } = false;
-        private bool IsInitialPageReached { get; set; } = false;
-        private bool IsImageUpdateSucceeded { get; set; } = false;
+        private bool LoadedFramework => ThisScrollViewer != null && ThisListView != null;
+        private bool LoadedFirstPage { get; set; } = false;
+        private bool LoadedLastPage { get; set; } = false;
+        private bool LoadedInitialPage { get; set; } = false;
+        private bool LoadedImages { get; set; } = false;
+        public bool Loaded { get; private set; } = false;
 
         // Internal - General
         private double? ZoomCoefficient()
         {
-            if (DataSource.Count == 0)
+            if (Frames.Count == 0)
             {
                 return null;
             }
 
             int frame_idx = PageToFrame(Page, out _, out _);
-            if (frame_idx < 0 || frame_idx >= DataSource.Count) frame_idx = 0;
+            
+            if (frame_idx < 0 || frame_idx >= Frames.Count)
+            {
+                frame_idx = 0;
+            }
 
             double viewport_width = ThisScrollViewer.ViewportWidth;
             double viewport_height = ThisScrollViewer.ViewportHeight;
-            double frame_width = DataSource[frame_idx].FrameWidth;
-            double frame_height = DataSource[frame_idx].FrameHeight;
+            double frame_width = Frames[frame_idx].FrameWidth;
+            double frame_height = Frames[frame_idx].FrameHeight;
 
             double viewport_ratio = viewport_width / viewport_height;
             double image_ratio = frame_width / frame_height;
@@ -826,12 +881,12 @@ namespace ComicReader.Views
                 viewport_width / frame_width);
         }
 
-        private double? PageOffsetRaw(int page, bool use_page_center)
+        private double? PageOffsetRaw(int page)
         {
             page = Math.Max(1, page);
-            page = Math.Min(Pages, page);
+            page = Math.Min(PageCount, page);
             int frame = PageToFrame(page, out _, out _);
-            double? parallel_offset = FrameOffsetRaw(frame, use_page_center);
+            double? parallel_offset = FrameOffsetRaw(frame);
 
             if (!parallel_offset.HasValue)
             {
@@ -841,16 +896,16 @@ namespace ComicReader.Views
             return parallel_offset;
         }
 
-        private double? PageOffset(double page, bool use_page_center)
+        private double? PageOffset(double page)
         {
             page = Math.Max(1.0, page);
-            page = Math.Min(Pages, page);
+            page = Math.Min(PageCount + 1, page);
 
             int page_int = (int)page;
             double page_frac = page - page_int;
 
             // Calculate parallel offset of this page.
-            double? this_offset = PageOffsetRaw(page_int, use_page_center);
+            double? this_offset = PageOffsetRaw(page_int);
 
             if (!this_offset.HasValue)
             {
@@ -860,15 +915,11 @@ namespace ComicReader.Views
             double offset = this_offset.Value;
 
             // Calculate parallel offset of next page and mix with this page.
-            double? _next_offset = PageOffsetRaw(page_int + 1, use_page_center);
+            double? _next_offset = PageOffsetRaw(page_int + 1);
 
             if (_next_offset.HasValue)
             {
                 offset += page_frac * (_next_offset.Value - this_offset.Value);
-            }
-            else if (page_frac > 0.05)
-            {
-                return null;
             }
 
             offset = offset * ZoomFactorFinal - ViewportParallelLength * 0.5;
@@ -876,14 +927,14 @@ namespace ComicReader.Views
             return offset;
         }
 
-        private double? FrameOffsetRaw(int frame, bool use_frame_center)
+        private double? FrameOffsetRaw(int frame)
         {
-            if (frame < 0 || frame >= DataSource.Count)
+            if (frame < 0 || frame >= Frames.Count)
             {
                 return null;
             }
 
-            var item = DataSource[frame];
+            ReaderFrameViewModel item = Frames[frame];
             Grid container = item.Container;
 
             if (container == null)
@@ -902,26 +953,23 @@ namespace ComicReader.Views
                 parallel_offset -= item.FrameMargin.Left + item.FrameWidth + item.FrameMargin.Right;
             }
 
-            if (use_frame_center)
-            {
-                parallel_offset += IsVertical ?
-                    item.FrameMargin.Top + item.FrameHeight * 0.5 :
-                    item.FrameMargin.Left + item.FrameWidth * 0.5;
-            }
+            parallel_offset += IsVertical ?
+                item.FrameMargin.Top + item.FrameHeight * 0.5 :
+                item.FrameMargin.Left + item.FrameWidth * 0.5;
 
             return parallel_offset;
         }
 
-        private double? FrameOffset(double frame, bool use_frame_center)
+        private double? FrameOffset(double frame)
         {
             frame = Math.Max(0, frame);
-            frame = Math.Min(DataSource.Count - 1, frame);
+            frame = Math.Min(Frames.Count - 1, frame);
 
             int frame_int = (int)frame;
             double frame_frac = frame - frame_int;
 
             // Calculate parallel offset of this page.
-            double? this_offset = FrameOffsetRaw(frame_int, use_frame_center);
+            double? this_offset = FrameOffsetRaw(frame_int);
 
             if (!this_offset.HasValue)
             {
@@ -931,7 +979,7 @@ namespace ComicReader.Views
             double offset = this_offset.Value;
 
             // Calculate parallel offset of next page and mix with this page.
-            double? _next_offset = PageOffsetRaw(frame_int + 1, use_frame_center);
+            double? _next_offset = FrameOffsetRaw(frame_int + 1);
 
             if (_next_offset.HasValue)
             {
@@ -945,16 +993,18 @@ namespace ComicReader.Views
 
         private void InternalMoveFrame(int increment, bool disable_animation)
         {
-            if (DataSource.Count == 0) return;
+            if (Frames.Count == 0)
+            {
+                return;
+            }
 
-            int frame = PageToFrame(Page, out _, out _);
-            frame += increment;
-            frame = Math.Min(DataSource.Count - 1, frame);
-            frame = Math.Max(0, frame);
+            int frame_idx = PageToFrame(Page, out _, out _);
+            frame_idx += increment;
+            frame_idx = Math.Min(Frames.Count - 1, frame_idx);
+            frame_idx = Math.Max(0, frame_idx);
+            double? parallel_offset = FrameOffset(frame_idx);
 
-            double? new_parallel_offset = FrameOffset(frame, use_frame_center: true);
-
-            if (new_parallel_offset == null || Math.Abs(new_parallel_offset.Value - ParallelOffsetFinal) < 1.0)
+            if (!parallel_offset.HasValue || Math.Abs(parallel_offset.Value - ParallelOffsetFinal) < 1.0)
             {
                 // IMPORTANT: Ignore the request if target offset is really close to the current offset,
                 // or else it could stuck in a dead loop. (See reference in OnScrollViewerViewChanged())
@@ -962,17 +1012,17 @@ namespace ComicReader.Views
             }
 
             float? zoom = Zoom > 101f ? 100f : (float?)null;
-            SetScrollViewer(zoom, new_parallel_offset, disable_animation);
+            SetScrollViewer1(zoom, parallel_offset, disable_animation);
         }
 
-        private bool InternalSetScrollViewer(float? zoom, double? page, bool use_page_center, bool disable_animation)
+        private bool InternalSetScrollViewer(float? zoom, double? page, bool disable_animation)
         {
             double? horizontal_offset = null;
             double? vertical_offset = null;
 
             if (page.HasValue)
             {
-                double? parallel_offset = PageOffset(page.Value, use_page_center);
+                double? parallel_offset = PageOffset(page.Value);
 
                 if (!parallel_offset.HasValue)
                 {
@@ -987,7 +1037,7 @@ namespace ComicReader.Views
 
         private bool InternalSetScrollViewer(float? zoom, double? horizontal_offset, double? vertical_offset, bool disable_animation)
         {
-            if (!IsFrameworkLoaded)
+            if (!LoadedFramework)
             {
                 return false;
             }
@@ -1034,23 +1084,18 @@ namespace ComicReader.Views
             }
 
             double zoom_coefficient = zoom_coefficient_boxed.Value;
-            bool zoom_sat = false;
-            bool zoom_null = zoom == null;
-            float zoom_rectified = zoom_null ? (float)(ZoomFactorFinal / zoom_coefficient) : (float)zoom;
+            float zoom_rectified = zoom == null ? (float)(ZoomFactorFinal / zoom_coefficient) : (float)zoom;
 
             // accept an error less than 1
             if (zoom_rectified - max_zoom > 1)
             {
-                zoom_sat = true;
                 zoom_rectified = max_zoom;
             }
             else if (min_zoom - zoom_rectified > 1)
             {
-                zoom_sat = true;
                 zoom_rectified = min_zoom;
             }
-
-            if (zoom_null && !zoom_sat)
+            else if (zoom == null)
             {
                 zoom = Math.Abs(zoom_rectified - m_zoom) <= 1 ? m_zoom : zoom_rectified;
                 zoom_factor = null;
@@ -1124,7 +1169,7 @@ namespace ComicReader.Views
 
         private void AdjustParallelOffset()
         {
-            if (DataSource.Count == 0)
+            if (Frames.Count == 0)
             {
                 return;
             }
@@ -1137,7 +1182,7 @@ namespace ComicReader.Views
             double? movement_backward = null;
             double screen_center_offset = ViewportParallelLength * 0.5 + ParallelOffsetFinal;
 
-            if (DataSource[0].Container != null)
+            if (Frames[0].Container != null)
             {
                 double space = PaddingStartFinal * ZoomFactorFinal - ParallelOffsetFinal;
                 double image_center_offset = (PaddingStartFinal + FrameParallelLength(0) * 0.5) * ZoomFactorFinal;
@@ -1145,12 +1190,12 @@ namespace ComicReader.Views
                 movement_forward = Math.Min(space, image_center_to_screen_center);
             }
 
-            if (DataSource[DataSource.Count - 1].Container != null)
+            if (Frames[Frames.Count - 1].Container != null)
             {
                 double space = PaddingEndFinal * ZoomFactorFinal - (ExtentParallelLengthFinal
                     - ParallelOffsetFinal - ViewportParallelLength);
                 double image_center_offset = ExtentParallelLengthFinal - (PaddingEndFinal
-                    + FrameParallelLength(DataSource.Count - 1) * 0.5) * ZoomFactorFinal;
+                    + FrameParallelLength(Frames.Count - 1) * 0.5) * ZoomFactorFinal;
                 double image_center_to_screen_center = screen_center_offset - image_center_offset;
                 movement_backward = Math.Min(space, image_center_to_screen_center);
             }
@@ -1189,7 +1234,7 @@ namespace ComicReader.Views
 
         private void AdjustPadding()
         {
-            if (!IsFrameworkLoaded)
+            if (!LoadedFramework)
             {
                 return;
             }
@@ -1198,7 +1243,7 @@ namespace ComicReader.Views
             if (zoom_coefficient_boxed == null) return;
             double zoom_coefficient = zoom_coefficient_boxed.Value;
 
-            if (DataSource[0].Container == null || DataSource[DataSource.Count - 1].Container == null)
+            if (Frames[0].Container == null || Frames[Frames.Count - 1].Container == null)
             {
                 return;
             }
@@ -1210,7 +1255,7 @@ namespace ComicReader.Views
             double zoom_factor = min_zoom * zoom_coefficient;
             double inner_length = ViewportParallelLength / zoom_factor;
             double new_start = (inner_length - FrameParallelLength(0)) / 2;
-            double new_end = (inner_length - FrameParallelLength(DataSource.Count - 1)) / 2;
+            double new_end = (inner_length - FrameParallelLength(Frames.Count - 1)) / 2;
 
             new_start = Math.Max(0.0, new_start);
             new_end = Math.Max(0.0, new_end);
@@ -1232,7 +1277,7 @@ namespace ComicReader.Views
         private Utils.CancellationLock m_lock_update_page = new Utils.CancellationLock();
         private async Task<bool> UpdatePage(bool use_final)
         {
-            if (!IsFrameworkLoaded)
+            if (!LoadedFramework)
             {
                 return false;
             }
@@ -1245,13 +1290,13 @@ namespace ComicReader.Views
                 double current_offset = (parallel_offset + ViewportParallelLength * 0.5) / zoom_factor;
 
                 // Use binary search to locate the current page.
-                if (DataSource.Count == 0)
+                if (Frames.Count == 0)
                 {
                     return false;
                 }
 
                 int begin = 0;
-                int end = DataSource.Count - 1;
+                int end = Frames.Count - 1;
 
                 while (begin < end)
                 {
@@ -1261,17 +1306,15 @@ namespace ComicReader.Views
                     }
 
                     int i = (begin + end + 1) / 2;
-                    var item = DataSource[i];
-                    int p = Math.Max(item.PageL, item.PageR);
-                    if (p <= 0) return false;
-                    double? page_offset = PageOffsetRaw(p, use_page_center: false);
+                    ReaderFrameViewModel item = Frames[i];
+                    double? offset = FrameOffsetRaw(i);
 
-                    if (!page_offset.HasValue)
+                    if (!offset.HasValue)
                     {
                         return false;
                     }
 
-                    if (page_offset.Value < current_offset)
+                    if (offset.Value < current_offset)
                     {
                         begin = i;
                     }
@@ -1281,12 +1324,11 @@ namespace ComicReader.Views
                     }
                 }
 
-                int frame_idx = begin;
-                var frame = DataSource[frame_idx];
+                ReaderFrameViewModel frame = Frames[begin];
                 int page = Math.Max(frame.PageL, frame.PageR);
 
-                double? this_offset = PageOffsetRaw(page, use_page_center: false);
-                double? next_offset = PageOffsetRaw(page + 1, use_page_center: false);
+                double? this_offset = PageOffsetRaw(page);
+                double? next_offset = PageOffsetRaw(page + 1);
                 double res;
 
                 if (this_offset.HasValue && next_offset.HasValue &&
@@ -1330,7 +1372,7 @@ namespace ComicReader.Views
             {
                 if (!IsCurrentReader)
                 {
-                    foreach (ReaderFrameViewModel m in DataSource)
+                    foreach (ReaderFrameViewModel m in Frames)
                     {
                         m.ImageL = null;
                         m.ImageR = null;
@@ -1341,14 +1383,14 @@ namespace ComicReader.Views
 
                 var img_loader_tokens = new List<Utils.ImageLoaderToken>();
                 int page_begin = Math.Max(Page - 5, 1);
-                int page_end = Math.Min(Page + 10, Pages);
+                int page_end = Math.Min(Page + 10, PageCount);
                 int idx_begin = PageToFrame(page_begin, out _, out _);
                 int idx_end = PageToFrame(page_end, out _, out _);
-                idx_end = Math.Min(DataSource.Count - 1, idx_end);
+                idx_end = Math.Min(Frames.Count - 1, idx_end);
                 
                 for (int i = idx_begin; i <= idx_end; ++i)
                 {
-                    ReaderFrameViewModel m = DataSource[i]; // Stores locally.
+                    ReaderFrameViewModel m = Frames[i]; // Stores locally.
 
                     if (m.ImageL == null && m.PageL > 0)
                     {
@@ -1383,9 +1425,9 @@ namespace ComicReader.Views
 
                 if (remove_out_of_view)
                 {
-                    for (int i = 0; i < DataSource.Count; ++i)
+                    for (int i = 0; i < Frames.Count; ++i)
                     {
-                        ReaderFrameViewModel m = DataSource[i];
+                        ReaderFrameViewModel m = Frames[i];
 
                         if ((m.PageL < page_begin || m.PageL > page_end) && m.ImageL != null)
                         {
@@ -1408,7 +1450,7 @@ namespace ComicReader.Views
         // Internal - Final Value
         private void FillFinalVal()
         {
-            if (!IsFrameworkLoaded)
+            if (!LoadedFramework)
             {
                 return;
             }
@@ -1486,19 +1528,19 @@ namespace ComicReader.Views
                     return page - 1;
                 case PageArrangementEnum.DualCover:
                     left_side = page == 1 || page % 2 == 0;
-                    neighbor = (page > 1 && (Pages % 2 == 1 || page < Pages)) ? (left_side ? page + 1 : page - 1) : -1;
+                    neighbor = (page > 1 && (PageCount % 2 == 1 || page < PageCount)) ? (left_side ? page + 1 : page - 1) : -1;
                     return page / 2;
                 case PageArrangementEnum.DualCoverMirror:
-                    left_side = page == Pages || page % 2 == 1;
-                    neighbor = (page > 1 && (Pages % 2 == 1 || page < Pages)) ? (left_side ? page - 1 : page + 1) : -1;
+                    left_side = page == PageCount || page % 2 == 1;
+                    neighbor = (page > 1 && (PageCount % 2 == 1 || page < PageCount)) ? (left_side ? page - 1 : page + 1) : -1;
                     return page / 2;
                 case PageArrangementEnum.DualNoCover:
                     left_side = page % 2 == 1;
-                    neighbor = (Pages % 2 == 0 || page < Pages) ? (left_side ? page + 1 : page - 1) : -1;
+                    neighbor = (PageCount % 2 == 0 || page < PageCount) ? (left_side ? page + 1 : page - 1) : -1;
                     return (page - 1) / 2;
                 case PageArrangementEnum.DualNoCoverMirror:
-                    left_side = page == Pages || page % 2 == 0;
-                    neighbor = (Pages % 2 == 0 || page < Pages) ? (left_side ? page - 1 : page + 1) : -1;
+                    left_side = page == PageCount || page % 2 == 0;
+                    neighbor = (PageCount % 2 == 0 || page < PageCount) ? (left_side ? page - 1 : page + 1) : -1;
                     return (page - 1) / 2;
                 default:
                     System.Diagnostics.Debug.Assert(false);
@@ -1527,7 +1569,6 @@ namespace ComicReader.Views
 
         private Utils.Tab.TabManager m_tab_manager;
         private ComicData m_comic;
-        private Utils.TaskQueue m_load_image_queue;
         private GestureRecognizer m_gesture_recognizer;
 
         // Bottom Tile
@@ -1537,7 +1578,7 @@ namespace ComicReader.Views
         private DateTimeOffset m_bottom_tile_hide_request_time = DateTimeOffset.Now;
 
         // Locks
-        private Utils.CancellationLock m_load_image_lock = new Utils.CancellationLock();
+        private Utils.CancellationLock m_lock_load_comic = new Utils.CancellationLock();
 
         public ReaderPage()
         {
@@ -1665,70 +1706,76 @@ namespace ComicReader.Views
                 return;
             }
 
-            Shared.ReaderStatus = ReaderStatusEnum.Loading;
-
-            VerticalReader.Reset();
-            HorizontalReader.Reset();
-
-            ReaderModel reader = GetCurrentReader();
-            System.Diagnostics.Debug.Assert(reader != null);
-
-            reader.OnLoaded = () =>
+            await m_lock_load_comic.WaitAsync();
+            try
             {
-                Shared.ReaderStatus = ReaderStatusEnum.Working;
-                UpdatePage(reader);
-                BottomTileShow();
-                BottomTileHide(5000);
-            };
+                Shared.ReaderStatus = ReaderStatusEnum.Loading;
 
-            m_comic = comic;
-            m_load_image_queue = Utils.TaskQueueManager.EmptyQueue();
+                VerticalReader.Reset();
+                HorizontalReader.Reset();
 
-            VerticalReader.Comic = m_comic;
-            HorizontalReader.Comic = m_comic;
+                ReaderModel reader = GetCurrentReader();
+                System.Diagnostics.Debug.Assert(reader != null);
 
-            // Additional procedures for comics in the library.
-            if (!m_comic.IsExternal)
-            {
-                // Mark as read.
-                m_comic.SetAsRead();
-
-                // Add to history
-                await HistoryDataManager.Add(m_comic.Id, m_comic.Title1, true);
-
-                // Update image files.
-                TaskResult r = await m_comic.UpdateImages(db, cover_only: false, reload: true);
-
-                if (!r.Successful)
+                reader.OnLoaded = () =>
                 {
-                    Log("Failed to load images of '" + m_comic.Location + "'. " + r.ExceptionType.ToString());
-                    Shared.ReaderStatus = ReaderStatusEnum.Error;
-                    return;
+                    Shared.ReaderStatus = ReaderStatusEnum.Working;
+                    UpdatePage(reader);
+                    BottomTileShow();
+                    BottomTileHide(5000);
+                };
+
+                m_comic = comic;
+                VerticalReader.Comic = m_comic;
+                HorizontalReader.Comic = m_comic;
+
+                // Additional procedures for comics in the library.
+                if (!m_comic.IsExternal)
+                {
+                    // Mark as read.
+                    m_comic.SetAsRead();
+
+                    // Add to history
+                    await HistoryDataManager.Add(m_comic.Id, m_comic.Title1, true);
+
+                    // Update image files.
+                    TaskResult r = await m_comic.UpdateImages(db, cover_only: false, reload: true);
+
+                    if (!r.Successful)
+                    {
+                        Log("Failed to load images of '" + m_comic.Location + "'. " + r.ExceptionType.ToString());
+                        Shared.ReaderStatus = ReaderStatusEnum.Error;
+                        return;
+                    }
+
+                    // Set initial page.
+                    reader.InitialPage = m_comic.LastPosition;
+
+                    // Load frames.
+                    for (int i = 0; i < m_comic.ImageAspectRatios.Count; ++i)
+                    {
+                        await VerticalReader.UpdateFrame(i);
+                        await HorizontalReader.UpdateFrame(i);
+                    }
+
+                    // Notify reader to update images.
+                    await reader.UpdateImages(db, true);
                 }
 
-                // Set initial page.
-                reader.InitialPage = m_comic.LastPosition;
-
-                // Load frames.
-                for (int i = 0; i < m_comic.ImageAspectRatios.Count; ++i)
-                {
-                    await VerticalReader.UpdateFrame(i);
-                    await HorizontalReader.UpdateFrame(i);
-                }
-
+                await LoadImages(db);
+                await LoadComicInfo();
+                await reader.CompleteFrameUpdate();
                 await reader.UpdateImages(db, true);
+                UpdatePage(reader);
             }
-
-            Utils.TaskQueueManager.AppendTask(LoadImagesSealed(), "", m_load_image_queue);
-            await LoadComicInfo();
+            finally
+            {
+                m_lock_load_comic.Release();
+            }
         }
 
-        private SealedTask LoadImagesSealed() => (RawTask _) => LoadImagesUnsealed(new LockContext()).Result;
-
-        private async RawTask LoadImagesUnsealed(LockContext db)
+        private async Task LoadImages(LockContext db)
         {
-            await m_load_image_lock.WaitAsync();
-
             double preview_width = 0.0;
             double preview_height = 0.0;
 
@@ -1743,7 +1790,6 @@ namespace ComicReader.Views
             var preview_img_loader_tokens = new List<Utils.ImageLoaderToken>();
             ComicData comic = m_comic; // Stores locally.
             Utils.Stopwatch save_timer = new Utils.Stopwatch();
-            save_timer.Start();
 
             for (int i = 0; i < comic.ImageCount; ++i)
             {
@@ -1797,11 +1843,9 @@ namespace ComicReader.Views
                 });
             }
 
+            save_timer.Start();
             await Utils.ImageLoader.Load(db,  preview_img_loader_tokens,
-                preview_width, preview_height, m_load_image_lock);
-
-            m_load_image_lock.Release();
-            return new TaskResult();
+                preview_width, preview_height, m_lock_load_comic);
         }
 
         private async Task LoadComicInfo()
@@ -1880,38 +1924,45 @@ namespace ComicReader.Views
             }
         }
 
-        private void UpdatePage(ReaderModel control)
+        private void UpdatePage(ReaderModel reader)
         {
             if (PageIndicator == null)
             {
                 return;
             }
 
-            string image_count = "?";
+            int page = reader.Page;
 
-            if (m_comic != null)
+            if (page <= 0)
             {
-                image_count = m_comic.ImageCount.ToString();
+                page = (int)Math.Round(reader.InitialPage);
             }
 
-            PageIndicator.Text = control.Page.ToString() + " / " + image_count;
+            PageIndicator.Text = page.ToString() + " / " + reader.PageCount.ToString();
         }
 
-        private void UpdateProgress(ReaderModel control, bool save)
+        private void UpdateProgress(ReaderModel reader, bool save)
         {
+            double page = reader.PageReal;
+
+            if (page <= 0.0)
+            {
+                return;
+            }
+
             int progress;
 
-            if (m_comic.ImageCount == 0)
+            if (reader.PageCount <= 0)
             {
                 progress = 0;
             }
-            else if (control.IsLastPage)
+            else if (reader.IsLastPage)
             {
                 progress = 100;
             }
             else
             {
-                progress = (int)((float)control.Page / control.Pages * 100);
+                progress = (int)((float)page / reader.PageCount * 100);
             }
 
             progress = Math.Min(progress, 100);
@@ -1919,7 +1970,7 @@ namespace ComicReader.Views
 
             if (save)
             {
-                m_comic.SaveProgress(progress, control.PageReal);
+                m_comic.SaveProgress(progress, reader.PageReal);
             }
         }
 
@@ -1952,8 +2003,8 @@ namespace ComicReader.Views
                 double page = last_reader.PageReal;
                 float zoom = Math.Min(100f, last_reader.Zoom);
 
-                await Utils.C0.WaitFor(() => reader.IsLoaded, 1000);
-                reader.SetScrollViewer(zoom, page, use_page_center: false, true);
+                await Utils.C0.WaitFor(() => reader.Loaded, 1000);
+                reader.SetScrollViewer2(zoom, page, true);
                 await reader.UpdateImages(db, true);
                 Shared.UpdateReaderUI();
                 await last_reader.UpdateImages(db, false);
@@ -2060,8 +2111,8 @@ namespace ComicReader.Views
                     return;
                 }
 
-                await Utils.C0.WaitFor(() => reader.IsLoaded);
-                reader.SetScrollViewer(null, ctx.Page, use_page_center: true, true);
+                await Utils.C0.WaitFor(() => reader.Loaded);
+                reader.SetScrollViewer2(null, ctx.Page, true);
             });
         }
 
@@ -2542,11 +2593,11 @@ namespace ComicReader.Views
                         break;
 
                     case Windows.System.VirtualKey.Home:
-                        reader.SetScrollViewer(null, 1, use_page_center: true, true);
+                        reader.SetScrollViewer2(null, 1, true);
                         break;
 
                     case Windows.System.VirtualKey.End:
-                        reader.SetScrollViewer(null, reader.Pages, use_page_center: true, true);
+                        reader.SetScrollViewer2(null, reader.PageCount, true);
                         break;
 
                     case Windows.System.VirtualKey.Space:

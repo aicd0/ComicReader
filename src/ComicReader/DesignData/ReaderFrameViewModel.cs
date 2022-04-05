@@ -73,9 +73,10 @@ namespace ComicReader.DesignData
         public int PageR { get; set; } = -1;
         public double Width => Container.ActualWidth;
         public double Height => Container.ActualHeight;
-        public bool Ready { get; set; } = false;
+        public bool Processed { get; private set; } = false;
+        public bool Ready { get; private set; } = false;
 
-        private bool EvalReady()
+        private bool GetReady()
         {
             if (Container == null)
             {
@@ -98,17 +99,34 @@ namespace ComicReader.DesignData
             return true;
         }
 
-        public void NotifyReady()
+        public void Notify(bool cancel = false)
         {
             lock (this)
             {
-                Ready = EvalReady();
-
-                if (Ready)
+                if (Processed)
                 {
                     Monitor.Pulse(this);
                 }
+                else
+                {
+                    if (!Ready)
+                    {
+                        Ready = GetReady();
+                    }
+
+                    if (Ready || cancel)
+                    {
+                        Processed = true;
+                        Monitor.Pulse(this);
+                    }
+                }
             }
+        }
+
+        public void Reset()
+        {
+            Processed = false;
+            Ready = false;
         }
 
         public Grid Container = null;

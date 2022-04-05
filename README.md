@@ -6,10 +6,9 @@ Comic Reader irregularly ships with new features and bug fixes. You can get the 
 ![Comic Reader Screenshot](docs/Images/ComicReaderScreenshot.png)
 
 ## Features
-- Vertical and horizontal reading mode.
-- Fast navigation.
-- Searching and editing titles, tags, ratings.
-- Favorites and history.
+- Reader customization.
+- Manage comic info such as titles, tags and ratings.
+- Other utilities.
 
 ## Getting started
 Prerequisites:
@@ -25,7 +24,7 @@ Prerequisites:
 - Open [ComicReader.sln](src/ComicReader.sln) in Visual Studio to build and run the Comic Reader app.
 
 ## Contributing
-If Comic Reader is not working properly, please [submit an issue on GitHub](https://github.com/aicd0/ComicReader/issues/new). If you have any suggestions about Comic Reader or want to add some new features to it, please contact us through comic_reader_uwp@163.com.
+Contributions are welcomed at any time. If Comic Reader is not working properly, please [submit an issue on GitHub](https://github.com/aicd0/ComicReader/issues/new/choose). If you have any suggestions about Comic Reader, please contact the author through comic_reader_uwp@163.com.
 
 ## License
 Licensed under the [MIT License](./LICENSE).
