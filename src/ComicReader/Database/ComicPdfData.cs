@@ -11,10 +11,10 @@ namespace ComicReader.Database
     using TaskResult = Utils.TaskResult;
     using TaskException = Utils.TaskException;
 
-    class ComicPdfData : ComicData
+    public class ComicPdfData : ComicData
     {
-        const int WrongPassword = unchecked((int)0x8007052b); // HRESULT_FROM_WIN32(ERROR_WRONG_PASSWORD)
-        const int GenericFail = unchecked((int)0x80004005);   // E_FAIL
+        private const int WrongPassword = unchecked((int)0x8007052b); // HRESULT_FROM_WIN32(ERROR_WRONG_PASSWORD)
+        private const int GenericFail = unchecked((int)0x80004005);   // E_FAIL
 
         private StorageFile ThisFile = null;
         private PdfDocument ThisDocument = null;
@@ -73,14 +73,21 @@ namespace ComicReader.Database
 
         private async RawTask SetDocument()
         {
-            if (ThisDocument != null) return new TaskResult();
+            if (ThisDocument != null)
+            {
+                return new TaskResult();
+            }
+
             TaskResult r = await SetFile();
-            if (!r.Successful) return r;
+            if (!r.Successful)
+            {
+                return r;
+            }
 
             try
             {
                 ThisDocument = await PdfDocument.LoadFromFileAsync(ThisFile);
-                //ThisDocument = await PdfDocument.LoadFromFileAsync(ThisFile, PasswordBox.Password);
+                // ThisDocument = await PdfDocument.LoadFromFileAsync(ThisFile, PasswordBox.Password);
             }
             catch (Exception ex)
             {
@@ -123,7 +130,10 @@ namespace ComicReader.Database
         protected override async Task<IRandomAccessStream> InternalGetImageStream(int index)
         {
             TaskResult r = await SetDocument();
-            if (!r.Successful) return null;
+            if (!r.Successful)
+            {
+                return null;
+            }
 
             if (index >= ImageCount)
             {
@@ -135,30 +145,6 @@ namespace ComicReader.Database
             {
                 var stream = new InMemoryRandomAccessStream();
                 await page.RenderToStreamAsync(stream);
-                //switch (Options.SelectedIndex)
-                //{
-                //    // View actual size.
-                //    case 0:
-                //        await page.RenderToStreamAsync(stream);
-                //        break;
-
-                //    // View half size on beige background.
-                //    case 1:
-                //        var options1 = new PdfPageRenderOptions();
-                //        options1.BackgroundColor = Windows.UI.Colors.Beige;
-                //        options1.DestinationHeight = (uint)(page.Size.Height / 2);
-                //        options1.DestinationWidth = (uint)(page.Size.Width / 2);
-                //        await page.RenderToStreamAsync(stream, options1);
-                //        break;
-
-                //    // Crop to center.
-                //    case 2:
-                //        var options2 = new PdfPageRenderOptions();
-                //        var rect = page.Dimensions.TrimBox;
-                //        options2.SourceRect = new Rect(rect.X + rect.Width / 4, rect.Y + rect.Height / 4, rect.Width / 2, rect.Height / 2);
-                //        await page.RenderToStreamAsync(stream, options2);
-                //        break;
-                //}
                 return stream;
             }
         }

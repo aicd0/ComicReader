@@ -65,6 +65,7 @@
                 <Grid Height="16" />
                 <GridView
                     x:Name="SearchResultGridView"
+                    HorizontalAlignment="Center"
                     ItemContainerStyleSelector="{StaticResource SearchResultItemContainerStyleSelector}"
                     ItemsSource="{x:Bind Shared.SearchResults}"
                     SelectionChanged="OnGridViewSelectionChanged"

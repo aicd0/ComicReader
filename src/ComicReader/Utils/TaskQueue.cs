@@ -21,6 +21,7 @@ namespace ComicReader.Utils
         NoPermission,
         NotImplemented,
         NotSupported,
+        StopIteration,
         Success,
         Unknown,
         UnknownEnum,

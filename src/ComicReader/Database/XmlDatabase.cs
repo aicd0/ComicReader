@@ -21,8 +21,8 @@ namespace ComicReader.Database
         [XmlIgnore]
         public abstract XmlData Target { get; set; }
 
-        public abstract void Pack();
-        public abstract void Unpack();
+        public virtual void Pack() {}
+        public virtual void Unpack() {}
     }
 
     public class XmlDatabase

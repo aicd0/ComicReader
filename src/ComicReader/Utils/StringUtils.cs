@@ -11,6 +11,9 @@ namespace ComicReader.Utils
         {
             public int Compare(string x, string y)
             {
+                x = DisplayNameFromFilename(x);
+                y = DisplayNameFromFilename(y);
+
                 if (int.TryParse(x, NumberStyles.Integer, CultureInfo.InvariantCulture, out int xint) &&
                     int.TryParse(y, NumberStyles.Integer, CultureInfo.InvariantCulture, out int yint))
                 {
@@ -102,7 +105,7 @@ namespace ComicReader.Utils
         }
 
         /// <summary>
-        /// Case sensitive. You might need to lower both strings before calling this function.
+        /// Case sensitive. You might need to lower both strings before calling this method.
         /// </summary>
         public static bool PathContain(string base_path, string child_path)
         {

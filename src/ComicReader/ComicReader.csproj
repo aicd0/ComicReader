@@ -188,7 +188,7 @@
     <Compile Include="DesignData\ReaderSettingViewModel.cs" />
     <Compile Include="DesignData\TagViewModel.cs" />
     <Compile Include="Utils\AppInfoProvider.cs" />
-    <Compile Include="Utils\ArchiveAccess.cs" />
+    <Compile Include="Utils\ArchiveUtils.cs" />
     <Compile Include="Utils\Debug.cs" />
     <Compile Include="Utils\StorageItemSearchEngine.cs" />
     <Compile Include="Utils\ImageLoader.cs" />
@@ -478,6 +478,9 @@
     </PackageReference>
     <PackageReference Include="Microsoft.UI.Xaml">
       <Version>2.7.0</Version>
+    </PackageReference>
+    <PackageReference Include="SharpCompress">
+      <Version>0.31.0</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>

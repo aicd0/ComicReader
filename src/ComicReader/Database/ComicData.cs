@@ -554,8 +554,6 @@ namespace ComicReader.Database
             double width_ratio = req_width / decoder.PixelWidth;
             double height_ratio = req_height / decoder.PixelHeight;
             double scale_ratio = Math.Min(width_ratio, height_ratio);
-            if (req_width == 0) scale_ratio = height_ratio;
-            if (req_height == 0) scale_ratio = width_ratio;
             scale_ratio = Math.Min(1.0, scale_ratio);
             uint aspect_height = (uint)Math.Floor(decoder.PixelHeight * scale_ratio);
             uint aspect_width = (uint)Math.Floor(decoder.PixelWidth * scale_ratio);
@@ -590,16 +588,32 @@ namespace ComicReader.Database
 
         protected virtual async Task<StorageFile> GetCoverCache()
         {
-            if (IsExternal) return null;
-            if (CoverFileCache.Length == 0) return null;
+            if (IsExternal)
+            {
+                return null;
+            }
+
+            if (CoverFileCache.Length == 0)
+            {
+                return null;
+            }
+
             IStorageItem item = await CacheFolder.TryGetItemAsync(CoverFileCache);
-            if (!(item is StorageFile)) return null;
+            
+            if (!(item is StorageFile))
+            {
+                return null;
+            }
+            
             return (StorageFile)item;
         }
 
         public async RawTask UpdateImages(LockContext db, bool cover_only, bool reload)
         {
-            if (reload) ImageUpdated = false;
+            if (reload)
+            {
+                ImageUpdated = false;
+            }
 
             if (cover_only)
             {
@@ -611,12 +625,20 @@ namespace ComicReader.Database
 
             if (!ImageUpdated)
             {
-                TaskResult r = await ReloadImages(db);
-                if (!r.Successful) return r;
+                TaskResult result = await ReloadImages(db);
+
+                if (!result.Successful)
+                {
+                    return result;
+                }
+
                 ImageUpdated = true;
             }
 
-            if (ImageCount == 0) return new TaskResult(TaskException.EmptySet);
+            if (ImageCount == 0)
+            {
+                return new TaskResult(TaskException.EmptySet);
+            }
 
             if (cover_only && !IsExternal)
             {

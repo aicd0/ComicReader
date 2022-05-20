@@ -1,7 +1,9 @@
 ﻿using Microsoft.Data.Sqlite;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
+using System.Text;
 using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.Storage;
@@ -38,6 +40,32 @@ namespace ComicReader.Views
 
         public Action OnSettingsChanged;
 
+        private List<Tuple<string, int>> m_Encodings = new List<Tuple<string, int>>();
+        public List<Tuple<string, int>> Encodings
+        {
+            get => m_Encodings;
+            set
+            {
+                m_Encodings = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Encodings"));
+            }
+        }
+
+        private int m_DefaultArchiveCodePage = -1;
+        public int DefaultArchiveCodePage
+        {
+            get => m_DefaultArchiveCodePage;
+            set
+            {
+                if (m_DefaultArchiveCodePage != value)
+                {
+                    m_DefaultArchiveCodePage = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("DefaultArchiveCodePage"));
+                    OnSettingsChanged?.Invoke();
+                }
+            }
+        }
+
         private bool m_IsRescanning = true;
         public bool IsRescanning
         {
@@ -60,15 +88,18 @@ namespace ComicReader.Views
             }
         }
 
-        private bool m_HistorySaveBrowsingHistory;
+        private bool m_HistorySaveBrowsingHistory = false;
         public bool HistorySaveBrowsingHistory
         {
             get => m_HistorySaveBrowsingHistory;
             set
             {
-                m_HistorySaveBrowsingHistory = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("HistorySaveBrowsingHistory"));
-                OnSettingsChanged?.Invoke();
+                if (m_HistorySaveBrowsingHistory != value)
+                {
+                    m_HistorySaveBrowsingHistory = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("HistorySaveBrowsingHistory"));
+                    OnSettingsChanged?.Invoke();
+                }
             }
         }
 
@@ -186,7 +217,7 @@ namespace ComicReader.Views
         private readonly Utils.Tab.TabManager m_tab_manager;
 
         // Initialize m_updating to TRUE to avoid copying values from
-        // controls (See Save()) while the page is launching.
+        // controls (See Save()) while this page is still launching.
         private bool m_updating = true;
 
         public SettingsPage()
@@ -271,15 +302,35 @@ namespace ComicReader.Views
 
             Shared.Appearance = Shared.CurrentAppearance;
 
+            // Supported code pages.
+            if (Shared.Encodings.Count == 0)
+            {
+                var encodings = new List<Tuple<string, int>>();
+                encodings.Add(new Tuple<string, int>(Utils.StringResourceProvider.GetResourceString("Default"), -1));
+
+                foreach (Encoding info in Utils.AppInfoProvider.SupportedEncodings.Values)
+                {
+                    string title = info.EncodingName + " [" + info.CodePage.ToString() + "]";
+                    encodings.Add(new Tuple<string, int>(title, info.CodePage));
+                }
+
+                Shared.Encodings = encodings;
+            }
+
+            if (!Utils.AppInfoProvider.SupportedEncodings.ContainsKey(XmlDatabase.Settings.DefaultArchiveCodePage))
+            {
+                XmlDatabase.Settings.DefaultArchiveCodePage = -1;
+            }
+
             // From Xml.
             await XmlDatabaseManager.WaitLock();
 
+            Shared.DefaultArchiveCodePage = XmlDatabase.Settings.DefaultArchiveCodePage;
             Shared.IsClearHistoryEnabled = XmlDatabase.History.Items.Count > 0;
             Shared.HistorySaveBrowsingHistory = XmlDatabase.Settings.SaveHistory;
             Shared.AdvancedDebugMode = XmlDatabase.Settings.DebugMode;
 
             XmlDatabaseManager.ReleaseLock();
-            
             m_updating = false;
 
             // Rescan status.
@@ -358,6 +409,7 @@ namespace ComicReader.Views
             // To database.
             await XmlDatabaseManager.WaitLock();
 
+            XmlDatabase.Settings.DefaultArchiveCodePage = Shared.DefaultArchiveCodePage;
             XmlDatabase.Settings.SaveHistory = Shared.HistorySaveBrowsingHistory;
             XmlDatabase.Settings.DebugMode = Shared.AdvancedDebugMode;
 

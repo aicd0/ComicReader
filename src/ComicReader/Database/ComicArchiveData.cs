@@ -163,8 +163,11 @@ namespace ComicReader.Database
 
         protected override async RawTask ReloadImages(LockContext db)
         {
-            TaskResult r = await SetArchive();
-            if (!r.Successful) return r;
+            TaskResult result = await SetArchive();
+            if (!result.Successful)
+            {
+                return result;
+            }
 
             // Load entries.
             Log("Retrieving images in '" + Location + "'");
@@ -199,11 +202,11 @@ namespace ComicReader.Database
             {
                 string sub_path = Utils.ArchiveAccess.GetSubPath(Location);
                 List<string> subfiles = new List<string>();
-                r = await Utils.ArchiveAccess.TryGetSubFiles(Archive, sub_path, subfiles);
 
-                if (!r.Successful)
+                result = await Utils.ArchiveAccess.TryGetSubFiles(Archive, sub_path, subfiles);
+                if (!result.Successful)
                 {
-                    return r;
+                    return result;
                 }
 
                 foreach (string subfile in subfiles)

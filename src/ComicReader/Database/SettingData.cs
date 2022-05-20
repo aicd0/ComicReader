@@ -20,6 +20,7 @@ namespace ComicReader.Database
     {
         public int DatabaseVersion = -1;
         public List<string> ComicFolders = new List<string>();
+        public int DefaultArchiveCodePage = -1;
         public bool VerticalReading = true;
         public bool LeftToRight = false;
         public bool VerticalContinuous = true;
@@ -44,10 +45,6 @@ namespace ComicReader.Database
             get => XmlDatabase.Settings;
             set => XmlDatabase.Settings = value as SettingData;
         }
-
-        public override void Pack() { }
-
-        public override void Unpack() { }
     }
 
     class SettingDataManager

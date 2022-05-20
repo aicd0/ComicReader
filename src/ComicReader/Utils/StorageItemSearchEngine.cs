@@ -1,11 +1,7 @@
-﻿using System;
+﻿using SharpCompress.Readers;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.Compression;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using Windows.Storage;
 
 namespace ComicReader.Utils.StorageItemSearchEngine
 {
@@ -181,19 +177,7 @@ namespace ComicReader.Utils.StorageItemSearchEngine
                     path_info.Ctx = new FolderSearchContext(path_info.Path);
                     break;
                 case PathType.File:
-                    {
-                        string filename = StringUtils.ItemNameFromPath(path_info.Path);
-                        string extension = StringUtils.ExtensionFromFilename(filename);
-                        switch (extension)
-                        {
-                            case ".zip":
-                                path_info.Ctx = new ZipSearchContext(path_info.Path);
-                                break;
-                            default:
-                                Utils.Debug.Log("Unknown archive extension " + extension);
-                                break;
-                        }
-                    }
+                    path_info.Ctx = new ArchiveSearchContext(path_info.Path);
                     break;
                 default:
                     break;
@@ -225,37 +209,46 @@ namespace ComicReader.Utils.StorageItemSearchEngine
         }
     }
 
-    public class ZipSearchContext : StorageItemSearchContext
+    public class ArchiveSearchContext : StorageItemSearchContext
     {
-        string m_path;
-        ZipArchive m_archive;
+        private string m_path;
+        private string m_extension;
 
-        public ZipSearchContext(string path)
+        public ArchiveSearchContext(string path)
         {
-            Stream stream = Utils.ArchiveAccess.TryGetFileStream(path).Result;
-            m_archive = new ZipArchive(stream, ZipArchiveMode.Read);
-            m_path = path + Utils.ArchiveAccess.FileSeperator;
+            m_path = path;
+            m_extension = Utils.StringUtils.ExtensionFromFilename(path);
         }
 
         public override bool Search(List<string> folders, List<string> files, List<string> no_access_items, int min_items)
         {
+            Stream stream = Utils.ArchiveAccess.TryGetFileStream(m_path).Result;
             HashSet<string> sub_folders = new HashSet<string>();
 
-            foreach (ZipArchiveEntry entry in m_archive.Entries)
+            Utils.ArchiveAccess.TryReadEntries(stream, m_extension, (Utils.ArchiveEntry entry) =>
             {
-                string name = entry.FullName.Replace('/', '\\');
-                files.Add(m_path + name);
-                int i = name.IndexOf('\\');
-                if (i == -1)
+                string path = entry.FullName.Replace('/', '\\');
+
+                if (entry.IsDirectory)
                 {
-                    continue;
+                    sub_folders.Add(path.Substring(0, path.Length - 1));
                 }
-                sub_folders.Add(name.Substring(0, i));
-            }
+                else
+                {
+                    files.Add(m_path + Utils.ArchiveAccess.FileSeperator + path);
+
+                    for (int i = 0; (i = path.IndexOf('\\', i)) >= 0; ++i)
+                    {
+                        sub_folders.Add(path.Substring(0, i));
+                    }
+                }
+
+                return Task.FromResult(new TaskResult());
+            }).Wait();
 
             foreach (string sub_folder in sub_folders)
             {
-                folders.Add(m_path + sub_folder);
+                folders.Add(m_path + Utils.ArchiveAccess.FileSeperator + sub_folder);
             }
 
             return false;

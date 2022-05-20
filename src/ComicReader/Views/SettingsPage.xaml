@@ -67,7 +67,23 @@
                         Glyph="&#xEB9F;"
                         IsExpanded="True">
                         <controls:SettingExpander.InnerContent>
-                            <Button x:Uid="ChooseLocationButton" Click="ChooseLocationsClick" />
+                            <StackPanel Orientation="Vertical">
+                                <Button x:Uid="ChooseLocationButton" Click="ChooseLocationsClick" />
+                                <Grid Height="15" />
+                                <TextBlock x:Uid="ArchiveEncoding" Style="{StaticResource SettingsPageBodyTextBlock}" />
+                                <Grid Height="5" />
+                                <TextBlock
+                                    x:Uid="ArchiveEncodingDetail"
+                                    Foreground="{ThemeResource ForegroundGrey2}"
+                                    Style="{StaticResource SettingsPageBodyTextBlock}" />
+                                <Grid Height="10" />
+                                <ComboBox
+                                    MinWidth="200"
+                                    DisplayMemberPath="Item1"
+                                    ItemsSource="{x:Bind Shared.Encodings, Mode=OneWay}"
+                                    SelectedValue="{x:Bind Shared.DefaultArchiveCodePage, Mode=TwoWay}"
+                                    SelectedValuePath="Item2" />
+                            </StackPanel>
                         </controls:SettingExpander.InnerContent>
                     </controls:SettingExpander>
 
@@ -94,7 +110,7 @@
                                     x:Uid="ClearAllHistoryButton"
                                     Click="OnHistoryClearAllClicked"
                                     IsEnabled="{x:Bind Shared.IsClearHistoryEnabled, Mode=OneWay}" />
-                                <Grid Height="10" />
+                                <Grid Height="15" />
                                 <TextBlock x:Uid="SaveHistory" Style="{StaticResource SettingsPageBodyTextBlock}" />
                                 <ToggleSwitch IsOn="{x:Bind Shared.HistorySaveBrowsingHistory, Mode=TwoWay}" />
                             </StackPanel>

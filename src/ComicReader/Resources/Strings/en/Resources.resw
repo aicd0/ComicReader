@@ -178,7 +178,7 @@
     <value>Build your collections from your local files</value>
   </data>
   <data name="ClearAllHistoryButton.Content" xml:space="preserve">
-    <value>Clear all</value>
+    <value>Clear all history</value>
   </data>
   <data name="ContributionRunAfterLink" xml:space="preserve">
     <value> to learn how you can contribute to this app.</value>
@@ -595,5 +595,14 @@ Category2: tag4/tag5
   </data>
   <data name="VerticalModeButton.Label" xml:space="preserve">
     <value>Vertical mode</value>
+  </data>
+  <data name="ArchiveEncoding.Text" xml:space="preserve">
+    <value>Archive encoding</value>
+  </data>
+  <data name="ArchiveEncodingDetail.Text" xml:space="preserve">
+    <value>Useful when file name in some ZIP archives cannot be displayed correctly. Notice that this is a global setting. This will take effect the next time you start the app (Some records will be cleared).</value>
+  </data>
+  <data name="Default" xml:space="preserve">
+    <value>Default</value>
   </data>
 </root>

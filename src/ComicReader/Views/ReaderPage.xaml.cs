@@ -1687,7 +1687,7 @@ namespace ComicReader.Views
 
                 ComicData comic = (ComicData)tab_id.RequestArgs;
                 tab_id.Tab.Header = comic.Title;
-                tab_id.Tab.IconSource = new muxc.SymbolIconSource { Symbol = Symbol.Document };
+                tab_id.Tab.IconSource = new muxc.SymbolIconSource { Symbol = Symbol.Pictures };
                 await LoadComic(db, comic);
             });
         }
@@ -1762,8 +1762,8 @@ namespace ComicReader.Views
                     await reader.UpdateImages(db, true);
                 }
 
-                await LoadImages(db);
                 await LoadComicInfo();
+                await LoadImages(db);
                 await reader.CompleteFrameUpdate();
                 await reader.UpdateImages(db, true);
                 UpdatePage(reader);
