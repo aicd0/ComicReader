@@ -24,8 +24,16 @@ namespace ComicReader.Database
     {
         public static bool DatabaseFirstInit { get; private set; }
 
+        private static bool Initialized { get; set; } = false;
+
         public static async RawTask Init()
         {
+            if (Initialized)
+            {
+                return new TaskResult();
+            }
+            Initialized = true;
+
             Log("Initializing database");
 
             // For backward compability.

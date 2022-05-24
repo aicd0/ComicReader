@@ -22,6 +22,8 @@ using ComicReader.Database;
 
 namespace ComicReader
 {
+    using TaskResult = Utils.TaskResult;
+
     sealed partial class App : Application
     {
         private bool m_window_setup = false;
@@ -43,8 +45,9 @@ namespace ComicReader
 
         private async Task Startup(bool prelaunch_activated, ApplicationExecutionState state)
         {
-            // Initialize the database.
-            await DatabaseManager.Init();
+            // Initialize the database if it has not been initialized.
+            TaskResult result = await DatabaseManager.Init();
+            System.Diagnostics.Debug.Assert(result.Successful);
 
             // Perform usual startup.
             Frame rootFrame = Window.Current.Content as Frame;
@@ -85,7 +88,7 @@ namespace ComicReader
                 }
 
                 appView.SetPreferredMinSize(minWindowSize);
-                //appView->TryResizeView(SizeHelper::FromDimensions(320, 700));
+                // appView->TryResizeView(SizeHelper::FromDimensions(320, 700));
             }
 
             if (!Window.Current.Visible)

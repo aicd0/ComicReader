@@ -830,6 +830,11 @@ namespace ComicReader.Views
                 FillFinalVal();
                 return m_padding_start_final;
             }
+            set
+            {
+                FillFinalVal();
+                m_padding_start_final = value;
+            }
         }
 
         private double m_padding_end_final;
@@ -839,6 +844,11 @@ namespace ComicReader.Views
             {
                 FillFinalVal();
                 return m_padding_end_final;
+            }
+            set
+            {
+                FillFinalVal();
+                m_padding_end_final = value;
             }
         }
 
@@ -855,18 +865,17 @@ namespace ComicReader.Views
         public bool Loaded { get; private set; } = false;
 
         // Internal - General
-        private double? ZoomCoefficient()
+        private double? ZoomCoefficient(int frame_idx)
         {
             if (Frames.Count == 0)
             {
                 return null;
             }
-
-            int frame_idx = PageToFrame(Page, out _, out _);
             
             if (frame_idx < 0 || frame_idx >= Frames.Count)
             {
-                frame_idx = 0;
+                System.Diagnostics.Debug.Assert(false);
+                return null;
             }
 
             double viewport_width = ThisScrollViewer.ViewportWidth;
@@ -876,6 +885,7 @@ namespace ComicReader.Views
 
             double viewport_ratio = viewport_width / viewport_height;
             double image_ratio = frame_width / frame_height;
+
             return 0.01 * (viewport_ratio > image_ratio ?
                 viewport_height / frame_height :
                 viewport_width / frame_width);
@@ -1074,7 +1084,12 @@ namespace ComicReader.Views
 
         private void SetScrollViewerZoom(ref double? horizontal_offset, ref double? vertical_offset, ref float? zoom, out float? zoom_factor)
         {
-            double? zoom_coefficient_boxed = ZoomCoefficient();
+            int frame_idx = PageToFrame(Page, out _, out _);
+            if (frame_idx < 0 || frame_idx >= Frames.Count)
+            {
+                frame_idx = 0;
+            }
+            double? zoom_coefficient_boxed = ZoomCoefficient(frame_idx);
 
             if (zoom_coefficient_boxed == null)
             {
@@ -1086,18 +1101,20 @@ namespace ComicReader.Views
             double zoom_coefficient = zoom_coefficient_boxed.Value;
             float zoom_rectified = zoom == null ? (float)(ZoomFactorFinal / zoom_coefficient) : (float)zoom;
 
-            // accept an error less than 1
-            if (zoom_rectified - max_zoom > 1)
+            // A zoom percentage error less than 1% is ignored.
+            const float max_error = 1.0f;
+
+            if (zoom_rectified - max_zoom > max_error)
             {
                 zoom_rectified = max_zoom;
             }
-            else if (min_zoom - zoom_rectified > 1)
+            else if (min_zoom - zoom_rectified > max_error)
             {
                 zoom_rectified = min_zoom;
             }
             else if (zoom == null)
             {
-                zoom = Math.Abs(zoom_rectified - m_zoom) <= 1 ? m_zoom : zoom_rectified;
+                zoom = Math.Abs(zoom_rectified - m_zoom) <= max_error ? m_zoom : zoom_rectified;
                 zoom_factor = null;
                 return;
             }
@@ -1239,11 +1256,7 @@ namespace ComicReader.Views
                 return;
             }
 
-            double? zoom_coefficient_boxed = ZoomCoefficient();
-            if (zoom_coefficient_boxed == null) return;
-            double zoom_coefficient = zoom_coefficient_boxed.Value;
-
-            if (Frames[0].Container == null || Frames[Frames.Count - 1].Container == null)
+            if (Frames.Count == 0)
             {
                 return;
             }
@@ -1252,25 +1265,62 @@ namespace ComicReader.Views
             Log("Adjusting padding");
 #endif
 
-            double zoom_factor = min_zoom * zoom_coefficient;
-            double inner_length = ViewportParallelLength / zoom_factor;
-            double new_start = (inner_length - FrameParallelLength(0)) / 2;
-            double new_end = (inner_length - FrameParallelLength(Frames.Count - 1)) / 2;
+            double padding_start = PaddingStartFinal;
+            do
+            {
+                int frame_idx = 0;
 
-            new_start = Math.Max(0.0, new_start);
-            new_end = Math.Max(0.0, new_end);
+                if (Frames[frame_idx].Container == null)
+                {
+                    break;
+                }
 
-            FillFinalVal();
-            m_padding_start_final = new_start;
-            m_padding_end_final = new_end;
+                double? zoom_coefficient = ZoomCoefficient(frame_idx);
+
+                if (!zoom_coefficient.HasValue)
+                {
+                    break;
+                }
+
+                double zoom_factor = min_zoom * zoom_coefficient.Value;
+                double inner_length = ViewportParallelLength / zoom_factor;
+                padding_start = (inner_length - FrameParallelLength(frame_idx)) / 2;
+                padding_start = Math.Max(0.0, padding_start);
+            } while (false);
+
+            double padding_end = PaddingEndFinal;
+            do
+            {
+                int frame_idx = Frames.Count - 1;
+
+                if (Frames[frame_idx].Container == null)
+                {
+                    break;
+                }
+
+                double? zoom_coefficient = ZoomCoefficient(frame_idx);
+
+                if (!zoom_coefficient.HasValue)
+                {
+                    break;
+                }
+
+                double zoom_factor = min_zoom * zoom_coefficient.Value;
+                double inner_length = ViewportParallelLength / zoom_factor;
+                padding_end = (inner_length - FrameParallelLength(frame_idx)) / 2;
+                padding_end = Math.Max(0.0, padding_end);
+            } while (false);
+
+            PaddingStartFinal = padding_start;
+            PaddingEndFinal = padding_end;
 
             if (IsVertical)
             {
-                ThisListView.Padding = new Thickness(0.0, new_start, 0.0, new_end);
+                ThisListView.Padding = new Thickness(0.0, padding_start, 0.0, padding_end);
             }
             else
             {
-                ThisListView.Padding = new Thickness(new_start, 0.0, new_end, 0.0);
+                ThisListView.Padding = new Thickness(padding_start, 0.0, padding_end, 0.0);
             }
         }
 

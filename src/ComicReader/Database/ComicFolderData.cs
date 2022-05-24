@@ -172,27 +172,48 @@ namespace ComicReader.Database
         protected override RawTask CreateCoverCache()
         {
             if (ImageCount == 0)
+            {
                 return Task.FromResult(new TaskResult(TaskException.Failure));
+            }
+
             CoverFileCache = ImageFiles[0].Name;
             return Task.FromResult(new TaskResult());
         }
 
         protected override async Task<StorageFile> GetCoverCache()
         {
-            if (CoverFileCache.Length == 0) return null;
+            if (CoverFileCache.Length == 0)
+            {
+                return null;
+            }
 
-            TaskResult r = await SetFolder();
-            if (!r.Successful) return null;
+            TaskResult result = await SetFolder();
+            if (!result.Successful)
+            {
+                return null;
+            }
 
             IStorageItem item = await Folder.TryGetItemAsync(CoverFileCache);
-            if (!(item is StorageFile)) return null;
+            if (!(item is StorageFile))
+            {
+                return null;
+            }
+
             return (StorageFile)item;
         }
 
         protected override async RawTask ReloadImages(LockContext db)
         {
-            TaskResult r = await SetFolder();
-            if (!r.Successful) return r;
+            if (IsExternal)
+            {
+                return new TaskResult();
+            }
+
+            TaskResult result = await SetFolder();
+            if (!result.Successful)
+            {
+                return result;
+            }
 
             // Load all images.
             Log("Retrieving images in '" + Location + "'");
@@ -207,8 +228,8 @@ namespace ComicReader.Database
                 query_options.FileTypeFilter.Add(type);
             }
 
-            var query = Folder.CreateFileQueryWithOptions(query_options);
-            var img_files = await query.GetFilesAsync();
+            StorageFileQueryResult query = Folder.CreateFileQueryWithOptions(query_options);
+            IReadOnlyList<StorageFile> img_files = await query.GetFilesAsync();
 
             // Sort by display name.
             ImageFiles = img_files.OrderBy(x => x.DisplayName,

@@ -60,7 +60,7 @@ namespace ComicReader.Utils
 
     public class ImageLoader
     {
-        private static void _Log(string text)
+        private static void Log(string text)
         {
             Utils.Debug.Log("Image Loader: " + text);
         }
@@ -72,7 +72,7 @@ namespace ComicReader.Utils
             List<ImageLoaderToken> tokens_cpy = new List<ImageLoaderToken>(tokens);
 
 #if DEBUG_LOG_LOAD
-            _Log("Loading " + tokens_cpy.Count.ToString() + " images");
+            Log("Loading " + tokens_cpy.Count.ToString() + " images");
 #endif
 
             bool use_origin_size =
@@ -91,7 +91,7 @@ namespace ComicReader.Utils
                 if (cancellation_lock.CancellationRequested)
                 {
 #if DEBUG_LOG_LOAD
-                    _Log("Task cancelled");
+                    Log("Task cancelled");
 #endif
                     return new TaskResult(TaskException.Cancellation);
                 }
@@ -101,15 +101,15 @@ namespace ComicReader.Utils
 
                 // Lazy load.
                 ComicData comic = token.Comic;
-                TaskResult r = await comic.UpdateImages(db, cover_only: token.Index < 0, reload: false);
+                TaskResult result = await comic.UpdateImages(db, cover_only: token.Index < 0, reload: false);
 
                 // Skip tokens whose comic folder cannot be reached.
-                if (!r.Successful)
+                if (!result.Successful)
                 {
-                    _Log("Token " + token.Index.ToString() + "(" + token_processed.ToString() + ") skipped, failed to update comic images");
+                    Log("Token " + token.Index.ToString() + "(" + token_processed.ToString() + ") skipped, failed to update comic images");
                     int token_before = tokens_cpy.Count;
                     tokens_cpy.RemoveAll(x => x.Comic == comic);
-                    _Log((tokens_cpy.Count - token_before).ToString() + " tokens with the same comic were removed.");
+                    Log((token_before - tokens_cpy.Count).ToString() + " tokens with the same comic were removed.");
                     all_token_success = false;
                     continue;
                 }
@@ -120,7 +120,7 @@ namespace ComicReader.Utils
                 {
                     if (stream == null)
                     {
-                        _Log("Failed to get img stream " + token.Index.ToString() + ", skipped");
+                        Log("Failed to get img stream " + token.Index.ToString() + ", skipped");
                         all_token_success = false;
                         continue;
                     }
@@ -143,7 +143,7 @@ namespace ComicReader.Utils
                         catch (Exception e)
                         {
                             img_load_success = false;
-                            _Log("Skipped token " + token.Index.ToString() + ", image corrupted. " + e.ToString());
+                            Log("Skipped token " + token.Index.ToString() + ", image corrupted. " + e.ToString());
                         }
 
                         completion_src.SetResult(true);
@@ -207,7 +207,7 @@ namespace ComicReader.Utils
                         }
 
 #if DEBUG_LOG_LOAD
-                        _Log("Token " + token_i.ToString() + " (idx=" + token.Index.ToString() + ") loaded");
+                        Log("Token " + token_i.ToString() + " (idx=" + token.Index.ToString() + ") loaded");
 #endif
 
                         completion_src.SetResult(true);
@@ -218,7 +218,7 @@ namespace ComicReader.Utils
             }
 
 #if DEBUG_LOG_LOAD
-            _Log("All tokens loaded (trig_update=" + trig_update.ToString() + ")");
+            Log("All tokens loaded (trig_update=" + trig_update.ToString() + ")");
 #endif
 
             if (!all_token_success)
