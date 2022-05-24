@@ -95,6 +95,9 @@
                         <controls:SettingExpander.InnerContent>
                             <StackPanel Orientation="Vertical">
                                 <controls:ReaderSettingPanel DataContext="{x:Bind Shared.ReaderSettings}" />
+                                <Grid Height="15" />
+                                <TextBlock x:Uid="TransitionAnimation" Style="{StaticResource SettingsPageBodyTextBlock}" />
+                                <ToggleSwitch IsOn="{x:Bind Shared.TransitionAnimation, Mode=TwoWay}" />
                             </StackPanel>
                         </controls:SettingExpander.InnerContent>
                     </controls:SettingExpander>

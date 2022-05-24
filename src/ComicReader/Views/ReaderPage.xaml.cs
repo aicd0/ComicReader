@@ -463,14 +463,14 @@ namespace ComicReader.Views
         }
 
         // Modifier - Manipulation
-        public async Task<bool> MoveFrame(int increment, bool disable_animation)
+        public async Task<bool> MoveFrame(int increment)
         {
             if (!await UpdatePage(true))
             {
                 return false;
             }
 
-            InternalMoveFrame(increment, disable_animation);
+            InternalMoveFrame(increment, !XmlDatabase.Settings.TransitionAnimation);
             return true;
         }
 
@@ -1085,13 +1085,15 @@ namespace ComicReader.Views
         private void SetScrollViewerZoom(ref double? horizontal_offset, ref double? vertical_offset, ref float? zoom, out float? zoom_factor)
         {
             int frame_idx = PageToFrame(Page, out _, out _);
+
             if (frame_idx < 0 || frame_idx >= Frames.Count)
             {
                 frame_idx = 0;
             }
+
             double? zoom_coefficient_boxed = ZoomCoefficient(frame_idx);
 
-            if (zoom_coefficient_boxed == null)
+            if (!zoom_coefficient_boxed.HasValue)
             {
                 zoom = m_zoom;
                 zoom_factor = null;
@@ -2098,7 +2100,7 @@ namespace ComicReader.Views
 
                 PointerPoint pt = e.GetCurrentPoint(null);
                 int delta = -pt.Properties.MouseWheelDelta / 120;
-                await reader.MoveFrame(delta, false);
+                await reader.MoveFrame(delta);
 
                 // Set e.Handled to true to suppress the default behavior of scroll viewer (which will override ours)
                 e.Handled = true;
@@ -2218,11 +2220,11 @@ namespace ComicReader.Views
 
                 if (velocity > 1.0)
                 {
-                    await reader.MoveFrame(-1, false);
+                    await reader.MoveFrame(-1);
                 }
                 else if (velocity < -1.0)
                 {
-                    await reader.MoveFrame(1, false);
+                    await reader.MoveFrame(1);
                 }
 
 #if DEBUG_LOG_MANIPULATION
@@ -2607,39 +2609,39 @@ namespace ComicReader.Views
                     case Windows.System.VirtualKey.Right:
                         if (reader.IsHorizontal && !Shared.ReaderSettings.IsLeftToRight)
                         {
-                            await reader.MoveFrame(-1, false);
+                            await reader.MoveFrame(-1);
                         }
                         else
                         {
-                            await reader.MoveFrame(1, false);
+                            await reader.MoveFrame(1);
                         }
                         break;
 
                     case Windows.System.VirtualKey.Left:
                         if (reader.IsHorizontal && !Shared.ReaderSettings.IsLeftToRight)
                         {
-                            await reader.MoveFrame(1, false);
+                            await reader.MoveFrame(1);
                         }
                         else
                         {
-                            await reader.MoveFrame(-1, false);
+                            await reader.MoveFrame(-1);
                         }
                         break;
 
                     case Windows.System.VirtualKey.Up:
-                        await reader.MoveFrame(-1, false);
+                        await reader.MoveFrame(-1);
                         break;
 
                     case Windows.System.VirtualKey.Down:
-                        await reader.MoveFrame(1, false);
+                        await reader.MoveFrame(1);
                         break;
 
                     case Windows.System.VirtualKey.PageUp:
-                        await reader.MoveFrame(-1, false);
+                        await reader.MoveFrame(-1);
                         break;
 
                     case Windows.System.VirtualKey.PageDown:
-                        await reader.MoveFrame(1, false);
+                        await reader.MoveFrame(1);
                         break;
 
                     case Windows.System.VirtualKey.Home:
@@ -2651,7 +2653,7 @@ namespace ComicReader.Views
                         break;
 
                     case Windows.System.VirtualKey.Space:
-                        await reader.MoveFrame(1, false);
+                        await reader.MoveFrame(1);
                         break;
 
                     case Windows.System.VirtualKey.F:

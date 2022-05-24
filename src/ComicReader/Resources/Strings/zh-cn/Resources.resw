@@ -605,4 +605,7 @@
   <data name="Default" xml:space="preserve">
     <value>默认</value>
   </data>
+  <data name="TransitionAnimation.Text" xml:space="preserve">
+    <value>翻页动画</value>
+  </data>
 </root>

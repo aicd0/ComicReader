@@ -1,14 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 using Windows.Storage;
-using Windows.Storage.AccessCache;
 using Windows.Storage.Pickers;
-using Windows.Storage.Streams;
 
 namespace ComicReader.Database
 {
@@ -25,6 +20,7 @@ namespace ComicReader.Database
         public bool LeftToRight = false;
         public bool VerticalContinuous = true;
         public bool HorizontalContinuous = false;
+        public bool TransitionAnimation = true;
         public DesignData.PageArrangementEnum VerticalPageArrangement = DesignData.PageArrangementEnum.Single;
         public DesignData.PageArrangementEnum HorizontalPageArrangement = DesignData.PageArrangementEnum.DualCoverMirror;
         public bool SaveHistory = true;

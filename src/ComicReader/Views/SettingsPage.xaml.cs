@@ -66,14 +66,18 @@ namespace ComicReader.Views
             }
         }
 
-        private bool m_IsRescanning = true;
-        public bool IsRescanning
+        private bool m_TransitionAnimation = true;
+        public bool TransitionAnimation
         {
-            get => m_IsRescanning;
+            get => m_TransitionAnimation;
             set
             {
-                m_IsRescanning = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsRescanning"));
+                if (m_TransitionAnimation != value)
+                {
+                    m_TransitionAnimation = value;
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("TransitionAnimation"));
+                    OnSettingsChanged?.Invoke();
+                }
             }
         }
 
@@ -206,6 +210,17 @@ namespace ComicReader.Views
             }
         }
 
+        private bool m_IsRescanning = true;
+        public bool IsRescanning
+        {
+            get => m_IsRescanning;
+            set
+            {
+                m_IsRescanning = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsRescanning"));
+            }
+        }
+
         public DesignData.ReaderSettingViewModel ReaderSettings => MainPageShared.ReaderSettings;
     }
 
@@ -326,6 +341,7 @@ namespace ComicReader.Views
             await XmlDatabaseManager.WaitLock();
 
             Shared.DefaultArchiveCodePage = XmlDatabase.Settings.DefaultArchiveCodePage;
+            Shared.TransitionAnimation = XmlDatabase.Settings.TransitionAnimation;
             Shared.IsClearHistoryEnabled = XmlDatabase.History.Items.Count > 0;
             Shared.HistorySaveBrowsingHistory = XmlDatabase.Settings.SaveHistory;
             Shared.AdvancedDebugMode = XmlDatabase.Settings.DebugMode;
@@ -410,6 +426,7 @@ namespace ComicReader.Views
             await XmlDatabaseManager.WaitLock();
 
             XmlDatabase.Settings.DefaultArchiveCodePage = Shared.DefaultArchiveCodePage;
+            XmlDatabase.Settings.TransitionAnimation = Shared.TransitionAnimation;
             XmlDatabase.Settings.SaveHistory = Shared.HistorySaveBrowsingHistory;
             XmlDatabase.Settings.DebugMode = Shared.AdvancedDebugMode;
 

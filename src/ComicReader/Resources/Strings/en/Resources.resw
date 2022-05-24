@@ -605,4 +605,7 @@ Category2: tag4/tag5
   <data name="Default" xml:space="preserve">
     <value>Default</value>
   </data>
+  <data name="TransitionAnimation.Text" xml:space="preserve">
+    <value>Transition animation</value>
+  </data>
 </root>
