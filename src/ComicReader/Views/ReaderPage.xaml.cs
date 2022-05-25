@@ -3,6 +3,7 @@
 //#define DEBUG_LOG_JUMP
 //#define DEBUG_LOG_VIEW_CHANGE
 //#define DEBUG_LOG_UPDATE_PAGE
+//#define DEBUG_LOG_UPDATE_IMAGE
 //#define DEBUG_LOG_MANIPULATION
 #endif
 
@@ -12,13 +13,13 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
-using Windows.Devices.Input;
 using Windows.Foundation;
 using Windows.UI.Core;
 using Windows.UI.Input;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
+using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
@@ -188,7 +189,7 @@ namespace ComicReader.Views
             }
         }
 
-        public DesignData.ReaderSettingViewModel ReaderSettings => NavigationPageShared.ReaderSettings;
+        public ReaderSettingViewModel ReaderSettings => NavigationPageShared.ReaderSettings;
 
         public void UpdateReaderUI()
         {
@@ -277,10 +278,25 @@ namespace ComicReader.Views
 
         public void Reset()
         {
+#if DEBUG_LOG_LOAD
+            Log("========== Reset ==========");
+#endif
+
             Comic = null;
             InitialPage = 0.0;
             OnLoaded = null;
+            ResetFrames();
+            SyncFinalVal();
 
+            Loaded = false;
+            LoadedFirstPage = false;
+            LoadedLastPage = false;
+            LoadedInitialPage = false;
+            LoadedImages = false;
+        }
+
+        private void ResetFrames()
+        {
             for (int i = 0; i < Frames.Count; ++i)
             {
                 ReaderFrameViewModel item = Frames[i];
@@ -290,18 +306,6 @@ namespace ComicReader.Views
                 item.ImageL = null;
                 item.ImageR = null;
             }
-
-            Loaded = false;
-            LoadedFirstPage = false;
-            LoadedLastPage = false;
-            LoadedInitialPage = false;
-            LoadedImages = false;
-
-            SyncFinalVal();
-
-#if DEBUG_LOG_LOAD
-            Log("========== Reset ==========");
-#endif
         }
 
         private Utils.CancellationLock m_lock_update_frame = new Utils.CancellationLock();
@@ -483,7 +487,14 @@ namespace ComicReader.Views
 
             double? horizontal_offset = IsHorizontal ? parallel_offset : null;
             double? vertical_offset = IsVertical ? parallel_offset : null;
-            return InternalSetScrollViewer(zoom, horizontal_offset, vertical_offset, disable_animation);
+
+            return InternalSetScrollViewer(new SetScrollViewerContext
+            {
+                Zoom = zoom,
+                HorizontalOffset = horizontal_offset,
+                VerticalOffset = vertical_offset,
+                DisableAnimation = disable_animation,
+            });
         }
 
         public bool SetScrollViewer2(float? zoom, double? page, bool disable_animation)
@@ -493,17 +504,23 @@ namespace ComicReader.Views
                 return false;
             }
 
-            return InternalSetScrollViewer(zoom, page, disable_animation);
+            return InternalSetScrollViewer2(zoom, page, disable_animation);
         }
 
-        public bool SetScrollViewer(float? zoom, double? horizontal_offset, double? vertical_offset, bool disable_animation)
+        public bool SetScrollViewer3(float? zoom, double? horizontal_offset, double? vertical_offset, bool disable_animation)
         {
             if (!Loaded)
             {
                 return false;
             }
 
-            return InternalSetScrollViewer(zoom, horizontal_offset, vertical_offset, disable_animation);
+            return InternalSetScrollViewer(new SetScrollViewerContext
+            {
+                Zoom = zoom,
+                HorizontalOffset = horizontal_offset,
+                VerticalOffset = vertical_offset,
+                DisableAnimation = disable_animation,
+            });
         }
 
         public async Task<bool> UpdateImages(LockContext db, bool use_final)
@@ -518,7 +535,7 @@ namespace ComicReader.Views
         }
 
         // Modifier - Events
-        private Utils.CancellationLock m_lock_container_loaded = new Utils.CancellationLock();
+        private readonly Utils.CancellationLock m_lock_container_loaded = new Utils.CancellationLock();
         public async Task OnContainerLoaded(ReaderFrameViewModel ctx)
         {
             LockContext db = new LockContext();
@@ -552,7 +569,7 @@ namespace ComicReader.Views
                 {
                     await Utils.C0.Sync(delegate
                     {
-                        SetScrollViewer1(m_zoom, null, true);
+                        SetScrollViewer1(Zoom, null, true);
                         AdjustPadding();
                     });
 
@@ -582,7 +599,7 @@ namespace ComicReader.Views
                 if (!LoadedInitialPage && LoadedFirstPage)
                 {
                     // Try jump to the initial page.
-                    LoadedInitialPage = InternalSetScrollViewer(null, InitialPage, true);
+                    LoadedInitialPage = InternalSetScrollViewer2(null, InitialPage, true);
 
 #if DEBUG_LOG_LOAD
                     if (LoadedInitialPage)
@@ -636,7 +653,7 @@ namespace ComicReader.Views
                 return false;
             }
 
-            if (!await UpdatePage(false))
+            if (!await UpdatePage(true))
             {
                 return false;
             }
@@ -690,6 +707,8 @@ namespace ComicReader.Views
                     float zoom = Math.Min(Zoom, 100f);
 
                     // Update Frames.
+                    ResetFrames();
+                    
                     for (int i = 0; i < PageCount; ++i)
                     {
                         if (m_lock_page_rearrange.CancellationRequested)
@@ -735,16 +754,14 @@ namespace ComicReader.Views
 
         // Observer - Frames
         public ObservableCollection<ReaderFrameViewModel> Frames { get; private set; } = new ObservableCollection<ReaderFrameViewModel>();
-        
+
         // Observer - Pages
         public int PageCount => Comic.ImageCount;
 
-        private double m_page = 0.0;
-        public int Page => (int)Math.Round(m_page);
-        public double PageReal => m_page;
+        public double PageReal { get; private set; } = 0.0;
+        public int Page => (int)Math.Round(PageReal);
 
-        private float m_zoom = 90f;
-        public float Zoom => m_zoom;
+        public float Zoom { get; private set; } = 90f;
 
         // Observer - Scroll Viewer
         public float ZoomFactor => ThisScrollViewer.ZoomFactor;
@@ -853,7 +870,7 @@ namespace ComicReader.Views
         }
 
         // Internal - Variables
-        private ReaderPageShared m_shared;
+        private readonly ReaderPageShared m_shared;
         private bool m_final_value_set = false;
 
         // Internal - Loader States
@@ -891,53 +908,65 @@ namespace ComicReader.Views
                 viewport_width / frame_width);
         }
 
-        private double? PageOffsetRaw(int page)
+        private Tuple<double, double> PageOffset(double page)
         {
-            page = Math.Max(1, page);
-            page = Math.Min(PageCount, page);
-            int frame = PageToFrame(page, out _, out _);
-            double? parallel_offset = FrameOffsetRaw(frame);
-
-            if (!parallel_offset.HasValue)
-            {
-                return null;
-            }
-
-            return parallel_offset;
-        }
-
-        private double? PageOffset(double page)
-        {
-            page = Math.Max(1.0, page);
-            page = Math.Min(PageCount + 1, page);
-
             int page_int = (int)page;
-            double page_frac = page - page_int;
+            page_int = Math.Max(page_int, 1);
+            page_int = Math.Min(page_int, PageCount + 1);
 
-            // Calculate parallel offset of this page.
-            double? this_offset = PageOffsetRaw(page_int);
+            int frame = PageToFrame(page_int, out _, out int neighbor);
+            FrameOffsets offsets = GetFrameOffsets(frame);
 
-            if (!this_offset.HasValue)
+            if (offsets == null)
             {
                 return null;
             }
 
-            double offset = this_offset.Value;
+            double perpendicular_offset = offsets.PerpendicularCenter * ZoomFactorFinal - ViewportPerpendicularLength * 0.5;
 
-            // Calculate parallel offset of next page and mix with this page.
-            double? _next_offset = PageOffsetRaw(page_int + 1);
+            int page_min;
+            int page_max;
 
-            if (_next_offset.HasValue)
+            if (neighbor == -1)
             {
-                offset += page_frac * (_next_offset.Value - this_offset.Value);
+                page_min = page_max = page_int;
+            }
+            else
+            {
+                page_min = Math.Min(page_int, neighbor);
+                page_max = Math.Max(page_int, neighbor);
             }
 
-            offset = offset * ZoomFactorFinal - ViewportParallelLength * 0.5;
-            offset = Math.Max(0.0, offset);
-            return offset;
+            double parallel_offset;
+
+            if (page_min <= page && page <= page_max)
+            {
+                parallel_offset = offsets.ParallelCenter;
+            }
+            else if (page < page_min)
+            {
+                double page_frac = (0.5 - page_min + page) * 2.0;
+                parallel_offset = offsets.ParallelBegin + page_frac * (offsets.ParallelCenter - offsets.ParallelBegin);
+            }
+            else
+            {
+                double page_frac = (page - page_max) * 2.0;
+                parallel_offset = offsets.ParallelCenter + page_frac * (offsets.ParallelEnd - offsets.ParallelCenter);
+            }
+
+            parallel_offset = parallel_offset * ZoomFactorFinal - ViewportParallelLength * 0.5;
+            return new Tuple<double, double>(parallel_offset, perpendicular_offset);
         }
 
-        private double? FrameOffsetRaw(int frame)
+        private class FrameOffsets
+        {
+            public double ParallelBegin;
+            public double ParallelCenter;
+            public double ParallelEnd;
+            public double PerpendicularCenter;
+        };
+
+        private FrameOffsets GetFrameOffsets(int frame)
         {
             if (frame < 0 || frame >= Frames.Count)
             {
@@ -952,9 +981,11 @@ namespace ComicReader.Views
                 return null;
             }
 
-            var frame_transform = container.TransformToVisual(ThisListView);
+            GeneralTransform frame_transform = container.TransformToVisual(ThisListView);
             Point frame_position = frame_transform.TransformPoint(new Point(0.0, 0.0));
+
             double parallel_offset = IsVertical ? frame_position.Y : frame_position.X;
+            double perpendicular_offset = IsVertical ? frame_position.X : frame_position.Y;
 
             bool left_to_right = m_shared.ReaderSettings.IsLeftToRight;
 
@@ -963,89 +994,92 @@ namespace ComicReader.Views
                 parallel_offset -= item.FrameMargin.Left + item.FrameWidth + item.FrameMargin.Right;
             }
 
-            parallel_offset += IsVertical ?
-                item.FrameMargin.Top + item.FrameHeight * 0.5 :
-                item.FrameMargin.Left + item.FrameWidth * 0.5;
-
-            return parallel_offset;
+            return new FrameOffsets
+            {
+                ParallelBegin = parallel_offset,
+                ParallelCenter = parallel_offset + (IsVertical ?
+                    item.FrameMargin.Top + item.FrameHeight * 0.5 :
+                    item.FrameMargin.Left + item.FrameWidth * 0.5),
+                ParallelEnd = parallel_offset + (IsVertical ?
+                    item.FrameMargin.Top + item.FrameHeight + item.FrameMargin.Bottom :
+                    item.FrameMargin.Left + item.FrameWidth + item.FrameMargin.Right),
+                PerpendicularCenter = perpendicular_offset + (IsVertical ?
+                    item.FrameMargin.Left + item.FrameWidth * 0.5 :
+                    item.FrameMargin.Top + item.FrameHeight * 0.5),
+            };
         }
 
-        private double? FrameOffset(double frame)
-        {
-            frame = Math.Max(0, frame);
-            frame = Math.Min(Frames.Count - 1, frame);
-
-            int frame_int = (int)frame;
-            double frame_frac = frame - frame_int;
-
-            // Calculate parallel offset of this page.
-            double? this_offset = FrameOffsetRaw(frame_int);
-
-            if (!this_offset.HasValue)
-            {
-                return null;
-            }
-
-            double offset = this_offset.Value;
-
-            // Calculate parallel offset of next page and mix with this page.
-            double? _next_offset = FrameOffsetRaw(frame_int + 1);
-
-            if (_next_offset.HasValue)
-            {
-                offset += frame_frac * (_next_offset.Value - this_offset.Value);
-            }
-
-            offset = offset * ZoomFactorFinal - ViewportParallelLength * 0.5;
-            offset = Math.Max(0.0, offset);
-            return offset;
-        }
-
-        private void InternalMoveFrame(int increment, bool disable_animation)
+        /// <summary>
+        /// We assume that Page is already up-to-date at this moment.
+        /// </summary>
+        /// <param name="increment"></param>
+        /// <param name="disable_animation"></param>
+        private bool InternalMoveFrame(int increment, bool disable_animation)
         {
             if (Frames.Count == 0)
             {
-                return;
+                return false;
             }
 
-            int frame_idx = PageToFrame(Page, out _, out _);
-            frame_idx += increment;
-            frame_idx = Math.Min(Frames.Count - 1, frame_idx);
-            frame_idx = Math.Max(0, frame_idx);
-            double? parallel_offset = FrameOffset(frame_idx);
-
-            if (!parallel_offset.HasValue || Math.Abs(parallel_offset.Value - ParallelOffsetFinal) < 1.0)
-            {
-                // IMPORTANT: Ignore the request if target offset is really close to the current offset,
-                // or else it could stuck in a dead loop. (See reference in OnScrollViewerViewChanged())
-                return;
-            }
-
+            int frame = PageToFrame(Page, out _, out _);
+            frame += increment;
+            frame = Math.Min(Frames.Count - 1, frame);
+            frame = Math.Max(0, frame);
+            double page = Frames[frame].Page;
             float? zoom = Zoom > 101f ? 100f : (float?)null;
-            SetScrollViewer1(zoom, parallel_offset, disable_animation);
+
+            return InternalSetScrollViewer2(zoom, page, disable_animation);
         }
 
-        private bool InternalSetScrollViewer(float? zoom, double? page, bool disable_animation)
+        private bool InternalSetScrollViewer2(float? zoom, double? page, bool disable_animation)
         {
             double? horizontal_offset = null;
             double? vertical_offset = null;
 
             if (page.HasValue)
             {
-                double? parallel_offset = PageOffset(page.Value);
+                Tuple<double, double> offsets = PageOffset(page.Value);
 
-                if (!parallel_offset.HasValue)
+                if (offsets == null)
                 {
                     return false;
                 }
 
-                ConvertOffset(ref horizontal_offset, ref vertical_offset, parallel_offset, null);
+                if (Math.Abs(offsets.Item1 - ParallelOffsetFinal) < 1.0)
+                {
+                    // IMPORTANT: Ignore the request if target offset is really close to the current offset,
+                    // or else it could stuck in a dead loop. (See reference in OnScrollViewerViewChanged())
+                    return true;
+                }
+
+                ConvertOffset(ref horizontal_offset, ref vertical_offset, offsets.Item1, offsets.Item2);
             }
 
-            return InternalSetScrollViewer(zoom, horizontal_offset, vertical_offset, disable_animation);
+            return InternalSetScrollViewer(new SetScrollViewerContext
+            {
+                Zoom = zoom,
+                PagePrediction = page,
+                HorizontalOffset = horizontal_offset,
+                VerticalOffset = vertical_offset,
+                DisableAnimation = disable_animation,
+            });
         }
 
-        private bool InternalSetScrollViewer(float? zoom, double? horizontal_offset, double? vertical_offset, bool disable_animation)
+        private class SetScrollViewerContext
+        {
+            // Zoom
+            public float? Zoom = null;
+            public double? PagePrediction = null;
+
+            // Offset
+            public double? HorizontalOffset = null;
+            public double? VerticalOffset = null;
+            
+            // Animation
+            public bool DisableAnimation = false;
+        };
+
+        private bool InternalSetScrollViewer(SetScrollViewerContext ctx)
         {
             if (!LoadedFramework)
             {
@@ -1060,7 +1094,7 @@ namespace ComicReader.Views
                 + ",D=" + disable_animation.ToString());
 #endif
 
-            SetScrollViewerZoom(ref horizontal_offset, ref vertical_offset, ref zoom, out float? zoom_out);
+            SetScrollViewerZoom(ctx, out float? zoom_out);
 
 #if DEBUG_LOG_JUMP
             Log("ParamSetZoom: "
@@ -1069,81 +1103,112 @@ namespace ComicReader.Views
                 + ",H=" + horizontal_offset.ToString()
                 + ",V=" + vertical_offset.ToString());
 #endif
-            
-            if (!ChangeView(zoom_out, horizontal_offset, vertical_offset, disable_animation))
+
+            if (!ChangeView(zoom_out, ctx.HorizontalOffset, ctx.VerticalOffset, ctx.DisableAnimation))
             {
                 return false;
             }
 
-            m_zoom = zoom.Value;
-            m_shared.NavigationPageShared.ZoomInEnabled = m_zoom < max_zoom;
-            m_shared.NavigationPageShared.ZoomOutEnabled = m_zoom > min_zoom;
+            Zoom = ctx.Zoom.Value;
+            m_shared.NavigationPageShared.ZoomInEnabled = Zoom < max_zoom;
+            m_shared.NavigationPageShared.ZoomOutEnabled = Zoom > min_zoom;
             AdjustParallelOffset();
             return true;
         }
 
-        private void SetScrollViewerZoom(ref double? horizontal_offset, ref double? vertical_offset, ref float? zoom, out float? zoom_factor)
+        private void SetScrollViewerZoom(SetScrollViewerContext ctx, out float? zoom_factor)
         {
-            int frame_idx = PageToFrame(Page, out _, out _);
-
-            if (frame_idx < 0 || frame_idx >= Frames.Count)
+            // Calculate zoom coefficient prediction.
+            double zoom_coefficient_pred;
+            int frame_pred;
             {
-                frame_idx = 0;
+                int page = ctx.PagePrediction.HasValue ? (int)ctx.PagePrediction.Value : Page;
+                frame_pred = PageToFrame(page, out _, out _);
+
+                if (frame_pred < 0 || frame_pred >= Frames.Count)
+                {
+                    frame_pred = 0;
+                }
+
+                double? zoom_coefficient_pred_boxed = ZoomCoefficient(frame_pred);
+
+                if (!zoom_coefficient_pred_boxed.HasValue)
+                {
+                    ctx.Zoom = Zoom;
+                    zoom_factor = null;
+                    return;
+                }
+
+                zoom_coefficient_pred = zoom_coefficient_pred_boxed.Value;
             }
 
-            double? zoom_coefficient_boxed = ZoomCoefficient(frame_idx);
+            // Calculate zoom in percentage.
+            float zoom;
 
-            if (!zoom_coefficient_boxed.HasValue)
+            if (ctx.Zoom.HasValue)
             {
-                zoom = m_zoom;
+                zoom = ctx.Zoom.Value;
+            }
+            else
+            {
+                int frame = PageToFrame(Page, out _, out _);
+
+                if (frame < 0 || frame >= Frames.Count)
+                {
+                    frame = 0;
+                }
+
+                double zoom_coefficient = zoom_coefficient_pred;
+
+                if (frame != frame_pred)
+                {
+                    double? zoom_coefficient_boxed = ZoomCoefficient(frame);
+
+                    if (zoom_coefficient_boxed.HasValue)
+                    {
+                        zoom_coefficient = zoom_coefficient_boxed.Value;
+                    }
+                }
+
+                zoom = (float)(ZoomFactorFinal / zoom_coefficient);
+            }
+
+            zoom = Math.Min(zoom, max_zoom);
+            zoom = Math.Max(zoom, min_zoom);
+            ctx.Zoom = zoom;
+
+            // A zoom factor vary less than 1% will be ignored.
+            float zoom_factor_pred = (float)(zoom * zoom_coefficient_pred);
+
+            if (Math.Abs(zoom_factor_pred / ZoomFactorFinal - 1.0f) <= 0.01f)
+            {
                 zoom_factor = null;
                 return;
             }
 
-            double zoom_coefficient = zoom_coefficient_boxed.Value;
-            float zoom_rectified = zoom == null ? (float)(ZoomFactorFinal / zoom_coefficient) : (float)zoom;
+            zoom_factor = zoom_factor_pred;
 
-            // A zoom percentage error less than 1% is ignored.
-            const float max_error = 1.0f;
-
-            if (zoom_rectified - max_zoom > max_error)
+            // Apply zooming.
+            if (ctx.HorizontalOffset == null)
             {
-                zoom_rectified = max_zoom;
-            }
-            else if (min_zoom - zoom_rectified > max_error)
-            {
-                zoom_rectified = min_zoom;
-            }
-            else if (zoom == null)
-            {
-                zoom = Math.Abs(zoom_rectified - m_zoom) <= max_error ? m_zoom : zoom_rectified;
-                zoom_factor = null;
-                return;
+                ctx.HorizontalOffset = HorizontalOffsetFinal;
             }
 
-            zoom = zoom_rectified;
-            zoom_factor = (float)(zoom_rectified * zoom_coefficient);
-
-            if (horizontal_offset == null)
+            if (ctx.VerticalOffset == null)
             {
-                horizontal_offset = HorizontalOffsetFinal;
+                ctx.VerticalOffset = VerticalOffsetFinal;
             }
 
-            if (vertical_offset == null)
-            {
-                vertical_offset = VerticalOffsetFinal;
-            }
+            ctx.HorizontalOffset += ThisScrollViewer.ViewportWidth * 0.5;
+            ctx.HorizontalOffset *= (float)zoom_factor / ZoomFactorFinal;
+            ctx.HorizontalOffset -= ThisScrollViewer.ViewportWidth * 0.5;
 
-            horizontal_offset += ThisScrollViewer.ViewportWidth * 0.5;
-            horizontal_offset *= (float)zoom_factor / ZoomFactorFinal;
-            horizontal_offset -= ThisScrollViewer.ViewportWidth * 0.5;
+            ctx.VerticalOffset += ThisScrollViewer.ViewportHeight * 0.5;
+            ctx.VerticalOffset *= (float)zoom_factor / ZoomFactorFinal;
+            ctx.VerticalOffset -= ThisScrollViewer.ViewportHeight * 0.5;
 
-            vertical_offset += ThisScrollViewer.ViewportHeight * 0.5;
-            vertical_offset *= (float)zoom_factor / ZoomFactorFinal;
-            vertical_offset -= ThisScrollViewer.ViewportHeight * 0.5;
-
-            horizontal_offset = Math.Max(0.0, horizontal_offset.Value);
-            vertical_offset = Math.Max(0.0, vertical_offset.Value);
+            ctx.HorizontalOffset = Math.Max(0.0, ctx.HorizontalOffset.Value);
+            ctx.VerticalOffset = Math.Max(0.0, ctx.VerticalOffset.Value);
         }
 
         private bool ChangeView(float? zoom_factor, double? horizontal_offset, double? vertical_offset, bool disable_animation)
@@ -1326,7 +1391,7 @@ namespace ComicReader.Views
             }
         }
 
-        private Utils.CancellationLock m_lock_update_page = new Utils.CancellationLock();
+        private readonly Utils.CancellationLock m_lock_update_page = new Utils.CancellationLock();
         private async Task<bool> UpdatePage(bool use_final)
         {
             if (!LoadedFramework)
@@ -1337,11 +1402,14 @@ namespace ComicReader.Views
             await m_lock_update_page.WaitAsync();
             try
             {
-                double parallel_offset = use_final ? ParallelOffsetFinal : ParallelOffset;
-                double zoom_factor = use_final ? ZoomFactorFinal : ZoomFactor;
-                double current_offset = (parallel_offset + ViewportParallelLength * 0.5) / zoom_factor;
+                double offset;
+                {
+                    double parallel_offset = use_final ? ParallelOffsetFinal : ParallelOffset;
+                    double zoom_factor = use_final ? ZoomFactorFinal : ZoomFactor;
+                    offset = (parallel_offset + ViewportParallelLength * 0.5) / zoom_factor;
+                }
 
-                // Use binary search to locate the current page.
+                // Locate current frame using binary search.
                 if (Frames.Count == 0)
                 {
                     return false;
@@ -1359,14 +1427,14 @@ namespace ComicReader.Views
 
                     int i = (begin + end + 1) / 2;
                     ReaderFrameViewModel item = Frames[i];
-                    double? offset = FrameOffsetRaw(i);
+                    FrameOffsets offsets = GetFrameOffsets(i);
 
-                    if (!offset.HasValue)
+                    if (offsets == null)
                     {
                         return false;
                     }
 
-                    if (offset.Value < current_offset)
+                    if (offsets.ParallelBegin < offset)
                     {
                         begin = i;
                     }
@@ -1377,23 +1445,46 @@ namespace ComicReader.Views
                 }
 
                 ReaderFrameViewModel frame = Frames[begin];
-                int page = Math.Max(frame.PageL, frame.PageR);
+                FrameOffsets frame_offsets = GetFrameOffsets(begin);
 
-                double? this_offset = PageOffsetRaw(page);
-                double? next_offset = PageOffsetRaw(page + 1);
-                double res;
+                // Convert offset to page.
+                int page_min;
+                int page_max;
 
-                if (this_offset.HasValue && next_offset.HasValue &&
-                    this_offset.Value < current_offset && current_offset <= next_offset.Value)
+                if (frame.PageL == -1 && frame.PageR == -1)
                 {
-                    res = page + (current_offset - this_offset.Value) / (next_offset.Value - this_offset.Value);
+                    // This could happen when we are rearranging pages.
+                    return false;
+                }
+
+                if (frame.PageL == -1)
+                {
+                    page_min = page_max = frame.PageR;
+                }
+                else if (frame.PageR == -1)
+                {
+                    page_min = page_max = frame.PageL;
                 }
                 else
                 {
-                    res = page;
+                    page_min = Math.Min(frame.PageL, frame.PageR);
+                    page_max = Math.Max(frame.PageL, frame.PageR);
                 }
 
-                m_page = res;
+                double page;
+
+                if (offset < frame_offsets.ParallelCenter)
+                {
+                    double page_frac = (offset - frame_offsets.ParallelBegin) / (frame_offsets.ParallelCenter - frame_offsets.ParallelBegin);
+                    page = page_min - 0.5 + page_frac * 0.5;
+                }
+                else
+                {
+                    double page_frac = (offset - frame_offsets.ParallelCenter) / (frame_offsets.ParallelEnd - frame_offsets.ParallelCenter);
+                    page = page_max + page_frac * 0.5;
+                }
+
+                PageReal = page;
 
 #if DEBUG_LOG_UPDATE_PAGE
                 Log("Page updated (" +
@@ -1412,10 +1503,10 @@ namespace ComicReader.Views
             }
         }
 
-        private Utils.CancellationLock m_lock_update_images = new Utils.CancellationLock();
+        private readonly Utils.CancellationLock m_lock_update_images = new Utils.CancellationLock();
         private async Task InternalUpdateImages(LockContext db, bool remove_out_of_view = true)
         {
-#if DEBUG_LOG_LOAD
+#if DEBUG_LOG_UPDATE_IMAGE
             Log("Updating images (page " + Page.ToString() + ")");
 #endif
 
@@ -1619,9 +1710,9 @@ namespace ComicReader.Views
         private ReaderModel HorizontalReader { get; set; }
         private ObservableCollection<ReaderImagePreviewViewModel> PreviewDataSource { get; set; }
 
-        private Utils.Tab.TabManager m_tab_manager;
+        private readonly Utils.Tab.TabManager m_tab_manager;
         private ComicData m_comic;
-        private GestureRecognizer m_gesture_recognizer;
+        private readonly GestureRecognizer m_gesture_recognizer;
 
         // Bottom Tile
         private bool m_bottom_tile_showed = false;
@@ -1630,7 +1721,7 @@ namespace ComicReader.Views
         private DateTimeOffset m_bottom_tile_hide_request_time = DateTimeOffset.Now;
 
         // Locks
-        private Utils.CancellationLock m_lock_load_comic = new Utils.CancellationLock();
+        private readonly Utils.CancellationLock m_lock_load_comic = new Utils.CancellationLock();
 
         public ReaderPage()
         {
@@ -1781,7 +1872,6 @@ namespace ComicReader.Views
                 VerticalReader.Comic = m_comic;
                 HorizontalReader.Comic = m_comic;
 
-                // Additional procedures for comics in the library.
                 if (!m_comic.IsExternal)
                 {
                     // Mark as read.
@@ -1791,15 +1881,22 @@ namespace ComicReader.Views
                     await HistoryDataManager.Add(m_comic.Id, m_comic.Title1, true);
 
                     // Update image files.
-                    TaskResult r = await m_comic.UpdateImages(db, cover_only: false, reload: true);
+                    TaskResult result = await m_comic.UpdateImages(db, cover_only: false, reload: true);
 
-                    if (!r.Successful)
+                    if (!result.Successful)
                     {
-                        Log("Failed to load images of '" + m_comic.Location + "'. " + r.ExceptionType.ToString());
+                        Log("Failed to load images of '" + m_comic.Location + "'. " + result.ExceptionType.ToString());
                         Shared.ReaderStatus = ReaderStatusEnum.Error;
                         return;
                     }
+                }
 
+                // Load info.
+                await LoadComicInfo();
+
+                // Load image frames.
+                if (!m_comic.IsExternal)
+                {
                     // Set initial page.
                     reader.InitialPage = m_comic.LastPosition;
 
@@ -1810,13 +1907,14 @@ namespace ComicReader.Views
                         await HorizontalReader.UpdateFrame(i);
                     }
 
-                    // Notify reader to update images.
+                    // Refresh reader.
                     await reader.UpdateImages(db, true);
                 }
 
-                await LoadComicInfo();
                 await LoadImages(db);
                 await reader.CompleteFrameUpdate();
+
+                // Refresh reader.
                 await reader.UpdateImages(db, true);
                 UpdatePage(reader);
             }
@@ -2092,17 +2190,28 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
+                // Ctrl key down indicates the user is zooming the page. In that case we shouldn't handle the event.
                 CoreVirtualKeyStates ctrl_state = Window.Current.CoreWindow.GetKeyState(Windows.System.VirtualKey.Control);
-                if (ctrl_state.HasFlag(CoreVirtualKeyStates.Down)) return;
+                
+                if (ctrl_state.HasFlag(CoreVirtualKeyStates.Down))
+                {
+                    return;
+                }
 
+                // Check if the reader is in the right state to perform a page turn.
                 ReaderModel reader = GetCurrentReader();
-                if (reader == null || reader.IsContinuous || reader.Zoom > 105) return;
+                
+                if (reader == null || reader.IsContinuous || reader.Zoom > 105)
+                {
+                    return;
+                }
 
+                // Page turning.
                 PointerPoint pt = e.GetCurrentPoint(null);
                 int delta = -pt.Properties.MouseWheelDelta / 120;
                 await reader.MoveFrame(delta);
 
-                // Set e.Handled to true to suppress the default behavior of scroll viewer (which will override ours)
+                // Set Handled flag to suppress the default behavior of scroll viewer (which will override ours).
                 e.Handled = true;
             });
         }
@@ -2196,8 +2305,14 @@ namespace ComicReader.Views
                 dx = -dx;
             }
 
-            reader.SetScrollViewer(reader.Zoom * scale,
-                reader.HorizontalOffsetFinal - dx, reader.VerticalOffsetFinal - dy, false);
+            float? zoom = null;
+
+            if (Math.Abs(scale - 1.0f) > 0.01f)
+            {
+                zoom = reader.Zoom * scale;
+            }
+
+            reader.SetScrollViewer3(zoom, reader.HorizontalOffsetFinal - dx, reader.VerticalOffsetFinal - dy, false);
         }
 
         private void OnManipulationCompleted(object sender, ManipulationCompletedEventArgs e)
@@ -2246,6 +2361,7 @@ namespace ComicReader.Views
         private void OnReaderPointerMoved(object sender, PointerRoutedEventArgs e)
         {
             m_gesture_recognizer.ProcessMoveEvents(e.GetIntermediatePoints(ManipulationReference));
+
 #if DEBUG_LOG_MANIPULATION
             //Log("Pointer moved");
 #endif
@@ -2266,61 +2382,26 @@ namespace ComicReader.Views
 #endif
         }
 
+        private void OnReaderPointerCanceled(object sender, PointerRoutedEventArgs e)
+        {
+            m_gesture_recognizer.ProcessUpEvent(e.GetCurrentPoint(ManipulationReference));
+            (sender as UIElement).ReleasePointerCapture(e.Pointer);
+
+            if (!m_gesture_recognizer.AutoProcessInertia)
+            {
+                m_gesture_recognizer.CompleteGesture();
+            }
+
+#if DEBUG_LOG_MANIPULATION
+            Log("Pointer canceled");
+#endif
+        }
+
         private void OnReaderPointerCaptureLost(object sender, PointerRoutedEventArgs e)
         {
 #if DEBUG_LOG_MANIPULATION
             Log("Pointer capture lost");
 #endif
-        }
-
-        private void OnVerticalReaderPointerPressed(object sender, PointerRoutedEventArgs e)
-        {
-            OnReaderPointerPressed(sender, e);
-        }
-
-        private void OnVerticalReaderPointerMoved(object sender, PointerRoutedEventArgs e)
-        {
-            OnReaderPointerMoved(sender, e);
-        }
-
-        private void OnVerticalReaderPointerReleased(object sender, PointerRoutedEventArgs e)
-        {
-            OnReaderPointerReleased(sender, e);
-        }
-
-        private void OnVerticalReaderPointerCaptureLost(object sender, PointerRoutedEventArgs e)
-        {
-            OnReaderPointerCaptureLost(sender, e);
-        }
-
-        private void OnVerticalReaderPointerCanceled(object sender, PointerRoutedEventArgs e)
-        {
-            OnReaderPointerReleased(sender, e);
-        }
-
-        private void OnHorizontalReaderPointerPressed(object sender, PointerRoutedEventArgs e)
-        {
-            OnReaderPointerPressed(sender, e);
-        }
-
-        private void OnHorizontalReaderPointerMoved(object sender, PointerRoutedEventArgs e)
-        {
-            OnReaderPointerMoved(sender, e);
-        }
-
-        private void OnHorizontalReaderPointerReleased(object sender, PointerRoutedEventArgs e)
-        {
-            OnReaderPointerReleased(sender, e);
-        }
-
-        private void OnHorizontalReaderPointerCanceled(object sender, PointerRoutedEventArgs e)
-        {
-            OnReaderPointerReleased(sender, e);
-        }
-
-        private void OnHorizontalReaderPointerCaptureLost(object sender, PointerRoutedEventArgs e)
-        {
-            OnReaderPointerCaptureLost(sender, e);
         }
 
         // Zooming
@@ -2346,7 +2427,7 @@ namespace ComicReader.Views
                 zoom /= scale;
             }
 
-            reader.SetScrollViewer((int)zoom, null, null, false);
+            reader.SetScrollViewer3((int)zoom, null, null, false);
         }
 
         private void ZoomIn()

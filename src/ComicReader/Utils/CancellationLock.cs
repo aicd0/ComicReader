@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 
 namespace ComicReader.Utils
@@ -27,10 +23,10 @@ namespace ComicReader.Utils
             _ = Interlocked.Decrement(ref m_cancellation_requests);
         }
 
-        public async Task WaitAsync(int milliseconds_timeout)
+        public async Task WaitAsync(int millisecond_timeout)
         {
             _ = Interlocked.Increment(ref m_cancellation_requests);
-            await m_semaphore.WaitAsync(milliseconds_timeout);
+            await m_semaphore.WaitAsync(millisecond_timeout);
             _ = Interlocked.Decrement(ref m_cancellation_requests);
         }
 

@@ -22,7 +22,7 @@
                 <ResourceDictionary Source="../Resources/Styles/ToggleButton.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <!--  Overwrite the scroll viewer style to enable PointerWheelChanged event.  -->
+            <!--  Overwrite the scroll viewer style to enable Pointer events.  -->
             <Style x:Key="ReaderScrollViewerStyle" TargetType="ScrollViewer">
                 <Setter Property="Template">
                     <Setter.Value>
@@ -32,6 +32,12 @@
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 CornerRadius="{TemplateBinding CornerRadius}"
+                                ManipulationMode="All"
+                                PointerCanceled="OnReaderPointerCanceled"
+                                PointerCaptureLost="OnReaderPointerCaptureLost"
+                                PointerMoved="OnReaderPointerMoved"
+                                PointerPressed="OnReaderPointerPressed"
+                                PointerReleased="OnReaderPointerReleased"
                                 PointerWheelChanged="OnReaderScrollViewerPointerWheelChanged">
                                 <Grid Background="{TemplateBinding Background}">
                                     <Grid.ColumnDefinitions>
@@ -438,7 +444,7 @@
                         Style="{StaticResource ReaderScrollViewerStyle}"
                         ViewChanged="OnVerticalReaderScrollViewerViewChanged"
                         ZoomMode="Enabled">
-                        <Grid HorizontalAlignment="Center">
+                        <Grid HorizontalAlignment="Center" IsHitTestVisible="False">
                             <ListView
                                 ItemsSource="{x:Bind VerticalReader.Frames, Mode=OneWay}"
                                 Loaded="OnVerticalReaderListViewLoaded"
@@ -458,18 +464,6 @@
                                     </Style>
                                 </ListView.ItemContainerStyle>
                             </ListView>
-                            <!--
-                                We have to set ManipulationMode here to disable the default behavior of ScrollViewer
-                                (which steals pointers from its inner controls)
-                            -->
-                            <Grid
-                                Background="Transparent"
-                                ManipulationMode="All"
-                                PointerCanceled="OnVerticalReaderPointerCanceled"
-                                PointerCaptureLost="OnVerticalReaderPointerCaptureLost"
-                                PointerMoved="OnVerticalReaderPointerMoved"
-                                PointerPressed="OnVerticalReaderPointerPressed"
-                                PointerReleased="OnVerticalReaderPointerReleased" />
                         </Grid>
                     </ScrollViewer>
 
@@ -488,7 +482,7 @@
                         VerticalScrollMode="Disabled"
                         ViewChanged="OnHorizontalReaderScrollViewerViewChanged"
                         ZoomMode="Enabled">
-                        <Grid VerticalAlignment="Center">
+                        <Grid VerticalAlignment="Center" IsHitTestVisible="False">
                             <ListView
                                 ItemsSource="{x:Bind HorizontalReader.Frames, Mode=OneWay}"
                                 Loaded="OnHorizontalReaderListViewLoaded"
@@ -512,14 +506,6 @@
                                     </Style>
                                 </ListView.ItemContainerStyle>
                             </ListView>
-                            <Grid
-                                Background="Transparent"
-                                ManipulationMode="All"
-                                PointerCanceled="OnHorizontalReaderPointerCanceled"
-                                PointerCaptureLost="OnHorizontalReaderPointerCaptureLost"
-                                PointerMoved="OnHorizontalReaderPointerMoved"
-                                PointerPressed="OnHorizontalReaderPointerPressed"
-                                PointerReleased="OnHorizontalReaderPointerReleased" />
                         </Grid>
                     </ScrollViewer>
                 </Grid>

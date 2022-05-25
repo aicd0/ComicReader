@@ -1,11 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Threading;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media.Imaging;
 
 namespace ComicReader.DesignData
@@ -71,6 +68,7 @@ namespace ComicReader.DesignData
 
         public int PageL { get; set; } = -1;
         public int PageR { get; set; } = -1;
+        public double Page => PageL != -1 && PageR != -1 ? (PageL + PageR) * 0.5 : (PageL == -1 ? PageR : PageL);
         public double Width => Container.ActualWidth;
         public double Height => Container.ActualHeight;
         public bool Processed { get; private set; } = false;
