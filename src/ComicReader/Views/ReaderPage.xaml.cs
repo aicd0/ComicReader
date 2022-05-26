@@ -257,8 +257,9 @@ namespace ComicReader.Views
     public class ReaderModel
     {
         // Constants
-        private const float max_zoom = 250f;
-        private const float min_zoom = 90f;
+        public static readonly float MaxZoom = 250f;
+        public static readonly float MinZoom = 90f;
+        public static readonly float ForceContinuousZoomThreshold = 105f;
 
         // Modifier - Configurations
         public ComicData Comic { get; set; } = null;
@@ -665,7 +666,7 @@ namespace ComicReader.Views
                 // Notify the scroll viewer to update its inner states.
                 SetScrollViewer1(null, null, false);
 
-                if (!IsContinuous && Zoom <= 100)
+                if (!IsContinuous && Zoom < ForceContinuousZoomThreshold)
                 {
                     // Stick our view to the center of two pages.
                     InternalMoveFrame(0, false);
@@ -1110,8 +1111,8 @@ namespace ComicReader.Views
             }
 
             Zoom = ctx.Zoom.Value;
-            m_shared.NavigationPageShared.ZoomInEnabled = Zoom < max_zoom - 1.0f;
-            m_shared.NavigationPageShared.ZoomOutEnabled = Zoom > min_zoom + 1.0f;
+            m_shared.NavigationPageShared.ZoomInEnabled = Zoom < MaxZoom - 1.0f;
+            m_shared.NavigationPageShared.ZoomOutEnabled = Zoom > MinZoom + 1.0f;
             AdjustParallelOffset();
             return true;
         }
@@ -1173,8 +1174,8 @@ namespace ComicReader.Views
                 zoom = (float)(ZoomFactorFinal / zoom_coefficient);
             }
 
-            zoom = Math.Min(zoom, max_zoom);
-            zoom = Math.Max(zoom, min_zoom);
+            zoom = Math.Min(zoom, MaxZoom);
+            zoom = Math.Max(zoom, MinZoom);
             ctx.Zoom = zoom;
 
             // A zoom factor vary less than 1% will be ignored.
@@ -1349,7 +1350,7 @@ namespace ComicReader.Views
                     break;
                 }
 
-                double zoom_factor = min_zoom * zoom_coefficient.Value;
+                double zoom_factor = MinZoom * zoom_coefficient.Value;
                 double inner_length = ViewportParallelLength / zoom_factor;
                 padding_start = (inner_length - FrameParallelLength(frame_idx)) / 2;
                 padding_start = Math.Max(0.0, padding_start);
@@ -1372,7 +1373,7 @@ namespace ComicReader.Views
                     break;
                 }
 
-                double zoom_factor = min_zoom * zoom_coefficient.Value;
+                double zoom_factor = MinZoom * zoom_coefficient.Value;
                 double inner_length = ViewportParallelLength / zoom_factor;
                 padding_end = (inner_length - FrameParallelLength(frame_idx)) / 2;
                 padding_end = Math.Max(0.0, padding_end);
@@ -2321,7 +2322,7 @@ namespace ComicReader.Views
             {
                 ReaderModel reader = GetCurrentReader();
 
-                if (reader == null || reader.IsContinuous || reader.Zoom > 105)
+                if (reader == null || reader.IsContinuous || reader.Zoom >= ReaderModel.ForceContinuousZoomThreshold)
                 {
                     return;
                 }
