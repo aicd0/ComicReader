@@ -611,4 +611,7 @@ Category2: tag4/tag5
   <data name="ReaderSettingButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>Reader settings</value>
   </data>
+  <data name="ComicInfoButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Comic information</value>
+  </data>
 </root>

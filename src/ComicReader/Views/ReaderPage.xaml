@@ -589,19 +589,11 @@
 
                             <!--  More  -->
                             <Button
-                                x:Uid="MoreButton"
+                                x:Uid="ComicInfoButton"
+                                Click="OnComicInfoBtClicked"
                                 Style="{StaticResource ReaderBottomTileButtonStyle}"
                                 Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}">
-                                <Button.Flyout>
-                                    <MenuFlyout>
-                                        <MenuFlyoutItem x:Uid="MenuFlyoutComicInfo" Click="OnComicInfoClicked">
-                                            <MenuFlyoutItem.Icon>
-                                                <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE946;" />
-                                            </MenuFlyoutItem.Icon>
-                                        </MenuFlyoutItem>
-                                    </MenuFlyout>
-                                </Button.Flyout>
-                                <FontIcon FontSize="15" Glyph="&#xE712;" />
+                                <FontIcon FontSize="15" Glyph="&#xE946;" />
                             </Button>
 
                             <AppBarSeparator Margin="2.5,0" Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}" />

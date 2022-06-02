@@ -2511,7 +2511,7 @@ namespace ComicReader.Views
             }
         }
 
-        private void OnComicInfoClicked(object sender, RoutedEventArgs e)
+        private void OnComicInfoBtClicked(object sender, RoutedEventArgs e)
         {
             ExpandInfoPane();
         }

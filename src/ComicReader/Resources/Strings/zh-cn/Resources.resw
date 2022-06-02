@@ -611,4 +611,7 @@
   <data name="ReaderSettingButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>阅读器设置</value>
   </data>
+  <data name="ComicInfoButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>漫画信息</value>
+  </data>
 </root>
