@@ -195,7 +195,7 @@
                     </AppBarToggleButton>
 
                     <!--  Reader settings  -->
-                    <AppBarButton Style="{StaticResource NavigationPageTopTileAppBarButton}">
+                    <AppBarButton x:Uid="ReaderSettingButton" Style="{StaticResource NavigationPageTopTileAppBarButton}">
                         <AppBarButton.Content>
                             <FontIcon Glyph="&#xE713;" />
                         </AppBarButton.Content>

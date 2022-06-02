@@ -654,7 +654,10 @@
                             </ToggleButton>
 
                             <!--  Reader settings  -->
-                            <Button Style="{StaticResource ReaderBottomTileButtonStyle}" Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}">
+                            <Button
+                                x:Uid="ReaderSettingButton"
+                                Style="{StaticResource ReaderBottomTileButtonStyle}"
+                                Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}">
                                 <Button.Flyout>
                                     <Flyout>
                                         <controls:ReaderSettingPanel DataContext="{x:Bind Shared.ReaderSettings}" />

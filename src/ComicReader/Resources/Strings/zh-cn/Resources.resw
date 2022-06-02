@@ -608,4 +608,7 @@
   <data name="TransitionAnimation.Text" xml:space="preserve">
     <value>翻页动画</value>
   </data>
+  <data name="ReaderSettingButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>阅读器设置</value>
+  </data>
 </root>

@@ -608,4 +608,7 @@ Category2: tag4/tag5
   <data name="TransitionAnimation.Text" xml:space="preserve">
     <value>Transition animation</value>
   </data>
+  <data name="ReaderSettingButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Reader settings</value>
+  </data>
 </root>
