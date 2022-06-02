@@ -599,9 +599,6 @@
   <data name="ArchiveEncoding.Text" xml:space="preserve">
     <value>压缩文件编码</value>
   </data>
-  <data name="ArchiveEncodingDetail.Text" xml:space="preserve">
-    <value>更改此选项可解决部分ZIP中的文件名无法正确显示的问题。该选项为全局选项。更改将在下次应用启动时生效（部分记录将会被清除）。</value>
-  </data>
   <data name="Default" xml:space="preserve">
     <value>默认</value>
   </data>

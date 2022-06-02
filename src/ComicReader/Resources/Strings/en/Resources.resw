@@ -432,7 +432,7 @@ Filtering nothing. Only used when we need to see all items in the library.
     <value>Rescan files</value>
   </data>
   <data name="RescanFilesDetail.Text" xml:space="preserve">
-    <value>NOTICE: If there are missing comics or inconsist comic info, rescanning files may resolve the problems. Notice that in some cases this could lead to high CPU occupation which may drain your battery quickly.</value>
+    <value>NOTICE: If there are missing comics or inconsist comic information, rescanning files may resolve the problems. Notice that in some cases this could lead to high CPU occupation which may drain your battery quickly.</value>
   </data>
   <data name="SaveHistory.Text" xml:space="preserve">
     <value>Save browsing history</value>
@@ -598,9 +598,6 @@ Category2: tag4/tag5
   </data>
   <data name="ArchiveEncoding.Text" xml:space="preserve">
     <value>Archive encoding</value>
-  </data>
-  <data name="ArchiveEncodingDetail.Text" xml:space="preserve">
-    <value>Useful when file name in some ZIP archives cannot be displayed correctly. Notice that this is a global setting. This will take effect the next time you start the app (Some records will be cleared).</value>
   </data>
   <data name="Default" xml:space="preserve">
     <value>Default</value>

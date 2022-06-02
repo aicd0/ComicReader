@@ -69,14 +69,9 @@
                         <controls:SettingExpander.InnerContent>
                             <StackPanel Orientation="Vertical">
                                 <Button x:Uid="ChooseLocationButton" Click="ChooseLocationsClick" />
-                                <Grid Height="15" />
+                                <Grid Height="20" />
                                 <TextBlock x:Uid="ArchiveEncoding" Style="{StaticResource SettingsPageBodyTextBlock}" />
-                                <Grid Height="5" />
-                                <TextBlock
-                                    x:Uid="ArchiveEncodingDetail"
-                                    Foreground="{ThemeResource ForegroundGrey2}"
-                                    Style="{StaticResource SettingsPageBodyTextBlock}" />
-                                <Grid Height="10" />
+                                <Grid Height="8" />
                                 <ComboBox
                                     MinWidth="200"
                                     DisplayMemberPath="Item1"
