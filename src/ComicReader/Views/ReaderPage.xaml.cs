@@ -14,6 +14,8 @@ using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Foundation;
+using Windows.Storage;
+using Windows.System;
 using Windows.UI.Core;
 using Windows.UI.Input;
 using Windows.UI.Xaml;
@@ -2517,6 +2519,22 @@ namespace ComicReader.Views
         private void OnRatingControlValueChanged(muxc.RatingControl sender, object args)
         {
             m_comic.SaveRating((int)sender.Value);
+        }
+
+        private void OnDirectoryDoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
+        {
+            Utils.C0.Run(async delegate
+            {
+                if (m_comic is ComicFolderData)
+                {
+                    StorageFolder folder = await Utils.Storage.TryGetFolder(m_comic.Location);
+
+                    if (folder != null)
+                    {
+                        _ = await Launcher.LaunchFolderAsync(folder);
+                    }
+                }
+            });
         }
 
         private void OnInfoPaneTagClicked(object sender, RoutedEventArgs e)

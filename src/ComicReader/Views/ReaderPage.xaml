@@ -334,9 +334,9 @@
                             <TextBlock
                                 Margin="0,0,0,0"
                                 VerticalAlignment="Center"
+                                DoubleTapped="OnDirectoryDoubleTapped"
                                 FontSize="13"
                                 FontWeight="SemiLight"
-                                IsTextSelectionEnabled="True"
                                 Text="{x:Bind Shared.ComicDir, Mode=OneWay}"
                                 TextWrapping="Wrap" />
 
