@@ -11,15 +11,15 @@
 
     <Grid
         Width="38"
-        Height="44"
+        Height="38"
         BorderBrush="{ThemeResource SystemAccentColorLight2}"
         BorderThickness="2"
         CornerRadius="5">
         <TextBlock
-            Margin="0,0,0,2"
+            Margin="0,0,0,1"
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
-            FontSize="20"
+            FontSize="19"
             FontWeight="SemiBold"
             Text="{x:Bind Header}" />
     </Grid>

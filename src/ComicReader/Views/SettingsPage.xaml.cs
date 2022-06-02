@@ -220,8 +220,6 @@ namespace ComicReader.Views
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsRescanning"));
             }
         }
-
-        public DesignData.ReaderSettingViewModel ReaderSettings => MainPageShared.ReaderSettings;
     }
 
     public sealed partial class SettingsPage : Page

@@ -329,9 +329,6 @@
   <data name="HomePageRefreshButton.Content" xml:space="preserve">
     <value>刷新</value>
   </data>
-  <data name="HorizontalButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>横向翻页</value>
-  </data>
   <data name="LeftToRight.Text" xml:space="preserve">
     <value>从左到右</value>
   </data>
@@ -506,9 +503,6 @@
   <data name="Unread" xml:space="preserve">
     <value>未阅读</value>
   </data>
-  <data name="VerticalButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>纵向翻页</value>
-  </data>
   <data name="WatchingFolders.Text" xml:space="preserve">
     <value>目前，您的仓库包含如下文件夹：</value>
   </data>
@@ -581,11 +575,11 @@
   <data name="AppStoreName" xml:space="preserve">
     <value>漫画阅读器 UWP</value>
   </data>
-  <data name="ContinuousModeButton.Label" xml:space="preserve">
-    <value>连续模式</value>
+  <data name="ContinuousButton.Label" xml:space="preserve">
+    <value>连续</value>
   </data>
-  <data name="HorizontalModeButton.Label" xml:space="preserve">
-    <value>横向翻页</value>
+  <data name="HorizontalButton.Label" xml:space="preserve">
+    <value>横向</value>
   </data>
   <data name="LeftToRightButton.Label" xml:space="preserve">
     <value>自左向右</value>
@@ -593,8 +587,8 @@
   <data name="RightToLeftButton.Label" xml:space="preserve">
     <value>自右向左</value>
   </data>
-  <data name="VerticalModeButton.Label" xml:space="preserve">
-    <value>纵向翻页</value>
+  <data name="VerticalButton.Label" xml:space="preserve">
+    <value>纵向</value>
   </data>
   <data name="ArchiveEncoding.Text" xml:space="preserve">
     <value>压缩文件编码</value>
@@ -610,5 +604,8 @@
   </data>
   <data name="ComicInfoButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>漫画信息</value>
+  </data>
+  <data name="DiscreteButton.Label" xml:space="preserve">
+    <value>离散</value>
   </data>
 </root>

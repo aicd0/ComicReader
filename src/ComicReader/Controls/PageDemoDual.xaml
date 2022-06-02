@@ -11,14 +11,10 @@
 
     <Grid
         Width="76"
-        Height="44"
+        Height="38"
         BorderBrush="{ThemeResource SystemAccentColorLight2}"
         BorderThickness="2"
         CornerRadius="5">
-        <Rectangle
-            Width="2"
-            HorizontalAlignment="Center"
-            Fill="{ThemeResource SystemAccentColorLight2}" />
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition />
@@ -26,18 +22,18 @@
             </Grid.ColumnDefinitions>
             <TextBlock
                 Grid.Column="0"
-                Margin="0,0,0,2"
+                Margin="0,0,0,1"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                FontSize="20"
+                FontSize="19"
                 FontWeight="SemiBold"
                 Text="{x:Bind HeaderL}" />
             <TextBlock
                 Grid.Column="1"
-                Margin="0,0,0,2"
+                Margin="0,0,0,1"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                FontSize="20"
+                FontSize="19"
                 FontWeight="SemiBold"
                 Text="{x:Bind HeaderR}" />
         </Grid>

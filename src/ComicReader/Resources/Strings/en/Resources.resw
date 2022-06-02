@@ -329,9 +329,6 @@ Filtering nothing. Only used when we need to see all items in the library.
   <data name="HomePageRefreshButton.Content" xml:space="preserve">
     <value>refresh</value>
   </data>
-  <data name="HorizontalButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>Horizontal</value>
-  </data>
   <data name="ImageLocationExpander.Header" xml:space="preserve">
     <value>Images on this device</value>
   </data>
@@ -509,9 +506,6 @@ Category2: tag4/tag5
   <data name="Unread" xml:space="preserve">
     <value>Unread</value>
   </data>
-  <data name="VerticalButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>Vertical</value>
-  </data>
   <data name="WatchingFolders.Text" xml:space="preserve">
     <value>Right now, we're watching these folders:</value>
   </data>
@@ -581,20 +575,20 @@ Category2: tag4/tag5
   <data name="AppStoreName" xml:space="preserve">
     <value>Comic Reader UWP</value>
   </data>
-  <data name="ContinuousModeButton.Label" xml:space="preserve">
-    <value>Continuous mode</value>
+  <data name="ContinuousButton.Label" xml:space="preserve">
+    <value>Continuous</value>
   </data>
-  <data name="HorizontalModeButton.Label" xml:space="preserve">
-    <value>Horizontal mode</value>
+  <data name="HorizontalButton.Label" xml:space="preserve">
+    <value>Horizontal</value>
   </data>
   <data name="LeftToRightButton.Label" xml:space="preserve">
-    <value>Left to right</value>
+    <value>L to R</value>
   </data>
   <data name="RightToLeftButton.Label" xml:space="preserve">
-    <value>Right to left</value>
+    <value>R to L</value>
   </data>
-  <data name="VerticalModeButton.Label" xml:space="preserve">
-    <value>Vertical mode</value>
+  <data name="VerticalButton.Label" xml:space="preserve">
+    <value>Vertical</value>
   </data>
   <data name="ArchiveEncoding.Text" xml:space="preserve">
     <value>Archive encoding</value>
@@ -610,5 +604,8 @@ Category2: tag4/tag5
   </data>
   <data name="ComicInfoButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>Comic information</value>
+  </data>
+  <data name="DiscreteButton.Label" xml:space="preserve">
+    <value>Discrete</value>
   </data>
 </root>

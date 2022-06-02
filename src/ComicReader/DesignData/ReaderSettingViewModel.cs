@@ -144,6 +144,16 @@ namespace ComicReader.DesignData
             }
         }
 
+        public void OnSetContinuous(object sender, RoutedEventArgs e)
+        {
+            IsContinuous = true;
+        }
+
+        public void OnSetDiscrete(object sender, RoutedEventArgs e)
+        {
+            IsContinuous = false;
+        }
+
         private PageArrangementEnum m_VerticalPageArrangement = PageArrangementEnum.Single;
         public PageArrangementEnum VerticalPageArrangement
         {

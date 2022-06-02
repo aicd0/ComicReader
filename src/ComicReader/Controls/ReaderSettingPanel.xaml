@@ -20,7 +20,7 @@
                 <Setter Property="Foreground" Value="{ThemeResource ListViewItemForeground}" />
                 <Setter Property="TabNavigation" Value="Local" />
                 <Setter Property="IsHoldingEnabled" Value="True" />
-                <Setter Property="Padding" Value="50,8" />
+                <Setter Property="Padding" Value="50,9" />
                 <Setter Property="Margin" Value="-50,-3" />
                 <Setter Property="HorizontalContentAlignment" Value="Left" />
                 <Setter Property="VerticalContentAlignment" Value="Center" />
@@ -117,69 +117,6 @@
 
     <Grid>
         <StackPanel Orientation="Vertical">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <StackPanel Grid.Column="0" Orientation="Horizontal">
-
-                    <!--  Vertical/Horizontal  -->
-                    <AppBarButton
-                        x:Uid="VerticalModeButton"
-                        Width="68"
-                        Click="{x:Bind Ctx.OnSetHorizontal}"
-                        IsCompact="False"
-                        Visibility="{x:Bind Ctx.IsVertical, Mode=OneWay}">
-                        <Grid>
-                            <FontIcon Glyph="&#xE7C3;" />
-                        </Grid>
-                    </AppBarButton>
-                    <AppBarButton
-                        x:Uid="HorizontalModeButton"
-                        Width="68"
-                        Click="{x:Bind Ctx.OnSetVertical}"
-                        IsCompact="False"
-                        Visibility="{x:Bind Ctx.IsVertical, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}">
-                        <Grid>
-                            <FontIcon Glyph="&#xEF6B;" />
-                        </Grid>
-                    </AppBarButton>
-
-                    <!--  Flow Direction  -->
-                    <AppBarButton
-                        x:Uid="LeftToRightButton"
-                        Width="68"
-                        Click="{x:Bind Ctx.OnSetRightToLeft}"
-                        IsCompact="False"
-                        Visibility="{x:Bind Ctx.IsLeftToRightVisible, Mode=OneWay}">
-                        <Grid>
-                            <FontIcon Glyph="&#xEBE7;" />
-                        </Grid>
-                    </AppBarButton>
-                    <AppBarButton
-                        x:Uid="RightToLeftButton"
-                        Width="68"
-                        Click="{x:Bind Ctx.OnSetLeftToRight}"
-                        IsCompact="False"
-                        Visibility="{x:Bind Ctx.IsRightToLeftVisible, Mode=OneWay}">
-                        <Grid>
-                            <FontIcon Glyph="&#xEC52;" />
-                        </Grid>
-                    </AppBarButton>
-                </StackPanel>
-
-                <!--  Continuous reading  -->
-                <AppBarToggleButton
-                    x:Uid="ContinuousModeButton"
-                    Grid.Column="2"
-                    Width="68"
-                    Icon="AlignCenter"
-                    IsChecked="{x:Bind Ctx.IsContinuous, Mode=TwoWay}"
-                    IsCompact="False" />
-            </Grid>
-            <Grid Height="15" />
             <ListView
                 Margin="-50,0"
                 Padding="50,0"
@@ -277,6 +214,83 @@
                     </StackPanel>
                 </ListViewItem>
             </ListView>
+            <Grid Height="0" />
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <!--  Vertical/Horizontal  -->
+                    <AppBarButton
+                        x:Uid="VerticalButton"
+                        Width="68"
+                        Click="{x:Bind Ctx.OnSetHorizontal}"
+                        IsCompact="False"
+                        Visibility="{x:Bind Ctx.IsVertical, Mode=OneWay}">
+                        <Grid>
+                            <FontIcon Glyph="&#xE7C3;" />
+                        </Grid>
+                    </AppBarButton>
+                    <AppBarButton
+                        x:Uid="HorizontalButton"
+                        Width="68"
+                        Click="{x:Bind Ctx.OnSetVertical}"
+                        IsCompact="False"
+                        Visibility="{x:Bind Ctx.IsVertical, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}">
+                        <Grid>
+                            <FontIcon Glyph="&#xEF6B;" />
+                        </Grid>
+                    </AppBarButton>
+
+                    <!--  Flow Direction  -->
+                    <AppBarButton
+                        x:Uid="LeftToRightButton"
+                        Width="68"
+                        Click="{x:Bind Ctx.OnSetRightToLeft}"
+                        IsCompact="False"
+                        Visibility="{x:Bind Ctx.IsLeftToRightVisible, Mode=OneWay}">
+                        <Grid>
+                            <FontIcon Glyph="&#xEBE7;" />
+                        </Grid>
+                    </AppBarButton>
+                    <AppBarButton
+                        x:Uid="RightToLeftButton"
+                        Width="68"
+                        Click="{x:Bind Ctx.OnSetLeftToRight}"
+                        IsCompact="False"
+                        Visibility="{x:Bind Ctx.IsRightToLeftVisible, Mode=OneWay}">
+                        <Grid>
+                            <FontIcon Glyph="&#xEC52;" />
+                        </Grid>
+                    </AppBarButton>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <!--  Continuous reading  -->
+                    <AppBarButton
+                        x:Uid="ContinuousButton"
+                        Width="68"
+                        Click="{x:Bind Ctx.OnSetDiscrete}"
+                        IsCompact="False"
+                        Visibility="{x:Bind Ctx.IsContinuous, Mode=OneWay}">
+                        <Grid>
+                            <FontIcon Glyph="&#xE89A;" />
+                        </Grid>
+                    </AppBarButton>
+                    <AppBarButton
+                        x:Uid="DiscreteButton"
+                        Width="68"
+                        Click="{x:Bind Ctx.OnSetContinuous}"
+                        IsCompact="False"
+                        Visibility="{x:Bind Ctx.IsContinuous, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}">
+                        <Grid>
+                            <FontIcon Glyph="&#xE7C3;" />
+                        </Grid>
+                    </AppBarButton>
+                </StackPanel>
+            </Grid>
         </StackPanel>
     </Grid>
 </UserControl>
