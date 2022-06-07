@@ -238,8 +238,8 @@
     <value>Help</value>
   </data>
   <data name="HelpPageMarkdown.Text" xml:space="preserve">
-    <value># How to use filters to search content
-You can use filters in searching to make the search results more accurate.
+    <value># How to use filters to search comics
+You can use filters in searching to limit the results.
 
 ### Basic usage
 `keyword1 keyword2... &lt;filter1&gt; &lt;filter2&gt;...` (spaces between filters is optional)
@@ -607,5 +607,8 @@ Category2: tag4/tag5
   </data>
   <data name="DiscreteButton.Label" xml:space="preserve">
     <value>Discrete</value>
+  </data>
+  <data name="OpenInFileExplorer.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Open in File Explorer</value>
   </data>
 </root>

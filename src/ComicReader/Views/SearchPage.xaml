@@ -126,7 +126,7 @@
                     Click="CommandBarHideClicked"
                     IsEnabled="{x:Bind Shared.IsCommandBarHideEnabled, Mode=OneWay}">
                     <AppBarButton.Icon>
-                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE8FF;" />
+                        <FontIcon Glyph="&#xE8FF;" />
                     </AppBarButton.Icon>
                 </AppBarButton>
                 <AppBarButton
@@ -134,7 +134,7 @@
                     Click="CommandBarUnhideClicked"
                     IsEnabled="{x:Bind Shared.IsCommandBarUnHideEnabled, Mode=OneWay}">
                     <AppBarButton.Icon>
-                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE7B3;" />
+                        <FontIcon Glyph="&#xE7B3;" />
                     </AppBarButton.Icon>
                 </AppBarButton>
             </StackPanel>

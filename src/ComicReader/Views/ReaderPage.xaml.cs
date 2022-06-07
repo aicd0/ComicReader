@@ -95,6 +95,17 @@ namespace ComicReader.Views
             }
         }
 
+        private bool m_CanDirOpenInFileExplorer = false;
+        public bool CanDirOpenInFileExplorer
+        {
+            get => m_CanDirOpenInFileExplorer;
+            set
+            {
+                m_CanDirOpenInFileExplorer = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("CanDirOpenInFileExplorer"));
+            }
+        }
+
         private ObservableCollection<TagCollectionViewModel> m_ComicTags;
         public ObservableCollection<TagCollectionViewModel> ComicTags
         {
@@ -2021,6 +2032,7 @@ namespace ComicReader.Views
             }
 
             Shared.ComicDir = m_comic.Location;
+            Shared.CanDirOpenInFileExplorer = m_comic is ComicFolderData;
             Shared.IsEditable = m_comic.IsEditable;
             Shared.Progress = "";
 
@@ -2521,18 +2533,15 @@ namespace ComicReader.Views
             m_comic.SaveRating((int)sender.Value);
         }
 
-        private void OnDirectoryDoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
+        private void OnDirectoryTapped(object sender, TappedRoutedEventArgs e)
         {
             Utils.C0.Run(async delegate
             {
-                if (m_comic is ComicFolderData)
-                {
-                    StorageFolder folder = await Utils.Storage.TryGetFolder(m_comic.Location);
+                StorageFolder folder = await Utils.Storage.TryGetFolder(m_comic.Location);
 
-                    if (folder != null)
-                    {
-                        _ = await Launcher.LaunchFolderAsync(folder);
-                    }
+                if (folder != null)
+                {
+                    _ = await Launcher.LaunchFolderAsync(folder);
                 }
             });
         }

@@ -21,8 +21,7 @@
         CornerRadius="13"
         FontSize="13"
         FontWeight="Bold"
-        Style="{StaticResource ButtonRevealStyle}"
-        ToolTipService.ToolTip="{x:Bind Ctx.Tag}">
+        Style="{StaticResource ButtonRevealStyle}">
         <Button.Content>
             <TextBlock Text="{x:Bind Ctx.Tag}" TextTrimming="CharacterEllipsis" />
         </Button.Content>

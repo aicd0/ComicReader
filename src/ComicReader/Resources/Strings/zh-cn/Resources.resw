@@ -608,4 +608,7 @@
   <data name="DiscreteButton.Label" xml:space="preserve">
     <value>离散</value>
   </data>
+  <data name="OpenInFileExplorer.ToolTipService.ToolTip" xml:space="preserve">
+    <value>在资源管理器中打开</value>
+  </data>
 </root>

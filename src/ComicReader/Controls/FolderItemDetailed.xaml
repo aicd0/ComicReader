@@ -39,7 +39,6 @@
                     Grid.Column="1"
                     Margin="3,0,2,0"
                     VerticalAlignment="Center"
-                    FontFamily="{StaticResource SymbolThemeFontFamily}"
                     FontSize="23"
                     Foreground="White"
                     Glyph="{x:Bind Glyph}" />
@@ -80,7 +79,6 @@
                     Grid.Column="1"
                     Margin="3,0,2,0"
                     VerticalAlignment="Center"
-                    FontFamily="{StaticResource SymbolThemeFontFamily}"
                     FontSize="23"
                     Glyph="{x:Bind Glyph}" />
             </Grid>

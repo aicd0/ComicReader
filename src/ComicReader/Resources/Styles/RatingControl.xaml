@@ -79,7 +79,6 @@
         <Setter Property="Height" Value="32" />
         <Setter Property="Foreground" Value="{ThemeResource RatingControlCaptionForeground}" />
         <Setter Property="UseSystemFocusVisuals" Value="{StaticResource UseSystemFocusVisuals}" />
-        <Setter Property="FontFamily" Value="{ThemeResource SymbolThemeFontFamily}" />
         <Setter Property="ItemInfo" Value="{ThemeResource MUX_RatingControlDefaultFontInfo}" />
         <Setter Property="Template">
             <Setter.Value>

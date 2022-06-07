@@ -331,14 +331,23 @@
                                 Fill="{ThemeResource ComicInfoSeparatorForeground}" />
 
                             <!--  Directory  -->
-                            <TextBlock
-                                Margin="0,0,0,0"
-                                VerticalAlignment="Center"
-                                DoubleTapped="OnDirectoryDoubleTapped"
-                                FontSize="13"
-                                FontWeight="SemiLight"
-                                Text="{x:Bind Shared.ComicDir, Mode=OneWay}"
-                                TextWrapping="Wrap" />
+                            <RichTextBlock Margin="0,0,0,0" VerticalAlignment="Center">
+                                <Paragraph>
+                                    <Run
+                                        FontSize="13"
+                                        FontWeight="SemiLight"
+                                        Text="{x:Bind Shared.ComicDir, Mode=OneWay}" />
+                                    <InlineUIContainer>
+                                        <FontIcon
+                                            x:Uid="OpenInFileExplorer"
+                                            Margin="0,0,0,-2.5"
+                                            FontSize="13"
+                                            Glyph="&#xE838;"
+                                            Tapped="OnDirectoryTapped"
+                                            Visibility="{x:Bind Shared.CanDirOpenInFileExplorer, Mode=OneWay}" />
+                                    </InlineUIContainer>
+                                </Paragraph>
+                            </RichTextBlock>
 
                             <!--  Tags  -->
                             <Rectangle
@@ -365,7 +374,6 @@
                                                 <FontIcon
                                                     Margin="0,0,7,0"
                                                     VerticalAlignment="Center"
-                                                    FontFamily="Segoe MDL2 Assets"
                                                     FontSize="12"
                                                     Glyph="&#xE8EC;" />
                                                 <TextBlock
@@ -652,6 +660,12 @@
                                 Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}">
                                 <Button.Flyout>
                                     <Flyout>
+                                        <Flyout.FlyoutPresenterStyle>
+                                            <Style TargetType="FlyoutPresenter">
+                                                <Setter Property="CornerRadius" Value="8" />
+                                                <Setter Property="Padding" Value="15,10,15,9" />
+                                            </Style>
+                                        </Flyout.FlyoutPresenterStyle>
                                         <controls:ReaderSettingPanel DataContext="{x:Bind Shared.ReaderSettings}" />
                                     </Flyout>
                                 </Button.Flyout>
@@ -679,7 +693,7 @@
                         Style="{StaticResource ReaderFullscreenButtonStyle}"
                         Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}">
                         <Button.Content>
-                            <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE740;" />
+                            <FontIcon Glyph="&#xE740;" />
                         </Button.Content>
                     </Button>
                     <Button
@@ -687,7 +701,7 @@
                         Style="{StaticResource ReaderFullscreenButtonStyle}"
                         Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}">
                         <Button.Content>
-                            <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE73F;" />
+                            <FontIcon Glyph="&#xE73F;" />
                         </Button.Content>
                     </Button>
                 </Grid>

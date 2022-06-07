@@ -37,7 +37,6 @@
                     <FontIcon
                         Grid.Column="1"
                         Margin="10,0,0,0"
-                        FontFamily="{StaticResource SymbolThemeFontFamily}"
                         FontSize="14"
                         Foreground="White"
                         Glyph="&#xE894;" />
@@ -50,10 +49,7 @@
                     x:Uid="AddLocationButton"
                     Background="{ThemeResource SystemAccentColor}"
                     PointerPressed="AddNewPointerPressed">
-                    <FontIcon
-                        FontFamily="{StaticResource SymbolThemeFontFamily}"
-                        Foreground="White"
-                        Glyph="&#xE710;" />
+                    <FontIcon Foreground="White" Glyph="&#xE710;" />
                 </Grid>
             </DataTemplate>
 

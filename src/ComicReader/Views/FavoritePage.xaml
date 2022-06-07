@@ -47,20 +47,17 @@
                         <Grid Visibility="{x:Bind IsItem, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}">
                             <FontIcon
                                 Margin="0,2,0,0"
-                                FontFamily="{StaticResource SymbolThemeFontFamily}"
                                 FontSize="18"
                                 Glyph="&#xED41;"
                                 Visibility="{x:Bind Expanded, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
                             <FontIcon
                                 Margin="0,2,0,0"
-                                FontFamily="{StaticResource SymbolThemeFontFamily}"
                                 FontSize="18"
                                 Glyph="&#xED43;"
                                 Visibility="{x:Bind Expanded, Mode=OneWay}" />
                         </Grid>
                         <FontIcon
                             Margin="0,2,0,0"
-                            FontFamily="{StaticResource SymbolThemeFontFamily}"
                             FontSize="18"
                             Glyph="&#xE8B9;"
                             Visibility="{x:Bind IsItem, Mode=OneWay}" />

@@ -63,7 +63,6 @@
 
                         <FontIcon
                             Grid.Column="0"
-                            FontFamily="{StaticResource SymbolThemeFontFamily}"
                             FontSize="18"
                             Glyph="&#xE8B9;" />
                         <TextBlock

@@ -192,10 +192,7 @@
                             x:Uid="ShowAllButton"
                             Click="OnSeeAllBtClicked"
                             IsEnabled="{x:Bind Shared.IsLibraryEmpty, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}" />
-                        <HyperlinkButton
-                            x:Uid="ShowHiddenButton"
-                            Click="OnSeeHiddenBtClick"
-                            IsEnabled="{x:Bind Shared.IsLibraryEmpty, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}" />
+                        <HyperlinkButton x:Uid="ShowHiddenButton" Click="OnSeeHiddenBtClick" />
                     </StackPanel>
                 </Grid>
                 <Grid Height="10" />

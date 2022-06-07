@@ -44,7 +44,7 @@
                     Click="{x:Bind Ctx.OnHideClicked}"
                     Visibility="{x:Bind Ctx.IsHide, Converter={StaticResource BooleanToVisibilityNegationConverter}}">
                     <MenuFlyoutItem.Icon>
-                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE8FF;" />
+                        <FontIcon Glyph="&#xE711;" />
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
                 <MenuFlyoutItem
@@ -52,13 +52,13 @@
                     Click="{x:Bind Ctx.OnUnhideClicked}"
                     Visibility="{x:Bind Ctx.IsHide}">
                     <MenuFlyoutItem.Icon>
-                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE7B3;" />
+                        <FontIcon Glyph="&#xE7B3;" />
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
                 <MenuFlyoutSeparator />
                 <MenuFlyoutItem x:Uid="MenuFlyoutSelect" Click="{x:Bind Ctx.OnSelectClicked}">
                     <MenuFlyoutItem.Icon>
-                        <FontIcon FontFamily="{StaticResource SymbolThemeFontFamily}" Glyph="&#xE762;" />
+                        <FontIcon Glyph="&#xE762;" />
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
             </MenuFlyout>
@@ -86,7 +86,6 @@
                         Orientation="Vertical"
                         Spacing="3">
                         <TextBlock
-                            FontFamily="Segoe UI"
                             FontSize="14"
                             FontWeight="SemiBold"
                             MaxLines="3"
@@ -113,7 +112,6 @@
                     </StackPanel>
                     <TextBlock
                         Grid.Row="1"
-                        FontFamily="Segoe UI"
                         FontSize="13"
                         FontWeight="SemiLight"
                         MaxLines="2"
