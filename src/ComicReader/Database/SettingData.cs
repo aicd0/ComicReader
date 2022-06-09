@@ -21,8 +21,8 @@ namespace ComicReader.Database
         public bool VerticalContinuous = true;
         public bool HorizontalContinuous = false;
         public bool TransitionAnimation = true;
-        public DesignData.PageArrangementEnum VerticalPageArrangement = DesignData.PageArrangementEnum.Single;
-        public DesignData.PageArrangementEnum HorizontalPageArrangement = DesignData.PageArrangementEnum.DualCoverMirror;
+        public DesignData.PageArrangementType VerticalPageArrangement = DesignData.PageArrangementType.Single;
+        public DesignData.PageArrangementType HorizontalPageArrangement = DesignData.PageArrangementType.DualCoverMirror;
         public bool SaveHistory = true;
 
         public bool DebugMode =

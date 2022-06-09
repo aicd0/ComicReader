@@ -60,13 +60,12 @@
                     Click="{x:Bind Ctx.OnRemoveFromFavoritesClicked}"
                     Icon="Unfavorite"
                     Visibility="{x:Bind Ctx.IsFavorite}" />
-                <MenuFlyoutSeparator />
                 <MenuFlyoutItem
                     x:Uid="MenuFlyoutHide"
                     Click="{x:Bind Ctx.OnHideClicked}"
                     Visibility="{x:Bind Ctx.IsHide, Converter={StaticResource BooleanToVisibilityNegationConverter}}">
                     <MenuFlyoutItem.Icon>
-                        <FontIcon Glyph="&#xE8FF;" />
+                        <FontIcon Glyph="&#xE711;" />
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
             </MenuFlyout>

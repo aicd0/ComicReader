@@ -15,10 +15,6 @@ using ComicReader.DesignData;
 
 namespace ComicReader.Views
 {
-    using RawTask = Task<Utils.TaskResult>;
-    using SealedTask = Func<Task<Utils.TaskResult>, Utils.TaskResult>;
-    using TaskResult = Utils.TaskResult;
-
     public class HomePageShared : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
@@ -50,7 +46,7 @@ namespace ComicReader.Views
     {
         public HomePageShared Shared { get; set; } = new HomePageShared();
 
-        private Utils.ObservableCollectionPlus<ComicItemViewModel> ComicItemSource
+        private Utils.ObservableCollectionPlus<ComicItemViewModel> ComicItemSource { get; set; }
             = new Utils.ObservableCollectionPlus<ComicItemViewModel>();
         public ObservableCollection<FolderItemViewModel> FolderItemDataSource { get; set; }
             = new ObservableCollection<FolderItemViewModel>();
@@ -101,7 +97,8 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                await Update();
+                LockContext db = new LockContext();
+                await Update(db);
             });
         }
 
@@ -115,32 +112,11 @@ namespace ComicReader.Views
 
         public static string PageUniqueString(object args) => "blank";
 
-        // utilities
-        public async Task Update()
+        // Utilities
+        public async Task Update(LockContext db)
         {
-            LockContext db = new LockContext();
-
             await UpdateFolders();
             await UpdateLibrary(db);
-        }
-
-        public SealedTask UpdateSealed()
-        {
-            return delegate (RawTask _)
-            {
-                // IMPORTANT: Use TaskCompletionSource to guarantee all async tasks
-                // in Sync block has completed.
-                TaskCompletionSource<bool> completion_src = new TaskCompletionSource<bool>();
-
-                Utils.C0.Sync(async delegate
-                {
-                    await Update();
-                    completion_src.SetResult(true);
-                }).Wait();
-
-                completion_src.Task.Wait();
-                return new TaskResult();
-            };
         }
 
         private void ComicDataToViewModel(ComicData comic, ComicItemViewModel model)
@@ -336,7 +312,7 @@ namespace ComicReader.Views
             }
         }
 
-        // events
+        // Events
         private void OnSeeAllBtClicked(object sender, RoutedEventArgs e)
         {
             MainPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Search, "<all>");
@@ -387,6 +363,7 @@ namespace ComicReader.Views
                 ComicItemViewModel item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 await item.Comic.SaveHiddenAsync(db, true);
                 ComicItemSource.Remove(item);
+                await UpdateLibrary(db);
             });
         }
 

@@ -9,7 +9,7 @@ using Windows.UI.Xaml.Controls;
 
 namespace ComicReader.DesignData
 {
-    public enum PageArrangementEnum
+    public enum PageArrangementType
     {
         Single, // 1 2 3 4 5
         DualCover, // 1 23 45
@@ -154,8 +154,8 @@ namespace ComicReader.DesignData
             IsContinuous = false;
         }
 
-        private PageArrangementEnum m_VerticalPageArrangement = PageArrangementEnum.Single;
-        public PageArrangementEnum VerticalPageArrangement
+        private PageArrangementType m_VerticalPageArrangement = PageArrangementType.Single;
+        public PageArrangementType VerticalPageArrangement
         {
             get => m_VerticalPageArrangement;
             set
@@ -171,8 +171,8 @@ namespace ComicReader.DesignData
             }
         }
 
-        private PageArrangementEnum m_HorizontalPageArrangement = PageArrangementEnum.DualCover;
-        public PageArrangementEnum HorizontalPageArrangement
+        private PageArrangementType m_HorizontalPageArrangement = PageArrangementType.DualCover;
+        public PageArrangementType HorizontalPageArrangement
         {
             get => m_HorizontalPageArrangement;
             set
@@ -188,7 +188,7 @@ namespace ComicReader.DesignData
             }
         }
 
-        public PageArrangementEnum PageArrangement
+        public PageArrangementType PageArrangement
         {
             get => IsVertical ? m_VerticalPageArrangement : m_HorizontalPageArrangement;
             set
@@ -214,19 +214,19 @@ namespace ComicReader.DesignData
         {
             get
             {
-                Func<PageArrangementEnum, int> to_index = (PageArrangementEnum page_arrangement) =>
+                Func<PageArrangementType, int> to_index = (PageArrangementType page_arrangement) =>
                 {
                     switch (page_arrangement)
                     {
-                        case PageArrangementEnum.Single:
+                        case PageArrangementType.Single:
                             return 0;
-                        case PageArrangementEnum.DualCover:
+                        case PageArrangementType.DualCover:
                             return 1;
-                        case PageArrangementEnum.DualCoverMirror:
+                        case PageArrangementType.DualCoverMirror:
                             return 2;
-                        case PageArrangementEnum.DualNoCover:
+                        case PageArrangementType.DualNoCover:
                             return 3;
-                        case PageArrangementEnum.DualNoCoverMirror:
+                        case PageArrangementType.DualNoCoverMirror:
                             return 4;
                         default:
                             System.Diagnostics.Debug.Assert(false);
@@ -238,23 +238,23 @@ namespace ComicReader.DesignData
             }
             set
             {
-                Func<int, PageArrangementEnum> from_index = (int index) =>
+                Func<int, PageArrangementType> from_index = (int index) =>
                 {
                     switch (index)
                     {
                         case 0:
-                            return PageArrangementEnum.Single;
+                            return PageArrangementType.Single;
                         case 1:
-                            return PageArrangementEnum.DualCover;
+                            return PageArrangementType.DualCover;
                         case 2:
-                            return PageArrangementEnum.DualCoverMirror;
+                            return PageArrangementType.DualCoverMirror;
                         case 3:
-                            return PageArrangementEnum.DualNoCover;
+                            return PageArrangementType.DualNoCover;
                         case 4:
-                            return PageArrangementEnum.DualNoCoverMirror;
+                            return PageArrangementType.DualNoCoverMirror;
                         default:
                             System.Diagnostics.Debug.Assert(false);
-                            return PageArrangementEnum.Single;
+                            return PageArrangementType.Single;
                     }
                 };
 
