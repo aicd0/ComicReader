@@ -2478,12 +2478,12 @@ namespace ComicReader.Views
             ReaderSetZoom(-1);
         }
 
-        private void OnZoomInBtClicked(object sender, RoutedEventArgs e)
+        private void OnZoomInClick(object sender, RoutedEventArgs e)
         {
             ZoomIn();
         }
 
-        private void OnZoomOutBtClicked(object sender, RoutedEventArgs e)
+        private void OnZoomOutClick(object sender, RoutedEventArgs e)
         {
             ZoomOut();
         }
@@ -2516,7 +2516,7 @@ namespace ComicReader.Views
             });
         }
 
-        private void OnFavoriteBtChecked(object sender, RoutedEventArgs e)
+        private void OnFavoritesChecked(object sender, RoutedEventArgs e)
         {
             Utils.C0.Run(async delegate
             {
@@ -2524,7 +2524,7 @@ namespace ComicReader.Views
             });
         }
 
-        private void OnFavoriteBtUnchecked(object sender, Windows.UI.Xaml.RoutedEventArgs e)
+        private void OnFavoritesUnchecked(object sender, Windows.UI.Xaml.RoutedEventArgs e)
         {
             Utils.C0.Run(async delegate
             {
@@ -2532,7 +2532,7 @@ namespace ComicReader.Views
             });
         }
 
-        private void OnFavoritesBtClicked(object sender, RoutedEventArgs e)
+        private void OnFavoritesClick(object sender, RoutedEventArgs e)
         {
             OnSwitchFavorites();
         }
@@ -2546,7 +2546,7 @@ namespace ComicReader.Views
             }
         }
 
-        private void OnComicInfoBtClicked(object sender, RoutedEventArgs e)
+        private void OnComicInfoClick(object sender, RoutedEventArgs e)
         {
             ExpandInfoPane();
         }
@@ -2575,7 +2575,7 @@ namespace ComicReader.Views
             MainPage.Current.LoadTab(null, Utils.Tab.PageType.Search, "<tag: " + ctx.Tag + ">");
         }
 
-        private void OnEditBtClicked(object sender, RoutedEventArgs e)
+        private void OnEditInfoClick(object sender, RoutedEventArgs e)
         {
             Utils.C0.Run(async delegate
             {
@@ -2694,7 +2694,7 @@ namespace ComicReader.Views
             }
         }
 
-        private void OnPinButtonClick(object sender, RoutedEventArgs e)
+        private void OnPinClick(object sender, RoutedEventArgs e)
         {
             Shared.BottomTilePinned = !Shared.BottomTilePinned;
         }

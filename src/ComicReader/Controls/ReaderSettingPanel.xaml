@@ -6,13 +6,16 @@
     xmlns:converters="using:ComicReader.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
     d:DesignHeight="300"
     d:DesignWidth="400"
     mc:Ignorable="d">
 
     <UserControl.Resources>
         <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="../Resources/Styles/AppBarButton.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
             <Style x:Key="PageArrangementListViewItemStyle" TargetType="ListViewItem">
                 <Setter Property="FontFamily" Value="{ThemeResource ContentControlThemeFontFamily}" />
                 <Setter Property="FontSize" Value="{ThemeResource ControlContentThemeFontSize}" />
@@ -112,6 +115,7 @@
             <!--  Converters  -->
             <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
             <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
+
         </ResourceDictionary>
     </UserControl.Resources>
 
@@ -225,9 +229,8 @@
                     <!--  Vertical/Horizontal  -->
                     <AppBarButton
                         x:Uid="VerticalButton"
-                        Width="68"
                         Click="{x:Bind Ctx.OnSetHorizontal}"
-                        IsCompact="False"
+                        Style="{StaticResource AppBarButtonCompactStyle}"
                         Visibility="{x:Bind Ctx.IsVertical, Mode=OneWay}">
                         <Grid>
                             <FontIcon Glyph="&#xE7C3;" />
@@ -235,9 +238,8 @@
                     </AppBarButton>
                     <AppBarButton
                         x:Uid="HorizontalButton"
-                        Width="68"
                         Click="{x:Bind Ctx.OnSetVertical}"
-                        IsCompact="False"
+                        Style="{StaticResource AppBarButtonCompactStyle}"
                         Visibility="{x:Bind Ctx.IsVertical, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}">
                         <Grid>
                             <FontIcon Glyph="&#xEF6B;" />
@@ -247,9 +249,8 @@
                     <!--  Flow Direction  -->
                     <AppBarButton
                         x:Uid="LeftToRightButton"
-                        Width="68"
                         Click="{x:Bind Ctx.OnSetRightToLeft}"
-                        IsCompact="False"
+                        Style="{StaticResource AppBarButtonCompactStyle}"
                         Visibility="{x:Bind Ctx.IsLeftToRightVisible, Mode=OneWay}">
                         <Grid>
                             <FontIcon Glyph="&#xEBE7;" />
@@ -257,9 +258,8 @@
                     </AppBarButton>
                     <AppBarButton
                         x:Uid="RightToLeftButton"
-                        Width="68"
                         Click="{x:Bind Ctx.OnSetLeftToRight}"
-                        IsCompact="False"
+                        Style="{StaticResource AppBarButtonCompactStyle}"
                         Visibility="{x:Bind Ctx.IsRightToLeftVisible, Mode=OneWay}">
                         <Grid>
                             <FontIcon Glyph="&#xEC52;" />
@@ -271,9 +271,8 @@
                     <!--  Continuous reading  -->
                     <AppBarButton
                         x:Uid="ContinuousButton"
-                        Width="68"
                         Click="{x:Bind Ctx.OnSetDiscrete}"
-                        IsCompact="False"
+                        Style="{StaticResource AppBarButtonCompactStyle}"
                         Visibility="{x:Bind Ctx.IsContinuous, Mode=OneWay}">
                         <Grid>
                             <FontIcon Glyph="&#xE89A;" />
@@ -281,9 +280,8 @@
                     </AppBarButton>
                     <AppBarButton
                         x:Uid="DiscreteButton"
-                        Width="68"
                         Click="{x:Bind Ctx.OnSetContinuous}"
-                        IsCompact="False"
+                        Style="{StaticResource AppBarButtonCompactStyle}"
                         Visibility="{x:Bind Ctx.IsContinuous, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}">
                         <Grid>
                             <FontIcon Glyph="&#xE7C3;" />

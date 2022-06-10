@@ -407,7 +407,7 @@
                         <AppBarButton
                             x:Uid="EditInfoButton"
                             Width="68"
-                            Click="OnEditBtClicked"
+                            Click="OnEditInfoClick"
                             Icon="Edit"
                             IsCompact="False"
                             IsEnabled="{x:Bind Shared.IsEditable, Mode=OneWay}" />
@@ -416,12 +416,12 @@
                             x:Uid="FavoriteToggleButton"
                             Width="68"
                             Margin="2,0,0,0"
-                            Checked="OnFavoriteBtChecked"
+                            Checked="OnFavoritesChecked"
                             Icon="Favorite"
                             IsChecked="{x:Bind Shared.NavigationPageShared.IsFavorite, Mode=OneWay}"
                             IsCompact="False"
                             IsEnabled="{x:Bind Shared.NavigationPageShared.IsExternal, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}"
-                            Unchecked="OnFavoriteBtUnchecked" />
+                            Unchecked="OnFavoritesUnchecked" />
                     </StackPanel>
                 </Grid>
             </SplitView.Pane>
@@ -573,7 +573,7 @@
 
                             <!--  Pin  -->
                             <Button
-                                Click="OnPinButtonClick"
+                                Click="OnPinClick"
                                 Style="{StaticResource ReaderBottomTileButtonStyle}"
                                 ToolTipService.ToolTip="{x:Bind Shared.PinButtonToolTip, Mode=OneWay}">
                                 <Grid>
@@ -594,21 +594,12 @@
                                 </Grid>
                             </Button>
 
-                            <!--  Comic info  -->
-                            <Button
-                                x:Uid="ComicInfoButton"
-                                Click="OnComicInfoBtClicked"
-                                Style="{StaticResource ReaderBottomTileButtonStyle}"
-                                Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}">
-                                <FontIcon FontSize="15" Glyph="&#xE946;" />
-                            </Button>
-
                             <AppBarSeparator Margin="2.5,0" Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}" />
 
                             <!--  Zooming  -->
                             <Button
                                 x:Uid="ZoomInButton"
-                                Click="OnZoomInBtClicked"
+                                Click="OnZoomInClick"
                                 IsEnabled="{x:Bind Shared.NavigationPageShared.ZoomInEnabled, Mode=OneWay}"
                                 Style="{StaticResource ReaderBottomTileButtonStyle}"
                                 Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}">
@@ -616,16 +607,16 @@
                             </Button>
                             <Button
                                 x:Uid="ZoomOutButton"
-                                Click="OnZoomOutBtClicked"
+                                Click="OnZoomOutClick"
                                 IsEnabled="{x:Bind Shared.NavigationPageShared.ZoomOutEnabled, Mode=OneWay}"
                                 Style="{StaticResource ReaderBottomTileButtonStyle}"
                                 Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}">
                                 <FontIcon FontSize="15" Glyph="&#xE71F;" />
                             </Button>
 
-                            <!--  Add to favorites  -->
+                            <!--  Add to / Remove from favorites  -->
                             <Button
-                                Click="OnFavoritesBtClicked"
+                                Click="OnFavoritesClick"
                                 IsEnabled="{x:Bind Shared.NavigationPageShared.IsExternal, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}"
                                 Style="{StaticResource ReaderBottomTileButtonStyle}"
                                 ToolTipService.ToolTip="{x:Bind Shared.NavigationPageShared.FavoriteButtonToolTip, Mode=OneWay}"
@@ -669,6 +660,15 @@
                                     </Flyout>
                                 </Button.Flyout>
                                 <FontIcon FontSize="15" Glyph="&#xE713;" />
+                            </Button>
+
+                            <!--  Comic info  -->
+                            <Button
+                                x:Uid="ComicInfoButton"
+                                Click="OnComicInfoClick"
+                                Style="{StaticResource ReaderBottomTileButtonStyle}"
+                                Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}">
+                                <FontIcon FontSize="15" Glyph="&#xE946;" />
                             </Button>
 
                             <!--  Page indicator  -->

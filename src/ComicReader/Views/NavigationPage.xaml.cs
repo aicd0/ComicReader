@@ -346,11 +346,6 @@ namespace ComicReader.Views
             NavigationPageSidePane.IsPaneOpen = !NavigationPageSidePane.IsPaneOpen;
         }
 
-        private void OnMoreComicInfoClick(object sender, RoutedEventArgs e)
-        {
-            Shared.OnExpandComicInfoPane?.Invoke();
-        }
-
         private void OnMoreSettingsClick(object sender, RoutedEventArgs e)
         {
             MainPage.Current.LoadTab(null, Utils.Tab.PageType.Settings);
@@ -374,6 +369,11 @@ namespace ComicReader.Views
         private void OnAddToFavoritesClick(object sender, RoutedEventArgs e)
         {
             Shared.OnSwitchFavorites?.Invoke();
+        }
+
+        private void OnComicInfoClick(object sender, RoutedEventArgs e)
+        {
+            Shared.OnExpandComicInfoPane?.Invoke();
         }
 
         // Side pane

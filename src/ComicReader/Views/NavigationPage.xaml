@@ -120,15 +120,6 @@
                             <AppBarButton.Flyout>
                                 <MenuFlyout Placement="BottomEdgeAlignedRight">
                                     <MenuFlyoutItem
-                                        x:Uid="MenuFlyoutComicInfo"
-                                        Click="OnMoreComicInfoClick"
-                                        Visibility="{x:Bind Shared.IsReaderPage, Mode=OneWay}">
-                                        <MenuFlyoutItem.Icon>
-                                            <FontIcon Glyph="&#xE946;" />
-                                        </MenuFlyoutItem.Icon>
-                                    </MenuFlyoutItem>
-                                    <MenuFlyoutSeparator Visibility="{x:Bind Shared.IsReaderPage, Mode=OneWay}" />
-                                    <MenuFlyoutItem
                                         x:Uid="MenuFlyoutSettings"
                                         Click="OnMoreSettingsClick"
                                         Icon="Setting" />
@@ -158,6 +149,7 @@
                             <FontIcon Glyph="&#xE8A3;" />
                         </AppBarButton.Content>
                     </AppBarButton>
+
                     <AppBarButton
                         x:Uid="ZoomOutButton"
                         Click="OnZoomOutClick"
@@ -211,6 +203,16 @@
                                 <controls:ReaderSettingPanel DataContext="{x:Bind Shared.ReaderSettings}" />
                             </Flyout>
                         </AppBarButton.Flyout>
+                    </AppBarButton>
+
+                    <!--  Comic info  -->
+                    <AppBarButton
+                        x:Uid="ComicInfoButton"
+                        Click="OnComicInfoClick"
+                        Style="{StaticResource NavigationPageTopTileAppBarButton}">
+                        <AppBarButton.Content>
+                            <FontIcon Glyph="&#xE946;" />
+                        </AppBarButton.Content>
                     </AppBarButton>
                 </StackPanel>
             </Grid>
