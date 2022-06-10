@@ -32,6 +32,7 @@
         </Grid.RowDefinitions>
         <Grid
             x:Name="TopTile"
+            Grid.Row="0"
             VerticalAlignment="Top"
             Background="{ThemeResource TabViewItemHeaderBackgroundSelected}"
             Visibility="{x:Bind Shared.MainPageShared.IsFullscreen, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}">
@@ -52,25 +53,25 @@
                         Orientation="Horizontal">
                         <AppBarButton
                             x:Uid="BackButton"
-                            Click="GoBackClick"
+                            Click="OnGoBackClick"
                             Icon="Back"
                             IsEnabled="{x:Bind ContentFrame.CanGoBack, Mode=OneWay}"
                             Style="{StaticResource NavigationPageTopTileAppBarButton}" />
                         <AppBarButton
                             x:Uid="ForwardButton"
-                            Click="GoForwardClick"
+                            Click="OnGoForwardClick"
                             Icon="Forward"
                             IsEnabled="{x:Bind ContentFrame.CanGoForward, Mode=OneWay}"
                             Style="{StaticResource NavigationPageTopTileAppBarButton}" />
                         <AppBarButton
                             x:Uid="HomeButton"
-                            Click="HomeClick"
+                            Click="OnHomeClick"
                             Icon="Home"
                             Style="{StaticResource NavigationPageTopTileAppBarButton}"
                             Visibility="{x:Bind Shared.IsHomePage, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
                         <AppBarButton
                             x:Uid="RefreshButton"
-                            Click="OnRefreshBtClicked"
+                            Click="OnRefreshClick"
                             Icon="Refresh"
                             Style="{StaticResource NavigationPageTopTileAppBarButton}"
                             Visibility="{x:Bind Shared.IsHomePage, Mode=OneWay}" />
@@ -87,10 +88,10 @@
                         VerticalAlignment="Center"
                         CornerRadius="6"
                         QueryIcon="Find"
-                        QuerySubmitted="SearchBoxQuerySubmitted"
+                        QuerySubmitted="OnSearchBoxQuerySubmitted"
                         Style="{StaticResource NavigationPageSearchBoxStyle}"
                         TextBoxStyle="{StaticResource NavigationPageSearchBoxTextBoxStyle}"
-                        TextChanged="SearchBoxTextChanged"
+                        TextChanged="OnSearchBoxTextChanged"
                         Visibility="{x:Bind Shared.IsReaderPage, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
 
                     <!--  Right buttons  -->
@@ -104,7 +105,7 @@
                         <!--  Expand favorites pane button  -->
                         <AppBarButton
                             x:Uid="FavoritesButton"
-                            Click="FavoritesClick"
+                            Click="OnFavoritesClick"
                             Style="{StaticResource NavigationPageTopTileAppBarButton}">
                             <AppBarButton.Content>
                                 <FontIcon Glyph="&#xE728;" />
@@ -120,7 +121,7 @@
                                 <MenuFlyout Placement="BottomEdgeAlignedRight">
                                     <MenuFlyoutItem
                                         x:Uid="MenuFlyoutComicInfo"
-                                        Click="ComicInfoClick"
+                                        Click="OnMoreComicInfoClick"
                                         Visibility="{x:Bind Shared.IsReaderPage, Mode=OneWay}">
                                         <MenuFlyoutItem.Icon>
                                             <FontIcon Glyph="&#xE946;" />
@@ -129,11 +130,11 @@
                                     <MenuFlyoutSeparator Visibility="{x:Bind Shared.IsReaderPage, Mode=OneWay}" />
                                     <MenuFlyoutItem
                                         x:Uid="MenuFlyoutSettings"
-                                        Click="OnMenuItemSettingsClicked"
+                                        Click="OnMoreSettingsClick"
                                         Icon="Setting" />
                                     <MenuFlyoutItem
                                         x:Uid="MenuFlyoutHelp"
-                                        Click="OnMenuItemHelpClicked"
+                                        Click="OnMoreHelpClick"
                                         Icon="Help" />
                                 </MenuFlyout>
                             </AppBarButton.Flyout>
@@ -150,7 +151,7 @@
                     <!--  Zoom in/out  -->
                     <AppBarButton
                         x:Uid="ZoomInButton"
-                        Click="ZoomInClick"
+                        Click="OnZoomInClick"
                         IsEnabled="{x:Bind Shared.ZoomInEnabled, Mode=OneWay}"
                         Style="{StaticResource NavigationPageTopTileAppBarButton}">
                         <AppBarButton.Content>
@@ -159,7 +160,7 @@
                     </AppBarButton>
                     <AppBarButton
                         x:Uid="ZoomOutButton"
-                        Click="ZoomOutClick"
+                        Click="OnZoomOutClick"
                         IsEnabled="{x:Bind Shared.ZoomOutEnabled, Mode=OneWay}"
                         Style="{StaticResource NavigationPageTopTileAppBarButton}">
                         <AppBarButton.Content>
@@ -169,7 +170,7 @@
 
                     <!--  Add to favorites  -->
                     <AppBarButton
-                        Click="AddToFavoritesClick"
+                        Click="OnAddToFavoritesClick"
                         IsEnabled="{x:Bind Shared.IsExternal, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}"
                         Style="{StaticResource NavigationPageTopTileAppBarButton}"
                         ToolTipService.ToolTip="{x:Bind Shared.FavoriteButtonToolTip, Mode=OneWay}">
@@ -225,9 +226,14 @@
             IsPaneOpen="{x:Bind Shared.IsSidePaneOpen, Mode=TwoWay}"
             OpenPaneLength="380"
             PaneBackground="{ThemeResource SidePaneBackground}"
-            PaneOpened="SidePaneOpened"
+            PaneOpened="OnSidePaneOpened"
             PanePlacement="Right">
-            <Frame x:Name="ContentFrame" />
+            <Grid
+                Background="Transparent"
+                PointerPressed="OnPagePointerPressed"
+                PointerReleased="OnPagePointerReleased">
+                <Frame x:Name="ContentFrame" />
+            </Grid>
             <SplitView.Pane>
                 <controls:SidePane DataContext="{x:Bind}" />
             </SplitView.Pane>

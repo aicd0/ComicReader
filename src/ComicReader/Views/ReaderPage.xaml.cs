@@ -481,7 +481,7 @@ namespace ComicReader.Views
                 viewport_width / frame_width);
         }
 
-        public float Zoom { get; private set; } = 90f;
+        public float Zoom { get; private set; } = 100f;
         public float ZoomFactor => ThisScrollViewer.ZoomFactor;
 
         private float m_ZoomFactorFinal;
@@ -1741,14 +1741,16 @@ namespace ComicReader.Views
 
     public sealed partial class ReaderPage : Page
     {
-        public ReaderPageShared Shared { get; set; }
+        public ReaderPageShared Shared { get; set; } = new ReaderPageShared();
         private ReaderModel VerticalReader { get; set; }
         private ReaderModel HorizontalReader { get; set; }
         private ObservableCollection<ReaderImagePreviewViewModel> PreviewDataSource { get; set; }
 
         private readonly Utils.Tab.TabManager m_tab_manager;
-        private ComicData m_comic;
-        private readonly GestureRecognizer m_gesture_recognizer;
+        private ComicData m_comic = null;
+
+        // Pointer events
+        private readonly GestureRecognizer m_gesture_recognizer = new GestureRecognizer();
 
         // Bottom Tile
         private bool m_bottom_tile_showed = false;
@@ -1761,7 +1763,6 @@ namespace ComicReader.Views
 
         public ReaderPage()
         {
-            Shared = new ReaderPageShared();
             Shared.ComicTitle1 = "";
             Shared.ComicTitle2 = "";
             Shared.ComicDir = "";
@@ -1782,18 +1783,17 @@ namespace ComicReader.Views
                 OnTabStart = OnTabStart
             };
 
-            m_comic = null;
-
-            m_gesture_recognizer = new GestureRecognizer();
             m_gesture_recognizer.GestureSettings =
+                GestureSettings.Tap |
                 GestureSettings.ManipulationTranslateX |
                 GestureSettings.ManipulationTranslateY |
                 GestureSettings.ManipulationTranslateInertia |
                 GestureSettings.ManipulationScale;
-            m_gesture_recognizer.ManipulationStarted += OnManipulationStarted;
-            m_gesture_recognizer.ManipulationUpdated += OnManipulationUpdated;
-            m_gesture_recognizer.ManipulationCompleted += OnManipulationCompleted;
-            
+            m_gesture_recognizer.Tapped += OnReaderTapped;
+            m_gesture_recognizer.ManipulationStarted += OnReaderManipulationStarted;
+            m_gesture_recognizer.ManipulationUpdated += OnReaderManipulationUpdated;
+            m_gesture_recognizer.ManipulationCompleted += OnReaderManipulationCompleted;
+
             InitializeComponent();
         }
 
@@ -2314,17 +2314,74 @@ namespace ComicReader.Views
             });
         }
 
-        // Manipulation
-        private void OnManipulationStarted(object sender, ManipulationStartedEventArgs e)
+        // Pointer events
+        private void OnReaderPointerPressed(object sender, PointerRoutedEventArgs e)
         {
-            // do nothing.
+            (sender as UIElement).CapturePointer(e.Pointer);
+            PointerPoint pointer_point = e.GetCurrentPoint(ManipulationReference);
+            m_gesture_recognizer.ProcessDownEvent(pointer_point);
+
+#if DEBUG_LOG_MANIPULATION
+            Log("Pointer pressed");
+#endif
+        }
+
+        private void OnReaderPointerMoved(object sender, PointerRoutedEventArgs e)
+        {
+            m_gesture_recognizer.ProcessMoveEvents(e.GetIntermediatePoints(ManipulationReference));
+
+#if DEBUG_LOG_MANIPULATION
+            //Log("Pointer moved");
+#endif
+        }
+
+        private void OnReaderPointerReleased(object sender, PointerRoutedEventArgs e)
+        {
+            PointerPoint pointer_point = e.GetCurrentPoint(ManipulationReference);
+            m_gesture_recognizer.ProcessUpEvent(pointer_point);
+            (sender as UIElement).ReleasePointerCapture(e.Pointer);
+
+            if (!m_gesture_recognizer.AutoProcessInertia)
+            {
+                m_gesture_recognizer.CompleteGesture();
+            }
+
+#if DEBUG_LOG_MANIPULATION
+            Log("Pointer released");
+#endif
+        }
+
+        private void OnReaderPointerCanceled(object sender, PointerRoutedEventArgs e)
+        {
+            PointerPoint pointer_point = e.GetCurrentPoint(ManipulationReference);
+            m_gesture_recognizer.ProcessUpEvent(pointer_point);
+            (sender as UIElement).ReleasePointerCapture(e.Pointer);
+
+            if (!m_gesture_recognizer.AutoProcessInertia)
+            {
+                m_gesture_recognizer.CompleteGesture();
+            }
+
+#if DEBUG_LOG_MANIPULATION
+            Log("Pointer canceled");
+#endif
+        }
+
+        private void OnReaderTapped(object sender, TappedEventArgs e)
+        {
+            BottomTileSetHold(!m_bottom_tile_showed);
+        }
+
+        private void OnReaderManipulationStarted(object sender, ManipulationStartedEventArgs e)
+        {
+            // Do nothing.
 
 #if DEBUG_LOG_MANIPULATION
             Log("Manipulation started");
 #endif
         }
 
-        private void OnManipulationUpdated(object sender, ManipulationUpdatedEventArgs e)
+        private void OnReaderManipulationUpdated(object sender, ManipulationUpdatedEventArgs e)
         {
             ReaderModel reader = GetCurrentReader();
 
@@ -2352,7 +2409,7 @@ namespace ComicReader.Views
             reader.SetScrollViewer3(zoom, reader.HorizontalOffsetFinal - dx, reader.VerticalOffsetFinal - dy, false);
         }
 
-        private void OnManipulationCompleted(object sender, ManipulationCompletedEventArgs e)
+        private void OnReaderManipulationCompleted(object sender, ManipulationCompletedEventArgs e)
         {
             Utils.C0.Run(async delegate
             {
@@ -2383,62 +2440,6 @@ namespace ComicReader.Views
                 Log("Manipulation completed, V=" + velocity.ToString());
 #endif
             });
-        }
-
-        private void OnReaderPointerPressed(object sender, PointerRoutedEventArgs e)
-        {
-            (sender as UIElement).CapturePointer(e.Pointer);
-            m_gesture_recognizer.ProcessDownEvent(e.GetCurrentPoint(ManipulationReference));
-
-#if DEBUG_LOG_MANIPULATION
-            Log("Pointer pressed");
-#endif
-        }
-
-        private void OnReaderPointerMoved(object sender, PointerRoutedEventArgs e)
-        {
-            m_gesture_recognizer.ProcessMoveEvents(e.GetIntermediatePoints(ManipulationReference));
-
-#if DEBUG_LOG_MANIPULATION
-            //Log("Pointer moved");
-#endif
-        }
-
-        private void OnReaderPointerReleased(object sender, PointerRoutedEventArgs e)
-        {
-            m_gesture_recognizer.ProcessUpEvent(e.GetCurrentPoint(ManipulationReference));
-            (sender as UIElement).ReleasePointerCapture(e.Pointer);
-
-            if (!m_gesture_recognizer.AutoProcessInertia)
-            {
-                m_gesture_recognizer.CompleteGesture();
-            }
-
-#if DEBUG_LOG_MANIPULATION
-            Log("Pointer released");
-#endif
-        }
-
-        private void OnReaderPointerCanceled(object sender, PointerRoutedEventArgs e)
-        {
-            m_gesture_recognizer.ProcessUpEvent(e.GetCurrentPoint(ManipulationReference));
-            (sender as UIElement).ReleasePointerCapture(e.Pointer);
-
-            if (!m_gesture_recognizer.AutoProcessInertia)
-            {
-                m_gesture_recognizer.CompleteGesture();
-            }
-
-#if DEBUG_LOG_MANIPULATION
-            Log("Pointer canceled");
-#endif
-        }
-
-        private void OnReaderPointerCaptureLost(object sender, PointerRoutedEventArgs e)
-        {
-#if DEBUG_LOG_MANIPULATION
-            Log("Pointer capture lost");
-#endif
         }
 
         // Zooming
@@ -2714,11 +2715,6 @@ namespace ComicReader.Views
             }
 
             BottomTileHide(3000);
-        }
-
-        private void OnReaderTapped(object sender, TappedRoutedEventArgs e)
-        {
-            BottomTileSetHold(!m_bottom_tile_showed);
         }
 
         // Keys

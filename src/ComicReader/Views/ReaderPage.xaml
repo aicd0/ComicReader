@@ -34,7 +34,6 @@
                                 CornerRadius="{TemplateBinding CornerRadius}"
                                 ManipulationMode="All"
                                 PointerCanceled="OnReaderPointerCanceled"
-                                PointerCaptureLost="OnReaderPointerCaptureLost"
                                 PointerMoved="OnReaderPointerMoved"
                                 PointerPressed="OnReaderPointerPressed"
                                 PointerReleased="OnReaderPointerReleased"
@@ -437,7 +436,7 @@
                     Visibility="{x:Bind Shared.IsReaderStatusTextBlockVisible, Mode=OneWay}" />
 
                 <!--  Reader  -->
-                <Grid Tapped="OnReaderTapped">
+                <Grid>
                     <Grid x:Name="ManipulationReference" />
 
                     <!--  Vertical  -->

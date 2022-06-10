@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using Windows.UI.Input;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
@@ -230,7 +231,7 @@ namespace ComicReader.Views
             }
         }
 
-        // utilities
+        // Common
         public void Update()
         {
             if (ContentFrame == null)
@@ -249,48 +250,36 @@ namespace ComicReader.Views
                 Utils.Tab.TabManager.TypeFromPageTypeEnum(m_tab_manager.TabId.Type), nav_params);
         }
 
-        public void SetSearchBox(string keywords)
+        public bool GoBack()
         {
-            SearchBox.Focus(FocusState.Programmatic);
-            SearchBox.Text = keywords;
-        }
-
-        // events
-        private void SearchBoxTextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args) { }
-
-        private void SearchBoxQuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
-        {
-            if (args.QueryText.Trim().Length == 0)
+            if (ContentFrame == null)
             {
-                return;
+                return false;
             }
 
-            MainPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Search, args.QueryText);
-        }
-
-        private void OnMenuItemSettingsClicked(object sender, RoutedEventArgs e)
-        {
-            MainPage.Current.LoadTab(null, Utils.Tab.PageType.Settings);
-        }
-
-        private void OnMenuItemHelpClicked(object sender, RoutedEventArgs e)
-        {
-            MainPage.Current.LoadTab(null, Utils.Tab.PageType.Help);
-        }
-
-        private void FavoritesClick(object sender, RoutedEventArgs e)
-        {
-            if (NavigationPageSidePane == null)
+            if (!ContentFrame.CanGoBack)
             {
-                return;
+                return false;
             }
 
-            NavigationPageSidePane.IsPaneOpen = !NavigationPageSidePane.IsPaneOpen;
+            ContentFrame.GoBack();
+            return true;
         }
 
-        private void HomeClick(object sender, RoutedEventArgs e)
+        public bool GoForward()
         {
-            MainPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Home);
+            if (ContentFrame == null)
+            {
+                return false;
+            }
+
+            if (!ContentFrame.CanGoForward)
+            {
+                return false;
+            }
+
+            ContentFrame.GoForward();
+            return true;
         }
 
         private void RefreshPage()
@@ -300,7 +289,42 @@ namespace ComicReader.Views
                 m_tab_manager.TabId.RequestArgs, try_reuse: false);
         }
 
-        private void OnRefreshBtClicked(object sender, RoutedEventArgs e)
+        // Search box
+        public void SetSearchBox(string keywords)
+        {
+            SearchBox.Focus(FocusState.Programmatic);
+            SearchBox.Text = keywords;
+        }
+
+        private void OnSearchBoxTextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args) { }
+
+        private void OnSearchBoxQuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
+        {
+            if (args.QueryText.Trim().Length == 0)
+            {
+                return;
+            }
+
+            MainPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Search, args.QueryText);
+        }
+
+        // Buttons
+        private void OnGoBackClick(object sender, RoutedEventArgs e)
+        {
+            _ = GoBack();
+        }
+
+        private void OnGoForwardClick(object sender, RoutedEventArgs e)
+        {
+            _ = GoForward();
+        }
+
+        private void OnHomeClick(object sender, RoutedEventArgs e)
+        {
+            MainPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Home);
+        }
+
+        private void OnRefreshClick(object sender, RoutedEventArgs e)
         {
             if (Shared.IsHomePage)
             {
@@ -312,43 +336,48 @@ namespace ComicReader.Views
             }
         }
 
-        private void GoBackClick(object sender, RoutedEventArgs e)
+        private void OnFavoritesClick(object sender, RoutedEventArgs e)
         {
-            if (ContentFrame.CanGoBack)
+            if (NavigationPageSidePane == null)
             {
-                ContentFrame.GoBack();
+                return;
             }
+
+            NavigationPageSidePane.IsPaneOpen = !NavigationPageSidePane.IsPaneOpen;
         }
 
-        private void GoForwardClick(object sender, RoutedEventArgs e)
-        {
-            if (ContentFrame.CanGoForward)
-            {
-                ContentFrame.GoForward();
-            }
-        }
-
-        private void AddToFavoritesClick(object sender, RoutedEventArgs e)
-        {
-            Shared.OnSwitchFavorites?.Invoke();
-        }
-
-        private void ZoomInClick(object sender, RoutedEventArgs e)
-        {
-            Shared.OnZoomIn?.Invoke();
-        }
-
-        private void ZoomOutClick(object sender, RoutedEventArgs e)
-        {
-            Shared.OnZoomOut?.Invoke();
-        }
-
-        private void ComicInfoClick(object sender, RoutedEventArgs e)
+        private void OnMoreComicInfoClick(object sender, RoutedEventArgs e)
         {
             Shared.OnExpandComicInfoPane?.Invoke();
         }
 
-        private void SidePaneOpened(SplitView sender, object args)
+        private void OnMoreSettingsClick(object sender, RoutedEventArgs e)
+        {
+            MainPage.Current.LoadTab(null, Utils.Tab.PageType.Settings);
+        }
+
+        private void OnMoreHelpClick(object sender, RoutedEventArgs e)
+        {
+            MainPage.Current.LoadTab(null, Utils.Tab.PageType.Help);
+        }
+
+        private void OnZoomInClick(object sender, RoutedEventArgs e)
+        {
+            Shared.OnZoomIn?.Invoke();
+        }
+
+        private void OnZoomOutClick(object sender, RoutedEventArgs e)
+        {
+            Shared.OnZoomOut?.Invoke();
+        }
+
+        private void OnAddToFavoritesClick(object sender, RoutedEventArgs e)
+        {
+            Shared.OnSwitchFavorites?.Invoke();
+        }
+
+        // Side pane
+        private void OnSidePaneOpened(SplitView sender, object args)
         {
             Utils.C0.Run(async delegate
             {
@@ -364,6 +393,34 @@ namespace ComicReader.Views
             });
         }
 
+        // Pointer events
+        PointerPoint m_last_pointer_point = null;
+
+        private void OnPagePointerPressed(object sender, PointerRoutedEventArgs e)
+        {
+            m_last_pointer_point = e.GetCurrentPoint(sender as UIElement);
+        }
+
+        private void OnPagePointerReleased(object sender, PointerRoutedEventArgs e)
+        {
+            if (m_last_pointer_point == null)
+            {
+                return;
+            }
+
+            if (m_last_pointer_point.Properties.IsXButton1Pressed)
+            {
+                _ = GoBack();
+            }
+            else if (m_last_pointer_point.Properties.IsXButton2Pressed)
+            {
+                _ = GoForward();
+            }
+
+            m_last_pointer_point = null;
+        }
+
+        // Keys
         private void OnKeyDown(object sender, KeyRoutedEventArgs e)
         {
             Shared.OnKeyDown?.Invoke(sender, e);
