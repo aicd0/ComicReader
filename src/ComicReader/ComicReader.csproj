@@ -132,6 +132,7 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Common\ReaderModel.cs" />
     <Compile Include="Controls\ComicItemHorizontal.xaml.cs">
       <DependentUpon>ComicItemHorizontal.xaml</DependentUpon>
     </Compile>
