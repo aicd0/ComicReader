@@ -93,7 +93,7 @@ namespace ComicReader.Common
                 FillFinalVal();
                 return m_PageFinal;
             }
-            set
+            private set
             {
                 FillFinalVal();
                 m_PageFinal = value;
@@ -249,7 +249,7 @@ namespace ComicReader.Common
                 FillFinalVal();
                 return m_ZoomFactorFinal;
             }
-            set
+            private set
             {
                 FillFinalVal();
                 m_ZoomFactorFinal = value;
@@ -266,7 +266,7 @@ namespace ComicReader.Common
                 FillFinalVal();
                 return m_HorizontalOffsetFinal;
             }
-            set
+            private set
             {
                 FillFinalVal();
                 m_HorizontalOffsetFinal = value;
@@ -283,7 +283,7 @@ namespace ComicReader.Common
                 FillFinalVal();
                 return m_VerticalOffsetFinal;
             }
-            set
+            private set
             {
                 FillFinalVal();
                 m_VerticalOffsetFinal = value;
@@ -298,7 +298,7 @@ namespace ComicReader.Common
                 FillFinalVal();
                 return m_DisableAnimationFinal;
             }
-            set
+            private set
             {
                 FillFinalVal();
                 m_DisableAnimationFinal = value;
@@ -311,7 +311,7 @@ namespace ComicReader.Common
         public double ViewportPerpendicularLength => IsVertical ? ThisScrollViewer.ViewportWidth : ThisScrollViewer.ViewportHeight;
         public double ExtentParallelLength => IsVertical ? ThisScrollViewer.ExtentHeight : ThisScrollViewer.ExtentWidth;
         public double ExtentParallelLengthFinal => FinalVal(ExtentParallelLength);
-        public double FrameParallelLength(int i) => IsVertical ? Frames[i].Height : Frames[i].Width;
+        private double FrameParallelLength(int i) => IsVertical ? Frames[i].Height : Frames[i].Width;
 
         // Observer - List View
         private double m_PaddingStartFinal;
@@ -322,7 +322,7 @@ namespace ComicReader.Common
                 FillFinalVal();
                 return m_PaddingStartFinal;
             }
-            set
+            private set
             {
                 FillFinalVal();
                 m_PaddingStartFinal = value;
@@ -337,7 +337,7 @@ namespace ComicReader.Common
                 FillFinalVal();
                 return m_PaddingEndFinal;
             }
-            set
+            private set
             {
                 FillFinalVal();
                 m_PaddingEndFinal = value;
