@@ -46,7 +46,7 @@ namespace ComicReader.Views
         public FavoritePageShared Shared { get; set; }
         private ObservableCollection<FavoriteItemViewModel> DataSource { get; set; }
 
-        private Utils.Tab.TabManager m_tab_manager;
+        private Common.Tab.TabManager m_tab_manager;
 
         public FavoritePage()
         {
@@ -54,7 +54,7 @@ namespace ComicReader.Views
             Shared = new FavoritePageShared();
             DataSource = new ObservableCollection<FavoriteItemViewModel>();
 
-            m_tab_manager = new Utils.Tab.TabManager(this)
+            m_tab_manager = new Common.Tab.TabManager(this)
             {
                 OnTabRegister = OnTabRegister,
                 OnTabUnregister = OnTabUnregister,
@@ -322,7 +322,7 @@ namespace ComicReader.Views
                     }
                     else
                     {
-                        MainPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Reader, comic);
+                        MainPage.Current.LoadTab(m_tab_manager.TabId, Common.Tab.PageType.Reader, comic);
                         Shared.NavigationPageShared.IsSidePaneOpen = false;
                     }
                 }
@@ -442,7 +442,7 @@ namespace ComicReader.Views
 
                 FavoriteItemViewModel item = (FavoriteItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 ComicData comic = await ComicData.Manager.FromId(db, item.Id);
-                MainPage.Current.LoadTab(null, Utils.Tab.PageType.Reader, comic);
+                MainPage.Current.LoadTab(null, Common.Tab.PageType.Reader, comic);
             });
         }
 

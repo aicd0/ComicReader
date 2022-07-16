@@ -29,6 +29,18 @@ namespace ComicReader.Utils
             }
         }
 
+        public static void RunWithNewLockContext(Action<ComicReader.Database.LockContext> action)
+        {
+            try
+            {
+                action(new Database.LockContext());
+            }
+            catch (Exception e)
+            {
+                throw e;
+            }
+        }
+
         public static async Task Sync(DispatchedHandler callback)
         {
             await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, callback);

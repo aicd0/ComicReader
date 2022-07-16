@@ -32,7 +32,7 @@ namespace ComicReader.Database
             };
         }
 
-        public static async Task<ComicData> FromExternal(LockContext db, StorageFile archive)
+        public static async Task<ComicData> FromExternal(StorageFile archive)
         {
             Utils.Storage.AddTrustedFile(archive);
 
@@ -43,8 +43,8 @@ namespace ComicReader.Database
                 Location = archive.Path,
             };
 
-            await comic.LoadFromInfoFile();
-            await comic.UpdateImages(db, cover_only: false, reload: true);
+            _ = await comic.LoadFromInfoFile();
+            _ = await comic.UpdateImages(cover_only: false, reload: true);
             return comic;
         }
 
@@ -191,7 +191,7 @@ namespace ComicReader.Database
                         string filename = Utils.StringUtils.ItemNameFromPath(filepath);
                         string extension = Utils.StringUtils.ExtensionFromFilename(filename);
 
-                        if (Utils.AppInfoProvider.IsSupportedImageExtension(extension))
+                        if (Common.AppInfoProvider.IsSupportedImageExtension(extension))
                         {
                             entries.Add(filepath.Substring(base_path.Length));
                         }
@@ -213,7 +213,7 @@ namespace ComicReader.Database
                 {
                     string extension = Utils.StringUtils.ExtensionFromFilename(subfile);
 
-                    if (!Utils.AppInfoProvider.IsSupportedImageExtension(extension))
+                    if (!Common.AppInfoProvider.IsSupportedImageExtension(extension))
                     {
                         continue;
                     }

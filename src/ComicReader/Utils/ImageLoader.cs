@@ -67,7 +67,6 @@ namespace ComicReader.Utils
 
         public sealed class Builder : BuilderBase<RawTask>
         {
-            private LockContext m_db;
             private List<Token> m_tokens;
             private DimensionConstrain m_width_constrain = double.PositiveInfinity;
             private DimensionConstrain m_height_constrain = double.PositiveInfinity;
@@ -75,9 +74,8 @@ namespace ComicReader.Utils
             private CancellationLock m_cancellation_lock;
             private double m_multiplication = 1.0;
 
-            public Builder(LockContext db, List<Token> tokens, CancellationLock cancellation_lock)
+            public Builder(List<Token> tokens, CancellationLock cancellation_lock)
             {
-                m_db = db;
                 m_tokens = tokens;
                 m_cancellation_lock = cancellation_lock;
             }
@@ -110,11 +108,11 @@ namespace ComicReader.Utils
             {
                 m_width_constrain.Val *= m_multiplication;
                 m_height_constrain.Val *= m_multiplication;
-                return Load(m_db, m_tokens, m_width_constrain, m_height_constrain, m_stretch_mode, m_cancellation_lock);
+                return Load(m_tokens, m_width_constrain, m_height_constrain, m_stretch_mode, m_cancellation_lock);
             }
         }
 
-        private static async RawTask Load(LockContext db, IEnumerable<Token> tokens,
+        private static async RawTask Load(IEnumerable<Token> tokens,
             DimensionConstrain width_constrain, DimensionConstrain height_constrain,
             StretchModeEnum stretch_mode, CancellationLock cancellation_lock)
         {
@@ -150,7 +148,7 @@ namespace ComicReader.Utils
 
                 // Lazy load.
                 ComicData comic = token.Comic;
-                TaskResult result = await comic.UpdateImages(db, cover_only: token.Index < 0, reload: false);
+                TaskResult result = await comic.UpdateImages(cover_only: token.Index < 0, reload: false);
 
                 // Skip tokens whose comic folder cannot be reached.
                 if (!result.Successful)
@@ -165,7 +163,7 @@ namespace ComicReader.Utils
 
                 BitmapImage image = null;
 
-                using (IRandomAccessStream stream = await comic.GetImageStream(db, token.Index))
+                using (IRandomAccessStream stream = await comic.GetImageStream(token.Index))
                 {
                     if (stream == null)
                     {

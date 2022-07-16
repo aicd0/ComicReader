@@ -264,7 +264,7 @@ namespace ComicReader.Views
         private ReaderModel HorizontalReader { get; set; }
         private ObservableCollection<ReaderImagePreviewViewModel> PreviewDataSource { get; set; }
 
-        private readonly Utils.Tab.TabManager m_tab_manager;
+        private readonly Common.Tab.TabManager m_tab_manager;
         private ComicData m_comic = null;
 
         // Pointer events
@@ -293,7 +293,7 @@ namespace ComicReader.Views
             HorizontalReader = new ReaderModel(Shared, false);
             PreviewDataSource = new ObservableCollection<ReaderImagePreviewViewModel>();
 
-            m_tab_manager = new Utils.Tab.TabManager(this)
+            m_tab_manager = new Common.Tab.TabManager(this)
             {
                 OnTabUpdate = OnTabUpdate,
                 OnTabRegister = OnTabRegister,
@@ -373,14 +373,14 @@ namespace ComicReader.Views
             });
         }
 
-        private void OnTabStart(Utils.Tab.TabIdentifier tab_id)
+        private void OnTabStart(Common.Tab.TabIdentifier tab_id)
         {
             Utils.C0.Run(async delegate
             {
                 LockContext db = new LockContext();
 
-                Shared.NavigationPageShared.CurrentPageType = Utils.Tab.PageType.Reader;
-                tab_id.Type = Utils.Tab.PageType.Reader;
+                Shared.NavigationPageShared.CurrentPageType = Common.Tab.PageType.Reader;
+                tab_id.Type = Common.Tab.PageType.Reader;
 
                 ComicData comic = (ComicData)tab_id.RequestArgs;
                 tab_id.Tab.Header = comic.Title;
@@ -435,7 +435,7 @@ namespace ComicReader.Views
                     await HistoryDataManager.Add(m_comic.Id, m_comic.Title1, true);
 
                     // Update image files.
-                    TaskResult result = await m_comic.UpdateImages(db, cover_only: false, reload: true);
+                    TaskResult result = await m_comic.UpdateImages(cover_only: false, reload: true);
 
                     if (!result.Successful)
                     {
@@ -548,7 +548,7 @@ namespace ComicReader.Views
             }
 
             save_timer.Start();
-            await new Utils.ImageLoader.Builder(db, preview_img_loader_tokens, m_lock_load_comic)
+            await new Utils.ImageLoader.Builder(preview_img_loader_tokens, m_lock_load_comic)
                 .WidthConstrain(preview_width).HeightConstrain(preview_height).Commit();
         }
 
@@ -1098,7 +1098,7 @@ namespace ComicReader.Views
         private void OnInfoPaneTagClicked(object sender, RoutedEventArgs e)
         {
             TagViewModel ctx = (TagViewModel)((Button)sender).DataContext;
-            MainPage.Current.LoadTab(null, Utils.Tab.PageType.Search, "<tag: " + ctx.Tag + ">");
+            MainPage.Current.LoadTab(null, Common.Tab.PageType.Search, "<tag: " + ctx.Tag + ">");
         }
 
         private void OnEditInfoClick(object sender, RoutedEventArgs e)

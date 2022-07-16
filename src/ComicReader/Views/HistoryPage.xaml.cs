@@ -41,14 +41,14 @@ namespace ComicReader.Views
         public static HistoryPage Current = null;
         public HistoryPageShared Shared { get; set; }
 
-        private Utils.Tab.TabManager m_tab_manager;
+        private Common.Tab.TabManager m_tab_manager;
 
         public HistoryPage()
         {
             Current = this;
             Shared = new HistoryPageShared();
 
-            m_tab_manager = new Utils.Tab.TabManager(this)
+            m_tab_manager = new Common.Tab.TabManager(this)
             {
                 OnTabRegister = OnTabRegister,
                 OnTabUnregister = OnTabUnregister,
@@ -140,7 +140,7 @@ namespace ComicReader.Views
             }
             else
             {
-                MainPage.Current.LoadTab(new_tab ? null : m_tab_manager.TabId, Utils.Tab.PageType.Reader, comic);
+                MainPage.Current.LoadTab(new_tab ? null : m_tab_manager.TabId, Common.Tab.PageType.Reader, comic);
                 Shared.NavigationPageShared.IsSidePaneOpen = false;
             }
         }

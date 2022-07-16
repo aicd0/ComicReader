@@ -32,7 +32,7 @@ namespace ComicReader.Database
             };
         }
 
-        public static async Task<ComicData> FromExternal(LockContext db, StorageFile file)
+        public static async Task<ComicData> FromExternal(StorageFile file)
         {
             Utils.Storage.AddTrustedFile(file);
 
@@ -42,7 +42,7 @@ namespace ComicReader.Database
                 Location = file.Path,
             };
 
-            await comic.UpdateImages(db, cover_only: false, reload: true);
+            await comic.UpdateImages(cover_only: false, reload: true);
             return comic;
         }
 

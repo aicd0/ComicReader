@@ -5,11 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 using Windows.Storage;
 
+using RawTask = System.Threading.Tasks.Task<ComicReader.Utils.TaskResult>;
+
 namespace ComicReader.Utils
 {
-    using RawTask = Task<Utils.TaskResult>;
-    using SealedTask = Func<Task<Utils.TaskResult>, Utils.TaskResult>;
-
     public abstract class ArchiveEntry
     {
         public abstract string FullName { get; }

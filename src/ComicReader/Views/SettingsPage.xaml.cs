@@ -227,7 +227,7 @@ namespace ComicReader.Views
         public const string AppearanceKey = "Appearance";
         public SettingsPageShared Shared { get; set; }
 
-        private readonly Utils.Tab.TabManager m_tab_manager;
+        private readonly Common.Tab.TabManager m_tab_manager;
 
         // Initialize m_updating to TRUE to avoid copying values from
         // controls (See Save()) while this page is still launching.
@@ -238,7 +238,7 @@ namespace ComicReader.Views
             Shared = new SettingsPageShared();
             Shared.OnSettingsChanged = OnSettingsChanged;
 
-            m_tab_manager = new Utils.Tab.TabManager(this)
+            m_tab_manager = new Common.Tab.TabManager(this)
             {
                 OnTabRegister = OnTabRegister,
                 OnTabUnregister = OnTabUnregister,
@@ -283,7 +283,7 @@ namespace ComicReader.Views
             });
         }
 
-        private void OnTabStart(Utils.Tab.TabIdentifier tab_id)
+        private void OnTabStart(Common.Tab.TabIdentifier tab_id)
         {
             m_tab_manager.TabId.Tab.Header = Utils.StringResourceProvider.GetResourceString("Settings");
             m_tab_manager.TabId.Tab.IconSource =
@@ -321,7 +321,7 @@ namespace ComicReader.Views
                 var encodings = new List<Tuple<string, int>>();
                 encodings.Add(new Tuple<string, int>(Utils.StringResourceProvider.GetResourceString("Default"), -1));
 
-                foreach (Encoding info in Utils.AppInfoProvider.SupportedEncodings.Values)
+                foreach (Encoding info in Common.AppInfoProvider.SupportedEncodings.Values)
                 {
                     string title = info.EncodingName + " [" + info.CodePage.ToString() + "]";
                     encodings.Add(new Tuple<string, int>(title, info.CodePage));
@@ -330,7 +330,7 @@ namespace ComicReader.Views
                 Shared.Encodings = encodings;
             }
 
-            if (!Utils.AppInfoProvider.SupportedEncodings.ContainsKey(XmlDatabase.Settings.DefaultArchiveCodePage))
+            if (!Common.AppInfoProvider.SupportedEncodings.ContainsKey(XmlDatabase.Settings.DefaultArchiveCodePage))
             {
                 XmlDatabase.Settings.DefaultArchiveCodePage = -1;
             }

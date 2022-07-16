@@ -18,7 +18,7 @@ namespace ComicReader.Controls
         {
             string item = (string)((muxc.NavigationViewItem)args.SelectedItem).Content;
             
-            Utils.Tab.NavigationParams nav_params = new Utils.Tab.NavigationParams
+            Common.Tab.NavigationParams nav_params = new Common.Tab.NavigationParams
             {
                 TabId = Ctx.TabId,
                 Shared = Ctx.Shared,

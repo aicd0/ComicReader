@@ -23,12 +23,12 @@ namespace ComicReader.Views
             }
         }
 
-        public Utils.Tab.PageType CurrentPageType
+        public Common.Tab.PageType CurrentPageType
         {
             set
             {
-                IsHomePage = value == Utils.Tab.PageType.Home;
-                IsReaderPage = value == Utils.Tab.PageType.Reader;
+                IsHomePage = value == Common.Tab.PageType.Home;
+                IsReaderPage = value == Common.Tab.PageType.Reader;
 
                 if (!IsReaderPage && MainPageShared.IsFullscreen)
                 {
@@ -183,15 +183,15 @@ namespace ComicReader.Views
     public sealed partial class NavigationPage : Page
     {
         public NavigationPageShared Shared { get; set; }
-        public Utils.Tab.TabIdentifier TabId => m_tab_manager.TabId;
+        public Common.Tab.TabIdentifier TabId => m_tab_manager.TabId;
 
-        private readonly Utils.Tab.TabManager m_tab_manager;
+        private readonly Common.Tab.TabManager m_tab_manager;
 
         public NavigationPage()
         {
             Shared = new NavigationPageShared();
 
-            m_tab_manager = new Utils.Tab.TabManager(this)
+            m_tab_manager = new Common.Tab.TabManager(this)
             {
                 OnTabRegister = OnTabRegister,
                 OnTabUnregister = OnTabUnregister,
@@ -240,14 +240,14 @@ namespace ComicReader.Views
             }
 
             // directly passes tab id to the sub page.
-            Utils.Tab.NavigationParams nav_params = new Utils.Tab.NavigationParams
+            Common.Tab.NavigationParams nav_params = new Common.Tab.NavigationParams
             {
                 Shared = Shared,
                 TabId = m_tab_manager.TabId
             };
 
             _ = ContentFrame.Navigate(
-                Utils.Tab.TabManager.TypeFromPageTypeEnum(m_tab_manager.TabId.Type), nav_params);
+                Common.Tab.TabManager.TypeFromPageTypeEnum(m_tab_manager.TabId.Type), nav_params);
         }
 
         public bool GoBack()
@@ -305,7 +305,7 @@ namespace ComicReader.Views
                 return;
             }
 
-            MainPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Search, args.QueryText);
+            MainPage.Current.LoadTab(m_tab_manager.TabId, Common.Tab.PageType.Search, args.QueryText);
         }
 
         // Buttons
@@ -321,7 +321,7 @@ namespace ComicReader.Views
 
         private void OnHomeClick(object sender, RoutedEventArgs e)
         {
-            MainPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Home);
+            MainPage.Current.LoadTab(m_tab_manager.TabId, Common.Tab.PageType.Home);
         }
 
         private void OnRefreshClick(object sender, RoutedEventArgs e)
@@ -348,12 +348,12 @@ namespace ComicReader.Views
 
         private void OnMoreSettingsClick(object sender, RoutedEventArgs e)
         {
-            MainPage.Current.LoadTab(null, Utils.Tab.PageType.Settings);
+            MainPage.Current.LoadTab(null, Common.Tab.PageType.Settings);
         }
 
         private void OnMoreHelpClick(object sender, RoutedEventArgs e)
         {
-            MainPage.Current.LoadTab(null, Utils.Tab.PageType.Help);
+            MainPage.Current.LoadTab(null, Common.Tab.PageType.Help);
         }
 
         private void OnZoomInClick(object sender, RoutedEventArgs e)

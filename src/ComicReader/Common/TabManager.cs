@@ -5,7 +5,7 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
 using muxc = Microsoft.UI.Xaml.Controls;
 
-namespace ComicReader.Utils.Tab
+namespace ComicReader.Common.Tab
 {
     public enum PageType
     {
@@ -171,7 +171,7 @@ namespace ComicReader.Utils.Tab
             OnTabStart?.Invoke(TabId);
         }
 
-        public static Type TypeFromPageTypeEnum(Utils.Tab.PageType type)
+        public static Type TypeFromPageTypeEnum(Common.Tab.PageType type)
         {
             switch (type)
             {
@@ -190,7 +190,7 @@ namespace ComicReader.Utils.Tab
             }
         }
 
-        public static string PageUniqueString(Utils.Tab.PageType type, object args)
+        public static string PageUniqueString(Common.Tab.PageType type, object args)
         {
             switch (type)
             {

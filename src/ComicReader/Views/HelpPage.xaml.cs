@@ -18,11 +18,11 @@ namespace ComicReader.Views
 {
     public sealed partial class HelpPage : Page
     {
-        private readonly Utils.Tab.TabManager m_tab_manager;
+        private readonly Common.Tab.TabManager m_tab_manager;
 
         public HelpPage()
         {
-            m_tab_manager = new Utils.Tab.TabManager(this)
+            m_tab_manager = new Common.Tab.TabManager(this)
             {
                 OnTabStart = OnTabStart
             };
@@ -43,7 +43,7 @@ namespace ComicReader.Views
             m_tab_manager.OnNavigatedFrom(e);
         }
 
-        private void OnTabStart(Utils.Tab.TabIdentifier tab_id)
+        private void OnTabStart(Common.Tab.TabIdentifier tab_id)
         {
             m_tab_manager.TabId.Tab.Header = Utils.StringResourceProvider.GetResourceString("Help");
             m_tab_manager.TabId.Tab.IconSource =

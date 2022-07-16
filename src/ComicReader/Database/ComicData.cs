@@ -608,7 +608,7 @@ namespace ComicReader.Database
             return (StorageFile)item;
         }
 
-        public async RawTask UpdateImages(LockContext db, bool cover_only, bool reload)
+        public async RawTask UpdateImages(bool cover_only, bool reload)
         {
             if (reload)
             {
@@ -654,7 +654,7 @@ namespace ComicReader.Database
 
         protected abstract RawTask SaveToInfoFile();
 
-        public async Task<IRandomAccessStream> GetImageStream(LockContext db, int index)
+        public async Task<IRandomAccessStream> GetImageStream(int index)
         {
             if (index < 0)
             {
@@ -1003,7 +1003,7 @@ namespace ComicReader.Database
                                 string filename = Utils.StringUtils.ItemNameFromPath(file_path);
                                 string extension = Utils.StringUtils.ExtensionFromFilename(filename).ToLower();
                                 
-                                if (Utils.AppInfoProvider.IsSupportedImageExtension(extension))
+                                if (Common.AppInfoProvider.IsSupportedImageExtension(extension))
                                 {
                                     string loc = Utils.StringUtils.ParentLocationFromLocation(file_path);
 

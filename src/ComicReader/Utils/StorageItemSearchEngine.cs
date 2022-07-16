@@ -113,7 +113,7 @@ namespace ComicReader.Utils.StorageItemSearchEngine
                         string filename = StringUtils.ItemNameFromPath(file);
                         string extension = StringUtils.ExtensionFromFilename(filename);
 
-                        if (AppInfoProvider.IsSupportedArchiveExtension(extension))
+                        if (Common.AppInfoProvider.IsSupportedArchiveExtension(extension))
                         {
                             path_info.SubItems.Add(new PathInfo
                             {

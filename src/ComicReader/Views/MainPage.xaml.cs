@@ -41,7 +41,7 @@ namespace ComicReader.Views
         public static MainPage Current = null;
         public MainPageShared Shared;
 
-        private List<Utils.Tab.TabIdentifier> m_all_tabs = new List<Utils.Tab.TabIdentifier>();
+        private List<Common.Tab.TabIdentifier> m_all_tabs = new List<Common.Tab.TabIdentifier>();
         private Grid m_tab_container_grid;
 
         public MainPage()
@@ -82,14 +82,14 @@ namespace ComicReader.Views
 
             StorageFile target_file = (StorageFile)args.Files[0];
 
-            if (!Utils.AppInfoProvider.IsSupportedExternalFileExtension(target_file.FileType))
+            if (!Common.AppInfoProvider.IsSupportedExternalFileExtension(target_file.FileType))
             {
                 return;
             }
 
             ComicData comic = null;
             
-            if (Utils.AppInfoProvider.IsSupportedDocumentExtension(target_file.FileType))
+            if (Common.AppInfoProvider.IsSupportedDocumentExtension(target_file.FileType))
             {
                 comic = await ComicData.Manager.FromLocation(db, target_file.Path);
 
@@ -98,23 +98,23 @@ namespace ComicReader.Views
                     switch (target_file.FileType.ToLower())
                     {
                         case ".pdf":
-                            comic = await ComicPdfData.FromExternal(db, target_file);
+                            comic = await ComicPdfData.FromExternal(target_file);
                             break;
                         default:
                             break;
                     }
                 }
             }
-            else if (Utils.AppInfoProvider.IsSupportedArchiveExtension(target_file.FileType))
+            else if (Common.AppInfoProvider.IsSupportedArchiveExtension(target_file.FileType))
             {
                 comic = await ComicData.Manager.FromLocation(db, target_file.Path);
 
                 if (comic == null)
                 {
-                    comic = await ComicArchiveData.FromExternal(db, target_file);
+                    comic = await ComicArchiveData.FromExternal(target_file);
                 }
             }
-            else if (Utils.AppInfoProvider.IsSupportedImageExtension(target_file.FileType))
+            else if (Common.AppInfoProvider.IsSupportedImageExtension(target_file.FileType))
             {
                 string dir = target_file.Path;
                 dir = Utils.StringUtils.ParentLocationFromLocation(dir);
@@ -150,7 +150,7 @@ namespace ComicReader.Views
                         {
                             info_file = file;
                         }
-                        else if (Utils.AppInfoProvider.IsSupportedImageExtension(file.FileType))
+                        else if (Common.AppInfoProvider.IsSupportedImageExtension(file.FileType))
                         {
                             img_files.Add(file);
                         }
@@ -167,23 +167,23 @@ namespace ComicReader.Views
 
             await Utils.C0.Sync(delegate
             {
-                LoadTab(null, Utils.Tab.PageType.Reader, comic);
+                LoadTab(null, Common.Tab.PageType.Reader, comic);
             });
         }
 
         // New tab
-        private bool TrySwitchToTab(Utils.Tab.PageType type, object args)
+        private bool TrySwitchToTab(Common.Tab.PageType type, object args)
         {
-            if (type != Utils.Tab.PageType.Reader &&
-                type != Utils.Tab.PageType.Settings &&
-                type != Utils.Tab.PageType.Help)
+            if (type != Common.Tab.PageType.Reader &&
+                type != Common.Tab.PageType.Settings &&
+                type != Common.Tab.PageType.Help)
             {
                 return false;
             }
 
-            string unique_string = Utils.Tab.TabManager.PageUniqueString(type, args);
+            string unique_string = Common.Tab.TabManager.PageUniqueString(type, args);
 
-            foreach (Utils.Tab.TabIdentifier tab in m_all_tabs)
+            foreach (Common.Tab.TabIdentifier tab in m_all_tabs)
             {
                 if (unique_string == tab.UniqueString)
                 {
@@ -195,7 +195,7 @@ namespace ComicReader.Views
             return false;
         }
 
-        private Utils.Tab.TabIdentifier AddNewTab(Utils.Tab.PageType type, object args = null)
+        private Common.Tab.TabIdentifier AddNewTab(Common.Tab.PageType type, object args = null)
         {
             ExitFullscreen();
 
@@ -206,7 +206,7 @@ namespace ComicReader.Views
             RootTabView.TabItems.Add(new_tab);
             RootTabView.SelectedItem = new_tab;
 
-            Utils.Tab.TabIdentifier id = new Utils.Tab.TabIdentifier
+            Common.Tab.TabIdentifier id = new Common.Tab.TabIdentifier
             {
                 Tab = new_tab,
                 Type = type,
@@ -220,7 +220,7 @@ namespace ComicReader.Views
             return id;
         }
 
-        public void LoadTab(Utils.Tab.TabIdentifier tab_id, Utils.Tab.PageType type, object args = null,
+        public void LoadTab(Common.Tab.TabIdentifier tab_id, Common.Tab.PageType type, object args = null,
             bool try_reuse = true)
         {
             if (try_reuse)
@@ -244,7 +244,7 @@ namespace ComicReader.Views
                 tab_id.OnTabSelected = null;
             }
 
-            Utils.Tab.NavigationParams nav_params = new Utils.Tab.NavigationParams
+            Common.Tab.NavigationParams nav_params = new Common.Tab.NavigationParams
             {
                 Shared = Shared,
                 TabId = tab_id
@@ -253,8 +253,8 @@ namespace ComicReader.Views
             Frame frame = (Frame)tab_id.Tab.Content;
 
             // use different loading strategies based on page type.
-            if (type == Utils.Tab.PageType.Reader || type == Utils.Tab.PageType.Home ||
-                type == Utils.Tab.PageType.Search)
+            if (type == Common.Tab.PageType.Reader || type == Common.Tab.PageType.Home ||
+                type == Common.Tab.PageType.Search)
             {
                 // these pages are based on NavigationPage.
                 if (frame.Content == null || frame.Content.GetType() != typeof(NavigationPage))
@@ -272,19 +272,19 @@ namespace ComicReader.Views
             else
             {
                 // these pages are based on MainPage.
-                frame.Navigate(Utils.Tab.TabManager.TypeFromPageTypeEnum(type), nav_params);
+                frame.Navigate(Common.Tab.TabManager.TypeFromPageTypeEnum(type), nav_params);
             }
         }
 
         // TabView
         private void OnAddTabButtonClicked(muxc.TabView sender, object args)
         {
-            LoadTab(null, Utils.Tab.PageType.Home);
+            LoadTab(null, Common.Tab.PageType.Home);
         }
 
-        private Utils.Tab.TabIdentifier GetTabId(muxc.TabViewItem tab)
+        private Common.Tab.TabIdentifier GetTabId(muxc.TabViewItem tab)
         {
-            foreach (Utils.Tab.TabIdentifier id in m_all_tabs)
+            foreach (Common.Tab.TabIdentifier id in m_all_tabs)
             {
                 if (id.Tab == tab)
                 {
@@ -300,7 +300,7 @@ namespace ComicReader.Views
         {
             for (int i = 0; i < m_all_tabs.Count; ++i)
             {
-                Utils.Tab.TabIdentifier tab_id = m_all_tabs[i];
+                Common.Tab.TabIdentifier tab_id = m_all_tabs[i];
 
                 if (tab_id.Tab == args.Tab)
                 {
@@ -319,7 +319,7 @@ namespace ComicReader.Views
 
         private void OnTabViewLoaded(object sender, RoutedEventArgs e)
         {
-            LoadTab(null, Utils.Tab.PageType.Home);
+            LoadTab(null, Common.Tab.PageType.Home);
         }
 
         // Background tasks
@@ -349,7 +349,7 @@ namespace ComicReader.Views
             }
 
             muxc.TabViewItem tab = (muxc.TabViewItem)e.AddedItems[0];
-            Utils.Tab.TabIdentifier id = GetTabId(tab);
+            Common.Tab.TabIdentifier id = GetTabId(tab);
 
             if (id == null)
             {

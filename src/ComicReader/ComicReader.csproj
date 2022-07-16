@@ -188,7 +188,7 @@
     <Compile Include="DesignData\ReaderImagePreviewViewModel.cs" />
     <Compile Include="DesignData\ReaderSettingViewModel.cs" />
     <Compile Include="DesignData\TagViewModel.cs" />
-    <Compile Include="Utils\AppInfoProvider.cs" />
+    <Compile Include="Common\AppInfoProvider.cs" />
     <Compile Include="Utils\ArchiveUtils.cs" />
     <Compile Include="Utils\BuilderBase.cs" />
     <Compile Include="Utils\Debug.cs" />
@@ -198,13 +198,13 @@
     <Compile Include="Utils\Storage.cs" />
     <Compile Include="Utils\StringResourceProvider.cs" />
     <Compile Include="Utils\Win32IO.cs" />
-    <Compile Include="Utils\TabManager.cs" />
+    <Compile Include="Common\TabManager.cs" />
     <Compile Include="DesignData\FolderItemViewModel.cs" />
     <Compile Include="Database\Database.cs" />
     <Compile Include="Utils\TaskQueue.cs" />
     <Compile Include="Utils\CancellationLock.cs" />
     <Compile Include="Utils\Heap.cs" />
-    <Compile Include="Utils\Filter.cs" />
+    <Compile Include="Common\Filter.cs" />
     <Compile Include="Utils\StringUtils.cs" />
     <Compile Include="Utils\ObservableCollectionPlus.cs" />
     <Compile Include="Utils\Common.cs" />

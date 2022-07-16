@@ -208,7 +208,7 @@ namespace ComicReader.Views
     {
         private SearchPageShared Shared { get; set; }
 
-        private Utils.Tab.TabManager m_tab_manager;
+        private Common.Tab.TabManager m_tab_manager;
         private List<Match> m_matches = new List<Match>();
         private int m_match_index = 0;
         private Utils.CancellationLock m_search_lock = new Utils.CancellationLock();
@@ -221,7 +221,7 @@ namespace ComicReader.Views
             Shared.FilterDetails = "";
             Shared.SearchResults = new Utils.ObservableCollectionPlus<ComicItemViewModel>();
 
-            m_tab_manager = new Utils.Tab.TabManager(this)
+            m_tab_manager = new Common.Tab.TabManager(this)
             {
                 OnTabRegister = OnTabRegister,
                 OnTabUnregister = OnTabUnregister,
@@ -252,13 +252,13 @@ namespace ComicReader.Views
 
         private void OnTabUnregister() { }
 
-        private void OnTabStart(Utils.Tab.TabIdentifier tab_id)
+        private void OnTabStart(Common.Tab.TabIdentifier tab_id)
         {
             Utils.C0.Run(async delegate
             {
                 LockContext db = new LockContext();
 
-                Shared.NavigationPageShared.CurrentPageType = Utils.Tab.PageType.Search;
+                Shared.NavigationPageShared.CurrentPageType = Common.Tab.PageType.Search;
                 Shared.NavigationPageShared.SetSearchBox((string)tab_id.RequestArgs);
                 Shared.IsSelectMode = false;
                 Shared.ComicItemSelectionMode = ListViewSelectionMode.None;
@@ -283,7 +283,7 @@ namespace ComicReader.Views
                 string keyword = (string)m_tab_manager.TabId.RequestArgs;
 
                 // Extract filters and keywords from string.
-                Utils.Search.Filter filter = Utils.Search.Filter.Parse(keyword, out List<string> remaining);
+                var filter = Common.Search.Filter.Parse(keyword, out List<string> remaining);
                 List<string> keywords = new List<string>();
 
                 foreach (string text in remaining)
@@ -355,7 +355,7 @@ namespace ComicReader.Views
             public int Similarity = 0;
         }
 
-        private async Task SearchMain(LockContext db, List<string> keywords, Utils.Search.Filter filter)
+        private async Task SearchMain(LockContext db, List<string> keywords, Common.Search.Filter filter)
         {
             for (int i = 0; i < keywords.Count; ++i)
             {
@@ -525,7 +525,7 @@ namespace ComicReader.Views
                     });
                 }
 
-                await new Utils.ImageLoader.Builder(db, image_loader_tokens, m_load_image_lock)
+                await new Utils.ImageLoader.Builder(image_loader_tokens, m_load_image_lock)
                     .WidthConstrain(image_width).HeightConstrain(image_height).Multiplication(1.4)
                     .StretchMode(Utils.ImageLoader.StretchModeEnum.UniformToFill)
                     .Commit();
@@ -538,10 +538,8 @@ namespace ComicReader.Views
 
         private void OnComicItemTapped(object sender, TappedRoutedEventArgs e)
         {
-            Utils.C0.Run(async delegate
+            Utils.C0.RunWithNewLockContext(async (LockContext db) =>
             {
-                LockContext db = new LockContext();
-
                 if (Shared.IsSelectMode)
                 {
                     return;
@@ -549,16 +547,14 @@ namespace ComicReader.Views
 
                 ComicItemViewModel item = (ComicItemViewModel)((FrameworkElement)sender).DataContext;
                 ComicData comic = await ComicData.Manager.FromId(db, item.Comic.Id);
-                MainPage.Current.LoadTab(m_tab_manager.TabId, Utils.Tab.PageType.Reader, comic);
+                MainPage.Current.LoadTab(m_tab_manager.TabId, Common.Tab.PageType.Reader, comic);
             });
         }
 
         private void OnScrollViewerViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
         {
-            Utils.C0.Run(async delegate
+            Utils.C0.RunWithNewLockContext(async (LockContext db) =>
             {
-                LockContext db = new LockContext();
-
                 ScrollViewer scrollViewer = (ScrollViewer)sender;
 
                 if (scrollViewer.ScrollableHeight - scrollViewer.VerticalOffset < scrollViewer.ActualHeight * 0.5)
@@ -571,7 +567,7 @@ namespace ComicReader.Views
         private void OnOpenInNewTabClicked(object sender, RoutedEventArgs e)
         {
             ComicItemViewModel item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-            MainPage.Current.LoadTab(null, Utils.Tab.PageType.Reader, item.Comic);
+            MainPage.Current.LoadTab(null, Common.Tab.PageType.Reader, item.Comic);
         }
 
         private void OnAddToFavoritesClicked(object sender, RoutedEventArgs e)

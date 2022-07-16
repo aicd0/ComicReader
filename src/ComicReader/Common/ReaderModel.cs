@@ -712,7 +712,7 @@ namespace ComicReader.Common
                     }
                 }
 
-                await new Utils.ImageLoader.Builder(db, img_loader_tokens, m_UpdateImageLock).Commit();
+                await new Utils.ImageLoader.Builder(img_loader_tokens, m_UpdateImageLock).Commit();
 
                 if (remove_out_of_view)
                 {
