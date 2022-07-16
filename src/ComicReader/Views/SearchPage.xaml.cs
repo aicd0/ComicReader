@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
-using Windows.UI.Input;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Data;
@@ -503,8 +502,9 @@ namespace ComicReader.Views
             await m_load_image_lock.WaitAsync();
             try
             {
+                double image_width = (double)Application.Current.Resources["ComicItemHorizontalImageWidth"];
                 double image_height = (double)Application.Current.Resources["ComicItemHorizontalImageHeight"];
-                var image_loader_tokens = new List<Utils.ImageLoaderToken>();
+                var image_loader_tokens = new List<Utils.ImageLoader.Token>();
 
                 foreach (ComicItemViewModel item in Shared.SearchResults)
                 {
@@ -513,7 +513,7 @@ namespace ComicReader.Views
                         continue;
                     }
 
-                    image_loader_tokens.Add(new Utils.ImageLoaderToken
+                    image_loader_tokens.Add(new Utils.ImageLoader.Token
                     {
                         Comic = item.Comic,
                         Index = -1,
@@ -525,8 +525,10 @@ namespace ComicReader.Views
                     });
                 }
 
-                await Utils.ImageLoader.Load(db, image_loader_tokens,
-                    double.PositiveInfinity, image_height, m_load_image_lock);
+                await new Utils.ImageLoader.Builder(db, image_loader_tokens, m_load_image_lock)
+                    .WidthConstrain(image_width).HeightConstrain(image_height).Multiplication(1.4)
+                    .StretchMode(Utils.ImageLoader.StretchModeEnum.UniformToFill)
+                    .Commit();
             }
             finally
             {

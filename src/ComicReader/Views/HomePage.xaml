@@ -201,7 +201,7 @@
                     will result in a layout error (probably a bug from API).
                 -->
                 <mtuuc:AdaptiveGridView
-                    DesiredWidth="160"
+                    DesiredWidth="{StaticResource ComicItemVerticalDesiredWidth}"
                     ItemContainerStyle="{StaticResource ComicItemContainerStyle}"
                     ItemHeight="310"
                     ItemsSource="{x:Bind ComicItemSource}"

@@ -190,6 +190,7 @@
     <Compile Include="DesignData\TagViewModel.cs" />
     <Compile Include="Utils\AppInfoProvider.cs" />
     <Compile Include="Utils\ArchiveUtils.cs" />
+    <Compile Include="Utils\BuilderBase.cs" />
     <Compile Include="Utils\Debug.cs" />
     <Compile Include="Utils\StorageItemSearchEngine.cs" />
     <Compile Include="Utils\ImageLoader.cs" />

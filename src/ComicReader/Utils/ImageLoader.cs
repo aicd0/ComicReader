@@ -4,11 +4,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.Graphics.Display;
-using Windows.Storage;
 using Windows.Storage.Streams;
 using Windows.UI.Xaml.Media.Imaging;
 using ComicReader.Database;
@@ -16,70 +14,121 @@ using ComicReader.Database;
 namespace ComicReader.Utils
 {
     using RawTask = Task<Utils.TaskResult>;
-    using SealedTask = Func<Task<Utils.TaskResult>, Utils.TaskResult>;
-
-    public enum ImageConstrainOption
-    {
-        None,
-        SameAsFirstImage
-    }
-
-    public class ImageLoaderToken
-    {
-        public ComicData Comic;
-        public int Index;
-        public Action<BitmapImage> Callback;
-        public Func<BitmapImage, Task> CallbackAsync;
-    }
-
-    public class ImageConstrain
-    {
-        public double Val;
-        public ImageConstrainOption Option;
-
-        public static implicit operator ImageConstrain(double val)
-        {
-            System.Diagnostics.Debug.Assert(!double.IsNaN(val));
-
-            return new ImageConstrain
-            {
-                Val = val,
-                Option = ImageConstrainOption.None
-            };
-        }
-
-        public static implicit operator ImageConstrain(ImageConstrainOption opt)
-        {
-            return new ImageConstrain
-            {
-                Val = 0.0,
-                Option = opt
-            };
-        }
-    }
 
     public class ImageLoader
     {
-        private static void Log(string text)
+        private ImageLoader() {}
+
+        public enum StretchModeEnum
         {
-            Utils.Debug.Log("Image Loader: " + text);
+            Uniform,
+            UniformToFill,
         }
 
-        public static async RawTask Load(LockContext db,
-            IEnumerable<ImageLoaderToken> tokens, ImageConstrain max_width,
-            ImageConstrain max_height, Utils.CancellationLock cancellation_lock)
+        public enum ConstrainType
         {
-            List<ImageLoaderToken> tokens_cpy = new List<ImageLoaderToken>(tokens);
+            Exact,
+            MatchFirstImage,
+        }
+
+        public class DimensionConstrain
+        {
+            public ConstrainType Type;
+            public double Val;
+
+            public static implicit operator DimensionConstrain(double val)
+            {
+                System.Diagnostics.Debug.Assert(!double.IsNaN(val));
+
+                return new DimensionConstrain
+                {
+                    Type = ConstrainType.Exact,
+                    Val = val,
+                };
+            }
+
+            public static implicit operator DimensionConstrain(ConstrainType type)
+            {
+                return new DimensionConstrain
+                {
+                    Type = type,
+                    Val = 0.0,
+                };
+            }
+        }
+
+        public class Token
+        {
+            public ComicData Comic;
+            public int Index;
+            public Action<BitmapImage> Callback;
+            public Func<BitmapImage, Task> CallbackAsync;
+        }
+
+        public sealed class Builder : BuilderBase<RawTask>
+        {
+            private LockContext m_db;
+            private List<Token> m_tokens;
+            private DimensionConstrain m_width_constrain = double.PositiveInfinity;
+            private DimensionConstrain m_height_constrain = double.PositiveInfinity;
+            private StretchModeEnum m_stretch_mode = StretchModeEnum.Uniform;
+            private CancellationLock m_cancellation_lock;
+            private double m_multiplication = 1.0;
+
+            public Builder(LockContext db, List<Token> tokens, CancellationLock cancellation_lock)
+            {
+                m_db = db;
+                m_tokens = tokens;
+                m_cancellation_lock = cancellation_lock;
+            }
+
+            public Builder WidthConstrain(DimensionConstrain constrain)
+            {
+                m_width_constrain = constrain;
+                return this;
+            }
+
+            public Builder HeightConstrain(DimensionConstrain constrain)
+            {
+                m_height_constrain = constrain;
+                return this;
+            }
+
+            public Builder StretchMode(StretchModeEnum mode)
+            {
+                m_stretch_mode = mode;
+                return this;
+            }
+
+            public Builder Multiplication(double value)
+            {
+                m_multiplication = value;
+                return this;
+            }
+
+            protected override RawTask CommitImpl()
+            {
+                m_width_constrain.Val *= m_multiplication;
+                m_height_constrain.Val *= m_multiplication;
+                return Load(m_db, m_tokens, m_width_constrain, m_height_constrain, m_stretch_mode, m_cancellation_lock);
+            }
+        }
+
+        private static async RawTask Load(LockContext db, IEnumerable<Token> tokens,
+            DimensionConstrain width_constrain, DimensionConstrain height_constrain,
+            StretchModeEnum stretch_mode, CancellationLock cancellation_lock)
+        {
+            List<Token> tokens_cpy = new List<Token>(tokens);
 
 #if DEBUG_LOG_LOAD
             Log("Loading " + tokens_cpy.Count.ToString() + " images");
 #endif
 
             bool use_origin_size =
-                max_width.Option == ImageConstrainOption.None &&
-                double.IsInfinity(max_width.Val) &&
-                max_height.Option == ImageConstrainOption.None &&
-                double.IsInfinity(max_height.Val);
+                width_constrain.Type == ConstrainType.Exact &&
+                double.IsInfinity(width_constrain.Val) &&
+                height_constrain.Type == ConstrainType.Exact &&
+                double.IsInfinity(height_constrain.Val);
 
             double raw_pixels_per_view_pixel = 0.0;
             double frame_ratio = 0.0;
@@ -96,7 +145,7 @@ namespace ComicReader.Utils
                     return new TaskResult(TaskException.Cancellation);
                 }
 
-                ImageLoaderToken token = tokens_cpy.First();
+                Token token = tokens_cpy.First();
                 tokens_cpy.RemoveAt(0);
 
                 // Lazy load.
@@ -166,35 +215,37 @@ namespace ComicReader.Utils
                         {
                             first_token = false;
 
-                            if (max_width.Option == ImageConstrainOption.SameAsFirstImage)
+                            if (width_constrain.Type == ConstrainType.MatchFirstImage)
                             {
-                                max_width.Val = image.PixelWidth;
+                                width_constrain.Val = image.PixelWidth;
                             }
 
-                            if (max_height.Option == ImageConstrainOption.SameAsFirstImage)
+                            if (height_constrain.Type == ConstrainType.MatchFirstImage)
                             {
-                                max_height.Val = image.PixelHeight;
+                                height_constrain.Val = image.PixelHeight;
                             }
 
                             raw_pixels_per_view_pixel = DisplayInformation.GetForCurrentView().RawPixelsPerViewPixel;
-                            frame_ratio = max_width.Val / max_height.Val;
+                            frame_ratio = width_constrain.Val / height_constrain.Val;
                         }
 
                         if (!use_origin_size)
                         {
                             double image_ratio = (double)image.PixelWidth / image.PixelHeight;
+
                             double image_height;
                             double image_width;
-                            if (image_ratio > frame_ratio)
+                            if ((image_ratio > frame_ratio) == (stretch_mode == StretchModeEnum.Uniform))
                             {
-                                image_width = max_width.Val * raw_pixels_per_view_pixel;
+                                image_width = width_constrain.Val * raw_pixels_per_view_pixel;
                                 image_height = image_width / image_ratio;
                             }
                             else
                             {
-                                image_height = max_height.Val * raw_pixels_per_view_pixel;
+                                image_height = height_constrain.Val * raw_pixels_per_view_pixel;
                                 image_width = image_height * image_ratio;
                             }
+
                             image.DecodePixelHeight = (int)image_height;
                             image.DecodePixelWidth = (int)image_width;
                         }
@@ -227,6 +278,11 @@ namespace ComicReader.Utils
             }
 
             return new TaskResult();
+        }
+
+        private static void Log(string text)
+        {
+            Utils.Debug.Log("Image Loader: " + text);
         }
     }
 }

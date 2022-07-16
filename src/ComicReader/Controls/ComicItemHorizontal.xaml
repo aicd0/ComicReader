@@ -68,10 +68,10 @@
             Height="{StaticResource ComicItemHorizontalImageHeight}"
             Margin="10,8">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="85" />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <Grid Grid.Column="0">
+            <Grid Grid.Column="0" Width="{StaticResource ComicItemHorizontalImageWidth}">
                 <Rectangle Fill="{ThemeResource ImagePlaceHolderBackground}" Visibility="{x:Bind Ctx.IsImageLoaded, Converter={StaticResource BooleanToVisibilityNegationConverter}}" />
                 <Image Source="{x:Bind Ctx.Image}" Stretch="UniformToFill" />
             </Grid>

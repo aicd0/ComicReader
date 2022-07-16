@@ -491,7 +491,7 @@ namespace ComicReader.Views
                 PreviewDataSource.Clear();
             });
 
-            var preview_img_loader_tokens = new List<Utils.ImageLoaderToken>();
+            var preview_img_loader_tokens = new List<Utils.ImageLoader.Token>();
             ComicData comic = m_comic; // Stores locally.
             Utils.Stopwatch save_timer = new Utils.Stopwatch();
 
@@ -500,7 +500,7 @@ namespace ComicReader.Views
                 int index = i; // Stores locally.
                 int page = i + 1; // Stores locally.
 
-                preview_img_loader_tokens.Add(new Utils.ImageLoaderToken
+                preview_img_loader_tokens.Add(new Utils.ImageLoader.Token
                 {
                     Comic = comic,
                     Index = index,
@@ -548,8 +548,8 @@ namespace ComicReader.Views
             }
 
             save_timer.Start();
-            await Utils.ImageLoader.Load(db,  preview_img_loader_tokens,
-                preview_width, preview_height, m_lock_load_comic);
+            await new Utils.ImageLoader.Builder(db, preview_img_loader_tokens, m_lock_load_comic)
+                .WidthConstrain(preview_width).HeightConstrain(preview_height).Commit();
         }
 
         private async Task LoadComicInfo()

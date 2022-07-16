@@ -674,7 +674,7 @@ namespace ComicReader.Common
                     return;
                 }
 
-                var img_loader_tokens = new List<Utils.ImageLoaderToken>();
+                var img_loader_tokens = new List<Utils.ImageLoader.Token>();
                 int page_begin = Math.Max(Page - 5, 1);
                 int page_end = Math.Min(Page + 10, PageCount);
                 int idx_begin = PageToFrame(page_begin, out _, out _);
@@ -687,7 +687,7 @@ namespace ComicReader.Common
 
                     if (m.ImageL == null && m.PageL > 0)
                     {
-                        img_loader_tokens.Add(new Utils.ImageLoaderToken
+                        img_loader_tokens.Add(new Utils.ImageLoader.Token
                         {
                             Index = m.PageL - 1,
                             Comic = Comic,
@@ -700,7 +700,7 @@ namespace ComicReader.Common
 
                     if (m.ImageR == null && m.PageR > 0)
                     {
-                        img_loader_tokens.Add(new Utils.ImageLoaderToken
+                        img_loader_tokens.Add(new Utils.ImageLoader.Token
                         {
                             Index = m.PageR - 1,
                             Comic = Comic,
@@ -712,9 +712,7 @@ namespace ComicReader.Common
                     }
                 }
 
-                await Utils.ImageLoader.Load(db, img_loader_tokens,
-                    double.PositiveInfinity, double.PositiveInfinity,
-                    m_UpdateImageLock);
+                await new Utils.ImageLoader.Builder(db, img_loader_tokens, m_UpdateImageLock).Commit();
 
                 if (remove_out_of_view)
                 {
@@ -775,10 +773,9 @@ namespace ComicReader.Common
             return SetScrollViewer2(zoom, page, disable_animation);
         }
 
-        public class ScrollManager
+        public sealed class ScrollManager : Utils.BuilderBase<bool>
         {
             private ReaderModel m_reader;
-            private bool m_committed = false;
             private float? m_zoom = null;
             private double? m_parallel_offset = null;
             private double? m_horizontal_offset = null;
@@ -794,6 +791,31 @@ namespace ComicReader.Common
             public static ScrollManager BeginTransaction(ReaderModel reader)
             {
                 return new ScrollManager(reader);
+            }
+
+            protected override bool CommitImpl()
+            {
+                if (!m_reader.Loaded)
+                {
+                    return false;
+                }
+
+                bool result;
+
+                if (m_parallel_offset.HasValue)
+                {
+                    result = m_reader.SetScrollViewer1(m_zoom, m_parallel_offset, m_disable_animation);
+                }
+                else if (m_page.HasValue)
+                {
+                    result = m_reader.SetScrollViewer2(m_zoom, m_page, m_disable_animation);
+                }
+                else
+                {
+                    result = m_reader.SetScrollViewer3(m_zoom, m_horizontal_offset, m_vertical_offset, m_disable_animation);
+                }
+
+                return result;
             }
 
             public ScrollManager Zoom(float? zoom)
@@ -836,38 +858,6 @@ namespace ComicReader.Common
                 return this;
             }
 
-            public bool Commit()
-            {
-                if (m_committed)
-                {
-                    throw new Exception("Cannot commit a transaction twice.");
-                }
-
-                m_committed = true;
-
-                if (!m_reader.Loaded)
-                {
-                    return false;
-                }
-
-                bool result;
-
-                if (m_parallel_offset.HasValue)
-                {
-                    result = m_reader.SetScrollViewer1(m_zoom, m_parallel_offset, m_disable_animation);
-                }
-                else if (m_page.HasValue)
-                {
-                    result = m_reader.SetScrollViewer2(m_zoom, m_page, m_disable_animation);
-                }
-                else
-                {
-                    result = m_reader.SetScrollViewer3(m_zoom, m_horizontal_offset, m_vertical_offset, m_disable_animation);
-                }
-
-                return result;
-            }
-
             private void OnSetOffset()
             {
                 int checksum = 0;
@@ -892,7 +882,7 @@ namespace ComicReader.Common
                     throw new Exception("Cannot set offset twice.");
                 }
             }
-        };
+        }
 
         private bool SetScrollViewer1(float? zoom, double? parallel_offset, bool disable_animation)
         {

@@ -236,7 +236,7 @@ namespace ComicReader.Views
                 Shared.IsLibraryEmpty = ComicItemSource.Count == 0;
 
                 // Load images.
-                var image_loader_tokens = new List<Utils.ImageLoaderToken>();
+                var image_loader_tokens = new List<Utils.ImageLoader.Token>();
 
                 foreach (ComicItemViewModel item in ComicItemSource)
                 {
@@ -245,7 +245,7 @@ namespace ComicReader.Views
                         continue;
                     }
 
-                    image_loader_tokens.Add(new Utils.ImageLoaderToken
+                    image_loader_tokens.Add(new Utils.ImageLoader.Token
                     {
                         Comic = item.Comic,
                         Index = -1,
@@ -257,13 +257,13 @@ namespace ComicReader.Views
                     });
                 }
 
+                double image_width = (double)Application.Current.Resources["ComicItemVerticalDesiredWidth"] - 40.0;
                 double image_height = (double)Application.Current.Resources["ComicItemVerticalImageHeight"];
 
                 await Task.Run(delegate
                 {
-                    Utils.ImageLoader.Load(db, image_loader_tokens,
-                        image_height * 1.4, image_height * 1.4,
-                        m_update_library_lock).Wait();
+                    new Utils.ImageLoader.Builder(db, image_loader_tokens, m_update_library_lock)
+                        .WidthConstrain(image_width).HeightConstrain(image_height).Multiplication(1.4).Commit().Wait();
                 });
             }
             finally
