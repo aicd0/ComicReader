@@ -34,8 +34,8 @@ namespace ComicReader.Database
 
         public static async Task<ComicData> FromExternal(string directory, List<StorageFile> image_files, StorageFile info_file)
         {
-            image_files.OrderBy(x => x.DisplayName,
-                new Utils.StringUtils.FileNameComparer());
+            image_files = image_files.OrderBy(x => x.DisplayName,
+                new Utils.StringUtils.FileNameComparer()).ToList();
 
             ComicFolderData comic = new ComicFolderData(true)
             {
