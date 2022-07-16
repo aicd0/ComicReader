@@ -4,13 +4,12 @@ using Windows.Data.Pdf;
 using Windows.Storage;
 using Windows.Storage.Streams;
 
+using RawTask = System.Threading.Tasks.Task<ComicReader.Utils.TaskResult>;
+using TaskResult = ComicReader.Utils.TaskResult;
+using TaskException = ComicReader.Utils.TaskException;
+
 namespace ComicReader.Database
 {
-    using RawTask = Task<Utils.TaskResult>;
-    using SealedTask = Func<Task<Utils.TaskResult>, Utils.TaskResult>;
-    using TaskResult = Utils.TaskResult;
-    using TaskException = Utils.TaskException;
-
     public class ComicPdfData : ComicData
     {
         private const int WrongPassword = unchecked((int)0x8007052b); // HRESULT_FROM_WIN32(ERROR_WRONG_PASSWORD)
@@ -120,7 +119,7 @@ namespace ComicReader.Database
             return Task.FromResult(new TaskResult(TaskException.NotSupported));
         }
 
-        protected override async RawTask ReloadImages(LockContext db)
+        protected override async RawTask ReloadImages()
         {
             TaskResult r = await SetDocument();
             if (!r.Successful) return r;

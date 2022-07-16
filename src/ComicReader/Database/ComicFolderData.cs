@@ -6,13 +6,12 @@ using Windows.Storage;
 using Windows.Storage.Search;
 using Windows.Storage.Streams;
 
+using RawTask = System.Threading.Tasks.Task<ComicReader.Utils.TaskResult>;
+using TaskResult = ComicReader.Utils.TaskResult;
+using TaskException = ComicReader.Utils.TaskException;
+
 namespace ComicReader.Database
 {
-    using RawTask = Task<Utils.TaskResult>;
-    using SealedTask = Func<Task<Utils.TaskResult>, Utils.TaskResult>;
-    using TaskResult = Utils.TaskResult;
-    using TaskException = Utils.TaskException;
-
     public class ComicFolderData : ComicData
     {
         private StorageFolder Folder = null;
@@ -202,7 +201,7 @@ namespace ComicReader.Database
             return (StorageFile)item;
         }
 
-        protected override async RawTask ReloadImages(LockContext db)
+        protected override async RawTask ReloadImages()
         {
             if (IsExternal)
             {

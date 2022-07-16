@@ -161,7 +161,7 @@ namespace ComicReader.Database
             return Task.FromResult(new TaskResult(TaskException.NotSupported));
         }
 
-        protected override async RawTask ReloadImages(LockContext db)
+        protected override async RawTask ReloadImages()
         {
             TaskResult result = await SetArchive();
             if (!result.Successful)

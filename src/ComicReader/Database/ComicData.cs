@@ -625,7 +625,7 @@ namespace ComicReader.Database
 
             if (!ImageUpdated)
             {
-                TaskResult result = await ReloadImages(db);
+                TaskResult result = await ReloadImages();
 
                 if (!result.Successful)
                 {
@@ -648,7 +648,7 @@ namespace ComicReader.Database
             return new TaskResult();
         }
 
-        protected abstract RawTask ReloadImages(LockContext db);
+        protected abstract RawTask ReloadImages();
 
         public abstract RawTask LoadFromInfoFile();
 
