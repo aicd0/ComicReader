@@ -377,15 +377,13 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                LockContext db = new LockContext();
-
                 Shared.NavigationPageShared.CurrentPageType = Common.Tab.PageType.Reader;
                 tab_id.Type = Common.Tab.PageType.Reader;
 
                 ComicData comic = (ComicData)tab_id.RequestArgs;
                 tab_id.Tab.Header = comic.Title;
                 tab_id.Tab.IconSource = new muxc.SymbolIconSource { Symbol = Symbol.Pictures };
-                await LoadComic(db, comic);
+                await LoadComic(comic);
             });
         }
 
@@ -396,7 +394,7 @@ namespace ComicReader.Views
         }
 
         // Load
-        private async Task LoadComic(LockContext db, ComicData comic)
+        private async Task LoadComic(ComicData comic)
         {
             if (comic == null)
             {
@@ -462,14 +460,14 @@ namespace ComicReader.Views
                     }
 
                     // Refresh reader.
-                    await reader.UpdateImages(db, true);
+                    await reader.UpdateImages(true);
                 }
 
-                await LoadImages(db);
+                await LoadImages();
                 await reader.Finalize();
 
                 // Refresh reader.
-                await reader.UpdateImages(db, true);
+                await reader.UpdateImages(true);
                 UpdatePage(reader);
             }
             finally
@@ -478,7 +476,7 @@ namespace ComicReader.Views
             }
         }
 
-        private async Task LoadImages(LockContext db)
+        private async Task LoadImages()
         {
             double preview_width = 0.0;
             double preview_height = 0.0;
@@ -684,8 +682,6 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                LockContext db = new LockContext();
-
                 ReaderModel reader = GetCurrentReader();
                 System.Diagnostics.Debug.Assert(reader != null);
 
@@ -710,9 +706,9 @@ namespace ComicReader.Views
 
                 await Utils.C0.WaitFor(() => reader.Loaded, 1000);
                 ReaderModel.ScrollManager.BeginTransaction(reader).Zoom(zoom).Page(page).Commit();
-                await reader.UpdateImages(db, true);
+                await reader.UpdateImages(true);
                 Shared.UpdateReaderUI();
-                await last_reader.UpdateImages(db, false);
+                await last_reader.UpdateImages(false);
             });
         }
 
@@ -725,9 +721,7 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                LockContext db = new LockContext();
-
-                if (await control.OnViewChanged(db, !e.IsIntermediate))
+                if (await control.OnViewChanged(!e.IsIntermediate))
                 {
                     UpdatePage(control);
                     UpdateProgress(control, save: !e.IsIntermediate);

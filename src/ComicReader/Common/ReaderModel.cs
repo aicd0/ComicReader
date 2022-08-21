@@ -646,18 +646,18 @@ namespace ComicReader.Common
             }
         }
 
-        public async Task<bool> UpdateImages(LockContext db, bool use_final)
+        public async Task<bool> UpdateImages(bool use_final)
         {
             if (!await UpdatePage(use_final))
             {
                 return false;
             }
 
-            await UpdateImagesInternal(db);
+            await UpdateImagesInternal();
             return true;
         }
 
-        private async Task UpdateImagesInternal(LockContext db, bool remove_out_of_view = true)
+        private async Task UpdateImagesInternal(bool remove_out_of_view = true)
         {
 #if DEBUG_LOG_UPDATE_IMAGE
             Log("Updating images (page " + Page.ToString() + ")");
@@ -666,6 +666,11 @@ namespace ComicReader.Common
             await m_UpdateImageLock.WaitAsync();
             try
             {
+                if (m_UpdateImageLock.CancellationRequested)
+                {
+                    return;
+                }
+
                 if (!IsCurrentReader)
                 {
                     foreach (ReaderFrameViewModel m in Frames)
@@ -715,7 +720,15 @@ namespace ComicReader.Common
                     }
                 }
 
-                await new Utils.ImageLoader.Builder(img_loader_tokens, m_UpdateImageLock).Commit();
+                Utils.TaskResult result = await Task.Run(delegate
+                {
+                    return new Utils.ImageLoader.Builder(img_loader_tokens, m_UpdateImageLock).Commit().Result;
+                });
+
+                if (result.ExceptionType == Utils.TaskException.Cancellation)
+                {
+                    return;
+                }
 
                 if (remove_out_of_view)
                 {
@@ -1346,8 +1359,6 @@ namespace ComicReader.Common
 
         public async Task OnContainerLoaded(ReaderFrameViewModel ctx)
         {
-            LockContext db = new LockContext();
-
             if (ctx == null || ctx.Container == null)
             {
                 System.Diagnostics.Debug.Assert(false);
@@ -1421,7 +1432,7 @@ namespace ComicReader.Common
                 {
                     if (await UpdatePage(true))
                     {
-                        await UpdateImagesInternal(db);
+                        await UpdateImagesInternal();
                         LoadedImages = true;
 
 #if DEBUG_LOG_LOAD
@@ -1447,7 +1458,7 @@ namespace ComicReader.Common
             }
         }
 
-        public async Task<bool> OnViewChanged(LockContext db, bool final)
+        public async Task<bool> OnViewChanged(bool final)
         {
             if (!Loaded)
             {
@@ -1457,7 +1468,7 @@ namespace ComicReader.Common
             if (!IsCurrentReader)
             {
                 // Clear images.
-                await UpdateImagesInternal(db);
+                await UpdateImagesInternal();
                 return false;
             }
 
@@ -1488,7 +1499,7 @@ namespace ComicReader.Common
 #endif
             }
 
-            await UpdateImagesInternal(db, final);
+            await UpdateImagesInternal(final);
             return true;
         }
 
@@ -1501,8 +1512,6 @@ namespace ComicReader.Common
         {
             Utils.C0.Run(async delegate
             {
-                var db = new LockContext();
-
                 await m_PageRearrangeLock.WaitAsync();
                 try
                 {
@@ -1535,7 +1544,7 @@ namespace ComicReader.Common
                     SetScrollViewer2(zoom, page, false);
 
                     // Update images.
-                    await UpdateImages(db, true);
+                    await UpdateImages(true);
 
                     // Recover reader status.
                     m_shared.ReaderStatus = Views.ReaderStatusEnum.Working;
