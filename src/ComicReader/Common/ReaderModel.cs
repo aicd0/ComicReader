@@ -1,6 +1,7 @@
 ﻿#define DEBUG_LOG_LOAD
 #if DEBUG
 //#define DEBUG_LOG_JUMP
+//#define DEBUG_LOG_MANIPULATION
 //#define DEBUG_LOG_VIEW_CHANGE
 //#define DEBUG_LOG_UPDATE_PAGE
 //#define DEBUG_LOG_UPDATE_IMAGE
@@ -12,6 +13,7 @@ using System.Collections.ObjectModel;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Foundation;
+using Windows.UI.Input;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
@@ -65,6 +67,7 @@ namespace ComicReader.Common
             get; private set;
         }
         public bool IsHorizontal => !IsVertical;
+        public bool IsLeftToRight => m_shared.ReaderSettings.IsLeftToRight;
         public bool IsLastPage => PageToFrame(Page, out _, out _) >= Frames.Count - 1;
         public bool IsContinuous => IsVertical ?
             m_shared.ReaderSettings.IsVerticalContinuous :
@@ -196,11 +199,11 @@ namespace ComicReader.Common
 
 #if DEBUG_LOG_UPDATE_PAGE
                 Log("Page updated (" +
-                    "Page=" + m_page.ToString() +
-                    ",UseF=" + use_final.ToString() +
-                    ",PO=" + parallel_offset.ToString() +
-                    ",ZF=" + zoom_factor.ToString() +
-                    ",O=" + current_offset.ToString() + ")");
+                    "Page=" + PageSource.ToString() + "," +
+                    "UseF=" + use_final.ToString() + "," +
+                    "PO=" + ParallelOffset.ToString() + "," +
+                    "POF=" + ParallelOffsetFinal.ToString() + "," +
+                    "ZF=" + ZoomFactor.ToString() + ")");
 #endif
 
                 return true;
@@ -738,7 +741,7 @@ namespace ComicReader.Common
             }
         }
 
-        // Modifier - Manipulation
+        // Modifier - Scrolling
         public async Task<bool> MoveFrame(int increment)
         {
             if (!await UpdatePage(true))
@@ -952,20 +955,20 @@ namespace ComicReader.Common
 
 #if DEBUG_LOG_JUMP
             Log("ParamIn: "
-                + "Z=" + zoom.ToString()
-                + ",H=" + horizontal_offset.ToString()
-                + ",V=" + vertical_offset.ToString()
-                + ",D=" + disable_animation.ToString());
+                + "Z=" + ctx.Zoom.ToString() + ","
+                + "H=" + ctx.HorizontalOffset.ToString() + ","
+                + "V=" + ctx.VerticalOffset.ToString() + ","
+                + "D=" + ctx.DisableAnimation.ToString());
 #endif
 
             SetScrollViewerZoom(ctx, out float? zoom_out);
 
 #if DEBUG_LOG_JUMP
             Log("ParamSetZoom: "
-                + "Z=" + zoom.ToString()
-                + ",Zo=" + zoom_out.ToString()
-                + ",H=" + horizontal_offset.ToString()
-                + ",V=" + vertical_offset.ToString());
+                + "Z=" + ctx.Zoom.ToString() + ","
+                + "Zo=" + zoom_out.ToString() + ","
+                + "H=" + ctx.HorizontalOffset.ToString() + ","
+                + "V=" + ctx.VerticalOffset.ToString());
 #endif
 
             if (!ChangeView(zoom_out, ctx.HorizontalOffset, ctx.VerticalOffset, ctx.DisableAnimation))
@@ -1183,6 +1186,12 @@ namespace ComicReader.Common
                 ChangeView(null, HorizontalVal(parallel_offset, null),
                     VerticalVal(parallel_offset, null), false);
             }
+            else
+            {
+                return;
+            }
+
+            m_manipulation_disabled = true;
         }
 
         private void AdjustPadding()
@@ -1260,7 +1269,78 @@ namespace ComicReader.Common
             }
         }
 
-        // Modifier - Events
+        // Events - Manipulation
+        private bool m_manipulation_disabled = false;
+
+        public void OnReaderManipulationStarted(object sender, ManipulationStartedEventArgs e)
+        {
+            m_manipulation_disabled = false;
+
+#if DEBUG_LOG_MANIPULATION
+            Log("Manipulation started");
+#endif
+        }
+
+        public void OnReaderManipulationUpdated(object sender, ManipulationUpdatedEventArgs e)
+        {
+            if (m_manipulation_disabled)
+            {
+                return;
+            }
+
+            double dx = e.Delta.Translation.X;
+            double dy = e.Delta.Translation.Y;
+            float scale = e.Delta.Scale;
+
+            if (IsHorizontal && !IsLeftToRight)
+            {
+                dx = -dx;
+            }
+
+            float? zoom = null;
+
+            if (Math.Abs(scale - 1.0f) > 0.01f)
+            {
+                zoom = Zoom * scale;
+            }
+
+            ScrollManager.BeginTransaction(this)
+                .Zoom(zoom)
+                .HorizontalOffset(HorizontalOffsetFinal - dx)
+                .VerticalOffset(VerticalOffsetFinal - dy)
+                .EnableAnimation()
+                .Commit();
+        }
+
+        public async Task OnReaderManipulationCompleted(object sender, ManipulationCompletedEventArgs e)
+        {
+            if (IsContinuous || Zoom >= ForceContinuousZoomThreshold)
+            {
+                return;
+            }
+
+            double velocity = IsVertical ? e.Velocities.Linear.Y : e.Velocities.Linear.X;
+
+            if (IsHorizontal && !IsLeftToRight)
+            {
+                velocity = -velocity;
+            }
+
+            if (velocity > 1.0)
+            {
+                await MoveFrame(-1);
+            }
+            else if (velocity < -1.0)
+            {
+                await MoveFrame(1);
+            }
+
+#if DEBUG_LOG_MANIPULATION
+            Log("Manipulation completed, V=" + velocity.ToString());
+#endif
+        }
+
+        // Events - Common
         private readonly Utils.CancellationLock m_ContainerLoadedLock = new Utils.CancellationLock();
         private readonly Utils.CancellationLock m_PageRearrangeLock = new Utils.CancellationLock();
 

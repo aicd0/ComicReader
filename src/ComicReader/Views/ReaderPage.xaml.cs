@@ -1,5 +1,5 @@
 ﻿#if DEBUG
-//#define DEBUG_LOG_MANIPULATION
+//#define DEBUG_LOG_POINTER
 #endif
 
 using muxc = Microsoft.UI.Xaml.Controls;
@@ -839,7 +839,7 @@ namespace ComicReader.Views
             PointerPoint pointer_point = e.GetCurrentPoint(ManipulationReference);
             m_gesture_recognizer.ProcessDownEvent(pointer_point);
 
-#if DEBUG_LOG_MANIPULATION
+#if DEBUG_LOG_POINTER
             Log("Pointer pressed");
 #endif
         }
@@ -848,7 +848,7 @@ namespace ComicReader.Views
         {
             m_gesture_recognizer.ProcessMoveEvents(e.GetIntermediatePoints(ManipulationReference));
 
-#if DEBUG_LOG_MANIPULATION
+#if DEBUG_LOG_POINTER
             //Log("Pointer moved");
 #endif
         }
@@ -864,7 +864,7 @@ namespace ComicReader.Views
                 m_gesture_recognizer.CompleteGesture();
             }
 
-#if DEBUG_LOG_MANIPULATION
+#if DEBUG_LOG_POINTER
             Log("Pointer released");
 #endif
         }
@@ -880,7 +880,7 @@ namespace ComicReader.Views
                 m_gesture_recognizer.CompleteGesture();
             }
 
-#if DEBUG_LOG_MANIPULATION
+#if DEBUG_LOG_POINTER
             Log("Pointer canceled");
 #endif
         }
@@ -892,76 +892,26 @@ namespace ComicReader.Views
 
         private void OnReaderManipulationStarted(object sender, ManipulationStartedEventArgs e)
         {
-            // Do nothing.
-
-#if DEBUG_LOG_MANIPULATION
-            Log("Manipulation started");
-#endif
+            GetCurrentReader()?.OnReaderManipulationStarted(sender, e);
         }
 
         private void OnReaderManipulationUpdated(object sender, ManipulationUpdatedEventArgs e)
         {
-            ReaderModel reader = GetCurrentReader();
-
-            if (reader == null)
-            {
-                return;
-            }
-
-            double dx = e.Delta.Translation.X;
-            double dy = e.Delta.Translation.Y;
-            float scale = e.Delta.Scale;
-
-            if (reader.IsHorizontal && !Shared.ReaderSettings.IsLeftToRight)
-            {
-                dx = -dx;
-            }
-
-            float? zoom = null;
-
-            if (Math.Abs(scale - 1.0f) > 0.01f)
-            {
-                zoom = reader.Zoom * scale;
-            }
-
-            ReaderModel.ScrollManager.BeginTransaction(reader)
-                .Zoom(zoom)
-                .HorizontalOffset(reader.HorizontalOffsetFinal - dx)
-                .VerticalOffset(reader.VerticalOffsetFinal - dy)
-                .EnableAnimation()
-                .Commit();
+            GetCurrentReader()?.OnReaderManipulationUpdated(sender, e);
         }
 
         private void OnReaderManipulationCompleted(object sender, ManipulationCompletedEventArgs e)
         {
+            ReaderModel reader = GetCurrentReader();
+
+            if (reader  == null)
+            {
+                return;
+            }
+
             Utils.C0.Run(async delegate
             {
-                ReaderModel reader = GetCurrentReader();
-
-                if (reader == null || reader.IsContinuous || reader.Zoom >= ReaderModel.ForceContinuousZoomThreshold)
-                {
-                    return;
-                }
-
-                double velocity = reader.IsVertical ? e.Velocities.Linear.Y : e.Velocities.Linear.X;
-
-                if (reader.IsHorizontal && !Shared.ReaderSettings.IsLeftToRight)
-                {
-                    velocity = -velocity;
-                }
-
-                if (velocity > 1.0)
-                {
-                    await reader.MoveFrame(-1);
-                }
-                else if (velocity < -1.0)
-                {
-                    await reader.MoveFrame(1);
-                }
-
-#if DEBUG_LOG_MANIPULATION
-                Log("Manipulation completed, V=" + velocity.ToString());
-#endif
+                await reader.OnReaderManipulationCompleted(sender, e);
             });
         }
 

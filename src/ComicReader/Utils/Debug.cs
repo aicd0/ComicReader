@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using Microsoft.Services.Store.Engagement;
+using System;
 using System.Threading.Tasks;
 using Windows.Storage;
-using Windows.Storage.Streams;
 
 namespace ComicReader.Utils
 {
@@ -15,8 +12,14 @@ namespace ComicReader.Utils
     {
         private const string LogFileName = "log.txt";
 
-        private static StorageFolder LogFolder => ApplicationData.Current.LocalFolder;
+        public enum Module {
+            CreateCoverCache
+        }
+
         private static readonly Utils.TaskQueue LogQueue = Utils.TaskQueueManager.EmptyQueue();
+
+        private static StorageFolder LogFolder => ApplicationData.Current.LocalFolder;
+        private static StoreServicesCustomEventLogger EventLogger => StoreServicesCustomEventLogger.GetDefault();
 
         public static void Log(string content, bool verbose = true)
         {
@@ -33,15 +36,21 @@ namespace ComicReader.Utils
                 System.Diagnostics.Debug.Print(content);
             }
 
-            Utils.TaskQueueManager.AppendTask(LogSealed(content), "", LogQueue);
+            Utils.TaskQueueManager.AppendTask(LogToFileSealed(content), "", LogQueue);
         }
 
-        private static SealedTask LogSealed(string content)
+        public static void LogException(Module module, Exception e)
         {
-            return (RawTask _) => _Log(content).Result;
+            string info = module.ToString() + ":" + e.GetType().Name;
+            EventLogger.Log(info);
         }
 
-        private static async RawTask _Log(string content)
+        private static SealedTask LogToFileSealed(string content)
+        {
+            return (RawTask _) => LogToFile(content).Result;
+        }
+
+        private static async RawTask LogToFile(string content)
         {
             StorageFile log_file;
 
