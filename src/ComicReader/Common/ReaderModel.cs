@@ -16,6 +16,7 @@ using Windows.Foundation;
 using Windows.UI.Input;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Imaging;
 using ComicReader.Database;
@@ -1280,6 +1281,28 @@ namespace ComicReader.Common
             {
                 ThisListView.Padding = new Thickness(padding_start, 0.0, padding_end, 0.0);
             }
+        }
+
+        // Events - Pointer
+        public async Task OnReaderScrollViewerPointerWheelChanged(object sender, PointerRoutedEventArgs e)
+        {
+            PointerPoint pt = e.GetCurrentPoint(null);
+            int delta = -pt.Properties.MouseWheelDelta / 120;
+
+            if (IsContinuous || Zoom > 105)
+            {
+                // Continuous scrolling.
+                ScrollManager.BeginTransaction(this)
+                    .ParallelOffset(ParallelOffsetFinal + delta * 140.0)
+                    .EnableAnimation()
+                    .Commit();
+            }
+            else
+            {
+                // Page turning.
+                await MoveFrame(delta);
+            }
+            e.Handled = true;
         }
 
         // Events - Manipulation

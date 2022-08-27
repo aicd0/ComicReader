@@ -747,21 +747,14 @@ namespace ComicReader.Views
                     return;
                 }
 
-                // Check if the reader is in the right state to perform a page turn.
                 ReaderModel reader = GetCurrentReader();
-                
-                if (reader == null || reader.IsContinuous || reader.Zoom > 105)
+
+                if (reader == null)
                 {
                     return;
                 }
 
-                // Page turning.
-                PointerPoint pt = e.GetCurrentPoint(null);
-                int delta = -pt.Properties.MouseWheelDelta / 120;
-                await reader.MoveFrame(delta);
-
-                // Set Handled flag to suppress the default behavior of scroll viewer (which will override ours).
-                e.Handled = true;
+                await reader.OnReaderScrollViewerPointerWheelChanged(sender, e);
             });
         }
 
