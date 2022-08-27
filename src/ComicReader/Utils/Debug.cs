@@ -1,5 +1,4 @@
-﻿using Microsoft.Services.Store.Engagement;
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using Windows.Storage;
 
@@ -19,7 +18,6 @@ namespace ComicReader.Utils
         private static readonly Utils.TaskQueue LogQueue = Utils.TaskQueueManager.EmptyQueue();
 
         private static StorageFolder LogFolder => ApplicationData.Current.LocalFolder;
-        private static StoreServicesCustomEventLogger EventLogger => StoreServicesCustomEventLogger.GetDefault();
 
         public static void Log(string content, bool verbose = true)
         {
@@ -41,8 +39,8 @@ namespace ComicReader.Utils
 
         public static void LogException(Module module, Exception e)
         {
-            string info = module.ToString() + ":" + e.GetType().Name;
-            EventLogger.Log(info);
+            string info = "Exception: " + module.ToString() + ": " + e.GetType().FullName;
+            Log(info);
         }
 
         private static SealedTask LogToFileSealed(string content)
