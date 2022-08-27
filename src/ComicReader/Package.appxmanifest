@@ -46,6 +46,10 @@
               <uap:FileType>.7z</uap:FileType>
               <uap:FileType>.bmp</uap:FileType>
               <uap:FileType>.bz2</uap:FileType>
+              <uap:FileType>.cb7</uap:FileType>
+              <uap:FileType>.cbr</uap:FileType>
+              <uap:FileType>.cbt</uap:FileType>
+              <uap:FileType>.cbz</uap:FileType>
               <uap:FileType>.gif</uap:FileType>
               <uap:FileType>.gz</uap:FileType>
               <uap:FileType>.jpe</uap:FileType>

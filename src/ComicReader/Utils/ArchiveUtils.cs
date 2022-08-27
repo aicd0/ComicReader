@@ -236,6 +236,7 @@ namespace ComicReader.Utils
             switch (extension.ToLower())
             {
                 case ".7z":
+                case ".cb7":
                     using (var archive = SharpCompress.Archives.SevenZip.SevenZipArchive.Open(stream, opts))
                     {
                         foreach (var raw_entry in archive.Entries)
@@ -252,6 +253,9 @@ namespace ComicReader.Utils
                     break;
 
                 case ".bz2":
+                case ".cbr":
+                case ".cbt":
+                case ".cbz":
                 case ".gz":
                 case ".rar":
                 case ".tar":

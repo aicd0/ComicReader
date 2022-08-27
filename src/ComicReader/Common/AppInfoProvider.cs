@@ -24,6 +24,10 @@ namespace ComicReader.Common
         public static readonly HashSet<string> SupportedArchiveExtensions = new HashSet<string>{
             ".7z",
             ".bz2",
+            ".cb7",
+            ".cbr",
+            ".cbt",
+            ".cbz",
             ".gz",
             ".rar",
             ".tar",
