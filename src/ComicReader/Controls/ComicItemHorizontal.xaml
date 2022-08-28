@@ -44,7 +44,7 @@
                     Click="{x:Bind Ctx.OnHideClicked}"
                     Visibility="{x:Bind Ctx.IsHide, Converter={StaticResource BooleanToVisibilityNegationConverter}}">
                     <MenuFlyoutItem.Icon>
-                        <FontIcon Glyph="&#xE711;" />
+                        <FontIcon Glyph="&#xE8FF;" />
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
                 <MenuFlyoutItem
