@@ -30,6 +30,10 @@ namespace ComicReader.Common
         public static readonly float MaxZoom = 250f;
         public static readonly float MinZoom = 90f;
         public static readonly float ForceContinuousZoomThreshold = 105f;
+        private static readonly int MinPreloadFramesBefore = 5;
+        private static readonly int MaxPreloadFramesBefore = 10;
+        private static readonly int MinPreloadFramesAfter = 5;
+        private static readonly int MaxPreloadFramesAfter = 10;
 
         // Structs
         private class FrameOffsetData
@@ -84,7 +88,10 @@ namespace ComicReader.Common
         private readonly Utils.CancellationLock m_UpdatePageLock = new Utils.CancellationLock();
 
         public int PageCount => Comic.ImageCount;
-        private int ToDiscretePage(double page_continuous) => (int)Math.Round(page_continuous);
+        private int ToDiscretePage(double page_continuous)
+        {
+            return (int)Math.Round(page_continuous);
+        }
 
         public double PageSource { get; private set; } = 0.0;
         public int Page => ToDiscretePage(PageSource);
@@ -315,7 +322,10 @@ namespace ComicReader.Common
         public double ViewportPerpendicularLength => IsVertical ? ThisScrollViewer.ViewportWidth : ThisScrollViewer.ViewportHeight;
         public double ExtentParallelLength => IsVertical ? ThisScrollViewer.ExtentHeight : ThisScrollViewer.ExtentWidth;
         public double ExtentParallelLengthFinal => FinalVal(ExtentParallelLength);
-        private double FrameParallelLength(int i) => IsVertical ? Frames[i].Height : Frames[i].Width;
+        private double FrameParallelLength(int i)
+        {
+            return IsVertical ? Frames[i].Height : Frames[i].Width;
+        }
 
         // Observer - List View
         private double m_PaddingStartFinal;
@@ -457,9 +467,8 @@ namespace ComicReader.Common
             get; set;
         }
 
-        // Modifier - Loader
+        // Modifier - General Loader
         private readonly Utils.CancellationLock m_LoaderLock = new Utils.CancellationLock();
-        private readonly Utils.CancellationLock m_UpdateImageLock = new Utils.CancellationLock();
 
         public void Reset()
         {
@@ -647,6 +656,10 @@ namespace ComicReader.Common
             }
         }
 
+        // Modifier - Image Loader
+        private readonly Utils.CancellationLock m_UpdateImageLock = new Utils.CancellationLock();
+        private bool m_NeedPreload = false;
+
         public async Task<bool> UpdateImages(bool use_final)
         {
             if (!await UpdatePage(use_final))
@@ -660,10 +673,6 @@ namespace ComicReader.Common
 
         private async Task UpdateImagesInternal(bool remove_out_of_view = true)
         {
-#if DEBUG_LOG_UPDATE_IMAGE
-            Log("Updating images (page " + Page.ToString() + ")");
-#endif
-
             await m_UpdateImageLock.WaitAsync();
             try
             {
@@ -683,68 +692,118 @@ namespace ComicReader.Common
                     return;
                 }
 
-                var img_loader_tokens = new List<Utils.ImageLoader.Token>();
-                int page_begin = Math.Max(Page - 5, 1);
-                int page_end = Math.Min(Page + 10, PageCount);
-                int idx_begin = PageToFrame(page_begin, out _, out _);
-                int idx_end = PageToFrame(page_end, out _, out _);
-                idx_end = Math.Min(Frames.Count - 1, idx_end);
+                int frame = PageToFrame(Page, out _, out _);
+                int preload_window_begin = Math.Max(frame - MaxPreloadFramesBefore, 0);
+                int preload_window_end = Math.Min(frame + MaxPreloadFramesAfter, Frames.Count - 1);
 
-                for (int i = idx_begin; i <= idx_end; ++i)
+                if (!m_NeedPreload)
                 {
-                    ReaderFrameViewModel m = Frames[i]; // Stores locally.
+                    int check_window_begin = Math.Max(frame - MinPreloadFramesBefore, 0);
+                    int check_window_end = Math.Min(frame + MinPreloadFramesAfter, Frames.Count - 1);
 
-                    if (m.ImageL == null && m.PageL > 0)
+                    for (int i = check_window_begin; i <= check_window_end; ++i)
                     {
-                        img_loader_tokens.Add(new Utils.ImageLoader.Token
-                        {
-                            Index = m.PageL - 1,
-                            Comic = Comic,
-                            Callback = (BitmapImage img) =>
-                            {
-                                m.ImageL = img;
-                            }
-                        });
-                    }
+                        ReaderFrameViewModel m = Frames[i];
 
-                    if (m.ImageR == null && m.PageR > 0)
-                    {
-                        img_loader_tokens.Add(new Utils.ImageLoader.Token
+                        if ((m.PageL > 0 && m.ImageL == null) || (m.PageR > 0 && m.ImageR == null))
                         {
-                            Index = m.PageR - 1,
-                            Comic = Comic,
-                            Callback = (BitmapImage img) =>
-                            {
-                                m.ImageR = img;
-                            }
-                        });
+                            m_NeedPreload = true;
+                            break;
+                        }
                     }
                 }
 
-                Utils.TaskResult result = await Task.Run(delegate
+                if (m_NeedPreload)
                 {
-                    return new Utils.ImageLoader.Builder(img_loader_tokens, m_UpdateImageLock).Commit().Result;
-                });
+#if DEBUG_LOG_UPDATE_IMAGE
+                    Log("Loading images (page=" + Page.ToString() + ")");
+#endif
 
-                if (result.ExceptionType == Utils.TaskException.Cancellation)
-                {
-                    return;
+                    List<Utils.ImageLoader.Token> img_loader_tokens = new List<Utils.ImageLoader.Token>();
+
+                    void addToLoaderQueue(int i)
+                    {
+                        ReaderFrameViewModel m = Frames[i]; // Stores locally.
+
+                        if (m.ImageL == null && m.PageL > 0)
+                        {
+                            img_loader_tokens.Add(new Utils.ImageLoader.Token
+                            {
+                                Index = m.PageL - 1,
+                                Comic = Comic,
+                                Callback = (BitmapImage img) =>
+                                {
+                                    m.ImageL = img;
+#if DEBUG_LOG_UPDATE_IMAGE
+                                    Log("Page " + m.PageL.ToString() + " loaded");
+#endif
+                                }
+                            });
+                        }
+
+                        if (m.ImageR == null && m.PageR > 0)
+                        {
+                            img_loader_tokens.Add(new Utils.ImageLoader.Token
+                            {
+                                Index = m.PageR - 1,
+                                Comic = Comic,
+                                Callback = (BitmapImage img) =>
+                                {
+                                    m.ImageR = img;
+#if DEBUG_LOG_UPDATE_IMAGE
+                                    Log("Page " + m.PageR.ToString() + " loaded");
+#endif
+                                }
+                            });
+                        }
+                    }
+
+                    for (int i = frame; i <= preload_window_end; ++i)
+                    {
+                        addToLoaderQueue(i);
+                    }
+
+                    for (int i = frame - 1; i > preload_window_begin; --i)
+                    {
+                        addToLoaderQueue(i);
+                    }
+
+                    Utils.TaskResult result = await Task.Run(delegate
+                    {
+                        return new Utils.ImageLoader.Builder(img_loader_tokens, m_UpdateImageLock).Commit().Result;
+                    });
+
+                    if (result.ExceptionType == Utils.TaskException.Cancellation)
+                    {
+                        return;
+                    }
+
+                    m_NeedPreload = false;
                 }
 
                 if (remove_out_of_view)
                 {
                     for (int i = 0; i < Frames.Count; ++i)
                     {
-                        ReaderFrameViewModel m = Frames[i];
-
-                        if ((m.PageL < page_begin || m.PageL > page_end) && m.ImageL != null)
+                        if (i < preload_window_begin || i > preload_window_end)
                         {
-                            m.ImageL = null;
-                        }
+                            ReaderFrameViewModel m = Frames[i];
 
-                        if ((m.PageR < page_begin || m.PageR > page_end) && m.ImageR != null)
-                        {
-                            m.ImageR = null;
+                            if (m.ImageL != null)
+                            {
+                                m.ImageL = null;
+#if DEBUG_LOG_UPDATE_IMAGE
+                                Log("Page " + m.PageL.ToString() + " removed");
+#endif
+                            }
+
+                            if (m.ImageR != null)
+                            {
+                                m.ImageR = null;
+#if DEBUG_LOG_UPDATE_IMAGE
+                                Log("Page " + m.PageR.ToString() + " removed");
+#endif
+                            }
                         }
                     }
                 }
@@ -1284,7 +1343,7 @@ namespace ComicReader.Common
         }
 
         // Events - Pointer
-        public async Task OnReaderScrollViewerPointerWheelChanged(object sender, PointerRoutedEventArgs e)
+        public async Task OnReaderScrollViewerPointerWheelChanged(PointerRoutedEventArgs e)
         {
             PointerPoint pt = e.GetCurrentPoint(null);
             int delta = -pt.Properties.MouseWheelDelta / 120;
@@ -1310,7 +1369,7 @@ namespace ComicReader.Common
         // Events - Manipulation
         private bool m_manipulation_disabled = false;
 
-        public void OnReaderManipulationStarted(object sender, ManipulationStartedEventArgs e)
+        public void OnReaderManipulationStarted(ManipulationStartedEventArgs e)
         {
             m_manipulation_disabled = false;
 
@@ -1319,7 +1378,7 @@ namespace ComicReader.Common
 #endif
         }
 
-        public void OnReaderManipulationUpdated(object sender, ManipulationUpdatedEventArgs e)
+        public void OnReaderManipulationUpdated(ManipulationUpdatedEventArgs e)
         {
             if (m_manipulation_disabled)
             {
@@ -1350,7 +1409,7 @@ namespace ComicReader.Common
                 .Commit();
         }
 
-        public async Task OnReaderManipulationCompleted(object sender, ManipulationCompletedEventArgs e)
+        public async Task OnReaderManipulationCompleted(ManipulationCompletedEventArgs e)
         {
             if (IsContinuous || Zoom >= ForceContinuousZoomThreshold)
             {
@@ -1705,7 +1764,7 @@ namespace ComicReader.Common
                 return;
             }
 
-            Utils.Debug.Log("Reader: " + text);
+            Utils.Debug.Log("Reader: " + text + ".");
         }
     }
 }

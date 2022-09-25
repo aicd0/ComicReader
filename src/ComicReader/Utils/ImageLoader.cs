@@ -74,7 +74,7 @@ namespace ComicReader.Utils
             private CancellationLock m_cancellation_lock;
             private double m_multiplication = 1.0;
 
-            public Builder(List<Token> tokens, CancellationLock cancellation_lock)
+            public Builder(List<Token> tokens, CancellationLock cancellation_lock = null)
             {
                 m_tokens = tokens;
                 m_cancellation_lock = cancellation_lock;
@@ -135,7 +135,7 @@ namespace ComicReader.Utils
 
             for (int token_processed = 0; tokens_cpy.Count > 0; ++token_processed)
             {
-                if (cancellation_lock.CancellationRequested)
+                if (cancellation_lock != null && cancellation_lock.CancellationRequested)
                 {
 #if DEBUG_LOG_LOAD
                     Log("Task cancelled");
@@ -156,7 +156,7 @@ namespace ComicReader.Utils
                     Log("Token " + token.Index.ToString() + "(" + token_processed.ToString() + ") skipped, failed to update comic images");
                     int token_before = tokens_cpy.Count;
                     tokens_cpy.RemoveAll(x => x.Comic == comic);
-                    Log((token_before - tokens_cpy.Count).ToString() + " tokens with the same comic were removed.");
+                    Log((token_before - tokens_cpy.Count).ToString() + " tokens with the same comic were removed");
                     all_token_success = false;
                     continue;
                 }
@@ -256,7 +256,7 @@ namespace ComicReader.Utils
                         }
 
 #if DEBUG_LOG_LOAD
-                        Log("Token " + token_i.ToString() + " (idx=" + token.Index.ToString() + ") loaded");
+                        Log("Token " + token_processed.ToString() + "(idx=" + token.Index.ToString() + ") loaded");
 #endif
 
                         completion_src.SetResult(true);
@@ -267,7 +267,7 @@ namespace ComicReader.Utils
             }
 
 #if DEBUG_LOG_LOAD
-            Log("All tokens loaded (trig_update=" + trig_update.ToString() + ")");
+            Log("Image loading compeleted (success=" + all_token_success.ToString() + ")");
 #endif
 
             if (!all_token_success)
@@ -280,7 +280,7 @@ namespace ComicReader.Utils
 
         private static void Log(string text)
         {
-            Utils.Debug.Log("Image Loader: " + text);
+            Utils.Debug.Log("Image Loader: " + text + ".");
         }
     }
 }

@@ -754,7 +754,7 @@ namespace ComicReader.Views
                     return;
                 }
 
-                await reader.OnReaderScrollViewerPointerWheelChanged(sender, e);
+                await reader.OnReaderScrollViewerPointerWheelChanged(e);
             });
         }
 
@@ -879,12 +879,12 @@ namespace ComicReader.Views
 
         private void OnReaderManipulationStarted(object sender, ManipulationStartedEventArgs e)
         {
-            GetCurrentReader()?.OnReaderManipulationStarted(sender, e);
+            GetCurrentReader()?.OnReaderManipulationStarted(e);
         }
 
         private void OnReaderManipulationUpdated(object sender, ManipulationUpdatedEventArgs e)
         {
-            GetCurrentReader()?.OnReaderManipulationUpdated(sender, e);
+            GetCurrentReader()?.OnReaderManipulationUpdated(e);
         }
 
         private void OnReaderManipulationCompleted(object sender, ManipulationCompletedEventArgs e)
@@ -898,7 +898,7 @@ namespace ComicReader.Views
 
             Utils.C0.Run(async delegate
             {
-                await reader.OnReaderManipulationCompleted(sender, e);
+                await reader.OnReaderManipulationCompleted(e);
             });
         }
 
