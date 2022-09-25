@@ -792,7 +792,7 @@ namespace ComicReader.Common
 
         public sealed class ScrollManager : Utils.BuilderBase<bool>
         {
-            private ReaderModel m_reader;
+            private readonly ReaderModel m_reader;
             private float? m_zoom = null;
             private double? m_parallel_offset = null;
             private double? m_horizontal_offset = null;
@@ -1302,6 +1302,8 @@ namespace ComicReader.Common
                 // Page turning.
                 await MoveFrame(delta);
             }
+
+            m_manipulation_disabled = true;
             e.Handled = true;
         }
 
