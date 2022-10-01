@@ -723,6 +723,11 @@ namespace ComicReader.Common
 
                     void addToLoaderQueue(int i)
                     {
+                        if (i < 0 || i >= Frames.Count)
+                        {
+                            return;
+                        }
+
                         ReaderFrameViewModel m = Frames[i]; // Stores locally.
 
                         if (m.ImageL == null && m.PageL > 0)
@@ -758,12 +763,12 @@ namespace ComicReader.Common
                         }
                     }
 
-                    for (int i = frame; i <= preload_window_end; ++i)
+                    for (int i = Math.Max(0, frame); i <= preload_window_end; ++i)
                     {
                         addToLoaderQueue(i);
                     }
 
-                    for (int i = frame - 1; i > preload_window_begin; --i)
+                    for (int i = Math.Min(Frames.Count - 1, frame - 1); i > preload_window_begin; --i)
                     {
                         addToLoaderQueue(i);
                     }
