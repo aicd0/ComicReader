@@ -2,10 +2,11 @@
 using Windows.UI.Xaml.Controls;
 using muxc = Microsoft.UI.Xaml.Controls;
 using ComicReader.Views;
+using ComicReader.Common.Router;
 
 namespace ComicReader.Controls
 {
-    public sealed partial class SidePane : UserControl
+    sealed internal partial class SidePane : UserControl
     {
         public NavigationPage Ctx => DataContext as NavigationPage;
 
@@ -18,10 +19,10 @@ namespace ComicReader.Controls
         {
             string item = (string)((muxc.NavigationViewItem)args.SelectedItem).Content;
             
-            Common.Tab.NavigationParams nav_params = new Common.Tab.NavigationParams
+            NavigationParams nav_params = new NavigationParams
             {
-                TabId = Ctx.TabId,
-                Shared = Ctx.Shared,
+                tabId = Ctx.TabId,
+                shared = Ctx.Shared,
             };
 
             Type page_type;

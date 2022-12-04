@@ -132,7 +132,11 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Common\NavigatablePage.cs" />
+    <Compile Include="Common\PageType.cs" />
+    <Compile Include="Common\NavigationManager.cs" />
     <Compile Include="Common\ReaderModel.cs" />
+    <Compile Include="Common\StatefulPage.cs" />
     <Compile Include="Controls\ComicItemHorizontal.xaml.cs">
       <DependentUpon>ComicItemHorizontal.xaml</DependentUpon>
     </Compile>
@@ -198,7 +202,6 @@
     <Compile Include="Utils\Storage.cs" />
     <Compile Include="Utils\StringResourceProvider.cs" />
     <Compile Include="Utils\Win32IO.cs" />
-    <Compile Include="Common\TabManager.cs" />
     <Compile Include="DesignData\FolderItemViewModel.cs" />
     <Compile Include="Database\Database.cs" />
     <Compile Include="Utils\TaskQueue.cs" />

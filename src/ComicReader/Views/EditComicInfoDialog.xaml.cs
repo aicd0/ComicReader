@@ -25,7 +25,7 @@ namespace ComicReader.Views
     {
         public EditComicInfoDialogShared Shared = new EditComicInfoDialogShared();
 
-        private ComicData m_comic;
+        private readonly ComicData m_comic;
 
         public EditComicInfoDialog(ComicData comic)
         {

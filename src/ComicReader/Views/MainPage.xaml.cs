@@ -12,6 +12,7 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using muxc = Microsoft.UI.Xaml.Controls;
+using ComicReader.Common.Router;
 using ComicReader.Database;
 
 namespace ComicReader.Views
@@ -36,20 +37,23 @@ namespace ComicReader.Views
         public DesignData.ReaderSettingViewModel ReaderSettings = new DesignData.ReaderSettingViewModel();
     }
 
-    public sealed partial class MainPage : Page
+    sealed internal partial class MainPage : Page
     {
         public static MainPage Current = null;
         public MainPageShared Shared;
 
-        private List<Common.Tab.TabIdentifier> m_all_tabs = new List<Common.Tab.TabIdentifier>();
+        private readonly List<TabIdentifier> m_all_tabs = new List<TabIdentifier>();
         private Grid m_tab_container_grid;
 
         public MainPage()
         {
             Current = this;
-            Shared = new MainPageShared();
 
-            Shared.IsFullscreen = false;
+            Shared = new MainPageShared
+            {
+                IsFullscreen = false
+            };
+
             Shared.ReaderSettings.IsVertical = Database.XmlDatabase.Settings.VerticalReading;
             Shared.ReaderSettings.IsLeftToRight = Database.XmlDatabase.Settings.LeftToRight;
             Shared.ReaderSettings.IsVerticalContinuous = Database.XmlDatabase.Settings.VerticalContinuous;
@@ -62,6 +66,11 @@ namespace ComicReader.Views
             Shared.ReaderSettings.OnHorizontalContinuousChanged += SaveReaderSettingsEventSealed;
             Shared.ReaderSettings.OnVerticalPageArrangementChanged += SaveReaderSettingsEventSealed;
             Shared.ReaderSettings.OnHorizontalPageArrangementChanged += SaveReaderSettingsEventSealed;
+
+            NavigationManager.GetInstance().OnExitFullscreen += delegate
+            {
+                ExitFullscreen();
+            };
 
             InitializeComponent();
         }
@@ -130,7 +139,7 @@ namespace ComicReader.Views
 
                     if (neighboring_file_query != null)
                     {
-                        var files = await args.NeighboringFilesQuery.GetFilesAsync();
+                        IReadOnlyList<StorageFile> files = await args.NeighboringFilesQuery.GetFilesAsync();
                         all_files = files.ToList();
                     }
                     else
@@ -167,49 +176,49 @@ namespace ComicReader.Views
 
             await Utils.C0.Sync(delegate
             {
-                LoadTab(null, Common.Tab.PageType.Reader, comic);
+                LoadTab(null, PageType.Reader, comic);
             });
         }
 
         // New tab
-        private bool TrySwitchToTab(Common.Tab.PageType type, object args)
+        private bool TrySwitchToTab(PageType type, object args)
         {
-            if (type != Common.Tab.PageType.Reader &&
-                type != Common.Tab.PageType.Settings &&
-                type != Common.Tab.PageType.Help)
+            foreach (TabIdentifier tab in m_all_tabs)
             {
-                return false;
-            }
+                if (tab.pageType != type)
+                {
+                    continue;
+                }
 
-            string unique_string = Common.Tab.TabManager.PageUniqueString(type, args);
+                if (!tab.listener.AllowJump())
+                {
+                    continue;
+                }
 
-            foreach (Common.Tab.TabIdentifier tab in m_all_tabs)
-            {
-                if (unique_string == tab.UniqueString)
+                if (tab.listener.GetUniqueString(args) == tab.listener.GetUniqueString(tab.RequestArgs))
                 {
                     RootTabView.SelectedItem = tab.Tab;
                     return true;
                 }
             }
-
             return false;
         }
 
-        private Common.Tab.TabIdentifier AddNewTab(Common.Tab.PageType type, object args = null)
+        private TabIdentifier AddNewTab(PageType type, object args = null)
         {
-            ExitFullscreen();
-
             // create a new tab and switch to it.
-            muxc.TabViewItem new_tab = new muxc.TabViewItem();
-            new_tab.Header = "Loading...";
-            new_tab.Content = new Frame();
+            muxc.TabViewItem new_tab = new muxc.TabViewItem
+            {
+                Header = "Loading...",
+                Content = new Frame()
+            };
             RootTabView.TabItems.Add(new_tab);
             RootTabView.SelectedItem = new_tab;
 
-            Common.Tab.TabIdentifier id = new Common.Tab.TabIdentifier
+            TabIdentifier id = new TabIdentifier
             {
                 Tab = new_tab,
-                Type = type,
+                pageType = type,
                 RequestArgs = args,
             };
 
@@ -220,41 +229,39 @@ namespace ComicReader.Views
             return id;
         }
 
-        public void LoadTab(Common.Tab.TabIdentifier tab_id, Common.Tab.PageType type, object args = null,
-            bool try_reuse = true)
+        public void LoadTab(TabIdentifier tab_id, PageType type, object args = null, bool try_reuse = true)
         {
+            // switch to an existed tab if possible
             if (try_reuse)
             {
-                // switch to an existed tab if possible
                 if (TrySwitchToTab(type, args))
                 {
                     return;
                 }
             }
 
+            // if no tab id provided, create one.
             if (tab_id == null)
             {
-                // if no tab id provided, create one.
                 tab_id = AddNewTab(type, args);
             }
             else
             {
-                tab_id.Type = type;
+                tab_id.pageType = type;
                 tab_id.RequestArgs = args;
-                tab_id.OnTabSelected = null;
+                tab_id.listener = null;
             }
 
-            Common.Tab.NavigationParams nav_params = new Common.Tab.NavigationParams
+            NavigationParams nav_params = new NavigationParams
             {
-                Shared = Shared,
-                TabId = tab_id
+                shared = Shared,
+                tabId = tab_id
             };
 
             Frame frame = (Frame)tab_id.Tab.Content;
 
             // use different loading strategies based on page type.
-            if (type == Common.Tab.PageType.Reader || type == Common.Tab.PageType.Home ||
-                type == Common.Tab.PageType.Search)
+            if (type == PageType.Reader || type == PageType.Home || type == PageType.Search)
             {
                 // these pages are based on NavigationPage.
                 if (frame.Content == null || frame.Content.GetType() != typeof(NavigationPage))
@@ -265,33 +272,31 @@ namespace ComicReader.Views
                         return;
                     }
                 }
-
                 NavigationPage content_page = (NavigationPage)frame.Content;
-                content_page.Update();
+                content_page.Navigate();
             }
             else
             {
                 // these pages are based on MainPage.
-                frame.Navigate(Common.Tab.TabManager.TypeFromPageTypeEnum(type), nav_params);
+                frame.Navigate(PageTypeUtils.PageTypeToType(type), nav_params);
             }
         }
 
         // TabView
         private void OnAddTabButtonClicked(muxc.TabView sender, object args)
         {
-            LoadTab(null, Common.Tab.PageType.Home);
+            LoadTab(null, PageType.Home);
         }
 
-        private Common.Tab.TabIdentifier GetTabId(muxc.TabViewItem tab)
+        private TabIdentifier GetTabId(muxc.TabViewItem tab)
         {
-            foreach (Common.Tab.TabIdentifier id in m_all_tabs)
+            foreach (TabIdentifier id in m_all_tabs)
             {
                 if (id.Tab == tab)
                 {
                     return id;
                 }
             }
-
             return null;
         }
 
@@ -300,7 +305,7 @@ namespace ComicReader.Views
         {
             for (int i = 0; i < m_all_tabs.Count; ++i)
             {
-                Common.Tab.TabIdentifier tab_id = m_all_tabs[i];
+                TabIdentifier tab_id = m_all_tabs[i];
 
                 if (tab_id.Tab == args.Tab)
                 {
@@ -319,7 +324,7 @@ namespace ComicReader.Views
 
         private void OnTabViewLoaded(object sender, RoutedEventArgs e)
         {
-            LoadTab(null, Common.Tab.PageType.Home);
+            LoadTab(null, PageType.Home);
         }
 
         // Background tasks
@@ -349,15 +354,12 @@ namespace ComicReader.Views
             }
 
             muxc.TabViewItem tab = (muxc.TabViewItem)e.AddedItems[0];
-            Common.Tab.TabIdentifier id = GetTabId(tab);
-
+            TabIdentifier id = GetTabId(tab);
             if (id == null)
             {
                 return;
             }
-
-            UpdateFullscreenMode();
-            id.OnTabSelected?.Invoke();
+            id.OnSelected();
         }
 
         private void SetTabViewVisibility(bool visibility)
@@ -377,15 +379,6 @@ namespace ComicReader.Views
         }
 
         // Fullscreen
-        public void UpdateFullscreenMode()
-        {
-            // make IsFullscreen consistent with the actual state.
-            if (!ApplicationView.GetForCurrentView().IsFullScreenMode)
-            {
-                ExitFullscreen();
-            }
-        }
-
         public bool EnterFullscreen()
         {
             if (Shared.IsFullscreen)
@@ -418,7 +411,11 @@ namespace ComicReader.Views
 
         private void OnRootGridSizeChanged(object sender, SizeChangedEventArgs e)
         {
-            UpdateFullscreenMode();
+            // make IsFullscreen consistent with the actual state.
+            if (!ApplicationView.GetForCurrentView().IsFullScreenMode)
+            {
+                ExitFullscreen();
+            }
         }
 
         // Reader settings
@@ -443,8 +440,7 @@ namespace ComicReader.Views
         // Keys
         private void OnKeyDown(object sender, KeyRoutedEventArgs e)
         {
-            bool handled = true;
-
+            bool handled;
             switch (e.Key)
             {
                 case Windows.System.VirtualKey.Escape:

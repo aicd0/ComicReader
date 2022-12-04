@@ -5,6 +5,8 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Navigation;
+using ComicReader.Common.Router;
+using ComicReader.Common;
 
 namespace ComicReader.Views
 {
@@ -20,20 +22,6 @@ namespace ComicReader.Views
             {
                 m_MainPageShared = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("MainPageShared"));
-            }
-        }
-
-        public Common.Tab.PageType CurrentPageType
-        {
-            set
-            {
-                IsHomePage = value == Common.Tab.PageType.Home;
-                IsReaderPage = value == Common.Tab.PageType.Reader;
-
-                if (!IsReaderPage && MainPageShared.IsFullscreen)
-                {
-                    MainPageShared.IsFullscreen = false;
-                }
             }
         }
 
@@ -180,74 +168,61 @@ namespace ComicReader.Views
         public Action OnExpandComicInfoPane;
     }
 
-    public sealed partial class NavigationPage : Page
+    sealed internal partial class NavigationPage : StatefulPage
     {
         public NavigationPageShared Shared { get; set; }
-        public Common.Tab.TabIdentifier TabId => m_tab_manager.TabId;
-
-        private readonly Common.Tab.TabManager m_tab_manager;
+        public TabIdentifier TabId { get; set; }
 
         public NavigationPage()
         {
             Shared = new NavigationPageShared();
-
-            m_tab_manager = new Common.Tab.TabManager(this)
-            {
-                OnTabRegister = OnTabRegister,
-                OnTabUnregister = OnTabUnregister,
-                OnTabUpdate = OnTabUpdate
-            };
-
             InitializeComponent();
         }
 
         // Navigation
-        protected override void OnNavigatedTo(NavigationEventArgs e)
+        public override void OnStart(NavigationParams p)
         {
-            base.OnNavigatedTo(e);
-            m_tab_manager.OnNavigatedTo(e);
-        }
+            base.OnStart(p);
+            TabId = p.tabId;
+            TabId.Selected += delegate
+            {
+                if (NavigationPageSidePane != null)
+                {
+                    NavigationPageSidePane.IsPaneOpen = false;
+                }
+            };
+            TabId.PageTypeChanged += delegate (PageType pageType)
+            {
+                Shared.IsHomePage = pageType == PageType.Home;
+                Shared.IsReaderPage = pageType == PageType.Reader;
+                Shared.SetSearchBox("");
+            };
 
-        protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
-        {
-            base.OnNavigatingFrom(e);
-            m_tab_manager.OnNavigatedFrom(e);
-        }
-
-        private void OnTabRegister(object shared)
-        {
-            Shared.MainPageShared = (MainPageShared)shared;
+            Shared.MainPageShared = (MainPageShared)p.shared;
             Shared.RefreshPage = RefreshPage;
             Shared.SetSearchBox = SetSearchBox;
         }
 
-        private void OnTabUnregister() { }
-
-        private void OnTabUpdate()
+        public override void OnResume()
         {
-            if (NavigationPageSidePane != null)
-            {
-                NavigationPageSidePane.IsPaneOpen = false;
-            }
+            base.OnResume();
+        }
+
+        public override void OnPause()
+        {
+            base.OnPause();
         }
 
         // Common
-        public void Update()
+        public void Navigate()
         {
-            if (ContentFrame == null)
+            // directly pass parameters to the sub page.
+            NavigationParams subParams = new NavigationParams
             {
-                return;
-            }
-
-            // directly passes tab id to the sub page.
-            Common.Tab.NavigationParams nav_params = new Common.Tab.NavigationParams
-            {
-                Shared = Shared,
-                TabId = m_tab_manager.TabId
+                shared = Shared,
+                tabId = TabId,
             };
-
-            _ = ContentFrame.Navigate(
-                Common.Tab.TabManager.TypeFromPageTypeEnum(m_tab_manager.TabId.Type), nav_params);
+            ContentFrame.Navigate(PageTypeUtils.PageTypeToType(TabId.pageType), subParams);
         }
 
         public bool GoBack()
@@ -284,9 +259,7 @@ namespace ComicReader.Views
 
         private void RefreshPage()
         {
-            MainPage.Current.LoadTab(m_tab_manager.TabId,
-                m_tab_manager.TabId.Type,
-                m_tab_manager.TabId.RequestArgs, try_reuse: false);
+            MainPage.Current.LoadTab(TabId, TabId.pageType, TabId.RequestArgs, try_reuse: false);
         }
 
         // Search box
@@ -305,7 +278,7 @@ namespace ComicReader.Views
                 return;
             }
 
-            MainPage.Current.LoadTab(m_tab_manager.TabId, Common.Tab.PageType.Search, args.QueryText);
+            MainPage.Current.LoadTab(TabId, PageType.Search, args.QueryText);
         }
 
         // Buttons
@@ -321,7 +294,7 @@ namespace ComicReader.Views
 
         private void OnHomeClick(object sender, RoutedEventArgs e)
         {
-            MainPage.Current.LoadTab(m_tab_manager.TabId, Common.Tab.PageType.Home);
+            MainPage.Current.LoadTab(TabId, PageType.Home);
         }
 
         private void OnRefreshClick(object sender, RoutedEventArgs e)
@@ -348,12 +321,12 @@ namespace ComicReader.Views
 
         private void OnMoreSettingsClick(object sender, RoutedEventArgs e)
         {
-            MainPage.Current.LoadTab(null, Common.Tab.PageType.Settings);
+            MainPage.Current.LoadTab(null, PageType.Settings);
         }
 
         private void OnMoreHelpClick(object sender, RoutedEventArgs e)
         {
-            MainPage.Current.LoadTab(null, Common.Tab.PageType.Help);
+            MainPage.Current.LoadTab(null, PageType.Help);
         }
 
         private void OnZoomInClick(object sender, RoutedEventArgs e)
@@ -394,7 +367,7 @@ namespace ComicReader.Views
         }
 
         // Pointer events
-        PointerPoint m_last_pointer_point = null;
+        private PointerPoint m_last_pointer_point = null;
 
         private void OnPagePointerPressed(object sender, PointerRoutedEventArgs e)
         {

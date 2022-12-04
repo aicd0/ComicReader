@@ -1,55 +1,52 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
-using Windows.UI.Xaml;
+﻿using ComicReader.Common;
+using ComicReader.Common.Router;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
-using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 using muxc = Microsoft.UI.Xaml.Controls;
 
 namespace ComicReader.Views
 {
-    public sealed partial class HelpPage : Page
+    sealed internal partial class HelpPage : NavigatablePage
     {
-        private readonly Common.Tab.TabManager m_tab_manager;
-
         public HelpPage()
         {
-            m_tab_manager = new Common.Tab.TabManager(this)
-            {
-                OnTabStart = OnTabStart
-            };
-
             InitializeComponent();
         }
 
-        // Navigation
-        protected override void OnNavigatedTo(NavigationEventArgs e)
+        public override void OnStart(NavigationParams p)
         {
-            base.OnNavigatedTo(e);
-            m_tab_manager.OnNavigatedTo(e);
+            base.OnStart(p);
+            p.tabId.Tab.Header = Utils.StringResourceProvider.GetResourceString("Help");
+            p.tabId.Tab.IconSource = new muxc.SymbolIconSource() { Symbol = Symbol.Help };
         }
 
-        protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
+        public override void OnResume()
         {
-            base.OnNavigatingFrom(e);
-            m_tab_manager.OnNavigatedFrom(e);
+            base.OnResume();
         }
 
-        private void OnTabStart(Common.Tab.TabIdentifier tab_id)
+        public override void OnPause()
         {
-            m_tab_manager.TabId.Tab.Header = Utils.StringResourceProvider.GetResourceString("Help");
-            m_tab_manager.TabId.Tab.IconSource =
-                new muxc.SymbolIconSource() { Symbol = Symbol.Help };
+            base.OnPause();
         }
 
-        public static string PageUniqueString(object _) => "help";
+        public override void OnSelected()
+        {
+        }
+
+        public override string GetUniqueString(object args)
+        {
+            return "help";
+        }
+
+        public override bool AllowJump()
+        {
+            return true;
+        }
+
+        public override bool SupportFullscreen()
+        {
+            return false;
+        }
     }
 }

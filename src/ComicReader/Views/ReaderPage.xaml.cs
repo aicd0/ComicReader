@@ -18,13 +18,14 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
+using ComicReader.Common;
+using ComicReader.Common.Router;
 using ComicReader.Database;
 using ComicReader.DesignData;
 
 namespace ComicReader.Views
 {
     using TaskResult = Utils.TaskResult;
-    using ReaderModel = Common.ReaderModel;
 
     public enum ReaderStatusEnum
     {
@@ -140,10 +141,7 @@ namespace ComicReader.Views
             set
             {
                 m_Progress = value;
-                if (PropertyChanged != null)
-                {
-                    PropertyChanged(this, new PropertyChangedEventArgs("Progress"));
-                }
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Progress"));
             }
         }
 
@@ -257,14 +255,13 @@ namespace ComicReader.Views
         public Action BottomTilePinnedChanged;
     }
 
-    public sealed partial class ReaderPage : Page
+    sealed internal partial class ReaderPage : NavigatablePage
     {
         public ReaderPageShared Shared { get; set; } = new ReaderPageShared();
         private ReaderModel VerticalReader { get; set; }
         private ReaderModel HorizontalReader { get; set; }
         private ObservableCollection<ReaderImagePreviewViewModel> PreviewDataSource { get; set; }
 
-        private readonly Common.Tab.TabManager m_tab_manager;
         private ComicData m_comic = null;
 
         // Pointer events
@@ -293,14 +290,6 @@ namespace ComicReader.Views
             HorizontalReader = new ReaderModel(Shared, false);
             PreviewDataSource = new ObservableCollection<ReaderImagePreviewViewModel>();
 
-            m_tab_manager = new Common.Tab.TabManager(this)
-            {
-                OnTabUpdate = OnTabUpdate,
-                OnTabRegister = OnTabRegister,
-                OnTabUnregister = OnTabUnregister,
-                OnTabStart = OnTabStart
-            };
-
             m_gesture_recognizer.GestureSettings =
                 GestureSettings.Tap |
                 GestureSettings.ManipulationTranslateX |
@@ -315,23 +304,15 @@ namespace ComicReader.Views
             InitializeComponent();
         }
 
-        // Navigation
-        protected override void OnNavigatedTo(NavigationEventArgs e)
+        public override void OnStart(NavigationParams p)
         {
-            base.OnNavigatedTo(e);
-            m_tab_manager.OnNavigatedTo(e);
+            base.OnStart(p);
+            Shared.NavigationPageShared = (NavigationPageShared)p.shared;
         }
 
-        protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
+        public override void OnResume()
         {
-            base.OnNavigatingFrom(e);
-            m_tab_manager.OnNavigatedFrom(e);
-        }
-
-        private void OnTabRegister(object shared)
-        {
-            Shared.NavigationPageShared = (NavigationPageShared)shared;
-
+            base.OnResume();
             Shared.NavigationPageShared.OnKeyDown += OnKeyDown;
             Shared.NavigationPageShared.OnSwitchFavorites += OnSwitchFavorites;
             Shared.NavigationPageShared.OnZoomIn += ZoomIn;
@@ -347,10 +328,20 @@ namespace ComicReader.Views
             Shared.NavigationPageShared.IsPreviewButtonToggled = false;
             OnReaderContinuousChanged();
             Shared.UpdateReaderUI();
+
+            ComicData comic = (ComicData)GetTabId().RequestArgs;
+            GetTabId().Tab.Header = comic.Title;
+            GetTabId().Tab.IconSource = new muxc.SymbolIconSource { Symbol = Symbol.Pictures };
+
+            Utils.C0.Run(async delegate
+            {
+                await LoadComic(comic);
+            });
         }
 
-        private void OnTabUnregister()
+        public override void OnPause()
         {
+            base.OnPause();
             Shared.NavigationPageShared.OnKeyDown -= OnKeyDown;
             Shared.NavigationPageShared.OnSwitchFavorites -= OnSwitchFavorites;
             Shared.NavigationPageShared.OnZoomIn -= ZoomIn;
@@ -364,7 +355,7 @@ namespace ComicReader.Views
             Shared.ReaderSettings.OnHorizontalPageArrangementChanged -= HorizontalReader.OnPageRearrangeEventSealed;
         }
 
-        private void OnTabUpdate()
+        public override void OnSelected()
         {
             Utils.C0.Run(async delegate
             {
@@ -373,30 +364,26 @@ namespace ComicReader.Views
             });
         }
 
-        private void OnTabStart(Common.Tab.TabIdentifier tab_id)
-        {
-            Utils.C0.Run(async delegate
-            {
-                Shared.NavigationPageShared.CurrentPageType = Common.Tab.PageType.Reader;
-                tab_id.Type = Common.Tab.PageType.Reader;
-
-                ComicData comic = (ComicData)tab_id.RequestArgs;
-                tab_id.Tab.Header = comic.Title;
-                tab_id.Tab.IconSource = new muxc.SymbolIconSource { Symbol = Symbol.Pictures };
-                await LoadComic(comic);
-            });
-        }
-
-        public static string PageUniqueString(object args)
+        public override string GetUniqueString(object args)
         {
             ComicData comic = (ComicData)args;
             return "Reader/" + comic.Location;
         }
 
+        public override bool AllowJump()
+        {
+            return true;
+        }
+
+        public override bool SupportFullscreen()
+        {
+            return true;
+        }
+
         // Load
         private async Task LoadComic(ComicData comic)
         {
-            if (comic == null)
+            if (comic == null || comic == m_comic)
             {
                 return;
             }
@@ -489,7 +476,7 @@ namespace ComicReader.Views
                 PreviewDataSource.Clear();
             });
 
-            var preview_img_loader_tokens = new List<Utils.ImageLoader.Token>();
+            List<Utils.ImageLoader.Token> preview_img_loader_tokens = new List<Utils.ImageLoader.Token>();
             ComicData comic = m_comic; // Stores locally.
             Utils.Stopwatch save_timer = new Utils.Stopwatch();
 
@@ -1035,7 +1022,7 @@ namespace ComicReader.Views
         private void OnInfoPaneTagClicked(object sender, RoutedEventArgs e)
         {
             TagViewModel ctx = (TagViewModel)((Button)sender).DataContext;
-            MainPage.Current.LoadTab(null, Common.Tab.PageType.Search, "<tag: " + ctx.Tag + ">");
+            MainPage.Current.LoadTab(null, PageType.Search, "<tag: " + ctx.Tag + ">");
         }
 
         private void OnEditInfoClick(object sender, RoutedEventArgs e)

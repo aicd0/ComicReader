@@ -7,9 +7,10 @@ using System.Threading.Tasks;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Navigation;
+using ComicReader.Common.Router;
 using ComicReader.Database;
 using ComicReader.DesignData;
+using ComicReader.Common;
 
 namespace ComicReader.Views
 {
@@ -40,13 +41,12 @@ namespace ComicReader.Views
         }
     }
 
-    public sealed partial class FavoritePage : Page
+    sealed internal partial class FavoritePage : StatefulPage
     {
         public static FavoritePage Current = null;
         public FavoritePageShared Shared { get; set; }
         private ObservableCollection<FavoriteItemViewModel> DataSource { get; set; }
-
-        private Common.Tab.TabManager m_tab_manager;
+        private TabIdentifier mTabId;
 
         public FavoritePage()
         {
@@ -54,42 +54,29 @@ namespace ComicReader.Views
             Shared = new FavoritePageShared();
             DataSource = new ObservableCollection<FavoriteItemViewModel>();
 
-            m_tab_manager = new Common.Tab.TabManager(this)
-            {
-                OnTabRegister = OnTabRegister,
-                OnTabUnregister = OnTabUnregister,
-                OnTabUpdate = OnTabUpdate
-            };
-
             InitializeComponent();
         }
 
         // Navigation
-        protected override void OnNavigatedTo(NavigationEventArgs e)
+        public override void OnStart(NavigationParams p)
         {
-            base.OnNavigatedTo(e);
-            m_tab_manager.OnNavigatedTo(e);
+            base.OnStart(p);
+            mTabId = p.tabId;
+            Shared.NavigationPageShared = (NavigationPageShared)p.shared;
         }
 
-        protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
+        public override void OnResume()
         {
-            base.OnNavigatingFrom(e);
-            m_tab_manager.OnNavigatedFrom(e);
-        }
-
-        private void OnTabRegister(object shared)
-        {
-            Shared.NavigationPageShared = (NavigationPageShared)shared;
-        }
-
-        private void OnTabUnregister() { }
-
-        private void OnTabUpdate()
-        {
+            base.OnResume();
             Utils.C0.Run(async delegate
             {
                 await Update();
             });
+        }
+
+        public override void OnPause()
+        {
+            base.OnPause();
         }
 
         // utilities
@@ -322,7 +309,7 @@ namespace ComicReader.Views
                     }
                     else
                     {
-                        MainPage.Current.LoadTab(m_tab_manager.TabId, Common.Tab.PageType.Reader, comic);
+                        MainPage.Current.LoadTab(mTabId, PageType.Reader, comic);
                         Shared.NavigationPageShared.IsSidePaneOpen = false;
                     }
                 }
@@ -442,7 +429,7 @@ namespace ComicReader.Views
 
                 FavoriteItemViewModel item = (FavoriteItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 ComicData comic = await ComicData.Manager.FromId(db, item.Id);
-                MainPage.Current.LoadTab(null, Common.Tab.PageType.Reader, comic);
+                MainPage.Current.LoadTab(null, PageType.Reader, comic);
             });
         }
 

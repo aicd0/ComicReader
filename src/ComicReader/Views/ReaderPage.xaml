@@ -1,7 +1,8 @@
-﻿<Page
+﻿<common:NavigatablePage
     x:Class="ComicReader.Views.ReaderPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:common="using:ComicReader.Common"
     xmlns:controls="using:ComicReader.Controls"
     xmlns:converters="using:ComicReader.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -707,4 +708,4 @@
             </Grid>
         </SplitView>
     </Grid>
-</Page>
+</common:NavigatablePage>

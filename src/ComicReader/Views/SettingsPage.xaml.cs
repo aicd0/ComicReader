@@ -12,6 +12,8 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
 using muxc = Microsoft.UI.Xaml.Controls;
 using ComicReader.Database;
+using ComicReader.Common.Router;
+using ComicReader.Common;
 
 namespace ComicReader.Views
 {
@@ -222,12 +224,10 @@ namespace ComicReader.Views
         }
     }
 
-    public sealed partial class SettingsPage : Page
+    sealed internal partial class SettingsPage : NavigatablePage
     {
         public const string AppearanceKey = "Appearance";
         public SettingsPageShared Shared { get; set; }
-
-        private readonly Common.Tab.TabManager m_tab_manager;
 
         // Initialize m_updating to TRUE to avoid copying values from
         // controls (See Save()) while this page is still launching.
@@ -235,46 +235,41 @@ namespace ComicReader.Views
 
         public SettingsPage()
         {
-            Shared = new SettingsPageShared();
-            Shared.OnSettingsChanged = OnSettingsChanged;
-
-            m_tab_manager = new Common.Tab.TabManager(this)
+            Shared = new SettingsPageShared
             {
-                OnTabRegister = OnTabRegister,
-                OnTabUnregister = OnTabUnregister,
-                OnTabUpdate = OnTabUpdate,
-                OnTabStart = OnTabStart
+                OnSettingsChanged = OnSettingsChanged
             };
 
             InitializeComponent();
         }
 
-        // Navigation
-        protected override void OnNavigatedTo(NavigationEventArgs e)
+        public override void OnStart(NavigationParams p)
         {
-            base.OnNavigatedTo(e);
-            m_tab_manager.OnNavigatedTo(e);
+            base.OnStart(p);
+            p.tabId.Tab.Header = Utils.StringResourceProvider.GetResourceString("Settings");
+            p.tabId.Tab.IconSource = new muxc.SymbolIconSource() { Symbol = Symbol.Setting };
+            Shared.MainPageShared = (MainPageShared)p.shared;
         }
 
-        protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
+        public override void OnResume()
         {
-            base.OnNavigatingFrom(e);
-            m_tab_manager.OnNavigatedFrom(e);
-        }
-
-        private void OnTabRegister(object shared)
-        {
-            Shared.MainPageShared = (MainPageShared)shared;
-
+            base.OnResume();
             ComicData.Manager.OnUpdated += OnComicDataUpdated;
+
+            Utils.C0.Run(async delegate
+            {
+                LockContext db = new LockContext();
+                await Update(db);
+            });
         }
 
-        private void OnTabUnregister()
+        public override void OnPause()
         {
+            base.OnPause();
             ComicData.Manager.OnUpdated -= OnComicDataUpdated;
         }
 
-        private void OnTabUpdate()
+        public override void OnSelected()
         {
             Utils.C0.Run(async delegate
             {
@@ -283,14 +278,20 @@ namespace ComicReader.Views
             });
         }
 
-        private void OnTabStart(Common.Tab.TabIdentifier tab_id)
+        public override string GetUniqueString(object args)
         {
-            m_tab_manager.TabId.Tab.Header = Utils.StringResourceProvider.GetResourceString("Settings");
-            m_tab_manager.TabId.Tab.IconSource =
-                new muxc.SymbolIconSource() { Symbol = Symbol.Setting };
+            return "settings";
         }
 
-        public static string PageUniqueString(object _) => "settings";
+        public override bool AllowJump()
+        {
+            return true;
+        }
+
+        public override bool SupportFullscreen()
+        {
+            return false;
+        }
 
         // utilities
         private async Task Update(LockContext db)
@@ -318,8 +319,10 @@ namespace ComicReader.Views
             // Supported code pages.
             if (Shared.Encodings.Count == 0)
             {
-                var encodings = new List<Tuple<string, int>>();
-                encodings.Add(new Tuple<string, int>(Utils.StringResourceProvider.GetResourceString("Default"), -1));
+                List<Tuple<string, int>> encodings = new List<Tuple<string, int>>
+                {
+                    new Tuple<string, int>(Utils.StringResourceProvider.GetResourceString("Default"), -1)
+                };
 
                 foreach (Encoding info in Common.AppInfoProvider.SupportedEncodings.Values)
                 {
