@@ -9,7 +9,6 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media.Imaging;
-using Windows.UI.Xaml.Navigation;
 using muxc = Microsoft.UI.Xaml.Controls;
 using ComicReader.Common.Router;
 using ComicReader.Database;
@@ -538,13 +537,17 @@ namespace ComicReader.Views
 
         private void OnComicItemTapped(object sender, TappedRoutedEventArgs e)
         {
+            if (!CanHandleTapped())
+            {
+                return;
+            }
+            if (Shared.IsSelectMode)
+            {
+                return;
+            }
+
             Utils.C0.RunWithNewLockContext(async (LockContext db) =>
             {
-                if (Shared.IsSelectMode)
-                {
-                    return;
-                }
-
                 ComicItemViewModel item = (ComicItemViewModel)((FrameworkElement)sender).DataContext;
                 ComicData comic = await ComicData.Manager.FromId(db, item.Comic.Id);
                 MainPage.Current.LoadTab(GetTabId(), PageType.Reader, comic);

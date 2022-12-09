@@ -285,7 +285,7 @@ namespace ComicReader.Views
         // TabView
         private void OnAddTabButtonClicked(muxc.TabView sender, object args)
         {
-            LoadTab(null, PageType.Home);
+            LoadTab(null, PageType.Home, try_reuse: false);
         }
 
         private TabIdentifier GetTabId(muxc.TabViewItem tab)

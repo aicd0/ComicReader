@@ -1,5 +1,7 @@
-﻿using System;
-using ComicReader.Common.Router;
+﻿using ComicReader.Common.Router;
+using Windows.UI.Input;
+using Windows.UI.Xaml;
+using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Navigation;
 
 namespace ComicReader.Common
@@ -7,6 +9,12 @@ namespace ComicReader.Common
     internal class NavigatablePage : StatefulPage, ITabListener
     {
         private TabIdentifier mTabId;
+        private PointerPoint mLastPointerPoint;
+
+        public NavigatablePage()
+        {
+            AddHandler(PointerPressedEvent, new PointerEventHandler(OnPagePointerPressed), true);
+        }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
@@ -48,6 +56,24 @@ namespace ComicReader.Common
         protected TabIdentifier GetTabId()
         {
             return mTabId;
+        }
+
+        private void OnPagePointerPressed(object sender, PointerRoutedEventArgs e)
+        {
+            mLastPointerPoint = e.GetCurrentPoint((UIElement)sender);
+        }
+
+        protected bool CanHandleTapped()
+        {
+            if (mLastPointerPoint == null)
+            {
+                return true; // OnPagePointerPressed not set
+            }
+            if (mLastPointerPoint.Properties.IsXButton1Pressed || mLastPointerPoint.Properties.IsXButton2Pressed)
+            {
+                return false;
+            }
+            return true;
         }
     }
 }

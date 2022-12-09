@@ -18,12 +18,6 @@ namespace ComicReader.Common
         private bool mIsStarted = false;
         private bool mIsResumed = false;
 
-        public StatefulPage()
-        {
-            Loaded += delegate { TryResume(); };
-            Unloaded += delegate { TryPause(); };
-        }
-
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);

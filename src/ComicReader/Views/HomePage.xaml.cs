@@ -8,7 +8,6 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media.Imaging;
-using Windows.UI.Xaml.Navigation;
 using muxc = Microsoft.UI.Xaml.Controls;
 using ComicReader.Common.Router;
 using ComicReader.Database;
@@ -74,6 +73,12 @@ namespace ComicReader.Views
 
             GetTabId().Tab.Header = Utils.StringResourceProvider.GetResourceString("NewTab");
             GetTabId().Tab.IconSource = new muxc.SymbolIconSource() { Symbol = Symbol.Document };
+            
+            Utils.C0.Run(async delegate
+            {
+                LockContext db = new LockContext();
+                await Update(db);
+            });
         }
 
         public override void OnPause()
@@ -325,6 +330,10 @@ namespace ComicReader.Views
 
         private void OnComicItemTapped(object sender, TappedRoutedEventArgs e)
         {
+            if (!CanHandleTapped())
+            {
+                return;
+            }
             ComicItemViewModel item = (ComicItemViewModel)((Grid)sender).DataContext;
             MainPage.Current.LoadTab(GetTabId(), PageType.Reader, item.Comic);
         }
@@ -378,8 +387,12 @@ namespace ComicReader.Views
 
         private void OnFolderItemTapped(object sender, TappedRoutedEventArgs e)
         {
-            FolderItemViewModel item = (FolderItemViewModel)((Grid)sender).DataContext;
+            if (!CanHandleTapped())
+            {
+                return;
+            }
 
+            FolderItemViewModel item = (FolderItemViewModel)((Grid)sender).DataContext;
             if (item.IsAddNew)
             {
                 AddNewFolder();
