@@ -38,7 +38,7 @@
             Background="{ThemeResource TabViewItemHeaderBackgroundSelected}"
             Visibility="{x:Bind Shared.MainPageShared.IsFullscreen, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}">
 
-            <Grid>
+            <Grid Margin="0,0,0,1">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />

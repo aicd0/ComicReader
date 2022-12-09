@@ -67,7 +67,7 @@ namespace ComicReader.Common
         {
             if (mLastPointerPoint == null)
             {
-                return true; // OnPagePointerPressed not set
+                return true;
             }
             if (mLastPointerPoint.Properties.IsXButton1Pressed || mLastPointerPoint.Properties.IsXButton2Pressed)
             {
