@@ -17,7 +17,6 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Media.Imaging;
-using Windows.UI.Xaml.Navigation;
 using ComicReader.Common;
 using ComicReader.Common.Router;
 using ComicReader.Database;
@@ -492,14 +491,14 @@ namespace ComicReader.Views
                     CallbackAsync = async (BitmapImage img) => 
                     {
                         // Save image aspect ratio info.
-                        double image_aspect_ratio = (double)img.PixelWidth / img.PixelHeight;
-
-                        // Normally image aspect ratio items will be added one by one.
-                        if (index > comic.ImageAspectRatios.Count)
+                        double image_aspect_ratio;
+                        if (img.PixelWidth <= 0 || img.PixelHeight <= 0)
                         {
-                            // Unexpected item.
-                            System.Diagnostics.Debug.Assert(false);
-                            return;
+                            image_aspect_ratio = -1;
+                        }
+                        else
+                        {
+                            image_aspect_ratio = (double)img.PixelWidth / img.PixelHeight;
                         }
 
                         if (index < comic.ImageAspectRatios.Count)
@@ -508,8 +507,18 @@ namespace ComicReader.Views
                         }
                         else
                         {
+                            // Normally image aspect ratio items will be added one by one.
+                            // In some cases (like corrupted images), few indices will be skipped.
+                            while (index > comic.ImageAspectRatios.Count)
+                            {
+                                comic.ImageAspectRatios.Add(-1);
+                                await VerticalReader.LoadFrame(comic.ImageAspectRatios.Count - 1);
+                                await HorizontalReader.LoadFrame(comic.ImageAspectRatios.Count - 1);
+                            }
                             comic.ImageAspectRatios.Add(image_aspect_ratio);
                         }
+                        await VerticalReader.LoadFrame(index);
+                        await HorizontalReader.LoadFrame(index);
 
                         // Save for each 5 sec.
                         if (save_timer.LapSpan().TotalSeconds > 5.0 || index == comic.ImageCount - 1)
@@ -524,10 +533,6 @@ namespace ComicReader.Views
                             ImageSource = img,
                             Page = page,
                         });
-
-                        // Update reader frames.
-                        await VerticalReader.LoadFrame(index);
-                        await HorizontalReader.LoadFrame(index);
                     }
                 });
             }

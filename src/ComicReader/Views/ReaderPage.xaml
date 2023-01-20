@@ -469,6 +469,8 @@
                                     <Style TargetType="ListViewItem">
                                         <Setter Property="Padding" Value="0" />
                                         <Setter Property="HorizontalAlignment" Value="Center" />
+                                        <Setter Property="MinHeight" Value="0" />
+                                        <Setter Property="MinWidth" Value="0" />
                                     </Style>
                                 </ListView.ItemContainerStyle>
                             </ListView>
@@ -511,6 +513,8 @@
                                 <ListView.ItemContainerStyle>
                                     <Style TargetType="ListViewItem">
                                         <Setter Property="Padding" Value="0" />
+                                        <Setter Property="MinHeight" Value="0" />
+                                        <Setter Property="MinWidth" Value="0" />
                                     </Style>
                                 </ListView.ItemContainerStyle>
                             </ListView>

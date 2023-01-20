@@ -241,6 +241,14 @@ namespace ComicReader.Common
             double frame_width = Frames[frame_idx].FrameWidth;
             double frame_height = Frames[frame_idx].FrameHeight;
 
+            double minValue = Math.Min(viewport_width, viewport_height);
+            minValue = Math.Min(minValue, frame_width);
+            minValue = Math.Min(minValue, frame_height);
+            if (minValue < 0.1)
+            {
+                return null;
+            }
+
             double viewport_ratio = viewport_width / viewport_height;
             double image_ratio = frame_width / frame_height;
 
@@ -518,53 +526,61 @@ namespace ComicReader.Common
                     return;
                 }
 
-                double aspect_ratio = Comic.ImageAspectRatios[image_index];
                 int frame_idx = PageToFrame(image_index + 1, out bool left_side, out int neighbor);
-
                 if (frame_idx < 0)
                 {
                     return;
                 }
+                int page = image_index + 1;
+                bool dual = neighbor != -1;
 
+                double aspect_ratio = Math.Max(0, Comic.ImageAspectRatios[image_index]);
                 if (neighbor != -1)
                 {
                     int neighbor_idx = neighbor - 1;
-
                     if (neighbor_idx >= 0 && neighbor_idx < Comic.ImageAspectRatios.Count)
                     {
-                        aspect_ratio += Comic.ImageAspectRatios[neighbor_idx];
+                        aspect_ratio += Math.Max(0, Comic.ImageAspectRatios[neighbor_idx]);
                     }
+                }
+
+                double frame_width;
+                double frame_height;
+                double vertical_padding;
+                double horizontal_padding;
+                if (aspect_ratio < 1e-3)
+                {
+                    frame_width = 0;
+                    frame_height = 0;
+                    vertical_padding = 0;
+                    horizontal_padding = 0;
+                }
+                else
+                {
+                    double default_width = 500.0;
+                    double default_height = 300.0;
+                    double default_vertical_padding = 10.0;
+                    double default_horizontal_padding = 100.0;
+                    if (dual)
+                    {
+                        default_width *= 2;
+                    }
+                    if (IsContinuous)
+                    {
+                        default_horizontal_padding = 10.0;
+                    }
+                    frame_width = IsVertical ? default_width : default_height * aspect_ratio;
+                    frame_height = IsVertical ? default_width / aspect_ratio : default_height;
+                    vertical_padding = IsVertical ? default_vertical_padding : 0;
+                    horizontal_padding = IsHorizontal ? default_horizontal_padding : 0;
                 }
 
                 while (frame_idx >= Frames.Count)
                 {
                     Frames.Add(new ReaderFrameViewModel());
                 }
-
-                int page = image_index + 1;
-                bool dual = neighbor != -1;
-
-                double default_width = 500.0;
-                double default_height = 300.0;
-                double default_vertical_padding = 10.0;
-                double default_horizontal_padding = 100.0;
-
-                if (dual)
-                {
-                    default_width *= 2;
-                }
-
-                if (IsContinuous)
-                {
-                    default_horizontal_padding = 10.0;
-                }
-
-                double frame_width = IsVertical ? default_width : default_height * aspect_ratio;
-                double frame_height = IsVertical ? default_width / aspect_ratio : default_height;
-                double vertical_padding = IsVertical ? default_vertical_padding : 0;
-                double horizontal_padding = IsHorizontal ? default_horizontal_padding : 0;
-
                 ReaderFrameViewModel item = Frames[frame_idx];
+
                 item.FrameWidth = frame_width;
                 item.FrameHeight = frame_height;
                 item.FrameMargin = new Thickness(horizontal_padding, vertical_padding, horizontal_padding, vertical_padding);
@@ -688,7 +704,6 @@ namespace ComicReader.Common
                         m.ImageL = null;
                         m.ImageR = null;
                     }
-
                     return;
                 }
 
