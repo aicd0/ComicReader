@@ -611,4 +611,10 @@ Category2: tag4/tag5
   <data name="OpenInFileExplorer.ToolTipService.ToolTip" xml:space="preserve">
     <value>Open in File Explorer</value>
   </data>
+  <data name="ReaderTip.Message" xml:space="preserve">
+    <value>Double tap to fit width/height</value>
+  </data>
+  <data name="ReaderTip.Title" xml:space="preserve">
+    <value>Tip</value>
+  </data>
 </root>

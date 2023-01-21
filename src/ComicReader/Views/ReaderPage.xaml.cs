@@ -22,6 +22,8 @@ using ComicReader.Common.Router;
 using ComicReader.Database;
 using ComicReader.DesignData;
 using System.Threading;
+using ComicReader.Utils.KVDatabase;
+using ComicReader.Common.Constants;
 
 namespace ComicReader.Views
 {
@@ -257,6 +259,8 @@ namespace ComicReader.Views
 
     sealed internal partial class ReaderPage : NavigatablePage
     {
+        private const string KEY_TIP_SHOWN = "ReaderTipShown";
+
         public ReaderPageShared Shared { get; set; } = new ReaderPageShared();
         private ReaderModel VerticalReader { get; set; }
         private ReaderModel HorizontalReader { get; set; }
@@ -311,6 +315,12 @@ namespace ComicReader.Views
         {
             base.OnStart(p);
             Shared.NavigationPageShared = (NavigationPageShared)p.shared;
+
+            bool tipShown = KVDatabase.getInstance().getDefaultMethod().GetBoolean(KVLib.TIPS, KEY_TIP_SHOWN, false);
+            if (!tipShown)
+            {
+                ReaderTip.IsOpen = !tipShown;
+            }
         }
 
         public override void OnResume()
@@ -1215,6 +1225,12 @@ namespace ComicReader.Views
             }
 
             BottomTileHide(3000);
+        }
+
+        // Tips
+        private void OnReaderTipCloseButtonClick(muxc.InfoBar sender, object args)
+        {
+            KVDatabase.getInstance().getDefaultMethod().SetBoolean(KVLib.TIPS, KEY_TIP_SHOWN, true);
         }
 
         // Keys

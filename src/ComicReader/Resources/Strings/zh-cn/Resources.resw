@@ -611,4 +611,10 @@
   <data name="OpenInFileExplorer.ToolTipService.ToolTip" xml:space="preserve">
     <value>在资源管理器中打开</value>
   </data>
+  <data name="ReaderTip.Message" xml:space="preserve">
+    <value>双击以适应当前图片宽/高</value>
+  </data>
+  <data name="ReaderTip.Title" xml:space="preserve">
+    <value>提示</value>
+  </data>
 </root>
