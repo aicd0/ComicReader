@@ -969,10 +969,10 @@ namespace ComicReader.Common
 
             return SetScrollViewerInternal(new SetScrollViewerContext
             {
-                Zoom = zoom,
-                HorizontalOffset = horizontal_offset,
-                VerticalOffset = vertical_offset,
-                DisableAnimation = disable_animation,
+                zoom = zoom,
+                horizontalOffset = horizontal_offset,
+                verticalOffset = vertical_offset,
+                disableAnimation = disable_animation,
             });
         }
 
@@ -1002,11 +1002,11 @@ namespace ComicReader.Common
 
             return SetScrollViewerInternal(new SetScrollViewerContext
             {
-                Zoom = zoom,
-                PageToApplyZoom = page,
-                HorizontalOffset = horizontal_offset,
-                VerticalOffset = vertical_offset,
-                DisableAnimation = disable_animation,
+                zoom = zoom,
+                pageToApplyZoom = page,
+                horizontalOffset = horizontal_offset,
+                verticalOffset = vertical_offset,
+                disableAnimation = disable_animation,
             });
         }
 
@@ -1019,11 +1019,11 @@ namespace ComicReader.Common
         ) {
             return SetScrollViewerInternal(new SetScrollViewerContext
             {
-                Zoom = zoom,
+                zoom = zoom,
                 zoomType = zoomType,
-                HorizontalOffset = horizontal_offset,
-                VerticalOffset = vertical_offset,
-                DisableAnimation = disable_animation,
+                horizontalOffset = horizontal_offset,
+                verticalOffset = vertical_offset,
+                disableAnimation = disable_animation,
             });
         }
 
@@ -1052,17 +1052,17 @@ namespace ComicReader.Common
                 + "V=" + ctx.VerticalOffset.ToString());
 #endif
 
-            if (!ChangeView(zoom_out, ctx.HorizontalOffset, ctx.VerticalOffset, ctx.DisableAnimation))
+            if (!ChangeView(zoom_out, ctx.horizontalOffset, ctx.verticalOffset, ctx.disableAnimation))
             {
                 return false;
             }
 
-            if (ctx.PageToApplyZoom.HasValue)
+            if (ctx.pageToApplyZoom.HasValue)
             {
-                PageFinal = ToDiscretePage(ctx.PageToApplyZoom.Value);
+                PageFinal = ToDiscretePage(ctx.pageToApplyZoom.Value);
             }
 
-            Zoom = ctx.Zoom.Value;
+            Zoom = ctx.zoom.Value;
             m_shared.NavigationPageShared.ZoomInEnabled = Zoom < MaxZoom - 1.0f;
             m_shared.NavigationPageShared.ZoomOutEnabled = Zoom > MinZoom + 1.0f;
             AdjustParallelOffset();
@@ -1075,7 +1075,7 @@ namespace ComicReader.Common
             ZoomCoefficientResult zoom_coefficient_new;
             int frame_new;
             {
-                int page_new = ctx.PageToApplyZoom.HasValue ? (int)ctx.PageToApplyZoom.Value : Page;
+                int page_new = ctx.pageToApplyZoom.HasValue ? (int)ctx.pageToApplyZoom.Value : Page;
                 frame_new = PageToFrame(page_new, out _, out _);
                 if (frame_new < 0 || frame_new >= Frames.Count)
                 {
@@ -1085,7 +1085,7 @@ namespace ComicReader.Common
                 zoom_coefficient_new = ZoomCoefficient(frame_new);
                 if (zoom_coefficient_new == null)
                 {
-                    ctx.Zoom = Zoom;
+                    ctx.zoom = Zoom;
                     zoom_factor = null;
                     return;
                 }
@@ -1093,9 +1093,9 @@ namespace ComicReader.Common
 
             // Calculate zoom in percentage.
             double zoom;
-            if (ctx.Zoom.HasValue)
+            if (ctx.zoom.HasValue)
             {
-                zoom = ctx.Zoom.Value;
+                zoom = ctx.zoom.Value;
             }
             else
             {
@@ -1125,7 +1125,7 @@ namespace ComicReader.Common
             double maxZoom = Math.Max(MaxZoom, 100 * zoom_coefficient_new.Max() / zoom_coefficient_new.Min());
             zoom = Math.Min(zoom, maxZoom);
             zoom = Math.Max(zoom, MinZoom);
-            ctx.Zoom = (float)zoom;
+            ctx.zoom = (float)zoom;
 
             // A zoom factor vary less than 1% will be ignored.
             float zoom_factor_new = (float)(zoom * zoom_coefficient_new.Min());
@@ -1139,26 +1139,26 @@ namespace ComicReader.Common
             zoom_factor = zoom_factor_new;
 
             // Apply zooming.
-            if (ctx.HorizontalOffset == null)
+            if (ctx.horizontalOffset == null)
             {
-                ctx.HorizontalOffset = HorizontalOffsetFinal;
+                ctx.horizontalOffset = HorizontalOffsetFinal;
             }
 
-            if (ctx.VerticalOffset == null)
+            if (ctx.verticalOffset == null)
             {
-                ctx.VerticalOffset = VerticalOffsetFinal;
+                ctx.verticalOffset = VerticalOffsetFinal;
             }
 
-            ctx.HorizontalOffset += ThisScrollViewer.ViewportWidth * 0.5;
-            ctx.HorizontalOffset *= (float)zoom_factor / ZoomFactorFinal;
-            ctx.HorizontalOffset -= ThisScrollViewer.ViewportWidth * 0.5;
+            ctx.horizontalOffset += ThisScrollViewer.ViewportWidth * 0.5;
+            ctx.horizontalOffset *= (float)zoom_factor / ZoomFactorFinal;
+            ctx.horizontalOffset -= ThisScrollViewer.ViewportWidth * 0.5;
 
-            ctx.VerticalOffset += ThisScrollViewer.ViewportHeight * 0.5;
-            ctx.VerticalOffset *= (float)zoom_factor / ZoomFactorFinal;
-            ctx.VerticalOffset -= ThisScrollViewer.ViewportHeight * 0.5;
+            ctx.verticalOffset += ThisScrollViewer.ViewportHeight * 0.5;
+            ctx.verticalOffset *= (float)zoom_factor / ZoomFactorFinal;
+            ctx.verticalOffset -= ThisScrollViewer.ViewportHeight * 0.5;
 
-            ctx.HorizontalOffset = Math.Max(0.0, ctx.HorizontalOffset.Value);
-            ctx.VerticalOffset = Math.Max(0.0, ctx.VerticalOffset.Value);
+            ctx.horizontalOffset = Math.Max(0.0, ctx.horizontalOffset.Value);
+            ctx.verticalOffset = Math.Max(0.0, ctx.verticalOffset.Value);
         }
 
         private bool ChangeView(float? zoom_factor, double? horizontal_offset, double? vertical_offset, bool disable_animation)

@@ -9,15 +9,15 @@
     internal class SetScrollViewerContext
     {
         // Zoom
-        public float? Zoom = null;
+        public float? zoom = null;
         public ZoomType zoomType = ZoomType.CenterInside;
-        public double? PageToApplyZoom = null;
+        public double? pageToApplyZoom = null;
 
         // Offset
-        public double? HorizontalOffset = null;
-        public double? VerticalOffset = null;
+        public double? horizontalOffset = null;
+        public double? verticalOffset = null;
 
         // Animation
-        public bool DisableAnimation = false;
+        public bool disableAnimation = false;
     }
 }

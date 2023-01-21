@@ -537,7 +537,7 @@ Category2: tag4/tag5
     <value>Select which app theme to display</value>
   </data>
   <data name="HistoryExpander.Detail" xml:space="preserve">
-    <value>Clear history, choose whether to save your browsing history</value>
+    <value>Clear history, enable or disable history</value>
   </data>
   <data name="ImageLocationExpander.Detail" xml:space="preserve">
     <value>Choose where we look for images</value>
@@ -552,7 +552,7 @@ Category2: tag4/tag5
     <value>Go to next page</value>
   </data>
   <data name="KeyboardShortcutsExpander.Detail" xml:space="preserve">
-    <value>Check all keyboard shortcuts</value>
+    <value>Check out all keyboard shortcuts</value>
   </data>
   <data name="KeyboardShortcutsExpander.Header" xml:space="preserve">
     <value>Keyboard shortcuts</value>
