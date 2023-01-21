@@ -19,6 +19,7 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Imaging;
+using ComicReader.Common.Structs;
 using ComicReader.Database;
 using ComicReader.DesignData;
 
@@ -34,29 +35,6 @@ namespace ComicReader.Common
         private static readonly int MaxPreloadFramesBefore = 10;
         private static readonly int MinPreloadFramesAfter = 5;
         private static readonly int MaxPreloadFramesAfter = 10;
-
-        // Structs
-        private class FrameOffsetData
-        {
-            public double ParallelBegin;
-            public double ParallelCenter;
-            public double ParallelEnd;
-            public double PerpendicularCenter;
-        };
-
-        private class SetScrollViewerContext
-        {
-            // Zoom
-            public float? Zoom = null;
-            public double? PagePrediction = null;
-
-            // Offset
-            public double? HorizontalOffset = null;
-            public double? VerticalOffset = null;
-
-            // Animation
-            public bool DisableAnimation = false;
-        };
 
         // Constructor
         public ReaderModel(Views.ReaderPageShared shared, bool is_vertical)
@@ -223,7 +201,7 @@ namespace ComicReader.Common
         }
 
         // Observer - Scroll Viewer
-        private double? ZoomCoefficient(int frame_idx)
+        private ZoomCoefficientResult ZoomCoefficient(int frame_idx)
         {
             if (Frames.Count == 0)
             {
@@ -249,12 +227,11 @@ namespace ComicReader.Common
                 return null;
             }
 
-            double viewport_ratio = viewport_width / viewport_height;
-            double image_ratio = frame_width / frame_height;
-
-            return 0.01 * (viewport_ratio > image_ratio ?
-                viewport_height / frame_height :
-                viewport_width / frame_width);
+            return new ZoomCoefficientResult
+            {
+                FitWidth = 0.01 * viewport_width / frame_width,
+                FitHeight = 0.01 * viewport_height / frame_height
+            };
         }
 
         public float Zoom { get; private set; } = 100f;
@@ -1021,7 +998,7 @@ namespace ComicReader.Common
             return SetScrollViewerInternal(new SetScrollViewerContext
             {
                 Zoom = zoom,
-                PagePrediction = page,
+                PageToApplyZoom = page,
                 HorizontalOffset = horizontal_offset,
                 VerticalOffset = vertical_offset,
                 DisableAnimation = disable_animation,
@@ -1069,9 +1046,9 @@ namespace ComicReader.Common
                 return false;
             }
 
-            if (ctx.PagePrediction.HasValue)
+            if (ctx.PageToApplyZoom.HasValue)
             {
-                PageFinal = ToDiscretePage(ctx.PagePrediction.Value);
+                PageFinal = ToDiscretePage(ctx.PageToApplyZoom.Value);
             }
 
             Zoom = ctx.Zoom.Value;
@@ -1084,32 +1061,27 @@ namespace ComicReader.Common
         private void SetScrollViewerZoom(SetScrollViewerContext ctx, out float? zoom_factor)
         {
             // Calculate zoom coefficient prediction.
-            double zoom_coefficient_pred;
-            int frame_pred;
+            ZoomCoefficientResult zoom_coefficient_new;
+            int frame_new;
             {
-                int page = ctx.PagePrediction.HasValue ? (int)ctx.PagePrediction.Value : Page;
-                frame_pred = PageToFrame(page, out _, out _);
-
-                if (frame_pred < 0 || frame_pred >= Frames.Count)
+                int page_new = ctx.PageToApplyZoom.HasValue ? (int)ctx.PageToApplyZoom.Value : Page;
+                frame_new = PageToFrame(page_new, out _, out _);
+                if (frame_new < 0 || frame_new >= Frames.Count)
                 {
-                    frame_pred = 0;
+                    frame_new = 0;
                 }
 
-                double? zoom_coefficient_pred_boxed = ZoomCoefficient(frame_pred);
-
-                if (!zoom_coefficient_pred_boxed.HasValue)
+                zoom_coefficient_new = ZoomCoefficient(frame_new);
+                if (zoom_coefficient_new == null)
                 {
                     ctx.Zoom = Zoom;
                     zoom_factor = null;
                     return;
                 }
-
-                zoom_coefficient_pred = zoom_coefficient_pred_boxed.Value;
             }
 
             // Calculate zoom in percentage.
-            float zoom;
-
+            double zoom;
             if (ctx.Zoom.HasValue)
             {
                 zoom = ctx.Zoom.Value;
@@ -1117,41 +1089,39 @@ namespace ComicReader.Common
             else
             {
                 int frame = PageToFrame(Page, out _, out _);
-
                 if (frame < 0 || frame >= Frames.Count)
                 {
                     frame = 0;
                 }
 
-                double zoom_coefficient = zoom_coefficient_pred;
-
-                if (frame != frame_pred)
+                ZoomCoefficientResult zoom_coefficient = zoom_coefficient_new;
+                if (frame != frame_new)
                 {
-                    double? zoom_coefficient_boxed = ZoomCoefficient(frame);
-
-                    if (zoom_coefficient_boxed.HasValue)
+                    ZoomCoefficientResult zoom_coefficient_test = ZoomCoefficient(frame);
+                    if (zoom_coefficient_test != null)
                     {
-                        zoom_coefficient = zoom_coefficient_boxed.Value;
+                        zoom_coefficient = zoom_coefficient_test;
                     }
                 }
 
-                zoom = (float)(ZoomFactorFinal / zoom_coefficient);
+                zoom = (float)(ZoomFactorFinal / zoom_coefficient.Min());
             }
 
-            zoom = Math.Min(zoom, MaxZoom);
+            double maxZoom = Math.Max(MaxZoom, 100 * zoom_coefficient_new.Max() / zoom_coefficient_new.Min());
+            zoom = Math.Min(zoom, maxZoom);
             zoom = Math.Max(zoom, MinZoom);
-            ctx.Zoom = zoom;
+            ctx.Zoom = (float)zoom;
 
             // A zoom factor vary less than 1% will be ignored.
-            float zoom_factor_pred = (float)(zoom * zoom_coefficient_pred);
+            float zoom_factor_new = (float)(zoom * zoom_coefficient_new.Min());
 
-            if (Math.Abs(zoom_factor_pred / ZoomFactorFinal - 1.0f) <= 0.01f)
+            if (Math.Abs(zoom_factor_new / ZoomFactorFinal - 1.0f) <= 0.01f)
             {
                 zoom_factor = null;
                 return;
             }
 
-            zoom_factor = zoom_factor_pred;
+            zoom_factor = zoom_factor_new;
 
             // Apply zooming.
             if (ctx.HorizontalOffset == null)
@@ -1313,14 +1283,13 @@ namespace ComicReader.Common
                     break;
                 }
 
-                double? zoom_coefficient = ZoomCoefficient(frame_idx);
-
-                if (!zoom_coefficient.HasValue)
+                ZoomCoefficientResult zoom_coefficient = ZoomCoefficient(frame_idx);
+                if (zoom_coefficient == null)
                 {
                     break;
                 }
 
-                double zoom_factor = MinZoom * zoom_coefficient.Value;
+                double zoom_factor = MinZoom * zoom_coefficient.Min();
                 double inner_length = ViewportParallelLength / zoom_factor;
                 padding_start = (inner_length - FrameParallelLength(frame_idx)) / 2;
                 padding_start = Math.Max(0.0, padding_start);
@@ -1336,14 +1305,13 @@ namespace ComicReader.Common
                     break;
                 }
 
-                double? zoom_coefficient = ZoomCoefficient(frame_idx);
-
-                if (!zoom_coefficient.HasValue)
+                ZoomCoefficientResult zoom_coefficient = ZoomCoefficient(frame_idx);
+                if (zoom_coefficient == null)
                 {
                     break;
                 }
 
-                double zoom_factor = MinZoom * zoom_coefficient.Value;
+                double zoom_factor = MinZoom * zoom_coefficient.Min();
                 double inner_length = ViewportParallelLength / zoom_factor;
                 padding_end = (inner_length - FrameParallelLength(frame_idx)) / 2;
                 padding_end = Math.Max(0.0, padding_end);

@@ -137,6 +137,9 @@
     <Compile Include="Common\NavigationManager.cs" />
     <Compile Include="Common\ReaderModel.cs" />
     <Compile Include="Common\StatefulPage.cs" />
+    <Compile Include="Common\Structs\FrameOffsetData.cs" />
+    <Compile Include="Common\Structs\SetScrollViewerContext.cs" />
+    <Compile Include="Common\Structs\ZoomCoefficientResult.cs" />
     <Compile Include="Controls\ComicItemHorizontal.xaml.cs">
       <DependentUpon>ComicItemHorizontal.xaml</DependentUpon>
     </Compile>
