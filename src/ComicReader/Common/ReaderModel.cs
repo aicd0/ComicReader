@@ -846,19 +846,20 @@ namespace ComicReader.Common
             return SetScrollViewer2(zoom, page, disable_animation);
         }
 
-        public sealed class ScrollManager : Utils.BuilderBase<bool>
+        sealed internal class ScrollManager : Utils.BuilderBase<bool>
         {
-            private readonly ReaderModel m_reader;
-            private float? m_zoom = null;
-            private double? m_parallel_offset = null;
-            private double? m_horizontal_offset = null;
-            private double? m_vertical_offset = null;
-            private double? m_page = null;
-            private bool m_disable_animation = true;
+            private readonly WeakReference<ReaderModel> mReader;
+            private float? mZoom = null;
+            private ZoomType mZoomType = ZoomType.CenterInside;
+            private double? mParallelOffset = null;
+            private double? mHorizontalOffset = null;
+            private double? mVerticalOffset = null;
+            private double? mPage = null;
+            private bool mDisableAnimation = true;
 
             private ScrollManager(ReaderModel reader)
             {
-                m_reader = reader;
+                mReader = new WeakReference<ReaderModel>(reader);
             }
 
             public static ScrollManager BeginTransaction(ReaderModel reader)
@@ -868,66 +869,70 @@ namespace ComicReader.Common
 
             protected override bool CommitImpl()
             {
-                if (!m_reader.Loaded)
+                if (!mReader.TryGetTarget(out ReaderModel reader))
+                {
+                    return false;
+                }
+
+                if (!reader.Loaded)
                 {
                     return false;
                 }
 
                 bool result;
-
-                if (m_parallel_offset.HasValue)
+                if (mParallelOffset.HasValue)
                 {
-                    result = m_reader.SetScrollViewer1(m_zoom, m_parallel_offset, m_disable_animation);
+                    result = reader.SetScrollViewer1(mZoom, mParallelOffset, mDisableAnimation);
                 }
-                else if (m_page.HasValue)
+                else if (mPage.HasValue)
                 {
-                    result = m_reader.SetScrollViewer2(m_zoom, m_page, m_disable_animation);
+                    result = reader.SetScrollViewer2(mZoom, mPage, mDisableAnimation);
                 }
                 else
                 {
-                    result = m_reader.SetScrollViewer3(m_zoom, m_horizontal_offset, m_vertical_offset, m_disable_animation);
+                    result = reader.SetScrollViewer3(mZoom, mZoomType, mHorizontalOffset, mVerticalOffset, mDisableAnimation);
                 }
-
                 return result;
             }
 
-            public ScrollManager Zoom(float? zoom)
+            public ScrollManager Zoom(float? zoom, ZoomType zoomType = ZoomType.CenterInside)
             {
-                m_zoom = zoom;
+                mZoom = zoom;
+                mZoomType = zoomType;
                 return this;
             }
 
             public ScrollManager ParallelOffset(double? parallel_offset)
             {
-                m_parallel_offset = parallel_offset;
+                mParallelOffset = parallel_offset;
                 OnSetOffset();
                 return this;
             }
 
             public ScrollManager HorizontalOffset(double? horizontal_offset)
             {
-                m_horizontal_offset = horizontal_offset;
+                mHorizontalOffset = horizontal_offset;
                 OnSetOffset();
                 return this;
             }
 
             public ScrollManager VerticalOffset(double? vertical_offset)
             {
-                m_vertical_offset = vertical_offset;
+                mVerticalOffset = vertical_offset;
                 OnSetOffset();
                 return this;
             }
 
             public ScrollManager Page(double? page)
             {
-                m_page = page;
+                mPage = page;
                 OnSetOffset();
                 return this;
             }
 
             public ScrollManager EnableAnimation()
             {
-                m_disable_animation = false;
+                mDisableAnimation = false;
                 return this;
             }
 
@@ -935,17 +940,17 @@ namespace ComicReader.Common
             {
                 int checksum = 0;
 
-                if (m_page.HasValue)
+                if (mPage.HasValue)
                 {
                     checksum++;
                 }
 
-                if (m_parallel_offset.HasValue)
+                if (mParallelOffset.HasValue)
                 {
                     checksum++;
                 }
 
-                if (m_horizontal_offset.HasValue || m_vertical_offset.HasValue)
+                if (mHorizontalOffset.HasValue || mVerticalOffset.HasValue)
                 {
                     checksum++;
                 }
@@ -1005,11 +1010,17 @@ namespace ComicReader.Common
             });
         }
 
-        private bool SetScrollViewer3(float? zoom, double? horizontal_offset, double? vertical_offset, bool disable_animation)
-        {
+        private bool SetScrollViewer3(
+            float? zoom,
+            ZoomType zoomType,
+            double? horizontal_offset,
+            double? vertical_offset,
+            bool disable_animation
+        ) {
             return SetScrollViewerInternal(new SetScrollViewerContext
             {
                 Zoom = zoom,
+                zoomType = zoomType,
                 HorizontalOffset = horizontal_offset,
                 VerticalOffset = vertical_offset,
                 DisableAnimation = disable_animation,
@@ -1105,6 +1116,10 @@ namespace ComicReader.Common
                 }
 
                 zoom = (float)(ZoomFactorFinal / zoom_coefficient.Min());
+            }
+            if (ctx.zoomType == ZoomType.CenterCrop)
+            {
+                zoom *= zoom_coefficient_new.Max() / zoom_coefficient_new.Min();
             }
 
             double maxZoom = Math.Max(MaxZoom, 100 * zoom_coefficient_new.Max() / zoom_coefficient_new.Min());

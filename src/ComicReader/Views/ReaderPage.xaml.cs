@@ -21,6 +21,7 @@ using ComicReader.Common;
 using ComicReader.Common.Router;
 using ComicReader.Database;
 using ComicReader.DesignData;
+using System.Threading;
 
 namespace ComicReader.Views
 {
@@ -261,19 +262,21 @@ namespace ComicReader.Views
         private ReaderModel HorizontalReader { get; set; }
         private ObservableCollection<ReaderImagePreviewViewModel> PreviewDataSource { get; set; }
 
-        private ComicData m_comic = null;
+        private ComicData mComic = null;
 
         // Pointer events
-        private readonly GestureRecognizer m_gesture_recognizer = new GestureRecognizer();
+        private readonly GestureRecognizer mGestureRecognizer = new GestureRecognizer();
+        private bool mPendingTap = false;
+        private bool mTapCancelled = false;
 
         // Bottom Tile
-        private bool m_bottom_tile_showed = false;
-        private bool m_bottom_tile_hold = false;
-        private bool m_bottom_tile_pointer_in = false;
-        private DateTimeOffset m_bottom_tile_hide_request_time = DateTimeOffset.Now;
+        private bool mBottomTileShowed = false;
+        private bool mBottomTileHold = false;
+        private bool mBottomTilePointerIn = false;
+        private DateTimeOffset mBottomTileHideRequestTime = DateTimeOffset.Now;
 
         // Locks
-        private readonly Utils.CancellationLock m_lock_load_comic = new Utils.CancellationLock();
+        private readonly Utils.CancellationLock mLoadComicLock = new Utils.CancellationLock();
 
         public ReaderPage()
         {
@@ -289,16 +292,17 @@ namespace ComicReader.Views
             HorizontalReader = new ReaderModel(Shared, false);
             PreviewDataSource = new ObservableCollection<ReaderImagePreviewViewModel>();
 
-            m_gesture_recognizer.GestureSettings =
+            mGestureRecognizer.GestureSettings =
                 GestureSettings.Tap |
+                GestureSettings.DoubleTap |
                 GestureSettings.ManipulationTranslateX |
                 GestureSettings.ManipulationTranslateY |
                 GestureSettings.ManipulationTranslateInertia |
                 GestureSettings.ManipulationScale;
-            m_gesture_recognizer.Tapped += OnReaderTapped;
-            m_gesture_recognizer.ManipulationStarted += OnReaderManipulationStarted;
-            m_gesture_recognizer.ManipulationUpdated += OnReaderManipulationUpdated;
-            m_gesture_recognizer.ManipulationCompleted += OnReaderManipulationCompleted;
+            mGestureRecognizer.Tapped += OnReaderTapped;
+            mGestureRecognizer.ManipulationStarted += OnReaderManipulationStarted;
+            mGestureRecognizer.ManipulationUpdated += OnReaderManipulationUpdated;
+            mGestureRecognizer.ManipulationCompleted += OnReaderManipulationCompleted;
 
             InitializeComponent();
         }
@@ -382,12 +386,12 @@ namespace ComicReader.Views
         // Load
         private async Task LoadComic(ComicData comic)
         {
-            if (comic == null || comic == m_comic)
+            if (comic == null || comic == mComic)
             {
                 return;
             }
 
-            await m_lock_load_comic.WaitAsync();
+            await mLoadComicLock.WaitAsync();
             try
             {
                 Shared.ReaderStatus = ReaderStatusEnum.Loading;
@@ -406,24 +410,24 @@ namespace ComicReader.Views
                     BottomTileHide(5000);
                 };
 
-                m_comic = comic;
-                VerticalReader.Comic = m_comic;
-                HorizontalReader.Comic = m_comic;
+                mComic = comic;
+                VerticalReader.Comic = mComic;
+                HorizontalReader.Comic = mComic;
 
-                if (!m_comic.IsExternal)
+                if (!mComic.IsExternal)
                 {
                     // Mark as read.
-                    m_comic.SetAsRead();
+                    mComic.SetAsRead();
 
                     // Add to history
-                    await HistoryDataManager.Add(m_comic.Id, m_comic.Title1, true);
+                    await HistoryDataManager.Add(mComic.Id, mComic.Title1, true);
 
                     // Update image files.
-                    TaskResult result = await m_comic.UpdateImages(cover_only: false, reload: true);
+                    TaskResult result = await mComic.UpdateImages(cover_only: false, reload: true);
 
                     if (!result.Successful)
                     {
-                        Log("Failed to load images of '" + m_comic.Location + "'. " + result.ExceptionType.ToString());
+                        Log("Failed to load images of '" + mComic.Location + "'. " + result.ExceptionType.ToString());
                         Shared.ReaderStatus = ReaderStatusEnum.Error;
                         return;
                     }
@@ -433,13 +437,13 @@ namespace ComicReader.Views
                 await LoadComicInfo();
 
                 // Load image frames.
-                if (!m_comic.IsExternal)
+                if (!mComic.IsExternal)
                 {
                     // Set initial page.
-                    reader.InitialPage = m_comic.LastPosition;
+                    reader.InitialPage = mComic.LastPosition;
 
                     // Load frames.
-                    for (int i = 0; i < m_comic.ImageAspectRatios.Count; ++i)
+                    for (int i = 0; i < mComic.ImageAspectRatios.Count; ++i)
                     {
                         await VerticalReader.LoadFrame(i);
                         await HorizontalReader.LoadFrame(i);
@@ -458,7 +462,7 @@ namespace ComicReader.Views
             }
             finally
             {
-                m_lock_load_comic.Release();
+                mLoadComicLock.Release();
             }
         }
 
@@ -476,7 +480,7 @@ namespace ComicReader.Views
             });
 
             List<Utils.ImageLoader.Token> preview_img_loader_tokens = new List<Utils.ImageLoader.Token>();
-            ComicData comic = m_comic; // Stores locally.
+            ComicData comic = mComic; // Stores locally.
             Utils.Stopwatch save_timer = new Utils.Stopwatch();
 
             for (int i = 0; i < comic.ImageCount; ++i)
@@ -538,55 +542,55 @@ namespace ComicReader.Views
             }
 
             save_timer.Start();
-            await new Utils.ImageLoader.Builder(preview_img_loader_tokens, m_lock_load_comic)
+            await new Utils.ImageLoader.Builder(preview_img_loader_tokens, mLoadComicLock)
                 .WidthConstrain(preview_width).HeightConstrain(preview_height).Commit();
         }
 
         private async Task LoadComicInfo()
         {
-            if (m_comic == null)
+            if (mComic == null)
             {
                 return;
             }
 
-            Shared.NavigationPageShared.IsExternal = m_comic.IsExternal;
+            Shared.NavigationPageShared.IsExternal = mComic.IsExternal;
 
-            if (m_comic.Title1.Length == 0)
+            if (mComic.Title1.Length == 0)
             {
-                Shared.ComicTitle1 = m_comic.Title;
+                Shared.ComicTitle1 = mComic.Title;
             }
             else
             {
-                Shared.ComicTitle1 = m_comic.Title1;
-                Shared.ComicTitle2 = m_comic.Title2;
+                Shared.ComicTitle1 = mComic.Title1;
+                Shared.ComicTitle2 = mComic.Title2;
             }
 
-            Shared.ComicDir = m_comic.Location;
-            Shared.CanDirOpenInFileExplorer = m_comic is ComicFolderData;
-            Shared.IsEditable = m_comic.IsEditable;
+            Shared.ComicDir = mComic.Location;
+            Shared.CanDirOpenInFileExplorer = mComic is ComicFolderData;
+            Shared.IsEditable = mComic.IsEditable;
             Shared.Progress = "";
 
             LoadComicTag();
 
-            if (!m_comic.IsExternal)
+            if (!mComic.IsExternal)
             {
-                Shared.NavigationPageShared.IsFavorite = await FavoriteDataManager.FromId(m_comic.Id) != null;
-                Shared.Rating = m_comic.Rating;
+                Shared.NavigationPageShared.IsFavorite = await FavoriteDataManager.FromId(mComic.Id) != null;
+                Shared.Rating = mComic.Rating;
             }
         }
 
         private void LoadComicTag()
         {
-            if (m_comic == null)
+            if (mComic == null)
             {
                 return;
             }
 
             ObservableCollection<TagCollectionViewModel> new_collection = new ObservableCollection<TagCollectionViewModel>();
 
-            for (int i = 0; i < m_comic.Tags.Count; ++i)
+            for (int i = 0; i < mComic.Tags.Count; ++i)
             {
-                TagData tags = m_comic.Tags[i];
+                TagData tags = mComic.Tags[i];
                 TagCollectionViewModel tags_model = new TagCollectionViewModel(tags.Name);
 
                 foreach (string tag in tags.Tags)
@@ -665,7 +669,7 @@ namespace ComicReader.Views
 
             if (save)
             {
-                m_comic.SaveProgress(progress, reader.PageSource);
+                mComic.SaveProgress(progress, reader.PageSource);
             }
         }
 
@@ -706,7 +710,7 @@ namespace ComicReader.Views
 
         private void OnReaderContinuousChanged()
         {
-            m_gesture_recognizer.AutoProcessInertia = Shared.ReaderSettings.IsContinuous;
+            mGestureRecognizer.AutoProcessInertia = Shared.ReaderSettings.IsContinuous;
         }
 
         private void OnReaderScrollViewerViewChanged(ReaderModel control, ScrollViewerViewChangedEventArgs e)
@@ -816,7 +820,7 @@ namespace ComicReader.Views
         {
             (sender as UIElement).CapturePointer(e.Pointer);
             PointerPoint pointer_point = e.GetCurrentPoint(ManipulationReference);
-            m_gesture_recognizer.ProcessDownEvent(pointer_point);
+            mGestureRecognizer.ProcessDownEvent(pointer_point);
 
 #if DEBUG_LOG_POINTER
             Log("Pointer pressed");
@@ -825,7 +829,7 @@ namespace ComicReader.Views
 
         private void OnReaderPointerMoved(object sender, PointerRoutedEventArgs e)
         {
-            m_gesture_recognizer.ProcessMoveEvents(e.GetIntermediatePoints(ManipulationReference));
+            mGestureRecognizer.ProcessMoveEvents(e.GetIntermediatePoints(ManipulationReference));
 
 #if DEBUG_LOG_POINTER
             //Log("Pointer moved");
@@ -835,12 +839,12 @@ namespace ComicReader.Views
         private void OnReaderPointerReleased(object sender, PointerRoutedEventArgs e)
         {
             PointerPoint pointer_point = e.GetCurrentPoint(ManipulationReference);
-            m_gesture_recognizer.ProcessUpEvent(pointer_point);
+            mGestureRecognizer.ProcessUpEvent(pointer_point);
             (sender as UIElement).ReleasePointerCapture(e.Pointer);
 
-            if (!m_gesture_recognizer.AutoProcessInertia)
+            if (!mGestureRecognizer.AutoProcessInertia)
             {
-                m_gesture_recognizer.CompleteGesture();
+                mGestureRecognizer.CompleteGesture();
             }
 
 #if DEBUG_LOG_POINTER
@@ -851,12 +855,12 @@ namespace ComicReader.Views
         private void OnReaderPointerCanceled(object sender, PointerRoutedEventArgs e)
         {
             PointerPoint pointer_point = e.GetCurrentPoint(ManipulationReference);
-            m_gesture_recognizer.ProcessUpEvent(pointer_point);
+            mGestureRecognizer.ProcessUpEvent(pointer_point);
             (sender as UIElement).ReleasePointerCapture(e.Pointer);
 
-            if (!m_gesture_recognizer.AutoProcessInertia)
+            if (!mGestureRecognizer.AutoProcessInertia)
             {
-                m_gesture_recognizer.CompleteGesture();
+                mGestureRecognizer.CompleteGesture();
             }
 
 #if DEBUG_LOG_POINTER
@@ -866,7 +870,48 @@ namespace ComicReader.Views
 
         private void OnReaderTapped(object sender, TappedEventArgs e)
         {
-            BottomTileSetHold(!m_bottom_tile_showed);
+            if (e.TapCount == 1)
+            {
+                if (mPendingTap)
+                {
+                    return;
+                }
+                mPendingTap = true;
+                mTapCancelled = false;
+                Utils.C0.Run(async delegate
+                {
+                    await Task.Delay(100);
+                    mPendingTap = false;
+                    if (mTapCancelled)
+                    {
+                        return;
+                    }
+                    BottomTileSetHold(!mBottomTileShowed);
+                });
+            }
+            else if (e.TapCount == 2)
+            {
+                mTapCancelled = true;
+                ReaderModel reader = GetCurrentReader();
+                if (reader == null)
+                {
+                    return;
+                }
+                if (Math.Abs(reader.Zoom - 100) <= 1)
+                {
+                    ReaderModel.ScrollManager.BeginTransaction(reader)
+                        .Zoom(100, Common.Structs.ZoomType.CenterCrop)
+                        .EnableAnimation()
+                        .Commit();
+                }
+                else
+                {
+                    ReaderModel.ScrollManager.BeginTransaction(reader)
+                        .Zoom(100)
+                        .EnableAnimation()
+                        .Commit();
+                }
+            }
         }
 
         private void OnReaderManipulationStarted(object sender, ManipulationStartedEventArgs e)
@@ -955,11 +1000,11 @@ namespace ComicReader.Views
 
             if (is_favorite)
             {
-                await FavoriteDataManager.Add(m_comic.Id, m_comic.Title1, final: true);
+                await FavoriteDataManager.Add(mComic.Id, mComic.Title1, final: true);
             }
             else
             {
-                await FavoriteDataManager.RemoveWithId(m_comic.Id, final: true);
+                await FavoriteDataManager.RemoveWithId(mComic.Id, final: true);
             }
         }
 
@@ -1008,14 +1053,14 @@ namespace ComicReader.Views
 
         private void OnRatingControlValueChanged(muxc.RatingControl sender, object args)
         {
-            m_comic.SaveRating((int)sender.Value);
+            mComic.SaveRating((int)sender.Value);
         }
 
         private void OnDirectoryTapped(object sender, TappedRoutedEventArgs e)
         {
             Utils.C0.Run(async delegate
             {
-                StorageFolder folder = await Utils.Storage.TryGetFolder(m_comic.Location);
+                StorageFolder folder = await Utils.Storage.TryGetFolder(mComic.Location);
 
                 if (folder != null)
                 {
@@ -1034,12 +1079,12 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                if (m_comic == null)
+                if (mComic == null)
                 {
                     return;
                 }
 
-                EditComicInfoDialog dialog = new EditComicInfoDialog(m_comic);
+                EditComicInfoDialog dialog = new EditComicInfoDialog(mComic);
                 ContentDialogResult result = await dialog.ShowAsync();
 
                 if (result == ContentDialogResult.Primary)
@@ -1077,19 +1122,19 @@ namespace ComicReader.Views
         // Bottom Tile
         private void BottomTileShow()
         {
-            if (m_bottom_tile_showed)
+            if (mBottomTileShowed)
             {
                 return;
             }
 
             BottomGridStoryboard.Children[0].SetValue(DoubleAnimation.ToProperty, 1.0);
             BottomGridStoryboard.Begin();
-            m_bottom_tile_showed = true;
+            mBottomTileShowed = true;
         }
 
         private void BottomTileHide(int timeout)
         {
-            m_bottom_tile_hide_request_time = DateTimeOffset.Now;
+            mBottomTileHideRequestTime = DateTimeOffset.Now;
 
             if (timeout > 0)
             {
@@ -1097,7 +1142,7 @@ namespace ComicReader.Views
                 {
                     Task.Delay(timeout + 1).Wait();
 
-                    if ((DateTimeOffset.Now - m_bottom_tile_hide_request_time).TotalMilliseconds < timeout)
+                    if ((DateTimeOffset.Now - mBottomTileHideRequestTime).TotalMilliseconds < timeout)
                     {
                         return;
                     }
@@ -1110,8 +1155,8 @@ namespace ComicReader.Views
                 return;
             }
 
-            if (!m_bottom_tile_showed || Shared.BottomTilePinned
-                || m_bottom_tile_hold || m_bottom_tile_pointer_in)
+            if (!mBottomTileShowed || Shared.BottomTilePinned
+                || mBottomTileHold || mBottomTilePointerIn)
             {
                 return;
             }
@@ -1123,15 +1168,15 @@ namespace ComicReader.Views
         {
             BottomGridStoryboard.Children[0].SetValue(DoubleAnimation.ToProperty, 0.0);
             BottomGridStoryboard.Begin();
-            m_bottom_tile_showed = false;
-            m_bottom_tile_hold = false;
+            mBottomTileShowed = false;
+            mBottomTileHold = false;
         }
 
         private void BottomTileSetHold(bool val)
         {
-            m_bottom_tile_hold = val;
+            mBottomTileHold = val;
 
-            if (m_bottom_tile_hold)
+            if (mBottomTileHold)
             {
                 BottomTileShow();
             }
@@ -1156,15 +1201,15 @@ namespace ComicReader.Views
 
         private void OnBottomTilePointerEntered(object sender, PointerRoutedEventArgs e)
         {
-            m_bottom_tile_pointer_in = true;
+            mBottomTilePointerIn = true;
             BottomTileShow();
         }
 
         private void OnBottomTilePointerExited(object sender, PointerRoutedEventArgs e)
         {
-            m_bottom_tile_pointer_in = false;
+            mBottomTilePointerIn = false;
 
-            if (!m_bottom_tile_showed || m_bottom_tile_hold)
+            if (!mBottomTileShowed || mBottomTileHold)
             {
                 return;
             }
