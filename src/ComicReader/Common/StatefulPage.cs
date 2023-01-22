@@ -6,7 +6,7 @@ namespace ComicReader.Common
 {
     internal interface IPageStateListener
     {
-        void OnStart(NavigationParams p);
+        void OnStart(object p);
 
         void OnResume();
 
@@ -21,15 +21,13 @@ namespace ComicReader.Common
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
-            
-            NavigationParams navigationParams = (NavigationParams)e.Parameter;
 
             switch (e.NavigationMode)
             {
                 case NavigationMode.New:
                 case NavigationMode.Back:
                 case NavigationMode.Forward:
-                    TryStart(navigationParams);
+                    TryStart(e.Parameter);
                     TryResume();
                     break;
                 case NavigationMode.Refresh:
@@ -53,7 +51,7 @@ namespace ComicReader.Common
             }
         }
 
-        public virtual void OnStart(NavigationParams p)
+        public virtual void OnStart(object p)
         {
         }
 
@@ -65,7 +63,7 @@ namespace ComicReader.Common
         {
         }
 
-        private void TryStart(NavigationParams p)
+        private void TryStart(object p)
         {
             if (!mIsStarted)
             {

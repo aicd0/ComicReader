@@ -1,24 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
+using System;
 using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
 using Windows.ApplicationModel.Core;
 using Windows.Foundation;
-using Windows.Foundation.Collections;
 using Windows.Storage;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
-using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 using Windows.UI.ViewManagement;
 using ComicReader.Database;
+using ComicReader.Views;
 
 namespace ComicReader
 {
@@ -43,16 +35,14 @@ namespace ComicReader
             CoreApplication.EnablePrelaunch(true);
         }
 
-        private async Task Startup(bool prelaunch_activated, ApplicationExecutionState state)
+        private async Task Startup(bool prelaunch_activated)
         {
             // Initialize the database if it has not been initialized.
             TaskResult result = await DatabaseManager.Init();
             System.Diagnostics.Debug.Assert(result.Successful);
 
             // Perform usual startup.
-            Frame rootFrame = Window.Current.Content as Frame;
-
-            if (rootFrame == null)
+            if (!(Window.Current.Content is Frame rootFrame))
             {
                 rootFrame = new Frame();
                 rootFrame.NavigationFailed += OnNavigationFailed;
@@ -101,29 +91,30 @@ namespace ComicReader
         {
             Utils.C0.Run(async delegate
             {
-                await Startup(args.PrelaunchActivated, args.PreviousExecutionState);
+                await Startup(args.PrelaunchActivated);
             });
         }
 
-        void OnNavigationFailed(object sender, NavigationFailedEventArgs e)
+        private void OnNavigationFailed(object sender, NavigationFailedEventArgs e)
         {
             throw new Exception("Failed to load Page " + e.SourcePageType.FullName);
         }
 
         private void OnSuspending(object sender, SuspendingEventArgs e)
         {
-            var deferral = e.SuspendingOperation.GetDeferral();
+            SuspendingDeferral deferral = e.SuspendingOperation.GetDeferral();
             //TODO: Save application state and stop any background activity
             deferral.Complete();
         }
 
         protected override void OnFileActivated(FileActivatedEventArgs args)
         {
+            base.OnFileActivated(args);
             Utils.C0.Run(async delegate
             {
-                base.OnFileActivated(args);
-                await Startup(false, args.PreviousExecutionState);
-                Utils.TaskQueueManager.AppendTask(Views.MainPage.Current.OnFileActivatedSealed(args));
+                var db = new LockContext();
+                await MainPage.OnFileActivated(db, args);
+                await Startup(false);
             });
         }
     }

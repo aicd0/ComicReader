@@ -22,10 +22,15 @@ namespace ComicReader.Common
             base.OnNavigatedTo(e);
         }
 
-        public override void OnStart(NavigationParams p)
+        public virtual void OnStart(NavigationParams p)
+        {
+            mTabId = p.tabId;
+        }
+
+        public override void OnStart(object p)
         {
             base.OnStart(p);
-            mTabId = p.tabId;
+            OnStart((NavigationParams)p);
         }
 
         public override void OnResume()

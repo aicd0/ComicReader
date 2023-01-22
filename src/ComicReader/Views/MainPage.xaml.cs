@@ -14,11 +14,10 @@ using Windows.UI.Xaml.Input;
 using muxc = Microsoft.UI.Xaml.Controls;
 using ComicReader.Common.Router;
 using ComicReader.Database;
+using ComicReader.Common;
 
 namespace ComicReader.Views
 {
-    using SealedTask = Func<Task<Utils.TaskResult>, Utils.TaskResult>;
-
     public class MainPageShared : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
@@ -37,13 +36,15 @@ namespace ComicReader.Views
         public DesignData.ReaderSettingViewModel ReaderSettings = new DesignData.ReaderSettingViewModel();
     }
 
-    sealed internal partial class MainPage : Page
+    sealed internal partial class MainPage : StatefulPage
     {
         public static MainPage Current = null;
+        private static FileActivatedEventArgs s_startupFileArgs;
+
         public MainPageShared Shared;
 
-        private readonly List<TabIdentifier> m_all_tabs = new List<TabIdentifier>();
-        private Grid m_tab_container_grid;
+        private readonly List<TabIdentifier> _allTabs = new List<TabIdentifier>();
+        private Grid _tabContainerGrid;
 
         public MainPage()
         {
@@ -76,28 +77,17 @@ namespace ComicReader.Views
         }
 
         // File activation
-        public SealedTask OnFileActivatedSealed(FileActivatedEventArgs args)
+        private async Task<ComicData> GetStartupComic(LockContext db, FileActivatedEventArgs args)
         {
-            return delegate (Task<Utils.TaskResult> _t)
-            {
-                OnFileActivatedUnsealed(args).Wait();
-                return new Utils.TaskResult();
-            };
-        }
-
-        private async Task OnFileActivatedUnsealed(FileActivatedEventArgs args)
-        {
-            LockContext db = new LockContext();
-
             StorageFile target_file = (StorageFile)args.Files[0];
 
             if (!Common.AppInfoProvider.IsSupportedExternalFileExtension(target_file.FileType))
             {
-                return;
+                return null;
             }
 
             ComicData comic = null;
-            
+
             if (Common.AppInfoProvider.IsSupportedDocumentExtension(target_file.FileType))
             {
                 comic = await ComicData.Manager.FromLocation(db, target_file.Path);
@@ -168,22 +158,13 @@ namespace ComicReader.Views
                     comic = await ComicFolderData.FromExternal(dir, img_files, info_file);
                 }
             }
-
-            if (comic == null)
-            {
-                return;
-            }
-
-            await Utils.C0.Sync(delegate
-            {
-                LoadTab(null, PageType.Reader, comic);
-            });
+            return comic;
         }
 
         // New tab
         private bool TrySwitchToTab(PageType type, object args)
         {
-            foreach (TabIdentifier tab in m_all_tabs)
+            foreach (TabIdentifier tab in _allTabs)
             {
                 if (tab.pageType != type)
                 {
@@ -222,7 +203,7 @@ namespace ComicReader.Views
                 RequestArgs = args,
             };
 
-            m_all_tabs.Add(id);
+            _allTabs.Add(id);
 
             // remember tab content are not loaded at this moment, further process
             // is required.
@@ -290,7 +271,7 @@ namespace ComicReader.Views
 
         private TabIdentifier GetTabId(muxc.TabViewItem tab)
         {
-            foreach (TabIdentifier id in m_all_tabs)
+            foreach (TabIdentifier id in _allTabs)
             {
                 if (id.Tab == tab)
                 {
@@ -303,13 +284,13 @@ namespace ComicReader.Views
         private void OnTabCloseRequested(muxc.TabView sender,
             muxc.TabViewTabCloseRequestedEventArgs args)
         {
-            for (int i = 0; i < m_all_tabs.Count; ++i)
+            for (int i = 0; i < _allTabs.Count; ++i)
             {
-                TabIdentifier tab_id = m_all_tabs[i];
+                TabIdentifier tab_id = _allTabs[i];
 
                 if (tab_id.Tab == args.Tab)
                 {
-                    m_all_tabs.RemoveAt(i);
+                    _allTabs.RemoveAt(i);
                     break;
                 }
             }
@@ -324,7 +305,20 @@ namespace ComicReader.Views
 
         private void OnTabViewLoaded(object sender, RoutedEventArgs e)
         {
-            LoadTab(null, PageType.Home);
+            Utils.C0.Run(async delegate
+            {
+                var db = new LockContext();
+                if (s_startupFileArgs != null)
+                {
+                    ComicData comic = await GetStartupComic(db, s_startupFileArgs);
+                    if (comic != null)
+                    {
+                        LoadTab(null, PageType.Reader, comic);
+                        return;
+                    }
+                }
+                LoadTab(null, PageType.Home);
+            });
         }
 
         // Background tasks
@@ -364,18 +358,18 @@ namespace ComicReader.Views
 
         private void SetTabViewVisibility(bool visibility)
         {
-            if (m_tab_container_grid == null)
+            if (_tabContainerGrid == null)
             {
                 return;
             }
 
-            m_tab_container_grid.Visibility = visibility ?
+            _tabContainerGrid.Visibility = visibility ?
                 Visibility.Visible : Visibility.Collapsed;
         }
 
         private void OnTabContainerGridLoaded(object sender, RoutedEventArgs e)
         {
-            m_tab_container_grid = sender as Grid;
+            _tabContainerGrid = sender as Grid;
         }
 
         // Fullscreen
@@ -454,6 +448,20 @@ namespace ComicReader.Views
             if (handled)
             {
                 e.Handled = true;
+            }
+        }
+
+        public static async Task OnFileActivated(LockContext db, FileActivatedEventArgs args)
+        {
+            if (args == null || Current == null || Current.RootTabView == null || !Current.RootTabView.IsLoaded)
+            {
+                s_startupFileArgs = args;
+                return;
+            }
+            ComicData comic = await Current.GetStartupComic(db, args);
+            if (comic != null)
+            {
+                Current.LoadTab(null, PageType.Reader, comic);
             }
         }
     }

@@ -180,10 +180,11 @@ namespace ComicReader.Views
         }
 
         // Navigation
-        public override void OnStart(NavigationParams p)
+        public override void OnStart(object p)
         {
             base.OnStart(p);
-            TabId = p.tabId;
+            var q = (NavigationParams)p;
+            TabId = q.tabId;
             TabId.Selected += delegate
             {
                 if (NavigationPageSidePane != null)
@@ -198,7 +199,7 @@ namespace ComicReader.Views
                 Shared.SetSearchBox("");
             };
 
-            Shared.MainPageShared = (MainPageShared)p.shared;
+            Shared.MainPageShared = (MainPageShared)q.shared;
             Shared.RefreshPage = RefreshPage;
             Shared.SetSearchBox = SetSearchBox;
         }

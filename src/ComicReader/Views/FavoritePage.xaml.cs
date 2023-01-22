@@ -58,11 +58,12 @@ namespace ComicReader.Views
         }
 
         // Navigation
-        public override void OnStart(NavigationParams p)
+        public override void OnStart(object p)
         {
             base.OnStart(p);
-            mTabId = p.tabId;
-            Shared.NavigationPageShared = (NavigationPageShared)p.shared;
+            var q = (NavigationParams)p;
+            mTabId = q.tabId;
+            Shared.NavigationPageShared = (NavigationPageShared)q.shared;
         }
 
         public override void OnResume()
