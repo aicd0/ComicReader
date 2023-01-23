@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -96,7 +96,7 @@ namespace ComicReader.Database
                 return r;
             }
 
-            IStorageItem item = await Folder.TryGetItemAsync(Manager.ComicInfoFileName);
+            IStorageItem item = await Folder.TryGetItemAsync(ComicInfoFileName);
 
             if (item == null)
             {
@@ -105,7 +105,7 @@ namespace ComicReader.Database
                     return new TaskResult(TaskException.FileNotFound);
                 }
 
-                InfoFile = await Folder.CreateFileAsync(Manager.ComicInfoFileName, CreationCollisionOption.OpenIfExists);
+                InfoFile = await Folder.CreateFileAsync(ComicInfoFileName, CreationCollisionOption.OpenIfExists);
                 return new TaskResult();
             }
 

@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using Windows.UI.Xaml;
@@ -119,9 +119,9 @@ namespace ComicReader.Views
             Shared.IsEmpty = source.Count == 0;
         }
 
-        private async Task OpenItem(LockContext db, HistoryItemViewModel item, bool new_tab)
+        private async Task OpenItem(HistoryItemViewModel item, bool new_tab)
         {
-            ComicData comic = await ComicData.Manager.FromId(db, item.Id);
+            ComicData comic = await ComicData.FromId(item.Id);
 
             if (comic == null)
             {
@@ -169,9 +169,8 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                LockContext db = new LockContext();
                 HistoryItemViewModel item = (HistoryItemViewModel)((MenuFlyoutItem)sender).DataContext;
-                await OpenItem(db, item, true);
+                await OpenItem(item, true);
             });
         }
 
@@ -188,9 +187,8 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                LockContext db = new LockContext();
                 HistoryItemViewModel item = (HistoryItemViewModel)e.ClickedItem;
-                await OpenItem(db, item, false);
+                await OpenItem(item, false);
             });
         }
     }

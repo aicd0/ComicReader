@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -116,10 +116,12 @@ namespace ComicReader.Views
             {
                 foreach (FavoriteItemViewModel enode in et)
                 {
-                    FavoriteNodeData inode = new FavoriteNodeData();
-                    inode.Type = enode.Type == FavoriteNodeType.Filter ? "f" : "i";
-                    inode.Name = enode.Name;
-                    inode.Id = enode.Id;
+                    FavoriteNodeData inode = new FavoriteNodeData
+                    {
+                        Type = enode.Type == FavoriteNodeType.Filter ? "f" : "i",
+                        Name = enode.Name,
+                        Id = enode.Id
+                    };
 
                     if (enode.Children.Count > 0)
                     {
@@ -289,8 +291,6 @@ namespace ComicReader.Views
             // left-click
             Utils.C0.Run(async delegate
             {
-                LockContext db = new LockContext();
-
                 FavoriteItemViewModel item = (FavoriteItemViewModel)e.InvokedItem;
 
                 if (item.IsRenaming)
@@ -302,7 +302,7 @@ namespace ComicReader.Views
 
                 if (item.Type == FavoriteNodeType.Item)
                 {
-                    ComicData comic = await ComicData.Manager.FromId(db, item.Id);
+                    ComicData comic = await ComicData.FromId(item.Id);
 
                     if (comic == null)
                     {
@@ -413,7 +413,7 @@ namespace ComicReader.Views
             {
                 var parent = (FavoriteItemViewModel)args.NewParentItem;
 
-                foreach (FavoriteItemViewModel item in args.Items)
+                foreach (FavoriteItemViewModel item in args.Items.Cast<FavoriteItemViewModel>())
                 {
                     item.Parent = parent;
                 }
@@ -426,10 +426,8 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                LockContext db = new LockContext();
-
                 FavoriteItemViewModel item = (FavoriteItemViewModel)((MenuFlyoutItem)sender).DataContext;
-                ComicData comic = await ComicData.Manager.FromId(db, item.Id);
+                ComicData comic = await ComicData.FromId(item.Id);
                 MainPage.Current.LoadTab(null, PageType.Reader, comic);
             });
         }

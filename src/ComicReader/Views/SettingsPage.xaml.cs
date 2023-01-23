@@ -1,4 +1,4 @@
-﻿using Microsoft.Data.Sqlite;
+using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -254,27 +254,25 @@ namespace ComicReader.Views
         public override void OnResume()
         {
             base.OnResume();
-            ComicData.Manager.OnUpdated += OnComicDataUpdated;
+            ComicData.OnUpdated += OnComicDataUpdated;
 
             Utils.C0.Run(async delegate
             {
-                LockContext db = new LockContext();
-                await Update(db);
+                await Update();
             });
         }
 
         public override void OnPause()
         {
             base.OnPause();
-            ComicData.Manager.OnUpdated -= OnComicDataUpdated;
+            ComicData.OnUpdated -= OnComicDataUpdated;
         }
 
         public override void OnSelected()
         {
             Utils.C0.Run(async delegate
             {
-                LockContext db = new LockContext();
-                await Update(db);
+                await Update();
             });
         }
 
@@ -294,7 +292,7 @@ namespace ComicReader.Views
         }
 
         // utilities
-        private async Task Update(LockContext db)
+        private async Task Update()
         {
             m_updating = true;
 
@@ -354,7 +352,7 @@ namespace ComicReader.Views
             UpdateRescanStatus();
 
             // Statistics.
-            await UpdateStatistis(db);
+            await UpdateStatistis();
 
             // Feedback.
             string app_name = Utils.StringResourceProvider.GetResourceString("AppDisplayName");
@@ -373,7 +371,7 @@ namespace ComicReader.Views
             AboutCopyrightControl.Text = about_copyright;
         }
 
-        private void OnComicDataUpdated(LockContext db)
+        private void OnComicDataUpdated()
         {
             // IMPORTANT: Use TaskCompletionSource to guarantee all async tasks
             // in Sync block has completed.
@@ -382,16 +380,16 @@ namespace ComicReader.Views
             Utils.C0.Sync(async delegate
             {
                 UpdateRescanStatus();
-                await UpdateStatistis(db);
+                await UpdateStatistis();
                 completion_src.SetResult(true);
             }).Wait();
 
             completion_src.Task.Wait();
         }
 
-        private async Task UpdateStatistis(LockContext db)
+        private async Task UpdateStatistis()
         {
-            await ComicData.Manager.CommandBlock(db, async delegate (SqliteCommand command)
+            await ComicData.CommandBlock(async delegate (SqliteCommand command)
             {
                 command.CommandText = "SELECT COUNT(*) FROM " + SqliteDatabaseManager.ComicTable;
                 long comic_count = (long)await command.ExecuteScalarAsync();
@@ -404,7 +402,7 @@ namespace ComicReader.Views
 
         private void UpdateRescanStatus()
         {
-            Shared.IsRescanning = ComicData.Manager.IsRescanning;
+            Shared.IsRescanning = ComicData.IsRescanning;
         }
 
         private async Task Save()
@@ -484,7 +482,7 @@ namespace ComicReader.Views
         private void OnRescanFilesClicked(object sender, RoutedEventArgs e)
         {
             Shared.IsRescanning = true;
-            Utils.TaskQueueManager.NewTask(ComicData.Manager.UpdateSealed(lazy_load: false));
+            Utils.TaskQueueManager.NewTask(ComicData.UpdateSealed(lazy_load: false));
         }
     }
 }

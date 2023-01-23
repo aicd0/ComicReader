@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -116,7 +116,7 @@ namespace ComicReader.Database
 
                         string filename = Utils.StringUtils.ItemNameFromPath(filepath);
                         
-                        if (filename.Equals(Manager.ComicInfoFileName))
+                        if (filename.Equals(ComicInfoFileName))
                         {
                             sub_path = filepath.Substring(base_path.Length);
                             break;
@@ -136,7 +136,7 @@ namespace ComicReader.Database
             }
             else
             {
-                sub_path = GetSubPathFromFilename(Manager.ComicInfoFileName);
+                sub_path = GetSubPathFromFilename(ComicInfoFileName);
             }
 
             using (Stream stream = await Utils.ArchiveAccess.TryGetFileStream(Archive, sub_path))

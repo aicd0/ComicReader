@@ -1,4 +1,4 @@
-﻿using Microsoft.Data.Sqlite;
+using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -69,30 +69,28 @@ namespace ComicReader.Views
         public override void OnResume()
         {
             base.OnResume();
-            ComicData.Manager.OnUpdated += OnComicDataUpdated;
+            ComicData.OnUpdated += OnComicDataUpdated;
 
             GetTabId().Tab.Header = Utils.StringResourceProvider.GetResourceString("NewTab");
             GetTabId().Tab.IconSource = new muxc.SymbolIconSource() { Symbol = Symbol.Document };
             
             Utils.C0.Run(async delegate
             {
-                LockContext db = new LockContext();
-                await Update(db);
+                await Update();
             });
         }
 
         public override void OnPause()
         {
             base.OnPause();
-            ComicData.Manager.OnUpdated -= OnComicDataUpdated;
+            ComicData.OnUpdated -= OnComicDataUpdated;
         }
 
         public override void OnSelected()
         {
             Utils.C0.Run(async delegate
             {
-                LockContext db = new LockContext();
-                await Update(db);
+                await Update();
             });
         }
 
@@ -112,10 +110,10 @@ namespace ComicReader.Views
         }
 
         // Utilities
-        public async Task Update(LockContext db)
+        public async Task Update()
         {
             await UpdateFolders();
-            await UpdateLibrary(db);
+            await UpdateLibrary();
         }
 
         private void ComicDataToViewModel(ComicData comic, ComicItemViewModel model)
@@ -146,7 +144,7 @@ namespace ComicReader.Views
             model.OnHideClicked = OnHideComicClicked;
         }
 
-        private void OnComicDataUpdated(LockContext db)
+        private void OnComicDataUpdated()
         {
             // IMPORTANT: Use TaskCompletionSource to guarantee all async tasks
             // in Sync block has completed.
@@ -154,14 +152,14 @@ namespace ComicReader.Views
 
             Utils.C0.Sync(async delegate
             {
-                await UpdateLibrary(db);
+                await UpdateLibrary();
                 completion_src.SetResult(true);
             }).Wait();
 
             completion_src.Task.Wait();
         }
 
-        public async Task UpdateLibrary(LockContext db)
+        public async Task UpdateLibrary()
         {
             await m_update_library_lock.WaitAsync();
             try
@@ -175,7 +173,7 @@ namespace ComicReader.Views
                 Utils.FixedHeap<Tuple<long, DateTimeOffset>> records = new Utils.FixedHeap<Tuple<long, DateTimeOffset>>(16,
                     (Tuple<long, DateTimeOffset> x, Tuple<long, DateTimeOffset> y) => { return x.Item2.CompareTo(y.Item2); });
 
-                await ComicData.Manager.CommandBlock(db, async delegate (SqliteCommand command)
+                await ComicData.CommandBlock(async delegate (SqliteCommand command)
                 {
                     // Use ORDER BY here will cause a crush (especially for a large result set)
                     // due to https://github.com/dotnet/efcore/issues/20044.
@@ -213,7 +211,7 @@ namespace ComicReader.Views
 
                 foreach (Tuple<long, DateTimeOffset> record in records.GetSorted())
                 {
-                    ComicData comic = await ComicData.Manager.FromId(db, record.Item1);
+                    ComicData comic = await ComicData.FromId(record.Item1);
                     
                     if (comic == null)
                     {
@@ -362,11 +360,10 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                LockContext db = new LockContext();
                 ComicItemViewModel item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-                await item.Comic.SaveHiddenAsync(db, true);
+                await item.Comic.SaveHiddenAsync(true);
                 ComicItemSource.Remove(item);
-                await UpdateLibrary(db);
+                await UpdateLibrary();
             });
         }
 
@@ -381,7 +378,7 @@ namespace ComicReader.Views
 
                 await UpdateFolders();
                 Utils.TaskQueueManager.AppendTask(
-                    ComicData.Manager.UpdateSealed(lazy_load: true), "");
+                    ComicData.UpdateSealed(lazy_load: true), "");
             });
         }
 
@@ -410,7 +407,7 @@ namespace ComicReader.Views
                 FolderItemViewModel item = (FolderItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 await SettingDataManager.RemoveComicFolder(item.Path, final: true);
                 await UpdateFolders();
-                Utils.TaskQueueManager.NewTask(ComicData.Manager.UpdateSealed(lazy_load: true));
+                Utils.TaskQueueManager.NewTask(ComicData.UpdateSealed(lazy_load: true));
             });
         }
 
@@ -426,7 +423,7 @@ namespace ComicReader.Views
 
         public static void RefreshPage()
         {
-            Utils.TaskQueueManager.NewTask(ComicData.Manager.UpdateSealed(lazy_load: true));
+            Utils.TaskQueueManager.NewTask(ComicData.UpdateSealed(lazy_load: true));
         }
     }
 }

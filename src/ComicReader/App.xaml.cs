@@ -112,8 +112,7 @@ namespace ComicReader
             base.OnFileActivated(args);
             Utils.C0.Run(async delegate
             {
-                var db = new LockContext();
-                await MainPage.OnFileActivated(db, args);
+                await MainPage.OnFileActivated(args);
                 await Startup(false);
             });
         }

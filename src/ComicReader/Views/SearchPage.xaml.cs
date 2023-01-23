@@ -1,4 +1,4 @@
-﻿using Microsoft.Data.Sqlite;
+using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -242,8 +242,7 @@ namespace ComicReader.Views
 
             Utils.C0.Run(async delegate
             {
-                LockContext db = new LockContext();
-                await StartSearch(db);
+                await StartSearch();
             });
         }
 
@@ -273,7 +272,7 @@ namespace ComicReader.Views
         }
 
         // Unsorted
-        private async Task StartSearch(LockContext db)
+        private async Task StartSearch()
         {
             await m_search_lock.WaitAsync();
             try
@@ -326,7 +325,7 @@ namespace ComicReader.Views
                 // start searching
                 Shared.IsLoading = true;
                 Shared.UpdateUI();
-                await SearchMain(db, keywords, filter);
+                await SearchMain(keywords, filter);
                 m_match_index = 0;
                 Shared.IsLoading = false;
 
@@ -345,7 +344,7 @@ namespace ComicReader.Views
                 m_search_lock.Release();
             }
 
-            await LoadMoreResults(db, 40);
+            await LoadMoreResults(40);
         }
 
         private class Match
@@ -354,7 +353,7 @@ namespace ComicReader.Views
             public int Similarity = 0;
         }
 
-        private async Task SearchMain(LockContext db, List<string> keywords, Common.Search.Filter filter)
+        private async Task SearchMain(List<string> keywords, Common.Search.Filter filter)
         {
             for (int i = 0; i < keywords.Count; ++i)
             {
@@ -364,7 +363,7 @@ namespace ComicReader.Views
             List<Match> keyword_matched = new List<Match>();
             List<long> filter_matched = null;
 
-            await ComicData.Manager.CommandBlock(db, async delegate (SqliteCommand command)
+            await ComicData.CommandBlock(async delegate (SqliteCommand command)
             {
                 command.CommandText = "SELECT " + ComicData.Field.Id + "," +
                     ComicData.Field.Title1 + "," + ComicData.Field.Title2 + " FROM " +
@@ -460,7 +459,7 @@ namespace ComicReader.Views
             };
         }
 
-        private async Task LoadMoreResults(LockContext db, int count)
+        private async Task LoadMoreResults(int count)
         {
             await m_search_lock.WaitAsync();
             try
@@ -478,7 +477,7 @@ namespace ComicReader.Views
                     }
 
                     Match match = m_matches[m_match_index];
-                    ComicData comic = await ComicData.Manager.FromId(db, match.Id);
+                    ComicData comic = await ComicData.FromId(match.Id);
 
                     ComicItemViewModel item = await ComicDataToViewModel(comic);
                     Shared.SearchResults.Add(item);
@@ -546,23 +545,22 @@ namespace ComicReader.Views
                 return;
             }
 
-            Utils.C0.RunWithNewLockContext(async (LockContext db) =>
+            Utils.C0.Run(async delegate
             {
                 ComicItemViewModel item = (ComicItemViewModel)((FrameworkElement)sender).DataContext;
-                ComicData comic = await ComicData.Manager.FromId(db, item.Comic.Id);
+                ComicData comic = await ComicData.FromId(item.Comic.Id);
                 MainPage.Current.LoadTab(GetTabId(), PageType.Reader, comic);
             });
         }
 
         private void OnScrollViewerViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
         {
-            Utils.C0.RunWithNewLockContext(async (LockContext db) =>
+            Utils.C0.Run(async delegate
             {
                 ScrollViewer scrollViewer = (ScrollViewer)sender;
-
                 if (scrollViewer.ScrollableHeight - scrollViewer.VerticalOffset < scrollViewer.ActualHeight * 0.5)
                 {
-                    await LoadMoreResults(db, 12);
+                    await LoadMoreResults(12);
                 }
             });
         }
@@ -597,10 +595,9 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                LockContext db = new LockContext();
                 ComicItemViewModel ctx = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-                await ctx.Comic.SaveHiddenAsync(db, false);
-                await StartSearch(db);
+                await ctx.Comic.SaveHiddenAsync(false);
+                await StartSearch();
             });
         }
 
@@ -608,10 +605,9 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                LockContext db = new LockContext();
                 ComicItemViewModel ctx = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-                await ctx.Comic.SaveHiddenAsync(db, true);
-                await StartSearch(db);
+                await ctx.Comic.SaveHiddenAsync(true);
+                await StartSearch();
             });
         }
 
@@ -746,7 +742,6 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                LockContext db = new LockContext();
                 List<object> selected_items = new List<object>(SearchResultGridView.SelectedItems);
 
                 for (int i = 0; i < selected_items.Count; ++i)
@@ -758,10 +753,10 @@ namespace ComicReader.Views
                         continue;
                     }
 
-                    await model.Comic.SaveHiddenAsync(db, true);
+                    await model.Comic.SaveHiddenAsync(true);
                 }
 
-                await StartSearch(db);
+                await StartSearch();
             });
         }
 
@@ -769,7 +764,6 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                LockContext db = new LockContext();
                 List<object> selected_items = new List<object>(SearchResultGridView.SelectedItems);
 
                 for (int i = 0; i < selected_items.Count; ++i)
@@ -781,10 +775,10 @@ namespace ComicReader.Views
                         continue;
                     }
 
-                    await model.Comic.SaveHiddenAsync(db, false);
+                    await model.Comic.SaveHiddenAsync(false);
                 }
 
-                await StartSearch(db);
+                await StartSearch();
             });
         }
 

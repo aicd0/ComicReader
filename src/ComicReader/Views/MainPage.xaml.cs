@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -77,7 +77,7 @@ namespace ComicReader.Views
         }
 
         // File activation
-        private async Task<ComicData> GetStartupComic(LockContext db, FileActivatedEventArgs args)
+        private async Task<ComicData> GetStartupComic(FileActivatedEventArgs args)
         {
             StorageFile target_file = (StorageFile)args.Files[0];
 
@@ -90,7 +90,7 @@ namespace ComicReader.Views
 
             if (Common.AppInfoProvider.IsSupportedDocumentExtension(target_file.FileType))
             {
-                comic = await ComicData.Manager.FromLocation(db, target_file.Path);
+                comic = await ComicData.FromLocation(target_file.Path);
 
                 if (comic == null)
                 {
@@ -106,7 +106,7 @@ namespace ComicReader.Views
             }
             else if (Common.AppInfoProvider.IsSupportedArchiveExtension(target_file.FileType))
             {
-                comic = await ComicData.Manager.FromLocation(db, target_file.Path);
+                comic = await ComicData.FromLocation(target_file.Path);
 
                 if (comic == null)
                 {
@@ -117,7 +117,7 @@ namespace ComicReader.Views
             {
                 string dir = target_file.Path;
                 dir = Utils.StringUtils.ParentLocationFromLocation(dir);
-                comic = await ComicData.Manager.FromLocation(db, dir);
+                comic = await ComicData.FromLocation(dir);
 
                 if (comic == null)
                 {
@@ -145,7 +145,7 @@ namespace ComicReader.Views
 
                     foreach (StorageFile file in all_files)
                     {
-                        if (file.Name.ToLower().Equals(ComicData.Manager.ComicInfoFileName))
+                        if (file.Name.ToLower().Equals(ComicData.ComicInfoFileName))
                         {
                             info_file = file;
                         }
@@ -307,10 +307,9 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                var db = new LockContext();
                 if (s_startupFileArgs != null)
                 {
-                    ComicData comic = await GetStartupComic(db, s_startupFileArgs);
+                    ComicData comic = await GetStartupComic(s_startupFileArgs);
                     if (comic != null)
                     {
                         LoadTab(null, PageType.Reader, comic);
@@ -451,14 +450,14 @@ namespace ComicReader.Views
             }
         }
 
-        public static async Task OnFileActivated(LockContext db, FileActivatedEventArgs args)
+        public static async Task OnFileActivated(FileActivatedEventArgs args)
         {
             if (args == null || Current == null || Current.RootTabView == null || !Current.RootTabView.IsLoaded)
             {
                 s_startupFileArgs = args;
                 return;
             }
-            ComicData comic = await Current.GetStartupComic(db, args);
+            ComicData comic = await Current.GetStartupComic(args);
             if (comic != null)
             {
                 Current.LoadTab(null, PageType.Reader, comic);

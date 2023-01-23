@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -22,18 +22,6 @@ namespace ComicReader.Utils
             try
             {
                 action();
-            }
-            catch (Exception e)
-            {
-                throw e;
-            }
-        }
-
-        public static void RunWithNewLockContext(Action<ComicReader.Database.LockContext> action)
-        {
-            try
-            {
-                action(new Database.LockContext());
             }
             catch (Exception e)
             {

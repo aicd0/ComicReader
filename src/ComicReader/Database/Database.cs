@@ -1,4 +1,4 @@
-﻿using Microsoft.Data.Sqlite;
+using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -11,14 +11,8 @@ using Windows.Storage.Streams;
 namespace ComicReader.Database
 {
     using RawTask = Task<Utils.TaskResult>;
-    using SealedTask = Func<Task<Utils.TaskResult>, Utils.TaskResult>;
     using TaskResult = Utils.TaskResult;
     using TaskException = Utils.TaskException;
-
-    public class LockContext
-    {
-        public int ComicTableLockDepth = 0;
-    }
 
     public class DatabaseManager
     {
@@ -42,7 +36,7 @@ namespace ComicReader.Database
             await SqliteDatabaseManager.Init();
             await XmlDatabaseManager.Load();
             await Update();
-            Utils.TaskQueueManager.AppendTask(ComicData.Manager.UpdateSealed(lazy_load: true));
+            Utils.TaskQueueManager.AppendTask(ComicData.UpdateSealed(lazy_load: true));
             return new TaskResult();
         }
 
