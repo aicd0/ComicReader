@@ -1,4 +1,4 @@
-﻿#if DEBUG
+#if DEBUG
 //#define DEBUG_LOG_POINTER
 #endif
 
@@ -21,7 +21,6 @@ using ComicReader.Common;
 using ComicReader.Common.Router;
 using ComicReader.Database;
 using ComicReader.DesignData;
-using System.Threading;
 using ComicReader.Utils.KVDatabase;
 using ComicReader.Common.Constants;
 
@@ -314,7 +313,7 @@ namespace ComicReader.Views
         public override void OnStart(NavigationParams p)
         {
             base.OnStart(p);
-            Shared.NavigationPageShared = (NavigationPageShared)p.shared;
+            Shared.NavigationPageShared = (NavigationPageShared)p.Params;
 
             bool tipShown = KVDatabase.getInstance().getDefaultMethod().GetBoolean(KVLib.TIPS, KEY_TIP_SHOWN, false);
             if (!tipShown)
@@ -736,7 +735,7 @@ namespace ComicReader.Views
             });
         }
 
-        private void OnReaderScrollViewerSizeChanged(ReaderModel control, SizeChangedEventArgs e)
+        private void OnReaderScrollViewerSizeChanged(ReaderModel control)
         {
             control.OnSizeChanged();
         }
@@ -776,12 +775,12 @@ namespace ComicReader.Views
 
         private void OnVerticalReaderScrollViewerSizeChanged(object sender, SizeChangedEventArgs e)
         {
-            OnReaderScrollViewerSizeChanged(VerticalReader, e);
+            OnReaderScrollViewerSizeChanged(VerticalReader);
         }
 
         private void OnHorizontalReaderScrollViewerSizeChanged(object sender, SizeChangedEventArgs e)
         {
-            OnReaderScrollViewerSizeChanged(HorizontalReader, e);
+            OnReaderScrollViewerSizeChanged(HorizontalReader);
         }
 
         private void OnVerticalReaderScrollViewerLoaded(object sender, RoutedEventArgs e)
@@ -1082,7 +1081,7 @@ namespace ComicReader.Views
         private void OnInfoPaneTagClicked(object sender, RoutedEventArgs e)
         {
             TagViewModel ctx = (TagViewModel)((Button)sender).DataContext;
-            MainPage.Current.LoadTab(null, PageType.Search, "<tag: " + ctx.Tag + ">");
+            MainPage.Current.LoadTab(null, SearchPageTrait.Instance, "<tag: " + ctx.Tag + ">");
         }
 
         private void OnEditInfoClick(object sender, RoutedEventArgs e)

@@ -246,9 +246,9 @@ namespace ComicReader.Views
         public override void OnStart(NavigationParams p)
         {
             base.OnStart(p);
-            p.tabId.Tab.Header = Utils.StringResourceProvider.GetResourceString("Settings");
-            p.tabId.Tab.IconSource = new muxc.SymbolIconSource() { Symbol = Symbol.Setting };
-            Shared.MainPageShared = (MainPageShared)p.shared;
+            p.TabId.Tab.Header = Utils.StringResourceProvider.GetResourceString("Settings");
+            p.TabId.Tab.IconSource = new muxc.SymbolIconSource() { Symbol = Symbol.Setting };
+            Shared.MainPageShared = (MainPageShared)p.Params;
         }
 
         public override void OnResume()

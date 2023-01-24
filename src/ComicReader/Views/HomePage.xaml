@@ -1,4 +1,4 @@
-﻿<common:NavigatablePage
+<common:NavigatablePage
     x:Class="ComicReader.Views.HomePage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -202,6 +202,7 @@
                     will result in a layout error (probably a bug from API).
                 -->
                 <mtuuc:AdaptiveGridView
+                    Margin="0,0,-1,0"
                     DesiredWidth="{StaticResource ComicItemVerticalDesiredWidth}"
                     ItemContainerStyle="{StaticResource ComicItemContainerStyle}"
                     ItemHeight="310"

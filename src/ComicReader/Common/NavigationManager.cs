@@ -1,6 +1,5 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
 using muxc = Microsoft.UI.Xaml.Controls;
 
@@ -8,25 +7,25 @@ namespace ComicReader.Common.Router
 {
     internal class NavigationParams
     {
-        public object shared;
-        public TabIdentifier tabId;
+        public object Params;
+        public TabIdentifier TabId;
     }
 
     internal class TabIdentifier
     {
         public muxc.TabViewItem Tab;
-        public PageType pageType;
+        public IPageTrait PageTrait;
         public object RequestArgs;
-        public ITabListener listener;
+        public ITabListener TabListener;
 
         public event Action Selected;
-        public event Action<PageType> PageTypeChanged;
+        public event Action<IPageTrait> PageTraitChanged;
 
         public TabIdentifier()
         {
             Selected += delegate
             {
-                listener?.OnSelected();
+                TabListener?.OnSelected();
             };
         }
 
@@ -37,7 +36,7 @@ namespace ComicReader.Common.Router
 
         public void OnPageTypeChanged()
         {
-            PageTypeChanged?.Invoke(pageType);
+            PageTraitChanged?.Invoke(PageTrait);
         }
     }
 
@@ -62,7 +61,7 @@ namespace ComicReader.Common.Router
 
         private class Scene
         {
-            public PageType pageType;
+            public IPageTrait PageTrait;
             public object RequestedArgs;
             public object Shared;
             public bool Resumed = false;
@@ -90,7 +89,7 @@ namespace ComicReader.Common.Router
         public void OnNavigateTo(ITabListener listener, NavigationEventArgs e)
         {
             NavigationParams navigationParams = (NavigationParams)e.Parameter;
-            TabIdentifier tabId = navigationParams.tabId;
+            TabIdentifier tabId = navigationParams.TabId;
             if (!mTabs.TryGetValue(tabId, out TabInfo tabInfo))
             {
                 tabInfo = new TabInfo();
@@ -108,9 +107,9 @@ namespace ComicReader.Common.Router
 
                 scene = new Scene()
                 {
-                    pageType = tabId.pageType,
+                    PageTrait = tabId.PageTrait,
                     RequestedArgs = tabId.RequestArgs,
-                    Shared = navigationParams.shared,
+                    Shared = navigationParams.Params,
                 };
                 tabInfo.scenes.Add(scene);
                 tabInfo.position++;
@@ -134,9 +133,9 @@ namespace ComicReader.Common.Router
             }
 
             scene = tabInfo.scenes[tabInfo.position];
-            tabId.pageType = scene.pageType;
+            tabId.PageTrait = scene.PageTrait;
             tabId.RequestArgs = scene.RequestedArgs;
-            tabId.listener = listener;
+            tabId.TabListener = listener;
 
 
             if (!listener.SupportFullscreen())

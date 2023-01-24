@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.ComponentModel;
 using Windows.UI.Input;
 using Windows.UI.Xaml;
@@ -7,6 +7,8 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Navigation;
 using ComicReader.Common.Router;
 using ComicReader.Common;
+using ComicReader.Utils;
+using ComicReader.Common.Constants;
 
 namespace ComicReader.Views
 {
@@ -173,6 +175,9 @@ namespace ComicReader.Views
         public NavigationPageShared Shared { get; set; }
         public TabIdentifier TabId { get; set; }
 
+        private double _rootTabHeight = 0;
+        private double _navigationBarHeight = 0;
+
         public NavigationPage()
         {
             Shared = new NavigationPageShared();
@@ -184,7 +189,7 @@ namespace ComicReader.Views
         {
             base.OnStart(p);
             var q = (NavigationParams)p;
-            TabId = q.tabId;
+            TabId = q.TabId;
             TabId.Selected += delegate
             {
                 if (NavigationPageSidePane != null)
@@ -192,26 +197,28 @@ namespace ComicReader.Views
                     NavigationPageSidePane.IsPaneOpen = false;
                 }
             };
-            TabId.PageTypeChanged += delegate (PageType pageType)
+            TabId.PageTraitChanged += delegate (IPageTrait pageTrait)
             {
-                Shared.IsHomePage = pageType == PageType.Home;
-                Shared.IsReaderPage = pageType == PageType.Reader;
+                Shared.IsHomePage = pageTrait is HomePageTrait;
+                Shared.IsReaderPage = pageTrait is ReaderPageTrait;
                 Shared.SetSearchBox("");
+                UpdateTopPadding();
             };
 
-            Shared.MainPageShared = (MainPageShared)q.shared;
+            Shared.MainPageShared = (MainPageShared)q.Params;
             Shared.RefreshPage = RefreshPage;
             Shared.SetSearchBox = SetSearchBox;
         }
 
-        public override void OnResume()
+        public override void OnLoaded(object sender, RoutedEventArgs e)
         {
-            base.OnResume();
-        }
+            base.OnLoaded(sender, e);
 
-        public override void OnPause()
-        {
-            base.OnPause();
+            EventBus.Instance.With<double>(EventId.RootTabHeightChange).Observe(this, delegate (double h)
+            {
+                _rootTabHeight = h;
+                UpdateTopPadding();
+            }, true);
         }
 
         // Common
@@ -220,10 +227,10 @@ namespace ComicReader.Views
             // directly pass parameters to the sub page.
             NavigationParams subParams = new NavigationParams
             {
-                shared = Shared,
-                tabId = TabId,
+                Params = Shared,
+                TabId = TabId,
             };
-            ContentFrame.Navigate(PageTypeUtils.PageTypeToType(TabId.pageType), subParams);
+            ContentFrame.Navigate(TabId.PageTrait.GetPageType(), subParams);
         }
 
         public bool GoBack()
@@ -260,7 +267,29 @@ namespace ComicReader.Views
 
         private void RefreshPage()
         {
-            MainPage.Current.LoadTab(TabId, TabId.pageType, TabId.RequestArgs, try_reuse: false);
+            MainPage.Current.LoadTab(TabId, TabId.PageTrait, TabId.RequestArgs, try_reuse: false);
+        }
+
+        private void OnTopTileSizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            _navigationBarHeight = e.NewSize.Height;
+            EventBus.Instance.With<double>(EventId.NavigationBarHeightChange).Emit(_navigationBarHeight);
+            UpdateTopPadding();
+        }
+
+        private void UpdateTopPadding()
+        {
+            if (TabId.PageTrait.HasTopPadding())
+            {
+                // MainPage has done that job for us.
+                TopTile.Margin = new Thickness(0, 0, 0, 0);
+                ContentGrid.Margin = new Thickness(0, _navigationBarHeight, 0, 0);
+            }
+            else
+            {
+                TopTile.Margin = new Thickness(0, _rootTabHeight, 0, 0);
+                ContentGrid.Margin = new Thickness(0, 0, 0, 0);
+            }
         }
 
         // Search box
@@ -279,7 +308,7 @@ namespace ComicReader.Views
                 return;
             }
 
-            MainPage.Current.LoadTab(TabId, PageType.Search, args.QueryText);
+            MainPage.Current.LoadTab(TabId, SearchPageTrait.Instance, args.QueryText);
         }
 
         // Buttons
@@ -295,7 +324,7 @@ namespace ComicReader.Views
 
         private void OnHomeClick(object sender, RoutedEventArgs e)
         {
-            MainPage.Current.LoadTab(TabId, PageType.Home);
+            MainPage.Current.LoadTab(TabId, HomePageTrait.Instance);
         }
 
         private void OnRefreshClick(object sender, RoutedEventArgs e)
@@ -322,12 +351,12 @@ namespace ComicReader.Views
 
         private void OnMoreSettingsClick(object sender, RoutedEventArgs e)
         {
-            MainPage.Current.LoadTab(null, PageType.Settings);
+            MainPage.Current.LoadTab(null, SettingPageTrait.Instance);
         }
 
         private void OnMoreHelpClick(object sender, RoutedEventArgs e)
         {
-            MainPage.Current.LoadTab(null, PageType.Help);
+            MainPage.Current.LoadTab(null, HelpPageTrait.Instance);
         }
 
         private void OnZoomInClick(object sender, RoutedEventArgs e)

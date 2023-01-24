@@ -15,6 +15,8 @@ using muxc = Microsoft.UI.Xaml.Controls;
 using ComicReader.Common.Router;
 using ComicReader.Database;
 using ComicReader.Common;
+using ComicReader.Common.Constants;
+using ComicReader.Utils;
 
 namespace ComicReader.Views
 {
@@ -44,7 +46,10 @@ namespace ComicReader.Views
         public MainPageShared Shared;
 
         private readonly List<TabIdentifier> _allTabs = new List<TabIdentifier>();
+        private TabIdentifier _currentTab;
         private Grid _tabContainerGrid;
+        private ContentPresenter _tabContentPresenter;
+        private double _rootTabHeight = 0;
 
         public MainPage()
         {
@@ -74,6 +79,25 @@ namespace ComicReader.Views
             };
 
             InitializeComponent();
+        }
+
+        public override void OnLoaded(object sender, RoutedEventArgs e)
+        {
+            base.OnLoaded(sender, e);
+
+            Utils.C0.Run(async delegate
+            {
+                if (s_startupFileArgs != null)
+                {
+                    ComicData comic = await GetStartupComic(s_startupFileArgs);
+                    if (comic != null)
+                    {
+                        LoadTab(null, ReaderPageTrait.Instance, comic);
+                        return;
+                    }
+                }
+                LoadTab(null, HomePageTrait.Instance);
+            });
         }
 
         // File activation
@@ -162,21 +186,21 @@ namespace ComicReader.Views
         }
 
         // New tab
-        private bool TrySwitchToTab(PageType type, object args)
+        private bool TrySwitchToTab(IPageTrait pageTrait, object args)
         {
             foreach (TabIdentifier tab in _allTabs)
             {
-                if (tab.pageType != type)
+                if (tab.PageTrait.GetPageType() != pageTrait.GetPageType())
                 {
                     continue;
                 }
 
-                if (!tab.listener.AllowJump())
+                if (!tab.TabListener.AllowJump())
                 {
                     continue;
                 }
 
-                if (tab.listener.GetUniqueString(args) == tab.listener.GetUniqueString(tab.RequestArgs))
+                if (tab.TabListener.GetUniqueString(args) == tab.TabListener.GetUniqueString(tab.RequestArgs))
                 {
                     RootTabView.SelectedItem = tab.Tab;
                     return true;
@@ -185,7 +209,7 @@ namespace ComicReader.Views
             return false;
         }
 
-        private TabIdentifier AddNewTab(PageType type, object args = null)
+        private TabIdentifier AddNewTab(IPageTrait pageTrait, object args = null)
         {
             // create a new tab and switch to it.
             muxc.TabViewItem new_tab = new muxc.TabViewItem
@@ -193,56 +217,50 @@ namespace ComicReader.Views
                 Header = "Loading...",
                 Content = new Frame()
             };
-            RootTabView.TabItems.Add(new_tab);
-            RootTabView.SelectedItem = new_tab;
-
             TabIdentifier id = new TabIdentifier
             {
                 Tab = new_tab,
-                pageType = type,
+                PageTrait = pageTrait,
                 RequestArgs = args,
             };
-
+            id.PageTraitChanged += OnPageChanged;
             _allTabs.Add(id);
-
+            RootTabView.TabItems.Add(new_tab);
+            RootTabView.SelectedItem = new_tab;
             // remember tab content are not loaded at this moment, further process
             // is required.
             return id;
         }
 
-        public void LoadTab(TabIdentifier tab_id, PageType type, object args = null, bool try_reuse = true)
+        public void LoadTab(TabIdentifier tab_id, IPageTrait pageTrait, object args = null, bool try_reuse = true)
         {
-            // switch to an existed tab if possible
-            if (try_reuse)
+            if (tab_id == null)
             {
-                if (TrySwitchToTab(type, args))
+                // switch to an existed tab if possible
+                if (try_reuse && TrySwitchToTab(pageTrait, args))
                 {
                     return;
                 }
-            }
-
-            // if no tab id provided, create one.
-            if (tab_id == null)
-            {
-                tab_id = AddNewTab(type, args);
+                tab_id = AddNewTab(pageTrait, args);
             }
             else
             {
-                tab_id.pageType = type;
+                tab_id.PageTrait = pageTrait;
                 tab_id.RequestArgs = args;
-                tab_id.listener = null;
+                tab_id.TabListener = null;
             }
+            _currentTab = tab_id;
 
             NavigationParams nav_params = new NavigationParams
             {
-                shared = Shared,
-                tabId = tab_id
+                Params = Shared,
+                TabId = tab_id
             };
 
             Frame frame = (Frame)tab_id.Tab.Content;
 
             // use different loading strategies based on page type.
-            if (type == PageType.Reader || type == PageType.Home || type == PageType.Search)
+            if (pageTrait.HasNavigationBar())
             {
                 // these pages are based on NavigationPage.
                 if (frame.Content == null || frame.Content.GetType() != typeof(NavigationPage))
@@ -259,14 +277,14 @@ namespace ComicReader.Views
             else
             {
                 // these pages are based on MainPage.
-                frame.Navigate(PageTypeUtils.PageTypeToType(type), nav_params);
+                frame.Navigate(pageTrait.GetPageType(), nav_params);
             }
         }
 
         // TabView
         private void OnAddTabButtonClicked(muxc.TabView sender, object args)
         {
-            LoadTab(null, PageType.Home, try_reuse: false);
+            LoadTab(null, HomePageTrait.Instance, try_reuse: false);
         }
 
         private TabIdentifier GetTabId(muxc.TabViewItem tab)
@@ -303,23 +321,6 @@ namespace ComicReader.Views
             }
         }
 
-        private void OnTabViewLoaded(object sender, RoutedEventArgs e)
-        {
-            Utils.C0.Run(async delegate
-            {
-                if (s_startupFileArgs != null)
-                {
-                    ComicData comic = await GetStartupComic(s_startupFileArgs);
-                    if (comic != null)
-                    {
-                        LoadTab(null, PageType.Reader, comic);
-                        return;
-                    }
-                }
-                LoadTab(null, PageType.Home);
-            });
-        }
-
         // Background tasks
         public void SetRootToolTip(string text)
         {
@@ -345,14 +346,35 @@ namespace ComicReader.Views
             {
                 return;
             }
-
             muxc.TabViewItem tab = (muxc.TabViewItem)e.AddedItems[0];
-            TabIdentifier id = GetTabId(tab);
-            if (id == null)
+            _currentTab = GetTabId(tab);
+            System.Diagnostics.Debug.Assert(_currentTab != null);
+            if (_currentTab != null)
+            {
+                OnPageChanged(_currentTab.PageTrait);
+                _currentTab.OnSelected();
+            }
+        }
+
+        private void OnPageChanged(IPageTrait pageTrait)
+        {
+            UpdateTopPadding();
+        }
+
+        private void UpdateTopPadding()
+        {
+            if (_currentTab == null || _tabContentPresenter == null)
             {
                 return;
             }
-            id.OnSelected();
+            if (_currentTab.PageTrait.HasTopPadding())
+            {
+                _tabContentPresenter.Margin = new Thickness(0, _rootTabHeight, 0, 0);
+            }
+            else
+            {
+                _tabContentPresenter.Margin = new Thickness(0, 0, 0, 0);
+            }
         }
 
         private void SetTabViewVisibility(bool visibility)
@@ -369,6 +391,18 @@ namespace ComicReader.Views
         private void OnTabContainerGridLoaded(object sender, RoutedEventArgs e)
         {
             _tabContainerGrid = sender as Grid;
+        }
+
+        private void OnTabContentPresenterLoaded(object sender, RoutedEventArgs e)
+        {
+            _tabContentPresenter = sender as ContentPresenter;
+        }
+
+        private void OnTabContainerGridSizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            _rootTabHeight = e.NewSize.Height;
+            EventBus.Instance.With<double>(EventId.RootTabHeightChange).Emit(_rootTabHeight);
+            UpdateTopPadding();
         }
 
         // Fullscreen
@@ -460,7 +494,7 @@ namespace ComicReader.Views
             ComicData comic = await Current.GetStartupComic(args);
             if (comic != null)
             {
-                Current.LoadTab(null, PageType.Reader, comic);
+                Current.LoadTab(null, ReaderPageTrait.Instance, comic);
             }
         }
     }

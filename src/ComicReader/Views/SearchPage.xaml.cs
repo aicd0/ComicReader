@@ -229,7 +229,7 @@ namespace ComicReader.Views
         public override void OnStart(NavigationParams p)
         {
             base.OnStart(p);
-            Shared.NavigationPageShared = (NavigationPageShared)p.shared;
+            Shared.NavigationPageShared = (NavigationPageShared)p.Params;
             Shared.OnCommandBarSelectAllToggleChanged = OnCommandBarSelectAllToggleChanged;
         }
 
@@ -549,7 +549,7 @@ namespace ComicReader.Views
             {
                 ComicItemViewModel item = (ComicItemViewModel)((FrameworkElement)sender).DataContext;
                 ComicData comic = await ComicData.FromId(item.Comic.Id);
-                MainPage.Current.LoadTab(GetTabId(), PageType.Reader, comic);
+                MainPage.Current.LoadTab(GetTabId(), ReaderPageTrait.Instance, comic);
             });
         }
 
@@ -568,7 +568,7 @@ namespace ComicReader.Views
         private void OnOpenInNewTabClicked(object sender, RoutedEventArgs e)
         {
             ComicItemViewModel item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-            MainPage.Current.LoadTab(null, PageType.Reader, item.Comic);
+            MainPage.Current.LoadTab(null, ReaderPageTrait.Instance, item.Comic);
         }
 
         private void OnAddToFavoritesClicked(object sender, RoutedEventArgs e)

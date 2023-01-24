@@ -24,7 +24,7 @@ namespace ComicReader.Common
 
         public virtual void OnStart(NavigationParams p)
         {
-            mTabId = p.tabId;
+            mTabId = p.TabId;
         }
 
         public override void OnStart(object p)

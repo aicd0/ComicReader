@@ -63,7 +63,7 @@ namespace ComicReader.Views
         public override void OnStart(NavigationParams p)
         {
             base.OnStart(p);
-            Shared.NavigationPageShared = (NavigationPageShared)p.shared;
+            Shared.NavigationPageShared = (NavigationPageShared)p.Params;
         }
 
         public override void OnResume()
@@ -312,18 +312,18 @@ namespace ComicReader.Views
         // Events
         private void OnSeeAllBtClicked(object sender, RoutedEventArgs e)
         {
-            MainPage.Current.LoadTab(GetTabId(), PageType.Search, "<all>");
+            MainPage.Current.LoadTab(GetTabId(), SearchPageTrait.Instance, "<all>");
         }
 
         private void OnSeeHiddenBtClick(object sender, RoutedEventArgs e)
         {
-            MainPage.Current.LoadTab(GetTabId(), PageType.Search, "<hidden>");
+            MainPage.Current.LoadTab(GetTabId(), SearchPageTrait.Instance, "<hidden>");
         }
 
         private void OnOpenInNewTabClicked(object sender, RoutedEventArgs e)
         {
             ComicItemViewModel item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-            MainPage.Current.LoadTab(null, PageType.Reader, item.Comic);
+            MainPage.Current.LoadTab(null, ReaderPageTrait.Instance, item.Comic);
         }
 
         private void OnComicItemTapped(object sender, TappedRoutedEventArgs e)
@@ -333,7 +333,7 @@ namespace ComicReader.Views
                 return;
             }
             ComicItemViewModel item = (ComicItemViewModel)((Grid)sender).DataContext;
-            MainPage.Current.LoadTab(GetTabId(), PageType.Reader, item.Comic);
+            MainPage.Current.LoadTab(GetTabId(), ReaderPageTrait.Instance, item.Comic);
         }
 
         private void OnAddToFavoritesClicked(object sender, RoutedEventArgs e)
@@ -396,7 +396,7 @@ namespace ComicReader.Views
             }
             else
             {
-                MainPage.Current.LoadTab(GetTabId(), PageType.Search, "<dir: " + item.Path + ">");
+                MainPage.Current.LoadTab(GetTabId(), SearchPageTrait.Instance, "<dir: " + item.Path + ">");
             }
         }
 

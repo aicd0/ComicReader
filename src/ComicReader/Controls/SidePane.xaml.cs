@@ -21,8 +21,8 @@ namespace ComicReader.Controls
             
             NavigationParams nav_params = new NavigationParams
             {
-                tabId = Ctx.TabId,
-                shared = Ctx.Shared,
+                TabId = Ctx.TabId,
+                Params = Ctx.Shared,
             };
 
             Type page_type;

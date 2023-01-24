@@ -135,6 +135,7 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Common\Constants\EventId.cs" />
     <Compile Include="Common\Constants\KVLib.cs" />
     <Compile Include="Common\NavigatablePage.cs" />
     <Compile Include="Common\PageType.cs" />
@@ -203,6 +204,7 @@
     <Compile Include="Utils\ArchiveUtils.cs" />
     <Compile Include="Utils\BuilderBase.cs" />
     <Compile Include="Utils\Debug.cs" />
+    <Compile Include="Utils\EventBus.cs" />
     <Compile Include="Utils\KVDatabase\KVDatabase.cs" />
     <Compile Include="Utils\KVDatabase\KVDatabaseLib.cs" />
     <Compile Include="Utils\KVDatabase\KVDatabaseMethod.cs" />

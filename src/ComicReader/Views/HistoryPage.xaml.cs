@@ -57,8 +57,8 @@ namespace ComicReader.Views
         {
             base.OnStart(p);
             var q = (NavigationParams)p;
-            mTabId = q.tabId;
-            Shared.NavigationPageShared = (NavigationPageShared)q.shared;
+            mTabId = q.TabId;
+            Shared.NavigationPageShared = (NavigationPageShared)q.Params;
         }
 
         public override void OnResume()
@@ -129,7 +129,7 @@ namespace ComicReader.Views
             }
             else
             {
-                MainPage.Current.LoadTab(new_tab ? null : mTabId, PageType.Reader, comic);
+                MainPage.Current.LoadTab(new_tab ? null : mTabId, ReaderPageTrait.Instance, comic);
                 Shared.NavigationPageShared.IsSidePaneOpen = false;
             }
         }

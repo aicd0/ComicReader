@@ -16,8 +16,8 @@ namespace ComicReader.Views
         public override void OnStart(NavigationParams p)
         {
             base.OnStart(p);
-            p.tabId.Tab.Header = Utils.StringResourceProvider.GetResourceString("Help");
-            p.tabId.Tab.IconSource = new muxc.SymbolIconSource() { Symbol = Symbol.Help };
+            p.TabId.Tab.Header = Utils.StringResourceProvider.GetResourceString("Help");
+            p.TabId.Tab.IconSource = new muxc.SymbolIconSource() { Symbol = Symbol.Help };
         }
 
         public override void OnResume()

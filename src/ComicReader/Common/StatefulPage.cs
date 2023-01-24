@@ -1,4 +1,5 @@
-﻿using ComicReader.Common.Router;
+using ComicReader.Common.Router;
+using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
 
@@ -17,6 +18,12 @@ namespace ComicReader.Common
     {
         private bool mIsStarted = false;
         private bool mIsResumed = false;
+
+        public StatefulPage()
+        {
+            Loaded += OnLoaded;
+            Unloaded += OnUnloaded;
+        }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
@@ -60,6 +67,14 @@ namespace ComicReader.Common
         }
 
         public virtual void OnResume()
+        {
+        }
+
+        public virtual void OnLoaded(object sender, RoutedEventArgs e)
+        {
+        }
+
+        public virtual void OnUnloaded(object sender, RoutedEventArgs e)
         {
         }
 

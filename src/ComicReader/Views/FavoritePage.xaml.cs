@@ -62,8 +62,8 @@ namespace ComicReader.Views
         {
             base.OnStart(p);
             var q = (NavigationParams)p;
-            mTabId = q.tabId;
-            Shared.NavigationPageShared = (NavigationPageShared)q.shared;
+            mTabId = q.TabId;
+            Shared.NavigationPageShared = (NavigationPageShared)q.Params;
         }
 
         public override void OnResume()
@@ -310,7 +310,7 @@ namespace ComicReader.Views
                     }
                     else
                     {
-                        MainPage.Current.LoadTab(mTabId, PageType.Reader, comic);
+                        MainPage.Current.LoadTab(mTabId, ReaderPageTrait.Instance, comic);
                         Shared.NavigationPageShared.IsSidePaneOpen = false;
                     }
                 }
@@ -428,7 +428,7 @@ namespace ComicReader.Views
             {
                 FavoriteItemViewModel item = (FavoriteItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 ComicData comic = await ComicData.FromId(item.Id);
-                MainPage.Current.LoadTab(null, PageType.Reader, comic);
+                MainPage.Current.LoadTab(null, ReaderPageTrait.Instance, comic);
             });
         }
 
