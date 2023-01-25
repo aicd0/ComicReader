@@ -39,12 +39,12 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <Grid Grid.Row="0" SizeChanged="OnTopTileSizeChanged">
+            <Grid Grid.Row="0">
                 <Grid
                     x:Name="TopTile"
-                    Margin="0,60,0,0"
                     VerticalAlignment="Top"
                     Background="{ThemeResource TabViewItemHeaderBackgroundSelected}"
+                    SizeChanged="OnTopTileSizeChanged"
                     Visibility="{x:Bind Shared.MainPageShared.IsFullscreen, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}">
                     <Grid Margin="0,0,0,1">
                         <Grid>

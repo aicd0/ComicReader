@@ -8,7 +8,7 @@ namespace ComicReader.Common.Router
 
         bool HasNavigationBar();
 
-        bool HasTopPadding();
+        bool ImmersiveMode();
     }
 
     internal class HomePageTrait : IPageTrait
@@ -25,9 +25,9 @@ namespace ComicReader.Common.Router
             return true;
         }
 
-        public bool HasTopPadding()
+        public bool ImmersiveMode()
         {
-            return true;
+            return false;
         }
 
         private static IPageTrait _instance;
@@ -58,9 +58,9 @@ namespace ComicReader.Common.Router
             return true;
         }
 
-        public bool HasTopPadding()
+        public bool ImmersiveMode()
         {
-            return true;
+            return false;
         }
 
         private static IPageTrait _instance;
@@ -91,9 +91,9 @@ namespace ComicReader.Common.Router
             return true;
         }
 
-        public bool HasTopPadding()
+        public bool ImmersiveMode()
         {
-            return false;
+            return true;
         }
 
         private static IPageTrait _instance;
@@ -124,9 +124,9 @@ namespace ComicReader.Common.Router
             return false;
         }
 
-        public bool HasTopPadding()
+        public bool ImmersiveMode()
         {
-            return true;
+            return false;
         }
 
         private static IPageTrait _instance;
@@ -157,9 +157,9 @@ namespace ComicReader.Common.Router
             return false;
         }
 
-        public bool HasTopPadding()
+        public bool ImmersiveMode()
         {
-            return true;
+            return false;
         }
 
         private static IPageTrait _instance;

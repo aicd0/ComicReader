@@ -9,6 +9,7 @@ using ComicReader.Common.Router;
 using ComicReader.Common;
 using ComicReader.Utils;
 using ComicReader.Common.Constants;
+using Windows.UI.Composition;
 
 namespace ComicReader.Views
 {
@@ -219,6 +220,17 @@ namespace ComicReader.Views
                 _rootTabHeight = h;
                 UpdateTopPadding();
             }, true);
+
+            EventBus.Instance.With<double>(EventId.TitleBarOpacity).Observe(this, delegate (double opacity)
+            {
+                TopTile.Opacity = opacity;
+                TopTile.IsHitTestVisible = opacity > 0.5;
+            }, true);
+        }
+
+        public override void OnUnloaded(object sender, RoutedEventArgs e)
+        {
+            base.OnUnloaded(sender, e);
         }
 
         // Common
@@ -279,16 +291,16 @@ namespace ComicReader.Views
 
         private void UpdateTopPadding()
         {
-            if (TabId.PageTrait.HasTopPadding())
+            if (TabId.PageTrait.ImmersiveMode())
+            {
+                TopTile.Margin = new Thickness(0, _rootTabHeight, 0, 0);
+                ContentGrid.Margin = new Thickness(0, 0, 0, 0);
+            }
+            else
             {
                 // MainPage has done that job for us.
                 TopTile.Margin = new Thickness(0, 0, 0, 0);
                 ContentGrid.Margin = new Thickness(0, _navigationBarHeight, 0, 0);
-            }
-            else
-            {
-                TopTile.Margin = new Thickness(0, _rootTabHeight, 0, 0);
-                ContentGrid.Margin = new Thickness(0, 0, 0, 0);
             }
         }
 

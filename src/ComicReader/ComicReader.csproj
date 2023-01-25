@@ -201,6 +201,7 @@
     <Compile Include="DesignData\ReaderSettingViewModel.cs" />
     <Compile Include="DesignData\TagViewModel.cs" />
     <Compile Include="Common\AppInfoProvider.cs" />
+    <Compile Include="Utils\KeyFrameAnimation.cs" />
     <Compile Include="Utils\ArchiveUtils.cs" />
     <Compile Include="Utils\BuilderBase.cs" />
     <Compile Include="Utils\Debug.cs" />

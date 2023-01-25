@@ -17,6 +17,8 @@ using ComicReader.Database;
 using ComicReader.Common;
 using ComicReader.Common.Constants;
 using ComicReader.Utils;
+using Windows.UI.Composition;
+using SharpCompress.Common;
 
 namespace ComicReader.Views
 {
@@ -50,6 +52,8 @@ namespace ComicReader.Views
         private Grid _tabContainerGrid;
         private ContentPresenter _tabContentPresenter;
         private double _rootTabHeight = 0;
+        private double _navigationBarHeight = 0;
+        private Utils.KeyFrameAnimation _titleBarAnimation;
 
         public MainPage()
         {
@@ -98,6 +102,28 @@ namespace ComicReader.Views
                 }
                 LoadTab(null, HomePageTrait.Instance);
             });
+
+            EventBus.Instance.With<double>(EventId.RootTabHeightChange).Observe(this, delegate (double h)
+            {
+                _rootTabHeight = h;
+                EventBus.Instance.With<double>(EventId.TitleBarHeightChange).Emit(_rootTabHeight + _navigationBarHeight);
+                UpdateTopPadding();
+            }, true);
+
+            EventBus.Instance.With<double>(EventId.NavigationBarHeightChange).Observe(this, delegate (double h)
+            {
+                _navigationBarHeight = h;
+                EventBus.Instance.With<double>(EventId.TitleBarHeightChange).Emit(_rootTabHeight + _navigationBarHeight);
+            }, true);
+
+            EventBus.Instance.With<double>(EventId.TitleBarOpacity).Observe(this, delegate (double opacity)
+            {
+                if (_tabContainerGrid != null)
+                {
+                    _tabContainerGrid.Opacity = opacity;
+                    _tabContainerGrid.IsHitTestVisible = opacity > 0.5;
+                }
+            }, true);
         }
 
         // File activation
@@ -359,6 +385,11 @@ namespace ComicReader.Views
         private void OnPageChanged(IPageTrait pageTrait)
         {
             UpdateTopPadding();
+            if (!pageTrait.ImmersiveMode())
+            {
+                _titleBarAnimation?.Stop();
+                EventBus.Instance.With<double>(EventId.TitleBarOpacity).Emit(1.0);
+            }
         }
 
         private void UpdateTopPadding()
@@ -367,14 +398,47 @@ namespace ComicReader.Views
             {
                 return;
             }
-            if (_currentTab.PageTrait.HasTopPadding())
-            {
-                _tabContentPresenter.Margin = new Thickness(0, _rootTabHeight, 0, 0);
-            }
-            else
+            if (_currentTab.PageTrait.ImmersiveMode())
             {
                 _tabContentPresenter.Margin = new Thickness(0, 0, 0, 0);
             }
+            else
+            {
+                _tabContentPresenter.Margin = new Thickness(0, _rootTabHeight, 0, 0);
+            }
+        }
+
+        public void ShowOrHideTitleBar(bool show)
+        {
+            if (_currentTab == null || !_currentTab.PageTrait.ImmersiveMode())
+            {
+                return;
+            }
+            if (_titleBarAnimation == null)
+            {
+                _titleBarAnimation = new Utils.KeyFrameAnimation
+                {
+                    Duration = 0.2,
+                    UpdateCallback = delegate (double value)
+                    {
+                        EventBus.Instance.With<double>(EventId.TitleBarOpacity).Emit(value);
+                    }
+                };
+            }
+            else
+            {
+                _titleBarAnimation.RemoveAllKeyFrames();
+            }
+            _titleBarAnimation.StartValue = _tabContainerGrid.Opacity;
+            if (show)
+            {
+                _titleBarAnimation.InsertKeyFrame(1.0, 1.0);
+            }
+            else
+            {
+                _titleBarAnimation.InsertKeyFrame(1.0, 0.0);
+            }
+            _titleBarAnimation.Start();
         }
 
         private void SetTabViewVisibility(bool visibility)
@@ -400,9 +464,7 @@ namespace ComicReader.Views
 
         private void OnTabContainerGridSizeChanged(object sender, SizeChangedEventArgs e)
         {
-            _rootTabHeight = e.NewSize.Height;
-            EventBus.Instance.With<double>(EventId.RootTabHeightChange).Emit(_rootTabHeight);
-            UpdateTopPadding();
+            EventBus.Instance.With<double>(EventId.RootTabHeightChange).Emit(e.NewSize.Height);
         }
 
         // Fullscreen

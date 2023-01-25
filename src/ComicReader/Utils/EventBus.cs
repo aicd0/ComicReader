@@ -52,8 +52,12 @@ namespace ComicReader.Utils
                     return;
                 }
                 RoutedEventHandler unloadedHandler = null;
-                unloadedHandler = delegate
+                unloadedHandler = delegate (object sender, RoutedEventArgs e)
                 {
+                    if ((sender as Page).IsLoaded)
+                    {
+                        return;
+                    }
                     _observers.Remove(observer);
                     owner.Unloaded -= unloadedHandler;
                 };

@@ -21,8 +21,8 @@ namespace ComicReader.Common
 
         public StatefulPage()
         {
-            Loaded += OnLoaded;
-            Unloaded += OnUnloaded;
+            Loaded += OnLoadedInternal;
+            Unloaded += OnUnloadedInternal;
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -76,6 +76,24 @@ namespace ComicReader.Common
 
         public virtual void OnUnloaded(object sender, RoutedEventArgs e)
         {
+        }
+
+        private void OnLoadedInternal(object sender, RoutedEventArgs e)
+        {
+            if (!(sender as Page).IsLoaded)
+            {
+                return;
+            }
+            OnLoaded(sender, e);
+        }
+
+        private void OnUnloadedInternal(object sender, RoutedEventArgs e)
+        {
+            if ((sender as Page).IsLoaded)
+            {
+                return;
+            }
+            OnUnloaded(sender, e);
         }
 
         private void TryStart(object p)

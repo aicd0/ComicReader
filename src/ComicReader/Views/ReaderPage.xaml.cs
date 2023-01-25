@@ -23,6 +23,8 @@ using ComicReader.Database;
 using ComicReader.DesignData;
 using ComicReader.Utils.KVDatabase;
 using ComicReader.Common.Constants;
+using ComicReader.Utils;
+using Windows.UI.Composition;
 
 namespace ComicReader.Views
 {
@@ -365,6 +367,21 @@ namespace ComicReader.Views
             Shared.ReaderSettings.OnHorizontalContinuousChanged -= HorizontalReader.OnPageRearrangeEventSealed;
             Shared.ReaderSettings.OnVerticalPageArrangementChanged -= VerticalReader.OnPageRearrangeEventSealed;
             Shared.ReaderSettings.OnHorizontalPageArrangementChanged -= HorizontalReader.OnPageRearrangeEventSealed;
+        }
+
+        public override void OnLoaded(object sender, RoutedEventArgs e)
+        {
+            base.OnLoaded(sender, e);
+
+            EventBus.Instance.With<double>(EventId.TitleBarHeightChange).Observe(this, delegate (double h)
+            {
+                TitleBarArea.Height = h;
+            }, true);
+
+            EventBus.Instance.With<double>(EventId.TitleBarOpacity).Observe(this, delegate (double opacity)
+            {
+                BottomGrid.Opacity = opacity;
+            }, true);
         }
 
         public override void OnSelected()
@@ -1135,9 +1152,7 @@ namespace ComicReader.Views
             {
                 return;
             }
-
-            BottomGridStoryboard.Children[0].SetValue(DoubleAnimation.ToProperty, 1.0);
-            BottomGridStoryboard.Begin();
+            MainPage.Current.ShowOrHideTitleBar(true);
             mBottomTileShowed = true;
         }
 
@@ -1175,8 +1190,7 @@ namespace ComicReader.Views
 
         private void BottomGridForceHide()
         {
-            BottomGridStoryboard.Children[0].SetValue(DoubleAnimation.ToProperty, 0.0);
-            BottomGridStoryboard.Begin();
+            MainPage.Current.ShowOrHideTitleBar(false);
             mBottomTileShowed = false;
             mBottomTileHold = false;
         }
@@ -1208,13 +1222,13 @@ namespace ComicReader.Views
             Shared.BottomTilePinned = !Shared.BottomTilePinned;
         }
 
-        private void OnBottomTilePointerEntered(object sender, PointerRoutedEventArgs e)
+        private void OnReaderPointerExited(object sender, PointerRoutedEventArgs e)
         {
             mBottomTilePointerIn = true;
             BottomTileShow();
         }
 
-        private void OnBottomTilePointerExited(object sender, PointerRoutedEventArgs e)
+        private void OnReaderPointerEntered(object sender, PointerRoutedEventArgs e)
         {
             mBottomTilePointerIn = false;
 
