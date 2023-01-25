@@ -51,7 +51,7 @@
                                 TintColor="#202020"
                                 TintLuminosityOpacity="0.85"
                                 TintOpacity="0.8" />
-                            <SolidColorBrush x:Key="TipBackground" Color="#505050" />
+                            <SolidColorBrush x:Key="TipBackground" Color="#373737" />
                         </ResourceDictionary>
                         <ResourceDictionary x:Key="Light">
                             <SolidColorBrush x:Key="ComicInfoSeparatorForeground" Color="#D0D0D0" />
@@ -93,7 +93,7 @@
                                 TintColor="#FFFFFF"
                                 TintLuminosityOpacity="0.85"
                                 TintOpacity="0.8" />
-                            <SolidColorBrush x:Key="TipBackground" Color="#DADADA" />
+                            <SolidColorBrush x:Key="TipBackground" Color="#FFFFFF" />
                         </ResourceDictionary>
                         <ResourceDictionary x:Key="HighContrast">
                             <SolidColorBrush x:Key="ComicInfoSeparatorForeground" Color="#D0D0D0" />

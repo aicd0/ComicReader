@@ -1047,6 +1047,7 @@ namespace ComicReader.Views
             if (InfoPane != null)
             {
                 InfoPane.IsPaneOpen = true;
+                BottomGridForceHide();
             }
         }
 
