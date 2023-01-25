@@ -527,6 +527,18 @@
                     VerticalAlignment="Top"
                     Background="Transparent" />
 
+                <!--  Tips  -->
+                <muxc:InfoBar
+                    x:Name="ReaderTip"
+                    x:Uid="ReaderTip"
+                    Margin="10"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Bottom"
+                    Background="{ThemeResource TipBackground}"
+                    CloseButtonClick="OnReaderTipCloseButtonClick"
+                    IsOpen="False"
+                    Severity="Informational" />
+
                 <!--  Grid Preview  -->
                 <ScrollViewer IsHitTestVisible="{x:Bind Shared.IsGridViewVisible, Mode=OneWay}" Opacity="{x:Bind Shared.IsGridViewVisible, Converter={StaticResource BooleanToDoubleConverter}, Mode=OneWay}">
                     <GridView
@@ -593,83 +605,6 @@
                                 </Grid>
                             </Button>
 
-                            <AppBarSeparator Margin="2.5,0" Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}" />
-
-                            <!--  Zooming  -->
-                            <Button
-                                x:Uid="ZoomInButton"
-                                Click="OnZoomInClick"
-                                IsEnabled="{x:Bind Shared.NavigationPageShared.ZoomInEnabled, Mode=OneWay}"
-                                Style="{StaticResource ReaderBottomTileButtonStyle}"
-                                Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}">
-                                <FontIcon FontSize="15" Glyph="&#xE8A3;" />
-                            </Button>
-                            <Button
-                                x:Uid="ZoomOutButton"
-                                Click="OnZoomOutClick"
-                                IsEnabled="{x:Bind Shared.NavigationPageShared.ZoomOutEnabled, Mode=OneWay}"
-                                Style="{StaticResource ReaderBottomTileButtonStyle}"
-                                Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}">
-                                <FontIcon FontSize="15" Glyph="&#xE71F;" />
-                            </Button>
-
-                            <!--  Add to / Remove from favorites  -->
-                            <Button
-                                Click="OnFavoritesClick"
-                                IsEnabled="{x:Bind Shared.NavigationPageShared.IsExternal, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}"
-                                Style="{StaticResource ReaderBottomTileButtonStyle}"
-                                ToolTipService.ToolTip="{x:Bind Shared.NavigationPageShared.FavoriteButtonToolTip, Mode=OneWay}"
-                                Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}">
-                                <Grid>
-                                    <FontIcon
-                                        FontSize="15"
-                                        Glyph="&#xE734;"
-                                        Visibility="{x:Bind Shared.NavigationPageShared.IsFavorite, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
-                                    <FontIcon
-                                        FontSize="15"
-                                        Foreground="{ThemeResource ReaderBottomTileButtonFillForeground}"
-                                        Glyph="&#xE735;"
-                                        Visibility="{x:Bind Shared.NavigationPageShared.IsFavorite, Mode=OneWay}" />
-                                </Grid>
-                            </Button>
-
-                            <!--  Grid preview toggle  -->
-                            <ToggleButton
-                                x:Uid="AllPagesButton"
-                                IsChecked="{x:Bind Shared.NavigationPageShared.IsPreviewButtonToggled, Mode=TwoWay}"
-                                Style="{StaticResource ReaderBottomTileToggleButtonStyle}"
-                                Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}">
-                                <FontIcon FontSize="15" Glyph="&#xF0E2;" />
-                            </ToggleButton>
-
-                            <!--  Reader settings  -->
-                            <Button
-                                x:Uid="ReaderSettingButton"
-                                Style="{StaticResource ReaderBottomTileButtonStyle}"
-                                Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}">
-                                <Button.Flyout>
-                                    <Flyout>
-                                        <Flyout.FlyoutPresenterStyle>
-                                            <Style TargetType="FlyoutPresenter">
-                                                <Setter Property="CornerRadius" Value="8" />
-                                                <Setter Property="Padding" Value="15,15,15,8" />
-                                            </Style>
-                                        </Flyout.FlyoutPresenterStyle>
-                                        <controls:ReaderSettingPanel DataContext="{x:Bind Shared.ReaderSettings}" />
-                                    </Flyout>
-                                </Button.Flyout>
-                                <FontIcon FontSize="15" Glyph="&#xE713;" />
-                            </Button>
-
-                            <!--  Comic info  -->
-                            <Button
-                                x:Uid="ComicInfoButton"
-                                Click="OnComicInfoClick"
-                                Style="{StaticResource ReaderBottomTileButtonStyle}"
-                                Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}">
-                                <FontIcon FontSize="15" Glyph="&#xE946;" />
-                            </Button>
-
                             <!--  Page indicator  -->
                             <AppBarSeparator Margin="2.5,0" />
 
@@ -683,37 +618,6 @@
                         </StackPanel>
                     </Grid>
                 </Grid>
-
-                <!--  Fullscreen button  -->
-                <Grid HorizontalAlignment="Right" VerticalAlignment="Bottom">
-                    <Button
-                        Click="OnFullscreenBtClicked"
-                        Style="{StaticResource ReaderFullscreenButtonStyle}"
-                        Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}">
-                        <Button.Content>
-                            <FontIcon Glyph="&#xE740;" />
-                        </Button.Content>
-                    </Button>
-                    <Button
-                        Click="OnBackToWindowBtClicked"
-                        Style="{StaticResource ReaderFullscreenButtonStyle}"
-                        Visibility="{x:Bind Shared.NavigationPageShared.MainPageShared.IsFullscreen, Mode=OneWay}">
-                        <Button.Content>
-                            <FontIcon Glyph="&#xE73F;" />
-                        </Button.Content>
-                    </Button>
-                </Grid>
-
-                <!--  Tips  -->
-                <muxc:InfoBar
-                    x:Name="ReaderTip"
-                    x:Uid="ReaderTip"
-                    Margin="5"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Bottom"
-                    CloseButtonClick="OnReaderTipCloseButtonClick"
-                    IsOpen="False"
-                    Severity="Informational" />
             </Grid>
         </SplitView>
     </Grid>

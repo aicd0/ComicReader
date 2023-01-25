@@ -1,4 +1,4 @@
-﻿<common:NavigatablePage
+<common:NavigatablePage
     x:Class="ComicReader.Views.SettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -147,8 +147,6 @@
                                     <controls:HotkeyInfo Key="Page Up" x:Uid="HotkeyPreviousPage" />
                                     <controls:HotkeyInfo Key="Home" x:Uid="HotkeyFirstPage" />
                                     <controls:HotkeyInfo Key="End" x:Uid="HotkeyLastPage" />
-                                    <controls:HotkeyInfo Key="F" x:Uid="HotkeyEnterFullscreen" />
-                                    <controls:HotkeyInfo Key="Esc/F" x:Uid="HotkeyExitFullscreen" />
                                 </StackPanel>
                             </Grid>
                         </controls:SettingExpander.InnerContent>

@@ -22,21 +22,8 @@ using SharpCompress.Common;
 
 namespace ComicReader.Views
 {
-    public class MainPageShared : INotifyPropertyChanged
+    public class MainPageShared
     {
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        private bool m_IsFullscreen;
-        public bool IsFullscreen
-        {
-            get => m_IsFullscreen;
-            set
-            {
-                m_IsFullscreen = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsFullscreen"));
-            }
-        }
-
         public DesignData.ReaderSettingViewModel ReaderSettings = new DesignData.ReaderSettingViewModel();
     }
 
@@ -59,11 +46,7 @@ namespace ComicReader.Views
         {
             Current = this;
 
-            Shared = new MainPageShared
-            {
-                IsFullscreen = false
-            };
-
+            Shared = new MainPageShared();
             Shared.ReaderSettings.IsVertical = Database.XmlDatabase.Settings.VerticalReading;
             Shared.ReaderSettings.IsLeftToRight = Database.XmlDatabase.Settings.LeftToRight;
             Shared.ReaderSettings.IsVerticalContinuous = Database.XmlDatabase.Settings.VerticalContinuous;
@@ -76,11 +59,6 @@ namespace ComicReader.Views
             Shared.ReaderSettings.OnHorizontalContinuousChanged += SaveReaderSettingsEventSealed;
             Shared.ReaderSettings.OnVerticalPageArrangementChanged += SaveReaderSettingsEventSealed;
             Shared.ReaderSettings.OnHorizontalPageArrangementChanged += SaveReaderSettingsEventSealed;
-
-            NavigationManager.GetInstance().OnExitFullscreen += delegate
-            {
-                ExitFullscreen();
-            };
 
             InitializeComponent();
         }
@@ -467,46 +445,6 @@ namespace ComicReader.Views
             EventBus.Instance.With<double>(EventId.RootTabHeightChange).Emit(e.NewSize.Height);
         }
 
-        // Fullscreen
-        public bool EnterFullscreen()
-        {
-            if (Shared.IsFullscreen)
-            {
-                return true;
-            }
-
-            if (!ApplicationView.GetForCurrentView().TryEnterFullScreenMode())
-            {
-                return false;
-            }
-
-            Shared.IsFullscreen = true;
-            SetTabViewVisibility(false);
-            return true;
-        }
-
-        public bool ExitFullscreen()
-        {
-            if (!Shared.IsFullscreen)
-            {
-                return false;
-            }
-
-            ApplicationView.GetForCurrentView().ExitFullScreenMode();
-            Shared.IsFullscreen = false;
-            SetTabViewVisibility(true);
-            return true;
-        }
-
-        private void OnRootGridSizeChanged(object sender, SizeChangedEventArgs e)
-        {
-            // make IsFullscreen consistent with the actual state.
-            if (!ApplicationView.GetForCurrentView().IsFullScreenMode)
-            {
-                ExitFullscreen();
-            }
-        }
-
         // Reader settings
         private void SaveReaderSettingsEventSealed()
         {
@@ -532,9 +470,6 @@ namespace ComicReader.Views
             bool handled;
             switch (e.Key)
             {
-                case Windows.System.VirtualKey.Escape:
-                    handled = ExitFullscreen();
-                    break;
                 default:
                     handled = false;
                     break;

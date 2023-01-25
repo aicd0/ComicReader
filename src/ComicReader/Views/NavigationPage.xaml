@@ -44,8 +44,7 @@
                     x:Name="TopTile"
                     VerticalAlignment="Top"
                     Background="{ThemeResource TabViewItemHeaderBackgroundSelected}"
-                    SizeChanged="OnTopTileSizeChanged"
-                    Visibility="{x:Bind Shared.MainPageShared.IsFullscreen, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}">
+                    SizeChanged="OnTopTileSizeChanged">
                     <Grid Margin="0,0,0,1">
                         <Grid>
                             <Grid.ColumnDefinitions>

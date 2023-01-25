@@ -285,11 +285,6 @@ namespace ComicReader.Views
             return true;
         }
 
-        public override bool SupportFullscreen()
-        {
-            return false;
-        }
-
         // utilities
         private async Task Update()
         {

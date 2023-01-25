@@ -1,4 +1,4 @@
-﻿using ComicReader.Common.Router;
+using ComicReader.Common.Router;
 using Windows.UI.Input;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Input;
@@ -51,11 +51,6 @@ namespace ComicReader.Common
         public virtual bool AllowJump()
         {
             return true;
-        }
-
-        public virtual bool SupportFullscreen()
-        {
-            return false;
         }
 
         protected TabIdentifier GetTabId()

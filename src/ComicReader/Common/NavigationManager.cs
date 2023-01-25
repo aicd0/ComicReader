@@ -47,8 +47,6 @@ namespace ComicReader.Common.Router
         string GetUniqueString(object args);
 
         bool AllowJump();
-
-        bool SupportFullscreen();
     }
 
     internal class NavigationManager
@@ -69,7 +67,6 @@ namespace ComicReader.Common.Router
 
         private static NavigationManager mInstance;
         private event Action mPostTasks;
-        public event Action OnExitFullscreen;
 
         private readonly Dictionary<TabIdentifier, TabInfo> mTabs = new Dictionary<TabIdentifier, TabInfo>();
 
@@ -137,11 +134,6 @@ namespace ComicReader.Common.Router
             tabId.RequestArgs = scene.RequestedArgs;
             tabId.TabListener = listener;
 
-
-            if (!listener.SupportFullscreen())
-            {
-                mPostTasks += delegate { OnExitFullscreen?.Invoke(); };
-            }
             mPostTasks += delegate { tabId.OnPageTypeChanged(); };
         }
 

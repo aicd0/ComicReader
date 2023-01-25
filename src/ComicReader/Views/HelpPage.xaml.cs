@@ -1,4 +1,4 @@
-﻿using ComicReader.Common;
+using ComicReader.Common;
 using ComicReader.Common.Router;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
@@ -42,11 +42,6 @@ namespace ComicReader.Views
         public override bool AllowJump()
         {
             return true;
-        }
-
-        public override bool SupportFullscreen()
-        {
-            return false;
         }
     }
 }

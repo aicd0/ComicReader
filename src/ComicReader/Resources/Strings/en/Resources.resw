@@ -557,12 +557,6 @@ Category2: tag4/tag5
   <data name="KeyboardShortcutsExpander.Header" xml:space="preserve">
     <value>Keyboard shortcuts</value>
   </data>
-  <data name="HotkeyEnterFullscreen.Header" xml:space="preserve">
-    <value>Enter fullscreen mode</value>
-  </data>
-  <data name="HotkeyExitFullscreen.Header" xml:space="preserve">
-    <value>Exit fullscreen mode</value>
-  </data>
   <data name="HotkeyFirstPage.Header" xml:space="preserve">
     <value>Go to first page</value>
   </data>

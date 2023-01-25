@@ -557,12 +557,6 @@
   <data name="KeyboardShortcutsExpander.Header" xml:space="preserve">
     <value>热键</value>
   </data>
-  <data name="HotkeyEnterFullscreen.Header" xml:space="preserve">
-    <value>进入全屏模式</value>
-  </data>
-  <data name="HotkeyExitFullscreen.Header" xml:space="preserve">
-    <value>退出全屏模式</value>
-  </data>
   <data name="HotkeyFirstPage.Header" xml:space="preserve">
     <value>跳转到第一页</value>
   </data>

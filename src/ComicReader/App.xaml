@@ -51,6 +51,7 @@
                                 TintColor="#202020"
                                 TintLuminosityOpacity="0.85"
                                 TintOpacity="0.8" />
+                            <SolidColorBrush x:Key="TipBackground" Color="#505050" />
                         </ResourceDictionary>
                         <ResourceDictionary x:Key="Light">
                             <SolidColorBrush x:Key="ComicInfoSeparatorForeground" Color="#D0D0D0" />
@@ -92,6 +93,7 @@
                                 TintColor="#FFFFFF"
                                 TintLuminosityOpacity="0.85"
                                 TintOpacity="0.8" />
+                            <SolidColorBrush x:Key="TipBackground" Color="#DADADA" />
                         </ResourceDictionary>
                         <ResourceDictionary x:Key="HighContrast">
                             <SolidColorBrush x:Key="ComicInfoSeparatorForeground" Color="#D0D0D0" />
@@ -117,6 +119,7 @@
                             <SolidColorBrush x:Key="TabViewItemHeaderBackgroundSelected" Color="#FAF8FC" />
                             <SolidColorBrush x:Key="TagButtonBackground" Color="#DADADA" />
                             <SolidColorBrush x:Key="TitleBarBackground" Color="#FFFFFF" />
+                            <SolidColorBrush x:Key="TipBackground" Color="#DADADA" />
                         </ResourceDictionary>
                     </ResourceDictionary.ThemeDictionaries>
 

@@ -15,7 +15,6 @@ using Windows.UI.Input;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Media.Imaging;
 using ComicReader.Common;
 using ComicReader.Common.Router;
@@ -24,7 +23,6 @@ using ComicReader.DesignData;
 using ComicReader.Utils.KVDatabase;
 using ComicReader.Common.Constants;
 using ComicReader.Utils;
-using Windows.UI.Composition;
 
 namespace ComicReader.Views
 {
@@ -267,7 +265,7 @@ namespace ComicReader.Views
         private ReaderModel HorizontalReader { get; set; }
         private ObservableCollection<ReaderImagePreviewViewModel> PreviewDataSource { get; set; }
 
-        private ComicData mComic = null;
+        private ComicData _comic;
 
         // Pointer events
         private readonly GestureRecognizer mGestureRecognizer = new GestureRecognizer();
@@ -404,15 +402,10 @@ namespace ComicReader.Views
             return true;
         }
 
-        public override bool SupportFullscreen()
-        {
-            return true;
-        }
-
         // Load
         private async Task LoadComic(ComicData comic)
         {
-            if (comic == null || comic == mComic)
+            if (comic == null || comic == _comic)
             {
                 return;
             }
@@ -436,24 +429,24 @@ namespace ComicReader.Views
                     BottomTileHide(5000);
                 };
 
-                mComic = comic;
-                VerticalReader.Comic = mComic;
-                HorizontalReader.Comic = mComic;
+                _comic = comic;
+                VerticalReader.Comic = _comic;
+                HorizontalReader.Comic = _comic;
 
-                if (!mComic.IsExternal)
+                if (!_comic.IsExternal)
                 {
                     // Mark as read.
-                    mComic.SetAsRead();
+                    _comic.SetAsRead();
 
                     // Add to history
-                    await HistoryDataManager.Add(mComic.Id, mComic.Title1, true);
+                    await HistoryDataManager.Add(_comic.Id, _comic.Title1, true);
 
                     // Update image files.
-                    TaskResult result = await mComic.UpdateImages(cover_only: false, reload: true);
+                    TaskResult result = await _comic.UpdateImages(cover_only: false, reload: true);
 
                     if (!result.Successful)
                     {
-                        Log("Failed to load images of '" + mComic.Location + "'. " + result.ExceptionType.ToString());
+                        Log("Failed to load images of '" + _comic.Location + "'. " + result.ExceptionType.ToString());
                         Shared.ReaderStatus = ReaderStatusEnum.Error;
                         return;
                     }
@@ -463,13 +456,13 @@ namespace ComicReader.Views
                 await LoadComicInfo();
 
                 // Load image frames.
-                if (!mComic.IsExternal)
+                if (!_comic.IsExternal)
                 {
                     // Set initial page.
-                    reader.InitialPage = mComic.LastPosition;
+                    reader.InitialPage = _comic.LastPosition;
 
                     // Load frames.
-                    for (int i = 0; i < mComic.ImageAspectRatios.Count; ++i)
+                    for (int i = 0; i < _comic.ImageAspectRatios.Count; ++i)
                     {
                         await VerticalReader.LoadFrame(i);
                         await HorizontalReader.LoadFrame(i);
@@ -506,7 +499,7 @@ namespace ComicReader.Views
             });
 
             List<Utils.ImageLoader.Token> preview_img_loader_tokens = new List<Utils.ImageLoader.Token>();
-            ComicData comic = mComic; // Stores locally.
+            ComicData comic = _comic; // Stores locally.
             Utils.Stopwatch save_timer = new Utils.Stopwatch();
 
             for (int i = 0; i < comic.ImageCount; ++i)
@@ -574,49 +567,49 @@ namespace ComicReader.Views
 
         private async Task LoadComicInfo()
         {
-            if (mComic == null)
+            if (_comic == null)
             {
                 return;
             }
 
-            Shared.NavigationPageShared.IsExternal = mComic.IsExternal;
+            Shared.NavigationPageShared.IsExternal = _comic.IsExternal;
 
-            if (mComic.Title1.Length == 0)
+            if (_comic.Title1.Length == 0)
             {
-                Shared.ComicTitle1 = mComic.Title;
+                Shared.ComicTitle1 = _comic.Title;
             }
             else
             {
-                Shared.ComicTitle1 = mComic.Title1;
-                Shared.ComicTitle2 = mComic.Title2;
+                Shared.ComicTitle1 = _comic.Title1;
+                Shared.ComicTitle2 = _comic.Title2;
             }
 
-            Shared.ComicDir = mComic.Location;
-            Shared.CanDirOpenInFileExplorer = mComic is ComicFolderData;
-            Shared.IsEditable = mComic.IsEditable;
+            Shared.ComicDir = _comic.Location;
+            Shared.CanDirOpenInFileExplorer = _comic is ComicFolderData;
+            Shared.IsEditable = _comic.IsEditable;
             Shared.Progress = "";
 
             LoadComicTag();
 
-            if (!mComic.IsExternal)
+            if (!_comic.IsExternal)
             {
-                Shared.NavigationPageShared.IsFavorite = await FavoriteDataManager.FromId(mComic.Id) != null;
-                Shared.Rating = mComic.Rating;
+                Shared.NavigationPageShared.IsFavorite = await FavoriteDataManager.FromId(_comic.Id) != null;
+                Shared.Rating = _comic.Rating;
             }
         }
 
         private void LoadComicTag()
         {
-            if (mComic == null)
+            if (_comic == null)
             {
                 return;
             }
 
             ObservableCollection<TagCollectionViewModel> new_collection = new ObservableCollection<TagCollectionViewModel>();
 
-            for (int i = 0; i < mComic.Tags.Count; ++i)
+            for (int i = 0; i < _comic.Tags.Count; ++i)
             {
-                TagData tags = mComic.Tags[i];
+                TagData tags = _comic.Tags[i];
                 TagCollectionViewModel tags_model = new TagCollectionViewModel(tags.Name);
 
                 foreach (string tag in tags.Tags)
@@ -695,7 +688,7 @@ namespace ComicReader.Views
 
             if (save)
             {
-                mComic.SaveProgress(progress, reader.PageSource);
+                _comic.SaveProgress(progress, reader.PageSource);
             }
         }
 
@@ -1004,16 +997,6 @@ namespace ComicReader.Views
             ReaderSetZoom(-1);
         }
 
-        private void OnZoomInClick(object sender, RoutedEventArgs e)
-        {
-            ZoomIn();
-        }
-
-        private void OnZoomOutClick(object sender, RoutedEventArgs e)
-        {
-            ZoomOut();
-        }
-
         // Favorites
         public async Task SetIsFavorite(bool is_favorite)
         {
@@ -1026,11 +1009,11 @@ namespace ComicReader.Views
 
             if (is_favorite)
             {
-                await FavoriteDataManager.Add(mComic.Id, mComic.Title1, final: true);
+                await FavoriteDataManager.Add(_comic.Id, _comic.Title1, final: true);
             }
             else
             {
-                await FavoriteDataManager.RemoveWithId(mComic.Id, final: true);
+                await FavoriteDataManager.RemoveWithId(_comic.Id, final: true);
             }
         }
 
@@ -1058,11 +1041,6 @@ namespace ComicReader.Views
             });
         }
 
-        private void OnFavoritesClick(object sender, RoutedEventArgs e)
-        {
-            OnSwitchFavorites();
-        }
-
         // Info Pane
         public void ExpandInfoPane()
         {
@@ -1072,21 +1050,16 @@ namespace ComicReader.Views
             }
         }
 
-        private void OnComicInfoClick(object sender, RoutedEventArgs e)
-        {
-            ExpandInfoPane();
-        }
-
         private void OnRatingControlValueChanged(muxc.RatingControl sender, object args)
         {
-            mComic.SaveRating((int)sender.Value);
+            _comic.SaveRating((int)sender.Value);
         }
 
         private void OnDirectoryTapped(object sender, TappedRoutedEventArgs e)
         {
             Utils.C0.Run(async delegate
             {
-                StorageFolder folder = await Utils.Storage.TryGetFolder(mComic.Location);
+                StorageFolder folder = await Utils.Storage.TryGetFolder(_comic.Location);
 
                 if (folder != null)
                 {
@@ -1105,12 +1078,12 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                if (mComic == null)
+                if (_comic == null)
                 {
                     return;
                 }
 
-                EditComicInfoDialog dialog = new EditComicInfoDialog(mComic);
+                EditComicInfoDialog dialog = new EditComicInfoDialog(_comic);
                 ContentDialogResult result = await dialog.ShowAsync();
 
                 if (result == ContentDialogResult.Primary)
@@ -1118,31 +1091,6 @@ namespace ComicReader.Views
                     await LoadComicInfo();
                 }
             });
-        }
-
-        // Fullscreen
-        private void EnterFullscreen()
-        {
-            MainPage.Current.EnterFullscreen();
-            BottomTileShow();
-            BottomTileHide(5000);
-        }
-
-        private void ExitFullscreen()
-        {
-            MainPage.Current.ExitFullscreen();
-            BottomTileShow();
-            BottomTileHide(5000);
-        }
-
-        private void OnFullscreenBtClicked(object sender, RoutedEventArgs e)
-        {
-            EnterFullscreen();
-        }
-
-        private void OnBackToWindowBtClicked(object sender, RoutedEventArgs e)
-        {
-            ExitFullscreen();
         }
 
         // Bottom Tile
@@ -1310,17 +1258,6 @@ namespace ComicReader.Views
 
                     case VirtualKey.Space:
                         await reader.MoveFrame(1);
-                        break;
-
-                    case VirtualKey.F:
-                        if (Shared.NavigationPageShared.MainPageShared.IsFullscreen)
-                        {
-                            ExitFullscreen();
-                        }
-                        else
-                        {
-                            EnterFullscreen();
-                        }
                         break;
 
                     default:
