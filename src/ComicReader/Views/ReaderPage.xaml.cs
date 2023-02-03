@@ -302,6 +302,7 @@ namespace ComicReader.Views
                 GestureSettings.ManipulationTranslateY |
                 GestureSettings.ManipulationTranslateInertia |
                 GestureSettings.ManipulationScale;
+            mGestureRecognizer.InertiaTranslationDeceleration = 0.002F;
             mGestureRecognizer.Tapped += OnReaderTapped;
             mGestureRecognizer.ManipulationStarted += OnReaderManipulationStarted;
             mGestureRecognizer.ManipulationUpdated += OnReaderManipulationUpdated;
