@@ -1173,12 +1173,23 @@ namespace ComicReader.Views
 
         private void OnReaderPointerExited(object sender, PointerRoutedEventArgs e)
         {
+            if (e.Pointer.PointerDeviceType != Windows.Devices.Input.PointerDeviceType.Mouse)
+            {
+                return;
+            }
+
             mBottomTilePointerIn = true;
             BottomTileShow();
         }
 
         private void OnReaderPointerEntered(object sender, PointerRoutedEventArgs e)
         {
+            if (e.Pointer.PointerDeviceType != Windows.Devices.Input.PointerDeviceType.Mouse)
+            {
+                mBottomTilePointerIn = false;
+                return;
+            }
+
             mBottomTilePointerIn = false;
 
             if (!mBottomTileShowed || mBottomTileHold)
