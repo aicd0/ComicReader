@@ -1,4 +1,4 @@
-﻿#define DEBUG_LOG_LOAD
+#define DEBUG_LOG_LOAD
 #if DEBUG
 //#define DEBUG_LOG_JUMP
 //#define DEBUG_LOG_MANIPULATION
@@ -1036,20 +1036,20 @@ namespace ComicReader.Common
 
 #if DEBUG_LOG_JUMP
             Log("ParamIn: "
-                + "Z=" + ctx.Zoom.ToString() + ","
-                + "H=" + ctx.HorizontalOffset.ToString() + ","
-                + "V=" + ctx.VerticalOffset.ToString() + ","
-                + "D=" + ctx.DisableAnimation.ToString());
+                + "Z=" + ctx.zoom.ToString() + ","
+                + "H=" + ctx.horizontalOffset.ToString() + ","
+                + "V=" + ctx.verticalOffset.ToString() + ","
+                + "D=" + ctx.disableAnimation.ToString());
 #endif
 
             SetScrollViewerZoom(ctx, out float? zoom_out);
 
 #if DEBUG_LOG_JUMP
             Log("ParamSetZoom: "
-                + "Z=" + ctx.Zoom.ToString() + ","
+                + "Z=" + ctx.zoom.ToString() + ","
                 + "Zo=" + zoom_out.ToString() + ","
-                + "H=" + ctx.HorizontalOffset.ToString() + ","
-                + "V=" + ctx.VerticalOffset.ToString());
+                + "H=" + ctx.horizontalOffset.ToString() + ","
+                + "V=" + ctx.verticalOffset.ToString());
 #endif
 
             if (!ChangeView(zoom_out, ctx.horizontalOffset, ctx.verticalOffset, ctx.disableAnimation))
