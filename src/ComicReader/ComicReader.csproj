@@ -210,6 +210,7 @@
     <Compile Include="Utils\KVDatabase\KVDatabaseLib.cs" />
     <Compile Include="Utils\KVDatabase\KVDatabaseMethod.cs" />
     <Compile Include="Utils\KVDatabase\KVDatabaseMethodLiteDB.cs" />
+    <Compile Include="Utils\ScreenUtils.cs" />
     <Compile Include="Utils\StorageItemSearchEngine.cs" />
     <Compile Include="Utils\ImageLoader.cs" />
     <Compile Include="Utils\Stopwatch.cs" />

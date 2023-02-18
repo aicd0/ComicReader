@@ -1135,6 +1135,10 @@ namespace ComicReader.Views
             {
                 return;
             }
+            if (!ScreenUtils.IsPointerInApp())
+            {
+                return;
+            }
 
             mBottomTilePointerIn = true;
             BottomTileShow();
@@ -1142,14 +1146,12 @@ namespace ComicReader.Views
 
         private void OnReaderPointerEntered(object sender, PointerRoutedEventArgs e)
         {
-            if (e.Pointer.PointerDeviceType != Windows.Devices.Input.PointerDeviceType.Mouse)
-            {
-                mBottomTilePointerIn = false;
-                return;
-            }
-
             mBottomTilePointerIn = false;
 
+            if (e.Pointer.PointerDeviceType != Windows.Devices.Input.PointerDeviceType.Mouse)
+            {
+                return;
+            }
             if (!mBottomTileShowed || mBottomTileHold)
             {
                 return;
