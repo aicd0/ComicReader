@@ -147,27 +147,6 @@
                             Orientation="Horizontal"
                             Visibility="{x:Bind Shared.IsReaderPage, Mode=OneWay}">
 
-                            <!--  Zoom in/out  -->
-                            <AppBarButton
-                                x:Uid="ZoomInButton"
-                                Click="OnZoomInClick"
-                                IsEnabled="{x:Bind Shared.ZoomInEnabled, Mode=OneWay}"
-                                Style="{StaticResource NavigationPageTopTileAppBarButton}">
-                                <AppBarButton.Content>
-                                    <FontIcon Glyph="&#xE8A3;" />
-                                </AppBarButton.Content>
-                            </AppBarButton>
-
-                            <AppBarButton
-                                x:Uid="ZoomOutButton"
-                                Click="OnZoomOutClick"
-                                IsEnabled="{x:Bind Shared.ZoomOutEnabled, Mode=OneWay}"
-                                Style="{StaticResource NavigationPageTopTileAppBarButton}">
-                                <AppBarButton.Content>
-                                    <FontIcon Glyph="&#xE71F;" />
-                                </AppBarButton.Content>
-                            </AppBarButton>
-
                             <!--  Add to favorites  -->
                             <AppBarButton
                                 Click="OnAddToFavoritesClick"

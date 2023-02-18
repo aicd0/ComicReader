@@ -1063,8 +1063,6 @@ namespace ComicReader.Common
             }
 
             Zoom = ctx.zoom.Value;
-            m_shared.NavigationPageShared.ZoomInEnabled = Zoom < MaxZoom - 1.0f;
-            m_shared.NavigationPageShared.ZoomOutEnabled = Zoom > MinZoom + 1.0f;
             AdjustParallelOffset();
             return true;
         }

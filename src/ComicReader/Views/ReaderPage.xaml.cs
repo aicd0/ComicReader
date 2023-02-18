@@ -328,8 +328,6 @@ namespace ComicReader.Views
             base.OnResume();
             Shared.NavigationPageShared.OnKeyDown += OnKeyDown;
             Shared.NavigationPageShared.OnSwitchFavorites += OnSwitchFavorites;
-            Shared.NavigationPageShared.OnZoomIn += ZoomIn;
-            Shared.NavigationPageShared.OnZoomOut += ZoomOut;
             Shared.NavigationPageShared.OnPreviewModeChanged += Shared.UpdateReaderUI;
             Shared.NavigationPageShared.OnExpandComicInfoPane += ExpandInfoPane;
             Shared.ReaderSettings.OnVerticalChanged += OnReaderSwitched;
@@ -357,8 +355,6 @@ namespace ComicReader.Views
             base.OnPause();
             Shared.NavigationPageShared.OnKeyDown -= OnKeyDown;
             Shared.NavigationPageShared.OnSwitchFavorites -= OnSwitchFavorites;
-            Shared.NavigationPageShared.OnZoomIn -= ZoomIn;
-            Shared.NavigationPageShared.OnZoomOut -= ZoomOut;
             Shared.NavigationPageShared.OnPreviewModeChanged -= Shared.UpdateReaderUI;
             Shared.NavigationPageShared.OnExpandComicInfoPane -= ExpandInfoPane;
             Shared.ReaderSettings.OnVerticalChanged -= OnReaderSwitched;
@@ -957,45 +953,6 @@ namespace ComicReader.Views
             {
                 await reader.OnReaderManipulationCompleted(e);
             });
-        }
-
-        // Zooming
-        public void ReaderSetZoom(int level)
-        {
-            ReaderModel reader = GetCurrentReader();
-
-            if (reader == null)
-            {
-                return;
-            }
-
-            double zoom = reader.Zoom;
-            const double scale = 1.2;
-
-            for (int i = 0; i < level; ++i)
-            {
-                zoom *= scale;
-            }
-
-            for (int i = 0; i > level; --i)
-            {
-                zoom /= scale;
-            }
-
-            ReaderModel.ScrollManager.BeginTransaction(reader)
-                .Zoom((float)zoom)
-                .EnableAnimation()
-                .Commit();
-        }
-
-        private void ZoomIn()
-        {
-            ReaderSetZoom(1);
-        }
-
-        private void ZoomOut()
-        {
-            ReaderSetZoom(-1);
         }
 
         // Favorites

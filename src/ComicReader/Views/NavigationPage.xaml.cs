@@ -102,28 +102,6 @@ namespace ComicReader.Views
             }
         }
 
-        private bool m_ZoomInEnabled;
-        public bool ZoomInEnabled
-        {
-            get => m_ZoomInEnabled;
-            set
-            {
-                m_ZoomInEnabled = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ZoomInEnabled"));
-            }
-        }
-
-        private bool m_ZoomOutEnabled;
-        public bool ZoomOutEnabled
-        {
-            get => m_ZoomOutEnabled;
-            set
-            {
-                m_ZoomOutEnabled = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ZoomOutEnabled"));
-            }
-        }
-
         private bool m_IsExternal;
         public bool IsExternal
         {
@@ -165,8 +143,6 @@ namespace ComicReader.Views
         public DesignData.ReaderSettingViewModel ReaderSettings => MainPageShared.ReaderSettings;
 
         public Action OnSwitchFavorites;
-        public Action OnZoomIn;
-        public Action OnZoomOut;
         public Action OnPreviewModeChanged;
         public Action OnExpandComicInfoPane;
     }
@@ -369,16 +345,6 @@ namespace ComicReader.Views
         private void OnMoreHelpClick(object sender, RoutedEventArgs e)
         {
             MainPage.Current.LoadTab(null, HelpPageTrait.Instance);
-        }
-
-        private void OnZoomInClick(object sender, RoutedEventArgs e)
-        {
-            Shared.OnZoomIn?.Invoke();
-        }
-
-        private void OnZoomOutClick(object sender, RoutedEventArgs e)
-        {
-            Shared.OnZoomOut?.Invoke();
         }
 
         private void OnAddToFavoritesClick(object sender, RoutedEventArgs e)

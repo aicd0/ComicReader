@@ -506,12 +506,6 @@
   <data name="WatchingFolders.Text" xml:space="preserve">
     <value>目前，您的仓库包含如下文件夹：</value>
   </data>
-  <data name="ZoomInButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>放大</value>
-  </data>
-  <data name="ZoomOutButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>缩小</value>
-  </data>
   <data name="AppDescription" xml:space="preserve">
     <value>漫画阅读器</value>
   </data>
