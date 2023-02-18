@@ -473,7 +473,7 @@
                             VerticalAlignment="Center"
                             FontSize="14"
                             FontWeight="SemiBold"
-                            Text="? / ?" />
+                            Text="- / -" />
                     </StackPanel>
                 </Grid>
             </Grid>
