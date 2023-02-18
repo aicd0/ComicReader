@@ -1,3 +1,8 @@
+using ComicReader.Database;
+using ComicReader.Views;
+using Microsoft.AppCenter;
+using Microsoft.AppCenter.Analytics;
+using Microsoft.AppCenter.Crashes;
 using System;
 using System.Threading.Tasks;
 using Windows.ApplicationModel;
@@ -9,8 +14,6 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
 using Windows.UI.ViewManagement;
-using ComicReader.Database;
-using ComicReader.Views;
 
 namespace ComicReader
 {
@@ -24,15 +27,20 @@ namespace ComicReader
         {
             // get and apply the appearance setting.
             object appearance_setting = ApplicationData.Current.LocalSettings.Values[Views.SettingsPage.AppearanceKey];
-
             if (appearance_setting != null)
             {
                 Current.RequestedTheme = (ApplicationTheme)(int)appearance_setting;
             }
 
             InitializeComponent();
+
             Suspending += OnSuspending;
             CoreApplication.EnablePrelaunch(true);
+
+            if (Keys.AppSecret.Length > 0)
+            {
+                AppCenter.Start(Keys.AppSecret, typeof(Analytics), typeof(Crashes));
+            }
         }
 
         private async Task Startup(bool prelaunch_activated)
