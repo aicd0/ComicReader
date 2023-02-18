@@ -279,348 +279,367 @@
     </Page.Resources>
 
     <Grid>
-        <SplitView
-            x:Name="InfoPane"
-            DisplayMode="Overlay"
-            PaneBackground="{ThemeResource SidePaneBackground}"
-            PanePlacement="Right">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
-            <!--  Information Pane  -->
-            <SplitView.Pane>
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
+        <Grid
+            x:Name="TitleBarPlaceHolder"
+            Grid.Row="0"
+            Visibility="{x:Bind Shared.IsTitleBarPlaceHolderVisible, Mode=OneWay}" />
 
-                    <!--  Information  -->
-                    <ScrollViewer Grid.Row="0" Padding="15,0,15,0">
-                        <StackPanel Orientation="Vertical">
-                            <Grid Height="34" />
+        <!--  Main section  -->
+        <Grid Grid.Row="1">
+            <TextBlock
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Foreground="{ThemeResource ForegroundGrey2}"
+                Text="{x:Bind Shared.ReaderStatusText, Mode=OneWay}"
+                Visibility="{x:Bind Shared.IsReaderStatusTextBlockVisible, Mode=OneWay}" />
 
-                            <!--  Title1  -->
-                            <TextBlock
-                                FontSize="20"
-                                FontWeight="SemiLight"
-                                IsTextSelectionEnabled="True"
-                                Text="{x:Bind Shared.ComicTitle1, Mode=OneWay}"
-                                TextWrapping="Wrap" />
+            <!--  Reader  -->
+            <Grid PointerEntered="OnReaderPointerEntered" PointerExited="OnReaderPointerExited">
+                <Grid x:Name="ManipulationReference" />
 
-                            <!--  Title2  -->
-                            <TextBlock
-                                Margin="0,10,0,0"
-                                FontSize="20"
-                                FontWeight="SemiLight"
-                                IsTextSelectionEnabled="True"
-                                Text="{x:Bind Shared.ComicTitle2, Mode=OneWay}"
-                                TextWrapping="Wrap"
-                                Visibility="{x:Bind Shared.IsComicTitle2Visible, Mode=OneWay}" />
-
-                            <!--  Rating  -->
-                            <muxc:RatingControl
-                                Margin="0,10,0,0"
-                                HorizontalAlignment="Left"
-                                IsClearEnabled="True"
-                                ValueChanged="OnRatingControlValueChanged"
-                                Visibility="{x:Bind Shared.NavigationPageShared.IsExternal, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}"
-                                Value="{x:Bind Shared.Rating, Mode=TwoWay}" />
-
-                            <Rectangle
-                                Height="1"
-                                Margin="0,18"
-                                Fill="{ThemeResource ComicInfoSeparatorForeground}" />
-
-                            <!--  Directory  -->
-                            <RichTextBlock Margin="0,0,0,0" VerticalAlignment="Center">
-                                <Paragraph>
-                                    <Run
-                                        FontSize="13"
-                                        FontWeight="SemiLight"
-                                        Text="{x:Bind Shared.ComicDir, Mode=OneWay}" />
-                                    <InlineUIContainer>
-                                        <FontIcon
-                                            x:Uid="OpenInFileExplorer"
-                                            Margin="0,0,0,-2.5"
-                                            FontSize="13"
-                                            Glyph="&#xE838;"
-                                            Tapped="OnDirectoryTapped"
-                                            Visibility="{x:Bind Shared.CanDirOpenInFileExplorer, Mode=OneWay}" />
-                                    </InlineUIContainer>
-                                </Paragraph>
-                            </RichTextBlock>
-
-                            <!--  Tags  -->
-                            <Rectangle
-                                Height="1"
-                                Margin="0,20"
-                                Fill="{ThemeResource ComicInfoSeparatorForeground}"
-                                Visibility="{x:Bind Shared.IsComicTagsVisible, Mode=OneWay}" />
-
-                            <ListView
-                                Margin="0,0,0,0"
-                                ItemsSource="{x:Bind Shared.ComicTags, Mode=OneWay}"
-                                SelectionMode="None">
-                                <ListView.ItemContainerStyle>
-                                    <Style TargetType="ListViewItem">
-                                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                                        <Setter Property="VerticalContentAlignment" Value="Stretch" />
-                                        <Setter Property="Padding" Value="0" />
-                                    </Style>
-                                </ListView.ItemContainerStyle>
-                                <ListView.ItemTemplate>
-                                    <DataTemplate x:DataType="data:TagCollectionViewModel">
-                                        <StackPanel Margin="0,0,0,10" Orientation="Vertical">
-                                            <StackPanel Margin="5,0,0,5" Orientation="Horizontal">
-                                                <FontIcon
-                                                    Margin="0,0,7,0"
-                                                    VerticalAlignment="Center"
-                                                    FontSize="12"
-                                                    Glyph="&#xE8EC;" />
-                                                <TextBlock
-                                                    Margin="0,0,0,1"
-                                                    VerticalAlignment="Center"
-                                                    FontSize="12"
-                                                    Text="{x:Bind Name}" />
-                                            </StackPanel>
-                                            <muxc:ItemsRepeater ItemsSource="{x:Bind Tags}">
-                                                <muxc:ItemsRepeater.ItemTemplate>
-                                                    <DataTemplate x:DataType="data:TagViewModel">
-                                                        <controls:TagButton DataContext="{x:Bind}" />
-                                                    </DataTemplate>
-                                                </muxc:ItemsRepeater.ItemTemplate>
-                                                <muxc:ItemsRepeater.Layout>
-                                                    <mtuuc:WrapLayout HorizontalSpacing="5" VerticalSpacing="5" />
-                                                </muxc:ItemsRepeater.Layout>
-                                            </muxc:ItemsRepeater>
-                                        </StackPanel>
-                                    </DataTemplate>
-                                </ListView.ItemTemplate>
-                            </ListView>
-                        </StackPanel>
-                    </ScrollViewer>
-
-                    <!--  Bottom buttons  -->
-                    <StackPanel
-                        Grid.Row="1"
-                        Margin="15,5,15,3"
-                        HorizontalAlignment="Right"
-                        Orientation="Horizontal">
-                        <AppBarButton
-                            x:Uid="EditInfoButton"
-                            Width="68"
-                            Click="OnEditInfoClick"
-                            Icon="Edit"
-                            IsCompact="False"
-                            IsEnabled="{x:Bind Shared.IsEditable, Mode=OneWay}" />
-                        <AppBarToggleButton
-                            x:Name="FavoriteBt"
-                            x:Uid="FavoriteToggleButton"
-                            Width="68"
-                            Margin="2,0,0,0"
-                            Checked="OnFavoritesChecked"
-                            Icon="Favorite"
-                            IsChecked="{x:Bind Shared.NavigationPageShared.IsFavorite, Mode=OneWay}"
-                            IsCompact="False"
-                            IsEnabled="{x:Bind Shared.NavigationPageShared.IsExternal, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}"
-                            Unchecked="OnFavoritesUnchecked" />
-                    </StackPanel>
-                </Grid>
-            </SplitView.Pane>
-
-            <!--  Main section  -->
-            <Grid>
-                <TextBlock
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Foreground="{ThemeResource ForegroundGrey2}"
-                    Text="{x:Bind Shared.ReaderStatusText, Mode=OneWay}"
-                    Visibility="{x:Bind Shared.IsReaderStatusTextBlockVisible, Mode=OneWay}" />
-
-                <!--  Reader  -->
-                <Grid PointerEntered="OnReaderPointerEntered" PointerExited="OnReaderPointerExited">
-                    <Grid x:Name="ManipulationReference" />
-
-                    <!--  Vertical  -->
-                    <ScrollViewer
-                        HorizontalScrollBarVisibility="Auto"
-                        HorizontalScrollMode="Enabled"
-                        IsEnabled="{x:Bind Shared.NavigationPageShared.IsVerticalReaderVisible, Mode=OneWay}"
-                        IsHitTestVisible="{x:Bind Shared.NavigationPageShared.IsVerticalReaderVisible, Mode=OneWay}"
-                        Loaded="OnVerticalReaderScrollViewerLoaded"
-                        MaxZoomFactor="100000"
-                        Opacity="{x:Bind Shared.NavigationPageShared.IsVerticalReaderVisible, Converter={StaticResource BooleanToDoubleConverter}, Mode=OneWay}"
-                        SizeChanged="OnVerticalReaderScrollViewerSizeChanged"
-                        Style="{StaticResource ReaderScrollViewerStyle}"
-                        ViewChanged="OnVerticalReaderScrollViewerViewChanged"
-                        ZoomMode="Enabled">
-                        <Grid HorizontalAlignment="Center" IsHitTestVisible="False">
-                            <ListView
-                                ItemsSource="{x:Bind VerticalReader.Frames, Mode=OneWay}"
-                                Loaded="OnVerticalReaderListViewLoaded"
-                                PreviewKeyDown="OnKeyDown"
-                                ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                ScrollViewer.VerticalScrollBarVisibility="Disabled"
-                                SelectionMode="None">
-                                <ListView.ItemTemplate>
-                                    <DataTemplate x:DataType="data:ReaderFrameViewModel">
-                                        <controls:ReadeFrame DataContext="{x:Bind}" />
-                                    </DataTemplate>
-                                </ListView.ItemTemplate>
-                                <ListView.ItemContainerStyle>
-                                    <Style TargetType="ListViewItem">
-                                        <Setter Property="Padding" Value="0" />
-                                        <Setter Property="HorizontalAlignment" Value="Center" />
-                                        <Setter Property="MinHeight" Value="0" />
-                                        <Setter Property="MinWidth" Value="0" />
-                                    </Style>
-                                </ListView.ItemContainerStyle>
-                            </ListView>
-                        </Grid>
-                    </ScrollViewer>
-
-                    <!--  Horizontal  -->
-                    <ScrollViewer
-                        FlowDirection="{x:Bind Shared.ReaderSettings.PageFlowDirection, Mode=OneWay}"
-                        HorizontalScrollBarVisibility="Auto"
-                        HorizontalScrollMode="Enabled"
-                        IsEnabled="{x:Bind Shared.NavigationPageShared.IsHorizontalReaderVisible, Mode=OneWay}"
-                        IsHitTestVisible="{x:Bind Shared.NavigationPageShared.IsHorizontalReaderVisible, Mode=OneWay}"
-                        Loaded="OnHorizontalReaderScrollViewerLoaded"
-                        MaxZoomFactor="100000"
-                        Opacity="{x:Bind Shared.NavigationPageShared.IsHorizontalReaderVisible, Converter={StaticResource BooleanToDoubleConverter}, Mode=OneWay}"
-                        SizeChanged="OnHorizontalReaderScrollViewerSizeChanged"
-                        Style="{StaticResource ReaderScrollViewerStyle}"
-                        VerticalScrollBarVisibility="Hidden"
-                        VerticalScrollMode="Disabled"
-                        ViewChanged="OnHorizontalReaderScrollViewerViewChanged"
-                        ZoomMode="Enabled">
-                        <Grid VerticalAlignment="Center" IsHitTestVisible="False">
-                            <ListView
-                                ItemsSource="{x:Bind HorizontalReader.Frames, Mode=OneWay}"
-                                Loaded="OnHorizontalReaderListViewLoaded"
-                                PreviewKeyDown="OnKeyDown"
-                                ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                ScrollViewer.VerticalScrollBarVisibility="Disabled"
-                                SelectionMode="None">
-                                <ListView.ItemTemplate>
-                                    <DataTemplate x:DataType="data:ReaderFrameViewModel">
-                                        <controls:ReadeFrame DataContext="{x:Bind}" FlowDirection="LeftToRight" />
-                                    </DataTemplate>
-                                </ListView.ItemTemplate>
-                                <ListView.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <ItemsStackPanel Orientation="Horizontal" />
-                                    </ItemsPanelTemplate>
-                                </ListView.ItemsPanel>
-                                <ListView.ItemContainerStyle>
-                                    <Style TargetType="ListViewItem">
-                                        <Setter Property="Padding" Value="0" />
-                                        <Setter Property="MinHeight" Value="0" />
-                                        <Setter Property="MinWidth" Value="0" />
-                                    </Style>
-                                </ListView.ItemContainerStyle>
-                            </ListView>
-                        </Grid>
-                    </ScrollViewer>
-                </Grid>
-
-                <Grid
-                    x:Name="TitleBarArea"
-                    VerticalAlignment="Top"
-                    Background="Transparent" />
-
-                <!--  Tips  -->
-                <muxc:InfoBar
-                    x:Name="ReaderTip"
-                    x:Uid="ReaderTip"
-                    Margin="10"
-                    HorizontalAlignment="Left"
-                    VerticalAlignment="Bottom"
-                    Background="{ThemeResource TipBackground}"
-                    CloseButtonClick="OnReaderTipCloseButtonClick"
-                    IsOpen="False"
-                    Severity="Informational" />
-
-                <!--  Grid Preview  -->
-                <ScrollViewer IsHitTestVisible="{x:Bind Shared.IsGridViewVisible, Mode=OneWay}" Opacity="{x:Bind Shared.IsGridViewVisible, Converter={StaticResource BooleanToDoubleConverter}, Mode=OneWay}">
-                    <GridView
-                        Padding="10"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        IsItemClickEnabled="True"
-                        ItemClick="OnGridViewItemClicked"
-                        ItemsSource="{x:Bind PreviewDataSource, Mode=OneWay}"
-                        SelectionMode="Single">
-                        <GridView.ItemContainerStyle>
-                            <Style TargetType="GridViewItem">
-                                <Setter Property="Margin" Value="10" />
-                                <Setter Property="mtuu:Effects.Shadow" Value="{StaticResource CommonShadow}" />
-                            </Style>
-                        </GridView.ItemContainerStyle>
-                        <GridView.ItemTemplate>
-                            <DataTemplate x:DataType="data:ReaderImagePreviewViewModel">
-                                <controls:ReaderPreviewImage DataContext="{x:Bind}" />
-                            </DataTemplate>
-                        </GridView.ItemTemplate>
-                    </GridView>
+                <!--  Vertical  -->
+                <ScrollViewer
+                    HorizontalScrollBarVisibility="Auto"
+                    HorizontalScrollMode="Enabled"
+                    IsEnabled="{x:Bind Shared.NavigationPageShared.IsVerticalReaderVisible, Mode=OneWay}"
+                    IsHitTestVisible="{x:Bind Shared.NavigationPageShared.IsVerticalReaderVisible, Mode=OneWay}"
+                    Loaded="OnVerticalReaderScrollViewerLoaded"
+                    MaxZoomFactor="100000"
+                    Opacity="{x:Bind Shared.NavigationPageShared.IsVerticalReaderVisible, Converter={StaticResource BooleanToDoubleConverter}, Mode=OneWay}"
+                    SizeChanged="OnVerticalReaderScrollViewerSizeChanged"
+                    Style="{StaticResource ReaderScrollViewerStyle}"
+                    ViewChanged="OnVerticalReaderScrollViewerViewChanged"
+                    ZoomMode="Enabled">
+                    <Grid HorizontalAlignment="Center" IsHitTestVisible="False">
+                        <ListView
+                            ItemsSource="{x:Bind VerticalReader.Frames, Mode=OneWay}"
+                            Loaded="OnVerticalReaderListViewLoaded"
+                            PreviewKeyDown="OnKeyDown"
+                            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                            ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                            SelectionMode="None">
+                            <ListView.ItemTemplate>
+                                <DataTemplate x:DataType="data:ReaderFrameViewModel">
+                                    <controls:ReadeFrame DataContext="{x:Bind}" />
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="Padding" Value="0" />
+                                    <Setter Property="HorizontalAlignment" Value="Center" />
+                                    <Setter Property="MinHeight" Value="0" />
+                                    <Setter Property="MinWidth" Value="0" />
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                        </ListView>
+                    </Grid>
                 </ScrollViewer>
 
-                <!--  Bottom Tile  -->
-                <Grid
-                    x:Name="BottomGrid"
-                    Height="48"
-                    Margin="0,0,0,20"
-                    Padding="5,0,20,0"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Bottom"
-                    Background="{ThemeResource ReaderBottomTileBackground}"
-                    BorderThickness="0"
-                    CornerRadius="24"
-                    Opacity="0">
-                    <Grid>
-                        <StackPanel
-                            HorizontalAlignment="Left"
-                            VerticalAlignment="Center"
-                            Orientation="Horizontal">
-                            <Grid Width="5" />
-
-                            <!--  Pin  -->
-                            <Button
-                                Click="OnPinClick"
-                                Style="{StaticResource ReaderBottomTileButtonStyle}"
-                                ToolTipService.ToolTip="{x:Bind Shared.PinButtonToolTip, Mode=OneWay}">
-                                <Grid>
-                                    <FontIcon
-                                        FontSize="15"
-                                        Glyph="&#xE840;"
-                                        Visibility="{x:Bind Shared.BottomTilePinned, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
-                                    <FontIcon
-                                        FontSize="15"
-                                        Foreground="{ThemeResource ReaderBottomTileButtonFillForeground}"
-                                        Glyph="&#xE840;"
-                                        Visibility="{x:Bind Shared.BottomTilePinned, Mode=OneWay}" />
-                                    <FontIcon
-                                        FontSize="15"
-                                        Foreground="{ThemeResource ReaderBottomTileButtonFillForeground}"
-                                        Glyph="&#xE842;"
-                                        Visibility="{x:Bind Shared.BottomTilePinned, Mode=OneWay}" />
-                                </Grid>
-                            </Button>
-
-                            <!--  Page indicator  -->
-                            <AppBarSeparator Margin="2.5,0" />
-
-                            <TextBlock
-                                x:Name="PageIndicator"
-                                Margin="12.5,0,0,2"
-                                VerticalAlignment="Center"
-                                FontSize="14"
-                                FontWeight="SemiBold"
-                                Text="? / ?" />
-                        </StackPanel>
+                <!--  Horizontal  -->
+                <ScrollViewer
+                    FlowDirection="{x:Bind Shared.ReaderSettings.PageFlowDirection, Mode=OneWay}"
+                    HorizontalScrollBarVisibility="Auto"
+                    HorizontalScrollMode="Enabled"
+                    IsEnabled="{x:Bind Shared.NavigationPageShared.IsHorizontalReaderVisible, Mode=OneWay}"
+                    IsHitTestVisible="{x:Bind Shared.NavigationPageShared.IsHorizontalReaderVisible, Mode=OneWay}"
+                    Loaded="OnHorizontalReaderScrollViewerLoaded"
+                    MaxZoomFactor="100000"
+                    Opacity="{x:Bind Shared.NavigationPageShared.IsHorizontalReaderVisible, Converter={StaticResource BooleanToDoubleConverter}, Mode=OneWay}"
+                    SizeChanged="OnHorizontalReaderScrollViewerSizeChanged"
+                    Style="{StaticResource ReaderScrollViewerStyle}"
+                    VerticalScrollBarVisibility="Hidden"
+                    VerticalScrollMode="Disabled"
+                    ViewChanged="OnHorizontalReaderScrollViewerViewChanged"
+                    ZoomMode="Enabled">
+                    <Grid VerticalAlignment="Center" IsHitTestVisible="False">
+                        <ListView
+                            ItemsSource="{x:Bind HorizontalReader.Frames, Mode=OneWay}"
+                            Loaded="OnHorizontalReaderListViewLoaded"
+                            PreviewKeyDown="OnKeyDown"
+                            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                            ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                            SelectionMode="None">
+                            <ListView.ItemTemplate>
+                                <DataTemplate x:DataType="data:ReaderFrameViewModel">
+                                    <controls:ReadeFrame DataContext="{x:Bind}" FlowDirection="LeftToRight" />
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                            <ListView.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <ItemsStackPanel Orientation="Horizontal" />
+                                </ItemsPanelTemplate>
+                            </ListView.ItemsPanel>
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="Padding" Value="0" />
+                                    <Setter Property="MinHeight" Value="0" />
+                                    <Setter Property="MinWidth" Value="0" />
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                        </ListView>
                     </Grid>
+                </ScrollViewer>
+            </Grid>
+
+            <!--  Tips  -->
+            <muxc:InfoBar
+                x:Name="ReaderTip"
+                x:Uid="ReaderTip"
+                Margin="10"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Bottom"
+                Background="{ThemeResource TipBackground}"
+                CloseButtonClick="OnReaderTipCloseButtonClick"
+                IsOpen="False"
+                Severity="Informational" />
+
+            <!--  Grid Preview  -->
+            <ScrollViewer IsHitTestVisible="{x:Bind Shared.IsGridViewVisible, Mode=OneWay}" Opacity="{x:Bind Shared.IsGridViewVisible, Converter={StaticResource BooleanToDoubleConverter}, Mode=OneWay}">
+                <GridView
+                    Padding="10"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    IsItemClickEnabled="True"
+                    ItemClick="OnGridViewItemClicked"
+                    ItemsSource="{x:Bind PreviewDataSource, Mode=OneWay}"
+                    SelectionMode="Single">
+                    <GridView.ItemContainerStyle>
+                        <Style TargetType="GridViewItem">
+                            <Setter Property="Margin" Value="10" />
+                            <Setter Property="mtuu:Effects.Shadow" Value="{StaticResource CommonShadow}" />
+                        </Style>
+                    </GridView.ItemContainerStyle>
+                    <GridView.ItemTemplate>
+                        <DataTemplate x:DataType="data:ReaderImagePreviewViewModel">
+                            <controls:ReaderPreviewImage DataContext="{x:Bind}" />
+                        </DataTemplate>
+                    </GridView.ItemTemplate>
+                </GridView>
+            </ScrollViewer>
+
+            <!--  Bottom Tile  -->
+            <Grid
+                x:Name="BottomGrid"
+                Height="48"
+                Margin="0,0,0,20"
+                Padding="5,0,20,0"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Bottom"
+                Background="{ThemeResource ReaderBottomTileBackground}"
+                BorderThickness="0"
+                CornerRadius="24"
+                Opacity="0">
+                <Grid>
+                    <StackPanel
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        Orientation="Horizontal">
+                        <Grid Width="5" />
+
+                        <!--  Pin  -->
+                        <Button
+                            Click="OnPinClick"
+                            Style="{StaticResource ReaderBottomTileButtonStyle}"
+                            ToolTipService.ToolTip="{x:Bind Shared.PinButtonToolTip, Mode=OneWay}">
+                            <Grid>
+                                <FontIcon
+                                    FontSize="15"
+                                    Glyph="&#xE840;"
+                                    Visibility="{x:Bind Shared.BottomTilePinned, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
+                                <FontIcon
+                                    FontSize="15"
+                                    Foreground="{ThemeResource ReaderBottomTileButtonFillForeground}"
+                                    Glyph="&#xE840;"
+                                    Visibility="{x:Bind Shared.BottomTilePinned, Mode=OneWay}" />
+                                <FontIcon
+                                    FontSize="15"
+                                    Foreground="{ThemeResource ReaderBottomTileButtonFillForeground}"
+                                    Glyph="&#xE842;"
+                                    Visibility="{x:Bind Shared.BottomTilePinned, Mode=OneWay}" />
+                            </Grid>
+                        </Button>
+
+                        <!--  Page indicator  -->
+                        <AppBarSeparator Margin="2.5,0" />
+
+                        <TextBlock
+                            x:Name="PageIndicator"
+                            Margin="12.5,0,0,2"
+                            VerticalAlignment="Center"
+                            FontSize="14"
+                            FontWeight="SemiBold"
+                            Text="? / ?" />
+                    </StackPanel>
                 </Grid>
             </Grid>
-        </SplitView>
+        </Grid>
+
+        <Grid Grid.Row="0" Grid.RowSpan="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Grid
+                x:Name="TitleBarArea"
+                Grid.Row="0"
+                VerticalAlignment="Top"
+                Background="Transparent" />
+
+            <SplitView
+                x:Name="InfoPane"
+                Grid.Row="1"
+                DisplayMode="Overlay"
+                PaneBackground="{ThemeResource SidePaneBackground}"
+                PanePlacement="Right">
+
+                <!--  Information Pane  -->
+                <SplitView.Pane>
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <!--  Information  -->
+                        <ScrollViewer Grid.Row="0" Padding="15,0,15,0">
+                            <StackPanel Orientation="Vertical">
+                                <Grid Height="34" />
+
+                                <!--  Title1  -->
+                                <TextBlock
+                                    FontSize="20"
+                                    FontWeight="SemiLight"
+                                    IsTextSelectionEnabled="True"
+                                    Text="{x:Bind Shared.ComicTitle1, Mode=OneWay}"
+                                    TextWrapping="Wrap" />
+
+                                <!--  Title2  -->
+                                <TextBlock
+                                    Margin="0,10,0,0"
+                                    FontSize="20"
+                                    FontWeight="SemiLight"
+                                    IsTextSelectionEnabled="True"
+                                    Text="{x:Bind Shared.ComicTitle2, Mode=OneWay}"
+                                    TextWrapping="Wrap"
+                                    Visibility="{x:Bind Shared.IsComicTitle2Visible, Mode=OneWay}" />
+
+                                <!--  Rating  -->
+                                <muxc:RatingControl
+                                    Margin="0,10,0,0"
+                                    HorizontalAlignment="Left"
+                                    IsClearEnabled="True"
+                                    ValueChanged="OnRatingControlValueChanged"
+                                    Visibility="{x:Bind Shared.NavigationPageShared.IsExternal, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}"
+                                    Value="{x:Bind Shared.Rating, Mode=TwoWay}" />
+
+                                <Rectangle
+                                    Height="1"
+                                    Margin="0,18"
+                                    Fill="{ThemeResource ComicInfoSeparatorForeground}" />
+
+                                <!--  Directory  -->
+                                <RichTextBlock Margin="0,0,0,0" VerticalAlignment="Center">
+                                    <Paragraph>
+                                        <Run
+                                            FontSize="13"
+                                            FontWeight="SemiLight"
+                                            Text="{x:Bind Shared.ComicDir, Mode=OneWay}" />
+                                        <InlineUIContainer>
+                                            <FontIcon
+                                                x:Uid="OpenInFileExplorer"
+                                                Margin="0,0,0,-2.5"
+                                                FontSize="13"
+                                                Glyph="&#xE838;"
+                                                Tapped="OnDirectoryTapped"
+                                                Visibility="{x:Bind Shared.CanDirOpenInFileExplorer, Mode=OneWay}" />
+                                        </InlineUIContainer>
+                                    </Paragraph>
+                                </RichTextBlock>
+
+                                <!--  Tags  -->
+                                <Rectangle
+                                    Height="1"
+                                    Margin="0,20"
+                                    Fill="{ThemeResource ComicInfoSeparatorForeground}"
+                                    Visibility="{x:Bind Shared.IsComicTagsVisible, Mode=OneWay}" />
+
+                                <ListView
+                                    Margin="0,0,0,0"
+                                    ItemsSource="{x:Bind Shared.ComicTags, Mode=OneWay}"
+                                    SelectionMode="None">
+                                    <ListView.ItemContainerStyle>
+                                        <Style TargetType="ListViewItem">
+                                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                            <Setter Property="VerticalContentAlignment" Value="Stretch" />
+                                            <Setter Property="Padding" Value="0" />
+                                        </Style>
+                                    </ListView.ItemContainerStyle>
+                                    <ListView.ItemTemplate>
+                                        <DataTemplate x:DataType="data:TagCollectionViewModel">
+                                            <StackPanel Margin="0,0,0,10" Orientation="Vertical">
+                                                <StackPanel Margin="5,0,0,5" Orientation="Horizontal">
+                                                    <FontIcon
+                                                        Margin="0,0,7,0"
+                                                        VerticalAlignment="Center"
+                                                        FontSize="12"
+                                                        Glyph="&#xE8EC;" />
+                                                    <TextBlock
+                                                        Margin="0,0,0,1"
+                                                        VerticalAlignment="Center"
+                                                        FontSize="12"
+                                                        Text="{x:Bind Name}" />
+                                                </StackPanel>
+                                                <muxc:ItemsRepeater ItemsSource="{x:Bind Tags}">
+                                                    <muxc:ItemsRepeater.ItemTemplate>
+                                                        <DataTemplate x:DataType="data:TagViewModel">
+                                                            <controls:TagButton DataContext="{x:Bind}" />
+                                                        </DataTemplate>
+                                                    </muxc:ItemsRepeater.ItemTemplate>
+                                                    <muxc:ItemsRepeater.Layout>
+                                                        <mtuuc:WrapLayout HorizontalSpacing="5" VerticalSpacing="5" />
+                                                    </muxc:ItemsRepeater.Layout>
+                                                </muxc:ItemsRepeater>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </ListView.ItemTemplate>
+                                </ListView>
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!--  Bottom buttons  -->
+                        <StackPanel
+                            Grid.Row="1"
+                            Margin="15,5,15,3"
+                            HorizontalAlignment="Right"
+                            Orientation="Horizontal">
+                            <AppBarButton
+                                x:Uid="EditInfoButton"
+                                Width="68"
+                                Click="OnEditInfoClick"
+                                Icon="Edit"
+                                IsCompact="False"
+                                IsEnabled="{x:Bind Shared.IsEditable, Mode=OneWay}" />
+                            <AppBarToggleButton
+                                x:Name="FavoriteBt"
+                                x:Uid="FavoriteToggleButton"
+                                Width="68"
+                                Margin="2,0,0,0"
+                                Checked="OnFavoritesChecked"
+                                Icon="Favorite"
+                                IsChecked="{x:Bind Shared.NavigationPageShared.IsFavorite, Mode=OneWay}"
+                                IsCompact="False"
+                                IsEnabled="{x:Bind Shared.NavigationPageShared.IsExternal, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}"
+                                Unchecked="OnFavoritesUnchecked" />
+                        </StackPanel>
+                    </Grid>
+                </SplitView.Pane>
+            </SplitView>
+        </Grid>
     </Grid>
 </common:NavigatablePage>

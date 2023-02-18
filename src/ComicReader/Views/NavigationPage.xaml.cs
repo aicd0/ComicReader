@@ -4,12 +4,10 @@ using Windows.UI.Input;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Navigation;
 using ComicReader.Common.Router;
 using ComicReader.Common;
 using ComicReader.Utils;
 using ComicReader.Common.Constants;
-using Windows.UI.Composition;
 
 namespace ComicReader.Views
 {

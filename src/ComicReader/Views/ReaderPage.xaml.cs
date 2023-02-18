@@ -191,18 +191,28 @@ namespace ComicReader.Views
             }
         }
 
+        private bool m_IsTitleBarPlaceHolderVisible = false;
+        public bool IsTitleBarPlaceHolderVisible
+        {
+            get => m_IsTitleBarPlaceHolderVisible;
+            set
+            {
+                m_IsTitleBarPlaceHolderVisible = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsTitleBarPlaceHolderVisible"));
+            }
+        }
+
         public ReaderSettingViewModel ReaderSettings => NavigationPageShared.ReaderSettings;
 
         public void UpdateReaderUI()
         {
             bool is_working = ReaderStatus == ReaderStatusEnum.Working;
-            bool grid_view_visible = is_working && NavigationPageShared.IsPreviewButtonToggled;
+            bool grid_view_visible = is_working && NavigationPageShared?.IsPreviewButtonToggled == true;
             bool reader_visible = is_working && !grid_view_visible;
             bool vertical_reader_visible = reader_visible && ReaderSettings.IsVertical;
             bool horizontal_reader_visible = reader_visible && !vertical_reader_visible;
 
             IsReaderStatusTextBlockVisible = !is_working;
-
             if (IsReaderStatusTextBlockVisible)
             {
                 switch (ReaderStatus)
@@ -219,9 +229,14 @@ namespace ComicReader.Views
                 }
             }
 
+            IsTitleBarPlaceHolderVisible = !(reader_visible && !BottomTilePinned);
             IsGridViewVisible = grid_view_visible;
-            NavigationPageShared.IsVerticalReaderVisible = vertical_reader_visible;
-            NavigationPageShared.IsHorizontalReaderVisible = horizontal_reader_visible;
+
+            if (NavigationPageShared != null)
+            {
+                NavigationPageShared.IsVerticalReaderVisible = vertical_reader_visible;
+                NavigationPageShared.IsHorizontalReaderVisible = horizontal_reader_visible;
+            }
         }
 
         // Bottom tile
@@ -234,6 +249,7 @@ namespace ComicReader.Views
                 m_BottomTilePinned = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("BottomTilePinned"));
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("PinButtonToolTip"));
+                UpdateReaderUI();
                 BottomTilePinnedChanged?.Invoke();
             }
         }
@@ -371,6 +387,7 @@ namespace ComicReader.Views
             EventBus.Instance.With<double>(EventId.TitleBarHeightChange).Observe(this, delegate (double h)
             {
                 TitleBarArea.Height = h;
+                TitleBarPlaceHolder.Height = h;
             }, true);
 
             EventBus.Instance.With<double>(EventId.TitleBarOpacity).Observe(this, delegate (double opacity)
@@ -1005,7 +1022,6 @@ namespace ComicReader.Views
             if (InfoPane != null)
             {
                 InfoPane.IsPaneOpen = true;
-                BottomGridForceHide();
             }
         }
 
