@@ -14,9 +14,9 @@ namespace ComicReader.Database
 {
     public class ComicFolderData : ComicData
     {
-        private StorageFolder Folder = null;
-        private StorageFile InfoFile = null;
-        private List<StorageFile> ImageFiles = new List<StorageFile>();
+        private StorageFolder Folder { get; set; }
+        private StorageFile InfoFile { get; set; }
+        private List<StorageFile> ImageFiles { get; set; } = new List<StorageFile>();
 
         public override int ImageCount => ImageFiles.Count;
         public override bool IsEditable => !(IsExternal && InfoFile == null);
@@ -168,39 +168,6 @@ namespace ComicReader.Database
             return new TaskResult();
         }
 
-        protected override RawTask CreateCoverCache()
-        {
-            if (ImageCount == 0)
-            {
-                return Task.FromResult(new TaskResult(TaskException.Failure));
-            }
-
-            CoverFileCache = ImageFiles[0].Name;
-            return Task.FromResult(new TaskResult());
-        }
-
-        protected override async Task<StorageFile> GetCoverCache()
-        {
-            if (CoverFileCache.Length == 0)
-            {
-                return null;
-            }
-
-            TaskResult result = await SetFolder();
-            if (!result.Successful)
-            {
-                return null;
-            }
-
-            IStorageItem item = await Folder.TryGetItemAsync(CoverFileCache);
-            if (!(item is StorageFile))
-            {
-                return null;
-            }
-
-            return (StorageFile)item;
-        }
-
         protected override async RawTask ReloadImages()
         {
             if (IsExternal)
@@ -233,13 +200,6 @@ namespace ComicReader.Database
             // Sort by display name.
             ImageFiles = img_files.OrderBy(x => x.DisplayName,
                 new Utils.StringUtils.FileNameComparer()).ToList();
-
-            if (ImageFiles.Count > 0 && CoverFileCache != ImageFiles[0].Name)
-            {
-                CoverFileCache = ImageFiles[0].Name;
-                SaveCoverFileCache();
-            }
-
             Log(img_files.Count.ToString() + " images added.");
             return new TaskResult();
         }
