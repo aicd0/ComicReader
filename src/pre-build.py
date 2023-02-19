@@ -9,7 +9,7 @@ def toCamelCase(name: str) -> str:
         return name
     return ''.join(i.capitalize() for i in words)
 
-def main():
+def transformKeys():
     keys = ["APP_SECRET"]
     key_maps = {}
     for k in keys:
@@ -30,6 +30,9 @@ def main():
         f.seek(0)
         f.truncate()
         f.write(content.encode())
+
+def main():
+    transformKeys()
 
 if __name__ == "__main__":
     print("pre-build.py start")
