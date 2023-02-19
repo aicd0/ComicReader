@@ -224,7 +224,7 @@
                     <Grid Height="8" />
                     <RichTextBlock IsTextSelectionEnabled="False">
                         <Paragraph>
-                            <Hyperlink NavigateUri="https://github.com/aicd0/ComicReader/blob/master/privacy_policy.md">
+                            <Hyperlink NavigateUri="https://github.com/aicd0/ComicReader/blob/develop/docs/PrivacyPolicy.md">
                                 <Run x:Uid="PrivacyPolicy" />
                             </Hyperlink>
                         </Paragraph>
