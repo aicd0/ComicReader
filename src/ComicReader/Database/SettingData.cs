@@ -1,4 +1,5 @@
-﻿using System;
+using ComicReader.Utils;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
@@ -51,40 +52,25 @@ namespace ComicReader.Database
             try
             {
                 string path = folder.Path;
-                string path_lower = path.ToLower();
                 bool folder_inserted = false;
 
                 foreach (string old_path in XmlDatabase.Settings.ComicFolders)
                 {
-                    string old_path_lower = old_path.ToLower();
-
-                    if (path_lower.Length > old_path_lower.Length)
-                    {
-                        if (path_lower.Substring(0, old_path_lower.Length).Equals(old_path_lower))
-                        {
-                            return new TaskResult(TaskException.ItemExists);
-                        }
-                    }
-                    else if (path_lower.Length < old_path_lower.Length)
-                    {
-                        if (old_path_lower.Substring(0, path_lower.Length).Equals(path_lower))
-                        {
-                            XmlDatabase.Settings.ComicFolders[XmlDatabase.Settings.ComicFolders.IndexOf(old_path)] = path;
-                            folder_inserted = true;
-                            break;
-                        }
-                    }
-                    else if (path_lower.Equals(old_path_lower))
+                    if (StringUtils.FolderContain(old_path, path))
                     {
                         return new TaskResult(TaskException.ItemExists);
                     }
+                    else if (StringUtils.FolderContain(path, old_path))
+                    {
+                        XmlDatabase.Settings.ComicFolders[XmlDatabase.Settings.ComicFolders.IndexOf(old_path)] = path;
+                        folder_inserted = true;
+                        break;
+                    }
                 }
-
                 if (!folder_inserted)
                 {
                     XmlDatabase.Settings.ComicFolders.Add(path);
                 }
-
                 Utils.Storage.AddToFutureAccessList(folder);
             }
             finally

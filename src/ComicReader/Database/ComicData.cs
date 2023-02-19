@@ -1,4 +1,4 @@
-﻿using Microsoft.Data.Sqlite;
+using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -1001,7 +1001,7 @@ namespace ComicReader.Database
 
                         foreach (string dir in ctx.NoAccessItems)
                         {
-                            loc_ignore.Add(dir.ToLower());
+                            loc_ignore.Add(dir);
                         }
 
                         // Generate a task queue for updating.
@@ -1068,12 +1068,11 @@ namespace ComicReader.Database
                     foreach (string loc in loc_removed)
                     {
                         // Skip directories in ignoring list.
-                        string loc_lower = loc.ToLower();
                         bool ignore = false;
 
                         foreach (string base_loc in loc_ignore)
                         {
-                            if (Utils.StringUtils.PathContain(base_loc, loc_lower))
+                            if (Utils.StringUtils.FolderContain(base_loc, loc))
                             {
                                 ignore = true;
                                 break;

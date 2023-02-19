@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,13 +16,13 @@ namespace ComicReader.Utils
 
         public static void AddTrustedFolder(StorageFolder folder)
         {
-            string token = Utils.StringUtils.TokenFromPath(folder.Path);
+            string token = StringUtils.TokenFromPath(folder.Path);
             FolderResources[token] = folder;
         }
 
         public static void AddTrustedFile(StorageFile file)
         {
-            string token = Utils.StringUtils.TokenFromPath(file.Path);
+            string token = StringUtils.TokenFromPath(file.Path);
             FileResources[token] = file;
         }
 
@@ -43,13 +43,12 @@ namespace ComicReader.Utils
             {
                 string base_token = entry.Token;
 
-                if (!Utils.StringUtils.PathContain(base_token, token))
+                if (!StringUtils.FolderContain(StringUtils.PathFromToken(base_token), StringUtils.PathFromToken(token)))
                 {
                     continue;
                 }
 
                 StorageFolder permitted_folder = null;
-
                 try
                 {
                     permitted_folder = await StorageApplicationPermissions.FutureAccessList.GetFolderAsync(base_token);

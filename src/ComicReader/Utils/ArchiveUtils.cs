@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -347,6 +347,10 @@ namespace ComicReader.Utils
         private static async RawTask TryGetFileEntries(Stream stream, string extension, string base_entry_name, List<string> output)
         {
             base_entry_name = base_entry_name.Replace('/', '\\');
+            if (base_entry_name.Length > 0 && base_entry_name[base_entry_name.Length - 1] != '\\')
+            {
+                base_entry_name += '\\';
+            }
 
             return await TryReadEntries(stream, extension, (ArchiveEntry entry) =>
             {
@@ -356,26 +360,16 @@ namespace ComicReader.Utils
                     {
                         break;
                     }
-
                     string entry_name = entry.FullName.Replace('/', '\\');
-
-                    if (!Utils.StringUtils.PathContain(base_entry_name, entry_name))
+                    if (!StringUtils.IsBeginWith(entry_name, base_entry_name))
                     {
                         break;
                     }
-
                     string subpath = entry_name.Substring(base_entry_name.Length);
-
                     if (subpath.Length == 0)
                     {
                         break;
                     }
-
-                    if (subpath[0] == '\\')
-                    {
-                        subpath = subpath.Substring(1);
-                    }
-
                     output.Add(subpath);
                 } while (false);
 

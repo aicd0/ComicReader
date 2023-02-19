@@ -339,7 +339,7 @@ namespace ComicReader.Views
                 m_search_lock.Release();
             }
 
-            await LoadMoreResults(40);
+            await LoadMoreResults(100);
         }
 
         private class Match
@@ -555,7 +555,7 @@ namespace ComicReader.Views
                 ScrollViewer scrollViewer = (ScrollViewer)sender;
                 if (scrollViewer.ScrollableHeight - scrollViewer.VerticalOffset < scrollViewer.ActualHeight * 0.5)
                 {
-                    await LoadMoreResults(12);
+                    await LoadMoreResults(30);
                 }
             });
         }

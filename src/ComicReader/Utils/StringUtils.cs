@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -96,25 +96,51 @@ namespace ComicReader.Utils
 
         public static string TokenFromPath(string path)
         {
-            return path.ToLower().Replace('\\', '%');
+            return UniquePath(path).Replace('\\', '%');
+        }
+
+        public static string PathFromToken(string token)
+        {
+            return token.Replace('%', '\\');
         }
 
         public static string UniquePath(string path)
         {
             return path.ToLower();
         }
-
-        /// <summary>
-        /// Case sensitive. You might need to lower both strings before calling this method.
-        /// </summary>
-        public static bool PathContain(string base_path, string child_path)
+        
+        public static bool IsBeginWith(string text, string subText)
         {
-            if (base_path.Length > child_path.Length)
+            if (subText.Length > text.Length)
             {
                 return false;
             }
+            return text.Substring(0, subText.Length).Equals(subText);
+        }
 
-            return child_path.Substring(0, base_path.Length).Equals(base_path);
+        public static bool FolderContain(string parentPath, string childPath)
+        {
+            parentPath = ToFolderPath(UniquePath(parentPath));
+            childPath = ToFolderPath(UniquePath(childPath));
+            if (parentPath.Length > childPath.Length)
+            {
+                return false;
+            }
+            return childPath.Substring(0, parentPath.Length).Equals(parentPath);
+        }
+
+        public static string ToFolderPath(string path)
+        {
+            path = path.Replace('/', '\\');
+            if (path.Length == 0)
+            {
+                return path;
+            }
+            if (path[path.Length - 1] != '\\')
+            {
+                path += '\\';
+            }
+            return path;
         }
 
         public static string ItemNameFromPath(string path)
