@@ -238,13 +238,13 @@ namespace ComicReader.Views
 
         public void LoadTab(TabIdentifier tab_id, IPageTrait pageTrait, object args = null, bool try_reuse = true)
         {
+            // switch to an existed tab if possible
+            if (try_reuse && TrySwitchToTab(pageTrait, args))
+            {
+                return;
+            }
             if (tab_id == null)
             {
-                // switch to an existed tab if possible
-                if (try_reuse && TrySwitchToTab(pageTrait, args))
-                {
-                    return;
-                }
                 tab_id = AddNewTab(pageTrait, args);
             }
             else
