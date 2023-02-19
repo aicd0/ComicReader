@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 
 namespace ComicReader.Utils
 {
@@ -224,6 +225,23 @@ namespace ComicReader.Utils
             }
 
             return res;
+        }
+
+        public static string DictionaryToString<K, V>(IDictionary<K, V> dictionary)
+        {
+            StringBuilder text = new StringBuilder();
+            bool first = true;
+            foreach (K k in dictionary.Keys)
+            {
+                if (!first)
+                {
+                    text.Append(",\n");
+                }
+                first = false;
+                V v = dictionary[k];
+                text.Append("\"" + k.ToString() + "\": \"" + v.ToString() + "\"");
+            }
+            return text.ToString();
         }
     }
 }

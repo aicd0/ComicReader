@@ -477,8 +477,7 @@ namespace ComicReader.Database
             }
             catch (Exception e)
             {
-                Log("Failed to create cover cache. " + e.ToString());
-                Utils.Debug.LogException(Utils.Debug.Module.CreateCoverCache, e);
+                Utils.Debug.LogException("CreateCoverCache", e);
                 return new TaskResult(TaskException.Failure);
             }
 

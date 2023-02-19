@@ -1,4 +1,6 @@
-﻿using System;
+using Microsoft.AppCenter.Analytics;
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Windows.Storage;
 
@@ -10,10 +12,6 @@ namespace ComicReader.Utils
     class Debug
     {
         private const string LogFileName = "log.txt";
-
-        public enum Module {
-            CreateCoverCache
-        }
 
         private static readonly Utils.TaskQueue LogQueue = Utils.TaskQueueManager.EmptyQueue();
 
@@ -37,10 +35,12 @@ namespace ComicReader.Utils
             Utils.TaskQueueManager.AppendTask(LogToFileSealed(content), "", LogQueue);
         }
 
-        public static void LogException(Module module, Exception e)
+        public static void LogException(string eventName, Exception e)
         {
-            string info = "Exception: " + module.ToString() + ": " + e.GetType().FullName;
-            Log(info);
+            Dictionary<string, string> properties = new Dictionary<string, string>();
+            properties["detail"] = e.ToString();
+            Analytics.TrackEvent(eventName, properties);
+            Log("[Exception] " + eventName + ":\n" + StringUtils.DictionaryToString(properties));
         }
 
         private static SealedTask LogToFileSealed(string content)
