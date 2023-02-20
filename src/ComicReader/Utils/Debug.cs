@@ -35,7 +35,25 @@ namespace ComicReader.Utils
             Utils.TaskQueueManager.AppendTask(LogToFileSealed(content), "", LogQueue);
         }
 
-        public static void LogException(string eventName, Exception e)
+        public static async RawTask TryAsync(string eventName, Func<Task> action)
+        {
+#if DEBUG
+            await action();
+#else
+            try
+            {
+                await action();
+            }
+            catch (Exception e)
+            {
+                LogException(eventName, e);
+                return new TaskResult(TaskException.Failure);
+            }
+#endif
+            return new TaskResult();
+        }
+
+        private static void LogException(string eventName, Exception e)
         {
             Dictionary<string, string> properties = new Dictionary<string, string>();
             properties["detail"] = e.ToString();

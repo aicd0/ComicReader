@@ -1,3 +1,4 @@
+using ComicReader.Utils;
 using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
@@ -445,11 +446,13 @@ namespace ComicReader.Database
                 return new TaskResult(TaskException.Failure);
             }
 
-            try
+            var result = await Debug.TryAsync("CreateCoverCache", async delegate
             {
                 BitmapDecoder decoder = await BitmapDecoder.CreateAsync(stream);
+                SoftwareBitmap softwareBitmap = await decoder.GetSoftwareBitmapAsync();
                 InMemoryRandomAccessStream resized_stream = new InMemoryRandomAccessStream();
-                BitmapEncoder encoder = await BitmapEncoder.CreateForTranscodingAsync(resized_stream, decoder);
+                BitmapEncoder encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.JpegEncoderId, resized_stream);
+                encoder.SetSoftwareBitmap(softwareBitmap);
 
                 double width_ratio = req_width / decoder.PixelWidth;
                 double height_ratio = req_height / decoder.PixelHeight;
@@ -474,13 +477,11 @@ namespace ComicReader.Database
 
                 await FileIO.WriteBytesAsync(sample_file, out_buffer);
                 CoverFileCache = filename;
-            }
-            catch (Exception e)
+            });
+            if (!result.Successful)
             {
-                Utils.Debug.LogException("CreateCoverCache", e);
-                return new TaskResult(TaskException.Failure);
+                return result;
             }
-
             SaveCoverFileCache();
             return new TaskResult();
         }
