@@ -440,20 +440,14 @@ namespace ComicReader.Database
             double req_width = 300.0;
             double req_height = 300.0;
 
-            IRandomAccessStream stream = await InternalGetImageStream(0);
-            if (stream == null)
+            using (IRandomAccessStream stream = await InternalGetImageStream(0))
             {
-                return new TaskResult(TaskException.Failure);
-            }
+                if (stream == null)
+                {
+                    return new TaskResult(TaskException.Failure);
+                }
 
-            var result = await Debug.TryAsync("CreateCoverCache", async delegate
-            {
                 BitmapDecoder decoder = await BitmapDecoder.CreateAsync(stream);
-                SoftwareBitmap softwareBitmap = await decoder.GetSoftwareBitmapAsync();
-                InMemoryRandomAccessStream resized_stream = new InMemoryRandomAccessStream();
-                BitmapEncoder encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.JpegEncoderId, resized_stream);
-                encoder.SetSoftwareBitmap(softwareBitmap);
-
                 double width_ratio = req_width / decoder.PixelWidth;
                 double height_ratio = req_height / decoder.PixelHeight;
                 double scale_ratio = Math.Min(width_ratio, height_ratio);
@@ -461,27 +455,34 @@ namespace ComicReader.Database
                 uint aspect_height = (uint)Math.Floor(decoder.PixelHeight * scale_ratio);
                 uint aspect_width = (uint)Math.Floor(decoder.PixelWidth * scale_ratio);
 
-                encoder.BitmapTransform.InterpolationMode = BitmapInterpolationMode.Fant;
-                encoder.BitmapTransform.ScaledHeight = aspect_height;
-                encoder.BitmapTransform.ScaledWidth = aspect_width;
+                var result = await Debug.TryAsync("GenCoverCache", async delegate
+                {
+                    using (SoftwareBitmap softwareBitmap = await decoder.GetSoftwareBitmapAsync())
+                    {
+                        InMemoryRandomAccessStream resized_stream = new InMemoryRandomAccessStream();
+                        BitmapEncoder encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.JpegEncoderId, resized_stream);
+                        encoder.SetSoftwareBitmap(softwareBitmap);
+                        encoder.BitmapTransform.InterpolationMode = BitmapInterpolationMode.Fant;
+                        encoder.BitmapTransform.ScaledHeight = aspect_height;
+                        encoder.BitmapTransform.ScaledWidth = aspect_width;
 
-                await encoder.FlushAsync();
-                resized_stream.Seek(0);
-                byte[] out_buffer = new byte[resized_stream.Size];
-                await resized_stream.ReadAsync(out_buffer.AsBuffer(), (uint)resized_stream.Size, InputStreamOptions.None);
+                        await encoder.FlushAsync();
+                        resized_stream.Seek(0);
+                        byte[] out_buffer = new byte[resized_stream.Size];
+                        await resized_stream.ReadAsync(out_buffer.AsBuffer(), (uint)resized_stream.Size, InputStreamOptions.None);
 
-                string filename = Utils.StringUtils.RandomFileName(16) + ".jpg";
-
-                StorageFile sample_file;
-                sample_file = await CacheFolder.CreateFileAsync(filename, CreationCollisionOption.ReplaceExisting);
-
-                await FileIO.WriteBytesAsync(sample_file, out_buffer);
-                CoverFileCache = filename;
-            });
-            if (!result.Successful)
-            {
-                return result;
+                        string filename = StringUtils.RandomFileName(16) + ".jpg";
+                        StorageFile sample_file = await CacheFolder.CreateFileAsync(filename, CreationCollisionOption.ReplaceExisting);
+                        await FileIO.WriteBytesAsync(sample_file, out_buffer);
+                        CoverFileCache = filename;
+                    }
+                });
+                if (!result.Successful)
+                {
+                    return result;
+                }
             }
+
             SaveCoverFileCache();
             return new TaskResult();
         }
