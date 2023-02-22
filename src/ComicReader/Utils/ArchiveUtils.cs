@@ -237,13 +237,21 @@ namespace ComicReader.Utils
             {
                 case ".7z":
                 case ".cb7":
-                    using (var archive = SharpCompress.Archives.SevenZip.SevenZipArchive.Open(stream, opts))
+                    SharpCompress.Archives.SevenZip.SevenZipArchive archive;
+                    try
+                    {
+                        archive = SharpCompress.Archives.SevenZip.SevenZipArchive.Open(stream, opts);
+                    }
+                    catch (Exception)
+                    {
+                        return new TaskResult(TaskException.FileCorrupted);
+                    }
+                    using (archive)
                     {
                         foreach (var raw_entry in archive.Entries)
                         {
                             var entry = new SevenZipArchiveEntry(raw_entry);
                             TaskResult result = await callback(entry);
-
                             if (result.ExceptionType == TaskException.StopIteration)
                             {
                                 break;
@@ -261,13 +269,35 @@ namespace ComicReader.Utils
                 case ".tar":
                 case ".xz":
                 case ".zip":
-                    using (var reader = SharpCompress.Readers.ReaderFactory.Open(stream, opts))
+                    SharpCompress.Readers.IReader reader;
+                    try
                     {
-                        while (reader.MoveToNextEntry())
+                        reader = SharpCompress.Readers.ReaderFactory.Open(stream, opts);
+                    }
+                    catch (Exception)
+                    {
+                        return new TaskResult(TaskException.FileCorrupted);
+                    }
+                    using (reader)
+                    {
+                        while (true)
                         {
+                            bool hasNext;
+                            try
+                            {
+                                hasNext = reader.MoveToNextEntry();
+                            }
+                            catch (Exception e)
+                            {
+                                Utils.Debug.LogException("ArchiveReaderMoveNext", e);
+                                break;
+                            }
+                            if (!hasNext)
+                            {
+                                break;
+                            }
                             var entry = new ReaderArchiveEntry(reader);
                             TaskResult result = await callback(entry);
-
                             if (result.ExceptionType == TaskException.StopIteration)
                             {
                                 break;

@@ -53,7 +53,7 @@ namespace ComicReader.Utils
             return new TaskResult();
         }
 
-        private static void LogException(string eventName, Exception e)
+        public static void LogException(string eventName, Exception e)
         {
             Dictionary<string, string> properties = new Dictionary<string, string>();
             properties["detail"] = e.ToString();
