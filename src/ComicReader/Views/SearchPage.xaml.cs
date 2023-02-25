@@ -10,10 +10,11 @@ using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media.Imaging;
 using muxc = Microsoft.UI.Xaml.Controls;
+using ComicReader.Common;
 using ComicReader.Common.Router;
 using ComicReader.Database;
 using ComicReader.DesignData;
-using ComicReader.Common;
+using ComicReader.Utils;
 
 namespace ComicReader.Views
 {
@@ -224,6 +225,13 @@ namespace ComicReader.Views
             };
 
             InitializeComponent();
+        }
+
+        public override void OnLoaded(object sender, RoutedEventArgs e)
+        {
+            base.OnLoaded(sender, e);
+            var scrollViewer = SearchResultGridView.ChildrenBreadthFirst().OfType<ScrollViewer>().First();
+            scrollViewer.ViewChanged += OnScrollViewerViewChanged;
         }
 
         public override void OnStart(NavigationParams p)

@@ -1,4 +1,4 @@
-﻿<common:NavigatablePage
+<common:NavigatablePage
     x:Class="ComicReader.Views.SearchPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -39,16 +39,29 @@
             IsIndeterminate="True" />
 
         <!--  Search Results  -->
-        <ScrollViewer
-            Tapped="OnScrollViewerTapped"
-            ViewChanged="OnScrollViewerViewChanged"
-            Visibility="{x:Bind Shared.IsResultGridVisible, Mode=OneWay}">
-            <StackPanel
-                Margin="15,0,15,0"
-                HorizontalAlignment="Center"
-                Orientation="Vertical">
-                <Grid Height="15" />
-                <StackPanel Margin="15,0,0,0" Orientation="Vertical">
+        <GridView
+            x:Name="SearchResultGridView"
+            Padding="15,15,15,0"
+            ItemContainerStyleSelector="{StaticResource SearchResultItemContainerStyleSelector}"
+            ItemsSource="{x:Bind Shared.SearchResults}"
+            SelectionChanged="OnGridViewSelectionChanged"
+            SelectionMode="{x:Bind Shared.ComicItemSelectionMode, Mode=OneWay}"
+            Tapped="OnScrollViewerTapped">
+            <GridView.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <ItemsWrapGrid
+                        Margin="0,0,0,10"
+                        HorizontalAlignment="Center"
+                        Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+            </GridView.ItemsPanel>
+            <GridView.ItemTemplate>
+                <DataTemplate x:DataType="data:ComicItemViewModel">
+                    <controls:ComicItemHorizontal IsContextFlyoutEnabled="{x:Bind IsSelectMode, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}" Tapped="OnComicItemControlTapped" />
+                </DataTemplate>
+            </GridView.ItemTemplate>
+            <GridView.Header>
+                <StackPanel Margin="15,0,0,16" Orientation="Vertical">
                     <TextBlock
                         FontSize="28"
                         FontWeight="SemiBold"
@@ -63,23 +76,11 @@
                         TextWrapping="Wrap"
                         Visibility="{x:Bind Shared.FilterDetailsVisible, Mode=OneWay}" />
                 </StackPanel>
-                <Grid Height="16" />
-                <GridView
-                    x:Name="SearchResultGridView"
-                    HorizontalAlignment="Center"
-                    ItemContainerStyleSelector="{StaticResource SearchResultItemContainerStyleSelector}"
-                    ItemsSource="{x:Bind Shared.SearchResults}"
-                    SelectionChanged="OnGridViewSelectionChanged"
-                    SelectionMode="{x:Bind Shared.ComicItemSelectionMode, Mode=OneWay}">
-                    <GridView.ItemTemplate>
-                        <DataTemplate x:DataType="data:ComicItemViewModel">
-                            <controls:ComicItemHorizontal IsContextFlyoutEnabled="{x:Bind IsSelectMode, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}" Tapped="OnComicItemControlTapped" />
-                        </DataTemplate>
-                    </GridView.ItemTemplate>
-                </GridView>
+            </GridView.Header>
+            <GridView.Footer>
                 <Grid Height="60" Visibility="{x:Bind Shared.IsSelectMode, Mode=OneWay}" />
-            </StackPanel>
-        </ScrollViewer>
+            </GridView.Footer>
+        </GridView>
 
         <!--  No Results  -->
         <StackPanel
