@@ -1,7 +1,8 @@
-﻿#if DEBUG
+#if DEBUG
 //#define DEBUG_LOG_LOAD
 #endif
 
+using ComicReader.Database;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,12 +10,9 @@ using System.Threading.Tasks;
 using Windows.Graphics.Display;
 using Windows.Storage.Streams;
 using Windows.UI.Xaml.Media.Imaging;
-using ComicReader.Database;
 
 namespace ComicReader.Utils
 {
-    using RawTask = Task<Utils.TaskResult>;
-
     public class ImageLoader
     {
         private ImageLoader() {}
@@ -65,54 +63,54 @@ namespace ComicReader.Utils
             public Func<BitmapImage, Task> CallbackAsync;
         }
 
-        public sealed class Builder : BuilderBase<RawTask>
+        public sealed class Builder : BuilderBase<Task<TaskException>>
         {
-            private List<Token> m_tokens;
-            private DimensionConstrain m_width_constrain = double.PositiveInfinity;
-            private DimensionConstrain m_height_constrain = double.PositiveInfinity;
-            private StretchModeEnum m_stretch_mode = StretchModeEnum.Uniform;
-            private CancellationLock m_cancellation_lock;
-            private double m_multiplication = 1.0;
+            private readonly List<Token> _tokens;
+            private DimensionConstrain _widthConstrain = double.PositiveInfinity;
+            private DimensionConstrain _heightConstrain = double.PositiveInfinity;
+            private StretchModeEnum _stretchMode = StretchModeEnum.Uniform;
+            private readonly CancellationLock _cancellationLock;
+            private double _multiplication = 1.0;
 
             public Builder(List<Token> tokens, CancellationLock cancellation_lock = null)
             {
-                m_tokens = tokens;
-                m_cancellation_lock = cancellation_lock;
+                _tokens = tokens;
+                _cancellationLock = cancellation_lock;
             }
 
             public Builder WidthConstrain(DimensionConstrain constrain)
             {
-                m_width_constrain = constrain;
+                _widthConstrain = constrain;
                 return this;
             }
 
             public Builder HeightConstrain(DimensionConstrain constrain)
             {
-                m_height_constrain = constrain;
+                _heightConstrain = constrain;
                 return this;
             }
 
             public Builder StretchMode(StretchModeEnum mode)
             {
-                m_stretch_mode = mode;
+                _stretchMode = mode;
                 return this;
             }
 
             public Builder Multiplication(double value)
             {
-                m_multiplication = value;
+                _multiplication = value;
                 return this;
             }
 
-            protected override RawTask CommitImpl()
+            protected override Task<TaskException> CommitImpl()
             {
-                m_width_constrain.Val *= m_multiplication;
-                m_height_constrain.Val *= m_multiplication;
-                return Load(m_tokens, m_width_constrain, m_height_constrain, m_stretch_mode, m_cancellation_lock);
+                _widthConstrain.Val *= _multiplication;
+                _heightConstrain.Val *= _multiplication;
+                return Load(_tokens, _widthConstrain, _heightConstrain, _stretchMode, _cancellationLock);
             }
         }
 
-        private static async RawTask Load(IEnumerable<Token> tokens,
+        private static async Task<TaskException> Load(IEnumerable<Token> tokens,
             DimensionConstrain width_constrain, DimensionConstrain height_constrain,
             StretchModeEnum stretch_mode, CancellationLock cancellation_lock)
         {
@@ -140,7 +138,7 @@ namespace ComicReader.Utils
 #if DEBUG_LOG_LOAD
                     Log("Task cancelled");
 #endif
-                    return new TaskResult(TaskException.Cancellation);
+                    return TaskException.Cancellation;
                 }
 
                 Token token = tokens_cpy.First();
@@ -148,10 +146,10 @@ namespace ComicReader.Utils
 
                 // Lazy load.
                 ComicData comic = token.Comic;
-                TaskResult result = await comic.UpdateImages(cover_only: token.Index < 0, reload: false);
+                TaskException result = await comic.UpdateImages(cover_only: token.Index < 0, reload: false);
 
                 // Skip tokens whose comic folder cannot be reached.
-                if (!result.Successful)
+                if (!result.Successful())
                 {
                     Log("Token " + token.Index.ToString() + "(" + token_processed.ToString() + ") skipped, failed to update comic images");
                     int token_before = tokens_cpy.Count;
@@ -254,28 +252,22 @@ namespace ComicReader.Utils
                         {
                             await token.CallbackAsync(image);
                         }
-
 #if DEBUG_LOG_LOAD
                         Log("Token " + token_processed.ToString() + "(idx=" + token.Index.ToString() + ") loaded");
 #endif
-
                         completion_src.SetResult(true);
                     });
-
                     await completion_src.Task;
                 }
             }
-
 #if DEBUG_LOG_LOAD
             Log("Image loading compeleted (success=" + all_token_success.ToString() + ")");
 #endif
-
             if (!all_token_success)
             {
-                return new TaskResult(TaskException.Failure);
+                return TaskException.Failure;
             }
-
-            return new TaskResult();
+            return TaskException.Success;
         }
 
         private static void Log(string text)

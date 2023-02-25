@@ -1,4 +1,5 @@
 using ComicReader.Database;
+using ComicReader.Utils;
 using ComicReader.Views;
 using Microsoft.AppCenter;
 using Microsoft.AppCenter.Analytics;
@@ -17,8 +18,6 @@ using Windows.UI.ViewManagement;
 
 namespace ComicReader
 {
-    using TaskResult = Utils.TaskResult;
-
     sealed partial class App : Application
     {
         private bool m_window_setup = false;
@@ -46,8 +45,8 @@ namespace ComicReader
         private async Task Startup(bool prelaunch_activated)
         {
             // Initialize the database if it has not been initialized.
-            TaskResult result = await DatabaseManager.Init();
-            System.Diagnostics.Debug.Assert(result.Successful);
+            TaskException result = await DatabaseManager.Init();
+            System.Diagnostics.Debug.Assert(result.Successful());
 
             // Perform usual startup.
             if (!(Window.Current.Content is Frame rootFrame))

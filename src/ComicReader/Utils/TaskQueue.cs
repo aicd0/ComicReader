@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,6 +17,7 @@ namespace ComicReader.Utils
         IncorrectPassword,
         InvalidParameters,
         ItemExists,
+        MaximumExceeded,
         NameCollision,
         NoPermission,
         NotImplemented,
@@ -27,171 +28,122 @@ namespace ComicReader.Utils
         UnknownEnum,
     }
 
-    public class TaskResult
-    {
-        public TaskResult(TaskException type = TaskException.Success,
-            bool fatal = false, string desc = "No description provided.")
-        {
-            ExceptionType = type;
-            IsFatal = fatal;
-            Description = desc;
-        }
-
-        public readonly TaskException ExceptionType;
-        public readonly bool IsFatal;
-        public readonly string Description;
-
-        public bool Successful => ExceptionType == TaskException.Success;
-    }
-
     public class TaskQueue
     {
-        public Task<TaskResult> Queue;
+        public Task<TaskException> Queue;
     }
 
     public class TaskQueueManager
     {
-        private static TaskQueue m_default_queue = EmptyQueue();
-        private static int m_next_token = 0;
-        private static SortedDictionary<int, string> m_task_prompts =
-            new SortedDictionary<int, string>();
-        private static SemaphoreSlim m_append_task_semaphore =
-            new SemaphoreSlim(1);
+        private static readonly TaskQueue s_defaultQueue = EmptyQueue();
+        private static int s_nextToken = 0;
+        private static readonly SortedDictionary<int, string> s_taskPrompts = new SortedDictionary<int, string>();
+        private static readonly SemaphoreSlim s_appendTaskSemaphore = new SemaphoreSlim(1);
 
         public static TaskQueue EmptyQueue()
         {
             return new TaskQueue
             {
-                Queue = Task.Factory.StartNew(() => new TaskResult())
+                Queue = Task.Factory.StartNew(() => TaskException.Success)
             };
         }
 
-        public static void NewTask(Func<Task<TaskResult>, TaskResult> ope)
+        public static void NewTask(Func<Task<TaskException>, TaskException> ope)
         {
             NewTask(ope, "");
         }
 
-        public static void NewTask(Func<Task<TaskResult>, TaskResult> ope,
+        public static void NewTask(Func<Task<TaskException>, TaskException> ope,
             string prompt)
         {
             AppendTask(ope, prompt, EmptyQueue());
         }
 
-        public static void AppendTask(Func<Task<TaskResult>, TaskResult> ope)
+        public static void AppendTask(Func<Task<TaskException>, TaskException> ope)
         {
             AppendTask(ope, "");
         }
 
-        public static void AppendTask(Func<Task<TaskResult>, TaskResult> ope,
+        public static void AppendTask(Func<Task<TaskException>, TaskException> ope,
             string prompt)
         {
-            AppendTask(ope, prompt, m_default_queue);
+            AppendTask(ope, prompt, s_defaultQueue);
         }
 
-        public static void AppendTask(Func<Task<TaskResult>, TaskResult> ope,
+        public static void AppendTask(Func<Task<TaskException>, TaskException> ope,
             string prompt, TaskQueue queue)
         {
             int token = 0;
 
             // enqueue
             queue.Queue = queue.Queue
-            .ContinueWith(delegate (Task<TaskResult> _t)
+            .ContinueWith(delegate (Task<TaskException> _t)
             {
-                m_append_task_semaphore.Wait();
+                s_appendTaskSemaphore.Wait();
 
                 if (prompt.Length != 0)
                 {
                     // generate a token and add the prompt to m_task_prompts
-                    if (m_task_prompts.Count == 0)
+                    if (s_taskPrompts.Count == 0)
                     {
-                        m_next_token = 0;
+                        s_nextToken = 0;
                     }
 
-                    token = m_next_token--;
-                    m_task_prompts.Add(token, prompt);
+                    token = s_nextToken--;
+                    s_taskPrompts.Add(token, prompt);
                 }
 
                 // fetch the first prompt from all prompts and set as current
                 // prompt
                 string first_prompt = "";
 
-                foreach (KeyValuePair<int, string> p in m_task_prompts)
+                foreach (KeyValuePair<int, string> p in s_taskPrompts)
                 {
                     first_prompt = p.Value;
                     break;
                 }
 
                 SetPromptText(first_prompt).Wait();
-                _ = m_append_task_semaphore.Release();
+                _ = s_appendTaskSemaphore.Release();
                 return _t.Result;
             })
             .ContinueWith(ope)
-            .ContinueWith(
-            delegate (Task<TaskResult> _t)
+            .ContinueWith(delegate (Task<TaskException> _t)
             {
-                m_append_task_semaphore.Wait();
+                s_appendTaskSemaphore.Wait();
 
                 // remove last prompt
                 if (prompt.Length != 0)
                 {
-                    m_task_prompts.Remove(token);
+                    s_taskPrompts.Remove(token);
                 }
 
                 // update current prompt
                 string text = "";
 
-                foreach (KeyValuePair<int, string> p in m_task_prompts)
+                foreach (KeyValuePair<int, string> p in s_taskPrompts)
                 {
                     text = p.Value;
                     break;
                 }
 
                 SetPromptText(text).Wait();
-                _ = m_append_task_semaphore.Release();
-
-                // show error dialog if a fatal error is encountered
-                if (_t.Result.IsFatal)
-                {
-                    Task show_dialog_task = null;
-
-                    Utils.C0.Sync(
-                    delegate
-                    {
-                        ContentDialog dialog = new ContentDialog()
-                        {
-                            Title = "Task failed",
-                            Content = "We have encountered a fatal error and" +
-                            " need to terminate this application. You can send" +
-                            " us the following information to help us locate" +
-                            " the issues.\n\n" +
-                            "Type: " + _t.Result.ExceptionType.ToString() + "\n" +
-                            "Description: " + _t.Result.Description,
-                            CloseButtonText = "Continue"
-                        };
-
-                        show_dialog_task = dialog.ShowAsync().AsTask();
-                    }).Wait();
-
-                    show_dialog_task.Wait();
-                    CoreApplication.Exit();
-                }
+                _ = s_appendTaskSemaphore.Release();
                 return _t.Result;
             });
         }
 
-        private static async Task<TaskResult> SetPromptText(string text)
+        private static async Task<TaskException> SetPromptText(string text)
         {
             if (Views.MainPage.Current == null)
             {
-                return new TaskResult(TaskException.Failure);
+                return TaskException.Failure;
             }
-
             await Utils.C0.Sync(delegate
             {
                 Views.MainPage.Current.SetRootToolTip(text);
             });
-
-            return new TaskResult();
+            return TaskException.Success;
         }
     };
 }

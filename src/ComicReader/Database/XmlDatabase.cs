@@ -1,6 +1,5 @@
-﻿using Microsoft.Data.Sqlite;
+using ComicReader.Utils;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -10,10 +9,7 @@ using Windows.Storage.Streams;
 
 namespace ComicReader.Database
 {
-    using RawTask = Task<Utils.TaskResult>;
-    using SealedTask = Func<Task<Utils.TaskResult>, Utils.TaskResult>;
-    using TaskResult = Utils.TaskResult;
-    using TaskException = Utils.TaskException;
+    using SealedTask = Func<Task<TaskException>, TaskException>;
 
     public abstract class XmlData
     {
@@ -57,24 +53,23 @@ namespace ComicReader.Database
             m_database_lock.Release();
         }
 
-        public static async RawTask Load()
+        public static async Task<TaskException> Load()
         {
             await _Load(XmlDatabase.Settings);
             await _Load(XmlDatabase.Favorites);
             await _Load(XmlDatabase.History);
 
             m_database_ready = true;
-            return new TaskResult();
+            return TaskException.Success;
         }
 
         [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
-        private static async RawTask _Load(XmlData obj)
+        private static async Task<TaskException> _Load(XmlData obj)
         {
             object file = await Utils.Storage.TryGetFile(DatabaseFolder, obj.FileName);
-
             if (file == null)
             {
-                return new TaskResult(TaskException.FileNotFound);
+                return TaskException.FileNotFound;
             }
 
             IRandomAccessStream stream = await (file as StorageFile).OpenAsync(FileAccessMode.Read);
@@ -90,21 +85,20 @@ namespace ComicReader.Database
             }
             catch (Exception)
             {
-                return new TaskResult(TaskException.Failure);
+                return TaskException.Failure;
             }
 
             obj.Target.Unpack();
             stream.Dispose();
-            return new TaskResult();
+            return TaskException.Success;
         }
 
         public static SealedTask SaveSealed(XmlDatabaseItem item) =>
-            (RawTask _) => SaveUnsealed(item).Result;
+            (Task<TaskException> _) => SaveUnsealed(item).Result;
 
-        public static async RawTask SaveUnsealed(XmlDatabaseItem item)
+        public static async Task<TaskException> SaveUnsealed(XmlDatabaseItem item)
         {
             Utils.Debug.Log("Saving: " + item.ToString());
-
             switch (item)
             {
                 case XmlDatabaseItem.Favorites:
@@ -117,10 +111,10 @@ namespace ComicReader.Database
                     await _Save(XmlDatabase.Settings);
                     break;
                 default:
-                    return new TaskResult(TaskException.InvalidParameters, fatal: true);
+                    Utils.Debug.LogException("SaveXmlDatabaseUnknownItem", null);
+                    return TaskException.InvalidParameters;
             }
-
-            return new TaskResult();
+            return TaskException.Success;
         }
 
         private static async Task _Save(XmlData obj)

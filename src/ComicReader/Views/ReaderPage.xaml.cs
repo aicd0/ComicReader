@@ -26,8 +26,6 @@ using ComicReader.Utils;
 
 namespace ComicReader.Views
 {
-    using TaskResult = Utils.TaskResult;
-
     public enum ReaderStatusEnum
     {
         Loading,
@@ -456,11 +454,10 @@ namespace ComicReader.Views
                     await HistoryDataManager.Add(_comic.Id, _comic.Title1, true);
 
                     // Update image files.
-                    TaskResult result = await _comic.UpdateImages(cover_only: false, reload: true);
-
-                    if (!result.Successful)
+                    TaskException result = await _comic.UpdateImages(cover_only: false, reload: true);
+                    if (!result.Successful())
                     {
-                        Log("Failed to load images of '" + _comic.Location + "'. " + result.ExceptionType.ToString());
+                        Log("Failed to load images of '" + _comic.Location + "'. " + result.ToString());
                         Shared.ReaderStatus = ReaderStatusEnum.Error;
                         return;
                     }
@@ -504,8 +501,7 @@ namespace ComicReader.Views
             double preview_width = 0.0;
             double preview_height = 0.0;
 
-            await Windows.ApplicationModel.Core.CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal,
-            delegate
+            await Utils.C0.Sync(delegate
             {
                 preview_width = (double)Application.Current.Resources["ReaderPreviewImageWidth"];
                 preview_height = (double)Application.Current.Resources["ReaderPreviewImageHeight"];

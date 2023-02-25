@@ -8,10 +8,6 @@ using Windows.Storage.Pickers;
 
 namespace ComicReader.Database
 {
-    using RawTask = Task<Utils.TaskResult>;
-    using TaskResult = Utils.TaskResult;
-    using TaskException = Utils.TaskException;
-
     public class SettingData : XmlData
     {
         public int DatabaseVersion = -1;
@@ -46,45 +42,52 @@ namespace ComicReader.Database
 
     class SettingDataManager
     {
-        public static async RawTask AddComicFolder(StorageFolder folder, bool final)
+        public static async Task<TaskException> AddComicFolder(StorageFolder folder, bool final)
         {
             await XmlDatabaseManager.WaitLock();
             try
             {
-                string path = folder.Path;
-                bool folder_inserted = false;
-
-                foreach (string old_path in XmlDatabase.Settings.ComicFolders)
-                {
-                    if (StringUtils.FolderContain(old_path, path))
-                    {
-                        return new TaskResult(TaskException.ItemExists);
-                    }
-                    else if (StringUtils.FolderContain(path, old_path))
-                    {
-                        XmlDatabase.Settings.ComicFolders[XmlDatabase.Settings.ComicFolders.IndexOf(old_path)] = path;
-                        folder_inserted = true;
-                        break;
-                    }
-                }
-                if (!folder_inserted)
-                {
-                    XmlDatabase.Settings.ComicFolders.Add(path);
-                }
-                Utils.Storage.AddToFutureAccessList(folder);
+                AddComicFolderNoLock(folder);
             }
             finally
             {
                 XmlDatabaseManager.ReleaseLock();
             }
-
             if (final)
             {
-                Utils.TaskQueueManager.AppendTask(
-                    XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
+                Utils.TaskQueueManager.AppendTask(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
             }
+            return TaskException.Success;
+        }
 
-            return new TaskResult();
+        private static TaskException AddComicFolderNoLock(StorageFolder folder)
+        {
+            if (!Utils.Storage.AllowAddToFutureAccessList())
+            {
+                return TaskException.MaximumExceeded;
+            }
+            Utils.Storage.AddToFutureAccessList(folder);
+
+            string path = folder.Path;
+            bool folder_added = false;
+            foreach (string old_path in XmlDatabase.Settings.ComicFolders)
+            {
+                if (StringUtils.FolderContain(old_path, path))
+                {
+                    return TaskException.ItemExists;
+                }
+                else if (StringUtils.FolderContain(path, old_path))
+                {
+                    XmlDatabase.Settings.ComicFolders[XmlDatabase.Settings.ComicFolders.IndexOf(old_path)] = path;
+                    folder_added = true;
+                    break;
+                }
+            }
+            if (!folder_added)
+            {
+                XmlDatabase.Settings.ComicFolders.Add(path);
+            }
+            return TaskException.Success;
         }
 
         public static async Task RemoveComicFolder(string path, bool final)
@@ -98,8 +101,7 @@ namespace ComicReader.Database
 
             if (final)
             {
-                Utils.TaskQueueManager.AppendTask(
-                    XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
+                Utils.TaskQueueManager.AppendTask(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
             }
         }
 
@@ -108,14 +110,12 @@ namespace ComicReader.Database
             FolderPicker picker = new FolderPicker();
             picker.FileTypeFilter.Add("*");
             StorageFolder folder = await picker.PickSingleFolderAsync();
-
             if (folder == null)
             {
                 return false;
             }
-
-            TaskResult r = await AddComicFolder(folder, true);
-            return r.Successful;
+            TaskException r = await AddComicFolder(folder, true);
+            return r.Successful();
         }
     }
 }

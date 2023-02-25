@@ -1,4 +1,4 @@
-using System;
+using ComicReader.Utils;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -8,11 +8,6 @@ using Windows.Storage.Streams;
 
 namespace ComicReader.Database
 {
-    using RawTask = Task<Utils.TaskResult>;
-    using SealedTask = Func<Task<Utils.TaskResult>, Utils.TaskResult>;
-    using TaskResult = Utils.TaskResult;
-    using TaskException = Utils.TaskException;
-
     public class ComicArchiveData : ComicData
     {
         private StorageFile Archive;
@@ -48,16 +43,16 @@ namespace ComicReader.Database
             return comic;
         }
 
-        private async RawTask SetArchive()
+        private async Task<TaskException> SetArchive()
         {
             if (Archive != null)
             {
-                return new TaskResult();
+                return TaskException.Success;
             }
 
             if (Location == null)
             {
-                return new TaskResult(TaskException.InvalidParameters);
+                return TaskException.InvalidParameters;
             }
 
             string base_path = Utils.ArchiveAccess.GetBasePath(Location);
@@ -65,11 +60,11 @@ namespace ComicReader.Database
 
             if (file == null)
             {
-                return new TaskResult(TaskException.NoPermission);
+                return TaskException.NoPermission;
             }
 
             Archive = file;
-            return new TaskResult();
+            return TaskException.Success;
         }
 
         private string GetSubPathFromFilename(string filename)
@@ -87,11 +82,10 @@ namespace ComicReader.Database
             }
         }
 
-        public override async RawTask LoadFromInfoFile()
+        public override async Task<TaskException> LoadFromInfoFile()
         {
-            TaskResult r = await SetArchive();
-
-            if (!r.Successful)
+            TaskException r = await SetArchive();
+            if (!r.Successful())
             {
                 return r;
             }
@@ -131,7 +125,7 @@ namespace ComicReader.Database
 
                 if (sub_path == null)
                 {
-                    return new TaskResult(TaskException.FileNotFound);
+                    return TaskException.FileNotFound;
                 }
             }
             else
@@ -143,7 +137,7 @@ namespace ComicReader.Database
             {
                 if (stream == null)
                 {
-                    return new TaskResult(TaskException.Failure);
+                    return TaskException.Failure;
                 }
 
                 using (StreamReader reader = new StreamReader(stream))
@@ -153,18 +147,18 @@ namespace ComicReader.Database
             }
 
             ParseInfo(info_text);
-            return new TaskResult();
+            return TaskException.Success;
         }
 
-        protected override RawTask SaveToInfoFile()
+        protected override Task<TaskException> SaveToInfoFile()
         {
-            return Task.FromResult(new TaskResult(TaskException.NotSupported));
+            return Task.FromResult(TaskException.NotSupported);
         }
 
-        protected override async RawTask ReloadImages()
+        protected override async Task<TaskException> ReloadImages()
         {
-            TaskResult result = await SetArchive();
-            if (!result.Successful)
+            TaskException result = await SetArchive();
+            if (!result.Successful())
             {
                 return result;
             }
@@ -204,7 +198,7 @@ namespace ComicReader.Database
                 List<string> subfiles = new List<string>();
 
                 result = await Utils.ArchiveAccess.TryGetSubFiles(Archive, sub_path, subfiles);
-                if (!result.Successful)
+                if (!result.Successful())
                 {
                     return result;
                 }
@@ -223,7 +217,7 @@ namespace ComicReader.Database
             }
 
             Entries = entries.OrderBy(x => x, new Utils.StringUtils.FileNameComparer()).ToList();
-            return new TaskResult();
+            return TaskException.Success;
         }
 
         protected override async Task<IRandomAccessStream> InternalGetImageStream(int index)

@@ -202,6 +202,7 @@
     <Compile Include="DesignData\TagViewModel.cs" />
     <Compile Include="Common\AppInfoProvider.cs" />
     <Compile Include="Keys.cs" />
+    <Compile Include="Utils\Extensions.cs" />
     <Compile Include="Utils\KeyFrameAnimation.cs" />
     <Compile Include="Utils\ArchiveUtils.cs" />
     <Compile Include="Utils\BuilderBase.cs" />

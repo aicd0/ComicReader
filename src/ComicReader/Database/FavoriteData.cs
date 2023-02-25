@@ -1,20 +1,9 @@
-﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
-using Windows.Storage;
-using Windows.Storage.Streams;
 
 namespace ComicReader.Database
 {
-    using RawTask = Task<Utils.TaskResult>;
-    using SealedTask = Func<Task<Utils.TaskResult>, Utils.TaskResult>;
-    using TaskResult = Utils.TaskResult;
-    using TaskException = Utils.TaskException;
-
     public class FavoriteData : XmlData
     {
         public List<FavoriteNodeData> RootNodes = new List<FavoriteNodeData>();

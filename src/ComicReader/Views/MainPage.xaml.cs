@@ -419,17 +419,6 @@ namespace ComicReader.Views
             _titleBarAnimation.Start();
         }
 
-        private void SetTabViewVisibility(bool visibility)
-        {
-            if (_tabContainerGrid == null)
-            {
-                return;
-            }
-
-            _tabContainerGrid.Visibility = visibility ?
-                Visibility.Visible : Visibility.Collapsed;
-        }
-
         private void OnTabContainerGridLoaded(object sender, RoutedEventArgs e)
         {
             _tabContainerGrid = sender as Grid;

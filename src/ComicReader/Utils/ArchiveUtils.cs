@@ -5,8 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Windows.Storage;
 
-using RawTask = System.Threading.Tasks.Task<ComicReader.Utils.TaskResult>;
-
 namespace ComicReader.Utils
 {
     public abstract class ArchiveEntry
@@ -21,17 +19,17 @@ namespace ComicReader.Utils
     {
         public ReaderArchiveEntry(SharpCompress.Readers.IReader reader)
         {
-            m_reader = reader;
+            _reader = reader;
         }
 
-        private SharpCompress.Readers.IReader m_reader;
+        private readonly SharpCompress.Readers.IReader _reader;
 
-        public override string FullName => m_reader.Entry.Key;
-        public override bool IsDirectory => m_reader.Entry.IsDirectory;
+        public override string FullName => _reader.Entry.Key;
+        public override bool IsDirectory => _reader.Entry.IsDirectory;
 
         public override Stream Open()
         {
-            return m_reader.OpenEntryStream();
+            return _reader.OpenEntryStream();
         }
     }
 
@@ -39,17 +37,17 @@ namespace ComicReader.Utils
     {
         public SevenZipArchiveEntry(SharpCompress.Archives.SevenZip.SevenZipArchiveEntry entry)
         {
-            m_entry = entry;
+            _entry = entry;
         }
 
-        private SharpCompress.Archives.SevenZip.SevenZipArchiveEntry m_entry;
+        private readonly SharpCompress.Archives.SevenZip.SevenZipArchiveEntry _entry;
 
-        public override string FullName => m_entry.Key;
-        public override bool IsDirectory => m_entry.IsDirectory;
+        public override string FullName => _entry.Key;
+        public override bool IsDirectory => _entry.IsDirectory;
 
         public override Stream Open()
         {
-            return m_entry.OpenEntryStream();
+            return _entry.OpenEntryStream();
         }
     }
 
@@ -116,15 +114,14 @@ namespace ComicReader.Utils
 
             var mem_stream = new MemoryStream();
 
-            TaskResult result = await TryAccessArchiveStream(base_file, sub_path,
-                async (Stream stream) =>
-                {
-                    await stream.CopyToAsync(mem_stream);
-                    mem_stream.Position = 0;
-                    return new TaskResult();
-                });
+            TaskException result = await TryAccessArchiveStream(base_file, sub_path, async (Stream stream) =>
+            {
+                await stream.CopyToAsync(mem_stream);
+                mem_stream.Position = 0;
+                return TaskException.Success;
+            });
 
-            if (!result.Successful)
+            if (!result.Successful())
             {
                 mem_stream.Dispose();
                 return null;
@@ -133,15 +130,14 @@ namespace ComicReader.Utils
             return mem_stream;
         }
 
-        public static async RawTask TryAccessArchiveStream(StorageFile base_file, string sub_path, Func<Stream, RawTask> func)
+        public static async Task<TaskException> TryAccessArchiveStream(StorageFile base_file, string sub_path, Func<Stream, Task<TaskException>> func)
         {
             if (base_file == null)
             {
-                return new TaskResult(TaskException.InvalidParameters);
+                return TaskException.InvalidParameters;
             }
 
             Stream stream;
-
             try
             {
                 stream = await base_file.OpenStreamForReadAsync();
@@ -149,10 +145,10 @@ namespace ComicReader.Utils
             catch (Exception e)
             {
                 Log("Failed to access '" + base_file.Path + FileSeperator + sub_path + "'. " + e.ToString());
-                return null;
+                return TaskException.Failure;
             }
 
-            TaskResult result = await TryAccessArchiveStream(stream, base_file.FileType, sub_path, func);
+            TaskException result = await TryAccessArchiveStream(stream, base_file.FileType, sub_path, func);
             stream.Dispose();
             return result;
         }
@@ -162,7 +158,7 @@ namespace ComicReader.Utils
             Utils.Debug.Log("ArchiveAccess: " + text);
         }
 
-        public static async RawTask TryGetSubFiles(StorageFile base_file, string sub_path, List<string> output)
+        public static async Task<TaskException> TryGetSubFiles(StorageFile base_file, string sub_path, List<string> output)
         {
             return await TryAccessDeepestArchive(base_file, sub_path,
                 async (Stream stream, ArchiveAccessContext ctx) =>
@@ -180,8 +176,8 @@ namespace ComicReader.Utils
             public string Extension;
         }
 
-        private static async RawTask TryAccessDeepestArchive(StorageFile base_file, string sub_path,
-            Func<Stream, ArchiveAccessContext, RawTask> func)
+        private static async Task<TaskException> TryAccessDeepestArchive(StorageFile base_file, string sub_path,
+            Func<Stream, ArchiveAccessContext, Task<TaskException>> func)
         {
             string sub_base_path = GetBasePath(sub_path, reverse: true);
             string entry = GetSubPath(sub_path, reverse: true);
@@ -204,11 +200,11 @@ namespace ComicReader.Utils
                 async (Stream stream) => await func(stream, ctx));
         }
 
-        public static async RawTask TryReadEntries(Stream stream, string extension, Func<ArchiveEntry, RawTask> callback)
+        public static async Task<TaskException> TryReadEntries(Stream stream, string extension, Func<ArchiveEntry, Task<TaskException>> callback)
         {
             if (stream == null || !stream.CanRead)
             {
-                return new TaskResult(TaskException.InvalidParameters);
+                return TaskException.InvalidParameters;
             }
 
             // Reader options.
@@ -244,15 +240,15 @@ namespace ComicReader.Utils
                     }
                     catch (Exception)
                     {
-                        return new TaskResult(TaskException.FileCorrupted);
+                        return TaskException.FileCorrupted;
                     }
                     using (archive)
                     {
                         foreach (var raw_entry in archive.Entries)
                         {
                             var entry = new SevenZipArchiveEntry(raw_entry);
-                            TaskResult result = await callback(entry);
-                            if (result.ExceptionType == TaskException.StopIteration)
+                            TaskException result = await callback(entry);
+                            if (result == TaskException.StopIteration)
                             {
                                 break;
                             }
@@ -276,7 +272,7 @@ namespace ComicReader.Utils
                     }
                     catch (Exception)
                     {
-                        return new TaskResult(TaskException.FileCorrupted);
+                        return TaskException.FileCorrupted;
                     }
                     using (reader)
                     {
@@ -297,8 +293,8 @@ namespace ComicReader.Utils
                                 break;
                             }
                             var entry = new ReaderArchiveEntry(reader);
-                            TaskResult result = await callback(entry);
-                            if (result.ExceptionType == TaskException.StopIteration)
+                            TaskException result = await callback(entry);
+                            if (result == TaskException.StopIteration)
                             {
                                 break;
                             }
@@ -307,25 +303,24 @@ namespace ComicReader.Utils
                     break;
 
                 default:
-                    return new TaskResult(TaskException.UnknownEnum);
+                    return TaskException.UnknownEnum;
             }
 
-            return new TaskResult();
+            return TaskException.Success;
         }
 
-        private static async RawTask TryAccessArchiveStream(Stream stream, string extension, string sub_path, Func<Stream, RawTask> func)
+        private static async Task<TaskException> TryAccessArchiveStream(Stream stream, string extension, string sub_path, Func<Stream, Task<TaskException>> func)
         {
             if (stream == null)
             {
                 System.Diagnostics.Debug.Assert(false);
-                return new TaskResult(TaskException.InvalidParameters);
+                return TaskException.InvalidParameters;
             }
-
             return await TryAccessArchiveStreamInternal(stream, extension.ToLower(), sub_path, func);
         }
 
-        private static async RawTask TryAccessArchiveStreamInternal(Stream stream,
-            string extension, string sub_path, Func<Stream, RawTask> callback)
+        private static async Task<TaskException> TryAccessArchiveStreamInternal(Stream stream,
+            string extension, string sub_path, Func<Stream, Task<TaskException>> callback)
         {
             if (sub_path.Length == 0)
             {
@@ -336,7 +331,7 @@ namespace ComicReader.Utils
             string sub_entry_name = GetSubPath(sub_path);
             string filename = Utils.StringUtils.ItemNameFromPath(main_entry_name);
             string sub_extension = Utils.StringUtils.ExtensionFromFilename(filename);
-            TaskResult result = new TaskResult(TaskException.Unknown);
+            TaskException result = TaskException.Unknown;
             bool entry_exist = false;
 
             await TryReadEntries(stream, extension, async (ArchiveEntry entry) =>
@@ -359,22 +354,22 @@ namespace ComicReader.Utils
                     {
                         entry_exist = true;
                         result = await TryAccessArchiveStreamInternal(sub_stream, sub_extension, sub_entry_name, callback);
-                        return new TaskResult(TaskException.StopIteration);
+                        return TaskException.StopIteration;
                     }
                 } while (false);
 
-                return new TaskResult();
+                return TaskException.Success;
             });
 
             if (!entry_exist)
             {
-                result = new TaskResult(TaskException.FileNotFound);
+                result = TaskException.FileNotFound;
             }
 
             return result;
         }
 
-        private static async RawTask TryGetFileEntries(Stream stream, string extension, string base_entry_name, List<string> output)
+        private static async Task<TaskException> TryGetFileEntries(Stream stream, string extension, string base_entry_name, List<string> output)
         {
             base_entry_name = base_entry_name.Replace('/', '\\');
             if (base_entry_name.Length > 0 && base_entry_name[base_entry_name.Length - 1] != '\\')
@@ -403,7 +398,7 @@ namespace ComicReader.Utils
                     output.Add(subpath);
                 } while (false);
 
-                return Task.FromResult(new TaskResult());
+                return Task.FromResult(TaskException.Success);
             });
         }
     }

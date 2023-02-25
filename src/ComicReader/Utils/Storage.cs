@@ -1,29 +1,26 @@
 using System;
-using System.IO;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.AccessCache;
 
 namespace ComicReader.Utils
 {
-    public class Storage
+    internal static class Storage
     {
-        private static Dictionary<string, StorageFolder> FolderResources = new Dictionary<string, StorageFolder>();
-        private static Dictionary<string, StorageFile> FileResources = new Dictionary<string, StorageFile>();
+        private static readonly Dictionary<string, StorageFolder> s_FolderResources = new Dictionary<string, StorageFolder>();
+        private static readonly Dictionary<string, StorageFile> s_FileResources = new Dictionary<string, StorageFile>();
 
         public static void AddTrustedFolder(StorageFolder folder)
         {
             string token = StringUtils.TokenFromPath(folder.Path);
-            FolderResources[token] = folder;
+            s_FolderResources[token] = folder;
         }
 
         public static void AddTrustedFile(StorageFile file)
         {
             string token = StringUtils.TokenFromPath(file.Path);
-            FileResources[token] = file;
+            s_FileResources[token] = file;
         }
 
         public static async Task<StorageFolder> TryGetFolder(string path)
@@ -31,9 +28,9 @@ namespace ComicReader.Utils
             System.Diagnostics.Debug.Assert(path.Length != 0);
             string token = StringUtils.TokenFromPath(path);
 
-            if (FolderResources.ContainsKey(token))
+            if (s_FolderResources.ContainsKey(token))
             {
-                return FolderResources[token];
+                return s_FolderResources[token];
             }
 
             List<string> out_of_date_tokens = new List<string>();
@@ -55,14 +52,14 @@ namespace ComicReader.Utils
                 }
                 catch (Exception e)
                 {
-                    Log("Failed to access folder through token '" + base_token + "'. " + e.ToString());
+                    Utils.Debug.LogException("GetFolderFromToken", e);
                     out_of_date_tokens.Add(base_token);
                     continue;
                 }
 
                 if (!StringUtils.TokenFromPath(permitted_folder.Path).Equals(base_token))
                 {
-                    // Remove entry if the folder path has changed.
+                    // remove the entry if the folder path has changed
                     out_of_date_tokens.Add(base_token);
                     continue;
                 }
@@ -78,7 +75,7 @@ namespace ComicReader.Utils
 
             if (result != null)
             {
-                FolderResources[token] = result;
+                s_FolderResources[token] = result;
             }
 
             return result;
@@ -88,9 +85,9 @@ namespace ComicReader.Utils
         {
             string token = Utils.StringUtils.TokenFromPath(path);
 
-            if (FileResources.ContainsKey(token))
+            if (s_FileResources.ContainsKey(token))
             {
-                return FileResources[token];
+                return s_FileResources[token];
             }
 
             string folder_path = Utils.StringUtils.ParentLocationFromLocation(path);
@@ -110,7 +107,7 @@ namespace ComicReader.Utils
             }
 
             StorageFile file = (StorageFile)item;
-            FileResources[token] = file;
+            s_FileResources[token] = file;
             return file;
         }
 
@@ -118,7 +115,7 @@ namespace ComicReader.Utils
         {
             string token = Utils.StringUtils.TokenFromPath(item.Path);
             StorageApplicationPermissions.FutureAccessList.AddOrReplace(token, item);
-            Utils.Debug.Log("Added '" + token + "' to future access list.");
+            Log("Added '" + token + "' to future access list.");
         }
 
         public static void RemoveFromFutureAccessList(string token)
@@ -127,9 +124,14 @@ namespace ComicReader.Utils
             {
                 return;
             }
-
             StorageApplicationPermissions.FutureAccessList.Remove(token);
-            Utils.Debug.Log("Removed '" + token + "' from future access list.");
+            Log("Removed '" + token + "' from future access list.");
+        }
+
+        public static bool AllowAddToFutureAccessList()
+        {
+            return StorageApplicationPermissions.FutureAccessList.Entries.Count <
+                StorageApplicationPermissions.FutureAccessList.MaximumItemsAllowed;
         }
 
         public static async Task<StorageFolder> TryGetFolder(StorageFolder base_folder, string path)

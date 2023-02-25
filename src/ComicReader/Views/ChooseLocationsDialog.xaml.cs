@@ -1,6 +1,5 @@
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
-using Windows.Storage.AccessCache;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
@@ -25,8 +24,7 @@ namespace ComicReader.Views
         {
             FolderItemDataSource.Clear();
 
-            if (StorageApplicationPermissions.FutureAccessList.Entries.Count <
-                StorageApplicationPermissions.FutureAccessList.MaximumItemsAllowed)
+            if (Utils.Storage.AllowAddToFutureAccessList())
             {
                 FolderItemDataSource.Add(new FolderItemViewModel
                 {

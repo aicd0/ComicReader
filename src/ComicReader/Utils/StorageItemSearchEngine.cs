@@ -1,4 +1,4 @@
-﻿using SharpCompress.Readers;
+using SharpCompress.Readers;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -228,7 +228,6 @@ namespace ComicReader.Utils.StorageItemSearchEngine
             Utils.ArchiveAccess.TryReadEntries(stream, m_extension, (Utils.ArchiveEntry entry) =>
             {
                 string path = entry.FullName.Replace('/', '\\');
-
                 if (entry.IsDirectory)
                 {
                     sub_folders.Add(path.Substring(0, path.Length - 1));
@@ -242,15 +241,13 @@ namespace ComicReader.Utils.StorageItemSearchEngine
                         sub_folders.Add(path.Substring(0, i));
                     }
                 }
-
-                return Task.FromResult(new TaskResult());
+                return Task.FromResult(TaskException.Success);
             }).Wait();
 
             foreach (string sub_folder in sub_folders)
             {
                 folders.Add(m_path + Utils.ArchiveAccess.FileSeperator + sub_folder);
             }
-
             return false;
         }
     }

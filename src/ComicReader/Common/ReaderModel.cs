@@ -22,6 +22,7 @@ using Windows.UI.Xaml.Media.Imaging;
 using ComicReader.Common.Structs;
 using ComicReader.Database;
 using ComicReader.DesignData;
+using ComicReader.Utils;
 
 namespace ComicReader.Common
 {
@@ -765,12 +766,12 @@ namespace ComicReader.Common
                         addToLoaderQueue(i);
                     }
 
-                    Utils.TaskResult result = await Task.Run(delegate
+                    TaskException result = await Task.Run(delegate
                     {
                         return new Utils.ImageLoader.Builder(img_loader_tokens, m_UpdateImageLock).Commit().Result;
                     });
 
-                    if (result.ExceptionType == Utils.TaskException.Cancellation)
+                    if (result == TaskException.Cancellation)
                     {
                         return;
                     }

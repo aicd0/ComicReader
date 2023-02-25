@@ -6,8 +6,7 @@ using Windows.Storage;
 
 namespace ComicReader.Utils
 {
-    using RawTask = Task<Utils.TaskResult>;
-    using SealedTask = Func<Task<Utils.TaskResult>, Utils.TaskResult>;
+    using SealedTask = Func<Task<TaskException>, TaskException>;
 
     class Debug
     {
@@ -35,7 +34,7 @@ namespace ComicReader.Utils
             Utils.TaskQueueManager.AppendTask(LogToFileSealed(content), "", LogQueue);
         }
 
-        public static async RawTask TryAsync(string eventName, Func<Task> action)
+        public static async Task<TaskException> TryAsync(string eventName, Func<Task> action)
         {
 #if DEBUG
             await action();
@@ -47,40 +46,40 @@ namespace ComicReader.Utils
             catch (Exception e)
             {
                 LogException(eventName, e);
-                return new TaskResult(TaskException.Failure);
+                return TaskException.Failure;
             }
 #endif
-            return new TaskResult();
+            return TaskException.Success;
         }
 
         public static void LogException(string eventName, Exception e)
         {
             Dictionary<string, string> properties = new Dictionary<string, string>();
-            properties["detail"] = e.ToString();
+            if (e != null) {
+                properties["detail"] = e.ToString();
+            }
             Analytics.TrackEvent(eventName, properties);
             Log("[Exception] " + eventName + ":\n" + StringUtils.DictionaryToString(properties));
         }
 
         private static SealedTask LogToFileSealed(string content)
         {
-            return (RawTask _) => LogToFile(content).Result;
+            return (Task<TaskException> _) => LogToFile(content).Result;
         }
 
-        private static async RawTask LogToFile(string content)
+        private static async Task<TaskException> LogToFile(string content)
         {
             StorageFile log_file;
-
             try
             {
                 log_file = await LogFolder.CreateFileAsync(LogFileName, CreationCollisionOption.OpenIfExists);
             }
             catch (Exception)
             {
-                return new TaskResult(TaskException.Failure);
+                return TaskException.Failure;
             }
-
             await FileIO.AppendTextAsync(log_file, content);
-            return new TaskResult();
+            return TaskException.Success;
         }
     }
 }

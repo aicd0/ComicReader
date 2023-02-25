@@ -1,30 +1,21 @@
+using ComicReader.Utils;
 using Microsoft.Data.Sqlite;
-using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Xml.Serialization;
-using Windows.Storage;
-using Windows.Storage.Streams;
 
 namespace ComicReader.Database
 {
-    using RawTask = Task<Utils.TaskResult>;
-    using TaskResult = Utils.TaskResult;
-    using TaskException = Utils.TaskException;
-
     public class DatabaseManager
     {
         public static bool DatabaseFirstInit { get; private set; }
 
         private static bool Initialized { get; set; } = false;
 
-        public static async RawTask Init()
+        public static async Task<TaskException> Init()
         {
             if (Initialized)
             {
-                return new TaskResult();
+                return TaskException.Success;
             }
             Initialized = true;
 
@@ -37,10 +28,10 @@ namespace ComicReader.Database
             await XmlDatabaseManager.Load();
             await Update();
             Utils.TaskQueueManager.AppendTask(ComicData.UpdateSealed(lazy_load: true));
-            return new TaskResult();
+            return TaskException.Success;
         }
 
-        public static async RawTask Update()
+        public static async Task<TaskException> Update()
         {
             int old_version = XmlDatabase.Settings.DatabaseVersion;
 
@@ -95,10 +86,10 @@ namespace ComicReader.Database
                 case 0:
                     XmlDatabase.Settings.DatabaseVersion = 1;
                     await XmlDatabaseManager.SaveUnsealed(XmlDatabaseItem.Settings);
-                    return new TaskResult();
+                    return TaskException.Success;
                 default:
                     System.Diagnostics.Debug.Assert(false);
-                    return new TaskResult(TaskException.UnknownEnum);
+                    return TaskException.UnknownEnum;
             }
         }
 

@@ -1,3 +1,4 @@
+using ComicReader.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -5,10 +6,6 @@ using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Search;
 using Windows.Storage.Streams;
-
-using RawTask = System.Threading.Tasks.Task<ComicReader.Utils.TaskResult>;
-using TaskResult = ComicReader.Utils.TaskResult;
-using TaskException = ComicReader.Utils.TaskException;
 
 namespace ComicReader.Database
 {
@@ -52,46 +49,44 @@ namespace ComicReader.Database
             return comic;
         }
 
-        private async RawTask SetFolder()
+        private async Task<TaskException> SetFolder()
         {
             if (Folder != null)
             {
-                return new TaskResult();
+                return TaskException.Success;
             }
 
             if (Location == null)
             {
-                return new TaskResult(TaskException.InvalidParameters);
+                return TaskException.InvalidParameters;
             }
 
             StorageFolder folder = await Utils.Storage.TryGetFolder(Location);
 
             if (folder == null)
             {
-                return new TaskResult(TaskException.NoPermission);
+                return TaskException.NoPermission;
             }
 
             Folder = folder;
-            return new TaskResult();
+            return TaskException.Success;
         }
 
-        private async RawTask SetInfoFile(bool create_if_not_exists)
+        private async Task<TaskException> SetInfoFile(bool create_if_not_exists)
         {
             if (InfoFile != null)
             {
-                return new TaskResult();
+                return TaskException.Success;
             }
 
             if (IsExternal)
             {
-                return create_if_not_exists ?
-                    new TaskResult(TaskException.NoPermission) :
-                    new TaskResult(TaskException.FileNotFound);
+                return create_if_not_exists ? TaskException.NoPermission : TaskException.FileNotFound;
             }
 
-            TaskResult r = await SetFolder();
+            TaskException r = await SetFolder();
 
-            if (!r.Successful)
+            if (!r.Successful())
             {
                 return r;
             }
@@ -102,27 +97,27 @@ namespace ComicReader.Database
             {
                 if (!create_if_not_exists)
                 {
-                    return new TaskResult(TaskException.FileNotFound);
+                    return TaskException.FileNotFound;
                 }
 
                 InfoFile = await Folder.CreateFileAsync(ComicInfoFileName, CreationCollisionOption.OpenIfExists);
-                return new TaskResult();
+                return TaskException.Success;
             }
 
             if (!(item is StorageFile))
             {
-                return new TaskResult(TaskException.NameCollision);
+                return TaskException.NameCollision;
             }
 
             InfoFile = (StorageFile)item;
-            return new TaskResult();
+            return TaskException.Success;
         }
 
-        public override async RawTask LoadFromInfoFile()
+        public override async Task<TaskException> LoadFromInfoFile()
         {
-            TaskResult r = await SetInfoFile(false);
+            TaskException r = await SetInfoFile(false);
 
-            if (!r.Successful)
+            if (!r.Successful())
             {
                 return r;
             }
@@ -136,18 +131,18 @@ namespace ComicReader.Database
             catch (Exception e)
             {
                 Log("Failed to access '" + InfoFile.Path + "'. " + e.ToString());
-                return new TaskResult(TaskException.Failure);
+                return TaskException.Failure;
             }
 
             ParseInfo(info_text);
-            return new TaskResult();
+            return TaskException.Success;
         }
 
-        protected override async RawTask SaveToInfoFile()
+        protected override async Task<TaskException> SaveToInfoFile()
         {
-            TaskResult r = await SetInfoFile(true);
+            TaskException r = await SetInfoFile(true);
 
-            if (!r.Successful)
+            if (!r.Successful())
             {
                 return r;
             }
@@ -162,21 +157,21 @@ namespace ComicReader.Database
             catch (Exception e)
             {
                 Log("Failed to access '" + InfoFile.Path + "'. " + e.ToString());
-                return new TaskResult(TaskException.Failure);
+                return TaskException.Failure;
             }
 
-            return new TaskResult();
+            return TaskException.Success;
         }
 
-        protected override async RawTask ReloadImages()
+        protected override async Task<TaskException> ReloadImages()
         {
             if (IsExternal)
             {
-                return new TaskResult();
+                return TaskException.Success;
             }
 
-            TaskResult result = await SetFolder();
-            if (!result.Successful)
+            TaskException result = await SetFolder();
+            if (!result.Successful())
             {
                 return result;
             }
@@ -201,7 +196,7 @@ namespace ComicReader.Database
             ImageFiles = img_files.OrderBy(x => x.DisplayName,
                 new Utils.StringUtils.FileNameComparer()).ToList();
             Log(img_files.Count.ToString() + " images added.");
-            return new TaskResult();
+            return TaskException.Success;
         }
 
         protected override async Task<IRandomAccessStream> InternalGetImageStream(int index)

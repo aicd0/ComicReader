@@ -1,12 +1,9 @@
-﻿using System;
+using ComicReader.Utils;
+using System;
 using System.Threading.Tasks;
 using Windows.Data.Pdf;
 using Windows.Storage;
 using Windows.Storage.Streams;
-
-using RawTask = System.Threading.Tasks.Task<ComicReader.Utils.TaskResult>;
-using TaskResult = ComicReader.Utils.TaskResult;
-using TaskException = ComicReader.Utils.TaskException;
 
 namespace ComicReader.Database
 {
@@ -46,16 +43,16 @@ namespace ComicReader.Database
             return comic;
         }
 
-        private async RawTask SetFile()
+        private async Task<TaskException> SetFile()
         {
             if (ThisFile != null)
             {
-                return new TaskResult();
+                return TaskException.Success;
             }
 
             if (Location == null)
             {
-                return new TaskResult(TaskException.InvalidParameters);
+                return TaskException.InvalidParameters;
             }
 
             string base_path = Utils.ArchiveAccess.GetBasePath(Location);
@@ -63,22 +60,22 @@ namespace ComicReader.Database
 
             if (file == null)
             {
-                return new TaskResult(TaskException.NoPermission);
+                return TaskException.NoPermission;
             }
 
             ThisFile = file;
-            return new TaskResult();
+            return TaskException.Success;
         }
 
-        private async RawTask SetDocument()
+        private async Task<TaskException> SetDocument()
         {
             if (ThisDocument != null)
             {
-                return new TaskResult();
+                return TaskException.Success;
             }
 
-            TaskResult r = await SetFile();
-            if (!r.Successful)
+            TaskException r = await SetFile();
+            if (!r.Successful())
             {
                 return r;
             }
@@ -93,43 +90,41 @@ namespace ComicReader.Database
                 switch (ex.HResult)
                 {
                     case WrongPassword:
-                        return new TaskResult(TaskException.IncorrectPassword);
+                        return TaskException.IncorrectPassword;
                     case GenericFail:
-                        return new TaskResult(TaskException.FileCorrupted);
+                        return TaskException.FileCorrupted;
                     default:
-                        return new TaskResult(TaskException.Failure);
+                        return TaskException.Failure;
                 }
             }
-
             if (ThisDocument == null)
             {
-                return new TaskResult(TaskException.Failure);
+                return TaskException.Failure;
             }
-
-            return new TaskResult();
+            return TaskException.Success;
         }
 
-        public override RawTask LoadFromInfoFile()
+        public override Task<TaskException> LoadFromInfoFile()
         {
-            return Task.FromResult(new TaskResult(TaskException.NotSupported));
+            return Task.FromResult(TaskException.NotSupported);
         }
 
-        protected override RawTask SaveToInfoFile()
+        protected override Task<TaskException> SaveToInfoFile()
         {
-            return Task.FromResult(new TaskResult(TaskException.NotSupported));
+            return Task.FromResult(TaskException.NotSupported);
         }
 
-        protected override async RawTask ReloadImages()
+        protected override async Task<TaskException> ReloadImages()
         {
-            TaskResult r = await SetDocument();
-            if (!r.Successful) return r;
-            return new TaskResult();
+            TaskException r = await SetDocument();
+            if (!r.Successful()) return r;
+            return TaskException.Success;
         }
 
         protected override async Task<IRandomAccessStream> InternalGetImageStream(int index)
         {
-            TaskResult r = await SetDocument();
-            if (!r.Successful)
+            TaskException r = await SetDocument();
+            if (!r.Successful())
             {
                 return null;
             }

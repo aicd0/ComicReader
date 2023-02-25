@@ -13,14 +13,10 @@ using Windows.Storage.Streams;
 
 namespace ComicReader.Database
 {
-    using RawTask = Task<Utils.TaskResult>;
-    using SealedTask = Func<Task<Utils.TaskResult>, Utils.TaskResult>;
-    using TaskResult = Utils.TaskResult;
-    using TaskException = Utils.TaskException;
+    using SealedTask = Func<Task<TaskException>, TaskException>;
 
     public abstract class ComicData
     {
-
         // Local fields.
         public long Id { get; private set; }
         private ComicType Type { get; set; }
@@ -268,7 +264,7 @@ namespace ComicReader.Database
         }
 
         public SealedTask SaveToInfoFileSealed() =>
-            (RawTask _) => SaveToInfoFile().Result;
+            (Task<TaskException> _) => SaveToInfoFile().Result;
 
         public string TagString()
         {
@@ -345,7 +341,7 @@ namespace ComicReader.Database
             }
         }
 
-        public async RawTask UpdateImages(bool cover_only, bool reload)
+        public async Task<TaskException> UpdateImages(bool cover_only, bool reload)
         {
             if (reload)
             {
@@ -356,15 +352,15 @@ namespace ComicReader.Database
             {
                 if (await GetCoverCache() != null)
                 {
-                    return new TaskResult();
+                    return TaskException.Success;
                 }
             }
 
             if (!_imageUpdated)
             {
-                TaskResult result = await ReloadImages();
+                TaskException result = await ReloadImages();
 
-                if (!result.Successful)
+                if (!result.Successful())
                 {
                     return result;
                 }
@@ -374,7 +370,7 @@ namespace ComicReader.Database
 
             if (ImageCount == 0)
             {
-                return new TaskResult(TaskException.EmptySet);
+                return TaskException.EmptySet;
             }
 
             if (cover_only && !IsExternal)
@@ -382,10 +378,10 @@ namespace ComicReader.Database
                 await CreateCoverCache();
             }
 
-            return new TaskResult();
+            return TaskException.Success;
         }
 
-        public abstract RawTask LoadFromInfoFile();
+        public abstract Task<TaskException> LoadFromInfoFile();
 
         public async Task<IRandomAccessStream> GetImageStream(int index)
         {
@@ -426,7 +422,7 @@ namespace ComicReader.Database
         }
 
         public static SealedTask UpdateSealed(bool lazy_load) =>
-            (RawTask _) => UpdateUnsealed(new LockContext(), lazy_load).Result;
+            (Task<TaskException> _) => UpdateUnsealed(new LockContext(), lazy_load).Result;
 
         protected ComicData(ComicType type, bool is_external)
         {
@@ -435,7 +431,7 @@ namespace ComicReader.Database
             IsExternal = is_external;
         }
 
-        protected virtual async RawTask CreateCoverCache()
+        protected virtual async Task<TaskException> CreateCoverCache()
         {
             double req_width = 300.0;
             double req_height = 300.0;
@@ -444,7 +440,7 @@ namespace ComicReader.Database
             {
                 if (stream == null)
                 {
-                    return new TaskResult(TaskException.Failure);
+                    return TaskException.Failure;
                 }
 
                 BitmapDecoder decoder = await BitmapDecoder.CreateAsync(stream);
@@ -477,14 +473,14 @@ namespace ComicReader.Database
                         CoverFileCache = filename;
                     }
                 });
-                if (!result.Successful)
+                if (!result.Successful())
                 {
                     return result;
                 }
             }
 
             SaveCoverFileCache();
-            return new TaskResult();
+            return TaskException.Success;
         }
 
         protected virtual async Task<StorageFile> GetCoverCache()
@@ -509,9 +505,9 @@ namespace ComicReader.Database
             return (StorageFile)item;
         }
 
-        protected abstract RawTask ReloadImages();
+        protected abstract Task<TaskException> ReloadImages();
 
-        protected abstract RawTask SaveToInfoFile();
+        protected abstract Task<TaskException> SaveToInfoFile();
 
         protected abstract Task<IRandomAccessStream> InternalGetImageStream(int index);
 
@@ -537,9 +533,8 @@ namespace ComicReader.Database
             }
 
             // Load comic info locally.
-            TaskResult r = await comic.LoadFromInfoFile();
-
-            if (r.Successful)
+            TaskException r = await comic.LoadFromInfoFile();
+            if (r.Successful())
             {
                 await comic.SaveAllAsync(db);
             }
@@ -632,13 +627,13 @@ namespace ComicReader.Database
         }
 
         private SealedTask SaveSealed(List<SqlKey> keys, bool save_tags) =>
-            (RawTask _) => SaveUnsealed(new LockContext(), keys, save_tags).Result;
+            (Task<TaskException> _) => SaveUnsealed(new LockContext(), keys, save_tags).Result;
 
-        private async RawTask SaveUnsealed(LockContext db, List<SqlKey> keys, bool save_tags)
+        private async Task<TaskException> SaveUnsealed(LockContext db, List<SqlKey> keys, bool save_tags)
         {
             if (IsExternal)
             {
-                return new TaskResult();
+                return TaskException.Success;
             }
 
             await WaitLock(db);
@@ -647,7 +642,7 @@ namespace ComicReader.Database
                 if (Id < 0)
                 {
                     await InternalInsertNoLock();
-                    return new TaskResult();
+                    return TaskException.Success;
                 }
 
                 if (keys.Count > 0)
@@ -661,7 +656,7 @@ namespace ComicReader.Database
                     await InternalSaveTagsNoLock();
                 }
 
-                return new TaskResult();
+                return TaskException.Success;
             }
             finally
             {
@@ -890,7 +885,7 @@ namespace ComicReader.Database
             });
         }
 
-        private static async RawTask UpdateUnsealed(LockContext db, bool lazy_load)
+        private static async Task<TaskException> UpdateUnsealed(LockContext db, bool lazy_load)
         {
             await _updateLock.WaitAsync();
             try
@@ -956,7 +951,7 @@ namespace ComicReader.Database
                         // Cancel this task if more requests have come in.
                         if (_updateLock.CancellationRequested)
                         {
-                            return new TaskResult(TaskException.Cancellation);
+                            return TaskException.Cancellation;
                         }
 
                         Log("Scanning " + ctx.ItemFound.ToString() + " items.");
@@ -1091,7 +1086,7 @@ namespace ComicReader.Database
                     }
                 });
 
-                return new TaskResult();
+                return TaskException.Success;
             }
             finally
             {
