@@ -7,10 +7,12 @@ using System.Threading.Tasks;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
+using ComicReader.Common;
+using ComicReader.Common.Constants;
 using ComicReader.Common.Router;
 using ComicReader.Database;
 using ComicReader.DesignData;
-using ComicReader.Common;
+using ComicReader.Utils;
 
 namespace ComicReader.Views
 {
@@ -43,14 +45,12 @@ namespace ComicReader.Views
 
     sealed internal partial class FavoritePage : StatefulPage
     {
-        public static FavoritePage Current = null;
         public FavoritePageShared Shared { get; set; }
         private ObservableCollection<FavoriteItemViewModel> DataSource { get; set; }
-        private TabIdentifier mTabId;
+        private TabIdentifier _tabId;
 
         public FavoritePage()
         {
-            Current = this;
             Shared = new FavoritePageShared();
             DataSource = new ObservableCollection<FavoriteItemViewModel>();
 
@@ -58,11 +58,23 @@ namespace ComicReader.Views
         }
 
         // Navigation
+        public override void OnLoaded(object sender, RoutedEventArgs e)
+        {
+            base.OnLoaded(sender, e);
+            EventBus.Default.With(EventId.SidePaneUpdate).Observe(this, delegate
+            {
+                Utils.C0.Run(async delegate
+                {
+                    await Update();
+                });
+            });
+        }
+
         public override void OnStart(object p)
         {
             base.OnStart(p);
             var q = (NavigationParams)p;
-            mTabId = q.TabId;
+            _tabId = q.TabId;
             Shared.NavigationPageShared = (NavigationPageShared)q.Params;
         }
 
@@ -81,7 +93,7 @@ namespace ComicReader.Views
         }
 
         // utilities
-        public async Task Update()
+        private async Task Update()
         {
             void helper(List<FavoriteNodeData> it, ObservableCollection<FavoriteItemViewModel> et, FavoriteItemViewModel parent)
             {
@@ -310,7 +322,7 @@ namespace ComicReader.Views
                     }
                     else
                     {
-                        MainPage.Current.LoadTab(mTabId, ReaderPageTrait.Instance, comic);
+                        MainPage.Current.LoadTab(_tabId, ReaderPageTrait.Instance, comic);
                         Shared.NavigationPageShared.IsSidePaneOpen = false;
                     }
                 }

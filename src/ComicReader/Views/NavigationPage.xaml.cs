@@ -358,18 +358,7 @@ namespace ComicReader.Views
         // Side pane
         private void OnSidePaneOpened(SplitView sender, object args)
         {
-            Utils.C0.Run(async delegate
-            {
-                if (FavoritePage.Current != null)
-                {
-                    await FavoritePage.Current.Update();
-                }
-
-                if (HistoryPage.Current != null)
-                {
-                    await HistoryPage.Current.Update();
-                }
-            });
+            EventBus.Default.With(EventId.SidePaneUpdate).Emit(0);
         }
 
         // Pointer events

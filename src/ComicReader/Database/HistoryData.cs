@@ -1,3 +1,5 @@
+using ComicReader.Common.Constants;
+using ComicReader.Utils;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -90,11 +92,7 @@ namespace ComicReader.Database
             {
                 Utils.TaskQueueManager.AppendTask(
                     XmlDatabaseManager.SaveSealed(XmlDatabaseItem.History));
-
-                if (Views.HistoryPage.Current != null)
-                {
-                    await Views.HistoryPage.Current.Update();
-                }
+                EventBus.Default.With(EventId.SidePaneUpdate).Emit(0);
             }
         }
 

@@ -1,13 +1,14 @@
+using ComicReader.Common;
+using ComicReader.Common.Router;
+using ComicReader.Common.Constants;
+using ComicReader.Database;
+using ComicReader.DesignData;
+using ComicReader.Utils;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Navigation;
-using ComicReader.Common.Router;
-using ComicReader.Database;
-using ComicReader.DesignData;
-using ComicReader.Common;
 
 namespace ComicReader.Views
 {
@@ -40,24 +41,34 @@ namespace ComicReader.Views
 
     sealed internal partial class HistoryPage : StatefulPage
     {
-        public static HistoryPage Current = null;
         public HistoryPageShared Shared { get; set; }
-        private TabIdentifier mTabId;
+        private TabIdentifier _tabId;
 
         public HistoryPage()
         {
-            Current = this;
             Shared = new HistoryPageShared();
 
             InitializeComponent();
         }
 
         // Navigation
+        public override void OnLoaded(object sender, RoutedEventArgs e)
+        {
+            base.OnLoaded(sender, e);
+            EventBus.Default.With(EventId.SidePaneUpdate).Observe(this, delegate
+            {
+                Utils.C0.Run(async delegate
+                {
+                    await Update();
+                });
+            });
+        }
+
         public override void OnStart(object p)
         {
             base.OnStart(p);
             var q = (NavigationParams)p;
-            mTabId = q.TabId;
+            _tabId = q.TabId;
             Shared.NavigationPageShared = (NavigationPageShared)q.Params;
         }
 
@@ -76,7 +87,7 @@ namespace ComicReader.Views
         }
 
         // utilities
-        public async Task Update()
+        private async Task Update()
         {
             ObservableCollection<HistoryGroupViewModel> source = new ObservableCollection<HistoryGroupViewModel>();
             HistoryGroupViewModel current_group = null;
@@ -129,7 +140,7 @@ namespace ComicReader.Views
             }
             else
             {
-                MainPage.Current.LoadTab(new_tab ? null : mTabId, ReaderPageTrait.Instance, comic);
+                MainPage.Current.LoadTab(new_tab ? null : _tabId, ReaderPageTrait.Instance, comic);
                 Shared.NavigationPageShared.IsSidePaneOpen = false;
             }
         }

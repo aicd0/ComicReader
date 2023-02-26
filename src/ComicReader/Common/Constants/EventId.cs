@@ -8,5 +8,6 @@ namespace ComicReader.Common.Constants
         public const string TitleBarOpacity = "TitleBarOpacity";
         public const string TabPageChanged = "TabPageChanged";
         public const string TabSelected = "TabSelected";
+        public const string SidePaneUpdate = "SidePaneUpdate";
     }
 }
