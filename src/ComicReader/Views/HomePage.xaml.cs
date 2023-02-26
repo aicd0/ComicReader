@@ -94,16 +94,6 @@ namespace ComicReader.Views
             });
         }
 
-        public override string GetUniqueString(object args)
-        {
-            return "blank";
-        }
-
-        public override bool AllowJump()
-        {
-            return true;
-        }
-
         // Utilities
         public async Task Update()
         {

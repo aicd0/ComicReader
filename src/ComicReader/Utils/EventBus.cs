@@ -6,7 +6,8 @@ namespace ComicReader.Utils
 {
     internal class EventBus
     {
-        private readonly Dictionary<string, object> _topics = new Dictionary<string, object>();
+        public static readonly EventBus Default = new EventBus();
+        private static readonly Dictionary<string, object> _topics = new Dictionary<string, object>();
 
         public Topic<T> With<T>(string eventId)
         {
@@ -19,23 +20,14 @@ namespace ComicReader.Utils
             return newTopic;
         }
 
-        private static EventBus _instance;
-
-        public static EventBus Instance
+        public Topic<object> With(string eventId)
         {
-            get
-            {
-                if (_instance == null)
-                {
-                    _instance = new EventBus();
-                }
-                return _instance;
-            }
+            return With<object>(eventId);
         }
 
         public class Topic<T>
         {
-            private List<Observer<T>> _observers = new List<Observer<T>>();
+            private readonly List<Observer<T>> _observers = new List<Observer<T>>();
             private T _value;
             private int _version = 0;
             private bool _dispatchingValue = false;
@@ -51,8 +43,7 @@ namespace ComicReader.Utils
                 {
                     return;
                 }
-                RoutedEventHandler unloadedHandler = null;
-                unloadedHandler = delegate (object sender, RoutedEventArgs e)
+                void unloadedHandler(object sender, RoutedEventArgs e)
                 {
                     if ((sender as Page).IsLoaded)
                     {
@@ -60,7 +51,7 @@ namespace ComicReader.Utils
                     }
                     _observers.Remove(observer);
                     owner.Unloaded -= unloadedHandler;
-                };
+                }
                 owner.Unloaded += unloadedHandler;
                 _observers.Add(observer);
                 if (sticky && _version > 0)

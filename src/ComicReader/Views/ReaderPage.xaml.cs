@@ -382,13 +382,13 @@ namespace ComicReader.Views
         {
             base.OnLoaded(sender, e);
 
-            EventBus.Instance.With<double>(EventId.TitleBarHeightChange).Observe(this, delegate (double h)
+            EventBus.Default.With<double>(EventId.TitleBarHeightChange).Observe(this, delegate (double h)
             {
                 TitleBarArea.Height = h;
                 TitleBarPlaceHolder.Height = h;
             }, true);
 
-            EventBus.Instance.With<double>(EventId.TitleBarOpacity).Observe(this, delegate (double opacity)
+            EventBus.Default.With<double>(EventId.TitleBarOpacity).Observe(this, delegate (double opacity)
             {
                 BottomGrid.Opacity = opacity;
             }, true);
@@ -401,17 +401,6 @@ namespace ComicReader.Views
                 Shared.BottomTilePinned = false;
                 await LoadComicInfo();
             });
-        }
-
-        public override string GetUniqueString(object args)
-        {
-            ComicData comic = (ComicData)args;
-            return "Reader/" + comic.Location;
-        }
-
-        public override bool AllowJump()
-        {
-            return true;
         }
 
         // Load

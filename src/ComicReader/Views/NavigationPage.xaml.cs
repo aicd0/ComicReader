@@ -165,20 +165,6 @@ namespace ComicReader.Views
             base.OnStart(p);
             var q = (NavigationParams)p;
             TabId = q.TabId;
-            TabId.Selected += delegate
-            {
-                if (NavigationPageSidePane != null)
-                {
-                    NavigationPageSidePane.IsPaneOpen = false;
-                }
-            };
-            TabId.PageTraitChanged += delegate (IPageTrait pageTrait)
-            {
-                Shared.IsHomePage = pageTrait is HomePageTrait;
-                Shared.IsReaderPage = pageTrait is ReaderPageTrait;
-                Shared.SetSearchBox("");
-                UpdateTopPadding();
-            };
 
             Shared.MainPageShared = (MainPageShared)q.Params;
             Shared.RefreshPage = RefreshPage;
@@ -189,17 +175,36 @@ namespace ComicReader.Views
         {
             base.OnLoaded(sender, e);
 
-            EventBus.Instance.With<double>(EventId.RootTabHeightChange).Observe(this, delegate (double h)
+            EventBus.Default.With<double>(EventId.RootTabHeightChange).Observe(this, delegate (double h)
             {
                 _rootTabHeight = h;
                 UpdateTopPadding();
             }, true);
 
-            EventBus.Instance.With<double>(EventId.TitleBarOpacity).Observe(this, delegate (double opacity)
+            EventBus.Default.With<double>(EventId.TitleBarOpacity).Observe(this, delegate (double opacity)
             {
                 TopTile.Opacity = opacity;
                 TopTile.IsHitTestVisible = opacity > 0.5;
             }, true);
+
+            if (TabId != null)
+            {
+                TabId.TabEventBus.With(EventId.TabSelected).Observe(this, delegate
+                {
+                    if (NavigationPageSidePane != null)
+                    {
+                        NavigationPageSidePane.IsPaneOpen = false;
+                    }
+                });
+
+                TabId.TabEventBus.With<IPageTrait>(EventId.TabPageChanged).Observe(this, delegate (IPageTrait pageTrait)
+                {
+                    Shared.IsHomePage = pageTrait is HomePageTrait;
+                    Shared.IsReaderPage = pageTrait is ReaderPageTrait;
+                    Shared.SetSearchBox("");
+                    UpdateTopPadding();
+                });
+            }
         }
 
         public override void OnUnloaded(object sender, RoutedEventArgs e)
@@ -259,7 +264,7 @@ namespace ComicReader.Views
         private void OnTopTileSizeChanged(object sender, SizeChangedEventArgs e)
         {
             _navigationBarHeight = e.NewSize.Height;
-            EventBus.Instance.With<double>(EventId.NavigationBarHeightChange).Emit(_navigationBarHeight);
+            EventBus.Default.With<double>(EventId.NavigationBarHeightChange).Emit(_navigationBarHeight);
             UpdateTopPadding();
         }
 

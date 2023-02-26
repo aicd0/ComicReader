@@ -1,3 +1,4 @@
+using ComicReader.Database;
 using System;
 
 namespace ComicReader.Common.Router
@@ -9,6 +10,10 @@ namespace ComicReader.Common.Router
         bool HasNavigationBar();
 
         bool ImmersiveMode();
+
+        string GetUniqueString(object args);
+
+        bool AllowJump();
     }
 
     internal class HomePageTrait : IPageTrait
@@ -28,6 +33,16 @@ namespace ComicReader.Common.Router
         public bool ImmersiveMode()
         {
             return false;
+        }
+
+        public string GetUniqueString(object args)
+        {
+            return "blank";
+        }
+
+        public bool AllowJump()
+        {
+            return true;
         }
 
         private static IPageTrait _instance;
@@ -59,6 +74,17 @@ namespace ComicReader.Common.Router
         }
 
         public bool ImmersiveMode()
+        {
+            return false;
+        }
+
+        public string GetUniqueString(object args)
+        {
+            string keyword = (string)args;
+            return "Search/" + keyword;
+        }
+
+        public bool AllowJump()
         {
             return false;
         }
@@ -96,6 +122,17 @@ namespace ComicReader.Common.Router
             return true;
         }
 
+        public string GetUniqueString(object args)
+        {
+            ComicData comic = (ComicData)args;
+            return "Reader/" + comic.Location;
+        }
+
+        public bool AllowJump()
+        {
+            return true;
+        }
+
         private static IPageTrait _instance;
         public static IPageTrait Instance
         {
@@ -129,6 +166,16 @@ namespace ComicReader.Common.Router
             return false;
         }
 
+        public string GetUniqueString(object args)
+        {
+            return "settings";
+        }
+
+        public bool AllowJump()
+        {
+            return true;
+        }
+
         private static IPageTrait _instance;
         public static IPageTrait Instance
         {
@@ -160,6 +207,16 @@ namespace ComicReader.Common.Router
         public bool ImmersiveMode()
         {
             return false;
+        }
+
+        public string GetUniqueString(object args)
+        {
+            return "help";
+        }
+
+        public bool AllowJump()
+        {
+            return true;
         }
 
         private static IPageTrait _instance;

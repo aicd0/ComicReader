@@ -1,3 +1,5 @@
+using ComicReader.Common.Constants;
+using ComicReader.Utils;
 using System;
 using System.Collections.Generic;
 using Windows.UI.Xaml.Navigation;
@@ -16,40 +18,20 @@ namespace ComicReader.Common.Router
         public muxc.TabViewItem Tab;
         public IPageTrait PageTrait;
         public object RequestArgs;
-        public ITabListener TabListener;
+        public readonly EventBus TabEventBus = new EventBus();
 
-        public event Action Selected;
-        public event Action<IPageTrait> PageTraitChanged;
-
-        public TabIdentifier()
+        public void DispatchTabPageChanged()
         {
-            Selected += delegate
-            {
-                TabListener?.OnSelected();
-            };
+            TabEventBus.With<IPageTrait>(EventId.TabPageChanged).Emit(PageTrait);
         }
 
-        public void OnSelected()
+        public void DispatchTabSelected()
         {
-            Selected?.Invoke();
-        }
-
-        public void OnPageTypeChanged()
-        {
-            PageTraitChanged?.Invoke(PageTrait);
+            TabEventBus.With(EventId.TabSelected).Emit(0);
         }
     }
 
-    internal interface ITabListener
-    {
-        void OnSelected();
-
-        string GetUniqueString(object args);
-
-        bool AllowJump();
-    }
-
-    internal class NavigationManager
+    internal static class NavigationManager
     {
         private class TabInfo
         {
@@ -65,25 +47,11 @@ namespace ComicReader.Common.Router
             public bool Resumed = false;
         }
 
-        private static NavigationManager mInstance;
-        private event Action mPostTasks;
+        private static event Action E_postTasks;
 
-        private readonly Dictionary<TabIdentifier, TabInfo> mTabs = new Dictionary<TabIdentifier, TabInfo>();
+        private static readonly Dictionary<TabIdentifier, TabInfo> mTabs = new Dictionary<TabIdentifier, TabInfo>();
 
-        private NavigationManager()
-        {
-        }
-
-        public static NavigationManager GetInstance()
-        {
-            if (mInstance == null)
-            {
-                mInstance = new NavigationManager();
-            }
-            return mInstance;
-        }
-
-        public void OnNavigateTo(ITabListener listener, NavigationEventArgs e)
+        public static void OnNavigateTo(NavigationEventArgs e)
         {
             NavigationParams navigationParams = (NavigationParams)e.Parameter;
             TabIdentifier tabId = navigationParams.TabId;
@@ -132,15 +100,17 @@ namespace ComicReader.Common.Router
             scene = tabInfo.scenes[tabInfo.position];
             tabId.PageTrait = scene.PageTrait;
             tabId.RequestArgs = scene.RequestedArgs;
-            tabId.TabListener = listener;
 
-            mPostTasks += delegate { tabId.OnPageTypeChanged(); };
+            E_postTasks = null;
+            E_postTasks += delegate {
+                tabId.DispatchTabPageChanged();
+            };
         }
 
-        public void ExecutePostTasks()
+        public static void ExecutePostTasks()
         {
-            mPostTasks?.Invoke();
-            mPostTasks = null;
+            E_postTasks?.Invoke();
+            E_postTasks = null;
         }
     }
 }

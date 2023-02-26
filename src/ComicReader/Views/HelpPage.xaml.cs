@@ -1,7 +1,6 @@
 using ComicReader.Common;
 using ComicReader.Common.Router;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Navigation;
 using muxc = Microsoft.UI.Xaml.Controls;
 
 namespace ComicReader.Views
@@ -32,16 +31,6 @@ namespace ComicReader.Views
 
         public override void OnSelected()
         {
-        }
-
-        public override string GetUniqueString(object args)
-        {
-            return "help";
-        }
-
-        public override bool AllowJump()
-        {
-            return true;
         }
     }
 }

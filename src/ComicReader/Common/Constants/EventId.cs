@@ -6,5 +6,7 @@ namespace ComicReader.Common.Constants
         public const string NavigationBarHeightChange = "NavigationBarHeightChange";
         public const string TitleBarHeightChange = "TitleBarHeightChange";
         public const string TitleBarOpacity = "TitleBarOpacity";
+        public const string TabPageChanged = "TabPageChanged";
+        public const string TabSelected = "TabSelected";
     }
 }

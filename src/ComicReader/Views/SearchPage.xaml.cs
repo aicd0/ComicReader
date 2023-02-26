@@ -263,17 +263,6 @@ namespace ComicReader.Views
         {
         }
 
-        public override string GetUniqueString(object args)
-        {
-            string keyword = (string)args;
-            return "Search/" + keyword;
-        }
-
-        public override bool AllowJump()
-        {
-            return false;
-        }
-
         // Unsorted
         private async Task StartSearch()
         {

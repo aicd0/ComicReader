@@ -81,20 +81,20 @@ namespace ComicReader.Views
                 LoadTab(null, HomePageTrait.Instance);
             });
 
-            EventBus.Instance.With<double>(EventId.RootTabHeightChange).Observe(this, delegate (double h)
+            EventBus.Default.With<double>(EventId.RootTabHeightChange).Observe(this, delegate (double h)
             {
                 _rootTabHeight = h;
-                EventBus.Instance.With<double>(EventId.TitleBarHeightChange).Emit(_rootTabHeight + _navigationBarHeight);
+                EventBus.Default.With<double>(EventId.TitleBarHeightChange).Emit(_rootTabHeight + _navigationBarHeight);
                 UpdateTopPadding();
             }, true);
 
-            EventBus.Instance.With<double>(EventId.NavigationBarHeightChange).Observe(this, delegate (double h)
+            EventBus.Default.With<double>(EventId.NavigationBarHeightChange).Observe(this, delegate (double h)
             {
                 _navigationBarHeight = h;
-                EventBus.Instance.With<double>(EventId.TitleBarHeightChange).Emit(_rootTabHeight + _navigationBarHeight);
+                EventBus.Default.With<double>(EventId.TitleBarHeightChange).Emit(_rootTabHeight + _navigationBarHeight);
             }, true);
 
-            EventBus.Instance.With<double>(EventId.TitleBarOpacity).Observe(this, delegate (double opacity)
+            EventBus.Default.With<double>(EventId.TitleBarOpacity).Observe(this, delegate (double opacity)
             {
                 if (_tabContainerGrid != null)
                 {
@@ -199,12 +199,12 @@ namespace ComicReader.Views
                     continue;
                 }
 
-                if (!tab.TabListener.AllowJump())
+                if (!tab.PageTrait.AllowJump())
                 {
                     continue;
                 }
 
-                if (tab.TabListener.GetUniqueString(args) == tab.TabListener.GetUniqueString(tab.RequestArgs))
+                if (tab.PageTrait.GetUniqueString(args) == tab.PageTrait.GetUniqueString(tab.RequestArgs))
                 {
                     RootTabView.SelectedItem = tab.Tab;
                     return true;
@@ -227,7 +227,7 @@ namespace ComicReader.Views
                 PageTrait = pageTrait,
                 RequestArgs = args,
             };
-            id.PageTraitChanged += OnPageChanged;
+            id.TabEventBus.With<IPageTrait>(EventId.TabPageChanged).Observe(this, OnPageChanged);
             _allTabs.Add(id);
             RootTabView.TabItems.Add(new_tab);
             RootTabView.SelectedItem = new_tab;
@@ -251,7 +251,6 @@ namespace ComicReader.Views
             {
                 tab_id.PageTrait = pageTrait;
                 tab_id.RequestArgs = args;
-                tab_id.TabListener = null;
             }
             _currentTab = tab_id;
 
@@ -356,7 +355,7 @@ namespace ComicReader.Views
             if (_currentTab != null)
             {
                 OnPageChanged(_currentTab.PageTrait);
-                _currentTab.OnSelected();
+                _currentTab.DispatchTabSelected();
             }
         }
 
@@ -366,7 +365,7 @@ namespace ComicReader.Views
             if (!pageTrait.ImmersiveMode())
             {
                 _titleBarAnimation?.Stop();
-                EventBus.Instance.With<double>(EventId.TitleBarOpacity).Emit(1.0);
+                EventBus.Default.With<double>(EventId.TitleBarOpacity).Emit(1.0);
             }
         }
 
@@ -399,7 +398,7 @@ namespace ComicReader.Views
                     Duration = 0.2,
                     UpdateCallback = delegate (double value)
                     {
-                        EventBus.Instance.With<double>(EventId.TitleBarOpacity).Emit(value);
+                        EventBus.Default.With<double>(EventId.TitleBarOpacity).Emit(value);
                     }
                 };
             }
@@ -431,7 +430,7 @@ namespace ComicReader.Views
 
         private void OnTabContainerGridSizeChanged(object sender, SizeChangedEventArgs e)
         {
-            EventBus.Instance.With<double>(EventId.RootTabHeightChange).Emit(e.NewSize.Height);
+            EventBus.Default.With<double>(EventId.RootTabHeightChange).Emit(e.NewSize.Height);
         }
 
         // Reader settings

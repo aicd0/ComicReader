@@ -138,8 +138,8 @@
     <Compile Include="Common\Constants\EventId.cs" />
     <Compile Include="Common\Constants\KVLib.cs" />
     <Compile Include="Common\NavigatablePage.cs" />
-    <Compile Include="Common\PageType.cs" />
-    <Compile Include="Common\NavigationManager.cs" />
+    <Compile Include="Common\Router\IPageTrait.cs" />
+    <Compile Include="Common\Router\NavigationManager.cs" />
     <Compile Include="Common\ReaderModel.cs" />
     <Compile Include="Common\StatefulPage.cs" />
     <Compile Include="Common\Structs\FrameOffsetData.cs" />

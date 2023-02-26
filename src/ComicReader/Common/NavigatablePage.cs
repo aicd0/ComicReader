@@ -6,7 +6,7 @@ using Windows.UI.Xaml.Navigation;
 
 namespace ComicReader.Common
 {
-    internal class NavigatablePage : StatefulPage, ITabListener
+    internal class NavigatablePage : StatefulPage
     {
         private TabIdentifier mTabId;
         private PointerPoint mLastPointerPoint;
@@ -18,7 +18,7 @@ namespace ComicReader.Common
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            NavigationManager.GetInstance().OnNavigateTo(this, e);
+            NavigationManager.OnNavigateTo(e);
             base.OnNavigatedTo(e);
         }
 
@@ -36,21 +36,11 @@ namespace ComicReader.Common
         public override void OnResume()
         {
             base.OnResume();
-            NavigationManager.GetInstance().ExecutePostTasks();
+            NavigationManager.ExecutePostTasks();
         }
 
         public virtual void OnSelected()
         {
-        }
-
-        public virtual string GetUniqueString(object args)
-        {
-            return "BasePage";
-        }
-
-        public virtual bool AllowJump()
-        {
-            return true;
         }
 
         protected TabIdentifier GetTabId()
