@@ -1,15 +1,9 @@
-﻿<ResourceDictionary
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <Style x:Key="NavigationPageSearchBoxStyle"
-           TargetType="AutoSuggestBox">
-        <Setter Property="VerticalAlignment"
-                Value="Top" />
-        <Setter Property="IsTabStop"
-                Value="False" />
-        <Setter Property="UseSystemFocusVisuals"
-                Value="{ThemeResource IsApplicationFocusVisualKindReveal}" />
+    <Style x:Key="NavigationPageSearchBoxStyle" TargetType="AutoSuggestBox">
+        <Setter Property="VerticalAlignment" Value="Top" />
+        <Setter Property="IsTabStop" Value="False" />
+        <Setter Property="UseSystemFocusVisuals" Value="{ThemeResource IsApplicationFocusVisualKindReveal}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="AutoSuggestBox">
@@ -20,40 +14,42 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
+                        <TextBox
+                            x:Name="TextBox"
+                            Width="{TemplateBinding Width}"
+                            Margin="0"
+                            Canvas.ZIndex="0"
+                            Description="{TemplateBinding Description}"
+                            DesiredCandidateWindowAlignment="BottomEdge"
+                            Header="{TemplateBinding Header}"
+                            IsSpellCheckEnabled="False"
+                            PlaceholderText="{TemplateBinding PlaceholderText}"
+                            ScrollViewer.BringIntoViewOnFocusChange="False"
+                            Style="{TemplateBinding TextBoxStyle}"
+                            UseSystemFocusVisuals="{TemplateBinding UseSystemFocusVisuals}" />
+                        <Popup x:Name="SuggestionsPopup">
+                            <Border x:Name="SuggestionsContainer">
+                                <ListView
+                                    x:Name="SuggestionsList"
+                                    MaxHeight="{ThemeResource AutoSuggestListMaxHeight}"
+                                    Margin="{ThemeResource AutoSuggestListMargin}"
+                                    Padding="{ThemeResource AutoSuggestListPadding}"
+                                    Background="{ThemeResource AutoSuggestBoxSuggestionsListBackground}"
+                                    BorderBrush="{ThemeResource AutoSuggestBoxSuggestionsListBorderBrush}"
+                                    BorderThickness="{ThemeResource AutoSuggestListBorderThemeThickness}"
+                                    DisplayMemberPath="{TemplateBinding DisplayMemberPath}"
+                                    IsItemClickEnabled="True"
+                                    ItemContainerStyle="{TemplateBinding ItemContainerStyle}"
+                                    ItemTemplate="{TemplateBinding ItemTemplate}"
+                                    ItemTemplateSelector="{TemplateBinding ItemTemplateSelector}" />
+                            </Border>
+                        </Popup>
                         <VisualStateManager.VisualStateGroups>
                             <VisualStateGroup x:Name="Orientation">
                                 <VisualState x:Name="Landscape" />
                                 <VisualState x:Name="Portrait" />
                             </VisualStateGroup>
                         </VisualStateManager.VisualStateGroups>
-                        <TextBox x:Name="TextBox"
-                                 IsSpellCheckEnabled="False"
-                                 ScrollViewer.BringIntoViewOnFocusChange="False"
-                                 Description="{TemplateBinding Description}"
-                                 DesiredCandidateWindowAlignment="BottomEdge"
-                                 Header="{TemplateBinding Header}"
-                                 Margin="0"
-                                 PlaceholderText="{TemplateBinding PlaceholderText}"
-                                 Style="{TemplateBinding TextBoxStyle}"
-                                 UseSystemFocusVisuals="{TemplateBinding UseSystemFocusVisuals}"
-                                 Width="{TemplateBinding Width}"
-                                 Canvas.ZIndex="0" />
-                        <Popup x:Name="SuggestionsPopup">
-                            <Border x:Name="SuggestionsContainer">
-                                <ListView x:Name="SuggestionsList"
-                                          Background="{ThemeResource AutoSuggestBoxSuggestionsListBackground}"
-                                          BorderThickness="{ThemeResource AutoSuggestListBorderThemeThickness}"
-                                          BorderBrush="{ThemeResource AutoSuggestBoxSuggestionsListBorderBrush}"
-                                          DisplayMemberPath="{TemplateBinding DisplayMemberPath}"
-                                          ItemContainerStyle="{TemplateBinding ItemContainerStyle}"
-                                          ItemTemplate="{TemplateBinding ItemTemplate}"
-                                          IsItemClickEnabled="True"
-                                          ItemTemplateSelector="{TemplateBinding ItemTemplateSelector}"
-                                          MaxHeight="{ThemeResource AutoSuggestListMaxHeight}"
-                                          Margin="{ThemeResource AutoSuggestListMargin}"
-                                          Padding="{ThemeResource AutoSuggestListPadding}" />
-                            </Border>
-                        </Popup>
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>

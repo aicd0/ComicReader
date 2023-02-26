@@ -254,15 +254,6 @@ namespace ComicReader.Views
             });
         }
 
-        public override void OnPause()
-        {
-            base.OnPause();
-        }
-
-        public override void OnSelected()
-        {
-        }
-
         // Unsorted
         private async Task StartSearch()
         {

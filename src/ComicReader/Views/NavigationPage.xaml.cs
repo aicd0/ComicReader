@@ -207,11 +207,6 @@ namespace ComicReader.Views
             }
         }
 
-        public override void OnUnloaded(object sender, RoutedEventArgs e)
-        {
-            base.OnUnloaded(sender, e);
-        }
-
         // Common
         public void Navigate()
         {

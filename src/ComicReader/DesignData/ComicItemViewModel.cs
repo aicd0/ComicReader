@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using ComicReader.Database;
 using System.ComponentModel;
-using System.Threading.Tasks;
 using Windows.UI.Xaml;
-using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media.Imaging;
-using ComicReader.Database;
 
 namespace ComicReader.DesignData
 {
@@ -32,7 +27,7 @@ namespace ComicReader.DesignData
             }
         }
 
-        public BitmapImage Image { get; set; } = new BitmapImage();
+        public BitmapImage Image { get; set; }
 
         public bool IsRatingVisible => Rating != -1;
         public bool IsHide => Comic.Hidden;
