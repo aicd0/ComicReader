@@ -56,7 +56,7 @@
             </GridView.ItemsPanel>
             <GridView.ItemTemplate>
                 <DataTemplate x:DataType="data:ComicItemViewModel">
-                    <controls:ComicItemHorizontal IsContextFlyoutEnabled="{x:Bind IsSelectMode, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}" Tapped="OnComicItemControlTapped" />
+                    <controls:ComicItemHorizontal IsContextFlyoutEnabled="{x:Bind IsSelectMode, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}" />
                 </DataTemplate>
             </GridView.ItemTemplate>
             <GridView.Header>

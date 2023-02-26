@@ -29,5 +29,11 @@ namespace ComicReader.Controls
                 (sender as MenuFlyout).Hide();
             }
         }
+
+        private void OnUserControlTapped(object sender, Windows.UI.Xaml.Input.TappedRoutedEventArgs e)
+        {
+            // prevent tap events being dispatched to other controls
+            e.Handled = true;
+        }
     }
 }

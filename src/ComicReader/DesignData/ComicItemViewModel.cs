@@ -1,4 +1,6 @@
 using ComicReader.Database;
+using ComicReader.Utils;
+using System;
 using System.ComponentModel;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Input;
@@ -54,13 +56,83 @@ namespace ComicReader.DesignData
             }
         }
 
-        // events
-        public TappedEventHandler OnItemTapped { get; set; }
-        public RoutedEventHandler OnOpenInNewTabClicked { get; set; }
-        public RoutedEventHandler OnAddToFavoritesClicked { get; set; }
-        public RoutedEventHandler OnRemoveFromFavoritesClicked { get; set; }
-        public RoutedEventHandler OnHideClicked { get; set; }
-        public RoutedEventHandler OnUnhideClicked { get; set; }
-        public RoutedEventHandler OnSelectClicked { get; set; }
+        // handlers
+        private WeakReference<IItemHandler> _itemHandler;
+        public IItemHandler ItemHandler
+        {
+            get
+            {
+                return _itemHandler?.Get() ?? EmptyItemHandler.Instance;
+            }
+            set
+            {
+                _itemHandler = new WeakReference<IItemHandler>(value);
+            }
+        }
+
+        public interface IItemHandler
+        {
+            void OnItemTapped(object sender, TappedRoutedEventArgs e);
+
+            void OnOpenInNewTabClicked(object sender, RoutedEventArgs e);
+
+            void OnAddToFavoritesClicked(object sender, RoutedEventArgs e);
+
+            void OnRemoveFromFavoritesClicked(object sender, RoutedEventArgs e);
+
+            void OnHideClicked(object sender, RoutedEventArgs e);
+
+            void OnUnhideClicked(object sender, RoutedEventArgs e);
+
+            void OnSelectClicked(object sender, RoutedEventArgs e);
+        }
+
+        private class EmptyItemHandler : IItemHandler
+        {
+            private EmptyItemHandler()
+            {
+            }
+
+            private static IItemHandler _instance;
+            public static IItemHandler Instance
+            {
+                get
+                {
+                    if (_instance == null)
+                    {
+                        _instance = new EmptyItemHandler();
+                    }
+                    return _instance;
+                }
+            }
+
+            public void OnAddToFavoritesClicked(object sender, RoutedEventArgs e)
+            {
+            }
+
+            public void OnHideClicked(object sender, RoutedEventArgs e)
+            {
+            }
+
+            public void OnItemTapped(object sender, TappedRoutedEventArgs e)
+            {
+            }
+
+            public void OnOpenInNewTabClicked(object sender, RoutedEventArgs e)
+            {
+            }
+
+            public void OnRemoveFromFavoritesClicked(object sender, RoutedEventArgs e)
+            {
+            }
+
+            public void OnSelectClicked(object sender, RoutedEventArgs e)
+            {
+            }
+
+            public void OnUnhideClicked(object sender, RoutedEventArgs e)
+            {
+            }
+        }
     };
 }

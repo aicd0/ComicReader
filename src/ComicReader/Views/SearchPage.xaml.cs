@@ -210,6 +210,7 @@ namespace ComicReader.Views
     {
         private SearchPageShared Shared { get; set; }
 
+        private readonly ComicItemViewModel.IItemHandler _comicItemHandler;
         private List<Match> m_matches = new List<Match>();
         private int m_match_index = 0;
         private readonly Utils.CancellationLock m_search_lock = new Utils.CancellationLock();
@@ -223,6 +224,7 @@ namespace ComicReader.Views
                 FilterDetails = "",
                 SearchResults = new Utils.ObservableCollectionPlus<ComicItemViewModel>()
             };
+            _comicItemHandler = new ComicItemHandler(this);
 
             InitializeComponent();
         }
@@ -431,14 +433,7 @@ namespace ComicReader.Views
                 Progress = progress,
                 IsFavorite = await FavoriteDataManager.FromId(comic.Id) != null,
                 IsSelectMode = Shared.IsSelectMode,
-
-                OnItemTapped = OnComicItemTapped,
-                OnOpenInNewTabClicked = OnOpenInNewTabClicked,
-                OnAddToFavoritesClicked = OnAddToFavoritesClicked,
-                OnRemoveFromFavoritesClicked = OnRemoveFromFavoritesClicked,
-                OnHideClicked = OnHideComicClicked,
-                OnUnhideClicked = OnUnhideComicClicked,
-                OnSelectClicked = OnSelectClicked,
+                ItemHandler = _comicItemHandler,
             };
         }
 
@@ -765,9 +760,49 @@ namespace ComicReader.Views
             });
         }
 
-        private void OnComicItemControlTapped(object sender, TappedRoutedEventArgs e)
+        private class ComicItemHandler : ComicItemViewModel.IItemHandler
         {
-            e.Handled = true;
+            private readonly SearchPage _page;
+
+            public ComicItemHandler(SearchPage page)
+            {
+                _page = page;
+            }
+
+            public void OnAddToFavoritesClicked(object sender, RoutedEventArgs e)
+            {
+                _page.OnAddToFavoritesClicked(sender, e);
+            }
+
+            public void OnHideClicked(object sender, RoutedEventArgs e)
+            {
+                _page.OnHideComicClicked(sender, e);
+            }
+
+            public void OnItemTapped(object sender, TappedRoutedEventArgs e)
+            {
+                _page.OnComicItemTapped(sender, e);
+            }
+
+            public void OnOpenInNewTabClicked(object sender, RoutedEventArgs e)
+            {
+                _page.OnOpenInNewTabClicked(sender, e);
+            }
+
+            public void OnRemoveFromFavoritesClicked(object sender, RoutedEventArgs e)
+            {
+                _page.OnRemoveFromFavoritesClicked(sender, e);
+            }
+
+            public void OnSelectClicked(object sender, RoutedEventArgs e)
+            {
+                _page.OnSelectClicked(sender, e);
+            }
+
+            public void OnUnhideClicked(object sender, RoutedEventArgs e)
+            {
+                _page.OnUnhideComicClicked(sender, e);
+            }
         }
     }
 }

@@ -47,6 +47,7 @@ namespace ComicReader.Views
     {
         public HomePageShared Shared { get; set; } = new HomePageShared();
 
+        private readonly ComicItemViewModel.IItemHandler _comicItemHandler;
         private Utils.ObservableCollectionPlus<ComicItemViewModel> ComicItemSource { get; set; }
             = new Utils.ObservableCollectionPlus<ComicItemViewModel>();
         public ObservableCollection<FolderItemViewModel> FolderItemDataSource { get; set; }
@@ -57,6 +58,7 @@ namespace ComicReader.Views
 
         public HomePage()
         {
+            _comicItemHandler = new ComicItemHandler(this);
             InitializeComponent();
         }
 
@@ -121,12 +123,7 @@ namespace ComicReader.Views
             }
 
             model.IsFavorite = FavoriteDataManager.FromIdNoLock(comic.Id) != null;
-
-            model.OnItemTapped = OnComicItemTapped;
-            model.OnOpenInNewTabClicked = OnOpenInNewTabClicked;
-            model.OnAddToFavoritesClicked = OnAddToFavoritesClicked;
-            model.OnRemoveFromFavoritesClicked = OnRemoveFromFavoritesClicked;
-            model.OnHideClicked = OnHideComicClicked;
+            model.ItemHandler = _comicItemHandler;
         }
 
         private void OnComicDataUpdated()
@@ -409,6 +406,49 @@ namespace ComicReader.Views
         public static void RefreshPage()
         {
             Utils.TaskQueueManager.NewTask(ComicData.UpdateSealed(lazy_load: true));
+        }
+
+        private class ComicItemHandler : ComicItemViewModel.IItemHandler
+        {
+            private readonly HomePage _page;
+
+            public ComicItemHandler(HomePage page)
+            {
+                _page = page;
+            }
+
+            public void OnAddToFavoritesClicked(object sender, RoutedEventArgs e)
+            {
+                _page.OnAddToFavoritesClicked(sender, e);
+            }
+
+            public void OnHideClicked(object sender, RoutedEventArgs e)
+            {
+                _page.OnHideComicClicked(sender, e);
+            }
+
+            public void OnItemTapped(object sender, TappedRoutedEventArgs e)
+            {
+                _page.OnComicItemTapped(sender, e);
+            }
+
+            public void OnOpenInNewTabClicked(object sender, RoutedEventArgs e)
+            {
+                _page.OnOpenInNewTabClicked(sender, e);
+            }
+
+            public void OnRemoveFromFavoritesClicked(object sender, RoutedEventArgs e)
+            {
+                _page.OnRemoveFromFavoritesClicked(sender, e);
+            }
+
+            public void OnSelectClicked(object sender, RoutedEventArgs e)
+            {
+            }
+
+            public void OnUnhideClicked(object sender, RoutedEventArgs e)
+            {
+            }
         }
     }
 }

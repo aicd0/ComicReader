@@ -1,4 +1,4 @@
-﻿<UserControl
+<UserControl
     x:Class="ComicReader.Controls.ComicItemVertical"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -8,8 +8,6 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:mtuu="using:Microsoft.Toolkit.Uwp.UI"
     xmlns:mtuum="using:Microsoft.Toolkit.Uwp.UI.Media"
-    xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
-    xmlns:muxm="using:Microsoft.UI.Xaml.Media"
     d:DataContext="{d:DesignInstance Type=data:ComicItemViewModel}"
     d:DesignHeight="310"
     d:DesignWidth="160"
@@ -39,7 +37,7 @@
         DataContextChanged="OnDataContextChanged"
         PointerEntered="OnPointerEntered"
         PointerExited="OnPointerExited"
-        Tapped="{x:Bind Ctx.OnItemTapped}">
+        Tapped="{x:Bind Ctx.ItemHandler.OnItemTapped}">
         <Grid.BackgroundTransition>
             <BrushTransition Duration="0:0:0.1" />
         </Grid.BackgroundTransition>
@@ -48,21 +46,21 @@
             <MenuFlyout>
                 <MenuFlyoutItem
                     x:Uid="MenuFlyoutOpenInNewTab"
-                    Click="{x:Bind Ctx.OnOpenInNewTabClicked}"
+                    Click="{x:Bind Ctx.ItemHandler.OnOpenInNewTabClicked}"
                     Icon="Document" />
                 <MenuFlyoutItem
                     x:Uid="MenuFlyoutAddToFavorites"
-                    Click="{x:Bind Ctx.OnAddToFavoritesClicked}"
+                    Click="{x:Bind Ctx.ItemHandler.OnAddToFavoritesClicked}"
                     Icon="Favorite"
                     Visibility="{x:Bind Ctx.IsFavorite, Converter={StaticResource BooleanToVisibilityNegationConverter}}" />
                 <MenuFlyoutItem
                     x:Uid="MenuFlyoutRemoveFromFavorites"
-                    Click="{x:Bind Ctx.OnRemoveFromFavoritesClicked}"
+                    Click="{x:Bind Ctx.ItemHandler.OnRemoveFromFavoritesClicked}"
                     Icon="Unfavorite"
                     Visibility="{x:Bind Ctx.IsFavorite}" />
                 <MenuFlyoutItem
                     x:Uid="MenuFlyoutHide"
-                    Click="{x:Bind Ctx.OnHideClicked}"
+                    Click="{x:Bind Ctx.ItemHandler.OnHideClicked}"
                     Visibility="{x:Bind Ctx.IsHide, Converter={StaticResource BooleanToVisibilityNegationConverter}}">
                     <MenuFlyoutItem.Icon>
                         <FontIcon Glyph="&#xE8FF;" />
