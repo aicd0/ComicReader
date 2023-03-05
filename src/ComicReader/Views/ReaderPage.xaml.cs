@@ -340,12 +340,6 @@ namespace ComicReader.Views
         public override void OnResume()
         {
             base.OnResume();
-            Shared.ReaderSettings.OnVerticalChanged += OnReaderSwitched;
-            Shared.ReaderSettings.OnContinuousChanged += OnReaderContinuousChanged;
-            Shared.ReaderSettings.OnHorizontalContinuousChanged += HorizontalReader.OnPageRearrangeEventSealed;
-            Shared.ReaderSettings.OnVerticalPageArrangementChanged += VerticalReader.OnPageRearrangeEventSealed;
-            Shared.ReaderSettings.OnHorizontalPageArrangementChanged += HorizontalReader.OnPageRearrangeEventSealed;
-
             ObserveData();
 
             Shared.NavigationPageShared.IsPreviewButtonToggled = false;
@@ -360,16 +354,6 @@ namespace ComicReader.Views
             {
                 await LoadComic(comic);
             });
-        }
-
-        public override void OnPause()
-        {
-            base.OnPause();
-            Shared.ReaderSettings.OnVerticalChanged -= OnReaderSwitched;
-            Shared.ReaderSettings.OnContinuousChanged -= OnReaderContinuousChanged;
-            Shared.ReaderSettings.OnHorizontalContinuousChanged -= HorizontalReader.OnPageRearrangeEventSealed;
-            Shared.ReaderSettings.OnVerticalPageArrangementChanged -= VerticalReader.OnPageRearrangeEventSealed;
-            Shared.ReaderSettings.OnHorizontalPageArrangementChanged -= HorizontalReader.OnPageRearrangeEventSealed;
         }
 
         public override void OnSelected()
@@ -396,6 +380,22 @@ namespace ComicReader.Views
             GetTabId().TabEventBus.With(EventId.ExpandInfoPane).Observe(this, delegate
             {
                 ExpandInfoPane();
+            });
+
+            EventBus.Default.With(EventId.ReaderVerticalChanged).Observe(this, delegate
+            {
+                OnReaderSwitched();
+            });
+
+            EventBus.Default.With(EventId.ReaderContinuousChanged).Observe(this, delegate
+            {
+                OnReaderContinuousChanged();
+                GetCurrentReader()?.OnPageRearrangeEventSealed();
+            });
+
+            EventBus.Default.With(EventId.ReaderPageArrangementChanged).Observe(this, delegate
+            {
+                GetCurrentReader()?.OnPageRearrangeEventSealed();
             });
 
             EventBus.Default.With<double>(EventId.TitleBarHeightChange).Observe(this, delegate (double h)
@@ -704,13 +704,13 @@ namespace ComicReader.Views
             Utils.C0.Run(async delegate
             {
                 ReaderModel reader = GetCurrentReader();
-                System.Diagnostics.Debug.Assert(reader != null);
-
                 if (reader == null)
                 {
+                    System.Diagnostics.Debug.Assert(false);
                     return;
                 }
 
+                OnReaderContinuousChanged();
                 ReaderModel last_reader = reader.IsVertical ? HorizontalReader : VerticalReader;
                 System.Diagnostics.Debug.Assert(last_reader != null);
 

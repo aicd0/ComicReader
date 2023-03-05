@@ -53,12 +53,6 @@ namespace ComicReader.Views
             Shared.ReaderSettings.IsHorizontalContinuous = Database.XmlDatabase.Settings.HorizontalContinuous;
             Shared.ReaderSettings.VerticalPageArrangement = Database.XmlDatabase.Settings.VerticalPageArrangement;
             Shared.ReaderSettings.HorizontalPageArrangement = Database.XmlDatabase.Settings.HorizontalPageArrangement;
-            Shared.ReaderSettings.OnVerticalChanged += SaveReaderSettingsEventSealed;
-            Shared.ReaderSettings.OnFlowDirectionChanged += SaveReaderSettingsEventSealed;
-            Shared.ReaderSettings.OnVerticalContinuousChanged += SaveReaderSettingsEventSealed;
-            Shared.ReaderSettings.OnHorizontalContinuousChanged += SaveReaderSettingsEventSealed;
-            Shared.ReaderSettings.OnVerticalPageArrangementChanged += SaveReaderSettingsEventSealed;
-            Shared.ReaderSettings.OnHorizontalPageArrangementChanged += SaveReaderSettingsEventSealed;
 
             InitializeComponent();
         }
@@ -435,25 +429,6 @@ namespace ComicReader.Views
         private void OnTabContainerGridSizeChanged(object sender, SizeChangedEventArgs e)
         {
             EventBus.Default.With<double>(EventId.RootTabHeightChange).Emit(e.NewSize.Height);
-        }
-
-        // Reader settings
-        private void SaveReaderSettingsEventSealed()
-        {
-            Utils.C0.Run(async delegate
-            {
-                await XmlDatabaseManager.WaitLock();
-
-                Database.XmlDatabase.Settings.VerticalReading = Shared.ReaderSettings.IsVertical;
-                Database.XmlDatabase.Settings.LeftToRight = Shared.ReaderSettings.IsLeftToRight;
-                Database.XmlDatabase.Settings.VerticalContinuous = Shared.ReaderSettings.IsVerticalContinuous;
-                Database.XmlDatabase.Settings.HorizontalContinuous = Shared.ReaderSettings.IsHorizontalContinuous;
-                Database.XmlDatabase.Settings.VerticalPageArrangement = Shared.ReaderSettings.VerticalPageArrangement;
-                Database.XmlDatabase.Settings.HorizontalPageArrangement = Shared.ReaderSettings.HorizontalPageArrangement;
-
-                XmlDatabaseManager.ReleaseLock();
-                Utils.TaskQueueManager.AppendTask(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
-            });
         }
 
         // Keys

@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+using ComicReader.Common.Constants;
+using ComicReader.Database;
+using ComicReader.Utils;
+using System;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Windows.UI.Xaml;
-using Windows.UI.Xaml.Controls;
 
 namespace ComicReader.DesignData
 {
@@ -36,12 +34,8 @@ namespace ComicReader.DesignData
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("PageArrangementIndex"));
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("DemoPageFlowDirection"));
 
-                if (IsVerticalContinuous != IsHorizontalContinuous)
-                {
-                    OnContinuousChanged?.Invoke();
-                }
-
-                OnVerticalChanged?.Invoke();
+                EventBus.Default.With(EventId.ReaderVerticalChanged).Emit(0);
+                SaveReaderSettings();
             }
         }
 
@@ -68,7 +62,7 @@ namespace ComicReader.DesignData
                 PageFlowDirection = value ? FlowDirection.LeftToRight : FlowDirection.RightToLeft;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsLeftToRightVisible"));
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsRightToLeftVisible"));
-                OnFlowDirectionChanged?.Invoke();
+                SaveReaderSettings();
             }
         }
 
@@ -95,8 +89,8 @@ namespace ComicReader.DesignData
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsContinuous"));
                 }
 
-                OnContinuousChanged?.Invoke();
-                OnVerticalContinuousChanged?.Invoke();
+                EventBus.Default.With(EventId.ReaderContinuousChanged).Emit(0);
+                SaveReaderSettings();
             }
         }
 
@@ -113,8 +107,8 @@ namespace ComicReader.DesignData
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsContinuous"));
                 }
 
-                OnContinuousChanged?.Invoke();
-                OnHorizontalContinuousChanged?.Invoke();
+                EventBus.Default.With(EventId.ReaderContinuousChanged).Emit(0);
+                SaveReaderSettings();
             }
         }
 
@@ -167,7 +161,8 @@ namespace ComicReader.DesignData
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("PageArrangementIndex"));
                 }
 
-                OnVerticalPageArrangementChanged?.Invoke();
+                EventBus.Default.With(EventId.ReaderPageArrangementChanged).Emit(0);
+                SaveReaderSettings();
             }
         }
 
@@ -184,7 +179,8 @@ namespace ComicReader.DesignData
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("PageArrangementIndex"));
                 }
 
-                OnHorizontalPageArrangementChanged?.Invoke();
+                EventBus.Default.With(EventId.ReaderPageArrangementChanged).Emit(0);
+                SaveReaderSettings();
             }
         }
 
@@ -276,12 +272,22 @@ namespace ComicReader.DesignData
 
         public FlowDirection DemoPageFlowDirection => m_IsVertical ? FlowDirection.LeftToRight : m_PageFlowDirection;
 
-        public Action OnVerticalChanged;
-        public Action OnFlowDirectionChanged;
-        public Action OnContinuousChanged;
-        public Action OnVerticalContinuousChanged;
-        public Action OnHorizontalContinuousChanged;
-        public Action OnVerticalPageArrangementChanged;
-        public Action OnHorizontalPageArrangementChanged;
+        private void SaveReaderSettings()
+        {
+            Utils.C0.Run(async delegate
+            {
+                await XmlDatabaseManager.WaitLock();
+
+                Database.XmlDatabase.Settings.VerticalReading = IsVertical;
+                Database.XmlDatabase.Settings.LeftToRight = IsLeftToRight;
+                Database.XmlDatabase.Settings.VerticalContinuous = IsVerticalContinuous;
+                Database.XmlDatabase.Settings.HorizontalContinuous = IsHorizontalContinuous;
+                Database.XmlDatabase.Settings.VerticalPageArrangement = VerticalPageArrangement;
+                Database.XmlDatabase.Settings.HorizontalPageArrangement = HorizontalPageArrangement;
+
+                XmlDatabaseManager.ReleaseLock();
+                Utils.TaskQueueManager.AppendTask(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
+            });
+        }
     }
 }
