@@ -63,9 +63,10 @@ namespace ComicReader.Views
             InitializeComponent();
         }
 
-        public override void OnLoaded(object sender, RoutedEventArgs e)
+        public override void OnResume()
         {
-            base.OnLoaded(sender, e);
+            base.OnResume();
+            ObserveData();
 
             Utils.C0.Run(async delegate
             {
@@ -80,7 +81,10 @@ namespace ComicReader.Views
                 }
                 LoadTab(null, HomePageTrait.Instance);
             });
+        }
 
+        private void ObserveData()
+        {
             EventBus.Default.With<double>(EventId.RootTabHeightChange).Observe(this, delegate (double h)
             {
                 _rootTabHeight = h;

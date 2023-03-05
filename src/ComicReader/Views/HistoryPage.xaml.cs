@@ -12,7 +12,7 @@ using Windows.UI.Xaml.Controls;
 
 namespace ComicReader.Views
 {
-    public class HistoryPageShared : INotifyPropertyChanged
+    internal class HistoryPageShared : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -51,19 +51,6 @@ namespace ComicReader.Views
             InitializeComponent();
         }
 
-        // Navigation
-        public override void OnLoaded(object sender, RoutedEventArgs e)
-        {
-            base.OnLoaded(sender, e);
-            EventBus.Default.With(EventId.SidePaneUpdate).Observe(this, delegate
-            {
-                Utils.C0.Run(async delegate
-                {
-                    await Update();
-                });
-            });
-        }
-
         public override void OnStart(object p)
         {
             base.OnStart(p);
@@ -75,15 +62,23 @@ namespace ComicReader.Views
         public override void OnResume()
         {
             base.OnResume();
+            ObserveData();
+
             Utils.C0.Run(async delegate
             {
                 await Update();
             });
         }
 
-        public override void OnPause()
+        private void ObserveData()
         {
-            base.OnPause();
+            EventBus.Default.With(EventId.SidePaneUpdate).Observe(this, delegate
+            {
+                Utils.C0.Run(async delegate
+                {
+                    await Update();
+                });
+            });
         }
 
         // utilities

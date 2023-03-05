@@ -11,9 +11,11 @@ using ComicReader.Common.Constants;
 
 namespace ComicReader.Views
 {
-    public class NavigationPageShared : INotifyPropertyChanged
+    internal class NavigationPageShared : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
+
+        public TabIdentifier TabId { get; set; }
 
         private MainPageShared m_MainPageShared;
         public MainPageShared MainPageShared
@@ -63,17 +65,17 @@ namespace ComicReader.Views
         public Action RefreshPage;
         public Action<string> SetSearchBox;
 
-        private bool? m_IsPreviewButtonToggled = null;
+        private bool? _isPreviewButtonToggled = null;
         public bool IsPreviewButtonToggled
         {
-            get => m_IsPreviewButtonToggled.HasValue && m_IsPreviewButtonToggled.Value;
+            get => _isPreviewButtonToggled.HasValue && _isPreviewButtonToggled.Value;
             set
             {
-                if (!m_IsPreviewButtonToggled.HasValue || m_IsPreviewButtonToggled.Value != value)
+                if (!_isPreviewButtonToggled.HasValue || _isPreviewButtonToggled.Value != value)
                 {
-                    m_IsPreviewButtonToggled = value;
+                    _isPreviewButtonToggled = value;
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsPreviewButtonToggled"));
-                    OnPreviewModeChanged?.Invoke();
+                    TabId.TabEventBus.With<bool>(EventId.PreviewModeChanged).Emit(value);
                 }
             }
         }
@@ -141,7 +143,6 @@ namespace ComicReader.Views
         public DesignData.ReaderSettingViewModel ReaderSettings => MainPageShared.ReaderSettings;
 
         public Action OnSwitchFavorites;
-        public Action OnPreviewModeChanged;
         public Action OnExpandComicInfoPane;
     }
 
@@ -165,16 +166,20 @@ namespace ComicReader.Views
             base.OnStart(p);
             var q = (NavigationParams)p;
             TabId = q.TabId;
-
+            Shared.TabId = TabId;
             Shared.MainPageShared = (MainPageShared)q.Params;
             Shared.RefreshPage = RefreshPage;
             Shared.SetSearchBox = SetSearchBox;
         }
 
-        public override void OnLoaded(object sender, RoutedEventArgs e)
+        public override void OnResume()
         {
-            base.OnLoaded(sender, e);
+            base.OnResume();
+            ObserveData();
+        }
 
+        private void ObserveData()
+        {
             EventBus.Default.With<double>(EventId.RootTabHeightChange).Observe(this, delegate (double h)
             {
                 _rootTabHeight = h;

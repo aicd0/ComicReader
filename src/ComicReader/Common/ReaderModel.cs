@@ -26,7 +26,7 @@ using ComicReader.Utils;
 
 namespace ComicReader.Common
 {
-    public class ReaderModel
+    internal class ReaderModel
     {
         // Constants
         public static readonly float MaxZoom = 250f;

@@ -18,7 +18,7 @@ using ComicReader.Utils;
 
 namespace ComicReader.Views
 {
-    public class SearchPageShared : INotifyPropertyChanged
+    internal class SearchPageShared : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -229,13 +229,6 @@ namespace ComicReader.Views
             InitializeComponent();
         }
 
-        public override void OnLoaded(object sender, RoutedEventArgs e)
-        {
-            base.OnLoaded(sender, e);
-            var scrollViewer = SearchResultGridView.ChildrenBreadthFirst().OfType<ScrollViewer>().First();
-            scrollViewer.ViewChanged += OnScrollViewerViewChanged;
-        }
-
         public override void OnStart(NavigationParams p)
         {
             base.OnStart(p);
@@ -249,6 +242,9 @@ namespace ComicReader.Views
             Shared.IsSelectMode = false;
             Shared.ComicItemSelectionMode = ListViewSelectionMode.None;
             Shared.NavigationPageShared.SetSearchBox((string)GetTabId().RequestArgs);
+
+            var scrollViewer = SearchResultGridView.ChildrenBreadthFirst().OfType<ScrollViewer>().First();
+            scrollViewer.ViewChanged += OnScrollViewerViewChanged;
 
             Utils.C0.Run(async delegate
             {

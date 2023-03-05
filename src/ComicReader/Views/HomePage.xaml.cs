@@ -16,7 +16,7 @@ using ComicReader.Common;
 
 namespace ComicReader.Views
 {
-    public class HomePageShared : INotifyPropertyChanged
+    internal class HomePageShared : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 

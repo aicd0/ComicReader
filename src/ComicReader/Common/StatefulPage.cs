@@ -16,8 +16,9 @@ namespace ComicReader.Common
 
     internal class StatefulPage : Page, IPageStateListener
     {
-        private bool mIsStarted = false;
-        private bool mIsResumed = false;
+        private bool _isStarted = false;
+        private bool _isResumed = false;
+        private bool _isLoaded = false;
 
         public StatefulPage()
         {
@@ -58,33 +59,14 @@ namespace ComicReader.Common
             }
         }
 
-        public virtual void OnStart(object p)
-        {
-        }
-
-        public virtual void OnPause()
-        {
-        }
-
-        public virtual void OnResume()
-        {
-        }
-
-        public virtual void OnLoaded(object sender, RoutedEventArgs e)
-        {
-        }
-
-        public virtual void OnUnloaded(object sender, RoutedEventArgs e)
-        {
-        }
-
         private void OnLoadedInternal(object sender, RoutedEventArgs e)
         {
             if (!(sender as Page).IsLoaded)
             {
                 return;
             }
-            OnLoaded(sender, e);
+            _isLoaded = true;
+            TryResume();
         }
 
         private void OnUnloadedInternal(object sender, RoutedEventArgs e)
@@ -93,38 +75,51 @@ namespace ComicReader.Common
             {
                 return;
             }
-            OnUnloaded(sender, e);
+            _isLoaded = false;
+            TryPause();
         }
 
         private void TryStart(object p)
         {
-            if (!mIsStarted)
+            if (!_isStarted)
             {
-                mIsStarted = true;
+                _isStarted = true;
                 OnStart(p);
             }
         }
 
         private void TryResume()
         {
-            if (!mIsStarted)
+            if (!_isStarted || !_isLoaded)
             {
                 return;
             }
-            if (!mIsResumed)
+            if (!_isResumed)
             {
-                mIsResumed = true;
+                _isResumed = true;
                 OnResume();
             }
         }
 
         private void TryPause()
         {
-            if (mIsResumed)
+            if (_isResumed)
             {
-                mIsResumed = false;
+                _isResumed = false;
                 OnPause();
             }
+        }
+
+        public virtual void OnStart(object p)
+        {
+        }
+
+        public virtual void OnResume()
+        {
+        }
+
+        public virtual void OnPause()
+        {
         }
     }
 }

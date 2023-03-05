@@ -33,7 +33,7 @@ namespace ComicReader.Views
         Working,
     }
 
-    public class ReaderPageShared : INotifyPropertyChanged
+    internal class ReaderPageShared : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -342,13 +342,14 @@ namespace ComicReader.Views
             base.OnResume();
             Shared.NavigationPageShared.OnKeyDown += OnKeyDown;
             Shared.NavigationPageShared.OnSwitchFavorites += OnSwitchFavorites;
-            Shared.NavigationPageShared.OnPreviewModeChanged += Shared.UpdateReaderUI;
             Shared.NavigationPageShared.OnExpandComicInfoPane += ExpandInfoPane;
             Shared.ReaderSettings.OnVerticalChanged += OnReaderSwitched;
             Shared.ReaderSettings.OnContinuousChanged += OnReaderContinuousChanged;
             Shared.ReaderSettings.OnHorizontalContinuousChanged += HorizontalReader.OnPageRearrangeEventSealed;
             Shared.ReaderSettings.OnVerticalPageArrangementChanged += VerticalReader.OnPageRearrangeEventSealed;
             Shared.ReaderSettings.OnHorizontalPageArrangementChanged += HorizontalReader.OnPageRearrangeEventSealed;
+
+            ObserveData();
 
             Shared.NavigationPageShared.IsPreviewButtonToggled = false;
             OnReaderContinuousChanged();
@@ -369,7 +370,6 @@ namespace ComicReader.Views
             base.OnPause();
             Shared.NavigationPageShared.OnKeyDown -= OnKeyDown;
             Shared.NavigationPageShared.OnSwitchFavorites -= OnSwitchFavorites;
-            Shared.NavigationPageShared.OnPreviewModeChanged -= Shared.UpdateReaderUI;
             Shared.NavigationPageShared.OnExpandComicInfoPane -= ExpandInfoPane;
             Shared.ReaderSettings.OnVerticalChanged -= OnReaderSwitched;
             Shared.ReaderSettings.OnContinuousChanged -= OnReaderContinuousChanged;
@@ -378,9 +378,21 @@ namespace ComicReader.Views
             Shared.ReaderSettings.OnHorizontalPageArrangementChanged -= HorizontalReader.OnPageRearrangeEventSealed;
         }
 
-        public override void OnLoaded(object sender, RoutedEventArgs e)
+        public override void OnSelected()
         {
-            base.OnLoaded(sender, e);
+            Utils.C0.Run(async delegate
+            {
+                Shared.BottomTilePinned = false;
+                await LoadComicInfo();
+            });
+        }
+
+        private void ObserveData()
+        {
+            GetTabId().TabEventBus.With<bool>(EventId.PreviewModeChanged).Observe(this, delegate
+            {
+                Shared.UpdateReaderUI();
+            });
 
             EventBus.Default.With<double>(EventId.TitleBarHeightChange).Observe(this, delegate (double h)
             {
@@ -392,15 +404,6 @@ namespace ComicReader.Views
             {
                 BottomGrid.Opacity = opacity;
             }, true);
-        }
-
-        public override void OnSelected()
-        {
-            Utils.C0.Run(async delegate
-            {
-                Shared.BottomTilePinned = false;
-                await LoadComicInfo();
-            });
         }
 
         // Load
