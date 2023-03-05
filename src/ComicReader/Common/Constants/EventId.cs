@@ -2,6 +2,7 @@ namespace ComicReader.Common.Constants
 {
     internal class EventId
     {
+        public const string ExpandInfoPane = "ExpandInfoPane";
         public const string NavigationBarHeightChange = "NavigationBarHeightChange";
         public const string PreviewModeChanged = "PreviewModeChanged";
         public const string RootTabHeightChange = "RootTabHeightChange";

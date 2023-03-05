@@ -140,8 +140,6 @@ namespace ComicReader.Views
         }
 
         public DesignData.ReaderSettingViewModel ReaderSettings => MainPageShared.ReaderSettings;
-
-        public Action OnExpandComicInfoPane;
     }
 
     sealed internal partial class NavigationPage : StatefulPage
@@ -355,7 +353,7 @@ namespace ComicReader.Views
 
         private void OnComicInfoClick(object sender, RoutedEventArgs e)
         {
-            Shared.OnExpandComicInfoPane?.Invoke();
+            TabId.TabEventBus.With(EventId.ExpandInfoPane).Emit(0);
         }
 
         // Side pane
