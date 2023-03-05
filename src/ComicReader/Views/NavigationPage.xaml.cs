@@ -141,7 +141,6 @@ namespace ComicReader.Views
 
         public DesignData.ReaderSettingViewModel ReaderSettings => MainPageShared.ReaderSettings;
 
-        public Action OnSwitchFavorites;
         public Action OnExpandComicInfoPane;
     }
 
@@ -351,7 +350,7 @@ namespace ComicReader.Views
 
         private void OnAddToFavoritesClick(object sender, RoutedEventArgs e)
         {
-            Shared.OnSwitchFavorites?.Invoke();
+            TabId.TabEventBus.With(EventId.SwitchFavorites).Emit(0);
         }
 
         private void OnComicInfoClick(object sender, RoutedEventArgs e)

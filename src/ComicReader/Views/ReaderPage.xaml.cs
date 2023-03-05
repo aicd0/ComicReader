@@ -340,7 +340,6 @@ namespace ComicReader.Views
         public override void OnResume()
         {
             base.OnResume();
-            Shared.NavigationPageShared.OnSwitchFavorites += OnSwitchFavorites;
             Shared.NavigationPageShared.OnExpandComicInfoPane += ExpandInfoPane;
             Shared.ReaderSettings.OnVerticalChanged += OnReaderSwitched;
             Shared.ReaderSettings.OnContinuousChanged += OnReaderContinuousChanged;
@@ -367,7 +366,6 @@ namespace ComicReader.Views
         public override void OnPause()
         {
             base.OnPause();
-            Shared.NavigationPageShared.OnSwitchFavorites -= OnSwitchFavorites;
             Shared.NavigationPageShared.OnExpandComicInfoPane -= ExpandInfoPane;
             Shared.ReaderSettings.OnVerticalChanged -= OnReaderSwitched;
             Shared.ReaderSettings.OnContinuousChanged -= OnReaderContinuousChanged;
@@ -390,6 +388,11 @@ namespace ComicReader.Views
             GetTabId().TabEventBus.With<bool>(EventId.PreviewModeChanged).Observe(this, delegate
             {
                 Shared.UpdateReaderUI();
+            });
+
+            GetTabId().TabEventBus.With(EventId.SwitchFavorites).Observe(this, delegate
+            {
+                OnSwitchFavorites();
             });
 
             EventBus.Default.With<double>(EventId.TitleBarHeightChange).Observe(this, delegate (double h)
