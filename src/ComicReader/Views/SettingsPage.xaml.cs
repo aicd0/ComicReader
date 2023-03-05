@@ -52,7 +52,7 @@ namespace ComicReader.Views
             }
         }
 
-        private int m_DefaultArchiveCodePage = -1;
+        private int m_DefaultArchiveCodePage = -2;
         public int DefaultArchiveCodePage
         {
             get => m_DefaultArchiveCodePage;
