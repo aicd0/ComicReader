@@ -340,7 +340,6 @@ namespace ComicReader.Views
         public override void OnResume()
         {
             base.OnResume();
-            Shared.NavigationPageShared.OnKeyDown += OnKeyDown;
             Shared.NavigationPageShared.OnSwitchFavorites += OnSwitchFavorites;
             Shared.NavigationPageShared.OnExpandComicInfoPane += ExpandInfoPane;
             Shared.ReaderSettings.OnVerticalChanged += OnReaderSwitched;
@@ -368,7 +367,6 @@ namespace ComicReader.Views
         public override void OnPause()
         {
             base.OnPause();
-            Shared.NavigationPageShared.OnKeyDown -= OnKeyDown;
             Shared.NavigationPageShared.OnSwitchFavorites -= OnSwitchFavorites;
             Shared.NavigationPageShared.OnExpandComicInfoPane -= ExpandInfoPane;
             Shared.ReaderSettings.OnVerticalChanged -= OnReaderSwitched;
@@ -1171,7 +1169,7 @@ namespace ComicReader.Views
         }
 
         // Keys
-        private void OnKeyDown(object sender, KeyRoutedEventArgs e)
+        private void OnReaderKeyDown(object sender, KeyRoutedEventArgs e)
         {
             ReaderModel reader = GetCurrentReader();
 

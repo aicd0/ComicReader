@@ -61,7 +61,6 @@ namespace ComicReader.Views
             }
         }
 
-        public Action<object, KeyRoutedEventArgs> OnKeyDown;
         public Action RefreshPage;
         public Action<string> SetSearchBox;
 
@@ -391,12 +390,6 @@ namespace ComicReader.Views
             }
 
             m_last_pointer_point = null;
-        }
-
-        // Keys
-        private void OnKeyDown(object sender, KeyRoutedEventArgs e)
-        {
-            Shared.OnKeyDown?.Invoke(sender, e);
         }
     }
 }

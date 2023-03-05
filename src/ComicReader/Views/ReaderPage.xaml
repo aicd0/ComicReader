@@ -318,7 +318,7 @@
                         <ListView
                             ItemsSource="{x:Bind VerticalReader.Frames, Mode=OneWay}"
                             Loaded="OnVerticalReaderListViewLoaded"
-                            PreviewKeyDown="OnKeyDown"
+                            PreviewKeyDown="OnReaderKeyDown"
                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                             ScrollViewer.VerticalScrollBarVisibility="Disabled"
                             SelectionMode="None">
@@ -359,7 +359,7 @@
                         <ListView
                             ItemsSource="{x:Bind HorizontalReader.Frames, Mode=OneWay}"
                             Loaded="OnHorizontalReaderListViewLoaded"
-                            PreviewKeyDown="OnKeyDown"
+                            PreviewKeyDown="OnReaderKeyDown"
                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                             ScrollViewer.VerticalScrollBarVisibility="Disabled"
                             SelectionMode="None">
