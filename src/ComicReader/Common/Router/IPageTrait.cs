@@ -109,7 +109,7 @@ namespace ComicReader.Common.Router
 
         public Type GetPageType()
         {
-            return typeof(Views.ReaderPage);
+            return typeof(Views.Reader.ReaderPage);
         }
 
         public bool HasNavigationBar()

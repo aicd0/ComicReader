@@ -24,7 +24,7 @@ using ComicReader.Database;
 using ComicReader.DesignData;
 using ComicReader.Utils;
 
-namespace ComicReader.Common
+namespace ComicReader.Views.Reader
 {
     internal class ReaderModel
     {
@@ -38,7 +38,7 @@ namespace ComicReader.Common
         private static readonly int MaxPreloadFramesAfter = 10;
 
         // Constructor
-        public ReaderModel(Views.ReaderPageShared shared, bool is_vertical)
+        public ReaderModel(ReaderPageShared shared, bool is_vertical)
         {
             m_shared = shared;
             IsVertical = is_vertical;
@@ -1602,7 +1602,7 @@ namespace ComicReader.Common
                 try
                 {
                     // Set reader status to Loading.
-                    m_shared.ReaderStatus = Views.ReaderStatusEnum.Loading;
+                    m_shared.ReaderStatus = ReaderStatusEnum.Loading;
 
                     // Save previous states.
                     double page = PageSource;
@@ -1633,7 +1633,7 @@ namespace ComicReader.Common
                     await UpdateImages(true);
 
                     // Recover reader status.
-                    m_shared.ReaderStatus = Views.ReaderStatusEnum.Working;
+                    m_shared.ReaderStatus = ReaderStatusEnum.Working;
                 }
                 finally
                 {
@@ -1643,7 +1643,7 @@ namespace ComicReader.Common
         }
 
         // Internal - Variables
-        private readonly Views.ReaderPageShared m_shared;
+        private readonly ReaderPageShared m_shared;
 
         // Internal - Loader States
         private bool LoadedFramework => ThisScrollViewer != null && ThisListView != null;

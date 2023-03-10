@@ -24,7 +24,7 @@ using ComicReader.Utils.KVDatabase;
 using ComicReader.Common.Constants;
 using ComicReader.Utils;
 
-namespace ComicReader.Views
+namespace ComicReader.Views.Reader
 {
     public enum ReaderStatusEnum
     {
