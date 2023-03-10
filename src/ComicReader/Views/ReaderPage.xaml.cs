@@ -248,7 +248,7 @@ namespace ComicReader.Views
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("BottomTilePinned"));
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("PinButtonToolTip"));
                 UpdateReaderUI();
-                BottomTilePinnedChanged?.Invoke();
+                BottomTilePinnedLiveData.Emit(value);
             }
         }
 
@@ -267,7 +267,7 @@ namespace ComicReader.Views
             }
         }
 
-        public Action BottomTilePinnedChanged;
+        public LiveData<bool> BottomTilePinnedLiveData = new LiveData<bool>();
     }
 
     sealed internal partial class ReaderPage : NavigatablePage
@@ -278,6 +278,8 @@ namespace ComicReader.Views
         private ReaderModel VerticalReader { get; set; }
         private ReaderModel HorizontalReader { get; set; }
         private ObservableCollection<ReaderImagePreviewViewModel> PreviewDataSource { get; set; }
+
+        private readonly TagItemHandler _tagItemHandler;
 
         private ComicData _comic;
 
@@ -297,13 +299,14 @@ namespace ComicReader.Views
 
         public ReaderPage()
         {
+            _tagItemHandler = new TagItemHandler(this);
+
             Shared.ComicTitle1 = "";
             Shared.ComicTitle2 = "";
             Shared.ComicDir = "";
             Shared.ComicTags = new ObservableCollection<TagCollectionViewModel>();
             Shared.IsEditable = false;
             Shared.BottomTilePinned = false;
-            Shared.BottomTilePinnedChanged = OnBottomTilePinnedChanged;
 
             VerticalReader = new ReaderModel(Shared, true);
             HorizontalReader = new ReaderModel(Shared, false);
@@ -408,6 +411,11 @@ namespace ComicReader.Views
             {
                 BottomGrid.Opacity = opacity;
             }, true);
+
+            Shared.BottomTilePinnedLiveData.Observe(this, delegate
+            {
+                OnBottomTilePinnedChanged();
+            });
         }
 
         // Load
@@ -623,9 +631,8 @@ namespace ComicReader.Views
                     TagViewModel tag_model = new TagViewModel
                     {
                         Tag = tag,
-                        OnClicked = OnInfoPaneTagClicked
+                        ItemHandler = _tagItemHandler
                     };
-
                     tags_model.Tags.Add(tag_model);
                 }
 
@@ -1256,6 +1263,21 @@ namespace ComicReader.Views
         private void Log(string text)
         {
             Utils.Debug.Log("ReaderPage: " + text + ".");
+        }
+
+        private class TagItemHandler : TagViewModel.IItemHandler
+        {
+            private readonly ReaderPage _page;
+
+            public TagItemHandler(ReaderPage page)
+            {
+                _page = page;
+            }
+
+            public void OnClicked(object sender, RoutedEventArgs e)
+            {
+                _page.OnInfoPaneTagClicked(sender, e);
+            }
         }
     }
 }

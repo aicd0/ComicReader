@@ -1,19 +1,54 @@
-﻿using System;
+using ComicReader.Utils;
+using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Threading.Tasks;
 using Windows.UI.Xaml;
-using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media.Imaging;
 
 namespace ComicReader.DesignData
 {
     public class TagViewModel
     {
         public string Tag { get; set; }
-        public RoutedEventHandler OnClicked { get; set; }
+
+        // handlers
+        private WeakReference<IItemHandler> _itemHandler;
+        public IItemHandler ItemHandler
+        {
+            get
+            {
+                return _itemHandler?.Get() ?? EmptyItemHandler.Instance;
+            }
+            set
+            {
+                _itemHandler = new WeakReference<IItemHandler>(value);
+            }
+        }
+
+        public interface IItemHandler
+        {
+            void OnClicked(object sender, RoutedEventArgs e);
+        }
+
+        private class EmptyItemHandler : IItemHandler
+        {
+            private EmptyItemHandler() { }
+
+            private static IItemHandler _instance;
+            public static IItemHandler Instance
+            {
+                get
+                {
+                    if (_instance == null)
+                    {
+                        _instance = new EmptyItemHandler();
+                    }
+                    return _instance;
+                }
+            }
+
+            public void OnClicked(object sender, RoutedEventArgs e)
+            {
+            }
+        }
     };
 
     public class TagCollectionViewModel
