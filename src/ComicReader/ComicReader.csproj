@@ -140,7 +140,7 @@
     <Compile Include="Common\NavigatablePage.cs" />
     <Compile Include="Common\Router\IPageTrait.cs" />
     <Compile Include="Common\Router\NavigationManager.cs" />
-    <Compile Include="Common\ReaderModel.cs" />
+    <Compile Include="Views\Reader\ReaderModel.cs" />
     <Compile Include="Common\StatefulPage.cs" />
     <Compile Include="Common\Structs\FrameOffsetData.cs" />
     <Compile Include="Common\Structs\SetScrollViewerContext.cs" />
@@ -250,7 +250,7 @@
     <Compile Include="Views\HistoryPage.xaml.cs">
       <DependentUpon>HistoryPage.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Views\ReaderPage.xaml.cs">
+    <Compile Include="Views\Reader\ReaderPage.xaml.cs">
       <DependentUpon>ReaderPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\MainPage.xaml.cs">
@@ -456,7 +456,7 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Views\ReaderPage.xaml">
+    <Page Include="Views\Reader\ReaderPage.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

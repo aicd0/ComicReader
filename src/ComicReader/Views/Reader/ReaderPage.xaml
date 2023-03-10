@@ -17,9 +17,9 @@
     <Page.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="../Resources/Styles/Button.xaml" />
-                <ResourceDictionary Source="../Resources/Styles/RatingControl.xaml" />
-                <ResourceDictionary Source="../Resources/Styles/ToggleButton.xaml" />
+                <ResourceDictionary Source="ms-appx:///Resources/Styles/Button.xaml" />
+                <ResourceDictionary Source="ms-appx:///Resources/Styles/RatingControl.xaml" />
+                <ResourceDictionary Source="ms-appx:///Resources/Styles/ToggleButton.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <!--  Overwrite the scroll viewer style to enable Pointer events.  -->
