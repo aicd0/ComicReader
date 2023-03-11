@@ -119,7 +119,7 @@ namespace ComicReader.Database
 
             if (final)
             {
-                Utils.TaskQueueManager.AppendTask(
+                Utils.TaskQueue.DefaultQueue.Enqueue(
                     XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Favorites));
             }
 
@@ -153,7 +153,7 @@ namespace ComicReader.Database
 
             if (final)
             {
-                Utils.TaskQueueManager.AppendTask(
+                Utils.TaskQueue.DefaultQueue.Enqueue(
                     XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Favorites));
             }
         }

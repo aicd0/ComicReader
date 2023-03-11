@@ -49,7 +49,7 @@ namespace ComicReader.Views
         private void ContentDialogPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
         {
             // Update comics.
-            Utils.TaskQueueManager.NewTask(ComicData.UpdateSealed(lazy_load: true));
+            Utils.TaskQueue.DefaultQueue.Enqueue(ComicData.UpdateSealed(lazy_load: true));
         }
 
         private void ListViewLoaded(object sender, RoutedEventArgs e)

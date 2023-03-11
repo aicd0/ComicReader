@@ -322,25 +322,6 @@ namespace ComicReader.Views
             }
         }
 
-        // Background tasks
-        public void SetRootToolTip(string text)
-        {
-            if (RootToolTip == null)
-            {
-                return;
-            }
-
-            if (text.Length == 0)
-            {
-                RootToolTip.Visibility = Visibility.Collapsed;
-            }
-            else
-            {
-                RootToolTip.Content = text;
-                RootToolTip.Visibility = Visibility.Visible;
-            }
-        }
-
         private void OnTabViewSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (e.AddedItems.Count == 0)

@@ -55,7 +55,7 @@ namespace ComicReader.Database
             }
             if (final)
             {
-                Utils.TaskQueueManager.AppendTask(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
+                Utils.TaskQueue.DefaultQueue.Enqueue(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
             }
             return TaskException.Success;
         }
@@ -101,7 +101,7 @@ namespace ComicReader.Database
 
             if (final)
             {
-                Utils.TaskQueueManager.AppendTask(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
+                Utils.TaskQueue.DefaultQueue.Enqueue(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
             }
         }
 

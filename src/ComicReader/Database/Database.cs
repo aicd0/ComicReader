@@ -27,7 +27,7 @@ namespace ComicReader.Database
             await SqliteDatabaseManager.Init();
             await XmlDatabaseManager.Load();
             await Update();
-            Utils.TaskQueueManager.AppendTask(ComicData.UpdateSealed(lazy_load: true));
+            Utils.TaskQueue.DefaultQueue.Enqueue(ComicData.UpdateSealed(lazy_load: true));
             return TaskException.Success;
         }
 

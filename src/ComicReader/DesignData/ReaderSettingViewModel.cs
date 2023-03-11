@@ -286,7 +286,7 @@ namespace ComicReader.DesignData
                 Database.XmlDatabase.Settings.HorizontalPageArrangement = HorizontalPageArrangement;
 
                 XmlDatabaseManager.ReleaseLock();
-                Utils.TaskQueueManager.AppendTask(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
+                Utils.TaskQueue.DefaultQueue.Enqueue(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
             });
         }
     }

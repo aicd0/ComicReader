@@ -122,7 +122,7 @@ namespace ComicReader.Database
         private static readonly Utils.CancellationLock _updateLock = new Utils.CancellationLock();
 
         private bool _imageUpdated = false;
-        private static readonly Utils.TaskQueue s_saveQueue = Utils.TaskQueueManager.EmptyQueue();
+        private static readonly Utils.TaskQueue s_saveQueue = new Utils.TaskQueue();
 
         public void SaveBasic()
         {
@@ -140,7 +140,7 @@ namespace ComicReader.Database
                 KeyCoverFileCache,
             };
 
-            Utils.TaskQueueManager.AppendTask(SaveSealed(fields, save_tags: false), "", s_saveQueue);
+            s_saveQueue.Enqueue(SaveSealed(fields, save_tags: false));
         }
 
         public async Task SaveHiddenAsync(bool hidden)
@@ -164,7 +164,7 @@ namespace ComicReader.Database
                 KeyRating,
             };
 
-            Utils.TaskQueueManager.AppendTask(SaveSealed(fields, save_tags: false), "", s_saveQueue);
+            s_saveQueue.Enqueue(SaveSealed(fields, save_tags: false));
         }
 
         public void SaveProgress(int progress, double last_position)
@@ -178,7 +178,7 @@ namespace ComicReader.Database
                 KeyLastPosition,
             };
 
-            Utils.TaskQueueManager.AppendTask(SaveSealed(fields, save_tags: false), "", s_saveQueue);
+            s_saveQueue.Enqueue(SaveSealed(fields, save_tags: false));
         }
 
         public void SetAsRead()
@@ -192,7 +192,7 @@ namespace ComicReader.Database
                 KeyLastVisit,
             };
 
-            Utils.TaskQueueManager.AppendTask(SaveSealed(fields, save_tags: false), "", s_saveQueue);
+            s_saveQueue.Enqueue(SaveSealed(fields, save_tags: false));
         }
 
         public void SaveImageAspectRatios()
@@ -202,7 +202,7 @@ namespace ComicReader.Database
                 KeyImageAspectRatios,
             };
 
-            Utils.TaskQueueManager.AppendTask(SaveSealed(fields, save_tags: false), "", s_saveQueue);
+            s_saveQueue.Enqueue(SaveSealed(fields, save_tags: false));
         }
 
         public void SaveCoverFileCache()
@@ -212,13 +212,13 @@ namespace ComicReader.Database
                 KeyCoverFileCache,
             };
 
-            Utils.TaskQueueManager.AppendTask(SaveSealed(fields, save_tags: false), "", s_saveQueue);
+            s_saveQueue.Enqueue(SaveSealed(fields, save_tags: false));
         }
 
         public void SaveTags()
         {
             List<SqlKey> fields = new List<SqlKey>();
-            Utils.TaskQueueManager.AppendTask(SaveSealed(fields, save_tags: true), "", s_saveQueue);
+            s_saveQueue.Enqueue(SaveSealed(fields, save_tags: true));
         }
 
         public void SetAsDefaultInfo()

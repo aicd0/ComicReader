@@ -12,7 +12,7 @@ namespace ComicReader.Utils
     {
         private const string LogFileName = "log.txt";
 
-        private static readonly Utils.TaskQueue LogQueue = Utils.TaskQueueManager.EmptyQueue();
+        private static readonly Utils.TaskQueue LogQueue = new Utils.TaskQueue();
 
         private static StorageFolder LogFolder => ApplicationData.Current.LocalFolder;
 
@@ -31,7 +31,7 @@ namespace ComicReader.Utils
                 System.Diagnostics.Debug.Print(content);
             }
 
-            Utils.TaskQueueManager.AppendTask(LogToFileSealed(content), "", LogQueue);
+            LogQueue.Enqueue(LogToFileSealed(content));
         }
 
         public static async Task<TaskException> TryAsync(string eventName, Func<Task> action)

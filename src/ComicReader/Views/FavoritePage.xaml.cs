@@ -143,7 +143,7 @@ namespace ComicReader.Views
             XmlDatabase.Favorites.RootNodes.Clear();
             helper(XmlDatabase.Favorites.RootNodes, DataSource);
             XmlDatabaseManager.ReleaseLock();
-            Utils.TaskQueueManager.AppendTask(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Favorites));
+            Utils.TaskQueue.DefaultQueue.Enqueue(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Favorites));
         }
 
         private async Task DeleteItem(FavoriteItemViewModel item)

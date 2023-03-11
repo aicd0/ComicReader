@@ -170,10 +170,5 @@
                 <controls:TitleBar />
             </muxc:TabView.TabStripFooter>
         </muxc:TabView>
-        <ToolTip
-            x:Name="RootToolTip"
-            HorizontalAlignment="Left"
-            VerticalAlignment="Bottom"
-            Visibility="Collapsed" />
     </Grid>
 </common:StatefulPage>

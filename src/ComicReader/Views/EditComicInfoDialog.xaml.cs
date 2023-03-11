@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+using System.ComponentModel;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using ComicReader.Database;
@@ -49,8 +49,7 @@ namespace ComicReader.Views
                 m_comic.SaveBasic();
                 m_comic.SaveTags();
 
-                Utils.TaskQueueManager.AppendTask(
-                    m_comic.SaveToInfoFileSealed(), "Saving...");
+                Utils.TaskQueue.DefaultQueue.Enqueue(m_comic.SaveToInfoFileSealed());
             });
         }
 

@@ -1,11 +1,11 @@
 #if DEBUG
 //#define DEBUG_LOG_LOAD
+//#define DEBUG_LOG_QUEUE
 #endif
 
 using ComicReader.Database;
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using System.Threading.Tasks;
 using Windows.Graphics.Display;
 using Windows.Storage.Streams;
@@ -17,7 +17,7 @@ namespace ComicReader.Utils
 
     internal static class ImageLoader
     {
-        private static readonly TaskQueue s_loadQueue = TaskQueueManager.EmptyQueue();
+        private static readonly TaskQueue s_loadQueue = new TaskQueue();
         private static double s_rawPixelPerPixel = -1;
 
         private static SealedTask LoadSingleImageSealed(
@@ -85,8 +85,11 @@ namespace ComicReader.Utils
                 _height *= _multiplication;
                 foreach (Token token in _tokens)
                 {
-                    TaskQueueManager.AppendTask(LoadSingleImageSealed(token, _width, _height, _stretchMode), "", s_loadQueue);
+                    s_loadQueue.Enqueue(LoadSingleImageSealed(token, _width, _height, _stretchMode));
                 }
+#if DEBUG_LOG_QUEUE
+                Log("");
+#endif
                 return TaskException.Success;
             }
         }

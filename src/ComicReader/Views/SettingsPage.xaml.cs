@@ -414,7 +414,7 @@ namespace ComicReader.Views
             XmlDatabase.Settings.DebugMode = Shared.AdvancedDebugMode;
 
             XmlDatabaseManager.ReleaseLock();
-            Utils.TaskQueueManager.AppendTask(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
+            Utils.TaskQueue.DefaultQueue.Enqueue(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
         }
 
         private void OnSettingsChanged()
@@ -466,7 +466,7 @@ namespace ComicReader.Views
         private void OnRescanFilesClicked(object sender, RoutedEventArgs e)
         {
             Shared.IsRescanning = true;
-            Utils.TaskQueueManager.NewTask(ComicData.UpdateSealed(lazy_load: false));
+            Utils.TaskQueue.DefaultQueue.Enqueue(ComicData.UpdateSealed(lazy_load: false));
         }
     }
 }
