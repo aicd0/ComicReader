@@ -214,7 +214,7 @@ namespace ComicReader.Views
         private List<Match> m_matches = new List<Match>();
         private int m_match_index = 0;
         private readonly Utils.CancellationLock m_search_lock = new Utils.CancellationLock();
-        private readonly Utils.CancellationLock m_load_image_lock = new Utils.CancellationLock();
+        private readonly Utils.CancellationSession _loadImageSession = new Utils.CancellationSession();
 
         public SearchPage()
         {
@@ -250,6 +250,12 @@ namespace ComicReader.Views
             {
                 await StartSearch();
             });
+        }
+
+        public override void OnPause()
+        {
+            base.OnPause();
+            _loadImageSession.Next();
         }
 
         // Unsorted
@@ -466,45 +472,51 @@ namespace ComicReader.Views
             }
 
             // Load images.
-            await LoadImages();
+            LoadImages();
         }
 
-        private async Task LoadImages()
+        private void LoadImages()
         {
-            await m_load_image_lock.WaitAsync();
-            try
+            CancellationSession.Token token = _loadImageSession.Next();
+            double image_width = (double)Application.Current.Resources["ComicItemHorizontalImageWidth"];
+            double image_height = (double)Application.Current.Resources["ComicItemHorizontalImageHeight"];
+            List<Utils.ImageLoader.Token> image_loader_tokens = new List<Utils.ImageLoader.Token>();
+
+            foreach (ComicItemViewModel item in Shared.SearchResults)
             {
-                double image_width = (double)Application.Current.Resources["ComicItemHorizontalImageWidth"];
-                double image_height = (double)Application.Current.Resources["ComicItemHorizontalImageHeight"];
-                List<Utils.ImageLoader.Token> image_loader_tokens = new List<Utils.ImageLoader.Token>();
-
-                foreach (ComicItemViewModel item in Shared.SearchResults)
+                if (item.IsImageLoaded)
                 {
-                    if (item.IsImageLoaded)
-                    {
-                        continue;
-                    }
-
-                    image_loader_tokens.Add(new Utils.ImageLoader.Token
-                    {
-                        Comic = item.Comic,
-                        Index = -1,
-                        Callback = (BitmapImage img) =>
-                        {
-                            item.Image = img;
-                            item.IsImageLoaded = true;
-                        }
-                    });
+                    continue;
                 }
 
-                await new Utils.ImageLoader.Builder(image_loader_tokens, m_load_image_lock)
-                    .WidthConstrain(image_width).HeightConstrain(image_height).Multiplication(1.4)
-                    .StretchMode(Utils.ImageLoader.StretchModeEnum.UniformToFill)
-                    .Commit();
+                image_loader_tokens.Add(new Utils.ImageLoader.Token
+                {
+                    SessionToken = token,
+                    Comic = item.Comic,
+                    Index = -1,
+                    Callback = new LoadImageCallback(item)
+                });
             }
-            finally
+
+            new Utils.ImageLoader.Builder(image_loader_tokens)
+                .WidthConstrain(image_width).HeightConstrain(image_height).Multiplication(1.4)
+                .StretchMode(Utils.ImageLoader.StretchModeEnum.UniformToFill)
+                .Commit();
+        }
+
+        private class LoadImageCallback : ImageLoader.ILoadImageCallback
+        {
+            private readonly ComicItemViewModel _viewModel;
+
+            public LoadImageCallback(ComicItemViewModel viewModel)
             {
-                m_load_image_lock.Release();
+                _viewModel = viewModel;
+            }
+
+            public void OnImageLoaded(BitmapImage image)
+            {
+                _viewModel.Image = image;
+                _viewModel.IsImageLoaded = true;
             }
         }
 

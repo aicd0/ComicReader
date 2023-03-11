@@ -5,7 +5,7 @@
 using ComicReader.Database;
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.Graphics.Display;
 using Windows.Storage.Streams;
@@ -13,9 +13,20 @@ using Windows.UI.Xaml.Media.Imaging;
 
 namespace ComicReader.Utils
 {
-    public class ImageLoader
+    using SealedTask = Func<Task<TaskException>, TaskException>;
+
+    internal static class ImageLoader
     {
-        private ImageLoader() {}
+        private static readonly TaskQueue s_loadQueue = TaskQueueManager.EmptyQueue();
+        private static double s_rawPixelPerPixel = -1;
+
+        private static SealedTask LoadSingleImageSealed(
+            Token token,
+            double width, double height,
+            StretchModeEnum stretch_mode
+        ) {
+            return (Task<TaskException> _) => LoadSingleImage(token, width, height, stretch_mode).Result;
+        }
 
         public enum StretchModeEnum
         {
@@ -23,70 +34,36 @@ namespace ComicReader.Utils
             UniformToFill,
         }
 
-        public enum ConstrainType
-        {
-            Exact,
-            MatchFirstImage,
-        }
-
-        public class DimensionConstrain
-        {
-            public ConstrainType Type;
-            public double Val;
-
-            public static implicit operator DimensionConstrain(double val)
-            {
-                System.Diagnostics.Debug.Assert(!double.IsNaN(val));
-
-                return new DimensionConstrain
-                {
-                    Type = ConstrainType.Exact,
-                    Val = val,
-                };
-            }
-
-            public static implicit operator DimensionConstrain(ConstrainType type)
-            {
-                return new DimensionConstrain
-                {
-                    Type = type,
-                    Val = 0.0,
-                };
-            }
-        }
-
         public class Token
         {
+            public CancellationSession.Token SessionToken;
             public ComicData Comic;
             public int Index;
-            public Action<BitmapImage> Callback;
-            public Func<BitmapImage, Task> CallbackAsync;
+            public ILoadImageCallback Callback;
         }
 
-        public sealed class Builder : BuilderBase<Task<TaskException>>
+        public sealed class Builder : BuilderBase<TaskException>
         {
             private readonly List<Token> _tokens;
-            private DimensionConstrain _widthConstrain = double.PositiveInfinity;
-            private DimensionConstrain _heightConstrain = double.PositiveInfinity;
+            private double _width = double.PositiveInfinity;
+            private double _height = double.PositiveInfinity;
             private StretchModeEnum _stretchMode = StretchModeEnum.Uniform;
-            private readonly CancellationLock _cancellationLock;
             private double _multiplication = 1.0;
 
-            public Builder(List<Token> tokens, CancellationLock cancellation_lock = null)
+            public Builder(List<Token> tokens)
             {
                 _tokens = tokens;
-                _cancellationLock = cancellation_lock;
             }
 
-            public Builder WidthConstrain(DimensionConstrain constrain)
+            public Builder WidthConstrain(double value)
             {
-                _widthConstrain = constrain;
+                _width = value;
                 return this;
             }
 
-            public Builder HeightConstrain(DimensionConstrain constrain)
+            public Builder HeightConstrain(double value)
             {
-                _heightConstrain = constrain;
+                _height = value;
                 return this;
             }
 
@@ -102,177 +79,139 @@ namespace ComicReader.Utils
                 return this;
             }
 
-            protected override Task<TaskException> CommitImpl()
+            protected override TaskException CommitImpl()
             {
-                _widthConstrain.Val *= _multiplication;
-                _heightConstrain.Val *= _multiplication;
-                return Load(_tokens, _widthConstrain, _heightConstrain, _stretchMode, _cancellationLock);
+                _width *= _multiplication;
+                _height *= _multiplication;
+                foreach (Token token in _tokens)
+                {
+                    TaskQueueManager.AppendTask(LoadSingleImageSealed(token, _width, _height, _stretchMode), "", s_loadQueue);
+                }
+                return TaskException.Success;
             }
         }
 
-        private static async Task<TaskException> Load(IEnumerable<Token> tokens,
-            DimensionConstrain width_constrain, DimensionConstrain height_constrain,
-            StretchModeEnum stretch_mode, CancellationLock cancellation_lock)
+        private static async Task<double> GetRawPixelPerPixel()
         {
-            List<Token> tokens_cpy = new List<Token>(tokens);
+            if (s_rawPixelPerPixel < 0)
+            {
+                await C0.Sync(delegate
+                {
+                    s_rawPixelPerPixel = DisplayInformation.GetForCurrentView().RawPixelsPerViewPixel;
+                });
+            }
+            return s_rawPixelPerPixel;
+        }
+
+        private static async Task<TaskException> LoadSingleImage(
+            Token token,
+            double width, double height,
+            StretchModeEnum stretch_mode
+        ) {
+            if (token.SessionToken.Cancelled)
+            {
+#if DEBUG_LOG_LOAD
+                Log("Task cancelled");
+#endif
+                return TaskException.Cancellation;
+            }
 
 #if DEBUG_LOG_LOAD
             Log("Loading " + tokens_cpy.Count.ToString() + " images");
 #endif
+            bool use_origin_size = double.IsInfinity(width) && double.IsInfinity(height);
+            double raw_pixels_per_view_pixel = await GetRawPixelPerPixel();
+            double frame_ratio = width / height;
 
-            bool use_origin_size =
-                width_constrain.Type == ConstrainType.Exact &&
-                double.IsInfinity(width_constrain.Val) &&
-                height_constrain.Type == ConstrainType.Exact &&
-                double.IsInfinity(height_constrain.Val);
-
-            double raw_pixels_per_view_pixel = 0.0;
-            double frame_ratio = 0.0;
-            bool first_token = true;
-            bool all_token_success = true;
-
-            for (int token_processed = 0; tokens_cpy.Count > 0; ++token_processed)
+            ComicData comic = token.Comic;
+            TaskException result = await comic.UpdateImages(cover_only: token.Index < 0, reload: false);
+            if (!result.Successful())
             {
-                if (cancellation_lock != null && cancellation_lock.CancellationRequested)
+                // Skip tokens whose comic folder cannot be reached.
+                return TaskException.Failure;
+            }
+
+            BitmapImage image = null;
+            using (IRandomAccessStream stream = await comic.GetImageStream(token.Index))
+            {
+                if (stream == null)
+                {
+                    Log("Failed to get img stream " + token.Index.ToString() + ", skipped");
+                    return TaskException.Failure;
+                }
+                stream.Seek(0);
+                bool img_load_success = true;
+
+                // IMPORTANT: Use TaskCompletionSource to guarantee all async tasks
+                // in Sync block has completed.
+                TaskCompletionSource<bool> completion_src = new TaskCompletionSource<bool>();
+                await Utils.C0.Sync(async delegate
+                {
+                    image = new BitmapImage();
+                    try
+                    {
+                        await image.SetSourceAsync(stream).AsTask();
+                    }
+                    catch (Exception e)
+                    {
+                        img_load_success = false;
+                        Log("Skipped token " + token.Index.ToString() + ", image corrupted. " + e.ToString());
+                    }
+                    completion_src.SetResult(true);
+                });
+                await completion_src.Task;
+                if (!img_load_success)
+                {
+                    return TaskException.Failure;
+                }
+            }
+
+            TaskCompletionSource<TaskException> taskResult = new TaskCompletionSource<TaskException>();
+            await Utils.C0.Sync(delegate
+            {
+                if (token.SessionToken.Cancelled)
                 {
 #if DEBUG_LOG_LOAD
                     Log("Task cancelled");
 #endif
-                    return TaskException.Cancellation;
+                    taskResult.SetResult(TaskException.Cancellation);
+                    return;
                 }
-
-                Token token = tokens_cpy.First();
-                tokens_cpy.RemoveAt(0);
-
-                // Lazy load.
-                ComicData comic = token.Comic;
-                TaskException result = await comic.UpdateImages(cover_only: token.Index < 0, reload: false);
-
-                // Skip tokens whose comic folder cannot be reached.
-                if (!result.Successful())
+                if (!use_origin_size)
                 {
-                    Log("Token " + token.Index.ToString() + "(" + token_processed.ToString() + ") skipped, failed to update comic images");
-                    int token_before = tokens_cpy.Count;
-                    tokens_cpy.RemoveAll(x => x.Comic == comic);
-                    Log((token_before - tokens_cpy.Count).ToString() + " tokens with the same comic were removed");
-                    all_token_success = false;
-                    continue;
-                }
-
-                BitmapImage image = null;
-
-                using (IRandomAccessStream stream = await comic.GetImageStream(token.Index))
-                {
-                    if (stream == null)
+                    double image_ratio = (double)image.PixelWidth / image.PixelHeight;
+                    double image_height;
+                    double image_width;
+                    if ((image_ratio > frame_ratio) == (stretch_mode == StretchModeEnum.Uniform))
                     {
-                        Log("Failed to get img stream " + token.Index.ToString() + ", skipped");
-                        all_token_success = false;
-                        continue;
+                        image_width = width * raw_pixels_per_view_pixel;
+                        image_height = image_width / image_ratio;
                     }
-
-                    stream.Seek(0);
-                    bool img_load_success = true;
-
-                    // IMPORTANT: Use TaskCompletionSource to guarantee all async tasks
-                    // in Sync block has completed.
-                    TaskCompletionSource<bool> completion_src = new TaskCompletionSource<bool>();
-
-                    await Utils.C0.Sync(async delegate
+                    else
                     {
-                        image = new BitmapImage();
-
-                        try
-                        {
-                            await image.SetSourceAsync(stream).AsTask();
-                        }
-                        catch (Exception e)
-                        {
-                            img_load_success = false;
-                            Log("Skipped token " + token.Index.ToString() + ", image corrupted. " + e.ToString());
-                        }
-
-                        completion_src.SetResult(true);
-                    });
-
-                    await completion_src.Task;
-
-                    if (!img_load_success)
-                    {
-                        continue;
+                        image_height = height * raw_pixels_per_view_pixel;
+                        image_width = image_height * image_ratio;
                     }
+                    image.DecodePixelHeight = (int)image_height;
+                    image.DecodePixelWidth = (int)image_width;
                 }
-
-                {
-                    TaskCompletionSource<bool> completion_src = new TaskCompletionSource<bool>();
-
-                    await Utils.C0.Sync(async delegate
-                    {
-                        if (first_token)
-                        {
-                            first_token = false;
-
-                            if (width_constrain.Type == ConstrainType.MatchFirstImage)
-                            {
-                                width_constrain.Val = image.PixelWidth;
-                            }
-
-                            if (height_constrain.Type == ConstrainType.MatchFirstImage)
-                            {
-                                height_constrain.Val = image.PixelHeight;
-                            }
-
-                            raw_pixels_per_view_pixel = DisplayInformation.GetForCurrentView().RawPixelsPerViewPixel;
-                            frame_ratio = width_constrain.Val / height_constrain.Val;
-                        }
-
-                        if (!use_origin_size)
-                        {
-                            double image_ratio = (double)image.PixelWidth / image.PixelHeight;
-
-                            double image_height;
-                            double image_width;
-                            if ((image_ratio > frame_ratio) == (stretch_mode == StretchModeEnum.Uniform))
-                            {
-                                image_width = width_constrain.Val * raw_pixels_per_view_pixel;
-                                image_height = image_width / image_ratio;
-                            }
-                            else
-                            {
-                                image_height = height_constrain.Val * raw_pixels_per_view_pixel;
-                                image_width = image_height * image_ratio;
-                            }
-
-                            image.DecodePixelHeight = (int)image_height;
-                            image.DecodePixelWidth = (int)image_width;
-                        }
-
-                        token.Callback?.Invoke(image);
-
-                        if (token.CallbackAsync != null)
-                        {
-                            await token.CallbackAsync(image);
-                        }
+                token.Callback.OnImageLoaded(image);
 #if DEBUG_LOG_LOAD
-                        Log("Token " + token_processed.ToString() + "(idx=" + token.Index.ToString() + ") loaded");
+                Log("Token " + token_processed.ToString() + "(idx=" + token.Index.ToString() + ") loaded");
 #endif
-                        completion_src.SetResult(true);
-                    });
-                    await completion_src.Task;
-                }
-            }
-#if DEBUG_LOG_LOAD
-            Log("Image loading compeleted (success=" + all_token_success.ToString() + ")");
-#endif
-            if (!all_token_success)
-            {
-                return TaskException.Failure;
-            }
-            return TaskException.Success;
+                taskResult.SetResult(TaskException.Success);
+            });
+            return taskResult.Task.Result;
         }
 
         private static void Log(string text)
         {
             Utils.Debug.Log("Image Loader: " + text + ".");
+        }
+
+        public interface ILoadImageCallback
+        {
+            void OnImageLoaded(BitmapImage image);
         }
     }
 }

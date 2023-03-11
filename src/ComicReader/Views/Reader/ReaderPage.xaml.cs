@@ -296,7 +296,8 @@ namespace ComicReader.Views.Reader
         private DateTimeOffset mBottomTileHideRequestTime = DateTimeOffset.Now;
 
         // Locks
-        private readonly Utils.CancellationLock mLoadComicLock = new Utils.CancellationLock();
+        private readonly Utils.CancellationLock _loadComicLock = new Utils.CancellationLock();
+        private readonly Utils.CancellationSession _loadImageSession = new Utils.CancellationSession();
 
         public ReaderPage()
         {
@@ -347,6 +348,14 @@ namespace ComicReader.Views.Reader
             {
                 await LoadComic(comic);
             });
+        }
+
+        public override void OnPause()
+        {
+            base.OnPause();
+            _loadImageSession.Next();
+            HorizontalReader.OnPause();
+            VerticalReader.OnPause();
         }
 
         public override void OnSelected()
@@ -416,7 +425,7 @@ namespace ComicReader.Views.Reader
                 return;
             }
 
-            await mLoadComicLock.WaitAsync();
+            await _loadComicLock.WaitAsync();
             try
             {
                 Shared.ReaderStatus = ReaderStatusEnum.Loading;
@@ -477,7 +486,7 @@ namespace ComicReader.Views.Reader
                     await reader.UpdateImages(true);
                 }
 
-                await LoadImages();
+                LoadImages();
                 await reader.Finalize();
 
                 // Refresh reader.
@@ -486,21 +495,17 @@ namespace ComicReader.Views.Reader
             }
             finally
             {
-                mLoadComicLock.Release();
+                _loadComicLock.Release();
             }
         }
 
-        private async Task LoadImages()
+        private void LoadImages()
         {
-            double preview_width = 0.0;
-            double preview_height = 0.0;
+            CancellationSession.Token token = _loadImageSession.Next();
 
-            await Utils.C0.Sync(delegate
-            {
-                preview_width = (double)Application.Current.Resources["ReaderPreviewImageWidth"];
-                preview_height = (double)Application.Current.Resources["ReaderPreviewImageHeight"];
-                PreviewDataSource.Clear();
-            });
+            double preview_width = (double)Application.Current.Resources["ReaderPreviewImageWidth"];
+            double preview_height = (double)Application.Current.Resources["ReaderPreviewImageHeight"];
+            PreviewDataSource.Clear();
 
             List<Utils.ImageLoader.Token> preview_img_loader_tokens = new List<Utils.ImageLoader.Token>();
             ComicData comic = _comic; // Stores locally.
@@ -509,64 +514,84 @@ namespace ComicReader.Views.Reader
             for (int i = 0; i < comic.ImageCount; ++i)
             {
                 int index = i; // Stores locally.
-                int page = i + 1; // Stores locally.
-
                 preview_img_loader_tokens.Add(new Utils.ImageLoader.Token
                 {
+                    SessionToken = token,
                     Comic = comic,
                     Index = index,
-                    CallbackAsync = async (BitmapImage img) => 
-                    {
-                        // Save image aspect ratio info.
-                        double image_aspect_ratio;
-                        if (img.PixelWidth <= 0 || img.PixelHeight <= 0)
-                        {
-                            image_aspect_ratio = -1;
-                        }
-                        else
-                        {
-                            image_aspect_ratio = (double)img.PixelWidth / img.PixelHeight;
-                        }
-
-                        if (index < comic.ImageAspectRatios.Count)
-                        {
-                            comic.ImageAspectRatios[index] = image_aspect_ratio;
-                        }
-                        else
-                        {
-                            // Normally image aspect ratio items will be added one by one.
-                            // In some cases (like corrupted images), few indices will be skipped.
-                            while (index > comic.ImageAspectRatios.Count)
-                            {
-                                comic.ImageAspectRatios.Add(-1);
-                                await VerticalReader.LoadFrame(comic.ImageAspectRatios.Count - 1);
-                                await HorizontalReader.LoadFrame(comic.ImageAspectRatios.Count - 1);
-                            }
-                            comic.ImageAspectRatios.Add(image_aspect_ratio);
-                        }
-                        await VerticalReader.LoadFrame(index);
-                        await HorizontalReader.LoadFrame(index);
-
-                        // Save for each 5 sec.
-                        if (save_timer.LapSpan().TotalSeconds > 5.0 || index == comic.ImageCount - 1)
-                        {
-                            comic.SaveImageAspectRatios();
-                            save_timer.Lap();
-                        }
-
-                        // Update previews.
-                        PreviewDataSource.Add(new ReaderImagePreviewViewModel
-                        {
-                            ImageSource = img,
-                            Page = page,
-                        });
-                    }
+                    Callback = new LoadPreviewImageCallback(this, index, save_timer)
                 });
             }
 
             save_timer.Start();
-            await new Utils.ImageLoader.Builder(preview_img_loader_tokens, mLoadComicLock)
+            new Utils.ImageLoader.Builder(preview_img_loader_tokens)
                 .WidthConstrain(preview_width).HeightConstrain(preview_height).Commit();
+        }
+
+        private class LoadPreviewImageCallback : ImageLoader.ILoadImageCallback
+        {
+            private readonly ReaderPage _page;
+            private readonly int _index;
+            private readonly ComicData _comic;
+            private readonly Stopwatch _saveTimer;
+
+            public LoadPreviewImageCallback(ReaderPage page, int index, Stopwatch saveTimer)
+            {
+                _page = page;
+                _index = index;
+                _comic = page._comic;
+                _saveTimer = saveTimer;
+            }
+
+            public void OnImageLoaded(BitmapImage image)
+            {
+                // Save image aspect ratio info.
+                double image_aspect_ratio;
+                if (image.PixelWidth <= 0 || image.PixelHeight <= 0)
+                {
+                    image_aspect_ratio = -1;
+                }
+                else
+                {
+                    image_aspect_ratio = (double)image.PixelWidth / image.PixelHeight;
+                }
+
+                // Update previews.
+                _page.PreviewDataSource.Add(new ReaderImagePreviewViewModel
+                {
+                    ImageSource = image,
+                    Page = _index + 1,
+                });
+
+                Utils.C0.Run(async delegate
+                {
+                    if (_index < _comic.ImageAspectRatios.Count)
+                    {
+                        _comic.ImageAspectRatios[_index] = image_aspect_ratio;
+                    }
+                    else
+                    {
+                        // Normally image aspect ratio items will be added one by one.
+                        // In some cases (like corrupted images), few indices will be skipped.
+                        while (_index > _comic.ImageAspectRatios.Count)
+                        {
+                            _comic.ImageAspectRatios.Add(-1);
+                            await _page.VerticalReader.LoadFrame(_comic.ImageAspectRatios.Count - 1);
+                            await _page.HorizontalReader.LoadFrame(_comic.ImageAspectRatios.Count - 1);
+                        }
+                        _comic.ImageAspectRatios.Add(image_aspect_ratio);
+                    }
+                    await _page.VerticalReader.LoadFrame(_index);
+                    await _page.HorizontalReader.LoadFrame(_index);
+
+                    // Save for each 5 sec.
+                    if (_saveTimer.LapSpan().TotalSeconds > 5.0 || _index == _comic.ImageCount - 1)
+                    {
+                        _comic.SaveImageAspectRatios();
+                        _saveTimer.Lap();
+                    }
+                });
+            }
         }
 
         private async Task LoadComicInfo()

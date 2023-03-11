@@ -651,8 +651,8 @@ namespace ComicReader.Views.Reader
         }
 
         // Modifier - Image Loader
-        private readonly Utils.CancellationLock m_UpdateImageLock = new Utils.CancellationLock();
         private bool m_NeedPreload = false;
+        private CancellationSession _updateImageSession = new CancellationSession();
 
         public async Task<bool> UpdateImages(bool use_final)
         {
@@ -661,154 +661,159 @@ namespace ComicReader.Views.Reader
                 return false;
             }
 
-            await UpdateImagesInternal();
+            UpdateImagesInternal();
             return true;
         }
 
-        private async Task UpdateImagesInternal(bool remove_out_of_view = true)
+        public void OnPause()
         {
-            await m_UpdateImageLock.WaitAsync();
-            try
+            _updateImageSession.Next();
+        }
+
+        private void UpdateImagesInternal(bool remove_out_of_view = true)
+        {
+            CancellationSession.Token token = _updateImageSession.Next();
+
+            if (!IsCurrentReader)
             {
-                if (m_UpdateImageLock.CancellationRequested)
+                foreach (ReaderFrameViewModel m in Frames)
                 {
-                    return;
+                    m.ImageL = null;
+                    m.ImageR = null;
                 }
+                return;
+            }
 
-                if (!IsCurrentReader)
+            int frame = PageToFrame(Page, out _, out _);
+            int preload_window_begin = Math.Max(frame - MaxPreloadFramesBefore, 0);
+            int preload_window_end = Math.Min(frame + MaxPreloadFramesAfter, Frames.Count - 1);
+
+            if (!m_NeedPreload)
+            {
+                int check_window_begin = Math.Max(frame - MinPreloadFramesBefore, 0);
+                int check_window_end = Math.Min(frame + MinPreloadFramesAfter, Frames.Count - 1);
+
+                for (int i = check_window_begin; i <= check_window_end; ++i)
                 {
-                    foreach (ReaderFrameViewModel m in Frames)
+                    ReaderFrameViewModel m = Frames[i];
+
+                    if ((m.PageL > 0 && m.ImageL == null) || (m.PageR > 0 && m.ImageR == null))
                     {
-                        m.ImageL = null;
-                        m.ImageR = null;
-                    }
-                    return;
-                }
-
-                int frame = PageToFrame(Page, out _, out _);
-                int preload_window_begin = Math.Max(frame - MaxPreloadFramesBefore, 0);
-                int preload_window_end = Math.Min(frame + MaxPreloadFramesAfter, Frames.Count - 1);
-
-                if (!m_NeedPreload)
-                {
-                    int check_window_begin = Math.Max(frame - MinPreloadFramesBefore, 0);
-                    int check_window_end = Math.Min(frame + MinPreloadFramesAfter, Frames.Count - 1);
-
-                    for (int i = check_window_begin; i <= check_window_end; ++i)
-                    {
-                        ReaderFrameViewModel m = Frames[i];
-
-                        if ((m.PageL > 0 && m.ImageL == null) || (m.PageR > 0 && m.ImageR == null))
-                        {
-                            m_NeedPreload = true;
-                            break;
-                        }
+                        m_NeedPreload = true;
+                        break;
                     }
                 }
+            }
 
-                if (m_NeedPreload)
+            if (m_NeedPreload)
+            {
+#if DEBUG_LOG_UPDATE_IMAGE
+                Log("Loading images (page=" + Page.ToString() + ")");
+#endif
+
+                List<Utils.ImageLoader.Token> img_loader_tokens = new List<Utils.ImageLoader.Token>();
+
+                void addToLoaderQueue(int i)
                 {
-#if DEBUG_LOG_UPDATE_IMAGE
-                    Log("Loading images (page=" + Page.ToString() + ")");
-#endif
-
-                    List<Utils.ImageLoader.Token> img_loader_tokens = new List<Utils.ImageLoader.Token>();
-
-                    void addToLoaderQueue(int i)
-                    {
-                        if (i < 0 || i >= Frames.Count)
-                        {
-                            return;
-                        }
-
-                        ReaderFrameViewModel m = Frames[i]; // Stores locally.
-
-                        if (m.ImageL == null && m.PageL > 0)
-                        {
-                            img_loader_tokens.Add(new Utils.ImageLoader.Token
-                            {
-                                Index = m.PageL - 1,
-                                Comic = Comic,
-                                Callback = (BitmapImage img) =>
-                                {
-                                    m.ImageL = img;
-#if DEBUG_LOG_UPDATE_IMAGE
-                                    Log("Page " + m.PageL.ToString() + " loaded");
-#endif
-                                }
-                            });
-                        }
-
-                        if (m.ImageR == null && m.PageR > 0)
-                        {
-                            img_loader_tokens.Add(new Utils.ImageLoader.Token
-                            {
-                                Index = m.PageR - 1,
-                                Comic = Comic,
-                                Callback = (BitmapImage img) =>
-                                {
-                                    m.ImageR = img;
-#if DEBUG_LOG_UPDATE_IMAGE
-                                    Log("Page " + m.PageR.ToString() + " loaded");
-#endif
-                                }
-                            });
-                        }
-                    }
-
-                    for (int i = Math.Max(0, frame); i <= preload_window_end; ++i)
-                    {
-                        addToLoaderQueue(i);
-                    }
-
-                    for (int i = Math.Min(Frames.Count - 1, frame - 1); i > preload_window_begin; --i)
-                    {
-                        addToLoaderQueue(i);
-                    }
-
-                    TaskException result = await Task.Run(delegate
-                    {
-                        return new Utils.ImageLoader.Builder(img_loader_tokens, m_UpdateImageLock).Commit().Result;
-                    });
-
-                    if (result == TaskException.Cancellation)
+                    if (i < 0 || i >= Frames.Count)
                     {
                         return;
                     }
 
-                    m_NeedPreload = false;
+                    ReaderFrameViewModel m = Frames[i]; // Stores locally.
+
+                    if (m.ImageL == null && m.PageL > 0)
+                    {
+                        img_loader_tokens.Add(new Utils.ImageLoader.Token
+                        {
+                            SessionToken = token,
+                            Index = m.PageL - 1,
+                            Comic = Comic,
+                            Callback = new LoadImageCallback(m, true)
+                        });
+                    }
+
+                    if (m.ImageR == null && m.PageR > 0)
+                    {
+                        img_loader_tokens.Add(new Utils.ImageLoader.Token
+                        {
+                            SessionToken = token,
+                            Index = m.PageR - 1,
+                            Comic = Comic,
+                            Callback = new LoadImageCallback(m, false)
+                        });
+                    }
                 }
 
-                if (remove_out_of_view)
+                addToLoaderQueue(frame);
+                int spread = Math.Max(preload_window_end - frame, frame - preload_window_begin);
+                for (int i = 1; i <= spread; ++i)
                 {
-                    for (int i = 0; i < Frames.Count; ++i)
+                    if (frame + i <= preload_window_end)
                     {
-                        if (i < preload_window_begin || i > preload_window_end)
+                        addToLoaderQueue(frame + i);
+                    }
+                    if (frame - i >= preload_window_begin)
+                    {
+                        addToLoaderQueue(frame - i);
+                    }
+                }
+                new ImageLoader.Builder(img_loader_tokens).Commit();
+                m_NeedPreload = false;
+            }
+
+            if (remove_out_of_view)
+            {
+                for (int i = 0; i < Frames.Count; ++i)
+                {
+                    if (i < preload_window_begin || i > preload_window_end)
+                    {
+                        ReaderFrameViewModel m = Frames[i];
+
+                        if (m.ImageL != null)
                         {
-                            ReaderFrameViewModel m = Frames[i];
-
-                            if (m.ImageL != null)
-                            {
-                                m.ImageL = null;
+                            m.ImageL = null;
 #if DEBUG_LOG_UPDATE_IMAGE
-                                Log("Page " + m.PageL.ToString() + " removed");
+                            Log("Page " + m.PageL.ToString() + " removed");
 #endif
-                            }
+                        }
 
-                            if (m.ImageR != null)
-                            {
-                                m.ImageR = null;
+                        if (m.ImageR != null)
+                        {
+                            m.ImageR = null;
 #if DEBUG_LOG_UPDATE_IMAGE
-                                Log("Page " + m.PageR.ToString() + " removed");
+                            Log("Page " + m.PageR.ToString() + " removed");
 #endif
-                            }
                         }
                     }
                 }
             }
-            finally
+        }
+
+        private class LoadImageCallback : ImageLoader.ILoadImageCallback
+        {
+            private readonly ReaderFrameViewModel _viewModel;
+            private readonly bool _isLeft;
+
+            public LoadImageCallback(ReaderFrameViewModel viewModel, bool isLeft)
             {
-                m_UpdateImageLock.Release();
+                _viewModel = viewModel;
+                _isLeft = isLeft;
+            }
+
+            public void OnImageLoaded(BitmapImage image)
+            {
+                if (_isLeft)
+                {
+                    _viewModel.ImageL = image;
+                }
+                else
+                {
+                    _viewModel.ImageR = image;
+                }
+#if DEBUG_LOG_UPDATE_IMAGE
+                Log("Page " + m.PageR.ToString() + " loaded");
+#endif
             }
         }
 
@@ -1518,9 +1523,8 @@ namespace ComicReader.Views.Reader
                 {
                     if (await UpdatePage(true))
                     {
-                        await UpdateImagesInternal();
+                        UpdateImagesInternal();
                         LoadedImages = true;
-
 #if DEBUG_LOG_LOAD
                         Log("Images loaded");
 #endif
@@ -1554,7 +1558,7 @@ namespace ComicReader.Views.Reader
             if (!IsCurrentReader)
             {
                 // Clear images.
-                await UpdateImagesInternal();
+                UpdateImagesInternal();
                 return false;
             }
 
@@ -1585,7 +1589,7 @@ namespace ComicReader.Views.Reader
 #endif
             }
 
-            await UpdateImagesInternal(final);
+            UpdateImagesInternal(final);
             return true;
         }
 

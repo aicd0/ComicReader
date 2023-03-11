@@ -13,6 +13,7 @@ using ComicReader.Common.Router;
 using ComicReader.Database;
 using ComicReader.DesignData;
 using ComicReader.Common;
+using ComicReader.Utils;
 
 namespace ComicReader.Views
 {
@@ -54,7 +55,8 @@ namespace ComicReader.Views
             = new ObservableCollection<FolderItemViewModel>();
 
         private readonly Utils.CancellationLock m_update_folder_lock = new Utils.CancellationLock();
-        private readonly Utils.CancellationLock m_update_library_lock = new Utils.CancellationLock();
+        private readonly Utils.CancellationLock _updateLibraryLock = new Utils.CancellationLock();
+        private readonly Utils.CancellationSession _updateLibrarySession = new Utils.CancellationSession();
 
         public HomePage()
         {
@@ -86,6 +88,7 @@ namespace ComicReader.Views
         {
             base.OnPause();
             ComicData.OnUpdated -= OnComicDataUpdated;
+            _updateLibrarySession.Next();
         }
 
         public override void OnSelected()
@@ -143,13 +146,14 @@ namespace ComicReader.Views
 
         public async Task UpdateLibrary()
         {
-            await m_update_library_lock.WaitAsync();
+            await _updateLibraryLock.WaitAsync();
             try
             {
-                if (m_update_library_lock.CancellationRequested)
+                if (_updateLibraryLock.CancellationRequested)
                 {
                     return;
                 }
+                CancellationSession.Token token = _updateLibrarySession.Next();
 
                 // Get recent visited comics.
                 Utils.FixedHeap<Tuple<long, DateTimeOffset>> records = new Utils.FixedHeap<Tuple<long, DateTimeOffset>>(16,
@@ -223,31 +227,40 @@ namespace ComicReader.Views
                     {
                         continue;
                     }
-
                     image_loader_tokens.Add(new Utils.ImageLoader.Token
                     {
+                        SessionToken = token,
                         Comic = item.Comic,
                         Index = -1,
-                        Callback = (BitmapImage img) =>
-                        {
-                            item.Image = img;
-                            item.IsImageLoaded = true;
-                        }
+                        Callback = new LoadImageCallback(item)
                     });
                 }
 
                 double image_width = (double)Application.Current.Resources["ComicItemVerticalDesiredWidth"] - 40.0;
                 double image_height = (double)Application.Current.Resources["ComicItemVerticalImageHeight"];
 
-                await Task.Run(delegate
-                {
-                    new Utils.ImageLoader.Builder(image_loader_tokens, m_update_library_lock)
-                        .WidthConstrain(image_width).HeightConstrain(image_height).Multiplication(1.4).Commit().Wait();
-                });
+                new Utils.ImageLoader.Builder(image_loader_tokens)
+                    .WidthConstrain(image_width).HeightConstrain(image_height).Multiplication(1.4).Commit();
             }
             finally
             {
-                m_update_library_lock.Release();
+                _updateLibraryLock.Release();
+            }
+        }
+
+        private class LoadImageCallback : ImageLoader.ILoadImageCallback
+        {
+            private readonly ComicItemViewModel _viewModel;
+
+            public LoadImageCallback(ComicItemViewModel viewModel)
+            {
+                _viewModel = viewModel;
+            }
+
+            public void OnImageLoaded(BitmapImage image)
+            {
+                _viewModel.Image = image;
+                _viewModel.IsImageLoaded = true;
             }
         }
 
