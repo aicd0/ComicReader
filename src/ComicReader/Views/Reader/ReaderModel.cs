@@ -512,7 +512,12 @@ namespace ComicReader.Views.Reader
             await m_LoaderLock.WaitAsync();
             try
             {
-                if (image_index >= Comic.ImageAspectRatios.Count)
+                var comic = Comic;
+                if (comic == null)
+                {
+                    return;
+                }
+                if (image_index >= comic.ImageAspectRatios.Count)
                 {
                     return;
                 }
@@ -525,13 +530,13 @@ namespace ComicReader.Views.Reader
                 int page = image_index + 1;
                 bool dual = neighbor != -1;
 
-                double aspect_ratio = Math.Max(0, Comic.ImageAspectRatios[image_index]);
+                double aspect_ratio = Math.Max(0, comic.ImageAspectRatios[image_index]);
                 if (neighbor != -1)
                 {
                     int neighbor_idx = neighbor - 1;
-                    if (neighbor_idx >= 0 && neighbor_idx < Comic.ImageAspectRatios.Count)
+                    if (neighbor_idx >= 0 && neighbor_idx < comic.ImageAspectRatios.Count)
                     {
-                        aspect_ratio += Math.Max(0, Comic.ImageAspectRatios[neighbor_idx]);
+                        aspect_ratio += Math.Max(0, comic.ImageAspectRatios[neighbor_idx]);
                     }
                 }
 
@@ -1467,7 +1472,6 @@ namespace ComicReader.Views.Reader
                     {
                         return;
                     }
-
 #if DEBUG_LOG_LOAD
                     Log("Framework loaded");
 #endif
@@ -1481,9 +1485,7 @@ namespace ComicReader.Views.Reader
                         SetScrollViewer1(Zoom, null, true);
                         AdjustPadding();
                     });
-
                     LoadedFirstPage = true;
-
 #if DEBUG_LOG_LOAD
                     Log("First page loaded");
 #endif
@@ -1496,9 +1498,7 @@ namespace ComicReader.Views.Reader
                     {
                         AdjustPadding();
                     });
-
                     LoadedLastPage = true;
-
 #if DEBUG_LOG_LOAD
                     Log("Last page loaded");
 #endif
@@ -1509,7 +1509,6 @@ namespace ComicReader.Views.Reader
                 {
                     // Try jump to the initial page.
                     LoadedInitialPage = SetScrollViewer2(null, InitialPage, true);
-
 #if DEBUG_LOG_LOAD
                     if (LoadedInitialPage)
                     {
@@ -1535,7 +1534,6 @@ namespace ComicReader.Views.Reader
                 {
                     Loaded = true;
                     OnLoaded?.Invoke();
-
 #if DEBUG_LOG_LOAD
                     Log("Reader loaded");
 #endif

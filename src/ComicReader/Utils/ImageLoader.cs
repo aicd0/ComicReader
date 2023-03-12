@@ -20,6 +20,12 @@ namespace ComicReader.Utils
         private static readonly TaskQueue s_loadQueue = new TaskQueue();
         private static double s_rawPixelPerPixel = -1;
 
+        static ImageLoader()
+        {
+            // To enable debugging, set this value to true
+            s_loadQueue.LogPendingTask = false;
+        }
+
         private static SealedTask LoadSingleImageSealed(
             Token token,
             double width, double height,
@@ -96,6 +102,10 @@ namespace ComicReader.Utils
                 }
                 foreach (Token token in _tokens)
                 {
+                    if (token.Callback == null || token.Comic == null || token.SessionToken == null)
+                    {
+                        continue;
+                    }
                     _queue.Enqueue(LoadSingleImageSealed(token, _width, _height, _stretchMode));
                 }
 #if DEBUG_LOG_QUEUE
@@ -215,12 +225,6 @@ namespace ComicReader.Utils
 #endif
                 taskResult.SetResult(TaskException.Success);
             });
-#if DEBUG_LOG_QUEUE
-            if (s_loadQueue.PendingTaskCount <= 0)
-            {
-                Log("Dequeued: " + s_loadQueue.PendingTaskCount.ToString());
-            }
-#endif
             return taskResult.Task.Result;
         }
 

@@ -154,7 +154,6 @@ namespace ComicReader.Views
                 {
                     return;
                 }
-                _updateLibrarySession.Next();
 
                 // Get recent visited comics.
                 Utils.FixedHeap<Tuple<long, DateTimeOffset>> records = new Utils.FixedHeap<Tuple<long, DateTimeOffset>>(16,
