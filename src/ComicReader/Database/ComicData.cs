@@ -118,11 +118,10 @@ namespace ComicReader.Database
         }
 
         // Locks.
-        private static readonly SemaphoreSlim _tableLock = new SemaphoreSlim(1);
+        private static readonly Utils.TaskQueue _tableQueue = new Utils.TaskQueue();
         private static readonly Utils.CancellationLock _updateLock = new Utils.CancellationLock();
 
         private bool _imageUpdated = false;
-        private static readonly Utils.TaskQueue s_saveQueue = new Utils.TaskQueue();
 
         public void SaveBasic()
         {
@@ -139,8 +138,7 @@ namespace ComicReader.Database
                 KeyLastPosition,
                 KeyCoverFileCache,
             };
-
-            s_saveQueue.Enqueue(SaveSealed(fields, save_tags: false));
+            _ = Save(fields, save_tags: false);
         }
 
         public async Task SaveHiddenAsync(bool hidden)
@@ -151,8 +149,7 @@ namespace ComicReader.Database
             {
                 KeyHidden,
             };
-
-            await SaveUnsealed(new LockContext(), fields, save_tags: false);
+            await Save(fields, save_tags: false);
         }
 
         public void SaveRating(int rating)
@@ -163,8 +160,7 @@ namespace ComicReader.Database
             {
                 KeyRating,
             };
-
-            s_saveQueue.Enqueue(SaveSealed(fields, save_tags: false));
+            _ = Save(fields, save_tags: false);
         }
 
         public void SaveProgress(int progress, double last_position)
@@ -177,8 +173,7 @@ namespace ComicReader.Database
                 KeyProgress,
                 KeyLastPosition,
             };
-
-            s_saveQueue.Enqueue(SaveSealed(fields, save_tags: false));
+            _ = Save(fields, save_tags: false);
         }
 
         public void SetAsRead()
@@ -191,8 +186,7 @@ namespace ComicReader.Database
                 KeyProgress,
                 KeyLastVisit,
             };
-
-            s_saveQueue.Enqueue(SaveSealed(fields, save_tags: false));
+            _ = Save(fields, save_tags: false);
         }
 
         public void SaveImageAspectRatios()
@@ -201,8 +195,7 @@ namespace ComicReader.Database
             {
                 KeyImageAspectRatios,
             };
-
-            s_saveQueue.Enqueue(SaveSealed(fields, save_tags: false));
+            _ = Save(fields, save_tags: false);
         }
 
         public void SaveCoverFileCache()
@@ -211,14 +204,13 @@ namespace ComicReader.Database
             {
                 KeyCoverFileCache,
             };
-
-            s_saveQueue.Enqueue(SaveSealed(fields, save_tags: false));
+            _ = Save(fields, save_tags: false);
         }
 
         public void SaveTags()
         {
             List<SqlKey> fields = new List<SqlKey>();
-            s_saveQueue.Enqueue(SaveSealed(fields, save_tags: true));
+            _ = Save(fields, save_tags: true);
         }
 
         public void SetAsDefaultInfo()
@@ -406,23 +398,13 @@ namespace ComicReader.Database
             return await InternalGetImageStream(Math.Max(0, index));
         }
 
-        public static async Task CommandBlock(Func<SqliteCommand, Task> op)
-        {
-            await CommandBlock(new LockContext(), op);
-        }
-
         public static async Task<ComicData> FromId(long id)
         {
-            return await From(new LockContext(), Field.Id, id);
-        }
-
-        public static async Task<ComicData> FromLocation(string location)
-        {
-            return await FromLocation(new LockContext(), location);
+            return await From(Field.Id, id);
         }
 
         public static SealedTask UpdateSealed(bool lazy_load) =>
-            (Task<TaskException> _) => UpdateUnsealed(new LockContext(), lazy_load).Result;
+            (Task<TaskException> _) => UpdateUnsealed(lazy_load).Result;
 
         protected ComicData(ComicType type, bool is_external)
         {
@@ -511,7 +493,7 @@ namespace ComicReader.Database
 
         protected abstract Task<IRandomAccessStream> InternalGetImageStream(int index);
 
-        private static async Task InternalUpdateComic(LockContext db, string location, ComicType type, bool is_exist)
+        private static async Task UpdateComicNoLock(string location, ComicType type, bool is_exist)
         {
             Log((is_exist ? "Updat" : "Add") + "ing comic '" + location + "'");
 
@@ -520,7 +502,7 @@ namespace ComicReader.Database
 
             if (is_exist)
             {
-                comic = await FromLocation(db, location);
+                comic = FromLocationNoLock(location);
             }
             else
             {
@@ -536,12 +518,12 @@ namespace ComicReader.Database
             TaskException r = await comic.LoadFromInfoFile();
             if (r.Successful())
             {
-                await comic.SaveAllAsync(db);
+                comic.SaveAllNoLock();
             }
             else if (!is_exist)
             {
                 comic.SetAsDefaultInfo();
-                await comic.SaveAllAsync(db);
+                comic.SaveAllNoLock();
             }
         }
 
@@ -626,47 +608,44 @@ namespace ComicReader.Database
             await InternalSaveTagsNoLock(remove_old: false);
         }
 
-        private SealedTask SaveSealed(List<SqlKey> keys, bool save_tags) =>
-            (Task<TaskException> _) => SaveUnsealed(new LockContext(), keys, save_tags).Result;
-
-        private async Task<TaskException> SaveUnsealed(LockContext db, List<SqlKey> keys, bool save_tags)
+        private async Task<TaskException> Save(List<SqlKey> keys, bool save_tags)
         {
             if (IsExternal)
             {
                 return TaskException.Success;
             }
-
-            await WaitLock(db);
-            try
+            return await Enqueue(delegate
             {
-                if (Id < 0)
-                {
-                    await InternalInsertNoLock();
-                    return TaskException.Success;
-                }
-
-                if (keys.Count > 0)
-                {
-                    SqlKey id = new SqlKey(Field.Id, Id);
-                    await SqliteDatabaseManager.Update(SqliteDatabaseManager.ComicTable, id, keys);
-                }
-
-                if (save_tags)
-                {
-                    await InternalSaveTagsNoLock();
-                }
-
-                return TaskException.Success;
-            }
-            finally
-            {
-                ReleaseLock(db);
-            }
+                return SaveNoLock(keys, save_tags);
+            });
         }
 
-        private async Task SaveAllAsync(LockContext db)
+        private TaskException SaveNoLock(List<SqlKey> keys, bool save_tags)
         {
-            await SaveUnsealed(db, AllFields, save_tags: true);
+            if (IsExternal)
+            {
+                return TaskException.Success;
+            }
+            if (Id < 0)
+            {
+                InternalInsertNoLock().Wait();
+                return TaskException.Success;
+            }
+            if (keys.Count > 0)
+            {
+                SqlKey id = new SqlKey(Field.Id, Id);
+                SqliteDatabaseManager.Update(SqliteDatabaseManager.ComicTable, id, keys).Wait();
+            }
+            if (save_tags)
+            {
+                InternalSaveTagsNoLock().Wait();
+            }
+            return TaskException.Success;
+        }
+
+        private void SaveAllNoLock()
+        {
+            SaveNoLock(AllFields, save_tags: true);
         }
 
         private static ComicData FromDatabase(ComicType type, string location)
@@ -685,80 +664,64 @@ namespace ComicReader.Database
             }
         }
 
-        private static async Task WaitLock(LockContext db)
+        private static async Task<T> Enqueue<T>(Func<T> op)
         {
-            int depth = Interlocked.Increment(ref db.ComicTableLockDepth);
-
-            System.Diagnostics.Debug.Assert(depth > 0);
-
-            if (depth == 1)
+            TaskCompletionSource<T> taskResult = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
+            _tableQueue.Enqueue(delegate (Task<TaskException> t)
             {
-                await _tableLock.WaitAsync();
+                taskResult.SetResult(op());
+                return TaskException.Success;
+            });
+            return await taskResult.Task;
+        }
+
+        public static async Task<T> CommandBlock1<T>(Func<SqliteCommand, Task<T>> op)
+        {
+            return await Enqueue(delegate
+            {
+                return CommandBlock1NoLock(op);
+            });
+        }
+
+        private static T CommandBlock1NoLock<T>(Func<SqliteCommand, Task<T>> op)
+        {
+            using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
+            {
+                return op(command).Result;
             }
         }
 
-        private static void ReleaseLock(LockContext db)
+        public static async Task CommandBlock2(Func<SqliteCommand, Task> op)
         {
-            int depth = Interlocked.Decrement(ref db.ComicTableLockDepth);
-
-            System.Diagnostics.Debug.Assert(depth >= 0);
-
-            if (depth == 0)
+            await Enqueue(delegate
             {
-                _tableLock.Release();
+                CommandBlock2NoLock(op);
+                return true;
+            });
+        }
+
+        private static void CommandBlock2NoLock(Func<SqliteCommand, Task> op)
+        {
+            using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
+            {
+                op(command).Wait();
             }
         }
 
-        private static async Task<T> CommandBlock<T>(LockContext db, Func<SqliteCommand, Task<T>> op)
+        private static async Task TransactionBlock(Func<Task> op)
         {
-            await WaitLock(db);
-            try
-            {
-                using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
-                {
-                    return await op(command);
-                }
-            }
-            finally
-            {
-                ReleaseLock(db);
-            }
-        }
-
-        private static async Task CommandBlock(LockContext db, Func<SqliteCommand, Task> op)
-        {
-            await WaitLock(db);
-            try
-            {
-                using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
-                {
-                    await op(command);
-                }
-            }
-            finally
-            {
-                ReleaseLock(db);
-            }
-        }
-
-        private static async Task TransactionBlock(LockContext db, Func<Task> op)
-        {
-            await WaitLock(db);
-            try
+            await Enqueue(delegate
             {
                 using (var transaction = SqliteDatabaseManager.NewTransaction())
                 {
-                    await op();
+                    op().Wait();
                     transaction.Commit();
                 }
-            }
-            finally
-            {
-                ReleaseLock(db);
-            }
+                return true;
+            });
         }
 
-        private static async Task<ComicData> From(LockContext db, SqliteDataReader query)
+        private static async Task<ComicData> FromNoLock(SqliteDataReader query)
         {
             // Directly imported fields.
             long id = query.GetInt64(0);
@@ -776,7 +739,7 @@ namespace ComicReader.Database
             // Tags
             List<TagData> tags = new List<TagData>();
 
-            await CommandBlock(db, async delegate (SqliteCommand command)
+            CommandBlock2NoLock(async delegate (SqliteCommand command)
             {
                 List<long> tag_category_ids = new List<long>();
 
@@ -850,9 +813,17 @@ namespace ComicReader.Database
             return comic;
         }
 
-        private static async Task<ComicData> From(LockContext db, string col, object entry)
+        private static async Task<ComicData> From(string col, object entry)
         {
-            return await CommandBlock(db, async delegate (SqliteCommand command)
+            return await CommandBlock1(delegate (SqliteCommand command)
+            {
+                return Task.FromResult(FromNoLock(col, entry));
+            });
+        }
+
+        private static ComicData FromNoLock(string col, object entry)
+        {
+            return CommandBlock1NoLock(async delegate (SqliteCommand command)
             {
                 command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.ComicTable +
                     " WHERE " + col + "=@entry LIMIT 1";
@@ -865,18 +836,23 @@ namespace ComicReader.Database
                     return null;
                 }
 
-                return await From(db, query);
+                return await FromNoLock(query);
             });
         }
 
-        private static async Task<ComicData> FromLocation(LockContext db, string location)
+        public static async Task<ComicData> FromLocation(string location)
         {
-            return await From(db, Field.Location, location);
+            return await From(Field.Location, location);
         }
 
-        private static async Task RemoveWithLocation(LockContext db, string location)
+        private static ComicData FromLocationNoLock(string location)
         {
-            await CommandBlock(db, async delegate (SqliteCommand command)
+            return FromNoLock(Field.Location, location);
+        }
+
+        private static void RemoveWithLocationNoLock(string location)
+        {
+            CommandBlock2NoLock(async delegate (SqliteCommand command)
             {
                 command.CommandText = "DELETE FROM " + SqliteDatabaseManager.ComicTable +
                     " WHERE " + ComicData.Field.Location + " LIKE @pattern";
@@ -885,7 +861,7 @@ namespace ComicReader.Database
             });
         }
 
-        private static async Task<TaskException> UpdateUnsealed(LockContext db, bool lazy_load)
+        private static async Task<TaskException> UpdateUnsealed(bool lazy_load)
         {
             await _updateLock.WaitAsync();
             try
@@ -901,7 +877,7 @@ namespace ComicReader.Database
                 // Fetch all locations in the database.
                 List<string> loc_exist = new List<string>();
 
-                await CommandBlock(db, async delegate (SqliteCommand command)
+                await CommandBlock2(async delegate (SqliteCommand command)
                 {
                     command.CommandText = "SELECT " + ComicData.Field.Location +
                         " FROM " + SqliteDatabaseManager.ComicTable;
@@ -1037,11 +1013,11 @@ namespace ComicReader.Database
                             }
                         }
 
-                        await TransactionBlock(db, async delegate
+                        await TransactionBlock(async delegate
                         {
                             foreach (UpdateItemInfo info in queue)
                             {
-                                await InternalUpdateComic(db, info.Location, info.ItemType, info.IsExist);
+                                await UpdateComicNoLock(info.Location, info.ItemType, info.IsExist);
                             }
                         });
 
@@ -1058,7 +1034,7 @@ namespace ComicReader.Database
                     Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
                     new Utils.C1<string>.DefaultEqualityComparer()).ToList();
 
-                await TransactionBlock(db, async delegate
+                await TransactionBlock(delegate
                 {
                     // Remove folders from database.
                     foreach (string loc in loc_removed)
@@ -1082,10 +1058,10 @@ namespace ComicReader.Database
 
                         // Remove.
                         Log("Removing item '" + loc + "'");
-                        await RemoveWithLocation(db, loc);
+                        RemoveWithLocationNoLock(loc);
                     }
+                    return Task.CompletedTask;
                 });
-
                 return TaskException.Success;
             }
             finally
@@ -1108,11 +1084,6 @@ namespace ComicReader.Database
             public ComicType ItemType;
             public bool IsExist;
         };
-
-        private class LockContext
-        {
-            public int ComicTableLockDepth = 0;
-        }
 
         public const string ComicInfoFileName = "info.txt";
 

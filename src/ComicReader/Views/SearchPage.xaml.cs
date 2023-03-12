@@ -351,7 +351,7 @@ namespace ComicReader.Views
             List<Match> keyword_matched = new List<Match>();
             List<long> filter_matched = null;
 
-            await ComicData.CommandBlock(async delegate (SqliteCommand command)
+            await ComicData.CommandBlock2(async delegate (SqliteCommand command)
             {
                 command.CommandText = "SELECT " + ComicData.Field.Id + "," +
                     ComicData.Field.Title1 + "," + ComicData.Field.Title2 + " FROM " +

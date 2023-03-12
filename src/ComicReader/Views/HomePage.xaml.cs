@@ -159,7 +159,7 @@ namespace ComicReader.Views
                 Utils.FixedHeap<Tuple<long, DateTimeOffset>> records = new Utils.FixedHeap<Tuple<long, DateTimeOffset>>(16,
                     (Tuple<long, DateTimeOffset> x, Tuple<long, DateTimeOffset> y) => { return x.Item2.CompareTo(y.Item2); });
 
-                await ComicData.CommandBlock(async delegate (SqliteCommand command)
+                await ComicData.CommandBlock2(async delegate (SqliteCommand command)
                 {
                     // Use ORDER BY here will cause a crush (especially for a large result set)
                     // due to https://github.com/dotnet/efcore/issues/20044.

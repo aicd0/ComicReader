@@ -373,15 +373,15 @@ namespace ComicReader.Views
 
         private async Task UpdateStatistis()
         {
-            await ComicData.CommandBlock(async delegate (SqliteCommand command)
+            long comicCount = 0;
+            await ComicData.CommandBlock2(async delegate (SqliteCommand command)
             {
                 command.CommandText = "SELECT COUNT(*) FROM " + SqliteDatabaseManager.ComicTable;
-                long comic_count = (long)await command.ExecuteScalarAsync();
-
-                string total_comic_string = Utils.StringResourceProvider.GetResourceString("TotalComics");
-                StatisticsTextBlock.Text = total_comic_string +
-                    comic_count.ToString("#,#0", CultureInfo.InvariantCulture);
+                comicCount = (long)await command.ExecuteScalarAsync();
             });
+            string total_comic_string = Utils.StringResourceProvider.GetResourceString("TotalComics");
+            StatisticsTextBlock.Text = total_comic_string +
+                comicCount.ToString("#,#0", CultureInfo.InvariantCulture);
         }
 
         private void UpdateRescanStatus()
