@@ -205,13 +205,13 @@ namespace ComicReader.Views.Reader
 
         public void UpdateReaderUI()
         {
-            bool is_working = ReaderStatus == ReaderStatusEnum.Working;
-            bool grid_view_visible = is_working && NavigationPageShared?.IsPreviewButtonToggled == true;
-            bool reader_visible = is_working && !grid_view_visible;
-            bool vertical_reader_visible = reader_visible && ReaderSettings.IsVertical;
-            bool horizontal_reader_visible = reader_visible && !vertical_reader_visible;
+            bool isWorking = ReaderStatus == ReaderStatusEnum.Working;
+            bool previewVisible = isWorking && NavigationPageShared?.IsPreviewButtonToggled == true;
+            bool readerVisible = isWorking && !previewVisible;
+            bool verticalReaderVisible = readerVisible && ReaderSettings.IsVertical;
+            bool horizontalReaderVisible = readerVisible && !verticalReaderVisible;
 
-            IsReaderStatusTextBlockVisible = !is_working;
+            IsReaderStatusTextBlockVisible = !isWorking;
             if (IsReaderStatusTextBlockVisible)
             {
                 switch (ReaderStatus)
@@ -227,14 +227,13 @@ namespace ComicReader.Views.Reader
                         break;
                 }
             }
-
-            IsTitleBarPlaceHolderVisible = !(reader_visible && !BottomTilePinned);
-            IsGridViewVisible = grid_view_visible;
+            IsTitleBarPlaceHolderVisible = BottomTilePinned;
+            IsGridViewVisible = previewVisible;
 
             if (NavigationPageShared != null)
             {
-                NavigationPageShared.IsVerticalReaderVisible = vertical_reader_visible;
-                NavigationPageShared.IsHorizontalReaderVisible = horizontal_reader_visible;
+                NavigationPageShared.IsVerticalReaderVisible = verticalReaderVisible;
+                NavigationPageShared.IsHorizontalReaderVisible = horizontalReaderVisible;
             }
         }
 
@@ -405,6 +404,7 @@ namespace ComicReader.Views.Reader
             {
                 TitleBarArea.Height = h;
                 TitleBarPlaceHolder.Height = h;
+                PreviewTitleBarPlaceHolder.Height = h;
             }, true);
 
             EventBus.Default.With<double>(EventId.TitleBarOpacity).Observe(this, delegate (double opacity)
@@ -852,22 +852,15 @@ namespace ComicReader.Views.Reader
         // Preview
         private void OnGridViewItemClicked(object sender, ItemClickEventArgs e)
         {
-            Utils.C0.Run(async delegate
+            ReaderImagePreviewViewModel ctx = (ReaderImagePreviewViewModel)e.ClickedItem;
+            Shared.NavigationPageShared.IsPreviewButtonToggled = false;
+
+            ReaderModel reader = GetCurrentReader();
+            if (reader == null)
             {
-                ReaderImagePreviewViewModel ctx = (ReaderImagePreviewViewModel)e.ClickedItem;
-
-                Shared.NavigationPageShared.IsPreviewButtonToggled = false;
-
-                ReaderModel reader = GetCurrentReader();
-
-                if (reader == null)
-                {
-                    return;
-                }
-
-                await Utils.C0.WaitFor(() => reader.Loaded);
-                ReaderModel.ScrollManager.BeginTransaction(reader).Page(ctx.Page).Commit();
-            });
+                return;
+            }
+            ReaderModel.ScrollManager.BeginTransaction(reader).Page(ctx.Page).Commit();
         }
 
         // Pointer events
@@ -876,7 +869,6 @@ namespace ComicReader.Views.Reader
             (sender as UIElement).CapturePointer(e.Pointer);
             PointerPoint pointer_point = e.GetCurrentPoint(ManipulationReference);
             _gestureRecognizer.ProcessDownEvent(pointer_point);
-
 #if DEBUG_LOG_POINTER
             Log("Pointer pressed");
 #endif
@@ -885,7 +877,6 @@ namespace ComicReader.Views.Reader
         private void OnReaderPointerMoved(object sender, PointerRoutedEventArgs e)
         {
             _gestureRecognizer.ProcessMoveEvents(e.GetIntermediatePoints(ManipulationReference));
-
 #if DEBUG_LOG_POINTER
             //Log("Pointer moved");
 #endif

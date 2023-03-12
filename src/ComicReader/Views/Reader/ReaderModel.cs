@@ -686,7 +686,7 @@ namespace ComicReader.Views.Reader
                 {
                     m.ImageL.ImageSet = false;
                     m.ImageR.ImageSet = false;
-                    m.ItemContainer.CompareAndBind(m);
+                    m.ItemContainer?.CompareAndBind(m);
                 }
                 return;
             }
@@ -780,7 +780,7 @@ namespace ComicReader.Views.Reader
                         ReaderFrameViewModel m = DataSource[i];
                         m.ImageL.ImageSet = false;
                         m.ImageR.ImageSet = false;
-                        m.ItemContainer.CompareAndBind(m);
+                        m.ItemContainer?.CompareAndBind(m);
                     }
                 }
             }
@@ -807,7 +807,7 @@ namespace ComicReader.Views.Reader
                 {
                     _viewModel.ImageR.Image = image;
                 }
-                _viewModel.ItemContainer.CompareAndBind(_viewModel);
+                _viewModel.ItemContainer?.CompareAndBind(_viewModel);
 #if DEBUG_LOG_UPDATE_IMAGE
                 Log("Page " + m.PageR.ToString() + " loaded");
 #endif
