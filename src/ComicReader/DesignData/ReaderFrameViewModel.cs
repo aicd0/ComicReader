@@ -1,10 +1,9 @@
 using ComicReader.Controls;
+using ComicReader.Utils;
 using System;
 using System.ComponentModel;
 using System.Threading;
 using Windows.UI.Xaml;
-using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Media.Imaging;
 
 namespace ComicReader.DesignData
 {
@@ -54,14 +53,13 @@ namespace ComicReader.DesignData
         public int PageL { get; set; } = -1;
         public int PageR { get; set; } = -1;
         public double Page => PageL != -1 && PageR != -1 ? (PageL + PageR) * 0.5 : (PageL == -1 ? PageR : PageL);
-        public double Width => Container.ActualWidth;
-        public double Height => Container.ActualHeight;
         public bool Processed { get; private set; } = false;
         public bool Ready { get; private set; } = false;
 
         private bool GetReady()
         {
-            if (Container == null)
+            var container = ItemContainer?.Container;
+            if (container == null)
             {
                 return false;
             }
@@ -69,12 +67,12 @@ namespace ComicReader.DesignData
             double desired_width = FrameWidth + FrameMargin.Left + FrameMargin.Right;
             double desired_height = FrameHeight + FrameMargin.Top + FrameMargin.Bottom;
 
-            if (Math.Abs(Container.ActualWidth - desired_width) > 5.0)
+            if (Math.Abs(container.ActualWidth - desired_width) > 5.0)
             {
                 return false;
             }
 
-            if (Math.Abs(Container.ActualHeight - desired_height) > 5.0)
+            if (Math.Abs(container.ActualHeight - desired_height) > 5.0)
             {
                 return false;
             }
@@ -112,7 +110,21 @@ namespace ComicReader.DesignData
             Ready = false;
         }
 
-        public Grid Container = null;
-        public ReaderFrame ItemContainer = null;
+        private WeakReference<ReaderFrame> _itemContainer = null;
+        public ReaderFrame ItemContainer
+        {
+            get => _itemContainer?.Get();
+            set
+            {
+                if (value == null)
+                {
+                    _itemContainer = null;
+                }
+                else
+                {
+                    _itemContainer = new WeakReference<ReaderFrame>(value);
+                }
+            }
+        }
     };
 }

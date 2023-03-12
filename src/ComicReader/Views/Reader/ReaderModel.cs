@@ -66,7 +66,7 @@ namespace ComicReader.Views.Reader
         // Observer - Pages
         private readonly Utils.CancellationLock m_UpdatePageLock = new Utils.CancellationLock();
 
-        public int PageCount => Comic.ImageCount;
+        public int PageCount => Comic?.ImageCount ?? 0;
         private int ToDiscretePage(double page_continuous)
         {
             return (int)Math.Round(page_continuous);
@@ -310,7 +310,12 @@ namespace ComicReader.Views.Reader
         public double ExtentParallelLengthFinal => FinalVal(ExtentParallelLength);
         private double FrameParallelLength(int i)
         {
-            return IsVertical ? DataSource[i].Height : DataSource[i].Width;
+            var container = DataSource[i].ItemContainer?.Container;
+            if (container == null)
+            {
+                return 0;
+            }
+            return IsVertical ? container.ActualHeight : container.ActualWidth;
         }
 
         // Observer - List View
@@ -402,8 +407,7 @@ namespace ComicReader.Views.Reader
             }
 
             ReaderFrameViewModel item = DataSource[frame];
-            Grid container = item.Container;
-
+            Grid container = item.ItemContainer?.Container;
             if (container == null)
             {
                 return null;
@@ -1213,7 +1217,7 @@ namespace ComicReader.Views.Reader
             double? movement_backward = null;
             double screen_center_offset = ViewportParallelLength * 0.5 + ParallelOffsetFinal;
 
-            if (DataSource[0].Container != null)
+            if (DataSource[0].ItemContainer?.Container != null)
             {
                 double space = PaddingStartFinal * ZoomFactorFinal - ParallelOffsetFinal;
                 double image_center_offset = (PaddingStartFinal + FrameParallelLength(0) * 0.5) * ZoomFactorFinal;
@@ -1221,7 +1225,7 @@ namespace ComicReader.Views.Reader
                 movement_forward = Math.Min(space, image_center_to_screen_center);
             }
 
-            if (DataSource[DataSource.Count - 1].Container != null)
+            if (DataSource[DataSource.Count - 1].ItemContainer?.Container != null)
             {
                 double space = PaddingEndFinal * ZoomFactorFinal - (ExtentParallelLengthFinal
                     - ParallelOffsetFinal - ViewportParallelLength);
@@ -1290,7 +1294,7 @@ namespace ComicReader.Views.Reader
             {
                 int frame_idx = 0;
 
-                if (DataSource[frame_idx].Container == null)
+                if (DataSource[frame_idx].ItemContainer?.Container == null)
                 {
                     break;
                 }
@@ -1312,7 +1316,7 @@ namespace ComicReader.Views.Reader
             {
                 int frame_idx = DataSource.Count - 1;
 
-                if (DataSource[frame_idx].Container == null)
+                if (DataSource[frame_idx].ItemContainer?.Container == null)
                 {
                     break;
                 }
@@ -1443,7 +1447,7 @@ namespace ComicReader.Views.Reader
 
         public async Task OnContainerLoaded(ReaderFrameViewModel ctx)
         {
-            if (ctx == null || ctx.Container == null)
+            if (ctx == null || ctx.ItemContainer?.Container == null)
             {
                 System.Diagnostics.Debug.Assert(false);
                 return;

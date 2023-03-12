@@ -20,15 +20,10 @@ namespace ComicReader.Controls
             {
                 return;
             }
-
-            Ctx.ItemContainer = this;
-
-            if (MainFrame == null)
+            if (Container == null)
             {
                 return;
             }
-
-            Ctx.Container = MainFrame;
             Ctx.Notify();
         }
 
@@ -50,9 +45,16 @@ namespace ComicReader.Controls
             Notify();
         }
 
+        public Grid Container => MainFrame;
+
         public void Bind(ReaderFrameViewModel item)
         {
+            if (Item != null)
+            {
+                Item.ItemContainer = null;
+            }
             Item = item;
+            Item.ItemContainer = this;
             CompareAndBind(item);
         }
 
