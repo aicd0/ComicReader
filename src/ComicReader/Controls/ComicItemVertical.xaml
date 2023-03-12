@@ -76,15 +76,12 @@
             </Grid.RowDefinitions>
             <Grid Grid.Row="0" Padding="20,35">
                 <Grid Height="{StaticResource ComicItemVerticalImageHeight}">
-                    <Grid
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        Visibility="{x:Bind Ctx.IsImageLoaded}">
+                    <Grid HorizontalAlignment="Center" VerticalAlignment="Center">
                         <Grid mtuu:Effects.Shadow="{StaticResource CommonShadow}">
-                            <Image Opacity="0" Source="{x:Bind Ctx.Image}" />
+                            <Image x:Name="ImageHolder1" Opacity="0" />
                         </Grid>
                         <Border CornerRadius="5">
-                            <Image Source="{x:Bind Ctx.Image}" />
+                            <Image x:Name="ImageHolder2" />
                         </Border>
                     </Grid>
                 </Grid>

@@ -140,6 +140,7 @@
     <Compile Include="Common\NavigatablePage.cs" />
     <Compile Include="Common\Router\IPageTrait.cs" />
     <Compile Include="Common\Router\NavigationManager.cs" />
+    <Compile Include="DesignData\ReaderImageViewModel.cs" />
     <Compile Include="Utils\CancellationSession.cs" />
     <Compile Include="Views\Reader\ReaderGestureRecognizer.cs" />
     <Compile Include="Views\Reader\ReaderModel.cs" />

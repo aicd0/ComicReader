@@ -18,6 +18,7 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media.Imaging;
 using ComicReader.Common;
 using ComicReader.Common.Router;
+using ComicReader.Controls;
 using ComicReader.Database;
 using ComicReader.DesignData;
 using ComicReader.Utils.KVDatabase;
@@ -354,8 +355,8 @@ namespace ComicReader.Views.Reader
         {
             base.OnPause();
             _loadImageSession.Next();
-            HorizontalReader.OnPause();
-            VerticalReader.OnPause();
+            HorizontalReader.Comic = null;
+            VerticalReader.Comic = null;
         }
 
         public override void OnSelected()
@@ -799,6 +800,13 @@ namespace ComicReader.Views.Reader
 
                 await reader.OnReaderScrollViewerPointerWheelChanged(e);
             });
+        }
+
+        private void OnReaderContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
+        {
+            ReaderFrameViewModel item = args.Item as ReaderFrameViewModel;
+            ReaderFrame viewHolder = args.ItemContainer.ContentTemplateRoot as ReaderFrame;
+            viewHolder.Bind(item);
         }
 
         private void OnVerticalReaderScrollViewerViewChanged(object sender, ScrollViewerViewChangedEventArgs e)

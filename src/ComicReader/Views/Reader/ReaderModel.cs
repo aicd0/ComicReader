@@ -438,7 +438,16 @@ namespace ComicReader.Views.Reader
         }
 
         // Modifier - Configurations
-        public ComicData Comic { get; set; } = null;
+        private ComicData _comic;
+        public ComicData Comic
+        {
+            get => _comic;
+            set
+            {
+                _comic = value;
+                _updateImageSession.Next();
+            }
+        }
         public double InitialPage { get; set; } = 0.0;
         public ScrollViewer ThisScrollViewer
         {
@@ -483,8 +492,8 @@ namespace ComicReader.Views.Reader
                 item.Notify(cancel: true);
                 item.PageL = -1;
                 item.PageR = -1;
-                item.ImageL = null;
-                item.ImageR = null;
+                item.ImageL.ImageSet = false;
+                item.ImageR.ImageSet = false;
             }
         }
 
@@ -568,13 +577,13 @@ namespace ComicReader.Views.Reader
                     if (item.PageL != page)
                     {
                         item.PageL = page;
-                        item.ImageL = null;
+                        item.ImageL.ImageSet = false;
                     }
 
                     if (!dual)
                     {
                         item.PageR = -1;
-                        item.ImageR = null;
+                        item.ImageR.ImageSet = false;
                     }
                 }
                 else
@@ -582,13 +591,13 @@ namespace ComicReader.Views.Reader
                     if (item.PageR != page)
                     {
                         item.PageR = page;
-                        item.ImageR = null;
+                        item.ImageR.ImageSet = false;
                     }
 
                     if (!dual)
                     {
                         item.PageL = -1;
-                        item.ImageL = null;
+                        item.ImageL.ImageSet = false;
                     }
                 }
 
@@ -665,25 +674,20 @@ namespace ComicReader.Views.Reader
             return true;
         }
 
-        public void OnPause()
-        {
-            _updateImageSession.Next();
-        }
-
         private void UpdateImagesInternal(bool remove_out_of_view = true)
         {
-            CancellationSession.Token token = _updateImageSession.Next();
-
             if (!IsCurrentReader)
             {
                 foreach (ReaderFrameViewModel m in Frames)
                 {
-                    m.ImageL = null;
-                    m.ImageR = null;
+                    m.ImageL.ImageSet = false;
+                    m.ImageR.ImageSet = false;
+                    m.ItemContainer.CompareAndBind(m);
                 }
                 return;
             }
 
+            CancellationSession.Token token = _updateImageSession.CurrentToken;
             int frame = PageToFrame(Page, out _, out _);
             int preload_window_begin = Math.Max(frame - MaxPreloadFramesBefore, 0);
             int preload_window_end = Math.Min(frame + MaxPreloadFramesAfter, Frames.Count - 1);
@@ -697,7 +701,7 @@ namespace ComicReader.Views.Reader
                 {
                     ReaderFrameViewModel m = Frames[i];
 
-                    if ((m.PageL > 0 && m.ImageL == null) || (m.PageR > 0 && m.ImageR == null))
+                    if ((m.PageL > 0 && !m.ImageL.ImageSet) || (m.PageR > 0 && !m.ImageR.ImageSet))
                     {
                         m_NeedPreload = true;
                         break;
@@ -710,7 +714,6 @@ namespace ComicReader.Views.Reader
 #if DEBUG_LOG_UPDATE_IMAGE
                 Log("Loading images (page=" + Page.ToString() + ")");
 #endif
-
                 List<Utils.ImageLoader.Token> img_loader_tokens = new List<Utils.ImageLoader.Token>();
 
                 void addToLoaderQueue(int i)
@@ -722,8 +725,9 @@ namespace ComicReader.Views.Reader
 
                     ReaderFrameViewModel m = Frames[i]; // Stores locally.
 
-                    if (m.ImageL == null && m.PageL > 0)
+                    if (!m.ImageL.ImageSet && m.PageL > 0)
                     {
+                        m.ImageL.ImageSet = true;
                         img_loader_tokens.Add(new Utils.ImageLoader.Token
                         {
                             SessionToken = token,
@@ -733,8 +737,9 @@ namespace ComicReader.Views.Reader
                         });
                     }
 
-                    if (m.ImageR == null && m.PageR > 0)
+                    if (!m.ImageR.ImageSet && m.PageR > 0)
                     {
+                        m.ImageR.ImageSet = true;
                         img_loader_tokens.Add(new Utils.ImageLoader.Token
                         {
                             SessionToken = token,
@@ -769,22 +774,9 @@ namespace ComicReader.Views.Reader
                     if (i < preload_window_begin || i > preload_window_end)
                     {
                         ReaderFrameViewModel m = Frames[i];
-
-                        if (m.ImageL != null)
-                        {
-                            m.ImageL = null;
-#if DEBUG_LOG_UPDATE_IMAGE
-                            Log("Page " + m.PageL.ToString() + " removed");
-#endif
-                        }
-
-                        if (m.ImageR != null)
-                        {
-                            m.ImageR = null;
-#if DEBUG_LOG_UPDATE_IMAGE
-                            Log("Page " + m.PageR.ToString() + " removed");
-#endif
-                        }
+                        m.ImageL.ImageSet = false;
+                        m.ImageR.ImageSet = false;
+                        m.ItemContainer.CompareAndBind(m);
                     }
                 }
             }
@@ -805,12 +797,13 @@ namespace ComicReader.Views.Reader
             {
                 if (_isLeft)
                 {
-                    _viewModel.ImageL = image;
+                    _viewModel.ImageL.Image = image;
                 }
                 else
                 {
-                    _viewModel.ImageR = image;
+                    _viewModel.ImageR.Image = image;
                 }
+                _viewModel.ItemContainer.CompareAndBind(_viewModel);
 #if DEBUG_LOG_UPDATE_IMAGE
                 Log("Page " + m.PageR.ToString() + " loaded");
 #endif

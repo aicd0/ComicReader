@@ -41,6 +41,7 @@
         <GridView
             x:Name="SearchResultGridView"
             Padding="15,15,15,0"
+            ContainerContentChanging="OnGridViewContainerContentChanging"
             ItemContainerStyleSelector="{StaticResource SearchResultItemContainerStyleSelector}"
             ItemsSource="{x:Bind Shared.SearchResults}"
             SelectionChanged="OnGridViewSelectionChanged"

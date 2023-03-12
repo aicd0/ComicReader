@@ -1,4 +1,5 @@
-﻿using System;
+using ComicReader.Controls;
+using System;
 using System.ComponentModel;
 using System.Threading;
 using Windows.UI.Xaml;
@@ -7,31 +8,15 @@ using Windows.UI.Xaml.Media.Imaging;
 
 namespace ComicReader.DesignData
 {
-    public class ReaderFrameViewModel : INotifyPropertyChanged
+    internal class ReaderFrameViewModel : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        private BitmapImage m_ImageL = null;
-        public BitmapImage ImageL
-        {
-            get => m_ImageL;
-            set
-            {
-                m_ImageL = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ImageL"));
-            }
-        }
+        private readonly ReaderImageViewModel _imageL = new ReaderImageViewModel();
+        public ReaderImageViewModel ImageL => _imageL;
 
-        private BitmapImage m_ImageR = null;
-        public BitmapImage ImageR
-        {
-            get => m_ImageR;
-            set
-            {
-                m_ImageR = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ImageR"));
-            }
-        }
+        private readonly ReaderImageViewModel _imageR = new ReaderImageViewModel();
+        public ReaderImageViewModel ImageR => _imageR;
 
         private double m_FrameWidth = 0.0;
         public double FrameWidth
@@ -128,5 +113,6 @@ namespace ComicReader.DesignData
         }
 
         public Grid Container = null;
+        public ReaderFrame ItemContainer = null;
     };
 }

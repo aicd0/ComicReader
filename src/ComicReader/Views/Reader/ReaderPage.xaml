@@ -316,6 +316,7 @@
                     ZoomMode="Enabled">
                     <Grid HorizontalAlignment="Center" IsHitTestVisible="False">
                         <ListView
+                            ContainerContentChanging="OnReaderContainerContentChanging"
                             ItemsSource="{x:Bind VerticalReader.Frames, Mode=OneWay}"
                             Loaded="OnVerticalReaderListViewLoaded"
                             PreviewKeyDown="OnReaderKeyDown"
@@ -324,7 +325,7 @@
                             SelectionMode="None">
                             <ListView.ItemTemplate>
                                 <DataTemplate x:DataType="data:ReaderFrameViewModel">
-                                    <controls:ReadeFrame DataContext="{x:Bind}" />
+                                    <controls:ReaderFrame DataContext="{x:Bind}" />
                                 </DataTemplate>
                             </ListView.ItemTemplate>
                             <ListView.ItemContainerStyle>
@@ -357,6 +358,7 @@
                     ZoomMode="Enabled">
                     <Grid VerticalAlignment="Center" IsHitTestVisible="False">
                         <ListView
+                            ContainerContentChanging="OnReaderContainerContentChanging"
                             ItemsSource="{x:Bind HorizontalReader.Frames, Mode=OneWay}"
                             Loaded="OnHorizontalReaderListViewLoaded"
                             PreviewKeyDown="OnReaderKeyDown"
@@ -365,7 +367,7 @@
                             SelectionMode="None">
                             <ListView.ItemTemplate>
                                 <DataTemplate x:DataType="data:ReaderFrameViewModel">
-                                    <controls:ReadeFrame DataContext="{x:Bind}" FlowDirection="LeftToRight" />
+                                    <controls:ReaderFrame DataContext="{x:Bind}" FlowDirection="LeftToRight" />
                                 </DataTemplate>
                             </ListView.ItemTemplate>
                             <ListView.ItemsPanel>

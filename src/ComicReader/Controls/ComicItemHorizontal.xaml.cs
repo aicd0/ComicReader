@@ -4,9 +4,10 @@ using ComicReader.DesignData;
 
 namespace ComicReader.Controls
 {
-    public sealed partial class ComicItemHorizontal : UserControl
+    internal sealed partial class ComicItemHorizontal : UserControl
     {
         public ComicItemViewModel Ctx => DataContext as ComicItemViewModel;
+        public ComicItemViewModel Item { get; private set; }
 
         public ComicItemHorizontal()
         {
@@ -34,6 +35,25 @@ namespace ComicReader.Controls
         {
             // prevent tap events being dispatched to other controls
             e.Handled = true;
+        }
+
+        public void Bind(ComicItemViewModel item)
+        {
+            Item = item;
+            CompareAndBind(item);
+        }
+
+        public void CompareAndBind(ComicItemViewModel item)
+        {
+            if (item != Item)
+            {
+                return;
+            }
+            if (Item == null)
+            {
+                ImageHolder.Source = null;
+            }
+            ImageHolder.Source = Item.Image.Image;
         }
     }
 }

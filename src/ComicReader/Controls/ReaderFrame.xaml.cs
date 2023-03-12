@@ -1,15 +1,15 @@
-﻿using System;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using ComicReader.DesignData;
 
 namespace ComicReader.Controls
 {
-    public sealed partial class ReadeFrame : UserControl
+    internal sealed partial class ReaderFrame : UserControl
     {
         public ReaderFrameViewModel Ctx => DataContext as ReaderFrameViewModel;
+        public ReaderFrameViewModel Item { get; private set; }
 
-        public ReadeFrame()
+        public ReaderFrame()
         {
             InitializeComponent();
         }
@@ -20,6 +20,8 @@ namespace ComicReader.Controls
             {
                 return;
             }
+
+            Ctx.ItemContainer = this;
 
             if (MainFrame == null)
             {
@@ -46,6 +48,27 @@ namespace ComicReader.Controls
         private void OnFrameSizeChanged(object sender, SizeChangedEventArgs e)
         {
             Notify();
+        }
+
+        public void Bind(ReaderFrameViewModel item)
+        {
+            Item = item;
+            CompareAndBind(item);
+        }
+
+        public void CompareAndBind(ReaderFrameViewModel item)
+        {
+            if (item != Item)
+            {
+                return;
+            }
+            if (Item == null)
+            {
+                ImageLeft.Source = null;
+                ImageRight.Source = null;
+            }
+            ImageLeft.Source = Item.ImageL.Image;
+            ImageRight.Source = Item.ImageR.Image;
         }
     }
 }

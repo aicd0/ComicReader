@@ -14,6 +14,7 @@ using ComicReader.Database;
 using ComicReader.DesignData;
 using ComicReader.Common;
 using ComicReader.Utils;
+using ComicReader.Controls;
 
 namespace ComicReader.Views
 {
@@ -153,7 +154,7 @@ namespace ComicReader.Views
                 {
                     return;
                 }
-                CancellationSession.Token token = _updateLibrarySession.Next();
+                _updateLibrarySession.Next();
 
                 // Get recent visited comics.
                 Utils.FixedHeap<Tuple<long, DateTimeOffset>> records = new Utils.FixedHeap<Tuple<long, DateTimeOffset>>(16,
@@ -217,30 +218,6 @@ namespace ComicReader.Views
                     x.Progress == y.Progress &&
                     x.IsFavorite == y.IsFavorite);
                 Shared.IsLibraryEmpty = ComicItemSource.Count == 0;
-
-                // Load images.
-                List<Utils.ImageLoader.Token> image_loader_tokens = new List<Utils.ImageLoader.Token>();
-
-                foreach (ComicItemViewModel item in ComicItemSource)
-                {
-                    if (item.IsImageLoaded)
-                    {
-                        continue;
-                    }
-                    image_loader_tokens.Add(new Utils.ImageLoader.Token
-                    {
-                        SessionToken = token,
-                        Comic = item.Comic,
-                        Index = -1,
-                        Callback = new LoadImageCallback(item)
-                    });
-                }
-
-                double image_width = (double)Application.Current.Resources["ComicItemVerticalDesiredWidth"] - 40.0;
-                double image_height = (double)Application.Current.Resources["ComicItemVerticalImageHeight"];
-
-                new Utils.ImageLoader.Builder(image_loader_tokens)
-                    .WidthConstrain(image_width).HeightConstrain(image_height).Multiplication(1.4).Commit();
             }
             finally
             {
@@ -248,19 +225,44 @@ namespace ComicReader.Views
             }
         }
 
+        private void LoadImage(ComicItemVertical viewHolder, ComicItemViewModel item)
+        {
+            double image_width = (double)Application.Current.Resources["ComicItemVerticalDesiredWidth"] - 40.0;
+            double image_height = (double)Application.Current.Resources["ComicItemVerticalImageHeight"];
+            List<Utils.ImageLoader.Token> image_loader_tokens = new List<Utils.ImageLoader.Token>();
+
+            if (item.Image.ImageSet)
+            {
+                return;
+            }
+            item.Image.ImageSet = true;
+            image_loader_tokens.Add(new Utils.ImageLoader.Token
+            {
+                SessionToken = _updateLibrarySession.CurrentToken,
+                Comic = item.Comic,
+                Index = -1,
+                Callback = new LoadImageCallback(viewHolder, item)
+            });
+
+            new Utils.ImageLoader.Builder(image_loader_tokens)
+                .WidthConstrain(image_width).HeightConstrain(image_height).Multiplication(1.4).Commit();
+        }
+
         private class LoadImageCallback : ImageLoader.ILoadImageCallback
         {
+            private readonly ComicItemVertical _viewHolder;
             private readonly ComicItemViewModel _viewModel;
 
-            public LoadImageCallback(ComicItemViewModel viewModel)
+            public LoadImageCallback(ComicItemVertical viewHolder, ComicItemViewModel viewModel)
             {
+                _viewHolder = viewHolder;
                 _viewModel = viewModel;
             }
 
             public void OnImageLoaded(BitmapImage image)
             {
-                _viewModel.Image = image;
-                _viewModel.IsImageLoaded = true;
+                _viewModel.Image.Image = image;
+                _viewHolder.CompareAndBind(_viewModel);
             }
         }
 
@@ -305,6 +307,21 @@ namespace ComicReader.Views
         }
 
         // Events
+        private void OnAdaptiveGridViewContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
+        {
+            ComicItemViewModel item = args.Item as ComicItemViewModel;
+            ComicItemVertical viewHolder = args.ItemContainer.ContentTemplateRoot as ComicItemVertical;
+            if (args.InRecycleQueue)
+            {
+                item.Image.ImageSet = false;
+            }
+            viewHolder.Bind(item);
+            if (!args.InRecycleQueue)
+            {
+                LoadImage(viewHolder, item);
+            }
+        }
+
         private void OnSeeAllBtClicked(object sender, RoutedEventArgs e)
         {
             MainPage.Current.LoadTab(GetTabId(), SearchPageTrait.Instance, "<all>");

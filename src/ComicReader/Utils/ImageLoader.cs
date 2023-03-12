@@ -88,7 +88,7 @@ namespace ComicReader.Utils
                     s_loadQueue.Enqueue(LoadSingleImageSealed(token, _width, _height, _stretchMode));
                 }
 #if DEBUG_LOG_QUEUE
-                Log("");
+                Log("Enqueued: " + s_loadQueue.PendingTaskCount.ToString());
 #endif
                 return TaskException.Success;
             }
@@ -204,6 +204,12 @@ namespace ComicReader.Utils
 #endif
                 taskResult.SetResult(TaskException.Success);
             });
+#if DEBUG_LOG_QUEUE
+            if (s_loadQueue.PendingTaskCount <= 0)
+            {
+                Log("Dequeued: " + s_loadQueue.PendingTaskCount.ToString());
+            }
+#endif
             return taskResult.Task.Result;
         }
 

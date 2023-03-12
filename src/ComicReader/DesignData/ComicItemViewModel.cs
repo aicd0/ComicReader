@@ -8,7 +8,7 @@ using Windows.UI.Xaml.Media.Imaging;
 
 namespace ComicReader.DesignData
 {
-    public class ComicItemViewModel : INotifyPropertyChanged
+    internal class ComicItemViewModel : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -29,21 +29,11 @@ namespace ComicReader.DesignData
             }
         }
 
-        public BitmapImage Image { get; set; }
+        private ReaderImageViewModel _image = new ReaderImageViewModel();
+        public ReaderImageViewModel Image => _image;
 
         public bool IsRatingVisible => Rating != -1;
         public bool IsHide => Comic.Hidden;
-
-        private bool m_IsImageLoaded = false;
-        public bool IsImageLoaded
-        {
-            get => m_IsImageLoaded;
-            set
-            {
-                m_IsImageLoaded = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsImageLoaded"));
-            }
-        }
 
         private bool m_IsSelectMode = false;
         public bool IsSelectMode

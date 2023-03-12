@@ -35,6 +35,8 @@ namespace ComicReader.Utils
         private int _pendingTaskCount = 0;
         private Task<TaskException> _queue = Task.Factory.StartNew(() => TaskException.Success);
 
+        public int PendingTaskCount => _pendingTaskCount;
+
         public void Enqueue(Func<Task<TaskException>, TaskException> ope)
         {
             Interlocked.Increment(ref _pendingTaskCount);

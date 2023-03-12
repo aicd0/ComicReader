@@ -15,6 +15,7 @@ using ComicReader.Common.Router;
 using ComicReader.Database;
 using ComicReader.DesignData;
 using ComicReader.Utils;
+using ComicReader.Controls;
 
 namespace ComicReader.Views
 {
@@ -470,33 +471,26 @@ namespace ComicReader.Views
             {
                 m_search_lock.Release();
             }
-
-            // Load images.
-            LoadImages();
         }
 
-        private void LoadImages()
+        private void LoadImage(ComicItemHorizontal viewHolder, ComicItemViewModel item)
         {
-            CancellationSession.Token token = _loadImageSession.Next();
             double image_width = (double)Application.Current.Resources["ComicItemHorizontalImageWidth"];
             double image_height = (double)Application.Current.Resources["ComicItemHorizontalImageHeight"];
             List<Utils.ImageLoader.Token> image_loader_tokens = new List<Utils.ImageLoader.Token>();
 
-            foreach (ComicItemViewModel item in Shared.SearchResults)
+            if (item.Image.ImageSet)
             {
-                if (item.IsImageLoaded)
-                {
-                    continue;
-                }
-
-                image_loader_tokens.Add(new Utils.ImageLoader.Token
-                {
-                    SessionToken = token,
-                    Comic = item.Comic,
-                    Index = -1,
-                    Callback = new LoadImageCallback(item)
-                });
+                return;
             }
+            item.Image.ImageSet = true;
+            image_loader_tokens.Add(new Utils.ImageLoader.Token
+            {
+                SessionToken = _loadImageSession.CurrentToken,
+                Comic = item.Comic,
+                Index = -1,
+                Callback = new LoadImageCallback(viewHolder, item)
+            });
 
             new Utils.ImageLoader.Builder(image_loader_tokens)
                 .WidthConstrain(image_width).HeightConstrain(image_height).Multiplication(1.4)
@@ -506,17 +500,19 @@ namespace ComicReader.Views
 
         private class LoadImageCallback : ImageLoader.ILoadImageCallback
         {
+            private readonly ComicItemHorizontal _viewHolder;
             private readonly ComicItemViewModel _viewModel;
 
-            public LoadImageCallback(ComicItemViewModel viewModel)
+            public LoadImageCallback(ComicItemHorizontal viewHolder, ComicItemViewModel viewModel)
             {
+                _viewHolder = viewHolder;
                 _viewModel = viewModel;
             }
 
             public void OnImageLoaded(BitmapImage image)
             {
-                _viewModel.Image = image;
-                _viewModel.IsImageLoaded = true;
+                _viewModel.Image.Image = image;
+                _viewHolder.CompareAndBind(_viewModel);
             }
         }
 
@@ -537,6 +533,21 @@ namespace ComicReader.Views
                 ComicData comic = await ComicData.FromId(item.Comic.Id);
                 MainPage.Current.LoadTab(GetTabId(), ReaderPageTrait.Instance, comic);
             });
+        }
+
+        private void OnGridViewContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
+        {
+            ComicItemViewModel item = args.Item as ComicItemViewModel;
+            ComicItemHorizontal viewHolder = args.ItemContainer.ContentTemplateRoot as ComicItemHorizontal;
+            if (args.InRecycleQueue)
+            {
+                item.Image.ImageSet = false;
+            }
+            viewHolder.Bind(item);
+            if (!args.InRecycleQueue)
+            {
+                LoadImage(viewHolder, item);
+            }
         }
 
         private void OnScrollViewerViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
