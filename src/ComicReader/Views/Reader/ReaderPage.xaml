@@ -317,7 +317,7 @@
                     <Grid HorizontalAlignment="Center" IsHitTestVisible="False">
                         <ListView
                             ContainerContentChanging="OnReaderContainerContentChanging"
-                            ItemsSource="{x:Bind VerticalReader.Frames, Mode=OneWay}"
+                            ItemsSource="{x:Bind VerticalReader.DataSource, Mode=OneWay}"
                             Loaded="OnVerticalReaderListViewLoaded"
                             PreviewKeyDown="OnReaderKeyDown"
                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
@@ -359,7 +359,7 @@
                     <Grid VerticalAlignment="Center" IsHitTestVisible="False">
                         <ListView
                             ContainerContentChanging="OnReaderContainerContentChanging"
-                            ItemsSource="{x:Bind HorizontalReader.Frames, Mode=OneWay}"
+                            ItemsSource="{x:Bind HorizontalReader.DataSource, Mode=OneWay}"
                             Loaded="OnHorizontalReaderListViewLoaded"
                             PreviewKeyDown="OnReaderKeyDown"
                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
