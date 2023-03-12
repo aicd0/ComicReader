@@ -45,6 +45,7 @@ namespace ComicReader.Utils
         public sealed class Builder : BuilderBase<TaskException>
         {
             private readonly List<Token> _tokens;
+            private TaskQueue _queue;
             private double _width = double.PositiveInfinity;
             private double _height = double.PositiveInfinity;
             private StretchModeEnum _stretchMode = StretchModeEnum.Uniform;
@@ -79,16 +80,26 @@ namespace ComicReader.Utils
                 return this;
             }
 
+            public Builder SetQueue(TaskQueue queue)
+            {
+                _queue = queue;
+                return this;
+            }
+
             protected override TaskException CommitImpl()
             {
                 _width *= _multiplication;
                 _height *= _multiplication;
+                if (_queue == null)
+                {
+                    _queue = s_loadQueue;
+                }
                 foreach (Token token in _tokens)
                 {
-                    s_loadQueue.Enqueue(LoadSingleImageSealed(token, _width, _height, _stretchMode));
+                    _queue.Enqueue(LoadSingleImageSealed(token, _width, _height, _stretchMode));
                 }
 #if DEBUG_LOG_QUEUE
-                Log("Enqueued: " + s_loadQueue.PendingTaskCount.ToString());
+                Log("Enqueued: " + _queue.PendingTaskCount.ToString());
 #endif
                 return TaskException.Success;
             }

@@ -399,37 +399,6 @@
                 IsOpen="False"
                 Severity="Informational" />
 
-            <!--  Grid Preview  -->
-            <Grid IsHitTestVisible="{x:Bind Shared.IsGridViewVisible, Mode=OneWay}" Opacity="{x:Bind Shared.IsGridViewVisible, Converter={StaticResource BooleanToDoubleConverter}, Mode=OneWay}">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-                <Grid x:Name="PreviewTitleBarPlaceHolder" Grid.Row="0" />
-                <ScrollViewer Grid.Row="1">
-                    <GridView
-                        Padding="10"
-                        HorizontalAlignment="Center"
-                        VerticalAlignment="Center"
-                        IsItemClickEnabled="True"
-                        ItemClick="OnGridViewItemClicked"
-                        ItemsSource="{x:Bind PreviewDataSource, Mode=OneWay}"
-                        SelectionMode="Single">
-                        <GridView.ItemContainerStyle>
-                            <Style TargetType="GridViewItem">
-                                <Setter Property="Margin" Value="10" />
-                                <Setter Property="mtuu:Effects.Shadow" Value="{StaticResource CommonShadow}" />
-                            </Style>
-                        </GridView.ItemContainerStyle>
-                        <GridView.ItemTemplate>
-                            <DataTemplate x:DataType="data:ReaderImagePreviewViewModel">
-                                <controls:ReaderPreviewImage DataContext="{x:Bind}" />
-                            </DataTemplate>
-                        </GridView.ItemTemplate>
-                    </GridView>
-                </ScrollViewer>
-            </Grid>
-
             <!--  Bottom Tile  -->
             <Grid
                 x:Name="BottomGrid"
@@ -485,6 +454,41 @@
                     </StackPanel>
                 </Grid>
             </Grid>
+        </Grid>
+
+        <!--  Grid Preview  -->
+        <Grid
+            Grid.Row="0"
+            Grid.RowSpan="2"
+            IsHitTestVisible="{x:Bind Shared.IsGridViewVisible, Mode=OneWay}"
+            Opacity="{x:Bind Shared.IsGridViewVisible, Converter={StaticResource BooleanToDoubleConverter}, Mode=OneWay}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Grid x:Name="PreviewTitleBarPlaceHolder" Grid.Row="0" />
+            <ScrollViewer Grid.Row="1">
+                <GridView
+                    Padding="10"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    IsItemClickEnabled="True"
+                    ItemClick="OnGridViewItemClicked"
+                    ItemsSource="{x:Bind PreviewDataSource, Mode=OneWay}"
+                    SelectionMode="Single">
+                    <GridView.ItemContainerStyle>
+                        <Style TargetType="GridViewItem">
+                            <Setter Property="Margin" Value="10" />
+                            <Setter Property="mtuu:Effects.Shadow" Value="{StaticResource CommonShadow}" />
+                        </Style>
+                    </GridView.ItemContainerStyle>
+                    <GridView.ItemTemplate>
+                        <DataTemplate x:DataType="data:ReaderImagePreviewViewModel">
+                            <controls:ReaderPreviewImage DataContext="{x:Bind}" />
+                        </DataTemplate>
+                    </GridView.ItemTemplate>
+                </GridView>
+            </ScrollViewer>
         </Grid>
 
         <Grid Grid.Row="0" Grid.RowSpan="2">

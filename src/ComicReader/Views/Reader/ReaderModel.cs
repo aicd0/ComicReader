@@ -664,8 +664,8 @@ namespace ComicReader.Views.Reader
         }
 
         // Modifier - Image Loader
-        private bool m_NeedPreload = false;
         private CancellationSession _updateImageSession = new CancellationSession();
+        private TaskQueue _updateImageQueue = new TaskQueue();
 
         public async Task<bool> UpdateImages(bool use_final)
         {
@@ -684,9 +684,12 @@ namespace ComicReader.Views.Reader
             {
                 foreach (ReaderFrameViewModel m in DataSource)
                 {
-                    m.ImageL.ImageSet = false;
-                    m.ImageR.ImageSet = false;
-                    m.ItemContainer?.CompareAndBind(m);
+                    if (m.ImageL.ImageSet || m.ImageR.ImageSet)
+                    {
+                        m.ImageL.ImageSet = false;
+                        m.ImageR.ImageSet = false;
+                        m.ItemContainer?.CompareAndBind(m);
+                    }
                 }
                 return;
             }
@@ -696,24 +699,38 @@ namespace ComicReader.Views.Reader
             int preload_window_begin = Math.Max(frame - MaxPreloadFramesBefore, 0);
             int preload_window_end = Math.Min(frame + MaxPreloadFramesAfter, DataSource.Count - 1);
 
-            if (!m_NeedPreload)
+            if (remove_out_of_view)
             {
-                int check_window_begin = Math.Max(frame - MinPreloadFramesBefore, 0);
-                int check_window_end = Math.Min(frame + MinPreloadFramesAfter, DataSource.Count - 1);
-
-                for (int i = check_window_begin; i <= check_window_end; ++i)
+                for (int i = 0; i < DataSource.Count; ++i)
                 {
-                    ReaderFrameViewModel m = DataSource[i];
-
-                    if ((m.PageL > 0 && !m.ImageL.ImageSet) || (m.PageR > 0 && !m.ImageR.ImageSet))
+                    if (i < preload_window_begin || i > preload_window_end)
                     {
-                        m_NeedPreload = true;
-                        break;
+                        ReaderFrameViewModel m = DataSource[i];
+                        if (m.ImageL.ImageSet || m.ImageR.ImageSet)
+                        {
+                            m.ImageL.ImageSet = false;
+                            m.ImageR.ImageSet = false;
+                            m.ItemContainer?.CompareAndBind(m);
+                        }
                     }
                 }
             }
 
-            if (m_NeedPreload)
+            bool needPreload = false;
+            int check_window_begin = Math.Max(frame - MinPreloadFramesBefore, 0);
+            int check_window_end = Math.Min(frame + MinPreloadFramesAfter, DataSource.Count - 1);
+            for (int i = check_window_begin; i <= check_window_end; ++i)
+            {
+                ReaderFrameViewModel m = DataSource[i];
+
+                if ((m.PageL > 0 && !m.ImageL.ImageSet) || (m.PageR > 0 && !m.ImageR.ImageSet))
+                {
+                    needPreload = true;
+                    break;
+                }
+            }
+
+            if (needPreload)
             {
 #if DEBUG_LOG_UPDATE_IMAGE
                 Log("Loading images (page=" + Page.ToString() + ")");
@@ -767,22 +784,7 @@ namespace ComicReader.Views.Reader
                         addToLoaderQueue(frame - i);
                     }
                 }
-                new ImageLoader.Builder(img_loader_tokens).Commit();
-                m_NeedPreload = false;
-            }
-
-            if (remove_out_of_view)
-            {
-                for (int i = 0; i < DataSource.Count; ++i)
-                {
-                    if (i < preload_window_begin || i > preload_window_end)
-                    {
-                        ReaderFrameViewModel m = DataSource[i];
-                        m.ImageL.ImageSet = false;
-                        m.ImageR.ImageSet = false;
-                        m.ItemContainer?.CompareAndBind(m);
-                    }
-                }
+                new ImageLoader.Builder(img_loader_tokens).SetQueue(_updateImageQueue).Commit();
             }
         }
 
