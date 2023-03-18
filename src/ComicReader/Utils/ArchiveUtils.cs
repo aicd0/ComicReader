@@ -238,8 +238,9 @@ namespace ComicReader.Utils
                     {
                         archive = SharpCompress.Archives.SevenZip.SevenZipArchive.Open(stream, opts);
                     }
-                    catch (Exception)
+                    catch (Exception e)
                     {
+                        Log("Failed to open 7z archive. " + e.ToString());
                         return TaskException.FileCorrupted;
                     }
                     using (archive)
@@ -270,8 +271,9 @@ namespace ComicReader.Utils
                     {
                         reader = SharpCompress.Readers.ReaderFactory.Open(stream, opts);
                     }
-                    catch (Exception)
+                    catch (Exception e)
                     {
+                        Log("Failed to open archive. " + e.ToString());
                         return TaskException.FileCorrupted;
                     }
                     using (reader)
