@@ -298,6 +298,7 @@ namespace ComicReader.Views.Reader
         // Locks
         private readonly Utils.CancellationLock _loadComicLock = new Utils.CancellationLock();
         private readonly Utils.CancellationSession _loadImageSession = new Utils.CancellationSession();
+        private volatile bool _updatingProgress = false;
 
         public ReaderPage()
         {
@@ -717,7 +718,16 @@ namespace ComicReader.Views.Reader
 
             if (save)
             {
-                _comic.SaveProgress(progress, reader.PageSource);
+                if (_updatingProgress)
+                {
+                    return;
+                }
+                _updatingProgress = true;
+                Task.Run(delegate
+                {
+                    _comic.SaveProgressAsync(progress, page).Wait();
+                    _updatingProgress = false;
+                });
             }
         }
 

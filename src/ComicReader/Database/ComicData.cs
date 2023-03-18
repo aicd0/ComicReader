@@ -1,3 +1,7 @@
+#if DEBUG
+#define DEBUG_LOG_TASK
+#endif
+
 using ComicReader.Utils;
 using Microsoft.Data.Sqlite;
 using System;
@@ -162,7 +166,7 @@ namespace ComicReader.Database
             _ = Save(fields, save_tags: false, "SaveRating");
         }
 
-        public void SaveProgress(int progress, double last_position)
+        public async Task SaveProgressAsync(int progress, double last_position)
         {
             Progress = progress;
             LastPosition = last_position;
@@ -172,7 +176,7 @@ namespace ComicReader.Database
                 KeyProgress,
                 KeyLastPosition,
             };
-            _ = Save(fields, save_tags: false, "SaveProgress");
+            await Save(fields, save_tags: false, "SaveProgress");
         }
 
         public void SetAsRead()
@@ -668,9 +672,13 @@ namespace ComicReader.Database
             TaskCompletionSource<T> taskResult = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
             _tableQueue.Enqueue(delegate (Task<TaskException> t)
             {
+#if DEBUG_LOG_TASK
                 Log("Starting task: " + taskName);
+#endif
                 taskResult.SetResult(op());
+#if DEBUG_LOG_TASK
                 Log("Completing task: " + taskName);
+#endif
                 return TaskException.Success;
             });
             return await taskResult.Task;
