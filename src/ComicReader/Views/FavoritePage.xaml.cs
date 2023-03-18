@@ -309,7 +309,7 @@ namespace ComicReader.Views
 
                 if (item.Type == FavoriteNodeType.Item)
                 {
-                    ComicData comic = await ComicData.FromId(item.Id);
+                    ComicData comic = await ComicData.FromId(item.Id, "FavoriteLoadComic");
 
                     if (comic == null)
                     {
@@ -434,7 +434,7 @@ namespace ComicReader.Views
             Utils.C0.Run(async delegate
             {
                 FavoriteItemViewModel item = (FavoriteItemViewModel)((MenuFlyoutItem)sender).DataContext;
-                ComicData comic = await ComicData.FromId(item.Id);
+                ComicData comic = await ComicData.FromId(item.Id, "FavoriteOpenInNewTabLoadComic");
                 MainPage.Current.LoadTab(null, ReaderPageTrait.Instance, comic);
             });
         }

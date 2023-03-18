@@ -395,7 +395,7 @@ namespace ComicReader.Views
                 }
 
                 filter_matched = filter.Match(all);
-            });
+            }, "SearchComics");
 
             // Intersect two.
             m_matches = Utils.C3<Match, long, long>.Intersect(keyword_matched, filter_matched,
@@ -458,7 +458,7 @@ namespace ComicReader.Views
                     }
 
                     Match match = m_matches[m_match_index];
-                    ComicData comic = await ComicData.FromId(match.Id);
+                    ComicData comic = await ComicData.FromId(match.Id, "SearchLoadComic");
 
                     ComicItemViewModel item = await ComicDataToViewModel(comic);
                     Shared.SearchResults.Add(item);
@@ -530,7 +530,7 @@ namespace ComicReader.Views
             Utils.C0.Run(async delegate
             {
                 ComicItemViewModel item = (ComicItemViewModel)((FrameworkElement)sender).DataContext;
-                ComicData comic = await ComicData.FromId(item.Comic.Id);
+                ComicData comic = await ComicData.FromId(item.Comic.Id, "SearchOpenLoadComic");
                 MainPage.Current.LoadTab(GetTabId(), ReaderPageTrait.Instance, comic);
             });
         }

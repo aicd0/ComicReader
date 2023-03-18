@@ -378,7 +378,7 @@ namespace ComicReader.Views
             {
                 command.CommandText = "SELECT COUNT(*) FROM " + SqliteDatabaseManager.ComicTable;
                 comicCount = (long)await command.ExecuteScalarAsync();
-            });
+            }, "SettingUpdateStatistics");
             string total_comic_string = Utils.StringResourceProvider.GetResourceString("TotalComics");
             StatisticsTextBlock.Text = total_comic_string +
                 comicCount.ToString("#,#0", CultureInfo.InvariantCulture);

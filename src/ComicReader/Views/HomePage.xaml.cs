@@ -190,14 +190,14 @@ namespace ComicReader.Views
                             }
                         }
                     }
-                });
+                }, "HomeLoadLibrary");
 
                 // Convert to view models.
                 List<ComicItemViewModel> comic_items = new List<ComicItemViewModel>();
 
                 foreach (Tuple<long, DateTimeOffset> record in records.GetSorted())
                 {
-                    ComicData comic = await ComicData.FromId(record.Item1);
+                    ComicData comic = await ComicData.FromId(record.Item1, "HomeLoadComic");
                     
                     if (comic == null)
                     {

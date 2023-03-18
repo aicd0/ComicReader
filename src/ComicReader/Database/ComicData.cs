@@ -137,7 +137,7 @@ namespace ComicReader.Database
                 KeyLastPosition,
                 KeyCoverFileCache,
             };
-            _ = Save(fields, save_tags: false);
+            _ = Save(fields, save_tags: false, "SaveBasic");
         }
 
         public async Task SaveHiddenAsync(bool hidden)
@@ -148,7 +148,7 @@ namespace ComicReader.Database
             {
                 KeyHidden,
             };
-            await Save(fields, save_tags: false);
+            await Save(fields, save_tags: false, "SaveHiddenAsync");
         }
 
         public void SaveRating(int rating)
@@ -159,7 +159,7 @@ namespace ComicReader.Database
             {
                 KeyRating,
             };
-            _ = Save(fields, save_tags: false);
+            _ = Save(fields, save_tags: false, "SaveRating");
         }
 
         public void SaveProgress(int progress, double last_position)
@@ -172,7 +172,7 @@ namespace ComicReader.Database
                 KeyProgress,
                 KeyLastPosition,
             };
-            _ = Save(fields, save_tags: false);
+            _ = Save(fields, save_tags: false, "SaveProgress");
         }
 
         public void SetAsRead()
@@ -185,7 +185,7 @@ namespace ComicReader.Database
                 KeyProgress,
                 KeyLastVisit,
             };
-            _ = Save(fields, save_tags: false);
+            _ = Save(fields, save_tags: false, "SetAsRead");
         }
 
         public void SaveImageAspectRatios()
@@ -194,7 +194,7 @@ namespace ComicReader.Database
             {
                 KeyImageAspectRatios,
             };
-            _ = Save(fields, save_tags: false);
+            _ = Save(fields, save_tags: false, "SaveImageAspectRatios");
         }
 
         public void SaveCoverFileCache()
@@ -203,13 +203,13 @@ namespace ComicReader.Database
             {
                 KeyCoverFileCache,
             };
-            _ = Save(fields, save_tags: false);
+            _ = Save(fields, save_tags: false, "SaveCoverFileCache");
         }
 
         public void SaveTags()
         {
             List<SqlKey> fields = new List<SqlKey>();
-            _ = Save(fields, save_tags: true);
+            _ = Save(fields, save_tags: true, "SaveTags");
         }
 
         public void SetAsDefaultInfo()
@@ -397,9 +397,9 @@ namespace ComicReader.Database
             return await InternalGetImageStream(Math.Max(0, index));
         }
 
-        public static async Task<ComicData> FromId(long id)
+        public static async Task<ComicData> FromId(long id, string taskName)
         {
-            return await From(Field.Id, id);
+            return await From(Field.Id, id, taskName);
         }
 
         public static SealedTask UpdateSealed(bool lazy_load) =>
@@ -607,7 +607,7 @@ namespace ComicReader.Database
             await InternalSaveTagsNoLock(remove_old: false);
         }
 
-        private async Task<TaskException> Save(List<SqlKey> keys, bool save_tags)
+        private async Task<TaskException> Save(List<SqlKey> keys, bool save_tags, string taskName)
         {
             if (IsExternal)
             {
@@ -616,7 +616,7 @@ namespace ComicReader.Database
             return await Enqueue(delegate
             {
                 return SaveNoLock(keys, save_tags);
-            });
+            }, taskName);
         }
 
         private TaskException SaveNoLock(List<SqlKey> keys, bool save_tags)
@@ -663,23 +663,25 @@ namespace ComicReader.Database
             }
         }
 
-        private static async Task<T> Enqueue<T>(Func<T> op)
+        private static async Task<T> Enqueue<T>(Func<T> op, string taskName)
         {
             TaskCompletionSource<T> taskResult = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
             _tableQueue.Enqueue(delegate (Task<TaskException> t)
             {
+                Log("Starting task: " + taskName);
                 taskResult.SetResult(op());
+                Log("Completing task: " + taskName);
                 return TaskException.Success;
             });
             return await taskResult.Task;
         }
 
-        public static async Task<T> CommandBlock1<T>(Func<SqliteCommand, Task<T>> op)
+        public static async Task<T> CommandBlock1<T>(Func<SqliteCommand, Task<T>> op, string taskName)
         {
             return await Enqueue(delegate
             {
                 return CommandBlock1NoLock(op);
-            });
+            }, taskName);
         }
 
         private static T CommandBlock1NoLock<T>(Func<SqliteCommand, Task<T>> op)
@@ -690,13 +692,13 @@ namespace ComicReader.Database
             }
         }
 
-        public static async Task CommandBlock2(Func<SqliteCommand, Task> op)
+        public static async Task CommandBlock2(Func<SqliteCommand, Task> op, string taskName)
         {
             await Enqueue(delegate
             {
                 CommandBlock2NoLock(op);
                 return true;
-            });
+            }, taskName);
         }
 
         private static void CommandBlock2NoLock(Func<SqliteCommand, Task> op)
@@ -707,7 +709,7 @@ namespace ComicReader.Database
             }
         }
 
-        private static async Task TransactionBlock(Func<Task> op)
+        private static async Task TransactionBlock(Func<Task> op, string taskName)
         {
             await Enqueue(delegate
             {
@@ -717,7 +719,7 @@ namespace ComicReader.Database
                     transaction.Commit();
                 }
                 return true;
-            });
+            }, taskName);
         }
 
         private static async Task<ComicData> FromNoLock(SqliteDataReader query)
@@ -812,12 +814,12 @@ namespace ComicReader.Database
             return comic;
         }
 
-        private static async Task<ComicData> From(string col, object entry)
+        private static async Task<ComicData> From(string col, object entry, string taskName)
         {
             return await CommandBlock1(delegate (SqliteCommand command)
             {
                 return Task.FromResult(FromNoLock(col, entry));
-            });
+            }, taskName);
         }
 
         private static ComicData FromNoLock(string col, object entry)
@@ -839,9 +841,9 @@ namespace ComicReader.Database
             });
         }
 
-        public static async Task<ComicData> FromLocation(string location)
+        public static async Task<ComicData> FromLocation(string location, string taskName)
         {
-            return await From(Field.Location, location);
+            return await From(Field.Location, location, taskName);
         }
 
         private static ComicData FromLocationNoLock(string location)
@@ -886,7 +888,7 @@ namespace ComicReader.Database
                     {
                         loc_exist.Add(query.GetString(0));
                     }
-                });
+                }, "GetLocationsFromDatabase");
 
                 // Get all root folders from setting.
                 List<string> root_folders = new List<string>(XmlDatabase.Settings.ComicFolders.Count);
@@ -1018,7 +1020,7 @@ namespace ComicReader.Database
                             {
                                 await UpdateComicNoLock(info.Location, info.ItemType, info.IsExist);
                             }
-                        });
+                        }, "Update comic");
 
                         if (watch.LapSpan().TotalSeconds > 2)
                         {
@@ -1060,7 +1062,7 @@ namespace ComicReader.Database
                         RemoveWithLocationNoLock(loc);
                     }
                     return Task.CompletedTask;
-                });
+                }, "RemoveLocationsFromDatabase");
                 return TaskException.Success;
             }
             finally

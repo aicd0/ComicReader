@@ -116,7 +116,7 @@ namespace ComicReader.Views
 
             if (Common.AppInfoProvider.IsSupportedDocumentExtension(target_file.FileType))
             {
-                comic = await ComicData.FromLocation(target_file.Path);
+                comic = await ComicData.FromLocation(target_file.Path, "MainGetStartupComicFromDocument");
 
                 if (comic == null)
                 {
@@ -132,7 +132,7 @@ namespace ComicReader.Views
             }
             else if (Common.AppInfoProvider.IsSupportedArchiveExtension(target_file.FileType))
             {
-                comic = await ComicData.FromLocation(target_file.Path);
+                comic = await ComicData.FromLocation(target_file.Path, "MainGetStartupComicFromArchive");
 
                 if (comic == null)
                 {
@@ -143,7 +143,7 @@ namespace ComicReader.Views
             {
                 string dir = target_file.Path;
                 dir = Utils.StringUtils.ParentLocationFromLocation(dir);
-                comic = await ComicData.FromLocation(dir);
+                comic = await ComicData.FromLocation(dir, "MainGetStartupComicFromImage");
 
                 if (comic == null)
                 {
