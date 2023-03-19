@@ -345,18 +345,15 @@ namespace ComicReader.Views.Reader
             GetTabId().Tab.Header = comic.Title;
             GetTabId().Tab.IconSource = new muxc.SymbolIconSource { Symbol = Symbol.Pictures };
 
-            Utils.C0.Run(async delegate
-            {
-                await LoadComic(comic);
-            });
+            _ = LoadComic(comic);
         }
 
         public override void OnPause()
         {
             base.OnPause();
             _loadImageSession.Next();
-            HorizontalReader.Comic = null;
-            VerticalReader.Comic = null;
+            HorizontalReader.StopLoadingImage();
+            VerticalReader.StopLoadingImage();
         }
 
         public override void OnSelected()

@@ -449,7 +449,7 @@ namespace ComicReader.Views.Reader
             set
             {
                 _comic = value;
-                _updateImageSession.Next();
+                StopLoadingImage();
             }
         }
         public double InitialPage { get; set; } = 0.0;
@@ -486,6 +486,11 @@ namespace ComicReader.Views.Reader
             LoadedLastPage = false;
             LoadedInitialPage = false;
             LoadedImages = false;
+        }
+
+        public void StopLoadingImage()
+        {
+            _updateImageSession.Next();
         }
 
         private void ResetFrames()
