@@ -293,6 +293,7 @@ namespace ComicReader.Views.Reader
         private bool mBottomTileShowed = false;
         private bool mBottomTileHold = false;
         private bool mBottomTilePointerIn = false;
+        private bool mMonitoringPointer = false;
         private DateTimeOffset mBottomTileHideRequestTime = DateTimeOffset.Now;
 
         // Locks
@@ -1122,7 +1123,7 @@ namespace ComicReader.Views.Reader
                 return;
             }
 
-            if (!mBottomTileShowed || Shared.BottomTilePinned
+            if (!mBottomTileShowed || Shared.BottomTilePinned || Shared.IsGridViewVisible
                 || mBottomTileHold || mBottomTilePointerIn)
             {
                 return;
@@ -1171,13 +1172,43 @@ namespace ComicReader.Views.Reader
             {
                 return;
             }
-            if (!ScreenUtils.IsPointerInApp())
-            {
-                return;
-            }
 
-            mBottomTilePointerIn = true;
-            BottomTileShow();
+            mBottomTilePointerIn = ScreenUtils.IsPointerInApp();
+
+            if (mBottomTilePointerIn)
+            {
+                BottomTileShow();
+
+                if (!mMonitoringPointer)
+                {
+                    mMonitoringPointer = true;
+
+                    Utils.C0.Run(async delegate
+                    {
+                        while (true)
+                        {
+                            await Task.Delay(500);
+
+                            if (!mBottomTilePointerIn)
+                            {
+                                break;
+                            }
+
+                            if (!ScreenUtils.IsPointerInApp())
+                            {
+                                mBottomTilePointerIn = false;
+                                BottomTileHide(3000);
+                                break;
+                            }
+                        }
+                        mMonitoringPointer = false;
+                    });
+                }
+            }
+            else
+            {
+                BottomTileHide(3000);
+            }
         }
 
         private void OnReaderPointerEntered(object sender, PointerRoutedEventArgs e)
@@ -1188,6 +1219,7 @@ namespace ComicReader.Views.Reader
             {
                 return;
             }
+
             if (!mBottomTileShowed || mBottomTileHold)
             {
                 return;
