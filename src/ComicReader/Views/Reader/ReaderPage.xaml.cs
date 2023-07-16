@@ -359,6 +359,7 @@ namespace ComicReader.Views.Reader
             GetTabId().Tab.IconSource = new muxc.SymbolIconSource { Symbol = Symbol.Pictures };
 
             _ = LoadComic(comic);
+            AppStatusPreserver.Instance.SetReadingComic(comic.Id);
         }
 
         public override void OnPause()
@@ -367,6 +368,11 @@ namespace ComicReader.Views.Reader
             _loadImageSession.Next();
             HorizontalReader.StopLoadingImage();
             VerticalReader.StopLoadingImage();
+
+            if (_comic != null)
+            {
+                AppStatusPreserver.Instance.UnsetReadingComic(_comic.Id);
+            }
         }
 
         public override void OnSelected()

@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using LiteDB;
 using Windows.Storage;
 
@@ -44,8 +44,7 @@ namespace ComicReader.Utils.KVDatabase
             using(LiteDatabase db = new LiteDatabase(DatabasePath))
             {
                 ILiteCollection<KVPair> col = db.GetCollection<KVPair>(lib);
-                col.EnsureIndex(x => x.Key);
-                KVPair pair = col.FindOne(x => x.Key == key);
+                KVPair pair = col.FindById(key);
                 if (pair == null)
                 {
                     return null;
@@ -59,8 +58,7 @@ namespace ComicReader.Utils.KVDatabase
             using (LiteDatabase db = new LiteDatabase(DatabasePath))
             {
                 ILiteCollection<KVPair> col = db.GetCollection<KVPair>(lib);
-                col.EnsureIndex(x => x.Key);
-                KVPair pair = col.FindOne(x => x.Key == key);
+                KVPair pair = col.FindById(key);
                 if (pair == null)
                 {
                     pair = new KVPair
@@ -95,6 +93,7 @@ namespace ComicReader.Utils.KVDatabase
 
         private class KVPair
         {
+            [BsonId]
             public string Key { get; set; }
             public string Value { get; set; }
         }

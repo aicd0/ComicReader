@@ -62,16 +62,33 @@ namespace ComicReader.Views
 
             Utils.C0.Run(async delegate
             {
+                bool page_started = false;
+
                 if (s_startupFileArgs != null)
                 {
                     ComicData comic = await GetStartupComic(s_startupFileArgs);
                     if (comic != null)
                     {
                         LoadTab(null, ReaderPageTrait.Instance, comic);
-                        return;
+                        page_started = true;
                     }
                 }
-                LoadTab(null, HomePageTrait.Instance);
+
+                if (!page_started)
+                {
+                    long id = AppStatusPreserver.Instance.GetLastComic();
+                    ComicData comic = await ComicData.FromId(id, "FetchLastComic");
+                    if (comic != null)
+                    {
+                        LoadTab(null, ReaderPageTrait.Instance, comic);
+                        page_started = true;
+                    }
+                }
+
+                if (!page_started)
+                {
+                    LoadTab(null, HomePageTrait.Instance);
+                }
             });
         }
 

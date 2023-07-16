@@ -143,6 +143,7 @@
                         <!--  Center buttons  -->
                         <StackPanel
                             HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
                             Orientation="Horizontal"
                             Visibility="{x:Bind Shared.IsReaderPage, Mode=OneWay}">
 
