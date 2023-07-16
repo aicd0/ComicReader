@@ -33,6 +33,62 @@ namespace ComicReader.Utils
             }
         }
 
+        private class SmartFileNameComparerInternal : IComparer<List<string>>
+        {
+            public int Compare(List<string> x, List<string> y)
+            {
+                for (int i = 0; i < Math.Min(x.Count, y.Count); i++)
+                {
+                    if (int.TryParse(x[i], NumberStyles.Integer, CultureInfo.InvariantCulture, out int xint) &&
+                        int.TryParse(y[i], NumberStyles.Integer, CultureInfo.InvariantCulture, out int yint))
+                    {
+                        if (xint != yint)
+                        {
+                            return xint - yint;
+                        }
+                    }
+                    int ordinal = string.CompareOrdinal(x[i], y[i]);
+                    if (ordinal != 0)
+                    {
+                        return ordinal;
+                    }
+                }
+                return y.Count - x.Count;
+            }
+        }
+
+        public static IComparer<List<string>> SmartFileNameComparer = new SmartFileNameComparerInternal();
+
+        public static Func<string, List<string>> SmartFileNameKeySelector = delegate (string x)
+        {
+            List<string> list = new List<string>();
+            bool last_is_number = false;
+            int start_index = 0;
+            for (int i = 0; i < x.Length; i++)
+            {
+                char c = x[i];
+                bool is_number = false;
+                if (c >= '0' && c <= '9')
+                {
+                    is_number = true;
+                }
+                if (is_number != last_is_number)
+                {
+                    if (start_index < i)
+                    {
+                        list.Add(x.Substring(start_index, i - start_index));
+                        start_index = i;
+                    }
+                    last_is_number = is_number;
+                }
+            }
+            if (x.Length > 0)
+            {
+                list.Add(x.Substring(start_index, x.Length - start_index));
+            }
+            return list;
+        };
+
         public static string Join(string seperator, IEnumerable<string> list)
         {
             if (list.Count() == 0)

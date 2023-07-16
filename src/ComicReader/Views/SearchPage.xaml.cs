@@ -339,6 +339,7 @@ namespace ComicReader.Views
         {
             public long Id;
             public int Similarity = 0;
+            public string SortTitle = "";
         }
 
         private async Task SearchMain(List<string> keywords, Common.Search.Filter filter)
@@ -363,12 +364,11 @@ namespace ComicReader.Views
                     {
                         // Calculate similarity.
                         int similarity = 0;
+                        string title1 = query.GetString(1);
+                        string title2 = query.GetString(2);
 
                         if (keywords.Count != 0)
                         {
-                            string title1 = query.GetString(1);
-                            string title2 = query.GetString(2);
-
                             string match_text = title1 + " " + title2;
                             similarity = Utils.StringUtils.QuickMatch(keywords, match_text);
 
@@ -382,7 +382,8 @@ namespace ComicReader.Views
                         keyword_matched.Add(new Match
                         {
                             Id = query.GetInt64(0),
-                            Similarity = similarity
+                            Similarity = similarity,
+                            SortTitle = title1 + " " + title2
                         });
                     }
                 }
@@ -403,7 +404,10 @@ namespace ComicReader.Views
                 new Utils.C1<long>.DefaultEqualityComparer()).ToList();
 
             // Sort by similarity.
-            m_matches = m_matches.OrderByDescending(x => x.Similarity).ToList();
+            m_matches = m_matches
+                .OrderBy(delegate (Match m) { return Utils.StringUtils.SmartFileNameKeySelector(m.SortTitle); }, Utils.StringUtils.SmartFileNameComparer)
+                .OrderByDescending(x => x.Similarity)
+                .ToList();
         }
 
         private async Task<ComicItemViewModel> ComicDataToViewModel(ComicData comic)
