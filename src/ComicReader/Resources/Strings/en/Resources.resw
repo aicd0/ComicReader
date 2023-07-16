@@ -121,7 +121,7 @@
     <value>About</value>
   </data>
   <data name="AboutCopyright" xml:space="preserve">
-    <value>© 2022 $author. All rights reserved.</value>
+    <value>© 2023 $author. All rights reserved.</value>
   </data>
   <data name="AddFolderButton.Content" xml:space="preserve">
     <value>add a folder</value>

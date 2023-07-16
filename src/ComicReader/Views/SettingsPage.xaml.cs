@@ -349,7 +349,7 @@ namespace ComicReader.Views
             PackageVersion version = Package.Current.Id.Version;
             AboutBuildVersionControl.Text = app_name + " " + version.Major + "." + version.Minor + "." + version.Build + "." + version.Revision;
 
-            string author = "x_x";
+            string author = "aicd0";
             string about_copyright = Utils.StringResourceProvider.GetResourceString("AboutCopyright");
             about_copyright = about_copyright.Replace("$author", author);
             AboutCopyrightControl.Text = about_copyright;
