@@ -12,7 +12,17 @@ namespace ComicReader.Utils
         private bool _dispatchingValue = false;
         private bool _dispatchInvalidated = false;
 
-        public void Observe(Page owner, Observer<T> observer, bool sticky = false)
+        public void Observe(Page owner, Observer<T> observer)
+        {
+            ObserveInternal(owner, observer, false);
+        }
+
+        public void ObserveSticky(Page owner, Observer<T> observer)
+        {
+            ObserveInternal(owner, observer, true);
+        }
+
+        private void ObserveInternal(Page owner, Observer<T> observer, bool sticky)
         {
             if (owner == null || observer == null)
             {

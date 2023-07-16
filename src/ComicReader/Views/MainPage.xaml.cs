@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Activation;
@@ -17,8 +16,6 @@ using ComicReader.Database;
 using ComicReader.Common;
 using ComicReader.Common.Constants;
 using ComicReader.Utils;
-using Windows.UI.Composition;
-using SharpCompress.Common;
 
 namespace ComicReader.Views
 {
@@ -41,6 +38,7 @@ namespace ComicReader.Views
         private double _rootTabHeight = 0;
         private double _navigationBarHeight = 0;
         private Utils.KeyFrameAnimation _titleBarAnimation;
+        private bool _isFullscreen = false;
 
         public MainPage()
         {
@@ -79,27 +77,27 @@ namespace ComicReader.Views
 
         private void ObserveData()
         {
-            EventBus.Default.With<double>(EventId.RootTabHeightChange).Observe(this, delegate (double h)
+            EventBus.Default.With<double>(EventId.RootTabHeightChange).ObserveSticky(this, delegate (double h)
             {
                 _rootTabHeight = h;
                 EventBus.Default.With<double>(EventId.TitleBarHeightChange).Emit(_rootTabHeight + _navigationBarHeight);
                 UpdateTopPadding();
-            }, true);
+            });
 
-            EventBus.Default.With<double>(EventId.NavigationBarHeightChange).Observe(this, delegate (double h)
+            EventBus.Default.With<double>(EventId.NavigationBarHeightChange).ObserveSticky(this, delegate (double h)
             {
                 _navigationBarHeight = h;
                 EventBus.Default.With<double>(EventId.TitleBarHeightChange).Emit(_rootTabHeight + _navigationBarHeight);
-            }, true);
+            });
 
-            EventBus.Default.With<double>(EventId.TitleBarOpacity).Observe(this, delegate (double opacity)
+            EventBus.Default.With<double>(EventId.TitleBarOpacity).ObserveSticky(this, delegate (double opacity)
             {
                 if (_tabContainerGrid != null)
                 {
                     _tabContainerGrid.Opacity = opacity;
                     _tabContainerGrid.IsHitTestVisible = opacity > 0.5;
                 }
-            }, true);
+            });
         }
 
         // File activation
@@ -341,10 +339,16 @@ namespace ComicReader.Views
         private void OnPageChanged(IPageTrait pageTrait)
         {
             UpdateTopPadding();
+
             if (!pageTrait.ImmersiveMode())
             {
                 _titleBarAnimation?.Stop();
                 EventBus.Default.With<double>(EventId.TitleBarOpacity).Emit(1.0);
+            }
+
+            if (!pageTrait.SupportFullscreen())
+            {
+                ExitFullscreen();
             }
         }
 
@@ -418,11 +422,14 @@ namespace ComicReader.Views
             bool handled;
             switch (e.Key)
             {
+                case Windows.System.VirtualKey.Escape:
+                    ExitFullscreen();
+                    handled = true;
+                    break;
                 default:
                     handled = false;
                     break;
             }
-
             if (handled)
             {
                 e.Handled = true;
@@ -440,6 +447,41 @@ namespace ComicReader.Views
             if (comic != null)
             {
                 Current.LoadTab(null, ReaderPageTrait.Instance, comic);
+            }
+        }
+
+        // Fullscreen
+        public bool EnterFullscreen()
+        {
+            if (_isFullscreen)
+            {
+                return true;
+            }
+            if (!ApplicationView.GetForCurrentView().TryEnterFullScreenMode())
+            {
+                return false;
+            }
+            _isFullscreen = true;
+            EventBus.Default.With<bool>(EventId.FullscreenChanged).Emit(true);
+            return true;
+        }
+
+        public void ExitFullscreen()
+        {
+            if (!_isFullscreen)
+            {
+                return;
+            }
+            ApplicationView.GetForCurrentView().ExitFullScreenMode();
+            _isFullscreen = false;
+            EventBus.Default.With<bool>(EventId.FullscreenChanged).Emit(false);
+        }
+
+        private void OnRootGridSizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            if (!ApplicationView.GetForCurrentView().IsFullScreenMode)
+            {
+                ExitFullscreen();
             }
         }
     }

@@ -157,7 +157,7 @@
         </Style>
     </Page.Resources>
 
-    <Grid>
+    <Grid SizeChanged="OnRootGridSizeChanged">
         <muxc:TabView
             x:Name="RootTabView"
             VerticalAlignment="Stretch"

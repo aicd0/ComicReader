@@ -176,17 +176,17 @@ namespace ComicReader.Views
 
         private void ObserveData()
         {
-            EventBus.Default.With<double>(EventId.RootTabHeightChange).Observe(this, delegate (double h)
+            EventBus.Default.With<double>(EventId.RootTabHeightChange).ObserveSticky(this, delegate (double h)
             {
                 _rootTabHeight = h;
                 UpdateTopPadding();
-            }, true);
+            });
 
-            EventBus.Default.With<double>(EventId.TitleBarOpacity).Observe(this, delegate (double opacity)
+            EventBus.Default.With<double>(EventId.TitleBarOpacity).ObserveSticky(this, delegate (double opacity)
             {
                 TopTile.Opacity = opacity;
                 TopTile.IsHitTestVisible = opacity > 0.5;
-            }, true);
+            });
 
             if (TabId != null)
             {

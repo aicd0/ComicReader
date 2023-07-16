@@ -15,5 +15,6 @@ namespace ComicReader.Common.Constants
         public const string TabSelected = "TabSelected";
         public const string TitleBarHeightChange = "TitleBarHeightChange";
         public const string TitleBarOpacity = "TitleBarOpacity";
+        public const string FullscreenChanged = "FullscreenChange";
     }
 }

@@ -454,6 +454,26 @@
                     </StackPanel>
                 </Grid>
             </Grid>
+
+            <!--  Fullscreen button  -->
+            <Grid HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                <Button
+                    Click="OnFullscreenBtClicked"
+                    Style="{StaticResource ReaderFullscreenButtonStyle}"
+                    Visibility="{x:Bind Shared.IsFullscreen, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}">
+                    <Button.Content>
+                        <FontIcon Glyph="&#xE740;" />
+                    </Button.Content>
+                </Button>
+                <Button
+                    Click="OnBackToWindowBtClicked"
+                    Style="{StaticResource ReaderFullscreenButtonStyle}"
+                    Visibility="{x:Bind Shared.IsFullscreen, Mode=OneWay}">
+                    <Button.Content>
+                        <FontIcon Glyph="&#xE73F;" />
+                    </Button.Content>
+                </Button>
+            </Grid>
         </Grid>
 
         <!--  Grid Preview  -->

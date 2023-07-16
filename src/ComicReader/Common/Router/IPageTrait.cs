@@ -14,6 +14,8 @@ namespace ComicReader.Common.Router
         string GetUniqueString(object args);
 
         bool AllowJump();
+
+        bool SupportFullscreen();
     }
 
     internal class HomePageTrait : IPageTrait
@@ -43,6 +45,11 @@ namespace ComicReader.Common.Router
         public bool AllowJump()
         {
             return true;
+        }
+
+        public bool SupportFullscreen()
+        {
+            return false;
         }
 
         private static IPageTrait _instance;
@@ -85,6 +92,11 @@ namespace ComicReader.Common.Router
         }
 
         public bool AllowJump()
+        {
+            return false;
+        }
+
+        public bool SupportFullscreen()
         {
             return false;
         }
@@ -133,6 +145,11 @@ namespace ComicReader.Common.Router
             return true;
         }
 
+        public bool SupportFullscreen()
+        {
+            return true;
+        }
+
         private static IPageTrait _instance;
         public static IPageTrait Instance
         {
@@ -176,6 +193,11 @@ namespace ComicReader.Common.Router
             return true;
         }
 
+        public bool SupportFullscreen()
+        {
+            return false;
+        }
+
         private static IPageTrait _instance;
         public static IPageTrait Instance
         {
@@ -217,6 +239,11 @@ namespace ComicReader.Common.Router
         public bool AllowJump()
         {
             return true;
+        }
+
+        public bool SupportFullscreen()
+        {
+            return false;
         }
 
         private static IPageTrait _instance;

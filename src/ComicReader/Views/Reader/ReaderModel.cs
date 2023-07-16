@@ -353,7 +353,7 @@ namespace ComicReader.Views.Reader
         {
             int page_int = (int)page;
             page_int = Math.Max(page_int, 1);
-            page_int = Math.Min(page_int, PageCount + 1);
+            page_int = Math.Min(page_int, PageCount);
 
             int frame = PageToFrame(page_int, out _, out int neighbor);
             FrameOffsetData offsets = FrameOffsets(frame);

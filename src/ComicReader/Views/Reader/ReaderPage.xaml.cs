@@ -268,6 +268,18 @@ namespace ComicReader.Views.Reader
         }
 
         public LiveData<bool> BottomTilePinnedLiveData = new LiveData<bool>();
+
+        // Fullscreen
+        private bool m_IsFullscreen = false;
+        public bool IsFullscreen
+        {
+            get => m_IsFullscreen;
+            set
+            {
+                m_IsFullscreen = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsFullscreen)}"));
+            }
+        }
     }
 
     sealed internal partial class ReaderPage : NavigatablePage
@@ -399,17 +411,22 @@ namespace ComicReader.Views.Reader
                 GetCurrentReader()?.OnPageRearrangeEventSealed();
             });
 
-            EventBus.Default.With<double>(EventId.TitleBarHeightChange).Observe(this, delegate (double h)
+            EventBus.Default.With<bool>(EventId.FullscreenChanged).ObserveSticky(this, delegate (bool fullscreen)
+            {
+                Shared.IsFullscreen = fullscreen;
+            });
+
+            EventBus.Default.With<double>(EventId.TitleBarHeightChange).ObserveSticky(this, delegate (double h)
             {
                 TitleBarArea.Height = h;
                 TitleBarPlaceHolder.Height = h;
                 PreviewTitleBarPlaceHolder.Height = h;
-            }, true);
+            });
 
-            EventBus.Default.With<double>(EventId.TitleBarOpacity).Observe(this, delegate (double opacity)
+            EventBus.Default.With<double>(EventId.TitleBarOpacity).ObserveSticky(this, delegate (double opacity)
             {
                 BottomGrid.Opacity = opacity;
-            }, true);
+            });
 
             Shared.BottomTilePinnedLiveData.Observe(this, delegate
             {
@@ -1232,6 +1249,20 @@ namespace ComicReader.Views.Reader
         private void OnReaderTipCloseButtonClick(muxc.InfoBar sender, object args)
         {
             KVDatabase.getInstance().getDefaultMethod().SetBoolean(KVLib.TIPS, KEY_TIP_SHOWN, true);
+        }
+
+        // Fullscreen
+        private void OnFullscreenBtClicked(object sender, RoutedEventArgs e)
+        {
+            if (MainPage.Current.EnterFullscreen()) {
+                Shared.IsFullscreen = true;
+            }
+        }
+
+        private void OnBackToWindowBtClicked(object sender, RoutedEventArgs e)
+        {
+            MainPage.Current.ExitFullscreen();
+            Shared.IsFullscreen = false;
         }
 
         // Keys
