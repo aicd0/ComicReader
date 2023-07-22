@@ -1,17 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
-using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
-using Windows.UI.Xaml.Navigation;
 
 // The User Control item template is documented at https://go.microsoft.com/fwlink/?LinkId=234236
 
@@ -51,5 +40,29 @@ namespace ComicReader.Controls
         }
         public static readonly DependencyProperty HeaderRProperty =
             DependencyProperty.Register(nameof(HeaderR), typeof(string), typeof(PageDemoDual), new PropertyMetadata(null));
+
+        private bool m_IsHighlight = false;
+        public bool IsHighlight
+        {
+            get
+            {
+                return m_IsHighlight;
+            }
+            set
+            {
+                m_IsHighlight = value;
+                if (RootGrid != null)
+                {
+                    if (value)
+                    {
+                        RootGrid.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(0x60, 0xFF, 0xFF, 0xFF));
+                    }
+                    else
+                    {
+                        RootGrid.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(0x00, 0xFF, 0xFF, 0xFF));
+                    }
+                }
+            }
+        }
     }
 }

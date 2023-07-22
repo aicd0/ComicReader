@@ -1,4 +1,4 @@
-﻿<UserControl
+<UserControl
     x:Class="ComicReader.Controls.ReaderSettingPanel"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -57,10 +57,9 @@
                                 PointerOverForeground="{ThemeResource ListViewItemForegroundPointerOver}"
                                 PressedBackground="{ThemeResource ListViewItemPressedBackground1}"
                                 ReorderHintOffset="{ThemeResource ListViewItemReorderHintThemeOffset}"
-                                SelectedBackground="{ThemeResource SystemAccentColorLight1}"
                                 SelectedForeground="White"
-                                SelectedPointerOverBackground="{ThemeResource SystemAccentColorLight1}"
-                                SelectedPressedBackground="{ThemeResource SystemAccentColor}"
+                                SelectedPointerOverBackground="{ThemeResource ListViewItemPointerOverBackground1}"
+                                SelectedPressedBackground="{ThemeResource ListViewItemPressedBackground1}"
                                 SelectionCheckMarkVisualEnabled="{ThemeResource ListViewItemSelectionCheckMarkVisualEnabled}">
                                 <VisualStateManager.VisualStateGroups>
                                     <VisualStateGroup x:Name="CommonStates">
@@ -134,11 +133,11 @@
                         FlowDirection="{x:Bind Ctx.DemoPageFlowDirection, Mode=OneWay}"
                         Orientation="Horizontal"
                         Spacing="6">
-                        <controls:PageDemoSingle Header="1" />
-                        <controls:PageDemoSingle Header="2" />
-                        <controls:PageDemoSingle Header="3" />
-                        <controls:PageDemoSingle Header="4" />
-                        <controls:PageDemoSingle Header="5" />
+                        <controls:PageDemoSingle Header="1" IsHighlight="{x:Bind Ctx.IsPageArrangementSingle, Mode=OneWay}" />
+                        <controls:PageDemoSingle Header="2" IsHighlight="{x:Bind Ctx.IsPageArrangementSingle, Mode=OneWay}" />
+                        <controls:PageDemoSingle Header="3" IsHighlight="{x:Bind Ctx.IsPageArrangementSingle, Mode=OneWay}" />
+                        <controls:PageDemoSingle Header="4" IsHighlight="{x:Bind Ctx.IsPageArrangementSingle, Mode=OneWay}" />
+                        <controls:PageDemoSingle Header="5" IsHighlight="{x:Bind Ctx.IsPageArrangementSingle, Mode=OneWay}" />
                     </StackPanel>
                 </ListViewItem>
 
@@ -148,16 +147,18 @@
                         Margin="3"
                         FlowDirection="{x:Bind Ctx.DemoPageFlowDirection, Mode=OneWay}"
                         Orientation="Horizontal"
-                        Spacing="13">
-                        <controls:PageDemoSingle Header="1" />
+                        Spacing="12">
+                        <controls:PageDemoSingle Header="1" IsHighlight="{x:Bind Ctx.IsPageArrangementDualCover, Mode=OneWay}" />
                         <controls:PageDemoDual
                             FlowDirection="LeftToRight"
                             HeaderL="2"
-                            HeaderR="3" />
+                            HeaderR="3"
+                            IsHighlight="{x:Bind Ctx.IsPageArrangementDualCover, Mode=OneWay}" />
                         <controls:PageDemoDual
                             FlowDirection="LeftToRight"
                             HeaderL="4"
-                            HeaderR="5" />
+                            HeaderR="5"
+                            IsHighlight="{x:Bind Ctx.IsPageArrangementDualCover, Mode=OneWay}" />
                     </StackPanel>
                 </ListViewItem>
 
@@ -167,16 +168,18 @@
                         Margin="3"
                         FlowDirection="{x:Bind Ctx.DemoPageFlowDirection, Mode=OneWay}"
                         Orientation="Horizontal"
-                        Spacing="13">
-                        <controls:PageDemoSingle Header="1" />
+                        Spacing="12">
+                        <controls:PageDemoSingle Header="1" IsHighlight="{x:Bind Ctx.IsPageArrangementDualCoverMirror, Mode=OneWay}" />
                         <controls:PageDemoDual
                             FlowDirection="LeftToRight"
                             HeaderL="3"
-                            HeaderR="2" />
+                            HeaderR="2"
+                            IsHighlight="{x:Bind Ctx.IsPageArrangementDualCoverMirror, Mode=OneWay}" />
                         <controls:PageDemoDual
                             FlowDirection="LeftToRight"
                             HeaderL="5"
-                            HeaderR="4" />
+                            HeaderR="4"
+                            IsHighlight="{x:Bind Ctx.IsPageArrangementDualCoverMirror, Mode=OneWay}" />
                     </StackPanel>
                 </ListViewItem>
 
@@ -186,16 +189,18 @@
                         Margin="3"
                         FlowDirection="{x:Bind Ctx.DemoPageFlowDirection, Mode=OneWay}"
                         Orientation="Horizontal"
-                        Spacing="13">
+                        Spacing="12">
                         <controls:PageDemoDual
                             FlowDirection="LeftToRight"
                             HeaderL="1"
-                            HeaderR="2" />
+                            HeaderR="2"
+                            IsHighlight="{x:Bind Ctx.IsPageArrangementDualNoCover, Mode=OneWay}" />
                         <controls:PageDemoDual
                             FlowDirection="LeftToRight"
                             HeaderL="3"
-                            HeaderR="4" />
-                        <controls:PageDemoSingle Header="5" />
+                            HeaderR="4"
+                            IsHighlight="{x:Bind Ctx.IsPageArrangementDualNoCover, Mode=OneWay}" />
+                        <controls:PageDemoSingle Header="5" IsHighlight="{x:Bind Ctx.IsPageArrangementDualNoCover, Mode=OneWay}" />
                     </StackPanel>
                 </ListViewItem>
 
@@ -205,20 +210,22 @@
                         Margin="3"
                         FlowDirection="{x:Bind Ctx.DemoPageFlowDirection, Mode=OneWay}"
                         Orientation="Horizontal"
-                        Spacing="13">
+                        Spacing="12">
                         <controls:PageDemoDual
                             FlowDirection="LeftToRight"
                             HeaderL="2"
-                            HeaderR="1" />
+                            HeaderR="1"
+                            IsHighlight="{x:Bind Ctx.IsPageArrangementDualNoCoverMirror, Mode=OneWay}" />
                         <controls:PageDemoDual
                             FlowDirection="LeftToRight"
                             HeaderL="4"
-                            HeaderR="3" />
-                        <controls:PageDemoSingle Header="5" />
+                            HeaderR="3"
+                            IsHighlight="{x:Bind Ctx.IsPageArrangementDualNoCoverMirror, Mode=OneWay}" />
+                        <controls:PageDemoSingle Header="5" IsHighlight="{x:Bind Ctx.IsPageArrangementDualNoCoverMirror, Mode=OneWay}" />
                     </StackPanel>
                 </ListViewItem>
             </ListView>
-            <Grid Height="0" />
+            <Grid Height="10" />
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />

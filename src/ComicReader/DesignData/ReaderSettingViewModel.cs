@@ -158,7 +158,12 @@ namespace ComicReader.DesignData
 
                 if (IsVertical)
                 {
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("PageArrangementIndex"));
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(PageArrangementIndex)}"));
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsPageArrangementSingle)}"));
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsPageArrangementDualCover)}"));
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsPageArrangementDualNoCover)}"));
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsPageArrangementDualCoverMirror)}"));
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsPageArrangementDualNoCoverMirror)}"));
                 }
 
                 EventBus.Default.With(EventId.ReaderPageArrangementChanged).Emit(0);
@@ -176,7 +181,12 @@ namespace ComicReader.DesignData
 
                 if (!IsVertical)
                 {
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("PageArrangementIndex"));
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(PageArrangementIndex)}"));
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsPageArrangementSingle)}"));
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsPageArrangementDualCover)}"));
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsPageArrangementDualNoCover)}"));
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsPageArrangementDualCoverMirror)}"));
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsPageArrangementDualNoCoverMirror)}"));
                 }
 
                 EventBus.Default.With(EventId.ReaderPageArrangementChanged).Emit(0);
@@ -256,6 +266,31 @@ namespace ComicReader.DesignData
 
                 PageArrangement = from_index(value);
             }
+        }
+
+        public bool IsPageArrangementSingle
+        {
+            get => PageArrangement == PageArrangementType.Single;
+        }
+
+        public bool IsPageArrangementDualCover
+        {
+            get => PageArrangement == PageArrangementType.DualCover;
+        }
+
+        public bool IsPageArrangementDualNoCover
+        {
+            get => PageArrangement == PageArrangementType.DualNoCover;
+        }
+
+        public bool IsPageArrangementDualCoverMirror
+        {
+            get => PageArrangement == PageArrangementType.DualCoverMirror;
+        }
+
+        public bool IsPageArrangementDualNoCoverMirror
+        {
+            get => PageArrangement == PageArrangementType.DualNoCoverMirror;
         }
 
         private FlowDirection m_PageFlowDirection = FlowDirection.LeftToRight;
