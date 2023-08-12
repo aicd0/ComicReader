@@ -57,7 +57,7 @@
                                 PointerOverForeground="{ThemeResource ListViewItemForegroundPointerOver}"
                                 PressedBackground="{ThemeResource ListViewItemPressedBackground1}"
                                 ReorderHintOffset="{ThemeResource ListViewItemReorderHintThemeOffset}"
-                                SelectedForeground="White"
+                                SelectedForeground="{ThemeResource ListViewItemSelectedForegroundThemeBrush}"
                                 SelectedPointerOverBackground="{ThemeResource ListViewItemPointerOverBackground1}"
                                 SelectedPressedBackground="{ThemeResource ListViewItemPressedBackground1}"
                                 SelectionCheckMarkVisualEnabled="{ThemeResource ListViewItemSelectionCheckMarkVisualEnabled}">

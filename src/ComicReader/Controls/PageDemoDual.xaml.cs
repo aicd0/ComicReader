@@ -55,7 +55,7 @@ namespace ComicReader.Controls
                 {
                     if (value)
                     {
-                        RootGrid.Background = new SolidColorBrush(Windows.UI.Color.FromArgb(0x60, 0xFF, 0xFF, 0xFF));
+                        RootGrid.Background = (SolidColorBrush)Application.Current.Resources["PageDemoBrush"];
                     }
                     else
                     {
