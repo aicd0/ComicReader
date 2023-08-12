@@ -209,7 +209,7 @@
     <Compile Include="Utils\Extensions.cs" />
     <Compile Include="Utils\KeyFrameAnimation.cs" />
     <Compile Include="Utils\ArchiveUtils.cs" />
-    <Compile Include="Utils\BuilderBase.cs" />
+    <Compile Include="Utils\BaseTransaction.cs" />
     <Compile Include="Utils\Debug.cs" />
     <Compile Include="Utils\EventBus.cs" />
     <Compile Include="Utils\KVDatabase\KVDatabase.cs" />
@@ -219,7 +219,7 @@
     <Compile Include="Utils\LiveData.cs" />
     <Compile Include="Utils\ScreenUtils.cs" />
     <Compile Include="Utils\StorageItemSearchEngine.cs" />
-    <Compile Include="Utils\ImageLoader.cs" />
+    <Compile Include="Utils\Image\ImageLoader.cs" />
     <Compile Include="Utils\Stopwatch.cs" />
     <Compile Include="Utils\Storage.cs" />
     <Compile Include="Utils\StringResourceProvider.cs" />

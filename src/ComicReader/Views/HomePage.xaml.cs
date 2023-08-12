@@ -13,8 +13,8 @@ using ComicReader.Common.Router;
 using ComicReader.Database;
 using ComicReader.DesignData;
 using ComicReader.Common;
-using ComicReader.Utils;
 using ComicReader.Controls;
+using ComicReader.Utils.Image;
 
 namespace ComicReader.Views
 {
@@ -228,14 +228,14 @@ namespace ComicReader.Views
         {
             double image_width = (double)Application.Current.Resources["ComicItemVerticalDesiredWidth"] - 40.0;
             double image_height = (double)Application.Current.Resources["ComicItemVerticalImageHeight"];
-            List<Utils.ImageLoader.Token> image_loader_tokens = new List<Utils.ImageLoader.Token>();
+            List<ImageLoader.Token> image_loader_tokens = new List<ImageLoader.Token>();
 
             if (item.Image.ImageSet)
             {
                 return;
             }
             item.Image.ImageSet = true;
-            image_loader_tokens.Add(new Utils.ImageLoader.Token
+            image_loader_tokens.Add(new ImageLoader.Token
             {
                 SessionToken = _updateLibrarySession.CurrentToken,
                 Comic = item.Comic,
@@ -243,11 +243,14 @@ namespace ComicReader.Views
                 Callback = new LoadImageCallback(viewHolder, item)
             });
 
-            new Utils.ImageLoader.Builder(image_loader_tokens)
-                .WidthConstrain(image_width).HeightConstrain(image_height).Multiplication(1.4).Commit();
+            new ImageLoader.Transaction(image_loader_tokens)
+                .SetWidthConstraint(image_width)
+                .SetHeightConstraint(image_height)
+                .SetDecodePixelMultiplication(1.4)
+                .Commit();
         }
 
-        private class LoadImageCallback : ImageLoader.ILoadImageCallback
+        private class LoadImageCallback : ImageLoader.ICallback
         {
             private readonly ComicItemVertical _viewHolder;
             private readonly ComicItemViewModel _viewModel;
@@ -258,7 +261,7 @@ namespace ComicReader.Views
                 _viewModel = viewModel;
             }
 
-            public void OnImageLoaded(BitmapImage image)
+            public void OnSuccess(BitmapImage image)
             {
                 _viewModel.Image.Image = image;
                 _viewHolder.CompareAndBind(_viewModel);

@@ -11,10 +11,8 @@ using Windows.Graphics.Display;
 using Windows.Storage.Streams;
 using Windows.UI.Xaml.Media.Imaging;
 
-namespace ComicReader.Utils
+namespace ComicReader.Utils.Image
 {
-    using SealedTask = Func<Task<TaskException>, TaskException>;
-
     internal static class ImageLoader
     {
         private static readonly TaskQueue s_loadQueue = new TaskQueue();
@@ -26,12 +24,74 @@ namespace ComicReader.Utils
             s_loadQueue.LogPendingTask = false;
         }
 
-        private static SealedTask LoadSingleImageSealed(
-            Token token,
-            double width, double height,
-            StretchModeEnum stretch_mode
-        ) {
-            return (Task<TaskException> _) => LoadSingleImage(token, width, height, stretch_mode).Result;
+        public sealed class Transaction : BaseTransaction<TaskException>
+        {
+            private readonly List<Token> _tokens;
+            private TaskQueue _queue;
+            private double _width = double.PositiveInfinity;
+            private double _height = double.PositiveInfinity;
+            private StretchModeEnum _stretchMode = StretchModeEnum.Uniform;
+            private double _multiplication = 1.0;
+
+            public Transaction(List<Token> tokens)
+            {
+                _tokens = tokens;
+            }
+
+            public Transaction SetWidthConstraint(double value)
+            {
+                _width = value;
+                return this;
+            }
+
+            public Transaction SetHeightConstraint(double value)
+            {
+                _height = value;
+                return this;
+            }
+
+            public Transaction SetStretchMode(StretchModeEnum mode)
+            {
+                _stretchMode = mode;
+                return this;
+            }
+
+            public Transaction SetDecodePixelMultiplication(double value)
+            {
+                _multiplication = value;
+                return this;
+            }
+
+            public Transaction SetQueue(TaskQueue queue)
+            {
+                _queue = queue;
+                return this;
+            }
+
+            protected override TaskException CommitImpl()
+            {
+                _width *= _multiplication;
+                _height *= _multiplication;
+
+                if (_queue == null)
+                {
+                    _queue = s_loadQueue;
+                }
+
+                foreach (Token token in _tokens)
+                {
+                    if (token.Callback == null || token.Comic == null || token.SessionToken == null)
+                    {
+                        continue;
+                    }
+                    TaskException task(Task<TaskException> _) => LoadSingleImage(token, _width, _height, _stretchMode).Result;
+                    _queue.Enqueue(task);
+                }
+#if DEBUG_LOG_QUEUE
+                Log("Enqueued: " + _queue.PendingTaskCount.ToString());
+#endif
+                return TaskException.Success;
+            }
         }
 
         public enum StretchModeEnum
@@ -45,74 +105,12 @@ namespace ComicReader.Utils
             public CancellationSession.Token SessionToken;
             public ComicData Comic;
             public int Index;
-            public ILoadImageCallback Callback;
+            public ICallback Callback;
         }
 
-        public sealed class Builder : BuilderBase<TaskException>
+        public interface ICallback
         {
-            private readonly List<Token> _tokens;
-            private TaskQueue _queue;
-            private double _width = double.PositiveInfinity;
-            private double _height = double.PositiveInfinity;
-            private StretchModeEnum _stretchMode = StretchModeEnum.Uniform;
-            private double _multiplication = 1.0;
-
-            public Builder(List<Token> tokens)
-            {
-                _tokens = tokens;
-            }
-
-            public Builder WidthConstrain(double value)
-            {
-                _width = value;
-                return this;
-            }
-
-            public Builder HeightConstrain(double value)
-            {
-                _height = value;
-                return this;
-            }
-
-            public Builder StretchMode(StretchModeEnum mode)
-            {
-                _stretchMode = mode;
-                return this;
-            }
-
-            public Builder Multiplication(double value)
-            {
-                _multiplication = value;
-                return this;
-            }
-
-            public Builder SetQueue(TaskQueue queue)
-            {
-                _queue = queue;
-                return this;
-            }
-
-            protected override TaskException CommitImpl()
-            {
-                _width *= _multiplication;
-                _height *= _multiplication;
-                if (_queue == null)
-                {
-                    _queue = s_loadQueue;
-                }
-                foreach (Token token in _tokens)
-                {
-                    if (token.Callback == null || token.Comic == null || token.SessionToken == null)
-                    {
-                        continue;
-                    }
-                    _queue.Enqueue(LoadSingleImageSealed(token, _width, _height, _stretchMode));
-                }
-#if DEBUG_LOG_QUEUE
-                Log("Enqueued: " + _queue.PendingTaskCount.ToString());
-#endif
-                return TaskException.Success;
-            }
+            void OnSuccess(BitmapImage image);
         }
 
         private static async Task<double> GetRawPixelPerPixel()
@@ -219,7 +217,7 @@ namespace ComicReader.Utils
                     image.DecodePixelHeight = (int)image_height;
                     image.DecodePixelWidth = (int)image_width;
                 }
-                token.Callback.OnImageLoaded(image);
+                token.Callback.OnSuccess(image);
 #if DEBUG_LOG_LOAD
                 Log("Token " + token_processed.ToString() + "(idx=" + token.Index.ToString() + ") loaded");
 #endif
@@ -231,11 +229,6 @@ namespace ComicReader.Utils
         private static void Log(string text)
         {
             Utils.Debug.Log("Image Loader: " + text + ".");
-        }
-
-        public interface ILoadImageCallback
-        {
-            void OnImageLoaded(BitmapImage image);
         }
     }
 }

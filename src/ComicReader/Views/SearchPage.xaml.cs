@@ -16,6 +16,7 @@ using ComicReader.Database;
 using ComicReader.DesignData;
 using ComicReader.Utils;
 using ComicReader.Controls;
+using ComicReader.Utils.Image;
 
 namespace ComicReader.Views
 {
@@ -481,14 +482,14 @@ namespace ComicReader.Views
         {
             double image_width = (double)Application.Current.Resources["ComicItemHorizontalImageWidth"];
             double image_height = (double)Application.Current.Resources["ComicItemHorizontalImageHeight"];
-            List<Utils.ImageLoader.Token> image_loader_tokens = new List<Utils.ImageLoader.Token>();
+            List<ImageLoader.Token> image_loader_tokens = new List<ImageLoader.Token>();
 
             if (item.Image.ImageSet)
             {
                 return;
             }
             item.Image.ImageSet = true;
-            image_loader_tokens.Add(new Utils.ImageLoader.Token
+            image_loader_tokens.Add(new ImageLoader.Token
             {
                 SessionToken = _loadImageSession.CurrentToken,
                 Comic = item.Comic,
@@ -496,13 +497,15 @@ namespace ComicReader.Views
                 Callback = new LoadImageCallback(viewHolder, item)
             });
 
-            new Utils.ImageLoader.Builder(image_loader_tokens)
-                .WidthConstrain(image_width).HeightConstrain(image_height).Multiplication(1.4)
-                .StretchMode(Utils.ImageLoader.StretchModeEnum.UniformToFill)
+            new ImageLoader.Transaction(image_loader_tokens)
+                .SetWidthConstraint(image_width)
+                .SetHeightConstraint(image_height)
+                .SetDecodePixelMultiplication(1.4)
+                .SetStretchMode(ImageLoader.StretchModeEnum.UniformToFill)
                 .Commit();
         }
 
-        private class LoadImageCallback : ImageLoader.ILoadImageCallback
+        private class LoadImageCallback : ImageLoader.ICallback
         {
             private readonly ComicItemHorizontal _viewHolder;
             private readonly ComicItemViewModel _viewModel;
@@ -513,7 +516,7 @@ namespace ComicReader.Views
                 _viewModel = viewModel;
             }
 
-            public void OnImageLoaded(BitmapImage image)
+            public void OnSuccess(BitmapImage image)
             {
                 _viewModel.Image.Image = image;
                 _viewHolder.CompareAndBind(_viewModel);

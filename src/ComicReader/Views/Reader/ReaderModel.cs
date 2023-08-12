@@ -23,6 +23,7 @@ using ComicReader.Common.Structs;
 using ComicReader.Database;
 using ComicReader.DesignData;
 using ComicReader.Utils;
+using ComicReader.Utils.Image;
 
 namespace ComicReader.Views.Reader
 {
@@ -745,7 +746,7 @@ namespace ComicReader.Views.Reader
 #if DEBUG_LOG_UPDATE_IMAGE
                 Log("Loading images (page=" + Page.ToString() + ")");
 #endif
-                List<Utils.ImageLoader.Token> img_loader_tokens = new List<Utils.ImageLoader.Token>();
+                List<ImageLoader.Token> img_loader_tokens = new List<ImageLoader.Token>();
 
                 void addToLoaderQueue(int i)
                 {
@@ -759,7 +760,7 @@ namespace ComicReader.Views.Reader
                     if (!m.ImageL.ImageSet && m.PageL > 0)
                     {
                         m.ImageL.ImageSet = true;
-                        img_loader_tokens.Add(new Utils.ImageLoader.Token
+                        img_loader_tokens.Add(new ImageLoader.Token
                         {
                             SessionToken = token,
                             Index = m.PageL - 1,
@@ -771,7 +772,7 @@ namespace ComicReader.Views.Reader
                     if (!m.ImageR.ImageSet && m.PageR > 0)
                     {
                         m.ImageR.ImageSet = true;
-                        img_loader_tokens.Add(new Utils.ImageLoader.Token
+                        img_loader_tokens.Add(new ImageLoader.Token
                         {
                             SessionToken = token,
                             Index = m.PageR - 1,
@@ -794,11 +795,11 @@ namespace ComicReader.Views.Reader
                         addToLoaderQueue(frame - i);
                     }
                 }
-                new ImageLoader.Builder(img_loader_tokens).SetQueue(_updateImageQueue).Commit();
+                new ImageLoader.Transaction(img_loader_tokens).SetQueue(_updateImageQueue).Commit();
             }
         }
 
-        private class LoadImageCallback : ImageLoader.ILoadImageCallback
+        private class LoadImageCallback : ImageLoader.ICallback
         {
             private readonly ReaderFrameViewModel _viewModel;
             private readonly bool _isLeft;
@@ -809,7 +810,7 @@ namespace ComicReader.Views.Reader
                 _isLeft = isLeft;
             }
 
-            public void OnImageLoaded(BitmapImage image)
+            public void OnSuccess(BitmapImage image)
             {
                 if (_isLeft)
                 {
@@ -861,7 +862,7 @@ namespace ComicReader.Views.Reader
             return SetScrollViewer2(zoom, page, disable_animation);
         }
 
-        sealed internal class ScrollManager : Utils.BuilderBase<bool>
+        sealed internal class ScrollManager : Utils.BaseTransaction<bool>
         {
             private readonly WeakReference<ReaderModel> mReader;
             private float? mZoom = null;

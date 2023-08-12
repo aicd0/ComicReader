@@ -173,7 +173,8 @@ namespace ComicReader.Views
                         IReadOnlyList<StorageFile> files = await args.NeighboringFilesQuery.GetFilesAsync();
                         all_files = files.ToList();
                     }
-                    else
+
+                    if (all_files.Count == 0)
                     {
                         foreach (IStorageItem item in args.Files)
                         {

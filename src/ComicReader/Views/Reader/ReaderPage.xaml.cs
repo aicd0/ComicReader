@@ -24,6 +24,7 @@ using ComicReader.DesignData;
 using ComicReader.Utils.KVDatabase;
 using ComicReader.Common.Constants;
 using ComicReader.Utils;
+using ComicReader.Utils.Image;
 
 namespace ComicReader.Views.Reader
 {
@@ -359,7 +360,10 @@ namespace ComicReader.Views.Reader
             GetTabId().Tab.IconSource = new muxc.SymbolIconSource { Symbol = Symbol.Pictures };
 
             _ = LoadComic(comic);
-            AppStatusPreserver.Instance.SetReadingComic(comic.Id);
+            if (!comic.IsExternal)
+            {
+                AppStatusPreserver.Instance.SetReadingComic(comic.Id);
+            }
         }
 
         public override void OnPause()
@@ -369,7 +373,7 @@ namespace ComicReader.Views.Reader
             HorizontalReader.StopLoadingImage();
             VerticalReader.StopLoadingImage();
 
-            if (_comic != null)
+            if (_comic != null && !_comic.IsExternal)
             {
                 AppStatusPreserver.Instance.UnsetReadingComic(_comic.Id);
             }
@@ -530,14 +534,14 @@ namespace ComicReader.Views.Reader
             double preview_height = (double)Application.Current.Resources["ReaderPreviewImageHeight"];
             PreviewDataSource.Clear();
 
-            List<Utils.ImageLoader.Token> preview_img_loader_tokens = new List<Utils.ImageLoader.Token>();
+            List<ImageLoader.Token> preview_img_loader_tokens = new List<ImageLoader.Token>();
             ComicData comic = _comic; // Stores locally.
             Utils.Stopwatch save_timer = new Utils.Stopwatch();
 
             for (int i = 0; i < comic.ImageCount; ++i)
             {
                 int index = i; // Stores locally.
-                preview_img_loader_tokens.Add(new Utils.ImageLoader.Token
+                preview_img_loader_tokens.Add(new ImageLoader.Token
                 {
                     SessionToken = token,
                     Comic = comic,
@@ -547,11 +551,11 @@ namespace ComicReader.Views.Reader
             }
 
             save_timer.Start();
-            new Utils.ImageLoader.Builder(preview_img_loader_tokens)
-                .WidthConstrain(preview_width).HeightConstrain(preview_height).Commit();
+            new ImageLoader.Transaction(preview_img_loader_tokens)
+                .SetWidthConstraint(preview_width).SetHeightConstraint(preview_height).Commit();
         }
 
-        private class LoadPreviewImageCallback : ImageLoader.ILoadImageCallback
+        private class LoadPreviewImageCallback : ImageLoader.ICallback
         {
             private readonly ReaderPage _page;
             private readonly int _index;
@@ -566,7 +570,7 @@ namespace ComicReader.Views.Reader
                 _saveTimer = saveTimer;
             }
 
-            public void OnImageLoaded(BitmapImage image)
+            public void OnSuccess(BitmapImage image)
             {
                 // Save image aspect ratio info.
                 double image_aspect_ratio;

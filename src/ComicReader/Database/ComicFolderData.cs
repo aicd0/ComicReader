@@ -31,6 +31,11 @@ namespace ComicReader.Database
 
         public static async Task<ComicData> FromExternal(string directory, List<StorageFile> image_files, StorageFile info_file)
         {
+            if (image_files.Count == 0)
+            {
+                return null;
+            }
+
             image_files = image_files.OrderBy(x => x.DisplayName,
                 new Utils.StringUtils.FileNameComparer()).ToList();
 
