@@ -1200,7 +1200,7 @@ namespace ComicReader.Views.Reader
                 return;
             }
 
-            mBottomTilePointerIn = ScreenUtils.IsPointerInApp();
+            mBottomTilePointerIn = ScreenUtils.IsPointerInApp() ?? true;
 
             if (mBottomTilePointerIn)
             {
@@ -1221,7 +1221,7 @@ namespace ComicReader.Views.Reader
                                 break;
                             }
 
-                            if (!ScreenUtils.IsPointerInApp())
+                            if (!(ScreenUtils.IsPointerInApp() ?? true))
                             {
                                 mBottomTilePointerIn = false;
                                 BottomTileHide(3000);
