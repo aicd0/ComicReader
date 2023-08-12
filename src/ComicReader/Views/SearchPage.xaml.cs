@@ -465,6 +465,12 @@ namespace ComicReader.Views
                     Match match = m_matches[m_match_index];
                     ComicData comic = await ComicData.FromId(match.Id, "SearchLoadComic");
 
+                    if (comic == null)
+                    {
+                        System.Diagnostics.Debug.Assert(false);
+                        continue;
+                    }
+
                     ComicItemViewModel item = await ComicDataToViewModel(comic);
                     Shared.SearchResults.Add(item);
                     ++i;

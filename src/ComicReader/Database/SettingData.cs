@@ -107,7 +107,18 @@ namespace ComicReader.Database
 
         public static async Task<bool> AddComicFolderUsingPicker()
         {
-            FolderPicker picker = new FolderPicker();
+            FolderPicker picker;
+            try
+            {
+                picker = new FolderPicker();
+            }
+            catch (Exception)
+            {
+                // The RPC server is unavailable
+                // Server RPC non disponibile
+                System.Diagnostics.Debug.Assert(false);
+                return false;
+            }
             picker.FileTypeFilter.Add("*");
             StorageFolder folder = await picker.PickSingleFolderAsync();
             if (folder == null)
