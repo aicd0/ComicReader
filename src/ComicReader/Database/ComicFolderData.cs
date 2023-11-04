@@ -36,8 +36,9 @@ namespace ComicReader.Database
                 return null;
             }
 
-            image_files = image_files.OrderBy(x => x.DisplayName,
-                new Utils.StringUtils.FileNameComparer()).ToList();
+            image_files = image_files
+                .OrderBy(x => Utils.StringUtils.SmartFileNameKeySelector(x.DisplayName), Utils.StringUtils.SmartFileNameComparer)
+                .ToList();
 
             ComicFolderData comic = new ComicFolderData(true)
             {
@@ -198,8 +199,9 @@ namespace ComicReader.Database
             IReadOnlyList<StorageFile> img_files = await query.GetFilesAsync();
 
             // Sort by display name.
-            ImageFiles = img_files.OrderBy(x => x.DisplayName,
-                new Utils.StringUtils.FileNameComparer()).ToList();
+            ImageFiles = img_files
+                .OrderBy(x => Utils.StringUtils.SmartFileNameKeySelector(x.DisplayName), Utils.StringUtils.SmartFileNameComparer)
+                .ToList();
             Log(img_files.Count.ToString() + " images added.");
             return TaskException.Success;
         }

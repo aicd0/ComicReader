@@ -216,7 +216,9 @@ namespace ComicReader.Database
                 }
             }
 
-            Entries = entries.OrderBy(x => x, new Utils.StringUtils.FileNameComparer()).ToList();
+            Entries = entries
+                .OrderBy(x => Utils.StringUtils.SmartFileNameKeySelector(x), Utils.StringUtils.SmartFileNameComparer)
+                .ToList();
             return TaskException.Success;
         }
 

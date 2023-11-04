@@ -8,23 +8,6 @@ namespace ComicReader.Utils
 {
     class StringUtils
     {
-        public class FileNameComparer : IComparer<string>
-        {
-            public int Compare(string x, string y)
-            {
-                x = DisplayNameFromFilename(x);
-                y = DisplayNameFromFilename(y);
-
-                if (int.TryParse(x, NumberStyles.Integer, CultureInfo.InvariantCulture, out int xint) &&
-                    int.TryParse(y, NumberStyles.Integer, CultureInfo.InvariantCulture, out int yint))
-                {
-                    return xint - yint;
-                }
-
-                return x.Length != y.Length ? x.Length - y.Length : string.CompareOrdinal(x, y);
-            }
-        }
-
         public class OrdinalComparer : IComparer<string>
         {
             public int Compare(string x, string y)
@@ -53,7 +36,7 @@ namespace ComicReader.Utils
                         return ordinal;
                     }
                 }
-                return y.Count - x.Count;
+                return x.Count - y.Count;
             }
         }
 
