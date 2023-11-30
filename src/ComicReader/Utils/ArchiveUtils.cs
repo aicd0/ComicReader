@@ -55,6 +55,11 @@ namespace ComicReader.Utils
     {
         public const string FileSeperator = "\\\\";
 
+        public static bool IsArchivePath(string path)
+        {
+            return path.Contains(FileSeperator) && !path.StartsWith(FileSeperator);
+        }
+
         public static string GetBasePath(string location, bool reverse = false)
         {
             int i = reverse ?

@@ -954,7 +954,7 @@ namespace ComicReader.Database
                                 if (!loc_scanned_dict.ContainsKey(loc))
                                 {
                                     loc_scanned_dict[loc] =
-                                        file_path.Contains(Utils.ArchiveAccess.FileSeperator) ?
+                                        ArchiveAccess.IsArchivePath(file_path) ?
                                         ComicType.Archive : ComicType.Folder;
                                 }
                             }
