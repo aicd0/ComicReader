@@ -1,8 +1,7 @@
-using Windows.UI.Xaml;
-using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Input;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using ComicReader.DesignData;
-using ComicReader.Utils;
 
 namespace ComicReader.Controls
 {

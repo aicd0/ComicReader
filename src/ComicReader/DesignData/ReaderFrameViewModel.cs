@@ -3,7 +3,7 @@ using ComicReader.Utils;
 using System;
 using System.ComponentModel;
 using System.Threading;
-using Windows.UI.Xaml;
+using Microsoft.UI.Xaml;
 
 namespace ComicReader.DesignData
 {

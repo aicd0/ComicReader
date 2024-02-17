@@ -7,12 +7,12 @@ using System.Text;
 using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.Storage;
-using Windows.UI.Xaml;
-using Windows.UI.Xaml.Controls;
-using muxc = Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using ComicReader.Database;
 using ComicReader.Common.Router;
 using ComicReader.Common;
+using ComicReader.Utils;
 
 namespace ComicReader.Views
 {
@@ -246,7 +246,7 @@ namespace ComicReader.Views
         {
             base.OnStart(p);
             p.TabId.Tab.Header = Utils.StringResourceProvider.GetResourceString("Settings");
-            p.TabId.Tab.IconSource = new muxc.SymbolIconSource() { Symbol = Symbol.Setting };
+            p.TabId.Tab.IconSource = new SymbolIconSource() { Symbol = Symbol.Setting };
             Shared.MainPageShared = (MainPageShared)p.Params;
         }
 
@@ -436,7 +436,7 @@ namespace ComicReader.Views
             Utils.C0.Run(async delegate
             {
                 ChooseLocationsDialog dialog = new ChooseLocationsDialog();
-                _ = await dialog.ShowAsync().AsTask();
+                await C0.ShowDialogAsync(dialog, XamlRoot);
             });
         }
 

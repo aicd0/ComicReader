@@ -1,25 +1,20 @@
-﻿using Windows.ApplicationModel.Core;
-using Windows.UI.ViewManagement;
-using Windows.UI.Xaml;
-using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Media;
+using Microsoft.UI.Windowing;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 
 namespace ComicReader.Controls
 {
     public sealed partial class TitleBar : UserControl
     {
-        private AccessibilitySettings m_accessibility_settings;
-
         public TitleBar()
         {
-            m_accessibility_settings = new AccessibilitySettings();
-
             InitializeComponent();
 
-            Window.Current.SetTitleBar(this);
-            CoreApplication.GetCurrentView().TitleBar.ExtendViewIntoTitleBar = true;
+            App.Window.SetTitleBar(this);
+            App.Window.ExtendsContentIntoTitleBar = true;
 
-            ApplicationViewTitleBar title_bar = ApplicationView.GetForCurrentView().TitleBar;
+            AppWindowTitleBar title_bar = App.Window.AppWindow.TitleBar;
             title_bar.ButtonBackgroundColor = ButtonBackground?.Color;
             title_bar.ButtonForegroundColor = ButtonForeground?.Color;
             title_bar.ButtonInactiveBackgroundColor = ButtonInactiveBackground?.Color;

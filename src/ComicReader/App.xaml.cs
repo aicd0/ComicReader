@@ -1,26 +1,24 @@
+using Microsoft.AppCenter.Analytics;
+using Microsoft.AppCenter.Crashes;
+using Microsoft.AppCenter;
+using Microsoft.UI.Xaml;
+using Microsoft.Windows.AppLifecycle;
+using System;
+using Windows.ApplicationModel.Core;
+using Windows.Storage;
 using ComicReader.Database;
 using ComicReader.Utils;
 using ComicReader.Views;
-using Microsoft.AppCenter;
-using Microsoft.AppCenter.Analytics;
-using Microsoft.AppCenter.Crashes;
-using System;
-using System.Threading.Tasks;
-using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
-using Windows.ApplicationModel.Core;
-using Windows.Foundation;
-using Windows.Storage;
-using Windows.UI.Xaml;
-using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Navigation;
-using Windows.UI.ViewManagement;
+using WinRT.Interop;
 
 namespace ComicReader
 {
-    sealed partial class App : Application
+    public partial class App : Application
     {
-        private bool m_window_setup = false;
+        public static MainWindow Window { get; private set; }
+
+        public static IntPtr WindowHandle { get; private set; }
 
         public App()
         {
@@ -33,7 +31,6 @@ namespace ComicReader
 
             InitializeComponent();
 
-            Suspending += OnSuspending;
             CoreApplication.EnablePrelaunch(true);
 
             if (Keys.AppSecret.Length > 0)
@@ -42,86 +39,44 @@ namespace ComicReader
             }
         }
 
-        private async Task Startup(bool prelaunch_activated)
+        protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs e)
         {
-            // Initialize the database if it has not been initialized.
-            TaskException result = await DatabaseManager.Init();
-            System.Diagnostics.Debug.Assert(result.Successful());
+            // Read: https://docs.microsoft.com/en-us/windows/apps/windows-app-sdk/migrate-to-windows-app-sdk/guides/applifecycle#single-instancing-in-applicationonlaunched
+            // If this is the first instance launched, then register it as the "main" instance.
+            // If this isn't the first instance launched, then "main" will already be registered,
+            // so retrieve it.
+            var mainInstance = AppInstance.FindOrRegisterForKey("main");
+            var activatedEventArgs = AppInstance.GetCurrent().GetActivatedEventArgs();
 
-            // Perform usual startup.
-            if (!(Window.Current.Content is Frame rootFrame))
+            // If the instance that's executing the OnLaunched handler right now
+            // isn't the "main" instance.
+            if (!mainInstance.IsCurrent)
             {
-                rootFrame = new Frame();
-                rootFrame.NavigationFailed += OnNavigationFailed;
-                Window.Current.Content = rootFrame;
-            }
-
-            if (rootFrame.Content == null)
-            {
-                rootFrame.Navigate(typeof(Views.MainPage));
-            }
-
-            if (prelaunch_activated)
-            {
+                // Redirect the activation (and args) to the "main" instance, and exit.
+                await mainInstance.RedirectActivationToAsync(activatedEventArgs);
+                System.Diagnostics.Process.GetCurrentProcess().Kill();
                 return;
             }
 
-            if (!m_window_setup)
+            // Initialize database here
+            TaskException result = await DatabaseManager.Init();
+            System.Diagnostics.Debug.Assert(result.Successful());
+
+            // Initialize MainWindow here
+            Window = new MainWindow();
+            Window.Activate();
+            WindowHandle = WindowNative.GetWindowHandle(Window);
+
+            mainInstance.Activated += OnActivated;
+            OnActivated(null, activatedEventArgs);
+        }
+
+        private void OnActivated(object sender, AppActivationArguments e)
+        {
+            if (e.Kind == ExtendedActivationKind.File)
             {
-                m_window_setup = true;
-                float minWindowWidth = (float)(double)Resources["AppMinWindowWidth"];
-                float minWindowHeight = (float)(double)Resources["AppMinWindowHeight"];
-                Size minWindowSize = SizeHelper.FromDimensions(minWindowWidth, minWindowHeight);
-                ApplicationDataContainer localSettings = ApplicationData.Current.LocalSettings;
-                ApplicationView appView = ApplicationView.GetForCurrentView();
-
-                if (!localSettings.Values.ContainsKey("VeryFirstLaunch"))
-                {
-                    localSettings.Values.Add("VeryFirstLaunch", false);
-                }
-                else
-                {
-                    ApplicationView.PreferredLaunchWindowingMode = ApplicationViewWindowingMode.Auto;
-                }
-
-                appView.SetPreferredMinSize(minWindowSize);
-                // appView->TryResizeView(SizeHelper::FromDimensions(320, 700));
+                MainPage.OnFileActivated((FileActivatedEventArgs)e.Data);
             }
-
-            if (!Window.Current.Visible)
-            {
-                Window.Current.Activate();
-            }
-        }
-
-        protected override void OnLaunched(LaunchActivatedEventArgs args)
-        {
-            Utils.C0.Run(async delegate
-            {
-                await Startup(args.PrelaunchActivated);
-            });
-        }
-
-        private void OnNavigationFailed(object sender, NavigationFailedEventArgs e)
-        {
-            throw new Exception("Failed to load Page " + e.SourcePageType.FullName);
-        }
-
-        private void OnSuspending(object sender, SuspendingEventArgs e)
-        {
-            SuspendingDeferral deferral = e.SuspendingOperation.GetDeferral();
-            //TODO: Save application state and stop any background activity
-            deferral.Complete();
-        }
-
-        protected override void OnFileActivated(FileActivatedEventArgs args)
-        {
-            base.OnFileActivated(args);
-            Utils.C0.Run(async delegate
-            {
-                await MainPage.OnFileActivated(args);
-                await Startup(false);
-            });
         }
     }
 }

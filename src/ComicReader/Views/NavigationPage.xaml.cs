@@ -1,9 +1,9 @@
 using System;
 using System.ComponentModel;
-using Windows.UI.Input;
-using Windows.UI.Xaml;
-using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Input;
+using Microsoft.UI.Input;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using ComicReader.Common.Router;
 using ComicReader.Common;
 using ComicReader.Utils;

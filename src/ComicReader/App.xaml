@@ -31,14 +31,12 @@
                             <SolidColorBrush x:Key="PageDemoBrush" Color="#60FFFFFF" />
                             <muxm:AcrylicBrush
                                 x:Key="ReaderBottomTileBackground"
-                                BackgroundSource="Backdrop"
                                 TintColor="MidnightBlue"
                                 TintLuminosityOpacity="0.6"
                                 TintOpacity="0.0" />
                             <SolidColorBrush x:Key="ReaderBottomTileButtonFillForeground" Color="{ThemeResource SystemAccentColorLight2}" />
                             <muxm:AcrylicBrush
                                 x:Key="SidePaneBackground"
-                                BackgroundSource="Backdrop"
                                 TintColor="MidnightBlue"
                                 TintLuminosityOpacity="0.85"
                                 TintOpacity="0.0" />
@@ -47,7 +45,6 @@
                             <SolidColorBrush x:Key="TagButtonBackground" Color="#505050" />
                             <muxm:AcrylicBrush
                                 x:Key="TitleBarBackground"
-                                BackgroundSource="HostBackdrop"
                                 FallbackColor="#202020"
                                 TintColor="#202020"
                                 TintLuminosityOpacity="0.85"
@@ -74,14 +71,12 @@
                             <SolidColorBrush x:Key="PageDemoBrush" Color="#30000000" />
                             <muxm:AcrylicBrush
                                 x:Key="ReaderBottomTileBackground"
-                                BackgroundSource="Backdrop"
                                 TintColor="#FFFFFF"
                                 TintLuminosityOpacity="0.6"
                                 TintOpacity="0.0" />
                             <SolidColorBrush x:Key="ReaderBottomTileButtonFillForeground" Color="{ThemeResource SystemAccentColorDark1}" />
                             <muxm:AcrylicBrush
                                 x:Key="SidePaneBackground"
-                                BackgroundSource="Backdrop"
                                 TintColor="#FFFFFF"
                                 TintLuminosityOpacity="0.85"
                                 TintOpacity="0.0" />
@@ -90,7 +85,6 @@
                             <SolidColorBrush x:Key="TagButtonBackground" Color="#DADADA" />
                             <muxm:AcrylicBrush
                                 x:Key="TitleBarBackground"
-                                BackgroundSource="HostBackdrop"
                                 FallbackColor="#FFFFFF"
                                 TintColor="#FFFFFF"
                                 TintLuminosityOpacity="0.85"

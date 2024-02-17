@@ -1,7 +1,7 @@
 using ComicReader.Utils;
 using System;
 using System.Collections.Generic;
-using Windows.UI.Xaml;
+using Microsoft.UI.Xaml;
 
 namespace ComicReader.DesignData
 {

@@ -4,12 +4,11 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
-using Windows.UI.Xaml;
-using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Data;
-using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media.Imaging;
-using muxc = Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Data;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media.Imaging;
 using ComicReader.Common;
 using ComicReader.Common.Router;
 using ComicReader.Database;
@@ -309,7 +308,7 @@ namespace ComicReader.Views
 
                 // update tab header
                 GetTabId().Tab.Header = tab_title;
-                GetTabId().Tab.IconSource = new muxc.SymbolIconSource() { Symbol = Symbol.Find };
+                GetTabId().Tab.IconSource = new SymbolIconSource() { Symbol = Symbol.Find };
 
                 // start searching
                 Shared.IsLoading = true;

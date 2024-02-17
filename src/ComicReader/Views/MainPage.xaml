@@ -8,7 +8,6 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
     xmlns:primitiveContract7Present="using:Microsoft.UI.Xaml.Controls.Primitives?IsApiContractPresent(Windows.Foundation.UniversalApiContract,7)"
-    muxc:BackdropMaterial.ApplyToRootOrPageBackground="True"
     KeyDown="OnKeyDown"
     mc:Ignorable="d">
 
@@ -162,7 +161,6 @@
             x:Name="RootTabView"
             VerticalAlignment="Stretch"
             AddTabButtonClick="OnAddTabButtonClicked"
-            Background="{ThemeResource TitleBarBackground}"
             SelectionChanged="OnTabViewSelectionChanged"
             Style="{StaticResource MainPageTabViewStyle}"
             TabCloseRequested="OnTabCloseRequested">

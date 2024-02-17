@@ -1,7 +1,6 @@
 using ComicReader.Common;
 using ComicReader.Common.Router;
-using Windows.UI.Xaml.Controls;
-using muxc = Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls;
 
 namespace ComicReader.Views
 {
@@ -16,7 +15,7 @@ namespace ComicReader.Views
         {
             base.OnStart(p);
             p.TabId.Tab.Header = Utils.StringResourceProvider.GetResourceString("Help");
-            p.TabId.Tab.IconSource = new muxc.SymbolIconSource() { Symbol = Symbol.Help };
+            p.TabId.Tab.IconSource = new SymbolIconSource() { Symbol = Symbol.Help };
         }
 
         public override void OnResume()

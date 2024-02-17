@@ -24,7 +24,7 @@ namespace ComicReader.Utils
             }
 
             string timestamp = "[" + DateTimeOffset.Now.ToString("G") + "]";
-            content = timestamp + " " + content + "\n";
+            content = timestamp + " " + content;
 
             if (verbose)
             {
@@ -78,7 +78,7 @@ namespace ComicReader.Utils
             {
                 return TaskException.Failure;
             }
-            await FileIO.AppendTextAsync(log_file, content);
+            await FileIO.AppendTextAsync(log_file, content + "\n");
             return TaskException.Success;
         }
     }

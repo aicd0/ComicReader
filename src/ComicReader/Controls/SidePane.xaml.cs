@@ -1,6 +1,5 @@
-﻿using System;
-using Windows.UI.Xaml.Controls;
-using muxc = Microsoft.UI.Xaml.Controls;
+using System;
+using Microsoft.UI.Xaml.Controls;
 using ComicReader.Views;
 using ComicReader.Common.Router;
 
@@ -15,9 +14,9 @@ namespace ComicReader.Controls
             InitializeComponent();
         }
 
-        private void OnNavPaneSelectionChanged(muxc.NavigationView sender, muxc.NavigationViewSelectionChangedEventArgs args)
+        private void OnNavPaneSelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
         {
-            string item = (string)((muxc.NavigationViewItem)args.SelectedItem).Content;
+            string item = (string)((NavigationViewItem)args.SelectedItem).Content;
             
             NavigationParams nav_params = new NavigationParams
             {

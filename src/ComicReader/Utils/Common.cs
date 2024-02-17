@@ -1,17 +1,18 @@
+using CommunityToolkit.WinUI;
+using Microsoft.UI.Dispatching;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading;
 using System.Threading.Tasks;
-using Windows.ApplicationModel.Core;
+using Windows.Foundation.Metadata;
 using Windows.Security.Cryptography;
 using Windows.Storage.Streams;
-using Windows.UI.Core;
 
 namespace ComicReader.Utils
 {
@@ -19,43 +20,12 @@ namespace ComicReader.Utils
     {
         public static void Run(Action action)
         {
-            try
-            {
-                action();
-            }
-            catch (Exception e)
-            {
-                throw e;
-            }
+            action();
         }
 
-        public static async Task Sync(DispatchedHandler callback)
+        public static async Task Sync(Action callback)
         {
-            await CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, callback);
-        }
-
-        public static MemoryStream SerializeToMemoryStream(object o)
-        {
-            MemoryStream stream = new MemoryStream();
-            IFormatter formatter = new BinaryFormatter();
-            formatter.Serialize(stream, o);
-            return stream;
-        }
-
-        public static object DeserializeFromMemoryStream(MemoryStream stream)
-        {
-            IFormatter formatter = new BinaryFormatter();
-            stream.Seek(0, SeekOrigin.Begin);
-            object o = formatter.Deserialize(stream);
-            return o;
-        }
-
-        public static async Task<object> DeserializeFromStream(Stream stream)
-        {
-            MemoryStream mstream = new MemoryStream();
-            mstream.Seek(0, SeekOrigin.Begin);
-            await stream.CopyToAsync(mstream);
-            return DeserializeFromMemoryStream(mstream);
+            await App.Window.DispatcherQueue.EnqueueAsync(callback, DispatcherQueuePriority.Normal);
         }
 
         public static async Task WaitFor(Func<bool> signal, int timeout_milliseconds = -1)
@@ -81,6 +51,16 @@ namespace ComicReader.Utils
                     sw.SpinOnce();
                 }
             });
+        }
+
+        public static async Task<ContentDialogResult> ShowDialogAsync(ContentDialog dialog, XamlRoot root)
+        {
+            // https://learn.microsoft.com/en-us/windows/apps/design/controls/dialogs-and-flyouts/dialogs
+            if (ApiInformation.IsApiContractPresent("Windows.Foundation.UniversalApiContract", 8))
+            {
+                dialog.XamlRoot = root;
+            }
+            return await dialog.ShowAsync();
         }
 
         public static IBuffer GetBufferFromString(string _string)

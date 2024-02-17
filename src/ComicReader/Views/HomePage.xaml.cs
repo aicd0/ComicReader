@@ -4,11 +4,10 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Threading.Tasks;
-using Windows.UI.Xaml;
-using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media.Imaging;
-using muxc = Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media.Imaging;
 using ComicReader.Common.Router;
 using ComicReader.Database;
 using ComicReader.DesignData;
@@ -77,7 +76,7 @@ namespace ComicReader.Views
             ComicData.OnUpdated += OnComicDataUpdated;
 
             GetTabId().Tab.Header = Utils.StringResourceProvider.GetResourceString("NewTab");
-            GetTabId().Tab.IconSource = new muxc.SymbolIconSource() { Symbol = Symbol.Document };
+            GetTabId().Tab.IconSource = new SymbolIconSource() { Symbol = Symbol.Document };
             
             Utils.C0.Run(async delegate
             {

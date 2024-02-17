@@ -5,12 +5,12 @@
     xmlns:common="using:ComicReader.Common"
     xmlns:controls="using:ComicReader.Controls"
     xmlns:converters="using:ComicReader.Converters"
+    xmlns:cwu="using:CommunityToolkit.WinUI.UI"
+    xmlns:cwuc="using:CommunityToolkit.WinUI.UI.Controls"
+    xmlns:cwum="using:CommunityToolkit.WinUI.UI.Media"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:data="using:ComicReader.DesignData"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:mtuu="using:Microsoft.Toolkit.Uwp.UI"
-    xmlns:mtuuc="using:Microsoft.Toolkit.Uwp.UI.Controls"
-    xmlns:mtuum="using:Microsoft.Toolkit.Uwp.UI.Media"
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
     mc:Ignorable="d">
 
@@ -270,7 +270,7 @@
             <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
 
             <!--  Shadows  -->
-            <mtuum:AttachedCardShadow
+            <cwum:AttachedCardShadow
                 x:Key="CommonShadow"
                 Opacity="0.1"
                 Offset="0" />
@@ -298,7 +298,7 @@
                 Visibility="{x:Bind Shared.IsReaderStatusTextBlockVisible, Mode=OneWay}" />
 
             <!--  Reader  -->
-            <Grid PointerEntered="OnReaderPointerEntered" PointerExited="OnReaderPointerExited">
+            <Grid PointerEntered="OnReaderPointerEntered">
                 <Grid x:Name="ManipulationReference" />
 
                 <!--  Vertical  -->
@@ -410,49 +410,48 @@
                 Background="{ThemeResource ReaderBottomTileBackground}"
                 BorderThickness="0"
                 CornerRadius="24"
-                Opacity="0">
-                <Grid>
-                    <StackPanel
-                        HorizontalAlignment="Left"
+                Opacity="0"
+                PointerEntered="OnBottomGridPointerEntered">
+                <StackPanel
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Center"
+                    Orientation="Horizontal">
+                    <Grid Width="5" />
+
+                    <!--  Pin  -->
+                    <Button
+                        Click="OnPinClick"
+                        Style="{StaticResource ReaderBottomTileButtonStyle}"
+                        ToolTipService.ToolTip="{x:Bind Shared.PinButtonToolTip, Mode=OneWay}">
+                        <Grid>
+                            <FontIcon
+                                FontSize="15"
+                                Glyph="&#xE840;"
+                                Visibility="{x:Bind Shared.BottomTilePinned, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
+                            <FontIcon
+                                FontSize="15"
+                                Foreground="{ThemeResource ReaderBottomTileButtonFillForeground}"
+                                Glyph="&#xE840;"
+                                Visibility="{x:Bind Shared.BottomTilePinned, Mode=OneWay}" />
+                            <FontIcon
+                                FontSize="15"
+                                Foreground="{ThemeResource ReaderBottomTileButtonFillForeground}"
+                                Glyph="&#xE842;"
+                                Visibility="{x:Bind Shared.BottomTilePinned, Mode=OneWay}" />
+                        </Grid>
+                    </Button>
+
+                    <!--  Page indicator  -->
+                    <AppBarSeparator Margin="2.5,0" />
+
+                    <TextBlock
+                        x:Name="PageIndicator"
+                        Margin="12.5,0,0,2"
                         VerticalAlignment="Center"
-                        Orientation="Horizontal">
-                        <Grid Width="5" />
-
-                        <!--  Pin  -->
-                        <Button
-                            Click="OnPinClick"
-                            Style="{StaticResource ReaderBottomTileButtonStyle}"
-                            ToolTipService.ToolTip="{x:Bind Shared.PinButtonToolTip, Mode=OneWay}">
-                            <Grid>
-                                <FontIcon
-                                    FontSize="15"
-                                    Glyph="&#xE840;"
-                                    Visibility="{x:Bind Shared.BottomTilePinned, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
-                                <FontIcon
-                                    FontSize="15"
-                                    Foreground="{ThemeResource ReaderBottomTileButtonFillForeground}"
-                                    Glyph="&#xE840;"
-                                    Visibility="{x:Bind Shared.BottomTilePinned, Mode=OneWay}" />
-                                <FontIcon
-                                    FontSize="15"
-                                    Foreground="{ThemeResource ReaderBottomTileButtonFillForeground}"
-                                    Glyph="&#xE842;"
-                                    Visibility="{x:Bind Shared.BottomTilePinned, Mode=OneWay}" />
-                            </Grid>
-                        </Button>
-
-                        <!--  Page indicator  -->
-                        <AppBarSeparator Margin="2.5,0" />
-
-                        <TextBlock
-                            x:Name="PageIndicator"
-                            Margin="12.5,0,0,2"
-                            VerticalAlignment="Center"
-                            FontSize="14"
-                            FontWeight="SemiBold"
-                            Text="- / -" />
-                    </StackPanel>
-                </Grid>
+                        FontSize="14"
+                        FontWeight="SemiBold"
+                        Text="- / -" />
+                </StackPanel>
             </Grid>
 
             <!--  Fullscreen button  -->
@@ -499,7 +498,7 @@
                     <GridView.ItemContainerStyle>
                         <Style TargetType="GridViewItem">
                             <Setter Property="Margin" Value="10" />
-                            <Setter Property="mtuu:Effects.Shadow" Value="{StaticResource CommonShadow}" />
+                            <Setter Property="cwu:Effects.Shadow" Value="{StaticResource CommonShadow}" />
                         </Style>
                     </GridView.ItemContainerStyle>
                     <GridView.ItemTemplate>
@@ -521,7 +520,8 @@
                 x:Name="TitleBarArea"
                 Grid.Row="0"
                 VerticalAlignment="Top"
-                Background="Transparent" />
+                Background="Transparent"
+                PointerEntered="OnTitleBarAreaPointerEntered" />
 
             <SplitView
                 x:Name="InfoPane"
@@ -532,7 +532,7 @@
 
                 <!--  Information Pane  -->
                 <SplitView.Pane>
-                    <Grid>
+                    <Grid PointerEntered="OnInfoPanePointerEntered">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*" />
                             <RowDefinition Height="Auto" />
@@ -634,7 +634,7 @@
                                                         </DataTemplate>
                                                     </muxc:ItemsRepeater.ItemTemplate>
                                                     <muxc:ItemsRepeater.Layout>
-                                                        <mtuuc:WrapLayout HorizontalSpacing="5" VerticalSpacing="5" />
+                                                        <cwuc:WrapLayout HorizontalSpacing="5" VerticalSpacing="5" />
                                                     </muxc:ItemsRepeater.Layout>
                                                 </muxc:ItemsRepeater>
                                             </StackPanel>

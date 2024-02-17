@@ -1,6 +1,7 @@
-using Windows.UI.Xaml;
-using Windows.UI.Xaml.Controls;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using ComicReader.DesignData;
+using Microsoft.UI.Xaml.Input;
 
 namespace ComicReader.Controls
 {
@@ -31,7 +32,7 @@ namespace ComicReader.Controls
             }
         }
 
-        private void OnUserControlTapped(object sender, Windows.UI.Xaml.Input.TappedRoutedEventArgs e)
+        private void OnUserControlTapped(object sender, TappedRoutedEventArgs e)
         {
             // prevent tap events being dispatched to other controls
             e.Handled = true;

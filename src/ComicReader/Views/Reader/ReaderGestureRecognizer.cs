@@ -1,7 +1,7 @@
 using ComicReader.Utils;
 using System;
 using System.Collections.Generic;
-using Windows.UI.Input;
+using Microsoft.UI.Input;
 
 namespace ComicReader.Views.Reader
 {

@@ -1,24 +1,11 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
+    <TargetFramework>net8.0-windows10.0.22621.0</TargetFramework>
     <AppxBundlePlatforms>x86|x64|arm|arm64</AppxBundlePlatforms>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
-    <ProjectGuid>{D5E797FD-AD3D-477F-8649-5EAE522BA061}</ProjectGuid>
-    <OutputType>AppContainerExe</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ComicReader</RootNamespace>
-    <AssemblyName>ComicReader</AssemblyName>
+    <OutputType>WinExe</OutputType>
     <DefaultLanguage>en-US</DefaultLanguage>
-    <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
-    <TargetPlatformVersion Condition=" '$(TargetPlatformVersion)' == '' ">10.0.22000.0</TargetPlatformVersion>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
-    <MinimumVisualStudioVersion>14</MinimumVisualStudioVersion>
-    <FileAlignment>512</FileAlignment>
-    <ProjectTypeGuids>{A5A43C5B-DE2A-4C0C-9213-0A381AF9435A};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
-    <WindowsXamlEnableOverview>true</WindowsXamlEnableOverview>
-    <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
     <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
     <PackageCertificateKeyFile>ComicReader_TemporaryKey.pfx</PackageCertificateKeyFile>
     <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
@@ -31,250 +18,70 @@
     <GenerateTemporaryStoreCertificate>True</GenerateTemporaryStoreCertificate>
     <PackageCertificateThumbprint>
     </PackageCertificateThumbprint>
+    <UseWinUI>true</UseWinUI>
+    <Platforms>x86;x64;arm64</Platforms>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <EnablePreviewMsixTooling>true</EnablePreviewMsixTooling>
+    <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+    <PublishProfile>win10-$(Platform).pubxml</PublishProfile><EnableMsixTooling>true</EnableMsixTooling>
+<PublishProfile>Properties\PublishProfiles\win10-$(Platform).pubxml</PublishProfile>
+<CreateMSIXPackage>False</CreateMSIXPackage>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
-    <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\x86\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
     <NoWarn>;2008</NoWarn>
-    <DebugType>full</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <ErrorReport>prompt</ErrorReport>
-    <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
     <OutputPath>bin\x86\Release\</OutputPath>
     <DefineConstants>TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
-    <Optimize>true</Optimize>
     <NoWarn>;2008</NoWarn>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x86</PlatformTarget>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <ErrorReport>prompt</ErrorReport>
-    <Prefer32Bit>true</Prefer32Bit>
     <UseDotNetNativeToolchain>true</UseDotNetNativeToolchain>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|ARM'">
-    <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\ARM\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
     <NoWarn>;2008</NoWarn>
-    <DebugType>full</DebugType>
-    <PlatformTarget>ARM</PlatformTarget>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <ErrorReport>prompt</ErrorReport>
-    <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|ARM'">
     <OutputPath>bin\ARM\Release\</OutputPath>
     <DefineConstants>TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
-    <Optimize>true</Optimize>
     <NoWarn>;2008</NoWarn>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>ARM</PlatformTarget>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <ErrorReport>prompt</ErrorReport>
-    <Prefer32Bit>true</Prefer32Bit>
     <UseDotNetNativeToolchain>true</UseDotNetNativeToolchain>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|ARM64'">
-    <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\ARM64\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
     <NoWarn>;2008</NoWarn>
-    <DebugType>full</DebugType>
-    <PlatformTarget>ARM64</PlatformTarget>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <ErrorReport>prompt</ErrorReport>
-    <Prefer32Bit>true</Prefer32Bit>
     <UseDotNetNativeToolchain>true</UseDotNetNativeToolchain>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|ARM64'">
     <OutputPath>bin\ARM64\Release\</OutputPath>
     <DefineConstants>TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
-    <Optimize>true</Optimize>
     <NoWarn>;2008</NoWarn>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>ARM64</PlatformTarget>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <ErrorReport>prompt</ErrorReport>
-    <Prefer32Bit>true</Prefer32Bit>
     <UseDotNetNativeToolchain>true</UseDotNetNativeToolchain>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
-    <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\x64\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
     <NoWarn>;2008</NoWarn>
-    <DebugType>full</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <ErrorReport>prompt</ErrorReport>
-    <Prefer32Bit>true</Prefer32Bit>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
     <OutputPath>bin\x64\Release\</OutputPath>
     <DefineConstants>TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
-    <Optimize>true</Optimize>
     <NoWarn>;2008</NoWarn>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>x64</PlatformTarget>
     <UseVSHostingProcess>false</UseVSHostingProcess>
-    <ErrorReport>prompt</ErrorReport>
-    <Prefer32Bit>true</Prefer32Bit>
     <UseDotNetNativeToolchain>true</UseDotNetNativeToolchain>
   </PropertyGroup>
-  <PropertyGroup>
-    <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
-  </PropertyGroup>
-  <ItemGroup>
-    <Compile Include="App.xaml.cs">
-      <DependentUpon>App.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Common\AppStatusPreserver.cs" />
-    <Compile Include="Common\Constants\EventId.cs" />
-    <Compile Include="Common\Constants\KVLib.cs" />
-    <Compile Include="Common\NavigatablePage.cs" />
-    <Compile Include="Common\Router\IPageTrait.cs" />
-    <Compile Include="Common\Router\NavigationManager.cs" />
-    <Compile Include="Common\Structs\LastAppStatusData.cs" />
-    <Compile Include="DesignData\ReaderImageViewModel.cs" />
-    <Compile Include="Utils\CancellationSession.cs" />
-    <Compile Include="Views\Reader\ReaderGestureRecognizer.cs" />
-    <Compile Include="Views\Reader\ReaderModel.cs" />
-    <Compile Include="Common\StatefulPage.cs" />
-    <Compile Include="Common\Structs\FrameOffsetData.cs" />
-    <Compile Include="Common\Structs\SetScrollViewerContext.cs" />
-    <Compile Include="Common\Structs\ZoomCoefficientResult.cs" />
-    <Compile Include="Controls\ComicItemHorizontal.xaml.cs">
-      <DependentUpon>ComicItemHorizontal.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Controls\ComicItemVertical.xaml.cs">
-      <DependentUpon>ComicItemVertical.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Controls\FolderItemDetailed.xaml.cs">
-      <DependentUpon>FolderItemDetailed.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Controls\HotkeyInfo.xaml.cs">
-      <DependentUpon>HotkeyInfo.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Controls\PageDemoDual.xaml.cs">
-      <DependentUpon>PageDemoDual.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Controls\PageDemoSingle.xaml.cs">
-      <DependentUpon>PageDemoSingle.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Controls\ReaderFrame.xaml.cs">
-      <DependentUpon>ReaderFrame.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Controls\ReaderPreviewImage.xaml.cs">
-      <DependentUpon>ReaderPreviewImage.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Controls\ReaderSettingPanel.xaml.cs">
-      <DependentUpon>ReaderSettingPanel.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Controls\SettingExpander.xaml.cs">
-      <DependentUpon>SettingExpander.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Controls\TagButton.xaml.cs">
-      <DependentUpon>TagButton.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Converters\BooleanNegationConverter.cs" />
-    <Compile Include="Converters\BooleanToDoubleConverter.cs" />
-    <Compile Include="Converters\BooleanToVisibilityConverter.cs" />
-    <Compile Include="Converters\FavoritesItemTemplateSelector.cs" />
-    <Compile Include="Converters\FolderItemTemplateSelector.cs" />
-    <Compile Include="Converters\SearchResultItemContainerStyleSelector.cs" />
-    <Compile Include="Database\ComicFolderData.cs" />
-    <Compile Include="Database\ComicArchiveData.cs" />
-    <Compile Include="Database\ComicPdfData.cs" />
-    <Compile Include="Database\SettingData.cs" />
-    <Compile Include="Database\ComicData.cs" />
-    <Compile Include="Database\FavoriteData.cs" />
-    <Compile Include="Database\HistoryData.cs" />
-    <Compile Include="Database\SqliteDatabase.cs" />
-    <Compile Include="Database\XmlDatabase.cs" />
-    <Compile Include="DesignData\ComicItemViewModel.cs" />
-    <Compile Include="DesignData\FavoriteItemViewModel.cs" />
-    <Compile Include="DesignData\HistoryViewModel.cs" />
-    <Compile Include="DesignData\ReaderFrameViewModel.cs" />
-    <Compile Include="DesignData\ReaderImagePreviewViewModel.cs" />
-    <Compile Include="DesignData\ReaderSettingViewModel.cs" />
-    <Compile Include="DesignData\TagViewModel.cs" />
-    <Compile Include="Common\AppInfoProvider.cs" />
-    <Compile Include="Keys.cs" />
-    <Compile Include="Utils\Extensions.cs" />
-    <Compile Include="Utils\KeyFrameAnimation.cs" />
-    <Compile Include="Utils\ArchiveUtils.cs" />
-    <Compile Include="Utils\BaseTransaction.cs" />
-    <Compile Include="Utils\Debug.cs" />
-    <Compile Include="Utils\EventBus.cs" />
-    <Compile Include="Utils\KVDatabase\KVDatabase.cs" />
-    <Compile Include="Utils\KVDatabase\KVDatabaseLib.cs" />
-    <Compile Include="Utils\KVDatabase\KVDatabaseMethod.cs" />
-    <Compile Include="Utils\KVDatabase\KVDatabaseMethodLiteDB.cs" />
-    <Compile Include="Utils\LiveData.cs" />
-    <Compile Include="Utils\ScreenUtils.cs" />
-    <Compile Include="Utils\StorageItemSearchEngine.cs" />
-    <Compile Include="Utils\Image\ImageLoader.cs" />
-    <Compile Include="Utils\Stopwatch.cs" />
-    <Compile Include="Utils\Storage.cs" />
-    <Compile Include="Utils\StringResourceProvider.cs" />
-    <Compile Include="Utils\Win32IO.cs" />
-    <Compile Include="DesignData\FolderItemViewModel.cs" />
-    <Compile Include="Database\Database.cs" />
-    <Compile Include="Utils\TaskQueue.cs" />
-    <Compile Include="Utils\CancellationLock.cs" />
-    <Compile Include="Utils\Heap.cs" />
-    <Compile Include="Common\Filter.cs" />
-    <Compile Include="Utils\StringUtils.cs" />
-    <Compile Include="Utils\ObservableCollectionPlus.cs" />
-    <Compile Include="Utils\Common.cs" />
-    <Compile Include="Views\HelpPage.xaml.cs">
-      <DependentUpon>HelpPage.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Views\HomePage.xaml.cs">
-      <DependentUpon>HomePage.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Views\ChooseLocationsDialog.xaml.cs">
-      <DependentUpon>ChooseLocationsDialog.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Views\NavigationPage.xaml.cs">
-      <DependentUpon>NavigationPage.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Views\EditComicInfoDialog.xaml.cs">
-      <DependentUpon>EditComicInfoDialog.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Views\FavoritePage.xaml.cs">
-      <DependentUpon>FavoritePage.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Views\HistoryPage.xaml.cs">
-      <DependentUpon>HistoryPage.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Views\Reader\ReaderPage.xaml.cs">
-      <DependentUpon>ReaderPage.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Views\MainPage.xaml.cs">
-      <DependentUpon>MainPage.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Views\SearchPage.xaml.cs">
-      <DependentUpon>SearchPage.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Views\SettingsPage.xaml.cs">
-      <DependentUpon>SettingsPage.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Controls\SidePane.xaml.cs">
-      <DependentUpon>SidePane.xaml</DependentUpon>
-    </Compile>
-    <Compile Include="Controls\TitleBar.xaml.cs">
-      <DependentUpon>TitleBar.xaml</DependentUpon>
-    </Compile>
-  </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">
       <SubType>Designer</SubType>
@@ -326,7 +133,6 @@
     <Content Include="Assets\Wide310x150Logo.scale-125.png" />
     <Content Include="Assets\Wide310x150Logo.scale-150.png" />
     <Content Include="Assets\Wide310x150Logo.scale-400.png" />
-    <None Include="ComicReader_TemporaryKey.pfx" />
     <None Include="Package.StoreAssociation.xml" />
     <Content Include="Properties\Default.rd.xml" />
     <Content Include="Assets\LockScreenLogo.scale-200.png" />
@@ -337,205 +143,20 @@
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
   </ItemGroup>
   <ItemGroup>
-    <ApplicationDefinition Include="App.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </ApplicationDefinition>
-    <Page Include="Controls\ComicItemHorizontal.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Controls\ComicItemVertical.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Controls\FolderItemDetailed.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Controls\HotkeyInfo.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Controls\PageDemoDual.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Controls\PageDemoSingle.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Controls\ReaderFrame.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Controls\ReaderPreviewImage.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Controls\ReaderSettingPanel.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Controls\SettingExpander.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Controls\TagButton.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Resources\Styles\GridViewItem.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Resources\Styles\AdaptiveGridView.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Resources\Styles\AppBarButton.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Resources\Styles\AppBarToggleButton.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Resources\Styles\AutoSuggestBox.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Resources\Styles\Button.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Resources\Styles\ListViewHeaderItem.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Resources\Styles\ListViewItem.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Resources\Styles\RatingControl.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Resources\Styles\TextBlock.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Resources\Styles\TextBox.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Resources\Styles\ToggleButton.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Views\HelpPage.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Views\HomePage.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Views\ChooseLocationsDialog.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Views\NavigationPage.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Views\EditComicInfoDialog.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Views\FavoritePage.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Views\HistoryPage.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Views\Reader\ReaderPage.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Views\MainPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
-    </Page>
-    <Page Include="Views\SearchPage.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Views\SettingsPage.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Controls\SidePane.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="Controls\TitleBar.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
-  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.WinUI.UI.Controls.Markdown" Version="7.1.2" />
+    <PackageReference Include="CommunityToolkit.WinUI.UI.Controls.Primitives" Version="7.1.2" />
+    <PackageReference Include="CommunityToolkit.WinUI.UI.Media" Version="7.1.2" />
     <PackageReference Include="LiteDB">
       <Version>5.0.15</Version>
     </PackageReference>
-    <PackageReference Include="Microsoft.AppCenter.Analytics">
-      <Version>5.0.1</Version>
-    </PackageReference>
-    <PackageReference Include="Microsoft.AppCenter.Crashes">
-      <Version>5.0.1</Version>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Data.Sqlite">
-      <Version>6.0.1</Version>
-    </PackageReference>
-    <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
-      <Version>6.2.13</Version>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Toolkit.Uwp.UI">
-      <Version>7.1.2</Version>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Toolkit.Uwp.UI.Behaviors">
-      <Version>7.1.2</Version>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Toolkit.Uwp.UI.Controls">
-      <Version>7.1.2</Version>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Toolkit.Uwp.UI.Media">
-      <Version>7.1.2</Version>
-    </PackageReference>
-    <PackageReference Include="Microsoft.UI.Xaml">
-      <Version>2.7.0</Version>
-    </PackageReference>
+    <PackageReference Include="Microsoft.AppCenter.Analytics" Version="5.0.3" />
+    <PackageReference Include="Microsoft.AppCenter.Crashes" Version="5.0.3" />
     <PackageReference Include="SharpCompress">
       <Version>0.31.0</Version>
     </PackageReference>
+    <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.1" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.4.231219000" />
+    <PackageReference Include="Microsoft.Graphics.Win2D" Version="1.1.0" />
+    <PackageReference Include="Microsoft.Windows.Compatibility" Version="8.0.1" />
   </ItemGroup>
-  <ItemGroup>
-    <PRIResource Include="Resources\Strings\zh-cn\Resources.resw" />
-  </ItemGroup>
-  <ItemGroup>
-    <PRIResource Include="Resources\Strings\en\Resources.resw" />
-  </ItemGroup>
-  <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
-    <VisualStudioVersion>14.0</VisualStudioVersion>
-  </PropertyGroup>
-  <Import Project="$(MSBuildExtensionsPath)\Microsoft\WindowsXaml\v$(VisualStudioVersion)\Microsoft.Windows.UI.Xaml.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>

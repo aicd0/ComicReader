@@ -107,18 +107,7 @@ namespace ComicReader.Database
 
         public static async Task<bool> AddComicFolderUsingPicker()
         {
-            FolderPicker picker;
-            try
-            {
-                picker = new FolderPicker();
-            }
-            catch (Exception)
-            {
-                // The RPC server is unavailable
-                // Server RPC non disponibile
-                System.Diagnostics.Debug.Assert(false);
-                return false;
-            }
+            FolderPicker picker = InitializeWithWindow(new FolderPicker(), App.WindowHandle);
             picker.FileTypeFilter.Add("*");
             StorageFolder folder = await picker.PickSingleFolderAsync();
             if (folder == null)
@@ -127,6 +116,12 @@ namespace ComicReader.Database
             }
             TaskException r = await AddComicFolder(folder, true);
             return r.Successful();
+        }
+
+        private static FolderPicker InitializeWithWindow(FolderPicker obj, IntPtr windowHandle)
+        {
+            WinRT.Interop.InitializeWithWindow.Initialize(obj, windowHandle);
+            return obj;
         }
     }
 }

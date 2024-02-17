@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "ComicReader (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "ComicReader (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}

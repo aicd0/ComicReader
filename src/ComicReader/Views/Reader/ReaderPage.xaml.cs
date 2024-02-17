@@ -2,20 +2,18 @@
 //#define DEBUG_LOG_POINTER
 #endif
 
-using muxc = Microsoft.UI.Xaml.Controls;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using Windows.Storage;
-using Windows.System;
 using Windows.UI.Core;
-using Windows.UI.Input;
-using Windows.UI.Xaml;
-using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media.Imaging;
+using Microsoft.UI.Input;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media.Imaging;
 using ComicReader.Common;
 using ComicReader.Common.Router;
 using ComicReader.Controls;
@@ -25,6 +23,7 @@ using ComicReader.Utils.KVDatabase;
 using ComicReader.Common.Constants;
 using ComicReader.Utils;
 using ComicReader.Utils.Image;
+using Windows.System;
 
 namespace ComicReader.Views.Reader
 {
@@ -306,7 +305,6 @@ namespace ComicReader.Views.Reader
         private bool mBottomTileShowed = false;
         private bool mBottomTileHold = false;
         private bool mBottomTilePointerIn = false;
-        private bool mMonitoringPointer = false;
         private DateTimeOffset mBottomTileHideRequestTime = DateTimeOffset.Now;
 
         // Locks
@@ -357,7 +355,7 @@ namespace ComicReader.Views.Reader
 
             ComicData comic = (ComicData)GetTabId().RequestArgs;
             GetTabId().Tab.Header = comic.Title;
-            GetTabId().Tab.IconSource = new muxc.SymbolIconSource { Symbol = Symbol.Pictures };
+            GetTabId().Tab.IconSource = new SymbolIconSource { Symbol = Symbol.Pictures };
 
             _ = LoadComic(comic);
             if (!comic.IsExternal)
@@ -819,8 +817,8 @@ namespace ComicReader.Views.Reader
             Utils.C0.Run(async delegate
             {
                 // Ctrl key down indicates the user is zooming the page. In that case we shouldn't handle the event.
-                CoreVirtualKeyStates ctrl_state = Window.Current.CoreWindow.GetKeyState(VirtualKey.Control);
-                
+                CoreVirtualKeyStates ctrl_state = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control);
+
                 if (ctrl_state.HasFlag(CoreVirtualKeyStates.Down))
                 {
                     return;
@@ -1056,7 +1054,7 @@ namespace ComicReader.Views.Reader
             });
         }
 
-        private void OnFavoritesUnchecked(object sender, Windows.UI.Xaml.RoutedEventArgs e)
+        private void OnFavoritesUnchecked(object sender, RoutedEventArgs e)
         {
             Utils.C0.Run(async delegate
             {
@@ -1073,7 +1071,7 @@ namespace ComicReader.Views.Reader
             }
         }
 
-        private void OnRatingControlValueChanged(muxc.RatingControl sender, object args)
+        private void OnRatingControlValueChanged(RatingControl sender, object args)
         {
             _comic.SaveRating((int)sender.Value);
         }
@@ -1107,8 +1105,7 @@ namespace ComicReader.Views.Reader
                 }
 
                 EditComicInfoDialog dialog = new EditComicInfoDialog(_comic);
-                ContentDialogResult result = await dialog.ShowAsync();
-
+                ContentDialogResult result = await C0.ShowDialogAsync(dialog, XamlRoot);
                 if (result == ContentDialogResult.Primary)
                 {
                     await LoadComicInfo();
@@ -1193,56 +1190,32 @@ namespace ComicReader.Views.Reader
             Shared.BottomTilePinned = !Shared.BottomTilePinned;
         }
 
-        private void OnReaderPointerExited(object sender, PointerRoutedEventArgs e)
+        private void OnBottomGridPointerEntered(object sender, PointerRoutedEventArgs e)
         {
-            if (e.Pointer.PointerDeviceType != Windows.Devices.Input.PointerDeviceType.Mouse)
-            {
-                return;
-            }
+            OnReaderPointerExited();
+        }
 
-            mBottomTilePointerIn = ScreenUtils.IsPointerInApp() ?? true;
+        private void OnInfoPanePointerEntered(object sender, PointerRoutedEventArgs e)
+        {
+            OnReaderPointerExited();
+        }
 
-            if (mBottomTilePointerIn)
-            {
-                BottomTileShow();
+        private void OnTitleBarAreaPointerEntered(object sender, PointerRoutedEventArgs e)
+        {
+            OnReaderPointerExited();
+        }
 
-                if (!mMonitoringPointer)
-                {
-                    mMonitoringPointer = true;
-
-                    Utils.C0.Run(async delegate
-                    {
-                        while (true)
-                        {
-                            await Task.Delay(500);
-
-                            if (!mBottomTilePointerIn)
-                            {
-                                break;
-                            }
-
-                            if (!(ScreenUtils.IsPointerInApp() ?? true))
-                            {
-                                mBottomTilePointerIn = false;
-                                BottomTileHide(3000);
-                                break;
-                            }
-                        }
-                        mMonitoringPointer = false;
-                    });
-                }
-            }
-            else
-            {
-                BottomTileHide(3000);
-            }
+        private void OnReaderPointerExited()
+        {
+            mBottomTilePointerIn = true;
+            BottomTileShow();
         }
 
         private void OnReaderPointerEntered(object sender, PointerRoutedEventArgs e)
         {
             mBottomTilePointerIn = false;
 
-            if (e.Pointer.PointerDeviceType != Windows.Devices.Input.PointerDeviceType.Mouse)
+            if (e.Pointer.PointerDeviceType != PointerDeviceType.Mouse)
             {
                 return;
             }
@@ -1256,7 +1229,7 @@ namespace ComicReader.Views.Reader
         }
 
         // Tips
-        private void OnReaderTipCloseButtonClick(muxc.InfoBar sender, object args)
+        private void OnReaderTipCloseButtonClick(InfoBar sender, object args)
         {
             KVDatabase.getInstance().getDefaultMethod().SetBoolean(KVLib.TIPS, KEY_TIP_SHOWN, true);
         }
@@ -1264,9 +1237,8 @@ namespace ComicReader.Views.Reader
         // Fullscreen
         private void OnFullscreenBtClicked(object sender, RoutedEventArgs e)
         {
-            if (MainPage.Current.EnterFullscreen()) {
-                Shared.IsFullscreen = true;
-            }
+            MainPage.Current.EnterFullscreen();
+            Shared.IsFullscreen = true;
         }
 
         private void OnBackToWindowBtClicked(object sender, RoutedEventArgs e)

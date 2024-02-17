@@ -3,19 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Activation;
-using Windows.ApplicationModel.Core;
 using Windows.Storage;
 using Windows.Storage.Search;
-using Windows.UI.ViewManagement;
-using Windows.UI.Xaml;
-using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Input;
-using muxc = Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Windowing;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using ComicReader.Common.Router;
 using ComicReader.Database;
 using ComicReader.Common;
 using ComicReader.Common.Constants;
 using ComicReader.Utils;
+using Microsoft.UI;
+using Microsoft.UI.Xaml.Media;
 
 namespace ComicReader.Views
 {
@@ -38,7 +38,6 @@ namespace ComicReader.Views
         private double _rootTabHeight = 0;
         private double _navigationBarHeight = 0;
         private Utils.KeyFrameAnimation _titleBarAnimation;
-        private bool _isFullscreen = false;
 
         public MainPage()
         {
@@ -230,7 +229,7 @@ namespace ComicReader.Views
         private TabIdentifier AddNewTab(IPageTrait pageTrait, object args = null)
         {
             // create a new tab and switch to it.
-            muxc.TabViewItem new_tab = new muxc.TabViewItem
+            TabViewItem new_tab = new TabViewItem
             {
                 Header = "Loading...",
                 Content = new Frame()
@@ -299,12 +298,12 @@ namespace ComicReader.Views
         }
 
         // TabView
-        private void OnAddTabButtonClicked(muxc.TabView sender, object args)
+        private void OnAddTabButtonClicked(TabView sender, object args)
         {
             LoadTab(null, HomePageTrait.Instance, try_reuse: false);
         }
 
-        private TabIdentifier GetTabId(muxc.TabViewItem tab)
+        private TabIdentifier GetTabId(TabViewItem tab)
         {
             foreach (TabIdentifier id in _allTabs)
             {
@@ -316,8 +315,7 @@ namespace ComicReader.Views
             return null;
         }
 
-        private void OnTabCloseRequested(muxc.TabView sender,
-            muxc.TabViewTabCloseRequestedEventArgs args)
+        private void OnTabCloseRequested(TabView sender, TabViewTabCloseRequestedEventArgs args)
         {
             for (int i = 0; i < _allTabs.Count; ++i)
             {
@@ -334,7 +332,7 @@ namespace ComicReader.Views
 
             if (sender.TabItems.Count == 0)
             {
-                CoreApplication.Exit();
+                Application.Current.Exit();
             }
         }
 
@@ -344,7 +342,7 @@ namespace ComicReader.Views
             {
                 return;
             }
-            muxc.TabViewItem tab = (muxc.TabViewItem)e.AddedItems[0];
+            TabViewItem tab = (TabViewItem)e.AddedItems[0];
             _currentTab = GetTabId(tab);
             System.Diagnostics.Debug.Assert(_currentTab != null);
             if (_currentTab != null)
@@ -379,10 +377,12 @@ namespace ComicReader.Views
             if (_currentTab.PageTrait.ImmersiveMode())
             {
                 _tabContentPresenter.Margin = new Thickness(0, 0, 0, 0);
+                RootTabView.Background = (Brush)Application.Current.Resources["TitleBarBackground"];
             }
             else
             {
                 _tabContentPresenter.Margin = new Thickness(0, _rootTabHeight, 0, 0);
+                RootTabView.Background = new SolidColorBrush(Colors.Transparent);
             }
         }
 
@@ -454,53 +454,55 @@ namespace ComicReader.Views
             }
         }
 
-        public static async Task OnFileActivated(FileActivatedEventArgs args)
+        public static void OnFileActivated(FileActivatedEventArgs args)
         {
-            if (args == null || Current == null || Current.RootTabView == null || !Current.RootTabView.IsLoaded)
+            _ = C0.Sync(async delegate
             {
-                s_startupFileArgs = args;
-                return;
-            }
-            ComicData comic = await Current.GetStartupComic(args);
-            if (comic != null)
-            {
-                Current.LoadTab(null, ReaderPageTrait.Instance, comic);
-            }
+                if (args == null || Current == null || Current.RootTabView == null || !Current.RootTabView.IsLoaded)
+                {
+                    s_startupFileArgs = args;
+                    return;
+                }
+                ComicData comic = await Current.GetStartupComic(args);
+                if (comic != null)
+                {
+                    Current.LoadTab(null, ReaderPageTrait.Instance, comic);
+                }
+            });
         }
 
         // Fullscreen
-        public bool EnterFullscreen()
+        public void EnterFullscreen()
         {
-            if (_isFullscreen)
+            if (IsFullScreen())
             {
-                return true;
+                return;
             }
-            if (!ApplicationView.GetForCurrentView().TryEnterFullScreenMode())
-            {
-                return false;
-            }
-            _isFullscreen = true;
+            App.Window.AppWindow.SetPresenter(AppWindowPresenterKind.FullScreen);
             EventBus.Default.With<bool>(EventId.FullscreenChanged).Emit(true);
-            return true;
         }
 
         public void ExitFullscreen()
         {
-            if (!_isFullscreen)
+            if (!IsFullScreen())
             {
                 return;
             }
-            ApplicationView.GetForCurrentView().ExitFullScreenMode();
-            _isFullscreen = false;
+            App.Window.AppWindow.SetPresenter(AppWindowPresenterKind.Default);
             EventBus.Default.With<bool>(EventId.FullscreenChanged).Emit(false);
         }
 
         private void OnRootGridSizeChanged(object sender, SizeChangedEventArgs e)
         {
-            if (!ApplicationView.GetForCurrentView().IsFullScreenMode)
+            if (!IsFullScreen())
             {
                 ExitFullscreen();
             }
+        }
+
+        private bool IsFullScreen()
+        {
+            return App.Window.AppWindow.Presenter.Kind == AppWindowPresenterKind.FullScreen;
         }
     }
 }

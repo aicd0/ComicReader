@@ -2,8 +2,8 @@ using ComicReader.Common.Constants;
 using ComicReader.Utils;
 using System;
 using System.Collections.Generic;
-using Windows.UI.Xaml.Navigation;
-using muxc = Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Navigation;
 
 namespace ComicReader.Common.Router
 {
@@ -15,7 +15,7 @@ namespace ComicReader.Common.Router
 
     internal class TabIdentifier
     {
-        public muxc.TabViewItem Tab;
+        public TabViewItem Tab;
         public IPageTrait PageTrait;
         public object RequestArgs;
         public readonly EventBus TabEventBus = new EventBus();

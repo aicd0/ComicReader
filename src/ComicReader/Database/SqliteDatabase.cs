@@ -1,4 +1,4 @@
-﻿using Microsoft.Data.Sqlite;
+using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -12,16 +12,14 @@ namespace ComicReader.Database
 {
     public class SqlKey
     {
-        public SqlKey(string name, object value = null, bool blob = false)
+        public SqlKey(string name, object value = null)
         {
             Name = name;
             Value = value;
-            IsBlob = blob;
         }
 
         public string Name;
         public object Value;
-        public bool IsBlob;
     }
 
     public class SqliteDatabaseManager
@@ -105,22 +103,9 @@ namespace ComicReader.Database
                 foreach (SqlKey key in keys)
                 {
                     field_names.Add(key.Name);
-
-                    if (key.IsBlob)
-                    {
-                        MemoryStream stream = Utils.C0.SerializeToMemoryStream(key.Value);
-                        blobs.Add(new KeyValuePair<string, MemoryStream>(key.Name, stream));
-
-                        string param = "$len_" + key.Name;
-                        field_vals.Add("zeroblob(" + param + ")");
-                        command.Parameters.AddWithValue(param, stream.Length);
-                    }
-                    else
-                    {
-                        string param = "@" + key.Name;
-                        field_vals.Add(param);
-                        command.Parameters.AddWithValue(param, key.Value);
-                    }
+                    string param = "@" + key.Name;
+                    field_vals.Add(param);
+                    command.Parameters.AddWithValue(param, key.Value);
                 }
 
                 command.CommandText = "INSERT INTO " + table + " (" +
@@ -163,21 +148,9 @@ namespace ComicReader.Database
 
             foreach (SqlKey key in keys)
             {
-                if (key.IsBlob)
-                {
-                    MemoryStream stream = Utils.C0.SerializeToMemoryStream(key.Value);
-                    blobs.Add(new KeyValuePair<string, MemoryStream>(key.Name, stream));
-
-                    string param = "$len_" + key.Name;
-                    fields.Add(key.Name + "=zeroblob(" + param + ")");
-                    command.Parameters.AddWithValue(param, stream.Length);
-                }
-                else
-                {
-                    string param = "@" + key.Name;
-                    fields.Add(key.Name + "=" + param);
-                    command.Parameters.AddWithValue(param, key.Value);
-                }
+                string param = "@" + key.Name;
+                fields.Add(key.Name + "=" + param);
+                command.Parameters.AddWithValue(param, key.Value);
             }
 
             string condition = " WHERE " + primary_key.Name + "=@" + primary_key.Name;

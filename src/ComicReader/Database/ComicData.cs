@@ -8,7 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
-using System.Runtime.Serialization;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
@@ -78,7 +78,13 @@ namespace ComicReader.Database
         private SqlKey KeyProgress => new SqlKey(Field.Progress, Progress);
         private SqlKey KeyLastVisit => new SqlKey(Field.LastVisit, LastVisit);
         private SqlKey KeyLastPosition => new SqlKey(Field.LastPosition, LastPosition);
-        private SqlKey KeyImageAspectRatios => new SqlKey(Field.ImageAspectRatios, ImageAspectRatios, blob: true);
+        private SqlKey KeyImageAspectRatios {
+            get
+            {
+                string serialized = JsonSerializer.Serialize(ImageAspectRatios);
+                return new SqlKey(Field.ImageAspectRatios, serialized);
+            }
+        }
         private SqlKey KeyCoverFileCache => new SqlKey(Field.CoverFileCache, CoverFileCache);
 
         private List<SqlKey> AllFields => new List<SqlKey>
@@ -108,14 +114,7 @@ namespace ComicReader.Database
         {
             get
             {
-                if (_defaultTagsString == null)
-                {
-                    Utils.C0.Sync(delegate
-                    {
-                        _defaultTagsString = Utils.StringResourceProvider.GetResourceString("DefaultTags");
-                    }).Wait();
-                }
-
+                _defaultTagsString ??= Utils.StringResourceProvider.GetResourceString("DefaultTags");
                 return _defaultTagsString;
             }
         }
@@ -743,6 +742,7 @@ namespace ComicReader.Database
             int progress = query.GetInt32(7);
             DateTimeOffset last_visit = query.GetDateTimeOffset(8);
             double last_position = query.GetDouble(9);
+            string image_aspect_ratios_serialized = query.GetString(10);
             string extended_string_1 = query.GetString(11);
 
             // Tags
@@ -794,10 +794,9 @@ namespace ComicReader.Database
 
             try
             {
-                image_aspect_ratios = (List<double>)
-                    await Utils.C0.DeserializeFromStream(query.GetStream(10));
+                image_aspect_ratios = JsonSerializer.Deserialize<List<double>>(image_aspect_ratios_serialized);
             }
-            catch (SerializationException)
+            catch (JsonException)
             {
                 reset_image_aspect_ratios = true;
             }

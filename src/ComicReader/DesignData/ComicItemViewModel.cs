@@ -2,9 +2,8 @@ using ComicReader.Database;
 using ComicReader.Utils;
 using System;
 using System.ComponentModel;
-using Windows.UI.Xaml;
-using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media.Imaging;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Input;
 
 namespace ComicReader.DesignData
 {
