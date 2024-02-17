@@ -4,7 +4,6 @@ using Microsoft.AppCenter;
 using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppLifecycle;
 using System;
-using Windows.ApplicationModel.Core;
 using Windows.Storage;
 using ComicReader.Database;
 using ComicReader.Utils;
@@ -30,8 +29,6 @@ namespace ComicReader
             }
 
             InitializeComponent();
-
-            CoreApplication.EnablePrelaunch(true);
 
             if (Keys.AppSecret.Length > 0)
             {
@@ -64,8 +61,8 @@ namespace ComicReader
 
             // Initialize MainWindow here
             Window = new MainWindow();
-            Window.Activate();
             WindowHandle = WindowNative.GetWindowHandle(Window);
+            Window.Activate();
 
             mainInstance.Activated += OnActivated;
             OnActivated(null, activatedEventArgs);
