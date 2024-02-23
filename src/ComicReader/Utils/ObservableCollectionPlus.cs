@@ -31,6 +31,7 @@ namespace ComicReader.Utils
                     ((INotifyPropertyChanged)item).PropertyChanged += ItemPropertyChanged;
                 }
             }
+
             if (e.OldItems != null)
             {
                 foreach (object item in e.OldItems)
@@ -49,8 +50,7 @@ namespace ComicReader.Utils
                 return;
             }
 
-            NotifyCollectionChangedEventArgs args =
-                new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, sender, sender, idx);
+            var args = new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, sender, sender, idx);
             OnCollectionChanged(args);
         }
     }

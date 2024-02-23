@@ -17,6 +17,7 @@ namespace ComicReader.Database
             {
                 return TaskException.Success;
             }
+
             Initialized = true;
 
             Log("Initializing database");

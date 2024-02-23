@@ -1,14 +1,14 @@
 using ComicReader.Common;
-using ComicReader.Common.Router;
 using ComicReader.Common.Constants;
+using ComicReader.Common.Router;
 using ComicReader.Database;
 using ComicReader.DesignData;
 using ComicReader.Utils;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Threading.Tasks;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 
 namespace ComicReader.Views
 {
@@ -84,7 +84,7 @@ namespace ComicReader.Views
         // utilities
         private async Task Update()
         {
-            ObservableCollection<HistoryGroupViewModel> source = new ObservableCollection<HistoryGroupViewModel>();
+            var source = new ObservableCollection<HistoryGroupViewModel>();
             HistoryGroupViewModel current_group = null;
             await XmlDatabaseManager.WaitLock();
 
@@ -98,12 +98,9 @@ namespace ComicReader.Views
                     current_group = null;
                 }
 
-                if (current_group == null)
-                {
-                    current_group = new HistoryGroupViewModel(key);
-                }
+                current_group ??= new HistoryGroupViewModel(key);
 
-                HistoryItemViewModel item_out = new HistoryItemViewModel
+                var item_out = new HistoryItemViewModel
                 {
                     Id = item.Id,
                     Time = item.DateTime.ToString("t"),
@@ -143,7 +140,7 @@ namespace ComicReader.Views
         private async Task DeleteItem(HistoryItemViewModel item)
         {
             await HistoryDataManager.Remove(item.Id, true);
-            ObservableCollection<HistoryGroupViewModel> source = (ObservableCollection<HistoryGroupViewModel>)HistorySource.Source;
+            var source = (ObservableCollection<HistoryGroupViewModel>)HistorySource.Source;
 
             for (int i = 0; i < source.Count; ++i)
             {
@@ -175,7 +172,7 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                HistoryItemViewModel item = (HistoryItemViewModel)((MenuFlyoutItem)sender).DataContext;
+                var item = (HistoryItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 await OpenItem(item, true);
             });
         }
@@ -184,7 +181,7 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                HistoryItemViewModel item = (HistoryItemViewModel)((MenuFlyoutItem)sender).DataContext;
+                var item = (HistoryItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 await DeleteItem(item);
             });
         }
@@ -193,7 +190,7 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                HistoryItemViewModel item = (HistoryItemViewModel)e.ClickedItem;
+                var item = (HistoryItemViewModel)e.ClickedItem;
                 await OpenItem(item, false);
             });
         }

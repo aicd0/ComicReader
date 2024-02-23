@@ -1,34 +1,35 @@
 ﻿using System;
 
-namespace ComicReader.Utils.KVDatabase
+namespace ComicReader.Utils.KVDatabase;
+
+internal class KVDatabaseLib
 {
-    internal class KVDatabaseLib
+    private readonly WeakReference<KVDatabaseMethod> mMethod;
+    private readonly string mName;
+
+    public KVDatabaseLib(KVDatabaseMethod method, string name)
     {
-        private WeakReference<KVDatabaseMethod> mMethod;
-        private string mName;
+        mMethod = new WeakReference<KVDatabaseMethod>(method);
+        mName = name;
+    }
 
-        public KVDatabaseLib(KVDatabaseMethod method, string name)
+    public void SetString(string key, string value)
+    {
+        if (!mMethod.TryGetTarget(out KVDatabaseMethod method))
         {
-            mMethod = new WeakReference<KVDatabaseMethod>(method);
-            mName = name;
+            return;
         }
 
-        public void setString(string key, string value)
+        method.SetString(mName, key, value);
+    }
+
+    public string GetString(string key)
+    {
+        if (!mMethod.TryGetTarget(out KVDatabaseMethod method))
         {
-            if (!mMethod.TryGetTarget(out KVDatabaseMethod method))
-            {
-                return;
-            }
-            method.SetString(mName, key, value);
+            return null;
         }
 
-        public string getString(string key)
-        {
-            if (!mMethod.TryGetTarget(out KVDatabaseMethod method))
-            {
-                return null;
-            }
-            return method.GetString(mName, key);
-        }
+        return method.GetString(mName, key);
     }
 }

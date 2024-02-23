@@ -1,4 +1,3 @@
-using SharpCompress.Readers;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -40,7 +39,7 @@ namespace ComicReader.Utils.StorageItemSearchEngine
 
         public SearchContext(string path, PathType type, int max_depth = -1)
         {
-            PathInfo path_info = new PathInfo
+            var path_info = new PathInfo
             {
                 Type = type,
                 Path = path,
@@ -93,9 +92,9 @@ namespace ComicReader.Utils.StorageItemSearchEngine
                 // Visit current node.
                 PathInfo path_info = m_stack[m_stack.Count - 1].CurrentPath;
                 SetSearchContext(path_info);
-                List<string> folders = new List<string>();
-                List<string> files = new List<string>();
-                List<string> no_access_items = new List<string>();
+                var folders = new List<string>();
+                var files = new List<string>();
+                var no_access_items = new List<string>();
                 bool not_finish = true;
 
                 while (min_items > ItemFound && not_finish)
@@ -223,7 +222,7 @@ namespace ComicReader.Utils.StorageItemSearchEngine
         public override bool Search(List<string> folders, List<string> files, List<string> no_access_items, int min_items)
         {
             Stream stream = Utils.ArchiveAccess.TryGetFileStream(m_path).Result;
-            HashSet<string> sub_folders = new HashSet<string>();
+            var sub_folders = new HashSet<string>();
 
             Utils.ArchiveAccess.TryReadEntries(stream, m_extension, (Utils.ArchiveEntry entry) =>
             {
@@ -241,6 +240,7 @@ namespace ComicReader.Utils.StorageItemSearchEngine
                         sub_folders.Add(path.Substring(0, i));
                     }
                 }
+
                 return Task.FromResult(TaskException.Success);
             }).Wait();
 
@@ -248,6 +248,7 @@ namespace ComicReader.Utils.StorageItemSearchEngine
             {
                 folders.Add(m_path + Utils.ArchiveAccess.FileSeperator + sub_folder);
             }
+
             return false;
         }
     }

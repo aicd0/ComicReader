@@ -25,7 +25,7 @@ namespace ComicReader.Controls
         }
         public static readonly DependencyProperty DetailProperty =
             DependencyProperty.Register(nameof(Detail), typeof(string), typeof(SettingExpander), new PropertyMetadata(null));
-        
+
         public string Glyph
         {
             get { return (string)GetValue(GlyphProperty); }

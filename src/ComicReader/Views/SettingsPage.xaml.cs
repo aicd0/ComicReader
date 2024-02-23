@@ -1,4 +1,10 @@
+using ComicReader.Common;
+using ComicReader.Common.Router;
+using ComicReader.Database;
+using ComicReader.Utils;
 using Microsoft.Data.Sqlite;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -7,12 +13,6 @@ using System.Text;
 using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.Storage;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using ComicReader.Database;
-using ComicReader.Common.Router;
-using ComicReader.Common;
-using ComicReader.Utils;
 
 namespace ComicReader.Views
 {
@@ -301,7 +301,7 @@ namespace ComicReader.Views
             // Supported code pages.
             if (Shared.Encodings.Count == 0)
             {
-                List<Tuple<string, int>> encodings = new List<Tuple<string, int>>
+                var encodings = new List<Tuple<string, int>>
                 {
                     new Tuple<string, int>(Utils.StringResourceProvider.GetResourceString("Default"), -1)
                 };
@@ -359,7 +359,7 @@ namespace ComicReader.Views
         {
             // IMPORTANT: Use TaskCompletionSource to guarantee all async tasks
             // in Sync block has completed.
-            TaskCompletionSource<bool> completion_src = new TaskCompletionSource<bool>();
+            var completion_src = new TaskCompletionSource<bool>();
 
             Utils.C0.Sync(async delegate
             {
@@ -435,7 +435,7 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                ChooseLocationsDialog dialog = new ChooseLocationsDialog();
+                var dialog = new ChooseLocationsDialog();
                 await C0.ShowDialogAsync(dialog, XamlRoot);
             });
         }
@@ -453,7 +453,7 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                Uri uri = new Uri(@"https://github.com/aicd0/ComicReader/issues/new/choose");
+                var uri = new Uri(@"https://github.com/aicd0/ComicReader/issues/new/choose");
                 bool success = await Windows.System.Launcher.LaunchUriAsync(uri);
 
                 if (!success)

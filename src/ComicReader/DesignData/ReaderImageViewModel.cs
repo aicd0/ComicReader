@@ -2,7 +2,8 @@ using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace ComicReader.DesignData
 {
-    internal class ReaderImageViewModel {
+    internal class ReaderImageViewModel
+    {
 
         private BitmapImage _image;
         public BitmapImage Image
@@ -19,6 +20,7 @@ namespace ComicReader.DesignData
                 {
                     newValue = null;
                 }
+
                 if (_image != newValue)
                 {
                     _image = newValue;

@@ -53,7 +53,7 @@ namespace ComicReader.Database
         {
             FavoriteNodeData helper(List<FavoriteNodeData> e)
             {
-                foreach (var node in e)
+                foreach (FavoriteNodeData node in e)
                 {
                     if (node.Type == "i")
                     {
@@ -66,7 +66,7 @@ namespace ComicReader.Database
                     {
                         if (!(node.Children.Count == 0))
                         {
-                            var result = helper(node.Children);
+                            FavoriteNodeData result = helper(node.Children);
 
                             if (result != null)
                             {
@@ -88,7 +88,7 @@ namespace ComicReader.Database
             {
                 for (int i = 0; i < e.Count; ++i)
                 {
-                    var node = e[i];
+                    FavoriteNodeData node = e[i];
 
                     if (node.Type == "i")
                     {
@@ -137,7 +137,7 @@ namespace ComicReader.Database
                     return;
                 }
 
-                FavoriteNodeData node = new FavoriteNodeData
+                var node = new FavoriteNodeData
                 {
                     Type = "i",
                     Name = title,

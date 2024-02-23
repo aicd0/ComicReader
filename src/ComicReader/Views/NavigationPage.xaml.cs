@@ -1,13 +1,13 @@
-using System;
-using System.ComponentModel;
+using ComicReader.Common;
+using ComicReader.Common.Constants;
+using ComicReader.Common.Router;
+using ComicReader.Utils;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-using ComicReader.Common.Router;
-using ComicReader.Common;
-using ComicReader.Utils;
-using ComicReader.Common.Constants;
+using System;
+using System.ComponentModel;
 
 namespace ComicReader.Views
 {
@@ -212,7 +212,7 @@ namespace ComicReader.Views
         public void Navigate()
         {
             // directly pass parameters to the sub page.
-            NavigationParams subParams = new NavigationParams
+            var subParams = new NavigationParams
             {
                 Params = Shared,
                 TabId = TabId,

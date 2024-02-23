@@ -1,9 +1,9 @@
 using ComicReader.Common.Constants;
 using ComicReader.Utils;
-using System;
-using System.Collections.Generic;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
+using System;
+using System.Collections.Generic;
 
 namespace ComicReader.Common.Router
 {
@@ -53,7 +53,7 @@ namespace ComicReader.Common.Router
 
         public static void OnNavigateTo(NavigationEventArgs e)
         {
-            NavigationParams navigationParams = (NavigationParams)e.Parameter;
+            var navigationParams = (NavigationParams)e.Parameter;
             TabIdentifier tabId = navigationParams.TabId;
             if (!mTabs.TryGetValue(tabId, out TabInfo tabInfo))
             {
@@ -102,7 +102,8 @@ namespace ComicReader.Common.Router
             tabId.RequestArgs = scene.RequestedArgs;
 
             E_postTasks = null;
-            E_postTasks += delegate {
+            E_postTasks += delegate
+            {
                 tabId.DispatchTabPageChanged();
             };
         }

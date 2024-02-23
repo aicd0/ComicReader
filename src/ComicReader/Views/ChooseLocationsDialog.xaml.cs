@@ -1,10 +1,10 @@
-using System.Collections.ObjectModel;
-using System.Threading.Tasks;
+using ComicReader.Database;
+using ComicReader.DesignData;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-using ComicReader.Database;
-using ComicReader.DesignData;
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 
 namespace ComicReader.Views
 {
@@ -99,7 +99,7 @@ namespace ComicReader.Views
                 }
 
                 IsPrimaryButtonEnabled = false;
-                FolderItemViewModel item = (FolderItemViewModel)((Grid)sender).DataContext;
+                var item = (FolderItemViewModel)((Grid)sender).DataContext;
                 await SettingDataManager.RemoveComicFolder(item.Folder, final: true);
                 await Update();
                 IsPrimaryButtonEnabled = true;

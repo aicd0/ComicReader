@@ -2,7 +2,7 @@ using System;
 
 namespace ComicReader.Utils
 {
-    interface IBaseTransaction<out T> {}
+    interface IBaseTransaction<out T> { }
 
     public abstract class BaseTransaction<T> : IBaseTransaction<T>
     {
@@ -14,6 +14,7 @@ namespace ComicReader.Utils
             {
                 throw new Exception("Cannot commit a transaction twice");
             }
+
             _committed = true;
             return CommitImpl();
         }
@@ -32,6 +33,7 @@ namespace ComicReader.Utils
             {
                 throw new Exception("Cannot commit a transaction twice");
             }
+
             _committed = true;
             CommitImpl();
         }

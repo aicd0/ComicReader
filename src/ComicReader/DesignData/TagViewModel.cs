@@ -1,7 +1,7 @@
 using ComicReader.Utils;
+using Microsoft.UI.Xaml;
 using System;
 using System.Collections.Generic;
-using Microsoft.UI.Xaml;
 
 namespace ComicReader.DesignData
 {
@@ -37,10 +37,7 @@ namespace ComicReader.DesignData
             {
                 get
                 {
-                    if (_instance == null)
-                    {
-                        _instance = new EmptyItemHandler();
-                    }
+                    _instance ??= new EmptyItemHandler();
                     return _instance;
                 }
             }

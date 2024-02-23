@@ -19,7 +19,8 @@ namespace ComicReader.Database
         public override bool IsEditable => !IsExternal;
 
         private ComicPdfData(bool is_external) :
-            base(ComicType.PDF, is_external) { }
+            base(ComicType.PDF, is_external)
+        { }
 
         public static ComicData FromDatabase(string location)
         {
@@ -33,7 +34,7 @@ namespace ComicReader.Database
         {
             Utils.Storage.AddTrustedFile(file);
 
-            ComicPdfData comic = new ComicPdfData(true)
+            var comic = new ComicPdfData(true)
             {
                 Title1 = file.DisplayName,
                 Location = file.Path,
@@ -97,10 +98,12 @@ namespace ComicReader.Database
                         return TaskException.Failure;
                 }
             }
+
             if (ThisDocument == null)
             {
                 return TaskException.Failure;
             }
+
             return TaskException.Success;
         }
 
@@ -117,7 +120,8 @@ namespace ComicReader.Database
         protected override async Task<TaskException> ReloadImages()
         {
             TaskException r = await SetDocument();
-            if (!r.Successful()) return r;
+            if (!r.Successful())
+                return r;
             return TaskException.Success;
         }
 

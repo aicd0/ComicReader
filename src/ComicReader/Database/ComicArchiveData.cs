@@ -17,7 +17,8 @@ namespace ComicReader.Database
         public override bool IsEditable => !IsExternal;
 
         private ComicArchiveData(bool is_external) :
-            base(ComicType.Archive, is_external) { }
+            base(ComicType.Archive, is_external)
+        { }
 
         public static ComicData FromDatabase(string location)
         {
@@ -31,7 +32,7 @@ namespace ComicReader.Database
         {
             Utils.Storage.AddTrustedFile(archive);
 
-            ComicArchiveData comic = new ComicArchiveData(true)
+            var comic = new ComicArchiveData(true)
             {
                 Title1 = archive.DisplayName,
                 Archive = archive,
@@ -109,7 +110,7 @@ namespace ComicReader.Database
                         }
 
                         string filename = Utils.StringUtils.ItemNameFromPath(filepath);
-                        
+
                         if (filename.Equals(ComicInfoFileName))
                         {
                             sub_path = filepath.Substring(base_path.Length);
@@ -140,7 +141,7 @@ namespace ComicReader.Database
                     return TaskException.Failure;
                 }
 
-                using (StreamReader reader = new StreamReader(stream))
+                using (var reader = new StreamReader(stream))
                 {
                     info_text = await reader.ReadToEndAsync();
                 }
@@ -165,7 +166,7 @@ namespace ComicReader.Database
 
             // Load entries.
             Log("Retrieving images in '" + Location + "'");
-            List<string> entries = new List<string>();
+            var entries = new List<string>();
 
             if (IsExternal)
             {
@@ -195,7 +196,7 @@ namespace ComicReader.Database
             else
             {
                 string sub_path = Utils.ArchiveAccess.GetSubPath(Location);
-                List<string> subfiles = new List<string>();
+                var subfiles = new List<string>();
 
                 result = await Utils.ArchiveAccess.TryGetSubFiles(Archive, sub_path, subfiles);
                 if (!result.Successful())

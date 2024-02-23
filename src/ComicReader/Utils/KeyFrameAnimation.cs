@@ -40,7 +40,7 @@ namespace ComicReader.Utils
 
         public void Start()
         {
-            List<KeyFrame> keyFrames = _keyFrames.OrderBy(delegate (KeyFrame keyFrame)
+            var keyFrames = _keyFrames.OrderBy(delegate (KeyFrame keyFrame)
             {
                 return keyFrame.Time;
             }).ToList();
@@ -64,27 +64,33 @@ namespace ComicReader.Utils
                             {
                                 return;
                             }
+
                             callbackInvoked = false;
                         }
+
                         long tickElapsed = DateTime.Now.Ticks - startTick;
                         double timeElapsed = (tickElapsed / 10000000.0 / duration);
                         if (timeElapsed > keyFrame.Time)
                         {
                             break;
                         }
+
                         double time = (timeElapsed - startTime) / (keyFrame.Time - startTime);
                         double value = GetValue(time, keyFrame.Curve) * (keyFrame.Value - startValue) + startValue;
                         UpdateCallback?.Invoke(value);
                         callbackInvoked = true;
                     }
+
                     startValue = keyFrame.Value;
                     startTime = keyFrame.Time;
                 }
+
                 if (keyFrames.Count > 0)
                 {
                     KeyFrame lastFrame = keyFrames[keyFrames.Count - 1];
                     UpdateCallback?.Invoke(lastFrame.Value);
                 }
+
                 StopCallback?.Invoke();
             });
         }
@@ -105,6 +111,7 @@ namespace ComicReader.Utils
                 default:
                     throw new ArgumentException();
             }
+
             return value;
         }
 

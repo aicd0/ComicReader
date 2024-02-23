@@ -1,5 +1,5 @@
-using System.IO;
 using LiteDB;
+using System.IO;
 using Windows.Storage;
 
 namespace ComicReader.Utils.KVDatabase
@@ -36,12 +36,13 @@ namespace ComicReader.Utils.KVDatabase
             {
                 return null;
             }
+
             return s.Equals("true");
         }
 
         private string GetValue(string lib, string key)
         {
-            using(LiteDatabase db = new LiteDatabase(DatabasePath))
+            using (var db = new LiteDatabase(DatabasePath))
             {
                 ILiteCollection<KVPair> col = db.GetCollection<KVPair>(lib);
                 KVPair pair = col.FindById(key);
@@ -49,13 +50,14 @@ namespace ComicReader.Utils.KVDatabase
                 {
                     return null;
                 }
+
                 return pair.Value;
             }
         }
 
         private void SetValue(string lib, string key, string value)
         {
-            using (LiteDatabase db = new LiteDatabase(DatabasePath))
+            using (var db = new LiteDatabase(DatabasePath))
             {
                 ILiteCollection<KVPair> col = db.GetCollection<KVPair>(lib);
                 KVPair pair = col.FindById(key);
@@ -74,6 +76,7 @@ namespace ComicReader.Utils.KVDatabase
                     {
                         return;
                     }
+
                     pair.Value = value;
                     col.Update(pair);
                 }
@@ -84,10 +87,7 @@ namespace ComicReader.Utils.KVDatabase
 
         public static KVDatabaseMethodLiteDB GetInstance()
         {
-            if (mInstance == null)
-            {
-                mInstance = new KVDatabaseMethodLiteDB();
-            }
+            mInstance ??= new KVDatabaseMethodLiteDB();
             return mInstance;
         }
 

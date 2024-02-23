@@ -1,21 +1,21 @@
+using ComicReader.Common;
+using ComicReader.Common.Router;
+using ComicReader.Controls;
+using ComicReader.Database;
+using ComicReader.DesignData;
+using ComicReader.Utils;
+using ComicReader.Utils.Image;
 using Microsoft.Data.Sqlite;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Imaging;
-using ComicReader.Common;
-using ComicReader.Common.Router;
-using ComicReader.Database;
-using ComicReader.DesignData;
-using ComicReader.Utils;
-using ComicReader.Controls;
-using ComicReader.Utils.Image;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace ComicReader.Views
 {
@@ -155,7 +155,7 @@ namespace ComicReader.Views
                     m_IsCommandBarSelectAllToggled = value;
                     PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsCommandBarSelectAllToggled"));
                 }
-                
+
                 CommandBarSelectAllToggleOmitOnce = false;
             }
         }
@@ -244,7 +244,7 @@ namespace ComicReader.Views
             Shared.ComicItemSelectionMode = ListViewSelectionMode.None;
             Shared.NavigationPageShared.SetSearchBox((string)GetTabId().RequestArgs);
 
-            var scrollViewer = SearchResultGridView.ChildrenBreadthFirst().OfType<ScrollViewer>().First();
+            ScrollViewer scrollViewer = SearchResultGridView.ChildrenBreadthFirst().OfType<ScrollViewer>().First();
             scrollViewer.ViewChanged += OnScrollViewerViewChanged;
 
             Utils.C0.Run(async delegate
@@ -269,8 +269,8 @@ namespace ComicReader.Views
                 string keyword = (string)GetTabId().RequestArgs;
 
                 // Extract filters and keywords from string.
-                Common.Search.Filter filter = Common.Search.Filter.Parse(keyword, out List<string> remaining);
-                List<string> keywords = new List<string>();
+                var filter = Common.Search.Filter.Parse(keyword, out List<string> remaining);
+                var keywords = new List<string>();
 
                 foreach (string text in remaining)
                 {
@@ -349,7 +349,7 @@ namespace ComicReader.Views
                 keywords[i] = keywords[i].ToLower();
             }
 
-            List<Match> keyword_matched = new List<Match>();
+            var keyword_matched = new List<Match>();
             List<long> filter_matched = null;
 
             await ComicData.CommandBlock2(async delegate (SqliteCommand command)
@@ -388,7 +388,7 @@ namespace ComicReader.Views
                     }
                 }
 
-                List<long> all = new List<long>(keyword_matched.Count);
+                var all = new List<long>(keyword_matched.Count);
 
                 foreach (Match match in keyword_matched)
                 {
@@ -487,12 +487,13 @@ namespace ComicReader.Views
         {
             double image_width = (double)Application.Current.Resources["ComicItemHorizontalImageWidth"];
             double image_height = (double)Application.Current.Resources["ComicItemHorizontalImageHeight"];
-            List<ImageLoader.Token> image_loader_tokens = new List<ImageLoader.Token>();
+            var image_loader_tokens = new List<ImageLoader.Token>();
 
             if (item.Image.ImageSet)
             {
                 return;
             }
+
             item.Image.ImageSet = true;
             image_loader_tokens.Add(new ImageLoader.Token
             {
@@ -534,6 +535,7 @@ namespace ComicReader.Views
             {
                 return;
             }
+
             if (Shared.IsSelectMode)
             {
                 return;
@@ -541,7 +543,7 @@ namespace ComicReader.Views
 
             Utils.C0.Run(async delegate
             {
-                ComicItemViewModel item = (ComicItemViewModel)((FrameworkElement)sender).DataContext;
+                var item = (ComicItemViewModel)((FrameworkElement)sender).DataContext;
                 ComicData comic = await ComicData.FromId(item.Comic.Id, "SearchOpenLoadComic");
                 MainPage.Current.LoadTab(GetTabId(), ReaderPageTrait.Instance, comic);
             });
@@ -549,12 +551,13 @@ namespace ComicReader.Views
 
         private void OnGridViewContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
         {
-            ComicItemViewModel item = args.Item as ComicItemViewModel;
-            ComicItemHorizontal viewHolder = args.ItemContainer.ContentTemplateRoot as ComicItemHorizontal;
+            var item = args.Item as ComicItemViewModel;
+            var viewHolder = args.ItemContainer.ContentTemplateRoot as ComicItemHorizontal;
             if (args.InRecycleQueue)
             {
                 item.Image.ImageSet = false;
             }
+
             viewHolder.Bind(item);
             if (!args.InRecycleQueue)
             {
@@ -566,7 +569,7 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                ScrollViewer scrollViewer = (ScrollViewer)sender;
+                var scrollViewer = (ScrollViewer)sender;
                 if (scrollViewer.ScrollableHeight - scrollViewer.VerticalOffset < scrollViewer.ActualHeight * 0.5)
                 {
                     await LoadMoreResults(30);
@@ -576,7 +579,7 @@ namespace ComicReader.Views
 
         private void OnOpenInNewTabClicked(object sender, RoutedEventArgs e)
         {
-            ComicItemViewModel item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
+            var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
             MainPage.Current.LoadTab(null, ReaderPageTrait.Instance, item.Comic);
         }
 
@@ -584,7 +587,7 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                ComicItemViewModel result = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
+                var result = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 result.IsFavorite = true;
                 await FavoriteDataManager.Add(result.Comic.Id, result.Title, true);
             });
@@ -594,7 +597,7 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                ComicItemViewModel result = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
+                var result = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 result.IsFavorite = false;
                 await FavoriteDataManager.RemoveWithId(result.Comic.Id, true);
             });
@@ -604,7 +607,7 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                ComicItemViewModel ctx = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
+                var ctx = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 await ctx.Comic.SaveHiddenAsync(false);
                 await StartSearch();
             });
@@ -614,7 +617,7 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                ComicItemViewModel ctx = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
+                var ctx = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 await ctx.Comic.SaveHiddenAsync(true);
                 await StartSearch();
             });
@@ -660,7 +663,7 @@ namespace ComicReader.Views
             {
                 // Never modify any element in the loop as selected_items is only a
                 // reference to SearchResultGridView.SelectedItems property.
-                ComicItemViewModel model = item as ComicItemViewModel;
+                var model = item as ComicItemViewModel;
 
                 if (model.IsFavorite)
                 {
@@ -705,11 +708,11 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                List<object> selected_items = new List<object>(SearchResultGridView.SelectedItems);
+                var selected_items = new List<object>(SearchResultGridView.SelectedItems);
 
                 for (int i = 0; i < selected_items.Count; ++i)
                 {
-                    ComicItemViewModel model = selected_items[i] as ComicItemViewModel;
+                    var model = selected_items[i] as ComicItemViewModel;
 
                     if (model.IsFavorite)
                     {
@@ -728,11 +731,11 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                List<object> selected_items = new List<object>(SearchResultGridView.SelectedItems);
+                var selected_items = new List<object>(SearchResultGridView.SelectedItems);
 
                 for (int i = 0; i < selected_items.Count; ++i)
                 {
-                    ComicItemViewModel model = selected_items[i] as ComicItemViewModel;
+                    var model = selected_items[i] as ComicItemViewModel;
 
                     if (!model.IsFavorite)
                     {
@@ -751,11 +754,11 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                List<object> selected_items = new List<object>(SearchResultGridView.SelectedItems);
+                var selected_items = new List<object>(SearchResultGridView.SelectedItems);
 
                 for (int i = 0; i < selected_items.Count; ++i)
                 {
-                    ComicItemViewModel model = selected_items[i] as ComicItemViewModel;
+                    var model = selected_items[i] as ComicItemViewModel;
 
                     if (model.IsHide)
                     {
@@ -773,11 +776,11 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                List<object> selected_items = new List<object>(SearchResultGridView.SelectedItems);
+                var selected_items = new List<object>(SearchResultGridView.SelectedItems);
 
                 for (int i = 0; i < selected_items.Count; ++i)
                 {
-                    ComicItemViewModel model = selected_items[i] as ComicItemViewModel;
+                    var model = selected_items[i] as ComicItemViewModel;
 
                     if (!model.IsHide)
                     {

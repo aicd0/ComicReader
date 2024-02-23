@@ -73,7 +73,7 @@ namespace ComicReader.Database
                     return;
                 }
 
-                HistoryItemData record = new HistoryItemData
+                var record = new HistoryItemData
                 {
                     Id = id,
                     DateTime = DateTimeOffset.Now,

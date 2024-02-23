@@ -1,19 +1,19 @@
+using ComicReader.Common;
+using ComicReader.Common.Router;
+using ComicReader.Controls;
+using ComicReader.Database;
+using ComicReader.DesignData;
+using ComicReader.Utils.Image;
 using Microsoft.Data.Sqlite;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Threading.Tasks;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media.Imaging;
-using ComicReader.Common.Router;
-using ComicReader.Database;
-using ComicReader.DesignData;
-using ComicReader.Common;
-using ComicReader.Controls;
-using ComicReader.Utils.Image;
 
 namespace ComicReader.Views
 {
@@ -77,7 +77,7 @@ namespace ComicReader.Views
 
             GetTabId().Tab.Header = Utils.StringResourceProvider.GetResourceString("NewTab");
             GetTabId().Tab.IconSource = new SymbolIconSource() { Symbol = Symbol.Document };
-            
+
             Utils.C0.Run(async delegate
             {
                 await Update();
@@ -133,7 +133,7 @@ namespace ComicReader.Views
         {
             // IMPORTANT: Use TaskCompletionSource to guarantee all async tasks
             // in Sync block has completed.
-            TaskCompletionSource<bool> completion_src = new TaskCompletionSource<bool>();
+            var completion_src = new TaskCompletionSource<bool>();
 
             Utils.C0.Sync(async delegate
             {
@@ -155,7 +155,7 @@ namespace ComicReader.Views
                 }
 
                 // Get recent visited comics.
-                Utils.FixedHeap<Tuple<long, DateTimeOffset>> records = new Utils.FixedHeap<Tuple<long, DateTimeOffset>>(16,
+                var records = new Utils.FixedHeap<Tuple<long, DateTimeOffset>>(16,
                     (Tuple<long, DateTimeOffset> x, Tuple<long, DateTimeOffset> y) => { return x.Item2.CompareTo(y.Item2); });
 
                 await ComicData.CommandBlock2(async delegate (SqliteCommand command)
@@ -192,18 +192,18 @@ namespace ComicReader.Views
                 }, "HomeLoadLibrary");
 
                 // Convert to view models.
-                List<ComicItemViewModel> comic_items = new List<ComicItemViewModel>();
+                var comic_items = new List<ComicItemViewModel>();
 
                 foreach (Tuple<long, DateTimeOffset> record in records.GetSorted())
                 {
                     ComicData comic = await ComicData.FromId(record.Item1, "HomeLoadComic");
-                    
+
                     if (comic == null)
                     {
                         continue;
                     }
 
-                    ComicItemViewModel model = new ComicItemViewModel();
+                    var model = new ComicItemViewModel();
                     ComicDataToViewModel(comic, model);
                     comic_items.Add(model);
                 }
@@ -227,12 +227,13 @@ namespace ComicReader.Views
         {
             double image_width = (double)Application.Current.Resources["ComicItemVerticalDesiredWidth"] - 40.0;
             double image_height = (double)Application.Current.Resources["ComicItemVerticalImageHeight"];
-            List<ImageLoader.Token> image_loader_tokens = new List<ImageLoader.Token>();
+            var image_loader_tokens = new List<ImageLoader.Token>();
 
             if (item.Image.ImageSet)
             {
                 return;
             }
+
             item.Image.ImageSet = true;
             image_loader_tokens.Add(new ImageLoader.Token
             {
@@ -273,7 +274,7 @@ namespace ComicReader.Views
             try
             {
                 // Add to folder item source.
-                Collection<FolderItemViewModel> new_folder_source = new Collection<FolderItemViewModel>
+                var new_folder_source = new Collection<FolderItemViewModel>
                 {
                     new FolderItemViewModel
                     {
@@ -286,7 +287,7 @@ namespace ComicReader.Views
 
                 foreach (string path in XmlDatabase.Settings.ComicFolders)
                 {
-                    FolderItemViewModel item = new FolderItemViewModel
+                    var item = new FolderItemViewModel
                     {
                         OnItemTapped = OnFolderItemTapped,
                         OnRemoveClicked = FolderItemRemoveClick,
@@ -310,12 +311,13 @@ namespace ComicReader.Views
         // Events
         private void OnAdaptiveGridViewContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
         {
-            ComicItemViewModel item = args.Item as ComicItemViewModel;
-            ComicItemVertical viewHolder = args.ItemContainer.ContentTemplateRoot as ComicItemVertical;
+            var item = args.Item as ComicItemViewModel;
+            var viewHolder = args.ItemContainer.ContentTemplateRoot as ComicItemVertical;
             if (args.InRecycleQueue)
             {
                 item.Image.ImageSet = false;
             }
+
             viewHolder.Bind(item);
             if (!args.InRecycleQueue)
             {
@@ -335,7 +337,7 @@ namespace ComicReader.Views
 
         private void OnOpenInNewTabClicked(object sender, RoutedEventArgs e)
         {
-            ComicItemViewModel item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
+            var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
             MainPage.Current.LoadTab(null, ReaderPageTrait.Instance, item.Comic);
         }
 
@@ -345,7 +347,8 @@ namespace ComicReader.Views
             {
                 return;
             }
-            ComicItemViewModel item = (ComicItemViewModel)((Grid)sender).DataContext;
+
+            var item = (ComicItemViewModel)((Grid)sender).DataContext;
             MainPage.Current.LoadTab(GetTabId(), ReaderPageTrait.Instance, item.Comic);
         }
 
@@ -353,7 +356,7 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                ComicItemViewModel item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
+                var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 item.IsFavorite = true;
                 await FavoriteDataManager.Add(item.Comic.Id, item.Title, true);
             });
@@ -363,7 +366,7 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                ComicItemViewModel item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
+                var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 item.IsFavorite = false;
                 await FavoriteDataManager.RemoveWithId(item.Comic.Id, true);
             });
@@ -373,7 +376,7 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                ComicItemViewModel item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
+                var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 await item.Comic.SaveHiddenAsync(true);
                 ComicItemSource.Remove(item);
                 await UpdateLibrary();
@@ -401,7 +404,7 @@ namespace ComicReader.Views
                 return;
             }
 
-            FolderItemViewModel item = (FolderItemViewModel)((Grid)sender).DataContext;
+            var item = (FolderItemViewModel)((Grid)sender).DataContext;
             if (item.IsAddNew)
             {
                 AddNewFolder();
@@ -416,7 +419,7 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                FolderItemViewModel item = (FolderItemViewModel)((MenuFlyoutItem)sender).DataContext;
+                var item = (FolderItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 await SettingDataManager.RemoveComicFolder(item.Path, final: true);
                 await UpdateFolders();
                 Utils.TaskQueue.DefaultQueue.Enqueue(ComicData.UpdateSealed(lazy_load: true));

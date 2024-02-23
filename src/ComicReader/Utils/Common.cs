@@ -31,10 +31,10 @@ namespace ComicReader.Utils
         public static async Task WaitFor(Func<bool> signal, int timeout_milliseconds = -1)
         {
             DateTimeOffset start_time = DateTimeOffset.Now;
-            
+
             await Task.Run(delegate
             {
-                SpinWait sw = new SpinWait();
+                var sw = new SpinWait();
 
                 while (!signal())
                 {
@@ -60,19 +60,20 @@ namespace ComicReader.Utils
             {
                 dialog.XamlRoot = root;
             }
+
             return await dialog.ShowAsync();
         }
 
-        public static IBuffer GetBufferFromString(string _string)
+        public static IBuffer GetBufferFromString(string text)
         {
-            if (_string.Length == 0)
+            if (text.Length == 0)
             {
                 return new Windows.Storage.Streams.Buffer(0);
             }
             else
             {
                 return CryptographicBuffer.ConvertStringToBinary(
-                    _string, BinaryStringEncoding.Utf8);
+                    text, BinaryStringEncoding.Utf8);
             }
         }
 
@@ -106,7 +107,7 @@ namespace ComicReader.Utils
             collection.RemoveAt(idx);
         }
 
-        private enum _ModificationType
+        private enum ModificationType
         {
             Unset,
             Skip,
@@ -114,9 +115,9 @@ namespace ComicReader.Utils
             Add
         }
 
-        class _Modification
+        class Modification
         {
-            public _ModificationType Type = _ModificationType.Unset;
+            public ModificationType Type = ModificationType.Unset;
             public int MinSteps;
         }
 
@@ -124,15 +125,15 @@ namespace ComicReader.Utils
             IEnumerable<T> src_collection, Func<T, T, bool> equal_func)
         {
             // DP Problem: Edit Distance
-            List<List<_Modification>> modifications = new List<List<_Modification>>(dst_collection.Count + 1);
+            var modifications = new List<List<Modification>>(dst_collection.Count + 1);
 
             for (int i = 0; i < dst_collection.Count + 1; i++)
             {
-                var row = new List<_Modification>(src_collection.Count() + 1);
+                var row = new List<Modification>(src_collection.Count() + 1);
 
                 for (int j = 0; j < src_collection.Count() + 1; j++)
                 {
-                    row.Add(new _Modification());
+                    row.Add(new Modification());
                 }
 
                 modifications.Add(row);
@@ -141,41 +142,41 @@ namespace ComicReader.Utils
             // Initialize cache.
             for (int i = 1; i < modifications[0].Count; ++i)
             {
-                var mod = modifications[0][i];
-                mod.Type = _ModificationType.Add;
+                Modification mod = modifications[0][i];
+                mod.Type = ModificationType.Add;
                 mod.MinSteps = i;
             }
 
             for (int i = 1; i < modifications.Count; ++i)
             {
-                var mod = modifications[i][0];
-                mod.Type = _ModificationType.Delete;
+                Modification mod = modifications[i][0];
+                mod.Type = ModificationType.Delete;
                 mod.MinSteps = i;
             }
 
             // Update the whole cache.
             for (int i = 1; i < modifications.Count; ++i)
             {
-                var row = modifications[i];
-                var last_row = modifications[i - 1];
+                List<Modification> row = modifications[i];
+                List<Modification> last_row = modifications[i - 1];
 
                 for (int j = 1; j < row.Count; ++j)
                 {
                     if (equal_func(dst_collection[i - 1], src_collection.ElementAt(j - 1)))
                     {
-                        row[j].Type = _ModificationType.Skip;
+                        row[j].Type = ModificationType.Skip;
                         row[j].MinSteps = last_row[j - 1].MinSteps;
                     }
                     else
                     {
                         if (row[j - 1].MinSteps < last_row[j].MinSteps)
                         {
-                            row[j].Type = _ModificationType.Add;
+                            row[j].Type = ModificationType.Add;
                             row[j].MinSteps = row[j - 1].MinSteps + 1;
                         }
                         else
                         {
-                            row[j].Type = _ModificationType.Delete;
+                            row[j].Type = ModificationType.Delete;
                             row[j].MinSteps = last_row[j].MinSteps + 1;
                         }
                     }
@@ -183,7 +184,7 @@ namespace ComicReader.Utils
             }
 
             // Backtracking to find the best solution.
-            List<_ModificationType> solution = new List<_ModificationType>();
+            var solution = new List<ModificationType>();
 
             {
                 int i = dst_collection.Count;
@@ -191,15 +192,15 @@ namespace ComicReader.Utils
 
                 while (i + j > 0)
                 {
-                    var type = modifications[i][j].Type;
+                    ModificationType type = modifications[i][j].Type;
                     solution.Add(type);
 
-                    if (type == _ModificationType.Skip)
+                    if (type == ModificationType.Skip)
                     {
                         i--;
                         j--;
                     }
-                    else if (type == _ModificationType.Add)
+                    else if (type == ModificationType.Add)
                     {
                         j--;
                     }
@@ -217,14 +218,14 @@ namespace ComicReader.Utils
 
                 for (int k = solution.Count - 1; k >= 0; --k)
                 {
-                    _ModificationType type = solution[k];
+                    ModificationType type = solution[k];
 
-                    if (type == _ModificationType.Skip)
+                    if (type == ModificationType.Skip)
                     {
                         ++i;
                         ++j;
                     }
-                    else if (type == _ModificationType.Add)
+                    else if (type == ModificationType.Add)
                     {
                         dst_collection.Insert(i, src_collection.ElementAt(j));
                         ++i;
@@ -298,8 +299,8 @@ namespace ComicReader.Utils
         public static IEnumerable<T> Except(IEnumerable<T> first, IEnumerable<U> second,
             Func<T, V> key_first, Func<U, V> key_second, IEqualityComparer<V> comparer)
         {
-            List<KeyValuePair<V, object>> pairs_1 = new List<KeyValuePair<V, object>>();
-            List<KeyValuePair<V, object>> pairs_2 = new List<KeyValuePair<V, object>>();
+            var pairs_1 = new List<KeyValuePair<V, object>>();
+            var pairs_2 = new List<KeyValuePair<V, object>>();
 
             foreach (T val in first)
             {
@@ -312,7 +313,7 @@ namespace ComicReader.Utils
             }
 
             IEnumerable<KeyValuePair<V, object>> processed = pairs_1.Except(pairs_2, new KeyEqualityComparer(comparer));
-            List<T> output = new List<T>();
+            var output = new List<T>();
 
             foreach (KeyValuePair<V, object> val in processed)
             {
@@ -325,8 +326,8 @@ namespace ComicReader.Utils
         public static IEnumerable<T> Intersect(IEnumerable<T> first, IEnumerable<U> second,
             Func<T, V> key_first, Func<U, V> key_second, IEqualityComparer<V> comparer)
         {
-            List<KeyValuePair<V, object>> pairs_1 = new List<KeyValuePair<V, object>>();
-            List<KeyValuePair<V, object>> pairs_2 = new List<KeyValuePair<V, object>>();
+            var pairs_1 = new List<KeyValuePair<V, object>>();
+            var pairs_2 = new List<KeyValuePair<V, object>>();
 
             foreach (T val in first)
             {
@@ -339,7 +340,7 @@ namespace ComicReader.Utils
             }
 
             IEnumerable<KeyValuePair<V, object>> processed = pairs_1.Intersect(pairs_2, new KeyEqualityComparer(comparer));
-            List<T> output = new List<T>();
+            var output = new List<T>();
 
             foreach (KeyValuePair<V, object> val in processed)
             {

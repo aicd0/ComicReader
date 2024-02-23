@@ -24,8 +24,9 @@ namespace ComicReader.Common
             {
                 return;
             }
+
             _data = new LastAppStatusData();
-            string serialized = KVDatabase.getInstance().getDefaultMethod().GetString(KVLib.APP, KEY);
+            string serialized = KVDatabase.GetInstance().GetDefaultMethod().GetString(KVLib.APP, KEY);
             if (serialized != null)
             {
                 try
@@ -42,7 +43,7 @@ namespace ComicReader.Common
         private void Save()
         {
             string serialized = JsonSerializer.Serialize(_data);
-            KVDatabase.getInstance().getDefaultMethod().SetString(KVLib.APP, KEY, serialized);
+            KVDatabase.GetInstance().GetDefaultMethod().SetString(KVLib.APP, KEY, serialized);
         }
 
         public long GetLastComic()
@@ -59,6 +60,7 @@ namespace ComicReader.Common
             {
                 return;
             }
+
             _data.ReadingComic = id;
             Save();
         }
@@ -71,6 +73,7 @@ namespace ComicReader.Common
             {
                 return;
             }
+
             _data.ReadingComic = -1;
             Save();
         }

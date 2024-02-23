@@ -32,7 +32,8 @@ namespace ComicReader.Utils
         private bool _logRoutineStarted = false;
         private int _lastLogCount = -1;
         private bool _logPendingTask = false;
-        public bool LogPendingTask {
+        public bool LogPendingTask
+        {
             get => _logPendingTask;
             set
             {
@@ -57,7 +58,7 @@ namespace ComicReader.Utils
             Interlocked.Increment(ref _pendingTaskCount);
             lock (_queue)
             {
-                _queue = _queue.ContinueWith(delegate(Task<TaskException> t)
+                _queue = _queue.ContinueWith(delegate (Task<TaskException> t)
                 {
                     Interlocked.Decrement(ref _pendingTaskCount);
                     return t.Result;
@@ -71,6 +72,7 @@ namespace ComicReader.Utils
             {
                 return;
             }
+
             Utils.C0.Run(async delegate
             {
                 while (_logPendingTask)
@@ -80,8 +82,10 @@ namespace ComicReader.Utils
                         _lastLogCount = _pendingTaskCount;
                         System.Diagnostics.Debug.WriteLine("PendingTaskCount: " + _pendingTaskCount.ToString());
                     }
+
                     await Task.Delay(1000);
                 }
+
                 _logRoutineStarted = false;
             });
         }

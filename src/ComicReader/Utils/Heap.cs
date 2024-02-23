@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ComicReader.Utils
 {
@@ -80,7 +76,7 @@ namespace ComicReader.Utils
 
         public List<T> GetSorted()
         {
-            List<T> cpy = new List<T>(m_container);
+            var cpy = new List<T>(m_container);
             cpy.Sort(m_comparison);
             cpy.Reverse();
             return cpy;

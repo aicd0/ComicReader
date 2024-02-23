@@ -33,7 +33,7 @@ namespace ComicReader.Utils
                 return s_FolderResources[token];
             }
 
-            List<string> out_of_date_tokens = new List<string>();
+            var out_of_date_tokens = new List<string>();
             StorageFolder result = null;
 
             foreach (AccessListEntry entry in StorageApplicationPermissions.FutureAccessList.Entries)
@@ -106,7 +106,7 @@ namespace ComicReader.Utils
                 return null;
             }
 
-            StorageFile file = (StorageFile)item;
+            var file = (StorageFile)item;
             s_FileResources[token] = file;
             return file;
         }
@@ -124,6 +124,7 @@ namespace ComicReader.Utils
             {
                 return;
             }
+
             StorageApplicationPermissions.FutureAccessList.Remove(token);
             Log("Removed '" + token + "' from future access list.");
         }

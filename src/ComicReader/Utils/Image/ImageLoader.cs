@@ -4,13 +4,13 @@
 #endif
 
 using ComicReader.Database;
-using Microsoft.UI.Xaml.Media.Imaging;
-using Microsoft.UI.Windowing;
+using ComicReader.Native;
 using Microsoft.UI;
+using Microsoft.UI.Windowing;
+using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Runtime.InteropServices;
 using Windows.Storage.Streams;
 using WinRT.Interop;
 
@@ -76,10 +76,7 @@ namespace ComicReader.Utils.Image
                 _width *= _multiplication;
                 _height *= _multiplication;
 
-                if (_queue == null)
-                {
-                    _queue = s_loadQueue;
-                }
+                _queue ??= s_loadQueue;
 
                 foreach (Token token in _tokens)
                 {
@@ -87,6 +84,7 @@ namespace ComicReader.Utils.Image
                     {
                         continue;
                     }
+
                     TaskException task(Task<TaskException> _) => LoadSingleImage(token, _width, _height, _stretchMode).Result;
                     _queue.Enqueue(task);
                 }
@@ -122,6 +120,7 @@ namespace ComicReader.Utils.Image
             {
                 s_rawPixelPerPixel = GetScaleAdjustment();
             }
+
             return s_rawPixelPerPixel;
         }
 
@@ -129,7 +128,8 @@ namespace ComicReader.Utils.Image
             Token token,
             double width, double height,
             StretchModeEnum stretch_mode
-        ) {
+        )
+        {
             if (token.SessionToken.Cancelled)
             {
 #if DEBUG_LOG_LOAD
@@ -161,12 +161,13 @@ namespace ComicReader.Utils.Image
                     Log("Failed to get img stream " + token.Index.ToString() + ", skipped");
                     return TaskException.Failure;
                 }
+
                 stream.Seek(0);
                 bool img_load_success = true;
 
                 // IMPORTANT: Use TaskCompletionSource to guarantee all async tasks
                 // in Sync block has completed.
-                TaskCompletionSource<bool> completion_src = new TaskCompletionSource<bool>();
+                var completion_src = new TaskCompletionSource<bool>();
                 await Utils.C0.Sync(async delegate
                 {
                     image = new BitmapImage();
@@ -179,6 +180,7 @@ namespace ComicReader.Utils.Image
                         img_load_success = false;
                         Log("Skipped token " + token.Index.ToString() + ", image corrupted. " + e.ToString());
                     }
+
                     completion_src.SetResult(true);
                 });
                 await completion_src.Task;
@@ -188,7 +190,7 @@ namespace ComicReader.Utils.Image
                 }
             }
 
-            TaskCompletionSource<TaskException> taskResult = new TaskCompletionSource<TaskException>();
+            var taskResult = new TaskCompletionSource<TaskException>();
             await Utils.C0.Sync(delegate
             {
                 if (token.SessionToken.Cancelled)
@@ -199,6 +201,7 @@ namespace ComicReader.Utils.Image
                     taskResult.SetResult(TaskException.Cancellation);
                     return;
                 }
+
                 if (!use_origin_size)
                 {
                     double image_ratio = (double)image.PixelWidth / image.PixelHeight;
@@ -214,9 +217,11 @@ namespace ComicReader.Utils.Image
                         image_height = height * raw_pixels_per_view_pixel;
                         image_width = image_height * image_ratio;
                     }
+
                     image.DecodePixelHeight = (int)image_height;
                     image.DecodePixelWidth = (int)image_width;
                 }
+
                 token.Callback.OnSuccess(image);
 #if DEBUG_LOG_LOAD
                 Log("Token " + token_processed.ToString() + "(idx=" + token.Index.ToString() + ") loaded");
@@ -231,26 +236,15 @@ namespace ComicReader.Utils.Image
             Utils.Debug.Log("Image Loader: " + text + ".");
         }
 
-        [DllImport("Shcore.dll", SetLastError = true)]
-        internal static extern int GetDpiForMonitor(IntPtr hmonitor, Monitor_DPI_Type dpiType, out uint dpiX, out uint dpiY);
-
-        internal enum Monitor_DPI_Type : int
-        {
-            MDT_Effective_DPI = 0,
-            MDT_Angular_DPI = 1,
-            MDT_Raw_DPI = 2,
-            MDT_Default = MDT_Effective_DPI
-        }
-
         private static double GetScaleAdjustment()
         {
             IntPtr hWnd = WindowNative.GetWindowHandle(App.Window);
             WindowId wndId = Win32Interop.GetWindowIdFromWindow(hWnd);
-            DisplayArea displayArea = DisplayArea.GetFromWindowId(wndId, DisplayAreaFallback.Primary);
+            var displayArea = DisplayArea.GetFromWindowId(wndId, DisplayAreaFallback.Primary);
             IntPtr hMonitor = Win32Interop.GetMonitorFromDisplayId(displayArea.DisplayId);
 
             // Get DPI.
-            int result = GetDpiForMonitor(hMonitor, Monitor_DPI_Type.MDT_Default, out uint dpiX, out uint _);
+            int result = NativeMethods.GetDpiForMonitor(hMonitor, NativeModels.MonitorDPIType.MDT_Default, out uint dpiX, out uint _);
             if (result != 0)
             {
                 throw new Exception("Could not get DPI for monitor.");

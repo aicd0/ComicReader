@@ -1,18 +1,18 @@
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
 using ComicReader.Common;
 using ComicReader.Common.Constants;
 using ComicReader.Common.Router;
 using ComicReader.Database;
 using ComicReader.DesignData;
 using ComicReader.Utils;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace ComicReader.Views
 {
@@ -95,7 +95,7 @@ namespace ComicReader.Views
                 foreach (FavoriteNodeData inode in it)
                 {
                     FavoriteNodeType type = inode.Type == "i" ? FavoriteNodeType.Item : FavoriteNodeType.Filter;
-                    FavoriteItemViewModel enode = new FavoriteItemViewModel(inode.Name, type, parent);
+                    var enode = new FavoriteItemViewModel(inode.Name, type, parent);
 
                     if (type == FavoriteNodeType.Filter)
                     {
@@ -123,7 +123,7 @@ namespace ComicReader.Views
             {
                 foreach (FavoriteItemViewModel enode in et)
                 {
-                    FavoriteNodeData inode = new FavoriteNodeData
+                    var inode = new FavoriteNodeData
                     {
                         Type = enode.Type == FavoriteNodeType.Filter ? "f" : "i",
                         Name = enode.Name,
@@ -165,7 +165,7 @@ namespace ComicReader.Views
         {
             async Task<bool> helper(ObservableCollection<FavoriteItemViewModel> root)
             {
-                foreach (var item in root)
+                foreach (FavoriteItemViewModel item in root)
                 {
                     if (item.IsRenaming)
                     {
@@ -251,7 +251,7 @@ namespace ComicReader.Views
 
                 for (int i = 0; i < ordered.Count; ++i)
                 {
-                    var item = ordered[i];
+                    FavoriteItemViewModel item = ordered[i];
 
                     if (source.IndexOf(item) == i)
                     {
@@ -298,7 +298,7 @@ namespace ComicReader.Views
             // left-click
             Utils.C0.Run(async delegate
             {
-                FavoriteItemViewModel item = (FavoriteItemViewModel)e.InvokedItem;
+                var item = (FavoriteItemViewModel)e.InvokedItem;
 
                 if (item.IsRenaming)
                 {
@@ -328,14 +328,14 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                FavoriteItemViewModel item = (FavoriteItemViewModel)((MenuFlyoutItem)sender).DataContext;
+                var item = (FavoriteItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 await DeleteItem(item);
             });
         }
 
         private void RenameClick(object sender, RoutedEventArgs e)
         {
-            FavoriteItemViewModel item = (FavoriteItemViewModel)((MenuFlyoutItem)sender).DataContext;
+            var item = (FavoriteItemViewModel)((MenuFlyoutItem)sender).DataContext;
             item.IsRenaming = true;
             ObservableCollection<FavoriteItemViewModel> parent = item.Parent != null ? item.Parent.Children : DataSource;
             Utils.C1<FavoriteItemViewModel>.NotifyCollectionChanged(parent, item);
@@ -362,11 +362,11 @@ namespace ComicReader.Views
 
         private void RenameTextBoxDataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
         {
-            FavoriteItemViewModel ctx = (FavoriteItemViewModel)args.NewValue;
+            var ctx = (FavoriteItemViewModel)args.NewValue;
 
             if (ctx.IsRenaming)
             {
-                TextBox textbox = (TextBox)sender;
+                var textbox = (TextBox)sender;
                 textbox.Focus(FocusState.Programmatic);
                 textbox.SelectAll();
             }
@@ -433,7 +433,7 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                FavoriteItemViewModel item = (FavoriteItemViewModel)((MenuFlyoutItem)sender).DataContext;
+                var item = (FavoriteItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 ComicData comic = await ComicData.FromId(item.Id, "FavoriteOpenInNewTabLoadComic");
                 MainPage.Current.LoadTab(null, ReaderPageTrait.Instance, comic);
             });
@@ -441,7 +441,7 @@ namespace ComicReader.Views
 
         private void SortByNameClick(object sender, RoutedEventArgs e)
         {
-            FavoriteItemViewModel item = (FavoriteItemViewModel)((MenuFlyoutItem)sender).DataContext;
+            var item = (FavoriteItemViewModel)((MenuFlyoutItem)sender).DataContext;
             ObservableCollection<FavoriteItemViewModel> parent = item.Parent != null ? item.Parent.Children : DataSource;
             SortFavorites(parent);
         }

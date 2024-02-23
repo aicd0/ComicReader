@@ -1,7 +1,7 @@
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Media;
 using System;
 using System.Collections.Generic;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml;
 
 namespace ComicReader.Utils
 {
@@ -25,11 +25,11 @@ namespace ComicReader.Utils
             while (queue.Count > 0)
             {
                 obj = queue.Dequeue();
-                var count = VisualTreeHelper.GetChildrenCount(obj);
+                int count = VisualTreeHelper.GetChildrenCount(obj);
 
-                for (var i = 0; i < count; i++)
+                for (int i = 0; i < count; i++)
                 {
-                    var child = VisualTreeHelper.GetChild(obj, i);
+                    DependencyObject child = VisualTreeHelper.GetChild(obj, i);
                     yield return child;
                     queue.Enqueue(child);
                 }
@@ -42,6 +42,7 @@ namespace ComicReader.Utils
             {
                 return obj;
             }
+
             return null;
         }
     }

@@ -1,12 +1,12 @@
+using ComicReader.Common.Constants;
+using ComicReader.Native;
 using ComicReader.Views;
 using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Xaml;
-using System.Runtime.InteropServices;
 using System;
-using WinRT;
-using Windows.Storage;
-using ComicReader.Common.Constants;
 using System.Text.Json;
+using Windows.Storage;
+using WinRT;
 
 namespace ComicReader
 {
@@ -32,16 +32,17 @@ namespace ComicReader
             object windowStates = ApplicationData.Current.LocalSettings.Values[LocalSettings.WindowStates];
             if (windowStates is string)
             {
-                WINDOWPLACEMENT windowPlacement;
+                NativeModels.WindowPlacement windowPlacement;
                 try
                 {
-                    windowPlacement = JsonSerializer.Deserialize<WINDOWPLACEMENT>((string)windowStates);
+                    windowPlacement = JsonSerializer.Deserialize<NativeModels.WindowPlacement>((string)windowStates);
                 }
                 catch (Exception)
                 {
                     return;
                 }
-                SetWindowPlacement(App.WindowHandle, ref windowPlacement);
+
+                NativeMethods.SetWindowPlacement(App.WindowHandle, ref windowPlacement);
             }
         }
 
@@ -83,6 +84,7 @@ namespace ComicReader
                 m_acrylicController.Dispose();
                 m_acrylicController = null;
             }
+
             this.Activated -= OnWindowActivated;
             m_configurationSource = null;
         }
@@ -107,36 +109,10 @@ namespace ComicReader
 
         private void OnWindowSizeChanged(object sender, WindowSizeChangedEventArgs args)
         {
-            WINDOWPLACEMENT placement = new WINDOWPLACEMENT();
-            GetWindowPlacement(App.WindowHandle, out placement);
-            var serialized = JsonSerializer.Serialize(placement);
+            var placement = new NativeModels.WindowPlacement();
+            NativeMethods.GetWindowPlacement(App.WindowHandle, out placement);
+            string serialized = JsonSerializer.Serialize(placement);
             ApplicationData.Current.LocalSettings.Values[LocalSettings.WindowStates] = serialized;
-        }
-
-        [DllImport("user32.dll")]
-        private static extern bool GetWindowPlacement(IntPtr hWnd, out WINDOWPLACEMENT lpwndpl);
-
-        [DllImport("user32.dll")]
-        private static extern bool SetWindowPlacement(IntPtr hWnd, [In] ref WINDOWPLACEMENT lpwndpl);
-
-        [Serializable]
-        [StructLayout(LayoutKind.Sequential)]
-        internal struct WINDOWPLACEMENT
-        {
-            public int length { get; set; }
-            public int flags { get; set; }
-            public ShowWindowCommands showCmd { get; set; }
-            public System.Drawing.Point ptMinPosition { get; set; }
-            public System.Drawing.Point ptMaxPosition { get; set; }
-            public System.Drawing.Rectangle rcNormalPosition { get; set; }
-        }
-
-        internal enum ShowWindowCommands : int
-        {
-            Hide = 0,
-            Normal = 1,
-            Minimized = 2,
-            Maximized = 3,
         }
     }
 }

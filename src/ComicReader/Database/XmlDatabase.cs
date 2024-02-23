@@ -17,8 +17,8 @@ namespace ComicReader.Database
         [XmlIgnore]
         public abstract XmlData Target { get; set; }
 
-        public virtual void Pack() {}
-        public virtual void Unpack() {}
+        public virtual void Pack() { }
+        public virtual void Unpack() { }
     }
 
     public class XmlDatabase
@@ -55,16 +55,15 @@ namespace ComicReader.Database
 
         public static async Task<TaskException> Load()
         {
-            await _Load(XmlDatabase.Settings);
-            await _Load(XmlDatabase.Favorites);
-            await _Load(XmlDatabase.History);
+            await Load(XmlDatabase.Settings);
+            await Load(XmlDatabase.Favorites);
+            await Load(XmlDatabase.History);
 
             m_database_ready = true;
             return TaskException.Success;
         }
 
-        [System.Runtime.ExceptionServices.HandleProcessCorruptedStateExceptions]
-        private static async Task<TaskException> _Load(XmlData obj)
+        private static async Task<TaskException> Load(XmlData obj)
         {
             object file = await Utils.Storage.TryGetFile(DatabaseFolder, obj.FileName);
             if (file == null)
@@ -73,7 +72,7 @@ namespace ComicReader.Database
             }
 
             IRandomAccessStream stream = await (file as StorageFile).OpenAsync(FileAccessMode.Read);
-            XmlSerializer serializer = new XmlSerializer(obj.GetType());
+            var serializer = new XmlSerializer(obj.GetType());
             serializer.UnknownAttribute += (object x, XmlAttributeEventArgs y) => Log("UnknownAttribute: " + y.ToString());
             serializer.UnknownElement += (object x, XmlElementEventArgs y) => Log("UnknownElement: " + y.ToString());
             serializer.UnknownNode += (object x, XmlNodeEventArgs y) => Log("UnknownNode: " + y.ToString());
@@ -102,22 +101,23 @@ namespace ComicReader.Database
             switch (item)
             {
                 case XmlDatabaseItem.Favorites:
-                    await _Save(XmlDatabase.Favorites);
+                    await Save(XmlDatabase.Favorites);
                     break;
                 case XmlDatabaseItem.History:
-                    await _Save(XmlDatabase.History);
+                    await Save(XmlDatabase.History);
                     break;
                 case XmlDatabaseItem.Settings:
-                    await _Save(XmlDatabase.Settings);
+                    await Save(XmlDatabase.Settings);
                     break;
                 default:
                     Utils.Debug.LogException("SaveXmlDatabaseUnknownItem", null);
                     return TaskException.InvalidParameters;
             }
+
             return TaskException.Success;
         }
 
-        private static async Task _Save(XmlData obj)
+        private static async Task Save(XmlData obj)
         {
             await WaitLock();
             StorageFile file = await DatabaseFolder.CreateFileAsync(
@@ -126,7 +126,7 @@ namespace ComicReader.Database
                 FileAccessMode.ReadWrite);
 
             obj.Pack();
-            XmlSerializer serializer = new XmlSerializer(obj.GetType());
+            var serializer = new XmlSerializer(obj.GetType());
             serializer.Serialize(stream.AsStream(), obj);
 
             stream.Dispose();

@@ -78,7 +78,8 @@ namespace ComicReader.Database
         private SqlKey KeyProgress => new SqlKey(Field.Progress, Progress);
         private SqlKey KeyLastVisit => new SqlKey(Field.LastVisit, LastVisit);
         private SqlKey KeyLastPosition => new SqlKey(Field.LastPosition, LastPosition);
-        private SqlKey KeyImageAspectRatios {
+        private SqlKey KeyImageAspectRatios
+        {
             get
             {
                 string serialized = JsonSerializer.Serialize(ImageAspectRatios);
@@ -127,7 +128,7 @@ namespace ComicReader.Database
 
         public void SaveBasic()
         {
-            List<SqlKey> fields = new List<SqlKey>
+            var fields = new List<SqlKey>
             {
                 KeyType,
                 KeyLocation,
@@ -147,7 +148,7 @@ namespace ComicReader.Database
         {
             Hidden = hidden;
 
-            List<SqlKey> fields = new List<SqlKey>
+            var fields = new List<SqlKey>
             {
                 KeyHidden,
             };
@@ -158,7 +159,7 @@ namespace ComicReader.Database
         {
             Rating = rating;
 
-            List<SqlKey> fields = new List<SqlKey>
+            var fields = new List<SqlKey>
             {
                 KeyRating,
             };
@@ -170,7 +171,7 @@ namespace ComicReader.Database
             Progress = progress;
             LastPosition = last_position;
 
-            List<SqlKey> fields = new List<SqlKey>
+            var fields = new List<SqlKey>
             {
                 KeyProgress,
                 KeyLastPosition,
@@ -183,7 +184,7 @@ namespace ComicReader.Database
             LastVisit = DateTimeOffset.Now;
             Progress = Math.Max(Progress, 0);
 
-            List<SqlKey> fields = new List<SqlKey>
+            var fields = new List<SqlKey>
             {
                 KeyProgress,
                 KeyLastVisit,
@@ -193,7 +194,7 @@ namespace ComicReader.Database
 
         public void SaveImageAspectRatios()
         {
-            List<SqlKey> fields = new List<SqlKey>
+            var fields = new List<SqlKey>
             {
                 KeyImageAspectRatios,
             };
@@ -202,7 +203,7 @@ namespace ComicReader.Database
 
         public void SaveCoverFileCache()
         {
-            List<SqlKey> fields = new List<SqlKey>
+            var fields = new List<SqlKey>
             {
                 KeyCoverFileCache,
             };
@@ -211,7 +212,7 @@ namespace ComicReader.Database
 
         public void SaveTags()
         {
-            List<SqlKey> fields = new List<SqlKey>();
+            var fields = new List<SqlKey>();
             _ = Save(fields, save_tags: true, "SaveTags");
         }
 
@@ -221,12 +222,12 @@ namespace ComicReader.Database
             Title2 = "";
             Tags.Clear();
 
-            List<string> sub_paths = Location.Split(Utils.ArchiveAccess.FileSeperator).ToList();
-            List<string> tags = new List<string>();
+            var sub_paths = Location.Split(Utils.ArchiveAccess.FileSeperator).ToList();
+            var tags = new List<string>();
 
             foreach (string path in sub_paths)
             {
-                List<string> sub_tags = path.Split('\\').ToList();
+                var sub_tags = path.Split('\\').ToList();
 
                 if (sub_tags.Count == 0)
                 {
@@ -248,7 +249,7 @@ namespace ComicReader.Database
 
             Title1 = tags[tags.Count - 1];
 
-            TagData default_tag = new TagData
+            var default_tag = new TagData
             {
                 Name = DefaultTagsString,
                 Tags = tags.Skip(1).ToHashSet(),
@@ -293,7 +294,7 @@ namespace ComicReader.Database
 
             foreach (string property in properties)
             {
-                TagData tag_data = TagData.Parse(property);
+                var tag_data = TagData.Parse(property);
 
                 if (tag_data == null)
                 {
@@ -435,11 +436,11 @@ namespace ComicReader.Database
                 uint aspect_height = (uint)Math.Floor(decoder.PixelHeight * scale_ratio);
                 uint aspect_width = (uint)Math.Floor(decoder.PixelWidth * scale_ratio);
 
-                var result = await Debug.TryAsync("GenCoverCache", async delegate
+                TaskException result = await Debug.TryAsync("GenCoverCache", async delegate
                 {
                     using (SoftwareBitmap softwareBitmap = await decoder.GetSoftwareBitmapAsync())
                     {
-                        InMemoryRandomAccessStream resized_stream = new InMemoryRandomAccessStream();
+                        var resized_stream = new InMemoryRandomAccessStream();
                         BitmapEncoder encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.JpegEncoderId, resized_stream);
                         encoder.SetSoftwareBitmap(softwareBitmap);
                         encoder.BitmapTransform.InterpolationMode = BitmapInterpolationMode.Fant;
@@ -480,12 +481,12 @@ namespace ComicReader.Database
             }
 
             IStorageItem item = await CacheFolder.TryGetItemAsync(CoverFileCache);
-            
+
             if (!(item is StorageFile))
             {
                 return null;
             }
-            
+
             return (StorageFile)item;
         }
 
@@ -561,7 +562,7 @@ namespace ComicReader.Database
                 // Insert to tag category table.
                 string name = category.Name;
 
-                List<SqlKey> tag_category_fields = new List<SqlKey>
+                var tag_category_fields = new List<SqlKey>
                 {
                     new SqlKey(Field.TagCategory.Name, name),
                     new SqlKey(Field.TagCategory.ComicId, Id),
@@ -579,7 +580,7 @@ namespace ComicReader.Database
 
                 foreach (string tag in category.Tags)
                 {
-                    List<SqlKey> tag_fields = new List<SqlKey>
+                    var tag_fields = new List<SqlKey>
                     {
                         new SqlKey(Field.Tag.Content, tag),
                         new SqlKey(Field.Tag.ComicId, Id),
@@ -616,6 +617,7 @@ namespace ComicReader.Database
             {
                 return TaskException.Success;
             }
+
             return await Enqueue(delegate
             {
                 return SaveNoLock(keys, save_tags);
@@ -628,20 +630,24 @@ namespace ComicReader.Database
             {
                 return TaskException.Success;
             }
+
             if (Id < 0)
             {
                 InternalInsertNoLock().Wait();
                 return TaskException.Success;
             }
+
             if (keys.Count > 0)
             {
-                SqlKey id = new SqlKey(Field.Id, Id);
+                var id = new SqlKey(Field.Id, Id);
                 SqliteDatabaseManager.Update(SqliteDatabaseManager.ComicTable, id, keys).Wait();
             }
+
             if (save_tags)
             {
                 InternalSaveTagsNoLock().Wait();
             }
+
             return TaskException.Success;
         }
 
@@ -668,7 +674,7 @@ namespace ComicReader.Database
 
         private static async Task<T> Enqueue<T>(Func<T> op, string taskName)
         {
-            TaskCompletionSource<T> taskResult = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var taskResult = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
             _tableQueue.Enqueue(delegate (Task<TaskException> t)
             {
 #if DEBUG_LOG_TASK
@@ -720,11 +726,12 @@ namespace ComicReader.Database
         {
             await Enqueue(delegate
             {
-                using (var transaction = SqliteDatabaseManager.NewTransaction())
+                using (SqliteTransaction transaction = SqliteDatabaseManager.NewTransaction())
                 {
                     op().Wait();
                     transaction.Commit();
                 }
+
                 return true;
             }, taskName);
         }
@@ -733,7 +740,7 @@ namespace ComicReader.Database
         {
             // Directly imported fields.
             long id = query.GetInt64(0);
-            ComicType type = (ComicType)query.GetInt64(1);
+            var type = (ComicType)query.GetInt64(1);
             string location = query.GetString(2);
             string title1 = query.GetString(3);
             string title2 = query.GetString(4);
@@ -746,11 +753,11 @@ namespace ComicReader.Database
             string extended_string_1 = query.GetString(11);
 
             // Tags
-            List<TagData> tags = new List<TagData>();
+            var tags = new List<TagData>();
 
             CommandBlock2NoLock(async delegate (SqliteCommand command)
             {
-                List<long> tag_category_ids = new List<long>();
+                var tag_category_ids = new List<long>();
 
                 command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.TagCategoryTable +
                     " WHERE " + ComicData.Field.TagCategory.ComicId + "=" + id.ToString();
@@ -762,7 +769,7 @@ namespace ComicReader.Database
                         long tag_category_id = tag_category_query.GetInt64(0);
                         string name = tag_category_query.GetString(1);
 
-                        TagData tag_data = new TagData
+                        var tag_data = new TagData
                         {
                             Name = name
                         };
@@ -790,7 +797,7 @@ namespace ComicReader.Database
 
             // ImageAspectRatios
             bool reset_image_aspect_ratios = false;
-            List<double> image_aspect_ratios = new List<double>();
+            var image_aspect_ratios = new List<double>();
 
             try
             {
@@ -883,7 +890,7 @@ namespace ComicReader.Database
                 }
 
                 // Fetch all locations in the database.
-                List<string> loc_exist = new List<string>();
+                var loc_exist = new List<string>();
 
                 await CommandBlock2(async delegate (SqliteCommand command)
                 {
@@ -898,19 +905,20 @@ namespace ComicReader.Database
                 }, "GetLocationsFromDatabase");
 
                 // Get all root folders from setting.
-                List<string> root_folders = new List<string>(XmlDatabase.Settings.ComicFolders.Count);
+                var root_folders = new List<string>(XmlDatabase.Settings.ComicFolders.Count);
 
                 await XmlDatabaseManager.WaitLock();
                 foreach (string folder_path in XmlDatabase.Settings.ComicFolders)
                 {
                     root_folders.Add(folder_path);
                 }
+
                 XmlDatabaseManager.ReleaseLock();
 
                 // Get all subfolders in root folders.
                 var loc_in_lib = new List<string>();
                 var loc_ignore = new List<string>();
-                Utils.Stopwatch watch = new Utils.Stopwatch();
+                var watch = new Utils.Stopwatch();
                 watch.Start();
 
                 foreach (string folder_path in root_folders)
@@ -945,7 +953,7 @@ namespace ComicReader.Database
                         {
                             string filename = Utils.StringUtils.ItemNameFromPath(file_path);
                             string extension = Utils.StringUtils.ExtensionFromFilename(filename).ToLower();
-                                
+
                             if (Common.AppInfoProvider.IsSupportedImageExtension(extension))
                             {
                                 string loc = Utils.StringUtils.ParentLocationFromLocation(file_path);
@@ -970,9 +978,9 @@ namespace ComicReader.Database
                             }
                         }
 
-                        List<string> loc_scanned = new List<string>();
+                        var loc_scanned = new List<string>();
 
-                        foreach (var item in loc_scanned_dict)
+                        foreach (KeyValuePair<string, ComicType> item in loc_scanned_dict)
                         {
                             loc_scanned.Add(item.Key);
                         }
@@ -988,7 +996,7 @@ namespace ComicReader.Database
                         var queue = new List<UpdateItemInfo>();
 
                         // Get folders added.
-                        List<string> loc_added = Utils.C3<string, string, string>.Except(
+                        var loc_added = Utils.C3<string, string, string>.Except(
                             loc_scanned, loc_exist,
                             Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
                             new Utils.C1<string>.DefaultEqualityComparer()).ToList();
@@ -1005,7 +1013,7 @@ namespace ComicReader.Database
 
                         if (!lazy_load)
                         {
-                            List<string> loc_kept = Utils.C3<string, string, string>.Intersect(
+                            var loc_kept = Utils.C3<string, string, string>.Intersect(
                                 loc_scanned, loc_exist,
                                 Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
                                 new Utils.C1<string>.DefaultEqualityComparer()).ToList();
@@ -1038,7 +1046,7 @@ namespace ComicReader.Database
                 }
 
                 // Get removed folders.
-                List<string> loc_removed = Utils.C3<string, string, string>.Except(loc_exist, loc_in_lib,
+                var loc_removed = Utils.C3<string, string, string>.Except(loc_exist, loc_in_lib,
                     Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
                     new Utils.C1<string>.DefaultEqualityComparer()).ToList();
 
@@ -1068,6 +1076,7 @@ namespace ComicReader.Database
                         Log("Removing item '" + loc + "'");
                         RemoveWithLocationNoLock(loc);
                     }
+
                     return Task.CompletedTask;
                 }, "RemoveLocationsFromDatabase");
                 return TaskException.Success;
@@ -1144,12 +1153,12 @@ namespace ComicReader.Database
                 return null;
             }
 
-            TagData tag_data = new TagData
+            var tag_data = new TagData
             {
                 Name = pieces[0]
             };
 
-            List<string> tags = new List<string>(pieces[1].Split("/", StringSplitOptions.RemoveEmptyEntries));
+            var tags = new List<string>(pieces[1].Split("/", StringSplitOptions.RemoveEmptyEntries));
 
             foreach (string tag in tags)
             {

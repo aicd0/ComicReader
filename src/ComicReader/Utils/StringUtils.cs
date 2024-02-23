@@ -30,12 +30,14 @@ namespace ComicReader.Utils
                             return xint - yint;
                         }
                     }
+
                     int ordinal = string.CompareOrdinal(x[i], y[i]);
                     if (ordinal != 0)
                     {
                         return ordinal;
                     }
                 }
+
                 return x.Count - y.Count;
             }
         }
@@ -44,7 +46,7 @@ namespace ComicReader.Utils
 
         public static Func<string, List<string>> SmartFileNameKeySelector = delegate (string x)
         {
-            List<string> list = new List<string>();
+            var list = new List<string>();
             bool last_is_number = false;
             int start_index = 0;
             for (int i = 0; i < x.Length; i++)
@@ -55,6 +57,7 @@ namespace ComicReader.Utils
                 {
                     is_number = true;
                 }
+
                 if (is_number != last_is_number)
                 {
                     if (start_index < i)
@@ -62,13 +65,16 @@ namespace ComicReader.Utils
                         list.Add(x.Substring(start_index, i - start_index));
                         start_index = i;
                     }
+
                     last_is_number = is_number;
                 }
             }
+
             if (x.Length > 0)
             {
                 list.Add(x.Substring(start_index, x.Length - start_index));
             }
+
             return list;
         };
 
@@ -148,13 +154,14 @@ namespace ComicReader.Utils
         {
             return path.ToLower();
         }
-        
+
         public static bool IsBeginWith(string text, string subText)
         {
             if (subText.Length > text.Length)
             {
                 return false;
             }
+
             return text.Substring(0, subText.Length).Equals(subText);
         }
 
@@ -166,6 +173,7 @@ namespace ComicReader.Utils
             {
                 return false;
             }
+
             return childPath.Substring(0, parentPath.Length).Equals(parentPath);
         }
 
@@ -176,10 +184,12 @@ namespace ComicReader.Utils
             {
                 return path;
             }
+
             if (path[path.Length - 1] != '\\')
             {
                 path += '\\';
             }
+
             return path;
         }
 
@@ -255,7 +265,7 @@ namespace ComicReader.Utils
         public static string RandomFileName(int length)
         {
             const string symbols = "0123456789abcdefghijklmnopqrstuvwxyz";
-            Random random = new Random();
+            var random = new Random();
             string res = "";
 
             for (int i = 0; i < length; ++i)
@@ -268,7 +278,7 @@ namespace ComicReader.Utils
 
         public static string DictionaryToString<K, V>(IDictionary<K, V> dictionary)
         {
-            StringBuilder text = new StringBuilder();
+            var text = new StringBuilder();
             bool first = true;
             foreach (K k in dictionary.Keys)
             {
@@ -276,10 +286,12 @@ namespace ComicReader.Utils
                 {
                     text.Append(",\n");
                 }
+
                 first = false;
                 V v = dictionary[k];
                 text.Append("\"" + k.ToString() + "\": \"" + v.ToString() + "\"");
             }
+
             return text.ToString();
         }
     }

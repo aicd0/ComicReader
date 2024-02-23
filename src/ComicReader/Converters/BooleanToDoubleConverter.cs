@@ -1,5 +1,5 @@
-using System;
 using Microsoft.UI.Xaml.Data;
+using System;
 
 namespace ComicReader.Converters
 {
@@ -15,14 +15,14 @@ namespace ComicReader.Converters
 
         public object Convert(object value, Type target_type, object parameter, string language)
         {
-            var boxed_bool = (value as bool?);
-            var bool_value = (boxed_bool != null && boxed_bool.Value);
+            bool? boxed_bool = (value as bool?);
+            bool bool_value = (boxed_bool != null && boxed_bool.Value);
             return BooleanToDoubleConverter.Convert(bool_value);
         }
 
         public object ConvertBack(object value, Type target_type, object parameter, string language)
         {
-            var double_boxed = (value as double?);
+            double? double_boxed = (value as double?);
             return (double_boxed != null && double_boxed.Value > 0.5);
         }
     }
@@ -34,14 +34,14 @@ namespace ComicReader.Converters
     {
         public object Convert(object value, Type target_type, object parameter, string language)
         {
-            var boxed_bool = (value as bool?);
-            var bool_value = (boxed_bool != null && boxed_bool.Value);
+            bool? boxed_bool = (value as bool?);
+            bool bool_value = (boxed_bool != null && boxed_bool.Value);
             return BooleanToDoubleConverter.Convert(!bool_value);
         }
 
         public object ConvertBack(object value, Type target_type, object parameter, string language)
         {
-            var double_boxed = (value as double?);
+            double? double_boxed = (value as double?);
             return (double_boxed != null && double_boxed.Value <= 0.5);
         }
     }

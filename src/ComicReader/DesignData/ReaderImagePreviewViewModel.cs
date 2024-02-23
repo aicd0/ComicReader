@@ -1,5 +1,5 @@
-using System.ComponentModel;
 using Microsoft.UI.Xaml.Media.Imaging;
+using System.ComponentModel;
 
 namespace ComicReader.DesignData
 {

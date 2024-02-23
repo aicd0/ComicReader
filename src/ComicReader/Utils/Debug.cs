@@ -54,10 +54,12 @@ namespace ComicReader.Utils
 
         public static void LogException(string eventName, Exception e)
         {
-            Dictionary<string, string> properties = new Dictionary<string, string>();
-            if (e != null) {
+            var properties = new Dictionary<string, string>();
+            if (e != null)
+            {
                 properties["detail"] = e.ToString();
             }
+
             Analytics.TrackEvent(eventName, properties);
             Log("[Exception] " + eventName + ":\n" + StringUtils.DictionaryToString(properties));
         }
@@ -78,6 +80,7 @@ namespace ComicReader.Utils
             {
                 return TaskException.Failure;
             }
+
             await FileIO.AppendTextAsync(log_file, content + "\n");
             return TaskException.Success;
         }

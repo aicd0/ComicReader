@@ -1,7 +1,7 @@
+using ComicReader.DesignData;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-using ComicReader.DesignData;
 
 namespace ComicReader.Controls
 {
@@ -42,11 +42,13 @@ namespace ComicReader.Controls
             {
                 return;
             }
+
             if (Item == null)
             {
                 ImageHolder1.Source = null;
                 ImageHolder2.Source = null;
             }
+
             ImageHolder1.Source = Item.Image.Image;
             ImageHolder2.Source = Item.Image.Image;
         }

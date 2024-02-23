@@ -195,7 +195,7 @@ namespace ComicReader.Utils
                 extension = base_file.FileType;
             }
 
-            ArchiveAccessContext ctx = new ArchiveAccessContext
+            var ctx = new ArchiveAccessContext
             {
                 Entry = entry,
                 Extension = extension,
@@ -248,9 +248,10 @@ namespace ComicReader.Utils
                         Log("Failed to open 7z archive. " + e.ToString());
                         return TaskException.FileCorrupted;
                     }
+
                     using (archive)
                     {
-                        foreach (var raw_entry in archive.Entries)
+                        foreach (SharpCompress.Archives.SevenZip.SevenZipArchiveEntry raw_entry in archive.Entries)
                         {
                             var entry = new SevenZipArchiveEntry(raw_entry);
                             TaskException result = await callback(entry);
@@ -260,6 +261,7 @@ namespace ComicReader.Utils
                             }
                         }
                     }
+
                     break;
 
                 case ".bz2":
@@ -281,6 +283,7 @@ namespace ComicReader.Utils
                         Log("Failed to open archive. " + e.ToString());
                         return TaskException.FileCorrupted;
                     }
+
                     using (reader)
                     {
                         while (true)
@@ -295,10 +298,12 @@ namespace ComicReader.Utils
                                 Utils.Debug.LogException("ArchiveReaderMoveNext", e);
                                 break;
                             }
+
                             if (!hasNext)
                             {
                                 break;
                             }
+
                             var entry = new ReaderArchiveEntry(reader);
                             TaskException result = await callback(entry);
                             if (result == TaskException.StopIteration)
@@ -307,6 +312,7 @@ namespace ComicReader.Utils
                             }
                         }
                     }
+
                     break;
 
                 default:
@@ -323,6 +329,7 @@ namespace ComicReader.Utils
                 System.Diagnostics.Debug.Assert(false);
                 return TaskException.InvalidParameters;
             }
+
             return await TryAccessArchiveStreamInternal(stream, extension.ToLower(), sub_path, func);
         }
 
@@ -392,16 +399,19 @@ namespace ComicReader.Utils
                     {
                         break;
                     }
+
                     string entry_name = entry.FullName.Replace('/', '\\');
                     if (!StringUtils.IsBeginWith(entry_name, base_entry_name))
                     {
                         break;
                     }
+
                     string subpath = entry_name.Substring(base_entry_name.Length);
                     if (subpath.Length == 0)
                     {
                         break;
                     }
+
                     output.Add(subpath);
                 } while (false);
 

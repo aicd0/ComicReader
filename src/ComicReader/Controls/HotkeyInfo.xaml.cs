@@ -9,7 +9,7 @@ namespace ComicReader.Controls
         {
             this.InitializeComponent();
         }
-        
+
         public string Header
         {
             get { return (string)GetValue(HeaderProperty); }
@@ -17,7 +17,7 @@ namespace ComicReader.Controls
         }
         public static readonly DependencyProperty HeaderProperty =
             DependencyProperty.Register(nameof(Header), typeof(string), typeof(HotkeyInfo), new PropertyMetadata(null));
-        
+
         public string Key
         {
             get { return (string)GetValue(KeyProperty); }

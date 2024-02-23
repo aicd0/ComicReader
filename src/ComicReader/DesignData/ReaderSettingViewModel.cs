@@ -1,9 +1,9 @@
 using ComicReader.Common.Constants;
 using ComicReader.Database;
 using ComicReader.Utils;
+using Microsoft.UI.Xaml;
 using System;
 using System.ComponentModel;
-using Microsoft.UI.Xaml;
 
 namespace ComicReader.DesignData
 {

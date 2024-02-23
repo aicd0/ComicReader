@@ -1,3 +1,14 @@
+using ComicReader.Common;
+using ComicReader.Common.Constants;
+using ComicReader.Common.Router;
+using ComicReader.Database;
+using ComicReader.Utils;
+using Microsoft.UI;
+using Microsoft.UI.Windowing;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -5,17 +16,6 @@ using System.Threading.Tasks;
 using Windows.ApplicationModel.Activation;
 using Windows.Storage;
 using Windows.Storage.Search;
-using Microsoft.UI.Windowing;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
-using ComicReader.Common.Router;
-using ComicReader.Database;
-using ComicReader.Common;
-using ComicReader.Common.Constants;
-using ComicReader.Utils;
-using Microsoft.UI;
-using Microsoft.UI.Xaml.Media;
 
 namespace ComicReader.Views
 {
@@ -119,7 +119,7 @@ namespace ComicReader.Views
         // File activation
         private async Task<ComicData> GetStartupComic(FileActivatedEventArgs args)
         {
-            StorageFile target_file = (StorageFile)args.Files[0];
+            var target_file = (StorageFile)args.Files[0];
 
             if (!Common.AppInfoProvider.IsSupportedExternalFileExtension(target_file.FileType))
             {
@@ -147,11 +147,7 @@ namespace ComicReader.Views
             else if (Common.AppInfoProvider.IsSupportedArchiveExtension(target_file.FileType))
             {
                 comic = await ComicData.FromLocation(target_file.Path, "MainGetStartupComicFromArchive");
-
-                if (comic == null)
-                {
-                    comic = await ComicArchiveData.FromExternal(target_file);
-                }
+                comic ??= await ComicArchiveData.FromExternal(target_file);
             }
             else if (Common.AppInfoProvider.IsSupportedImageExtension(target_file.FileType))
             {
@@ -162,8 +158,8 @@ namespace ComicReader.Views
                 if (comic == null)
                 {
                     StorageFile info_file = null;
-                    List<StorageFile> all_files = new List<StorageFile>();
-                    List<StorageFile> img_files = new List<StorageFile>();
+                    var all_files = new List<StorageFile>();
+                    var img_files = new List<StorageFile>();
                     StorageFileQueryResult neighboring_file_query =
                         args.NeighboringFilesQuery;
 
@@ -199,6 +195,7 @@ namespace ComicReader.Views
                     comic = await ComicFolderData.FromExternal(dir, img_files, info_file);
                 }
             }
+
             return comic;
         }
 
@@ -223,18 +220,19 @@ namespace ComicReader.Views
                     return true;
                 }
             }
+
             return false;
         }
 
         private TabIdentifier AddNewTab(IPageTrait pageTrait, object args = null)
         {
             // create a new tab and switch to it.
-            TabViewItem new_tab = new TabViewItem
+            var new_tab = new TabViewItem
             {
                 Header = "Loading...",
                 Content = new Frame()
             };
-            TabIdentifier id = new TabIdentifier
+            var id = new TabIdentifier
             {
                 Tab = new_tab,
                 PageTrait = pageTrait,
@@ -256,6 +254,7 @@ namespace ComicReader.Views
             {
                 return;
             }
+
             if (tab_id == null)
             {
                 tab_id = AddNewTab(pageTrait, args);
@@ -265,15 +264,16 @@ namespace ComicReader.Views
                 tab_id.PageTrait = pageTrait;
                 tab_id.RequestArgs = args;
             }
+
             _currentTab = tab_id;
 
-            NavigationParams nav_params = new NavigationParams
+            var nav_params = new NavigationParams
             {
                 Params = Shared,
                 TabId = tab_id
             };
 
-            Frame frame = (Frame)tab_id.Tab.Content;
+            var frame = (Frame)tab_id.Tab.Content;
 
             // use different loading strategies based on page type.
             if (pageTrait.HasNavigationBar())
@@ -287,7 +287,8 @@ namespace ComicReader.Views
                         return;
                     }
                 }
-                NavigationPage content_page = (NavigationPage)frame.Content;
+
+                var content_page = (NavigationPage)frame.Content;
                 content_page.Navigate();
             }
             else
@@ -312,6 +313,7 @@ namespace ComicReader.Views
                     return id;
                 }
             }
+
             return null;
         }
 
@@ -342,7 +344,8 @@ namespace ComicReader.Views
             {
                 return;
             }
-            TabViewItem tab = (TabViewItem)e.AddedItems[0];
+
+            var tab = (TabViewItem)e.AddedItems[0];
             _currentTab = GetTabId(tab);
             System.Diagnostics.Debug.Assert(_currentTab != null);
             if (_currentTab != null)
@@ -374,6 +377,7 @@ namespace ComicReader.Views
             {
                 return;
             }
+
             if (_currentTab.PageTrait.ImmersiveMode())
             {
                 _tabContentPresenter.Margin = new Thickness(0, 0, 0, 0);
@@ -392,6 +396,7 @@ namespace ComicReader.Views
             {
                 return;
             }
+
             if (_titleBarAnimation == null)
             {
                 _titleBarAnimation = new Utils.KeyFrameAnimation
@@ -407,6 +412,7 @@ namespace ComicReader.Views
             {
                 _titleBarAnimation.RemoveAllKeyFrames();
             }
+
             _titleBarAnimation.StartValue = _tabContainerGrid.Opacity;
             if (show)
             {
@@ -416,6 +422,7 @@ namespace ComicReader.Views
             {
                 _titleBarAnimation.InsertKeyFrame(1.0, 0.0);
             }
+
             _titleBarAnimation.Start();
         }
 
@@ -448,6 +455,7 @@ namespace ComicReader.Views
                     handled = false;
                     break;
             }
+
             if (handled)
             {
                 e.Handled = true;
@@ -463,6 +471,7 @@ namespace ComicReader.Views
                     s_startupFileArgs = args;
                     return;
                 }
+
                 ComicData comic = await Current.GetStartupComic(args);
                 if (comic != null)
                 {
@@ -478,6 +487,7 @@ namespace ComicReader.Views
             {
                 return;
             }
+
             App.Window.AppWindow.SetPresenter(AppWindowPresenterKind.FullScreen);
             EventBus.Default.With<bool>(EventId.FullscreenChanged).Emit(true);
         }
@@ -488,6 +498,7 @@ namespace ComicReader.Views
             {
                 return;
             }
+
             App.Window.AppWindow.SetPresenter(AppWindowPresenterKind.Default);
             EventBus.Default.With<bool>(EventId.FullscreenChanged).Emit(false);
         }

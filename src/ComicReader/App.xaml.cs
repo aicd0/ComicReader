@@ -1,14 +1,14 @@
-using Microsoft.AppCenter.Analytics;
-using Microsoft.AppCenter.Crashes;
-using Microsoft.AppCenter;
-using Microsoft.UI.Xaml;
-using Microsoft.Windows.AppLifecycle;
-using System;
-using Windows.Storage;
 using ComicReader.Database;
 using ComicReader.Utils;
 using ComicReader.Views;
+using Microsoft.AppCenter;
+using Microsoft.AppCenter.Analytics;
+using Microsoft.AppCenter.Crashes;
+using Microsoft.UI.Xaml;
+using Microsoft.Windows.AppLifecycle;
+using System;
 using Windows.ApplicationModel.Activation;
+using Windows.Storage;
 using WinRT.Interop;
 
 namespace ComicReader
@@ -43,7 +43,7 @@ namespace ComicReader
             // If this isn't the first instance launched, then "main" will already be registered,
             // so retrieve it.
             var mainInstance = AppInstance.FindOrRegisterForKey("main");
-            var activatedEventArgs = AppInstance.GetCurrent().GetActivatedEventArgs();
+            AppActivationArguments activatedEventArgs = AppInstance.GetCurrent().GetActivatedEventArgs();
 
             // If the instance that's executing the OnLaunched handler right now
             // isn't the "main" instance.

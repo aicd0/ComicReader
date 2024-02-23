@@ -1,7 +1,7 @@
-using System.ComponentModel;
+using ComicReader.Database;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using ComicReader.Database;
+using System.ComponentModel;
 
 namespace ComicReader.Views
 {

@@ -1,6 +1,6 @@
+using ComicReader.DesignData;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using ComicReader.DesignData;
 
 namespace ComicReader.Converters
 {
@@ -11,7 +11,7 @@ namespace ComicReader.Converters
 
         protected override Style SelectStyleCore(object item, DependencyObject container)
         {
-            ComicItemViewModel model = item as ComicItemViewModel;
+            var model = item as ComicItemViewModel;
             return model.IsSelectMode ? ExpandedStyle : NormalStyle;
         }
     }

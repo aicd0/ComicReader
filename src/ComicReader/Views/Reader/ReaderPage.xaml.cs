@@ -2,28 +2,28 @@
 //#define DEBUG_LOG_POINTER
 #endif
 
+using ComicReader.Common;
+using ComicReader.Common.Constants;
+using ComicReader.Common.Router;
+using ComicReader.Controls;
+using ComicReader.Database;
+using ComicReader.DesignData;
+using ComicReader.Utils;
+using ComicReader.Utils.Image;
+using ComicReader.Utils.KVDatabase;
+using Microsoft.UI.Input;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using Windows.Storage;
-using Windows.UI.Core;
-using Microsoft.UI.Input;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media.Imaging;
-using ComicReader.Common;
-using ComicReader.Common.Router;
-using ComicReader.Controls;
-using ComicReader.Database;
-using ComicReader.DesignData;
-using ComicReader.Utils.KVDatabase;
-using ComicReader.Common.Constants;
-using ComicReader.Utils;
-using ComicReader.Utils.Image;
 using Windows.System;
+using Windows.UI.Core;
 
 namespace ComicReader.Views.Reader
 {
@@ -227,6 +227,7 @@ namespace ComicReader.Views.Reader
                         break;
                 }
             }
+
             IsTitleBarPlaceHolderVisible = BottomTilePinned;
             IsGridViewVisible = previewVisible;
 
@@ -337,7 +338,7 @@ namespace ComicReader.Views.Reader
             base.OnStart(p);
             Shared.NavigationPageShared = (NavigationPageShared)p.Params;
 
-            bool tipShown = KVDatabase.getInstance().getDefaultMethod().GetBoolean(KVLib.TIPS, KEY_TIP_SHOWN, false);
+            bool tipShown = KVDatabase.GetInstance().GetDefaultMethod().GetBoolean(KVLib.TIPS, KEY_TIP_SHOWN, false);
             if (!tipShown)
             {
                 ReaderTip.IsOpen = !tipShown;
@@ -353,7 +354,7 @@ namespace ComicReader.Views.Reader
             OnReaderContinuousChanged();
             Shared.UpdateReaderUI();
 
-            ComicData comic = (ComicData)GetTabId().RequestArgs;
+            var comic = (ComicData)GetTabId().RequestArgs;
             GetTabId().Tab.Header = comic.Title;
             GetTabId().Tab.IconSource = new SymbolIconSource { Symbol = Symbol.Pictures };
 
@@ -532,9 +533,9 @@ namespace ComicReader.Views.Reader
             double preview_height = (double)Application.Current.Resources["ReaderPreviewImageHeight"];
             PreviewDataSource.Clear();
 
-            List<ImageLoader.Token> preview_img_loader_tokens = new List<ImageLoader.Token>();
+            var preview_img_loader_tokens = new List<ImageLoader.Token>();
             ComicData comic = _comic; // Stores locally.
-            Utils.Stopwatch save_timer = new Utils.Stopwatch();
+            var save_timer = new Utils.Stopwatch();
 
             for (int i = 0; i < comic.ImageCount; ++i)
             {
@@ -604,8 +605,10 @@ namespace ComicReader.Views.Reader
                             await _page.VerticalReader.LoadFrame(_comic.ImageAspectRatios.Count - 1);
                             await _page.HorizontalReader.LoadFrame(_comic.ImageAspectRatios.Count - 1);
                         }
+
                         _comic.ImageAspectRatios.Add(image_aspect_ratio);
                     }
+
                     await _page.VerticalReader.LoadFrame(_index);
                     await _page.HorizontalReader.LoadFrame(_index);
 
@@ -659,16 +662,16 @@ namespace ComicReader.Views.Reader
                 return;
             }
 
-            ObservableCollection<TagCollectionViewModel> new_collection = new ObservableCollection<TagCollectionViewModel>();
+            var new_collection = new ObservableCollection<TagCollectionViewModel>();
 
             for (int i = 0; i < _comic.Tags.Count; ++i)
             {
                 TagData tags = _comic.Tags[i];
-                TagCollectionViewModel tags_model = new TagCollectionViewModel(tags.Name);
+                var tags_model = new TagCollectionViewModel(tags.Name);
 
                 foreach (string tag in tags.Tags)
                 {
-                    TagViewModel tag_model = new TagViewModel
+                    var tag_model = new TagViewModel
                     {
                         Tag = tag,
                         ItemHandler = _tagItemHandler
@@ -745,6 +748,7 @@ namespace ComicReader.Views.Reader
                 {
                     return;
                 }
+
                 _updatingProgress = true;
                 Task.Run(delegate
                 {
@@ -837,8 +841,8 @@ namespace ComicReader.Views.Reader
 
         private void OnReaderContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
         {
-            ReaderFrameViewModel item = args.Item as ReaderFrameViewModel;
-            ReaderFrame viewHolder = args.ItemContainer.ContentTemplateRoot as ReaderFrame;
+            var item = args.Item as ReaderFrameViewModel;
+            var viewHolder = args.ItemContainer.ContentTemplateRoot as ReaderFrame;
             viewHolder.Bind(item);
         }
 
@@ -885,7 +889,7 @@ namespace ComicReader.Views.Reader
         // Preview
         private void OnGridViewItemClicked(object sender, ItemClickEventArgs e)
         {
-            ReaderImagePreviewViewModel ctx = (ReaderImagePreviewViewModel)e.ClickedItem;
+            var ctx = (ReaderImagePreviewViewModel)e.ClickedItem;
             Shared.NavigationPageShared.IsPreviewButtonToggled = false;
 
             ReaderModel reader = GetCurrentReader();
@@ -893,6 +897,7 @@ namespace ComicReader.Views.Reader
             {
                 return;
             }
+
             ReaderModel.ScrollManager.BeginTransaction(reader).Page(ctx.Page).Commit();
         }
 
@@ -955,6 +960,7 @@ namespace ComicReader.Views.Reader
                 {
                     return;
                 }
+
                 mPendingTap = true;
                 mTapCancelled = false;
                 Utils.C0.Run(async delegate
@@ -965,6 +971,7 @@ namespace ComicReader.Views.Reader
                     {
                         return;
                     }
+
                     BottomTileSetHold(!mBottomTileShowed);
                 });
             }
@@ -976,6 +983,7 @@ namespace ComicReader.Views.Reader
                 {
                     return;
                 }
+
                 if (Math.Abs(reader.Zoom - 100) <= 1)
                 {
                     ReaderModel.ScrollManager.BeginTransaction(reader)
@@ -1007,7 +1015,7 @@ namespace ComicReader.Views.Reader
         {
             ReaderModel reader = GetCurrentReader();
 
-            if (reader  == null)
+            if (reader == null)
             {
                 return;
             }
@@ -1091,7 +1099,7 @@ namespace ComicReader.Views.Reader
 
         private void OnInfoPaneTagClicked(object sender, RoutedEventArgs e)
         {
-            TagViewModel ctx = (TagViewModel)((Button)sender).DataContext;
+            var ctx = (TagViewModel)((Button)sender).DataContext;
             MainPage.Current.LoadTab(null, SearchPageTrait.Instance, "<tag: " + ctx.Tag + ">");
         }
 
@@ -1104,7 +1112,7 @@ namespace ComicReader.Views.Reader
                     return;
                 }
 
-                EditComicInfoDialog dialog = new EditComicInfoDialog(_comic);
+                var dialog = new EditComicInfoDialog(_comic);
                 ContentDialogResult result = await C0.ShowDialogAsync(dialog, XamlRoot);
                 if (result == ContentDialogResult.Primary)
                 {
@@ -1120,6 +1128,7 @@ namespace ComicReader.Views.Reader
             {
                 return;
             }
+
             MainPage.Current.ShowOrHideTitleBar(true);
             mBottomTileShowed = true;
         }
@@ -1231,7 +1240,7 @@ namespace ComicReader.Views.Reader
         // Tips
         private void OnReaderTipCloseButtonClick(InfoBar sender, object args)
         {
-            KVDatabase.getInstance().getDefaultMethod().SetBoolean(KVLib.TIPS, KEY_TIP_SHOWN, true);
+            KVDatabase.GetInstance().GetDefaultMethod().SetBoolean(KVLib.TIPS, KEY_TIP_SHOWN, true);
         }
 
         // Fullscreen
@@ -1272,6 +1281,7 @@ namespace ComicReader.Views.Reader
                         {
                             await reader.MoveFrame(1);
                         }
+
                         break;
 
                     case VirtualKey.Left:
@@ -1283,6 +1293,7 @@ namespace ComicReader.Views.Reader
                         {
                             await reader.MoveFrame(-1);
                         }
+
                         break;
 
                     case VirtualKey.Up:

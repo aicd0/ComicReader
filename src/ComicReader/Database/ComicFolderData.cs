@@ -19,7 +19,8 @@ namespace ComicReader.Database
         public override bool IsEditable => !(IsExternal && InfoFile == null);
 
         private ComicFolderData(bool is_external) :
-            base(ComicType.Folder, is_external) { }
+            base(ComicType.Folder, is_external)
+        { }
 
         public static ComicData FromDatabase(string location)
         {
@@ -40,7 +41,7 @@ namespace ComicReader.Database
                 .OrderBy(x => Utils.StringUtils.SmartFileNameKeySelector(x.DisplayName), Utils.StringUtils.SmartFileNameComparer)
                 .ToList();
 
-            ComicFolderData comic = new ComicFolderData(true)
+            var comic = new ComicFolderData(true)
             {
                 Location = directory,
                 ImageFiles = image_files,
@@ -184,7 +185,7 @@ namespace ComicReader.Database
 
             // Load all images.
             Log("Retrieving images in '" + Location + "'");
-            QueryOptions query_options = new QueryOptions
+            var query_options = new QueryOptions
             {
                 FolderDepth = FolderDepth.Shallow,
                 IndexerOption = IndexerOption.DoNotUseIndexer, // The results from UseIndexerWhenAvailable are incomplete.

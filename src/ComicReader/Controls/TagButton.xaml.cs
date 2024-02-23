@@ -1,5 +1,5 @@
-﻿using Microsoft.UI.Xaml.Controls;
-using ComicReader.DesignData;
+﻿using ComicReader.DesignData;
+using Microsoft.UI.Xaml.Controls;
 
 namespace ComicReader.Controls
 {

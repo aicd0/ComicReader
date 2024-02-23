@@ -9,10 +9,11 @@ namespace ComicReader.Utils
 
         public LiveData<T> With<T>(string eventId)
         {
-            if (_topics.TryGetValue(eventId, out var topic))
+            if (_topics.TryGetValue(eventId, out object topic))
             {
                 return topic as LiveData<T>;
             }
+
             var newTopic = new LiveData<T>();
             _topics.Add(eventId, newTopic);
             return newTopic;

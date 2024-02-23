@@ -1,4 +1,3 @@
-using ComicReader.Common.Router;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
@@ -65,6 +64,7 @@ namespace ComicReader.Common
             {
                 return;
             }
+
             _isLoaded = true;
             TryResume();
         }
@@ -75,6 +75,7 @@ namespace ComicReader.Common
             {
                 return;
             }
+
             _isLoaded = false;
             TryPause();
         }
@@ -94,6 +95,7 @@ namespace ComicReader.Common
             {
                 return;
             }
+
             if (!_isResumed)
             {
                 _isResumed = true;

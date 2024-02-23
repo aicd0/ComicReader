@@ -57,10 +57,7 @@ namespace ComicReader.Common.Router
         {
             get
             {
-                if (_instance == null)
-                {
-                    _instance = new HomePageTrait();
-                }
+                _instance ??= new HomePageTrait();
                 return _instance;
             }
         }
@@ -106,10 +103,7 @@ namespace ComicReader.Common.Router
         {
             get
             {
-                if (_instance == null)
-                {
-                    _instance = new SearchPageTrait();
-                }
+                _instance ??= new SearchPageTrait();
                 return _instance;
             }
         }
@@ -136,7 +130,7 @@ namespace ComicReader.Common.Router
 
         public string GetUniqueString(object args)
         {
-            ComicData comic = (ComicData)args;
+            var comic = (ComicData)args;
             return "Reader/" + comic.Location;
         }
 
@@ -155,10 +149,7 @@ namespace ComicReader.Common.Router
         {
             get
             {
-                if (_instance == null)
-                {
-                    _instance = new ReaderPageTrait();
-                }
+                _instance ??= new ReaderPageTrait();
                 return _instance;
             }
         }
@@ -203,10 +194,7 @@ namespace ComicReader.Common.Router
         {
             get
             {
-                if (_instance == null)
-                {
-                    _instance = new SettingPageTrait();
-                }
+                _instance ??= new SettingPageTrait();
                 return _instance;
             }
         }
@@ -251,10 +239,7 @@ namespace ComicReader.Common.Router
         {
             get
             {
-                if (_instance == null)
-                {
-                    _instance = new HelpPageTrait();
-                }
+                _instance ??= new HelpPageTrait();
                 return _instance;
             }
         }

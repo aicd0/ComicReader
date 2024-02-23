@@ -1,7 +1,7 @@
-﻿using Microsoft.Data.Sqlite;
+﻿using ComicReader.Database;
+using Microsoft.Data.Sqlite;
 using System.Collections.Generic;
 using System.Linq;
-using ComicReader.Database;
 
 namespace ComicReader.Common.Search
 {
@@ -39,7 +39,7 @@ namespace ComicReader.Common.Search
 
         public string DescriptionDetailed()
         {
-            List<SubFilter> cpy = new List<SubFilter>(m_subfilters);
+            var cpy = new List<SubFilter>(m_subfilters);
             _ = cpy.RemoveAll(x => x.UniqueString == "~hidden");
 
             if (ContainsFilter("hidden", cpy))
@@ -133,7 +133,7 @@ namespace ComicReader.Common.Search
 
         public static Filter Parse(string desc, out List<string> remaining)
         {
-            Filter filter = new Filter();
+            var filter = new Filter();
             List<SubFilter> filters = ParseFilters(desc, out remaining);
 
             foreach (SubFilter f in filters)
@@ -166,7 +166,7 @@ namespace ComicReader.Common.Search
         private static List<SubFilter> ParseFilters(string desc, out List<string> remaining)
         {
             remaining = new List<string>();
-            List<SubFilter> filters = new List<SubFilter>();
+            var filters = new List<SubFilter>();
             int bracket_cnt = 0;
             int bracket_start = 0;
             int keyword_start = 0;
@@ -263,12 +263,14 @@ namespace ComicReader.Common.Search
                     return filters[0];
                 }
 
-                if (filter_type == "or") return new SubFilterOr(filters);
-                else return new SubFilterAnd(filters);
+                if (filter_type == "or")
+                    return new SubFilterOr(filters);
+                else
+                    return new SubFilterAnd(filters);
             }
 
             {
-                List<string> sub_args = args.Split(',').ToList();
+                var sub_args = args.Split(',').ToList();
 
                 for (int i = sub_args.Count - 1; i >= 0; --i)
                 {
@@ -285,8 +287,8 @@ namespace ComicReader.Common.Search
                     sub_args.Add("");
                 }
 
-                List<SubFilter> filters = new List<SubFilter>();
-                List<string> all_unique_strings = new List<string>();
+                var filters = new List<SubFilter>();
+                var all_unique_strings = new List<string>();
 
                 foreach (string arg in sub_args)
                 {
@@ -313,7 +315,7 @@ namespace ComicReader.Common.Search
 
                 {
                     string unique_string = filter_type + ": " + string.Join(", ", all_unique_strings);
-                    SubFilterOr filter = new SubFilterOr(filters);
+                    var filter = new SubFilterOr(filters);
                     filter.SetUniqueString(unique_string);
                     return filter;
                 }
@@ -430,7 +432,7 @@ namespace ComicReader.Common.Search
                 return;
             }
 
-            List<string> all_unique_strings = new List<string>();
+            var all_unique_strings = new List<string>();
 
             foreach (SubFilter filter in m_filters)
             {
@@ -442,7 +444,7 @@ namespace ComicReader.Common.Search
 
         public override List<long> Match(List<long> all)
         {
-            List<long> result = new List<long>();
+            var result = new List<long>();
 
             foreach (SubFilter filter in m_filters)
             {
@@ -491,7 +493,7 @@ namespace ComicReader.Common.Search
                 return;
             }
 
-            List<string> all_unique_strings = new List<string>();
+            var all_unique_strings = new List<string>();
 
             foreach (SubFilter filter in m_filters)
             {
@@ -546,12 +548,12 @@ namespace ComicReader.Common.Search
         {
             public long TagCategoryId;
             public long ComicId;
-        } 
+        }
 
         public override List<long> Match(List<long> all)
         {
-            List<MatchedItem> tag_category_matched = new List<MatchedItem>();
-            List<long> tag_matched = new List<long>();
+            var tag_category_matched = new List<MatchedItem>();
+            var tag_matched = new List<long>();
 
             using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
             {
@@ -592,7 +594,7 @@ namespace ComicReader.Common.Search
                 (MatchedItem x) => x.TagCategoryId, (long x) => x,
                 new Utils.C1<long>.DefaultEqualityComparer());
 
-            List<long> results = new List<long>(matched.Count());
+            var results = new List<long>(matched.Count());
 
             foreach (MatchedItem item in matched)
             {
@@ -629,7 +631,7 @@ namespace ComicReader.Common.Search
 
         public override List<long> Match(List<long> all)
         {
-            List<long> results = new List<long>();
+            var results = new List<long>();
 
             using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
             {
@@ -657,7 +659,7 @@ namespace ComicReader.Common.Search
 
         public override List<long> Match(List<long> all)
         {
-            List<long> results = new List<long>();
+            var results = new List<long>();
 
             using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
             {
@@ -697,7 +699,7 @@ namespace ComicReader.Common.Search
 
         public override List<long> Match(List<long> all)
         {
-            List<long> results = new List<long>();
+            var results = new List<long>();
 
             using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
             {
@@ -737,7 +739,7 @@ namespace ComicReader.Common.Search
 
         public override List<long> Match(List<long> all)
         {
-            List<long> results = new List<long>();
+            var results = new List<long>();
 
             using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
             {
@@ -771,7 +773,7 @@ namespace ComicReader.Common.Search
 
         public override List<long> Match(List<long> all)
         {
-            List<long> results = new List<long>();
+            var results = new List<long>();
 
             using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
             {

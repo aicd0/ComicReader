@@ -1,6 +1,6 @@
+using ComicReader.DesignData;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using ComicReader.DesignData;
 
 namespace ComicReader.Controls
 {
@@ -20,10 +20,12 @@ namespace ComicReader.Controls
             {
                 return;
             }
+
             if (Container == null)
             {
                 return;
             }
+
             Ctx.Notify();
         }
 
@@ -53,6 +55,7 @@ namespace ComicReader.Controls
             {
                 Item.ItemContainer = null;
             }
+
             Item = item;
             Item.ItemContainer = this;
             CompareAndBind(item);
@@ -64,11 +67,13 @@ namespace ComicReader.Controls
             {
                 return;
             }
+
             if (Item == null)
             {
                 ImageLeft.Source = null;
                 ImageRight.Source = null;
             }
+
             ImageLeft.Source = Item.ImageL.Image;
             ImageRight.Source = Item.ImageR.Image;
         }

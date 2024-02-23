@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace ComicReader.Common
 {
@@ -40,7 +37,8 @@ namespace ComicReader.Common
         };
 
         private static HashSet<string> m_SupportedExternalFileExtensions = null;
-        public static HashSet<string> SupportedExternalFileExtensions {
+        public static HashSet<string> SupportedExternalFileExtensions
+        {
             get
             {
                 if (m_SupportedExternalFileExtensions == null)
@@ -50,6 +48,7 @@ namespace ComicReader.Common
                     m_SupportedExternalFileExtensions.UnionWith(SupportedArchiveExtensions);
                     m_SupportedExternalFileExtensions.UnionWith(SupportedDocumentExtensions);
                 }
+
                 return m_SupportedExternalFileExtensions;
             }
         }
@@ -113,12 +112,13 @@ namespace ComicReader.Common
                     {
                         try
                         {
-                            Encoding info = Encoding.GetEncoding(codepage);
+                            var info = Encoding.GetEncoding(codepage);
                             m_SupportedEncodings.Add(codepage, info);
                         }
                         catch { }
                     }
                 }
+
                 return m_SupportedEncodings;
             }
         }

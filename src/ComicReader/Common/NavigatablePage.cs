@@ -59,10 +59,12 @@ namespace ComicReader.Common
             {
                 return true;
             }
+
             if (mLastPointerPoint.Properties.IsXButton1Pressed || mLastPointerPoint.Properties.IsXButton2Pressed)
             {
                 return false;
             }
+
             return true;
         }
     }

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace ComicReader.Utils.KVDatabase
 {
@@ -16,6 +12,7 @@ namespace ComicReader.Utils.KVDatabase
             {
                 return lib;
             }
+
             lib = new KVDatabaseLib(this, libName);
             mLibs.Add(libName, lib);
             return lib;
@@ -32,6 +29,7 @@ namespace ComicReader.Utils.KVDatabase
             {
                 return value;
             }
+
             return defaultValue;
         }
 
@@ -46,6 +44,7 @@ namespace ComicReader.Utils.KVDatabase
             {
                 return value.Value;
             }
+
             return defaultValue;
         }
     }

@@ -1,6 +1,6 @@
-using System.Collections.Generic;
-using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using System.Collections.Generic;
 
 namespace ComicReader.Utils
 {
@@ -28,19 +28,23 @@ namespace ComicReader.Utils
             {
                 return;
             }
+
             if (!owner.IsLoaded)
             {
                 return;
             }
+
             void unloadedHandler(object sender, RoutedEventArgs e)
             {
                 if ((sender as Page).IsLoaded)
                 {
                     return;
                 }
+
                 _observers.Remove(observer);
                 owner.Unloaded -= unloadedHandler;
             }
+
             owner.Unloaded += unloadedHandler;
             _observers.Add(observer);
             if (sticky && _version > 0)
@@ -63,6 +67,7 @@ namespace ComicReader.Utils
                 _dispatchInvalidated = true;
                 return;
             }
+
             _dispatchingValue = true;
             do
             {

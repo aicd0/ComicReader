@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ComicReader.Utils
 {
@@ -58,7 +54,7 @@ namespace ComicReader.Utils
             {
                 return TimeSpan.Zero;
             }
-            
+
             if (m_stoped)
             {
                 return m_stop_time - m_start_time;

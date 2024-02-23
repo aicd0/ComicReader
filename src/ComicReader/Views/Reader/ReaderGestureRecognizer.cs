@@ -1,7 +1,7 @@
 using ComicReader.Utils;
+using Microsoft.UI.Input;
 using System;
 using System.Collections.Generic;
-using Microsoft.UI.Input;
 
 namespace ComicReader.Views.Reader
 {
@@ -10,7 +10,8 @@ namespace ComicReader.Views.Reader
         private readonly GestureRecognizer _gestureRecognizer = new GestureRecognizer();
         private WeakReference<IHandler> _handler;
 
-        public ReaderGestureRecognizer() {
+        public ReaderGestureRecognizer()
+        {
             _gestureRecognizer.GestureSettings =
                 GestureSettings.Tap |
                 GestureSettings.DoubleTap |

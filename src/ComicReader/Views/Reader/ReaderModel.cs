@@ -7,23 +7,23 @@
 //#define DEBUG_LOG_UPDATE_IMAGE
 #endif
 
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Threading;
-using System.Threading.Tasks;
-using Windows.Foundation;
+using ComicReader.Common.Structs;
+using ComicReader.Database;
+using ComicReader.DesignData;
+using ComicReader.Utils;
+using ComicReader.Utils.Image;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
-using ComicReader.Common.Structs;
-using ComicReader.Database;
-using ComicReader.DesignData;
-using ComicReader.Utils;
-using ComicReader.Utils.Image;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Threading;
+using System.Threading.Tasks;
+using Windows.Foundation;
 
 namespace ComicReader.Views.Reader
 {
@@ -311,11 +311,12 @@ namespace ComicReader.Views.Reader
         public double ExtentParallelLengthFinal => FinalVal(ExtentParallelLength);
         private double FrameParallelLength(int i)
         {
-            var container = DataSource[i].ItemContainer?.Container;
+            Grid container = DataSource[i].ItemContainer?.Container;
             if (container == null)
             {
                 return 0;
             }
+
             return IsVertical ? container.ActualHeight : container.ActualWidth;
         }
 
@@ -518,11 +519,12 @@ namespace ComicReader.Views.Reader
             await m_LoaderLock.WaitAsync();
             try
             {
-                var comic = Comic;
+                ComicData comic = Comic;
                 if (comic == null)
                 {
                     return;
                 }
+
                 if (image_index >= comic.ImageAspectRatios.Count)
                 {
                     return;
@@ -533,6 +535,7 @@ namespace ComicReader.Views.Reader
                 {
                     return;
                 }
+
                 int page = image_index + 1;
                 bool dual = neighbor != -1;
 
@@ -567,10 +570,12 @@ namespace ComicReader.Views.Reader
                     {
                         default_width *= 2;
                     }
+
                     if (IsContinuous)
                     {
                         default_horizontal_padding = 10.0;
                     }
+
                     frame_width = IsVertical ? default_width : default_height * aspect_ratio;
                     frame_height = IsVertical ? default_width / aspect_ratio : default_height;
                     vertical_padding = IsVertical ? default_vertical_padding : 0;
@@ -581,6 +586,7 @@ namespace ComicReader.Views.Reader
                 {
                     DataSource.Add(new ReaderFrameViewModel());
                 }
+
                 ReaderFrameViewModel item = DataSource[frame_idx];
 
                 item.FrameWidth = frame_width;
@@ -702,6 +708,7 @@ namespace ComicReader.Views.Reader
                         m.ItemContainer?.CompareAndBind(m);
                     }
                 }
+
                 return;
             }
 
@@ -746,7 +753,7 @@ namespace ComicReader.Views.Reader
 #if DEBUG_LOG_UPDATE_IMAGE
                 Log("Loading images (page=" + Page.ToString() + ")");
 #endif
-                List<ImageLoader.Token> img_loader_tokens = new List<ImageLoader.Token>();
+                var img_loader_tokens = new List<ImageLoader.Token>();
 
                 void addToLoaderQueue(int i)
                 {
@@ -790,11 +797,13 @@ namespace ComicReader.Views.Reader
                     {
                         addToLoaderQueue(frame + i);
                     }
+
                     if (frame - i >= preload_window_begin)
                     {
                         addToLoaderQueue(frame - i);
                     }
                 }
+
                 new ImageLoader.Transaction(img_loader_tokens).SetQueue(_updateImageQueue).Commit();
             }
         }
@@ -820,6 +829,7 @@ namespace ComicReader.Views.Reader
                 {
                     _viewModel.ImageR.Image = image;
                 }
+
                 _viewModel.ItemContainer?.CompareAndBind(_viewModel);
 #if DEBUG_LOG_UPDATE_IMAGE
                 Log("Page " + m.PageR.ToString() + " loaded");
@@ -908,6 +918,7 @@ namespace ComicReader.Views.Reader
                 {
                     result = reader.SetScrollViewer3(mZoom, mZoomType, mHorizontalOffset, mVerticalOffset, mDisableAnimation);
                 }
+
                 return result;
             }
 
@@ -1032,7 +1043,8 @@ namespace ComicReader.Views.Reader
             double? horizontal_offset,
             double? vertical_offset,
             bool disable_animation
-        ) {
+        )
+        {
             return SetScrollViewerInternal(new SetScrollViewerContext
             {
                 zoom = zoom,
@@ -1131,6 +1143,7 @@ namespace ComicReader.Views.Reader
 
                 zoom = (float)(ZoomFactorFinal / zoom_coefficient.Min());
             }
+
             if (ctx.zoomType == ZoomType.CenterCrop)
             {
                 zoom *= zoom_coefficient_new.Max() / zoom_coefficient_new.Min();
@@ -1153,15 +1166,8 @@ namespace ComicReader.Views.Reader
             zoom_factor = zoom_factor_new;
 
             // Apply zooming.
-            if (ctx.horizontalOffset == null)
-            {
-                ctx.horizontalOffset = HorizontalOffsetFinal;
-            }
-
-            if (ctx.verticalOffset == null)
-            {
-                ctx.verticalOffset = VerticalOffsetFinal;
-            }
+            ctx.horizontalOffset ??= HorizontalOffsetFinal;
+            ctx.verticalOffset ??= VerticalOffsetFinal;
 
             ctx.horizontalOffset += ThisScrollViewer.ViewportWidth * 0.5;
             ctx.horizontalOffset *= (float)zoom_factor / ZoomFactorFinal;

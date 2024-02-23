@@ -1,24 +1,19 @@
-﻿using System.Collections.Generic;
-
-namespace ComicReader.Utils.KVDatabase
+﻿namespace ComicReader.Utils.KVDatabase
 {
     internal class KVDatabase
     {
         private KVDatabase() { }
 
-        public KVDatabaseMethod getDefaultMethod()
+        public KVDatabaseMethod GetDefaultMethod()
         {
             return KVDatabaseMethodLiteDB.GetInstance();
         }
 
         static KVDatabase mInstance;
 
-        public static KVDatabase getInstance()
+        public static KVDatabase GetInstance()
         {
-            if (mInstance == null)
-            {
-                mInstance = new KVDatabase();
-            }
+            mInstance ??= new KVDatabase();
             return mInstance;
         }
     }

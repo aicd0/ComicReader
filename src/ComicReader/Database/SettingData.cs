@@ -53,10 +53,12 @@ namespace ComicReader.Database
             {
                 XmlDatabaseManager.ReleaseLock();
             }
+
             if (final)
             {
                 Utils.TaskQueue.DefaultQueue.Enqueue(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
             }
+
             return TaskException.Success;
         }
 
@@ -66,6 +68,7 @@ namespace ComicReader.Database
             {
                 return TaskException.MaximumExceeded;
             }
+
             Utils.Storage.AddToFutureAccessList(folder);
 
             string path = folder.Path;
@@ -83,10 +86,12 @@ namespace ComicReader.Database
                     break;
                 }
             }
+
             if (!folder_added)
             {
                 XmlDatabase.Settings.ComicFolders.Add(path);
             }
+
             return TaskException.Success;
         }
 
@@ -114,6 +119,7 @@ namespace ComicReader.Database
             {
                 return false;
             }
+
             TaskException r = await AddComicFolder(folder, true);
             return r.Successful();
         }

@@ -1,7 +1,7 @@
-using System;
-using Microsoft.UI.Xaml.Controls;
-using ComicReader.Views;
 using ComicReader.Common.Router;
+using ComicReader.Views;
+using Microsoft.UI.Xaml.Controls;
+using System;
 
 namespace ComicReader.Controls
 {
@@ -17,26 +17,18 @@ namespace ComicReader.Controls
         private void OnNavPaneSelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
         {
             string item = (string)((NavigationViewItem)args.SelectedItem).Content;
-            
-            NavigationParams nav_params = new NavigationParams
+
+            var nav_params = new NavigationParams
             {
                 TabId = Ctx.TabId,
                 Params = Ctx.Shared,
             };
-
-            Type page_type;
-            switch (item)
+            Type page_type = item switch
             {
-                case "Favorites":
-                    page_type = typeof(FavoritePage);
-                    break;
-                case "History":
-                    page_type = typeof(HistoryPage);
-                    break;
-                default:
-                    throw new Exception();
-            }
-
+                "Favorites" => typeof(FavoritePage),
+                "History" => typeof(HistoryPage),
+                _ => throw new Exception(),
+            };
             _ = ContentFrame.Navigate(page_type, nav_params);
         }
     }
