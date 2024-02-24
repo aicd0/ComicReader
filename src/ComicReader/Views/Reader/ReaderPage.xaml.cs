@@ -1099,7 +1099,8 @@ namespace ComicReader.Views.Reader
                 return;
             }
 
-            if (!mBottomTileShowed || Shared.IsGridViewVisible || mBottomTileHold || mBottomTilePointerIn)
+            if (!mBottomTileShowed || Shared.IsGridViewVisible || mBottomTileHold || mBottomTilePointerIn ||
+                InfoPane.IsPaneOpen || Shared.NavigationPageShared.IsSidePaneOpen)
             {
                 return;
             }

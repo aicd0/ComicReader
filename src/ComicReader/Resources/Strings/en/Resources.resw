@@ -121,7 +121,7 @@
     <value>About</value>
   </data>
   <data name="AboutCopyright" xml:space="preserve">
-    <value>© 2023 $author. All rights reserved.</value>
+    <value>© 2024 $author. All rights reserved.</value>
   </data>
   <data name="AddFolderButton.Content" xml:space="preserve">
     <value>add a folder</value>
@@ -588,7 +588,7 @@ Category2: tag4/tag5
     <value>Comic information</value>
   </data>
   <data name="DiscreteButton.Label" xml:space="preserve">
-    <value>Discrete</value>
+    <value>Separate</value>
   </data>
   <data name="OpenInFileExplorer.ToolTipService.ToolTip" xml:space="preserve">
     <value>Open in File Explorer</value>

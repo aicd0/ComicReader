@@ -3,16 +3,21 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:Microsoft.UI.Xaml.Controls">
 
+    <controls:RatingItemFontInfo
+        x:Key="RatingControlDefaultFontInfo"
+        Glyph="&#xE735;"
+        UnsetGlyph="&#xE735;" />
+
     <Style x:Key="RatingControlReadOnly" TargetType="RatingControl">
         <Setter Property="IsReadOnly" Value="True" />
         <Setter Property="Opacity" Value="0.7" />
         <Setter Property="Foreground" Value="{ThemeResource RatingControlCaptionForeground}" />
         <Setter Property="UseSystemFocusVisuals" Value="{StaticResource UseSystemFocusVisuals}" />
         <Setter Property="FontFamily" Value="Segoe MDL2 Assets" />
-        <Setter Property="ItemInfo" Value="{ThemeResource MUX_RatingControlDefaultFontInfo}" />
+        <Setter Property="ItemInfo" Value="{ThemeResource RatingControlDefaultFontInfo}" />
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="RatingControl">
+                <ControlTemplate TargetType="controls:RatingControl">
                     <Grid x:Name="LayoutRoot">
                         <StackPanel
                             Grid.Row="0"

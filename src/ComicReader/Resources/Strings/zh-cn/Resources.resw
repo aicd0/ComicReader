@@ -121,7 +121,7 @@
     <value>关于</value>
   </data>
   <data name="AboutCopyright" xml:space="preserve">
-    <value>© 2023 $author。保留所有权利。</value>
+    <value>© 2024 $author。保留所有权利。</value>
   </data>
   <data name="AddFolderButton.Content" xml:space="preserve">
     <value>添加文件夹</value>
@@ -429,7 +429,7 @@
     <value>记录您的浏览历史</value>
   </data>
   <data name="SearchBox.PlaceholderText" xml:space="preserve">
-    <value>在"帮助"中了解如何用过滤条件进行搜索</value>
+    <value>在"帮助"中了解如何过滤搜索结果</value>
   </data>
   <data name="SearchResults" xml:space="preserve">
     <value>搜索结果</value>
@@ -588,7 +588,7 @@
     <value>漫画信息</value>
   </data>
   <data name="DiscreteButton.Label" xml:space="preserve">
-    <value>离散</value>
+    <value>拆分</value>
   </data>
   <data name="OpenInFileExplorer.ToolTipService.ToolTip" xml:space="preserve">
     <value>在资源管理器中打开</value>
