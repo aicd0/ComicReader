@@ -5,8 +5,6 @@ namespace ComicReader.Database
 {
     public class DatabaseManager
     {
-        public static bool DatabaseFirstInit { get; private set; }
-
         private static bool Initialized { get; set; } = false;
 
         public static async Task<TaskException> Init()
@@ -19,10 +17,6 @@ namespace ComicReader.Database
             Initialized = true;
 
             Log("Initializing database");
-
-            // For backward compability.
-            DatabaseFirstInit = !await SqliteDatabaseManager.IsDatabaseExist();
-
             await SqliteDatabaseManager.Init();
             await XmlDatabaseManager.Load();
             await Update();
@@ -36,9 +30,14 @@ namespace ComicReader.Database
 
             switch (old_version)
             {
-                case 1:
+                case -1:
+                    goto case 2;
                 case 0:
-                    XmlDatabase.Settings.DatabaseVersion = 1;
+                    goto case 2;
+                case 1:
+                    goto case 2;
+                case 2:
+                    XmlDatabase.Settings.DatabaseVersion = 2;
                     await XmlDatabaseManager.SaveUnsealed(XmlDatabaseItem.Settings);
                     return TaskException.Success;
                 default:

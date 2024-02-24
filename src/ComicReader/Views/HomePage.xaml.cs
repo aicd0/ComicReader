@@ -160,7 +160,7 @@ namespace ComicReader.Views
 
                 await ComicData.CommandBlock2(async delegate (SqliteCommand command)
                 {
-                    // Use ORDER BY here will cause a crush (especially for a large result set)
+                    // Use ORDER BY here will cause a crash (especially for a large result set)
                     // due to https://github.com/dotnet/efcore/issues/20044.
                     // Switch from Microsoft.Data.Sqlite to SQLitePCLRaw.bundle_winsqlite3 will
                     // solve the issue but the app then cannot not be built in Release mode.

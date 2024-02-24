@@ -55,7 +55,7 @@ namespace ComicReader.Database
                     ComicData.Field.Progress + " INTEGER NOT NULL," + // 7
                     ComicData.Field.LastVisit + " TIMESTAMP NOT NULL," + // 8
                     ComicData.Field.LastPosition + " REAL NOT NULL," + // 9
-                    ComicData.Field.ImageAspectRatios + " BLOB," + // 10
+                    ComicData.Field.ImageAspectRatios + " TEXT," + // 10
                     ComicData.Field.CoverFileCache + " TEXT)"; // 11
                 await command.ExecuteNonQueryAsync();
 
@@ -94,13 +94,6 @@ namespace ComicReader.Database
             command.Parameters.AddWithValue("$table", table);
             long count = (long)await command.ExecuteScalarAsync();
             return count > 0;
-        }
-
-        // For backward compability.
-        public static async Task<bool> IsDatabaseExist()
-        {
-            IStorageItem item = await DatabaseFolder.TryGetItemAsync(DatabaseFileName);
-            return item != null;
         }
     }
 }
