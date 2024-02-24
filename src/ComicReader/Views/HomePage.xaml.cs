@@ -3,6 +3,7 @@ using ComicReader.Common.Router;
 using ComicReader.Controls;
 using ComicReader.Database;
 using ComicReader.DesignData;
+using ComicReader.Utils;
 using ComicReader.Utils.Image;
 using Microsoft.Data.Sqlite;
 using Microsoft.UI.Xaml;
@@ -146,10 +147,9 @@ namespace ComicReader.Views
 
         public async Task UpdateLibrary()
         {
-            await _updateLibraryLock.WaitAsync();
-            try
+            await _updateLibraryLock.LockAsync(async delegate (CancellationLock.Token token)
             {
-                if (_updateLibraryLock.CancellationRequested)
+                if (token.CancellationRequested)
                 {
                     return;
                 }
@@ -216,11 +216,7 @@ namespace ComicReader.Views
                     x.Progress == y.Progress &&
                     x.IsFavorite == y.IsFavorite);
                 Shared.IsLibraryEmpty = ComicItemSource.Count == 0;
-            }
-            finally
-            {
-                _updateLibraryLock.Release();
-            }
+            });
         }
 
         private void LoadImage(ComicItemVertical viewHolder, ComicItemViewModel item)
@@ -270,8 +266,7 @@ namespace ComicReader.Views
 
         public async Task UpdateFolders()
         {
-            await m_update_folder_lock.WaitAsync();
-            try
+            await m_update_folder_lock.LockAsync(async delegate (CancellationLock.Token token)
             {
                 // Add to folder item source.
                 var new_folder_source = new Collection<FolderItemViewModel>
@@ -301,11 +296,7 @@ namespace ComicReader.Views
 
                 XmlDatabaseManager.ReleaseLock();
                 Utils.C1<FolderItemViewModel>.UpdateCollection(FolderItemDataSource, new_folder_source, FolderItemViewModel.ContentEquals);
-            }
-            finally
-            {
-                m_update_folder_lock.Release();
-            }
+            });
         }
 
         // Events

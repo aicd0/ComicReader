@@ -1,6 +1,4 @@
 using ComicReader.Utils;
-using Microsoft.Data.Sqlite;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace ComicReader.Database
@@ -38,51 +36,6 @@ namespace ComicReader.Database
 
             switch (old_version)
             {
-                case -1:
-                    if (DatabaseFirstInit)
-                    {
-                        goto case 0;
-                    }
-
-                    Log("Updating from version -1");
-
-                    await ExecuteCommands(new List<string>
-                    {
-                        "PRAGMA foreign_keys=OFF",
-                        "BEGIN TRANSACTION",
-
-                        "CREATE TABLE IF NOT EXISTS comics_tmp (" +
-                        "id INTEGER PRIMARY KEY AUTOINCREMENT," +
-                        "type INTEGER NOT NULL DEFAULT 1," +
-                        "location TEXT NOT NULL," +
-                        "title1 TEXT," +
-                        "title2 TEXT," +
-                        "hidden BOOLEAN NOT NULL," +
-                        "rating INTEGER NOT NULL," +
-                        "progress INTEGER NOT NULL," +
-                        "last_visit TIMESTAMP NOT NULL," +
-                        "last_pos REAL NOT NULL," +
-                        "image_aspect_ratios BLOB," +
-                        "cover_file_name TEXT)",
-
-                        "INSERT INTO comics_tmp (" +
-                        "id, location, title1, title2, hidden," +
-                        "rating, progress, last_visit, last_pos," +
-                        "image_aspect_ratios, cover_file_name" +
-                        ") SELECT " +
-                        "id, dir, title1, title2, hidden," +
-                        "rating, progress, last_visit, last_pos," +
-                        "image_aspect_ratios, cover_file_name" +
-                        " FROM comics",
-
-                        "DROP TABLE IF EXISTS comics",
-                        "ALTER TABLE comics_tmp RENAME TO comics",
-
-                        "COMMIT",
-                        "PRAGMA foreign_keys=ON",
-                    });
-
-                    goto case 1;
                 case 1:
                 case 0:
                     XmlDatabase.Settings.DatabaseVersion = 1;
@@ -91,15 +44,6 @@ namespace ComicReader.Database
                 default:
                     System.Diagnostics.Debug.Assert(false);
                     return TaskException.UnknownEnum;
-            }
-        }
-
-        private static async Task ExecuteCommands(List<string> commands)
-        {
-            using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
-            {
-                command.CommandText = string.Join(';', commands) + ";";
-                await command.ExecuteNonQueryAsync();
             }
         }
 

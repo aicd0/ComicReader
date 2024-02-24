@@ -3,11 +3,10 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Windows.Storage;
+using SealedTask = System.Func<System.Threading.Tasks.Task<ComicReader.Utils.TaskException>, ComicReader.Utils.TaskException>;
 
 namespace ComicReader.Utils
 {
-    using SealedTask = Func<Task<TaskException>, TaskException>;
-
     class Debug
     {
         private const string LogFileName = "log.txt";

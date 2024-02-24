@@ -262,8 +262,7 @@ namespace ComicReader.Views
         // Unsorted
         private async Task StartSearch()
         {
-            await m_search_lock.WaitAsync();
-            try
+            await m_search_lock.LockAsync(async delegate (CancellationLock.Token token)
             {
                 SetSelectMode(false);
                 string keyword = (string)GetTabId().RequestArgs;
@@ -326,11 +325,7 @@ namespace ComicReader.Views
 
                 Shared.NoResultText = no_results;
                 Shared.SearchResults.Clear();
-            }
-            finally
-            {
-                m_search_lock.Release();
-            }
+            });
 
             await LoadMoreResults(100);
         }
@@ -446,12 +441,11 @@ namespace ComicReader.Views
 
         private async Task LoadMoreResults(int count)
         {
-            await m_search_lock.WaitAsync();
-            try
+            await m_search_lock.LockAsync(async delegate (CancellationLock.Token token)
             {
                 for (int i = 0; i < count; ++m_match_index)
                 {
-                    if (m_search_lock.CancellationRequested)
+                    if (token.CancellationRequested)
                     {
                         return;
                     }
@@ -476,11 +470,7 @@ namespace ComicReader.Views
                 }
 
                 Shared.UpdateUI();
-            }
-            finally
-            {
-                m_search_lock.Release();
-            }
+            });
         }
 
         private void LoadImage(ComicItemHorizontal viewHolder, ComicItemViewModel item)

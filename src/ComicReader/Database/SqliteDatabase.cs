@@ -1,6 +1,5 @@
 using Microsoft.Data.Sqlite;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Windows.Storage;
@@ -21,9 +20,9 @@ namespace ComicReader.Database
 
     public class SqliteDatabaseManager
     {
-        public static string ComicTable = "comics";
-        public static string TagCategoryTable = "tag_categories";
-        public static string TagTable = "tags";
+        public const string ComicTable = "comics";
+        public const string TagCategoryTable = "tag_categories";
+        public const string TagTable = "tags";
 
         private static StorageFolder DatabaseFolder => ApplicationData.Current.LocalFolder;
         private static string DatabaseFileName => "database.db";
@@ -86,109 +85,6 @@ namespace ComicReader.Database
         {
             System.Diagnostics.Debug.Assert(m_connection != null);
             return m_connection.BeginTransaction();
-        }
-
-        public static async Task<long> Insert(string table, List<SqlKey> keys)
-        {
-            var field_names = new List<string>();
-            var field_vals = new List<string>();
-            var blobs = new List<KeyValuePair<string, MemoryStream>>();
-            long rowid;
-
-            using (SqliteCommand command = NewCommand())
-            {
-                foreach (SqlKey key in keys)
-                {
-                    field_names.Add(key.Name);
-                    string param = "@" + key.Name;
-                    field_vals.Add(param);
-                    command.Parameters.AddWithValue(param, key.Value);
-                }
-
-                command.CommandText = "INSERT INTO " + table + " (" +
-                    string.Join(',', field_names) + ") VALUES (" +
-                    string.Join(',', field_vals) + ");" +
-                    "SELECT LAST_INSERT_ROWID();";
-
-                rowid = (long)command.ExecuteScalar();
-            }
-
-            // Copy to blobs.
-            foreach (KeyValuePair<string, MemoryStream> pairs in blobs)
-            {
-                MemoryStream input_stream = pairs.Value;
-                input_stream.Seek(0, SeekOrigin.Begin);
-
-                using (var write_stream = new SqliteBlob(
-                    m_connection, table, pairs.Key, rowid))
-                {
-                    await input_stream.CopyToAsync(write_stream);
-                }
-            }
-
-            return rowid;
-        }
-
-        public static async Task<bool> Update(string table, SqlKey primary_key, List<SqlKey> keys)
-        {
-            if (keys.Count == 0)
-            {
-                throw new ArgumentException();
-            }
-
-            // Generate the command.
-            SqliteCommand command = NewCommand();
-            _ = command.Parameters.AddWithValue("@" + primary_key.Name, primary_key.Value);
-
-            var fields = new List<string>();
-            var blobs = new List<KeyValuePair<string, MemoryStream>>();
-
-            foreach (SqlKey key in keys)
-            {
-                string param = "@" + key.Name;
-                fields.Add(key.Name + "=" + param);
-                command.Parameters.AddWithValue(param, key.Value);
-            }
-
-            string condition = " WHERE " + primary_key.Name + "=@" + primary_key.Name;
-            command.CommandText = "UPDATE " + table + " SET " +
-                string.Join(',', fields) + condition;
-
-            // Execute the command.
-            try
-            {
-                int rows_updated = await command.ExecuteNonQueryAsync();
-
-                if (rows_updated == 0)
-                {
-                    return false;
-                }
-
-                // Copy to blobs.
-                if (blobs.Count > 0)
-                {
-                    command.CommandText = "SELECT rowid FROM " + table + condition + " LIMIT 1";
-                    long rowid = (long)command.ExecuteScalar();
-
-                    foreach (KeyValuePair<string, MemoryStream> pairs in blobs)
-                    {
-                        MemoryStream input_stream = pairs.Value;
-                        input_stream.Seek(0, SeekOrigin.Begin);
-
-                        using (var write_stream = new SqliteBlob(
-                            m_connection, table, pairs.Key, rowid))
-                        {
-                            await input_stream.CopyToAsync(write_stream);
-                        }
-                    }
-                }
-
-                return true;
-            }
-            finally
-            {
-                command.Dispose();
-            }
         }
 
         public static async Task<bool> IsTableExist(string table)

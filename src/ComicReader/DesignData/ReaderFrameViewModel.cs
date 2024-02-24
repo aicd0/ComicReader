@@ -4,12 +4,15 @@ using Microsoft.UI.Xaml;
 using System;
 using System.ComponentModel;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace ComicReader.DesignData;
 
 internal class ReaderFrameViewModel : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler PropertyChanged;
+
+    private object _lock = new();
 
     private readonly ReaderImageViewModel _imageL = new ReaderImageViewModel();
     public ReaderImageViewModel ImageL => _imageL;
@@ -82,11 +85,11 @@ internal class ReaderFrameViewModel : INotifyPropertyChanged
 
     public void Notify(bool cancel = false)
     {
-        lock (this)
+        lock (_lock)
         {
             if (Processed)
             {
-                Monitor.Pulse(this);
+                Monitor.Pulse(_lock);
             }
             else
             {
@@ -98,9 +101,26 @@ internal class ReaderFrameViewModel : INotifyPropertyChanged
                 if (Ready || cancel)
                 {
                     Processed = true;
-                    Monitor.Pulse(this);
+                    Monitor.Pulse(_lock);
                 }
             }
+        }
+    }
+
+    public async Task WaitForReady()
+    {
+        if (!Processed)
+        {
+            await Task.Run(delegate
+            {
+                lock (_lock)
+                {
+                    while (!Processed)
+                    {
+                        _ = Monitor.Wait(_lock);
+                    }
+                }
+            });
         }
     }
 

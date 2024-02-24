@@ -21,7 +21,6 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Threading;
 using System.Threading.Tasks;
 using Windows.Foundation;
 
@@ -98,8 +97,7 @@ namespace ComicReader.Views.Reader
                 return false;
             }
 
-            await m_UpdatePageLock.WaitAsync();
-            try
+            return await m_UpdatePageLock.LockAsync(delegate (CancellationLock.Token token)
             {
                 double offset;
                 {
@@ -119,7 +117,7 @@ namespace ComicReader.Views.Reader
 
                 while (begin < end)
                 {
-                    if (m_UpdatePageLock.CancellationRequested)
+                    if (token.CancellationRequested)
                     {
                         return false;
                     }
@@ -195,11 +193,7 @@ namespace ComicReader.Views.Reader
 #endif
 
                 return true;
-            }
-            finally
-            {
-                m_UpdatePageLock.Release();
-            }
+            });
         }
 
         // Observer - Scroll Viewer
@@ -516,8 +510,7 @@ namespace ComicReader.Views.Reader
         /// </summary>
         public async Task LoadFrame(int image_index)
         {
-            await m_LoaderLock.WaitAsync();
-            try
+            await m_LoaderLock.LockAsync(async delegate (CancellationLock.Token token)
             {
                 ComicData comic = Comic;
                 if (comic == null)
@@ -625,20 +618,7 @@ namespace ComicReader.Views.Reader
                 // Wait for the frame to be ready.
                 item.Reset();
                 item.Notify();
-
-                if (!item.Processed)
-                {
-                    await Task.Run(delegate
-                    {
-                        lock (item)
-                        {
-                            while (!item.Processed)
-                            {
-                                _ = Monitor.Wait(item);
-                            }
-                        }
-                    });
-                }
+                await item.WaitForReady();
 
                 if (!item.Ready)
                 {
@@ -646,17 +626,12 @@ namespace ComicReader.Views.Reader
                 }
 
                 await OnContainerLoaded(item);
-            }
-            finally
-            {
-                m_LoaderLock.Release();
-            }
+            });
         }
 
         public async Task Finalize()
         {
-            await m_LoaderLock.WaitAsync();
-            try
+            await m_LoaderLock.LockAsync(delegate (CancellationLock.Token token)
             {
                 for (int i = DataSource.Count - 1; i >= 0; --i)
                 {
@@ -673,11 +648,7 @@ namespace ComicReader.Views.Reader
                 }
 
                 AdjustPadding();
-            }
-            finally
-            {
-                m_LoaderLock.Release();
-            }
+            });
         }
 
         // Modifier - Image Loader
@@ -1472,8 +1443,7 @@ namespace ComicReader.Views.Reader
                 return;
             }
 
-            await m_ContainerLoadedLock.WaitAsync();
-            try
+            await m_ContainerLoadedLock.LockAsync(async delegate (CancellationLock.Token token)
             {
                 // Wait until the framework was fully loaded.
                 if (!LoadedFramework)
@@ -1550,11 +1520,7 @@ namespace ComicReader.Views.Reader
                     Log("Reader loaded");
 #endif
                 }
-            }
-            finally
-            {
-                m_ContainerLoadedLock.Release();
-            }
+            });
         }
 
         public async Task<bool> OnViewChanged(bool final)
@@ -1611,8 +1577,7 @@ namespace ComicReader.Views.Reader
         {
             Utils.C0.Run(async delegate
             {
-                await m_PageRearrangeLock.WaitAsync();
-                try
+                await m_PageRearrangeLock.LockAsync(async delegate (CancellationLock.Token token)
                 {
                     // Set reader status to Loading.
                     m_shared.ReaderStatus = ReaderStatusEnum.Loading;
@@ -1626,7 +1591,7 @@ namespace ComicReader.Views.Reader
 
                     for (int i = 0; i < PageCount; ++i)
                     {
-                        if (m_PageRearrangeLock.CancellationRequested)
+                        if (token.CancellationRequested)
                         {
                             return;
                         }
@@ -1647,11 +1612,7 @@ namespace ComicReader.Views.Reader
 
                     // Recover reader status.
                     m_shared.ReaderStatus = ReaderStatusEnum.Working;
-                }
-                finally
-                {
-                    m_PageRearrangeLock.Release();
-                }
+                });
             });
         }
 

@@ -1,38 +1,66 @@
-﻿using System.Threading;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace ComicReader.Utils
 {
     public class CancellationLock
     {
-        private int m_cancellation_requests;
-        private SemaphoreSlim m_semaphore;
+        private LinkedList<TaskCompletionSource> _queue = new();
 
-        public bool CancellationRequested => m_cancellation_requests > 0;
-
-        public CancellationLock()
+        public async Task LockAsync(Action<Token> action)
         {
-            m_cancellation_requests = 0;
-            m_semaphore = new SemaphoreSlim(1);
+            await LockAsync(async delegate (Token token)
+            {
+                await Task.FromResult(0);
+                action(token);
+            });
         }
 
-        public async Task WaitAsync()
+        public async Task<T> LockAsync<T>(Func<Token, T> action)
         {
-            _ = Interlocked.Increment(ref m_cancellation_requests);
-            await m_semaphore.WaitAsync();
-            _ = Interlocked.Decrement(ref m_cancellation_requests);
+            return await LockAsync(async delegate (Token token)
+            {
+                await Task.FromResult(0);
+                return action(token);
+            });
         }
 
-        public async Task WaitAsync(int millisecond_timeout)
+        public async Task<T> LockAsync<T>(Func<Token, Task<T>> action)
         {
-            _ = Interlocked.Increment(ref m_cancellation_requests);
-            await m_semaphore.WaitAsync(millisecond_timeout);
-            _ = Interlocked.Decrement(ref m_cancellation_requests);
+            var currentCompletionSource = new TaskCompletionSource();
+            TaskCompletionSource priorCompletionSource = null;
+            lock (_queue)
+            {
+                if (_queue.Count > 0)
+                    priorCompletionSource = _queue.Last.Value;
+                _queue.AddLast(currentCompletionSource);
+            }
+
+            if (priorCompletionSource != null)
+                await priorCompletionSource.Task;
+
+            var token = new Token(this);
+            T result = await action(token);
+            lock (_queue)
+            {
+                _queue.RemoveFirst();
+            }
+
+            currentCompletionSource.SetResult();
+            return result;
         }
 
-        public void Release()
+        public class Token
         {
-            _ = m_semaphore.Release();
+            private CancellationLock _parent;
+
+            public Token(CancellationLock parent)
+            {
+                _parent = parent;
+            }
+
+            public bool CancellationRequested => _parent._queue.Count > 1;
         }
     }
 }

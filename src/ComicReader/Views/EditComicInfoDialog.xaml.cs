@@ -47,7 +47,6 @@ namespace ComicReader.Views
 
                 m_comic.ParseInfo(text);
                 m_comic.SaveBasic();
-                m_comic.SaveTags();
 
                 Utils.TaskQueue.DefaultQueue.Enqueue(m_comic.SaveToInfoFileSealed());
             });

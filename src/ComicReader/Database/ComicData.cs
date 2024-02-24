@@ -13,11 +13,10 @@ using System.Threading.Tasks;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
 using Windows.Storage.Streams;
+using SealedTask = System.Func<System.Threading.Tasks.Task<ComicReader.Utils.TaskException>, ComicReader.Utils.TaskException>;
 
 namespace ComicReader.Database
 {
-    using SealedTask = Func<Task<TaskException>, TaskException>;
-
     public abstract class ComicData
     {
         // Local fields.
@@ -69,39 +68,17 @@ namespace ComicReader.Database
         public abstract int ImageCount { get; }
         protected StorageFolder CacheFolder => ApplicationData.Current.LocalCacheFolder;
 
-        private SqlKey KeyType => new SqlKey(Field.Type, Type);
-        private SqlKey KeyLocation => new SqlKey(Field.Location, Location);
-        private SqlKey KeyTitle1 => new SqlKey(Field.Title1, Title1);
-        private SqlKey KeyTitle2 => new SqlKey(Field.Title2, Title2);
-        private SqlKey KeyHidden => new SqlKey(Field.Hidden, Hidden);
-        private SqlKey KeyRating => new SqlKey(Field.Rating, Rating);
-        private SqlKey KeyProgress => new SqlKey(Field.Progress, Progress);
-        private SqlKey KeyLastVisit => new SqlKey(Field.LastVisit, LastVisit);
-        private SqlKey KeyLastPosition => new SqlKey(Field.LastPosition, LastPosition);
-        private SqlKey KeyImageAspectRatios
-        {
-            get
-            {
-                string serialized = JsonSerializer.Serialize(ImageAspectRatios);
-                return new SqlKey(Field.ImageAspectRatios, serialized);
-            }
-        }
-        private SqlKey KeyCoverFileCache => new SqlKey(Field.CoverFileCache, CoverFileCache);
-
-        private List<SqlKey> AllFields => new List<SqlKey>
-        {
-            KeyType,
-            KeyLocation,
-            KeyTitle1,
-            KeyTitle2,
-            KeyHidden,
-            KeyRating,
-            KeyProgress,
-            KeyLastVisit,
-            KeyLastPosition,
-            KeyImageAspectRatios,
-            KeyCoverFileCache,
-        };
+        private ComicType ValueType => Type;
+        private string ValueLocation => Location;
+        private string ValueTitle1 => Title1;
+        private string ValueTitle2 => Title2;
+        private bool ValueHidden => Hidden;
+        private int ValueRating => Rating;
+        private int ValueProgress => Progress;
+        private DateTimeOffset ValueLastVisit => LastVisit;
+        private double ValueLastPosition => LastPosition;
+        private string ValueImageAspectRatios => JsonSerializer.Serialize(ImageAspectRatios);
+        private string ValueCoverFileCache => CoverFileCache;
 
         // Subscriptions.
         public static Action OnUpdated { get; set; }
@@ -126,44 +103,123 @@ namespace ComicReader.Database
 
         private bool _imageUpdated = false;
 
+        private void SaveAllNoLock()
+        {
+            SaveNoLock(delegate
+            {
+                using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
+                {
+                    command.CommandText = "UPDATE " + SqliteDatabaseManager.ComicTable + " SET " +
+                        Field.Type + "=@type," +
+                        Field.Location + "=@location," +
+                        Field.Title1 + "=@title1," +
+                        Field.Title2 + "=@title2," +
+                        Field.Hidden + "=@hidden," +
+                        Field.Rating + "=@rating," +
+                        Field.Progress + "=@progress," +
+                        Field.LastVisit + "=@last_visit," +
+                        Field.LastPosition + "=@last_pos," +
+                        Field.ImageAspectRatios + "=@ratios," +
+                        Field.CoverFileCache + "=@cover" +
+                        " WHERE " + Field.Id + "=@id";
+                    command.Parameters.AddWithValue("@id", Id);
+                    command.Parameters.AddWithValue("@type", ValueType);
+                    command.Parameters.AddWithValue("@location", ValueLocation);
+                    command.Parameters.AddWithValue("@title1", ValueTitle1);
+                    command.Parameters.AddWithValue("@title2", ValueTitle2);
+                    command.Parameters.AddWithValue("@hidden", ValueHidden);
+                    command.Parameters.AddWithValue("@rating", ValueRating);
+                    command.Parameters.AddWithValue("@progress", ValueProgress);
+                    command.Parameters.AddWithValue("@last_visit", ValueLastVisit);
+                    command.Parameters.AddWithValue("@last_pos", ValueLastPosition);
+                    command.Parameters.AddWithValue("@ratios", ValueImageAspectRatios);
+                    command.Parameters.AddWithValue("@cover", ValueCoverFileCache);
+                    command.ExecuteNonQuery();
+                }
+
+                InternalSaveTagsNoLock();
+            });
+        }
+
         public void SaveBasic()
         {
-            var fields = new List<SqlKey>
+            _ = Enqueue(delegate
             {
-                KeyType,
-                KeyLocation,
-                KeyTitle1,
-                KeyTitle2,
-                KeyHidden,
-                KeyRating,
-                KeyProgress,
-                KeyLastVisit,
-                KeyLastPosition,
-                KeyCoverFileCache,
-            };
-            _ = Save(fields, save_tags: false, "SaveBasic");
+                return SaveNoLock(delegate
+                {
+                    using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
+                    {
+                        command.CommandText = "UPDATE " + SqliteDatabaseManager.ComicTable + " SET " +
+                            Field.Type + "=@type," +
+                            Field.Location + "=@location," +
+                            Field.Title1 + "=@title1," +
+                            Field.Title2 + "=@title2," +
+                            Field.Hidden + "=@hidden," +
+                            Field.Rating + "=@rating," +
+                            Field.Progress + "=@progress," +
+                            Field.LastVisit + "=@last_visit," +
+                            Field.LastPosition + "=@last_pos," +
+                            Field.CoverFileCache + "=@cover" +
+                            " WHERE " + Field.Id + "=@id";
+                        command.Parameters.AddWithValue("@id", Id);
+                        command.Parameters.AddWithValue("@type", ValueType);
+                        command.Parameters.AddWithValue("@location", ValueLocation);
+                        command.Parameters.AddWithValue("@title1", ValueTitle1);
+                        command.Parameters.AddWithValue("@title2", ValueTitle2);
+                        command.Parameters.AddWithValue("@hidden", ValueHidden);
+                        command.Parameters.AddWithValue("@rating", ValueRating);
+                        command.Parameters.AddWithValue("@progress", ValueProgress);
+                        command.Parameters.AddWithValue("@last_visit", ValueLastVisit);
+                        command.Parameters.AddWithValue("@last_pos", ValueLastPosition);
+                        command.Parameters.AddWithValue("@cover", ValueCoverFileCache);
+                        command.ExecuteNonQuery();
+                    }
+
+                    InternalSaveTagsNoLock();
+                });
+            }, "SaveBasic");
         }
 
         public async Task SaveHiddenAsync(bool hidden)
         {
             Hidden = hidden;
 
-            var fields = new List<SqlKey>
+            await Enqueue(delegate
             {
-                KeyHidden,
-            };
-            await Save(fields, save_tags: false, "SaveHiddenAsync");
+                return SaveNoLock(delegate
+                {
+                    using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
+                    {
+                        command.CommandText = "UPDATE " + SqliteDatabaseManager.ComicTable + " SET " +
+                            Field.Hidden + "=@hidden" +
+                            " WHERE " + Field.Id + "=@id";
+                        command.Parameters.AddWithValue("@id", Id);
+                        command.Parameters.AddWithValue("@hidden", ValueHidden);
+                        command.ExecuteNonQuery();
+                    }
+                });
+            }, "SaveHiddenAsync");
         }
 
         public void SaveRating(int rating)
         {
             Rating = rating;
 
-            var fields = new List<SqlKey>
+            _ = Enqueue(delegate
             {
-                KeyRating,
-            };
-            _ = Save(fields, save_tags: false, "SaveRating");
+                return SaveNoLock(delegate
+                {
+                    using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
+                    {
+                        command.CommandText = "UPDATE " + SqliteDatabaseManager.ComicTable + " SET " +
+                            Field.Rating + "=@rating" +
+                            " WHERE " + Field.Id + "=@id";
+                        command.Parameters.AddWithValue("@id", Id);
+                        command.Parameters.AddWithValue("@rating", ValueRating);
+                        command.ExecuteNonQuery();
+                    }
+                });
+            }, "SaveRating");
         }
 
         public async Task SaveProgressAsync(int progress, double last_position)
@@ -171,12 +227,23 @@ namespace ComicReader.Database
             Progress = progress;
             LastPosition = last_position;
 
-            var fields = new List<SqlKey>
+            await Enqueue(delegate
             {
-                KeyProgress,
-                KeyLastPosition,
-            };
-            await Save(fields, save_tags: false, "SaveProgress");
+                return SaveNoLock(delegate
+                {
+                    using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
+                    {
+                        command.CommandText = "UPDATE " + SqliteDatabaseManager.ComicTable + " SET " +
+                            Field.Progress + "=@progress," +
+                            Field.LastPosition + "=@last_pos" +
+                            " WHERE " + Field.Id + "=@id";
+                        command.Parameters.AddWithValue("@id", Id);
+                        command.Parameters.AddWithValue("@progress", ValueProgress);
+                        command.Parameters.AddWithValue("@last_pos", ValueLastPosition);
+                        command.ExecuteNonQuery();
+                    }
+                });
+            }, "SaveProgress");
         }
 
         public void SetAsRead()
@@ -184,36 +251,61 @@ namespace ComicReader.Database
             LastVisit = DateTimeOffset.Now;
             Progress = Math.Max(Progress, 0);
 
-            var fields = new List<SqlKey>
+            _ = Enqueue(delegate
             {
-                KeyProgress,
-                KeyLastVisit,
-            };
-            _ = Save(fields, save_tags: false, "SetAsRead");
+                return SaveNoLock(delegate
+                {
+                    using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
+                    {
+                        command.CommandText = "UPDATE " + SqliteDatabaseManager.ComicTable + " SET " +
+                            Field.Progress + "=@progress," +
+                            Field.LastVisit + "=@last_visit" +
+                            " WHERE " + Field.Id + "=@id";
+                        command.Parameters.AddWithValue("@id", Id);
+                        command.Parameters.AddWithValue("@progress", ValueProgress);
+                        command.Parameters.AddWithValue("@last_visit", ValueLastVisit);
+                        command.ExecuteNonQuery();
+                    }
+                });
+            }, "SetAsRead");
         }
 
         public void SaveImageAspectRatios()
         {
-            var fields = new List<SqlKey>
+            _ = Enqueue(delegate
             {
-                KeyImageAspectRatios,
-            };
-            _ = Save(fields, save_tags: false, "SaveImageAspectRatios");
+                return SaveNoLock(delegate
+                {
+                    using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
+                    {
+                        command.CommandText = "UPDATE " + SqliteDatabaseManager.ComicTable + " SET " +
+                            Field.ImageAspectRatios + "=@ratios" +
+                            " WHERE " + Field.Id + "=@id";
+                        command.Parameters.AddWithValue("@id", Id);
+                        command.Parameters.AddWithValue("@ratios", ValueImageAspectRatios);
+                        command.ExecuteNonQuery();
+                    }
+                });
+            }, "SaveImageAspectRatios");
         }
 
         public void SaveCoverFileCache()
         {
-            var fields = new List<SqlKey>
+            _ = Enqueue(delegate
             {
-                KeyCoverFileCache,
-            };
-            _ = Save(fields, save_tags: false, "SaveCoverFileCache");
-        }
-
-        public void SaveTags()
-        {
-            var fields = new List<SqlKey>();
-            _ = Save(fields, save_tags: true, "SaveTags");
+                return SaveNoLock(delegate
+                {
+                    using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
+                    {
+                        command.CommandText = "UPDATE " + SqliteDatabaseManager.ComicTable + " SET " +
+                            Field.CoverFileCache + "=@cover" +
+                            " WHERE " + Field.Id + "=@id";
+                        command.Parameters.AddWithValue("@id", Id);
+                        command.Parameters.AddWithValue("@cover", ValueCoverFileCache);
+                        command.ExecuteNonQuery();
+                    }
+                });
+            }, "SaveCoverFileCache");
         }
 
         public void SetAsDefaultInfo()
@@ -403,7 +495,29 @@ namespace ComicReader.Database
 
         public static async Task<ComicData> FromId(long id, string taskName)
         {
-            return await From(Field.Id, id, taskName);
+            return await Enqueue(delegate
+            {
+                return FromIdNoLock(id);
+            }, taskName);
+        }
+
+        private static ComicData FromIdNoLock(long id)
+        {
+            using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
+            {
+                command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.ComicTable +
+                    " WHERE " + Field.Id + "=@id LIMIT 1";
+                command.Parameters.AddWithValue("@id", id);
+
+                SqliteDataReader query = command.ExecuteReader();
+
+                if (!query.Read())
+                {
+                    return null;
+                }
+
+                return FromNoLock(query);
+            }
         }
 
         public static SealedTask UpdateSealed(bool lazy_load) =>
@@ -547,84 +661,104 @@ namespace ComicReader.Database
             Tags = tags;
         }
 
-        private async Task InternalSaveTagsNoLock(bool remove_old = true)
+        private void InternalSaveTagsNoLock(bool remove_old = true)
         {
             if (remove_old)
             {
                 SqliteCommand command = SqliteDatabaseManager.NewCommand();
                 command.CommandText = "DELETE FROM " + SqliteDatabaseManager.TagCategoryTable
-                    + " WHERE " + Field.TagCategory.ComicId + "=" + Id;
+                    + " WHERE " + Field.TagCategory.ComicId + "=@id";
+                command.Parameters.AddWithValue("@id", Id);
                 command.ExecuteNonQuery();
             }
 
             foreach (TagData category in Tags)
             {
                 // Insert to tag category table.
-                string name = category.Name;
-
-                var tag_category_fields = new List<SqlKey>
+                long rowid;
+                using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
                 {
-                    new SqlKey(Field.TagCategory.Name, name),
-                    new SqlKey(Field.TagCategory.ComicId, Id),
-                };
-
-                long rowid = await SqliteDatabaseManager.Insert(SqliteDatabaseManager.TagCategoryTable, tag_category_fields);
+                    command.CommandText = "INSERT INTO " + SqliteDatabaseManager.TagCategoryTable + " (" +
+                        Field.TagCategory.Name + "," + Field.TagCategory.ComicId + ") VALUES (@name, @id);" +
+                        "SELECT LAST_INSERT_ROWID();";
+                    command.Parameters.AddWithValue("@name", category.Name);
+                    command.Parameters.AddWithValue("@id", Id);
+                    rowid = (long)command.ExecuteScalar();
+                }
 
                 // Retrieve ID from inserted row.
-                SqliteCommand command = SqliteDatabaseManager.NewCommand();
-                command.CommandText = "SELECT " + Field.TagCategory.Id + " FROM " +
-                    SqliteDatabaseManager.TagCategoryTable + " WHERE ROWID=$rowid";
-                command.Parameters.AddWithValue("$rowid", rowid);
-
-                long tag_category_id = (long)command.ExecuteScalar();
+                long tag_category_id;
+                using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
+                {
+                    command.CommandText = "SELECT " + Field.TagCategory.Id + " FROM " +
+                        SqliteDatabaseManager.TagCategoryTable + " WHERE ROWID=$rowid";
+                    command.Parameters.AddWithValue("$rowid", rowid);
+                    tag_category_id = (long)command.ExecuteScalar();
+                }
 
                 foreach (string tag in category.Tags)
                 {
-                    var tag_fields = new List<SqlKey>
+                    using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
                     {
-                        new SqlKey(Field.Tag.Content, tag),
-                        new SqlKey(Field.Tag.ComicId, Id),
-                        new SqlKey(Field.Tag.TagCategoryId, tag_category_id),
-                    };
-
-                    _ = await SqliteDatabaseManager.Insert(SqliteDatabaseManager.TagTable, tag_fields);
+                        command.CommandText = "INSERT INTO " + SqliteDatabaseManager.TagTable + " (" +
+                            Field.Tag.Content + "," + Field.Tag.ComicId + "," + Field.Tag.TagCategoryId +
+                            ") VALUES (@tag, @comic_id, @category_id)";
+                        command.Parameters.AddWithValue("@tag", tag);
+                        command.Parameters.AddWithValue("@comic_id", Id);
+                        command.Parameters.AddWithValue("@category_id", tag_category_id);
+                        command.ExecuteScalar();
+                    }
                 }
             }
         }
 
-        private async Task InternalInsertNoLock()
+        private void InternalInsertNoLock()
         {
             // Insert to comic table.
-            long rowid = await SqliteDatabaseManager.Insert(SqliteDatabaseManager.ComicTable, AllFields);
-
-            // Retrieve ID from inserted row.
-            SqliteCommand command = SqliteDatabaseManager.NewCommand();
-            command.CommandText = "SELECT " + Field.Id + " FROM " +
-                SqliteDatabaseManager.ComicTable + " WHERE ROWID=$rowid";
-            command.Parameters.AddWithValue("$rowid", rowid);
-            Id = (long)command.ExecuteScalar();
-
-            // Cleanups.
-            command.Dispose();
-
-            // Insert tags.
-            await InternalSaveTagsNoLock(remove_old: false);
-        }
-
-        private async Task<TaskException> Save(List<SqlKey> keys, bool save_tags, string taskName)
-        {
-            if (IsExternal)
+            long rowid;
+            using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
             {
-                return TaskException.Success;
+                command.CommandText = "INSERT INTO " + SqliteDatabaseManager.ComicTable + " (" +
+                    Field.Type + "," +
+                    Field.Location + "," +
+                    Field.Title1 + "," +
+                    Field.Title2 + "," +
+                    Field.Hidden + "," +
+                    Field.Rating + "," +
+                    Field.Progress + "," +
+                    Field.LastVisit + "," +
+                    Field.LastPosition + "," +
+                    Field.ImageAspectRatios + "," +
+                    Field.CoverFileCache + ") VALUES (@type,@location,@title1,@title2,@hidden,@rating,@progress,@last_visit,@last_pos,@ratios,@cover);" +
+                    "SELECT LAST_INSERT_ROWID();";
+                command.Parameters.AddWithValue("@type", ValueType);
+                command.Parameters.AddWithValue("@location", ValueLocation);
+                command.Parameters.AddWithValue("@title1", ValueTitle1);
+                command.Parameters.AddWithValue("@title2", ValueTitle2);
+                command.Parameters.AddWithValue("@hidden", ValueHidden);
+                command.Parameters.AddWithValue("@rating", ValueRating);
+                command.Parameters.AddWithValue("@progress", ValueProgress);
+                command.Parameters.AddWithValue("@last_visit", ValueLastVisit);
+                command.Parameters.AddWithValue("@last_pos", ValueLastPosition);
+                command.Parameters.AddWithValue("@ratios", ValueImageAspectRatios);
+                command.Parameters.AddWithValue("@cover", ValueCoverFileCache);
+                rowid = (long)command.ExecuteScalar();
             }
 
-            return await Enqueue(delegate
+            // Retrieve ID from inserted row.
+            using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
             {
-                return SaveNoLock(keys, save_tags);
-            }, taskName);
+                command.CommandText = "SELECT " + Field.Id + " FROM " +
+                    SqliteDatabaseManager.ComicTable + " WHERE ROWID=$rowid";
+                command.Parameters.AddWithValue("$rowid", rowid);
+                Id = (long)command.ExecuteScalar();
+            }
+
+            // Insert tags.
+            InternalSaveTagsNoLock(remove_old: false);
         }
 
-        private TaskException SaveNoLock(List<SqlKey> keys, bool save_tags)
+        private TaskException SaveNoLock(Action action)
         {
             if (IsExternal)
             {
@@ -633,27 +767,12 @@ namespace ComicReader.Database
 
             if (Id < 0)
             {
-                InternalInsertNoLock().Wait();
+                InternalInsertNoLock();
                 return TaskException.Success;
             }
 
-            if (keys.Count > 0)
-            {
-                var id = new SqlKey(Field.Id, Id);
-                SqliteDatabaseManager.Update(SqliteDatabaseManager.ComicTable, id, keys).Wait();
-            }
-
-            if (save_tags)
-            {
-                InternalSaveTagsNoLock().Wait();
-            }
-
+            action();
             return TaskException.Success;
-        }
-
-        private void SaveAllNoLock()
-        {
-            SaveNoLock(AllFields, save_tags: true);
         }
 
         private static ComicData FromDatabase(ComicType type, string location)
@@ -736,7 +855,7 @@ namespace ComicReader.Database
             }, taskName);
         }
 
-        private static async Task<ComicData> FromNoLock(SqliteDataReader query)
+        private static ComicData FromNoLock(SqliteDataReader query)
         {
             // Directly imported fields.
             long id = query.GetInt64(0);
@@ -754,46 +873,43 @@ namespace ComicReader.Database
 
             // Tags
             var tags = new List<TagData>();
-
-            CommandBlock2NoLock(async delegate (SqliteCommand command)
+            var tag_category_ids = new List<long>();
+            using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
             {
-                var tag_category_ids = new List<long>();
-
                 command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.TagCategoryTable +
-                    " WHERE " + ComicData.Field.TagCategory.ComicId + "=" + id.ToString();
+                    " WHERE " + ComicData.Field.TagCategory.ComicId + "=@id";
+                command.Parameters.AddWithValue("@id", id);
 
-                using (SqliteDataReader tag_category_query = await command.ExecuteReaderAsync())
+                using SqliteDataReader tag_category_query = command.ExecuteReader();
+                while (tag_category_query.Read())
                 {
-                    while (tag_category_query.Read())
+                    long tag_category_id = tag_category_query.GetInt64(0);
+                    string name = tag_category_query.GetString(1);
+
+                    var tag_data = new TagData
                     {
-                        long tag_category_id = tag_category_query.GetInt64(0);
-                        string name = tag_category_query.GetString(1);
+                        Name = name
+                    };
 
-                        var tag_data = new TagData
-                        {
-                            Name = name
-                        };
-
-                        tags.Add(tag_data);
-                        tag_category_ids.Add(tag_category_id);
-                    }
+                    tags.Add(tag_data);
+                    tag_category_ids.Add(tag_category_id);
                 }
+            }
 
-                for (int i = 0; i < tags.Count; ++i)
+            for (int i = 0; i < tags.Count; ++i)
+            {
+                using SqliteCommand command = SqliteDatabaseManager.NewCommand();
+                command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.TagTable +
+                    " WHERE " + ComicData.Field.Tag.TagCategoryId + "=@id";
+                command.Parameters.AddWithValue("@id", tag_category_ids[i]);
+
+                using SqliteDataReader tag_query = command.ExecuteReader();
+                while (tag_query.Read())
                 {
-                    command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.TagTable +
-                        " WHERE " + ComicData.Field.Tag.TagCategoryId + "=" + tag_category_ids[i].ToString();
-
-                    using (SqliteDataReader tag_query = await command.ExecuteReaderAsync())
-                    {
-                        while (tag_query.Read())
-                        {
-                            string tag = tag_query.GetString(0);
-                            _ = tags[i].Tags.Add(tag);
-                        }
-                    }
+                    string tag = tag_query.GetString(0);
+                    _ = tags[i].Tags.Add(tag);
                 }
-            });
+            }
 
             // ImageAspectRatios
             bool reset_image_aspect_ratios = false;
@@ -828,21 +944,21 @@ namespace ComicReader.Database
             return comic;
         }
 
-        private static async Task<ComicData> From(string col, object entry, string taskName)
+        public static async Task<ComicData> FromLocation(string location, string taskName)
         {
-            return await CommandBlock1(delegate (SqliteCommand command)
+            return await Enqueue(delegate
             {
-                return Task.FromResult(FromNoLock(col, entry));
+                return FromLocationNoLock(location);
             }, taskName);
         }
 
-        private static ComicData FromNoLock(string col, object entry)
+        private static ComicData FromLocationNoLock(string location)
         {
-            return CommandBlock1NoLock(async delegate (SqliteCommand command)
+            using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
             {
                 command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.ComicTable +
-                    " WHERE " + col + "=@entry LIMIT 1";
-                command.Parameters.AddWithValue("@entry", entry);
+                " WHERE " + Field.Location + "=@entry LIMIT 1";
+                command.Parameters.AddWithValue("@entry", location);
 
                 SqliteDataReader query = command.ExecuteReader();
 
@@ -851,18 +967,8 @@ namespace ComicReader.Database
                     return null;
                 }
 
-                return await FromNoLock(query);
-            });
-        }
-
-        public static async Task<ComicData> FromLocation(string location, string taskName)
-        {
-            return await From(Field.Location, location, taskName);
-        }
-
-        private static ComicData FromLocationNoLock(string location)
-        {
-            return FromNoLock(Field.Location, location);
+                return FromNoLock(query);
+            }
         }
 
         private static void RemoveWithLocationNoLock(string location)
@@ -878,216 +984,217 @@ namespace ComicReader.Database
 
         private static async Task<TaskException> UpdateUnsealed(bool lazy_load)
         {
-            await _updateLock.WaitAsync();
-            try
+            return await _updateLock.LockAsync(async delegate (CancellationLock.Token token)
             {
-                Log("Updating comics" + (lazy_load ? " (lazy load)" : ""));
-
-                if (!lazy_load)
+                try
                 {
-                    IsRescanning = true;
-                    OnUpdated?.Invoke();
-                }
+                    Log("Updating comics" + (lazy_load ? " (lazy load)" : ""));
 
-                // Fetch all locations in the database.
-                var loc_exist = new List<string>();
-
-                await CommandBlock2(async delegate (SqliteCommand command)
-                {
-                    command.CommandText = "SELECT " + ComicData.Field.Location +
-                        " FROM " + SqliteDatabaseManager.ComicTable;
-                    SqliteDataReader query = await command.ExecuteReaderAsync();
-
-                    while (query.Read())
+                    if (!lazy_load)
                     {
-                        loc_exist.Add(query.GetString(0));
-                    }
-                }, "GetLocationsFromDatabase");
-
-                // Get all root folders from setting.
-                var root_folders = new List<string>(XmlDatabase.Settings.ComicFolders.Count);
-
-                await XmlDatabaseManager.WaitLock();
-                foreach (string folder_path in XmlDatabase.Settings.ComicFolders)
-                {
-                    root_folders.Add(folder_path);
-                }
-
-                XmlDatabaseManager.ReleaseLock();
-
-                // Get all subfolders in root folders.
-                var loc_in_lib = new List<string>();
-                var loc_ignore = new List<string>();
-                var watch = new Utils.Stopwatch();
-                watch.Start();
-
-                foreach (string folder_path in root_folders)
-                {
-                    Log("Scanning folder '" + folder_path + "'");
-                    StorageFolder root_folder = await Utils.Storage.TryGetFolder(folder_path);
-
-                    // Remove unreachable folders from database.
-                    if (root_folder == null)
-                    {
-                        Log("Failed to reach folder '" + folder_path + "', skipped");
-                        await XmlDatabaseManager.WaitLock();
-                        XmlDatabase.Settings.ComicFolders.Remove(folder_path);
-                        XmlDatabaseManager.ReleaseLock();
-                        continue;
+                        IsRescanning = true;
+                        OnUpdated?.Invoke();
                     }
 
-                    var ctx = new Utils.StorageItemSearchEngine.SearchContext(folder_path, Utils.StorageItemSearchEngine.PathType.Folder);
+                    // Fetch all locations in the database.
+                    var loc_exist = new List<string>();
 
-                    while (await ctx.Search(1024))
+                    await CommandBlock2(async delegate (SqliteCommand command)
                     {
-                        // Cancel this task if more requests have come in.
-                        if (_updateLock.CancellationRequested)
+                        command.CommandText = "SELECT " + ComicData.Field.Location +
+                            " FROM " + SqliteDatabaseManager.ComicTable;
+                        SqliteDataReader query = await command.ExecuteReaderAsync();
+
+                        while (query.Read())
                         {
-                            return TaskException.Cancellation;
+                            loc_exist.Add(query.GetString(0));
+                        }
+                    }, "GetLocationsFromDatabase");
+
+                    // Get all root folders from setting.
+                    var root_folders = new List<string>(XmlDatabase.Settings.ComicFolders.Count);
+
+                    await XmlDatabaseManager.WaitLock();
+                    foreach (string folder_path in XmlDatabase.Settings.ComicFolders)
+                    {
+                        root_folders.Add(folder_path);
+                    }
+
+                    XmlDatabaseManager.ReleaseLock();
+
+                    // Get all subfolders in root folders.
+                    var loc_in_lib = new List<string>();
+                    var loc_ignore = new List<string>();
+                    var watch = new Utils.Stopwatch();
+                    watch.Start();
+
+                    foreach (string folder_path in root_folders)
+                    {
+                        Log("Scanning folder '" + folder_path + "'");
+                        StorageFolder root_folder = await Utils.Storage.TryGetFolder(folder_path);
+
+                        // Remove unreachable folders from database.
+                        if (root_folder == null)
+                        {
+                            Log("Failed to reach folder '" + folder_path + "', skipped");
+                            await XmlDatabaseManager.WaitLock();
+                            XmlDatabase.Settings.ComicFolders.Remove(folder_path);
+                            XmlDatabaseManager.ReleaseLock();
+                            continue;
                         }
 
-                        Log("Scanning " + ctx.ItemFound.ToString() + " items.");
-                        var loc_scanned_dict = new Dictionary<string, ComicType>();
+                        var ctx = new Utils.StorageItemSearchEngine.SearchContext(folder_path, Utils.StorageItemSearchEngine.PathType.Folder);
 
-                        foreach (string file_path in ctx.Files)
+                        while (await ctx.Search(1024))
                         {
-                            string filename = Utils.StringUtils.ItemNameFromPath(file_path);
-                            string extension = Utils.StringUtils.ExtensionFromFilename(filename).ToLower();
-
-                            if (Common.AppInfoProvider.IsSupportedImageExtension(extension))
+                            // Cancel this task if more requests have come in.
+                            if (token.CancellationRequested)
                             {
-                                string loc = Utils.StringUtils.ParentLocationFromLocation(file_path);
+                                return TaskException.Cancellation;
+                            }
 
-                                if (!loc_scanned_dict.ContainsKey(loc))
+                            Log("Scanning " + ctx.ItemFound.ToString() + " items.");
+                            var loc_scanned_dict = new Dictionary<string, ComicType>();
+
+                            foreach (string file_path in ctx.Files)
+                            {
+                                string filename = Utils.StringUtils.ItemNameFromPath(file_path);
+                                string extension = Utils.StringUtils.ExtensionFromFilename(filename).ToLower();
+
+                                if (Common.AppInfoProvider.IsSupportedImageExtension(extension))
                                 {
-                                    loc_scanned_dict[loc] =
-                                        ArchiveAccess.IsArchivePath(file_path) ?
-                                        ComicType.Archive : ComicType.Folder;
+                                    string loc = Utils.StringUtils.ParentLocationFromLocation(file_path);
+
+                                    if (!loc_scanned_dict.ContainsKey(loc))
+                                    {
+                                        loc_scanned_dict[loc] =
+                                            ArchiveAccess.IsArchivePath(file_path) ?
+                                            ComicType.Archive : ComicType.Folder;
+                                    }
+                                }
+                                else
+                                {
+                                    switch (extension)
+                                    {
+                                        case ".pdf":
+                                            loc_scanned_dict[file_path] = ComicType.PDF;
+                                            break;
+                                        default:
+                                            break;
+                                    }
                                 }
                             }
-                            else
+
+                            var loc_scanned = new List<string>();
+
+                            foreach (KeyValuePair<string, ComicType> item in loc_scanned_dict)
                             {
-                                switch (extension)
-                                {
-                                    case ".pdf":
-                                        loc_scanned_dict[file_path] = ComicType.PDF;
-                                        break;
-                                    default:
-                                        break;
-                                }
+                                loc_scanned.Add(item.Key);
                             }
-                        }
 
-                        var loc_scanned = new List<string>();
+                            loc_in_lib.AddRange(loc_scanned);
 
-                        foreach (KeyValuePair<string, ComicType> item in loc_scanned_dict)
-                        {
-                            loc_scanned.Add(item.Key);
-                        }
-
-                        loc_in_lib.AddRange(loc_scanned);
-
-                        foreach (string dir in ctx.NoAccessItems)
-                        {
-                            loc_ignore.Add(dir);
-                        }
-
-                        // Generate a task queue for updating.
-                        var queue = new List<UpdateItemInfo>();
-
-                        // Get folders added.
-                        var loc_added = Utils.C3<string, string, string>.Except(
-                            loc_scanned, loc_exist,
-                            Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
-                            new Utils.C1<string>.DefaultEqualityComparer()).ToList();
-
-                        foreach (string loc in loc_added)
-                        {
-                            queue.Add(new UpdateItemInfo
+                            foreach (string dir in ctx.NoAccessItems)
                             {
-                                Location = loc,
-                                ItemType = loc_scanned_dict[loc],
-                                IsExist = false,
-                            });
-                        }
+                                loc_ignore.Add(dir);
+                            }
 
-                        if (!lazy_load)
-                        {
-                            var loc_kept = Utils.C3<string, string, string>.Intersect(
+                            // Generate a task queue for updating.
+                            var queue = new List<UpdateItemInfo>();
+
+                            // Get folders added.
+                            var loc_added = Utils.C3<string, string, string>.Except(
                                 loc_scanned, loc_exist,
                                 Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
                                 new Utils.C1<string>.DefaultEqualityComparer()).ToList();
 
-                            foreach (string loc in loc_kept)
+                            foreach (string loc in loc_added)
                             {
                                 queue.Add(new UpdateItemInfo
                                 {
                                     Location = loc,
                                     ItemType = loc_scanned_dict[loc],
-                                    IsExist = true,
+                                    IsExist = false,
                                 });
                             }
-                        }
 
-                        await TransactionBlock(async delegate
-                        {
-                            foreach (UpdateItemInfo info in queue)
+                            if (!lazy_load)
                             {
-                                await UpdateComicNoLock(info.Location, info.ItemType, info.IsExist);
-                            }
-                        }, "Update comic");
+                                var loc_kept = Utils.C3<string, string, string>.Intersect(
+                                    loc_scanned, loc_exist,
+                                    Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
+                                    new Utils.C1<string>.DefaultEqualityComparer()).ToList();
 
-                        if (watch.LapSpan().TotalSeconds > 2)
-                        {
-                            OnUpdated?.Invoke();
-                            watch.Lap();
+                                foreach (string loc in loc_kept)
+                                {
+                                    queue.Add(new UpdateItemInfo
+                                    {
+                                        Location = loc,
+                                        ItemType = loc_scanned_dict[loc],
+                                        IsExist = true,
+                                    });
+                                }
+                            }
+
+                            await TransactionBlock(async delegate
+                            {
+                                foreach (UpdateItemInfo info in queue)
+                                {
+                                    await UpdateComicNoLock(info.Location, info.ItemType, info.IsExist);
+                                }
+                            }, "Update comic");
+
+                            if (watch.LapSpan().TotalSeconds > 2)
+                            {
+                                OnUpdated?.Invoke();
+                                watch.Lap();
+                            }
                         }
                     }
-                }
 
-                // Get removed folders.
-                var loc_removed = Utils.C3<string, string, string>.Except(loc_exist, loc_in_lib,
-                    Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
-                    new Utils.C1<string>.DefaultEqualityComparer()).ToList();
+                    // Get removed folders.
+                    var loc_removed = Utils.C3<string, string, string>.Except(loc_exist, loc_in_lib,
+                        Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
+                        new Utils.C1<string>.DefaultEqualityComparer()).ToList();
 
-                await TransactionBlock(delegate
-                {
-                    // Remove folders from database.
-                    foreach (string loc in loc_removed)
+                    await TransactionBlock(delegate
                     {
-                        // Skip directories in ignoring list.
-                        bool ignore = false;
-
-                        foreach (string base_loc in loc_ignore)
+                        // Remove folders from database.
+                        foreach (string loc in loc_removed)
                         {
-                            if (Utils.StringUtils.FolderContain(base_loc, loc))
+                            // Skip directories in ignoring list.
+                            bool ignore = false;
+
+                            foreach (string base_loc in loc_ignore)
                             {
-                                ignore = true;
-                                break;
+                                if (Utils.StringUtils.FolderContain(base_loc, loc))
+                                {
+                                    ignore = true;
+                                    break;
+                                }
                             }
+
+                            if (ignore)
+                            {
+                                continue;
+                            }
+
+                            // Remove.
+                            Log("Removing item '" + loc + "'");
+                            RemoveWithLocationNoLock(loc);
                         }
 
-                        if (ignore)
-                        {
-                            continue;
-                        }
-
-                        // Remove.
-                        Log("Removing item '" + loc + "'");
-                        RemoveWithLocationNoLock(loc);
-                    }
-
-                    return Task.CompletedTask;
-                }, "RemoveLocationsFromDatabase");
-                return TaskException.Success;
-            }
-            finally
-            {
-                Log("Comic update completed");
-                IsRescanning = false;
-                OnUpdated?.Invoke();
-                _updateLock.Release();
-            }
+                        return Task.CompletedTask;
+                    }, "RemoveLocationsFromDatabase");
+                    return TaskException.Success;
+                }
+                finally
+                {
+                    Log("Comic update completed");
+                    IsRescanning = false;
+                    OnUpdated?.Invoke();
+                }
+            });
         }
 
         protected static void Log(string content)

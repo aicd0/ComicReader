@@ -132,7 +132,7 @@ csharp_style_unused_value_assignment_preference = discard_variable:suggestion
 csharp_style_unused_value_expression_statement_preference = discard_variable:silent
 
 # 'using' directive preferences
-csharp_using_directive_placement = outside_namespace:silent
+csharp_using_directive_placement = outside_namespace:error
 
 # New line preferences
 csharp_style_allow_blank_line_after_colon_in_constructor_initializer_experimental = false:silent
@@ -269,6 +269,8 @@ dotnet_diagnostic.IDE0011.severity = error
 dotnet_diagnostic.IDE2001.severity = error
 dotnet_diagnostic.IDE0066.severity = error
 dotnet_diagnostic.IDE0074.severity = error
+dotnet_diagnostic.IDE0090.severity = error
+dotnet_diagnostic.IDE0065.severity = error
 
 [*.{cs,vb}]
 dotnet_style_operator_placement_when_wrapping = beginning_of_line

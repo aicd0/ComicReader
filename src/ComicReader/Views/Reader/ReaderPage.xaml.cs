@@ -451,8 +451,7 @@ namespace ComicReader.Views.Reader
                 return;
             }
 
-            await _loadComicLock.WaitAsync();
-            try
+            await _loadComicLock.LockAsync(async delegate (CancellationLock.Token token)
             {
                 Shared.ReaderStatus = ReaderStatusEnum.Loading;
 
@@ -518,11 +517,7 @@ namespace ComicReader.Views.Reader
                 // Refresh reader.
                 await reader.UpdateImages(true);
                 UpdatePage(reader);
-            }
-            finally
-            {
-                _loadComicLock.Release();
-            }
+            });
         }
 
         private void LoadImages()

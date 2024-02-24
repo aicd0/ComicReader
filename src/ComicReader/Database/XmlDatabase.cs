@@ -6,11 +6,10 @@ using System.Threading.Tasks;
 using System.Xml.Serialization;
 using Windows.Storage;
 using Windows.Storage.Streams;
+using SealedTask = System.Func<System.Threading.Tasks.Task<ComicReader.Utils.TaskException>, ComicReader.Utils.TaskException>;
 
 namespace ComicReader.Database
 {
-    using SealedTask = Func<Task<TaskException>, TaskException>;
-
     public abstract class XmlData
     {
         public abstract string FileName { get; }

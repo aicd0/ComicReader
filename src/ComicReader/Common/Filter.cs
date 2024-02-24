@@ -560,8 +560,8 @@ namespace ComicReader.Common.Search
                 // Query matched tag categories.
                 command.CommandText = "SELECT " + ComicData.Field.TagCategory.Id + "," + ComicData.Field.TagCategory.ComicId +
                     " FROM " + SqliteDatabaseManager.TagCategoryTable + " WHERE " + ComicData.Field.TagCategory.Name +
-                    "=$category COLLATE NOCASE";
-                command.Parameters.AddWithValue("$category", m_category);
+                    "=@category COLLATE NOCASE";
+                command.Parameters.AddWithValue("@category", m_category);
 
                 using (SqliteDataReader query = command.ExecuteReader())
                 {
@@ -577,8 +577,8 @@ namespace ComicReader.Common.Search
 
                 // Query matched tags.
                 command.CommandText = "SELECT " + ComicData.Field.Tag.TagCategoryId + " FROM " + SqliteDatabaseManager.TagTable +
-                    " WHERE " + ComicData.Field.Tag.Content + "=$tag COLLATE NOCASE";
-                command.Parameters.AddWithValue("$tag", m_tag);
+                    " WHERE " + ComicData.Field.Tag.Content + "=@tag COLLATE NOCASE";
+                command.Parameters.AddWithValue("@tag", m_tag);
 
                 using (SqliteDataReader query = command.ExecuteReader())
                 {
@@ -636,8 +636,8 @@ namespace ComicReader.Common.Search
             using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
             {
                 command.CommandText = "SELECT " + ComicData.Field.Id + " FROM " + SqliteDatabaseManager.ComicTable + " WHERE "
-                    + ComicData.Field.Location + " LIKE $dir";
-                command.Parameters.AddWithValue("$dir", m_directory + "%");
+                    + ComicData.Field.Location + " LIKE @dir";
+                command.Parameters.AddWithValue("@dir", m_directory + "%");
 
                 using (SqliteDataReader query = command.ExecuteReader())
                 {
@@ -704,7 +704,8 @@ namespace ComicReader.Common.Search
             using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
             {
                 command.CommandText = "SELECT " + ComicData.Field.Id + " FROM " + SqliteDatabaseManager.ComicTable + " WHERE "
-                    + ComicData.Field.Id + "=" + m_id.ToString() + " LIMIT 1";
+                    + ComicData.Field.Id + "=@id LIMIT 1";
+                command.Parameters.AddWithValue("@id", m_id);
 
                 using (SqliteDataReader query = command.ExecuteReader())
                 {
@@ -744,7 +745,8 @@ namespace ComicReader.Common.Search
             using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
             {
                 command.CommandText = "SELECT " + ComicData.Field.Id + " FROM " + SqliteDatabaseManager.ComicTable + " WHERE "
-                    + ComicData.Field.Rating + "=" + m_rating.ToString();
+                    + ComicData.Field.Rating + "=@rating";
+                command.Parameters.AddWithValue("@rating", m_rating);
 
                 using (SqliteDataReader query = command.ExecuteReader())
                 {
@@ -779,8 +781,8 @@ namespace ComicReader.Common.Search
             {
                 command.CommandText = "SELECT DISTINCT " + ComicData.Field.Tag.ComicId + " FROM " +
                     SqliteDatabaseManager.TagTable + " WHERE " + ComicData.Field.Tag.Content + "=" +
-                    "$tag COLLATE NOCASE";
-                command.Parameters.AddWithValue("$tag", m_tag);
+                    "@tag COLLATE NOCASE";
+                command.Parameters.AddWithValue("@tag", m_tag);
 
                 using (SqliteDataReader query = command.ExecuteReader())
                 {
