@@ -27,12 +27,12 @@ namespace ComicReader.DesignData
             set
             {
                 m_IsVertical = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsVertical"));
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsLeftToRightVisible"));
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsRightToLeftVisible"));
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsContinuous"));
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("PageArrangementIndex"));
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("DemoPageFlowDirection"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsVertical)}"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsLeftToRightVisible)}"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsRightToLeftVisible)}"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsContinuous)}"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(DemoPageFlowDirection)}"));
+                NotifyPageArrangementChanged();
 
                 EventBus.Default.With(EventId.ReaderVerticalChanged).Emit(0);
                 SaveReaderSettings();
@@ -60,8 +60,8 @@ namespace ComicReader.DesignData
             {
                 m_IsLeftToRight = value;
                 PageFlowDirection = value ? FlowDirection.LeftToRight : FlowDirection.RightToLeft;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsLeftToRightVisible"));
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsRightToLeftVisible"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsLeftToRightVisible)}"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsRightToLeftVisible)}"));
                 SaveReaderSettings();
             }
         }
@@ -86,7 +86,7 @@ namespace ComicReader.DesignData
 
                 if (IsVertical)
                 {
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsContinuous"));
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsContinuous)}"));
                 }
 
                 EventBus.Default.With(EventId.ReaderContinuousChanged).Emit(0);
@@ -104,7 +104,7 @@ namespace ComicReader.DesignData
 
                 if (!IsVertical)
                 {
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsContinuous"));
+                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsContinuous)}"));
                 }
 
                 EventBus.Default.With(EventId.ReaderContinuousChanged).Emit(0);
@@ -158,12 +158,7 @@ namespace ComicReader.DesignData
 
                 if (IsVertical)
                 {
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(PageArrangementIndex)}"));
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsPageArrangementSingle)}"));
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsPageArrangementDualCover)}"));
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsPageArrangementDualNoCover)}"));
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsPageArrangementDualCoverMirror)}"));
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsPageArrangementDualNoCoverMirror)}"));
+                    NotifyPageArrangementChanged();
                 }
 
                 EventBus.Default.With(EventId.ReaderPageArrangementChanged).Emit(0);
@@ -181,12 +176,7 @@ namespace ComicReader.DesignData
 
                 if (!IsVertical)
                 {
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(PageArrangementIndex)}"));
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsPageArrangementSingle)}"));
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsPageArrangementDualCover)}"));
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsPageArrangementDualNoCover)}"));
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsPageArrangementDualCoverMirror)}"));
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsPageArrangementDualNoCoverMirror)}"));
+                    NotifyPageArrangementChanged();
                 }
 
                 EventBus.Default.With(EventId.ReaderPageArrangementChanged).Emit(0);
@@ -300,12 +290,22 @@ namespace ComicReader.DesignData
             set
             {
                 m_PageFlowDirection = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("PageFlowDirection"));
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("DemoPageFlowDirection"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(PageFlowDirection)}"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(DemoPageFlowDirection)}"));
             }
         }
 
         public FlowDirection DemoPageFlowDirection => m_IsVertical ? FlowDirection.LeftToRight : m_PageFlowDirection;
+
+        private void NotifyPageArrangementChanged()
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(PageArrangementIndex)}"));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsPageArrangementSingle)}"));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsPageArrangementDualCover)}"));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsPageArrangementDualNoCover)}"));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsPageArrangementDualCoverMirror)}"));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsPageArrangementDualNoCoverMirror)}"));
+        }
 
         private void SaveReaderSettings()
         {

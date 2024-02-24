@@ -14,6 +14,7 @@ namespace ComicReader.Utils
             {
                 await Task.FromResult(0);
                 action(token);
+                return 0;
             });
         }
 
@@ -23,6 +24,15 @@ namespace ComicReader.Utils
             {
                 await Task.FromResult(0);
                 return action(token);
+            });
+        }
+
+        public async Task LockAsync(Func<Token, Task> action)
+        {
+            await LockAsync(async delegate (Token token)
+            {
+                await action(token);
+                return 0;
             });
         }
 

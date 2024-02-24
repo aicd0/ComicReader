@@ -279,7 +279,7 @@
 
     <Grid>
         <!--  Main section  -->
-        <Grid>
+        <Grid Visibility="{x:Bind Shared.IsGridViewVisible, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}">
             <TextBlock
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
