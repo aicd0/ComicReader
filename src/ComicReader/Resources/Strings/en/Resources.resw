@@ -410,9 +410,6 @@ Filtering nothing. Only used when we need to see all items in the library.
   <data name="NoResultsDetail.Text" xml:space="preserve">
     <value>Try searching with different keywords</value>
   </data>
-  <data name="Pin" xml:space="preserve">
-    <value>Pin</value>
-  </data>
   <data name="ReaderExpander.Header" xml:space="preserve">
     <value>Reader</value>
   </data>
@@ -499,9 +496,6 @@ Category2: tag4/tag5
   </data>
   <data name="UnhideAppBarButton.Label" xml:space="preserve">
     <value>Unhide</value>
-  </data>
-  <data name="Unpin" xml:space="preserve">
-    <value>Unpin</value>
   </data>
   <data name="Unread" xml:space="preserve">
     <value>Unread</value>

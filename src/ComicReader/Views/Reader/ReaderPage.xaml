@@ -278,18 +278,8 @@
     </Page.Resources>
 
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-
-        <Grid
-            x:Name="TitleBarPlaceHolder"
-            Grid.Row="0"
-            Visibility="{x:Bind Shared.IsTitleBarPlaceHolderVisible, Mode=OneWay}" />
-
         <!--  Main section  -->
-        <Grid Grid.Row="1">
+        <Grid>
             <TextBlock
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
@@ -404,7 +394,7 @@
                 x:Name="BottomGrid"
                 Height="48"
                 Margin="0,0,0,20"
-                Padding="5,0,20,0"
+                Padding="20,0,20,0"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Bottom"
                 Background="{ThemeResource ReaderBottomTileBackground}"
@@ -412,46 +402,14 @@
                 CornerRadius="24"
                 Opacity="0"
                 PointerEntered="OnBottomGridPointerEntered">
-                <StackPanel
-                    HorizontalAlignment="Left"
+                <TextBlock
+                    x:Name="PageIndicator"
+                    Margin="1,0,0,2"
+                    HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Orientation="Horizontal">
-                    <Grid Width="5" />
-
-                    <!--  Pin  -->
-                    <Button
-                        Click="OnPinClick"
-                        Style="{StaticResource ReaderBottomTileButtonStyle}"
-                        ToolTipService.ToolTip="{x:Bind Shared.PinButtonToolTip, Mode=OneWay}">
-                        <Grid>
-                            <FontIcon
-                                FontSize="15"
-                                Glyph="&#xE840;"
-                                Visibility="{x:Bind Shared.BottomTilePinned, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
-                            <FontIcon
-                                FontSize="15"
-                                Foreground="{ThemeResource ReaderBottomTileButtonFillForeground}"
-                                Glyph="&#xE840;"
-                                Visibility="{x:Bind Shared.BottomTilePinned, Mode=OneWay}" />
-                            <FontIcon
-                                FontSize="15"
-                                Foreground="{ThemeResource ReaderBottomTileButtonFillForeground}"
-                                Glyph="&#xE842;"
-                                Visibility="{x:Bind Shared.BottomTilePinned, Mode=OneWay}" />
-                        </Grid>
-                    </Button>
-
-                    <!--  Page indicator  -->
-                    <AppBarSeparator Margin="2.5,0" />
-
-                    <TextBlock
-                        x:Name="PageIndicator"
-                        Margin="12.5,0,0,2"
-                        VerticalAlignment="Center"
-                        FontSize="14"
-                        FontWeight="SemiBold"
-                        Text="- / -" />
-                </StackPanel>
+                    FontSize="14"
+                    FontWeight="SemiBold"
+                    Text="- / -" />
             </Grid>
 
             <!--  Fullscreen button  -->
@@ -476,11 +434,7 @@
         </Grid>
 
         <!--  Grid Preview  -->
-        <Grid
-            Grid.Row="0"
-            Grid.RowSpan="2"
-            IsHitTestVisible="{x:Bind Shared.IsGridViewVisible, Mode=OneWay}"
-            Opacity="{x:Bind Shared.IsGridViewVisible, Converter={StaticResource BooleanToDoubleConverter}, Mode=OneWay}">
+        <Grid IsHitTestVisible="{x:Bind Shared.IsGridViewVisible, Mode=OneWay}" Opacity="{x:Bind Shared.IsGridViewVisible, Converter={StaticResource BooleanToDoubleConverter}, Mode=OneWay}">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
@@ -510,7 +464,7 @@
             </ScrollViewer>
         </Grid>
 
-        <Grid Grid.Row="0" Grid.RowSpan="2">
+        <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />

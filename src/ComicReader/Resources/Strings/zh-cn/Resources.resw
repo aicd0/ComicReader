@@ -407,9 +407,6 @@
   <data name="NoResultsDetail.Text" xml:space="preserve">
     <value>尝试使用不同关键词进行搜索</value>
   </data>
-  <data name="Pin" xml:space="preserve">
-    <value>固定</value>
-  </data>
   <data name="ReaderExpander.Header" xml:space="preserve">
     <value>阅读器</value>
   </data>
@@ -496,9 +493,6 @@
   </data>
   <data name="UnhideAppBarButton.Label" xml:space="preserve">
     <value>取消隐藏</value>
-  </data>
-  <data name="Unpin" xml:space="preserve">
-    <value>取消固定</value>
   </data>
   <data name="Unread" xml:space="preserve">
     <value>未阅读</value>

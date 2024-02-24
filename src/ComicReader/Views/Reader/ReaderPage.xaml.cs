@@ -190,17 +190,6 @@ namespace ComicReader.Views.Reader
             }
         }
 
-        private bool m_IsTitleBarPlaceHolderVisible = false;
-        public bool IsTitleBarPlaceHolderVisible
-        {
-            get => m_IsTitleBarPlaceHolderVisible;
-            set
-            {
-                m_IsTitleBarPlaceHolderVisible = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsTitleBarPlaceHolderVisible"));
-            }
-        }
-
         public ReaderSettingViewModel ReaderSettings => NavigationPageShared.ReaderSettings;
 
         public void UpdateReaderUI()
@@ -228,7 +217,6 @@ namespace ComicReader.Views.Reader
                 }
             }
 
-            IsTitleBarPlaceHolderVisible = BottomTilePinned;
             IsGridViewVisible = previewVisible;
 
             if (NavigationPageShared != null)
@@ -237,38 +225,6 @@ namespace ComicReader.Views.Reader
                 NavigationPageShared.IsHorizontalReaderVisible = horizontalReaderVisible;
             }
         }
-
-        // Bottom tile
-        private bool m_BottomTilePinned = false;
-        public bool BottomTilePinned
-        {
-            get => m_BottomTilePinned;
-            set
-            {
-                m_BottomTilePinned = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("BottomTilePinned"));
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("PinButtonToolTip"));
-                UpdateReaderUI();
-                BottomTilePinnedLiveData.Emit(value);
-            }
-        }
-
-        public string PinButtonToolTip
-        {
-            get
-            {
-                if (BottomTilePinned)
-                {
-                    return Utils.StringResourceProvider.GetResourceString("Unpin");
-                }
-                else
-                {
-                    return Utils.StringResourceProvider.GetResourceString("Pin");
-                }
-            }
-        }
-
-        public LiveData<bool> BottomTilePinnedLiveData = new LiveData<bool>();
 
         // Fullscreen
         private bool m_IsFullscreen = false;
@@ -324,7 +280,6 @@ namespace ComicReader.Views.Reader
             Shared.ComicDir = "";
             Shared.ComicTags = new ObservableCollection<TagCollectionViewModel>();
             Shared.IsEditable = false;
-            Shared.BottomTilePinned = false;
 
             VerticalReader = new ReaderModel(Shared, true);
             HorizontalReader = new ReaderModel(Shared, false);
@@ -382,7 +337,6 @@ namespace ComicReader.Views.Reader
         {
             Utils.C0.Run(async delegate
             {
-                Shared.BottomTilePinned = false;
                 await LoadComicInfo();
             });
         }
@@ -428,18 +382,12 @@ namespace ComicReader.Views.Reader
             EventBus.Default.With<double>(EventId.TitleBarHeightChange).ObserveSticky(this, delegate (double h)
             {
                 TitleBarArea.Height = h;
-                TitleBarPlaceHolder.Height = h;
                 PreviewTitleBarPlaceHolder.Height = h;
             });
 
             EventBus.Default.With<double>(EventId.TitleBarOpacity).ObserveSticky(this, delegate (double opacity)
             {
                 BottomGrid.Opacity = opacity;
-            });
-
-            Shared.BottomTilePinnedLiveData.Observe(this, delegate
-            {
-                OnBottomTilePinnedChanged();
             });
         }
 
@@ -1151,8 +1099,7 @@ namespace ComicReader.Views.Reader
                 return;
             }
 
-            if (!mBottomTileShowed || Shared.BottomTilePinned || Shared.IsGridViewVisible
-                || mBottomTileHold || mBottomTilePointerIn)
+            if (!mBottomTileShowed || Shared.IsGridViewVisible || mBottomTileHold || mBottomTilePointerIn)
             {
                 return;
             }
@@ -1179,19 +1126,6 @@ namespace ComicReader.Views.Reader
             {
                 BottomTileHide(0);
             }
-        }
-
-        private void OnBottomTilePinnedChanged()
-        {
-            if (Shared.BottomTilePinned)
-            {
-                BottomTileShow();
-            }
-        }
-
-        private void OnPinClick(object sender, RoutedEventArgs e)
-        {
-            Shared.BottomTilePinned = !Shared.BottomTilePinned;
         }
 
         private void OnBottomGridPointerEntered(object sender, PointerRoutedEventArgs e)
