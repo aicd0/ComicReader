@@ -1,0 +1,6 @@
+$password = ConvertTo-SecureString -String 123456 -Force -AsPlainText
+New-SelfSignedCertificate -Type Custom -Subject "CN=EDF29702-407F-438D-9326-040AAE6557ED" -KeyUsage DigitalSignature -FriendlyName "friendly name" -CertStoreLocation "Cert:\CurrentUser\My" -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3", "2.5.29.19={text}")
+Export-PfxCertificate -cert "Cert:\CurrentUser\My\F5E0F36CD0052EA7B76735ED4C7319573D94852F" -FilePath "ComicReader_1.5.0.0_Test\ComicReader_1.5.0.0.pfx" -Password $password
+
+"C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\makeappx.exe" bundle /d "ComicReader_1.5.0.0_Test\temp" /p ComicReader_1.5.0.0_Test\ComicReader_1.5.0.0_x86_x64_arm_arm64_bundle.msixbundle
+"C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe" sign /fd SHA256 /a /f "ComicReader_1.5.0.0_Test\ComicReader_1.5.0.0.pfx" /p 123456 ComicReader_1.5.0.0_Test\ComicReader_1.5.0.0_x86_x64_arm_arm64_bundle.msixbundle

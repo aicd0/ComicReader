@@ -10,7 +10,6 @@ using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading;
 using System.Threading.Tasks;
-using Windows.Foundation.Metadata;
 using Windows.Security.Cryptography;
 using Windows.Storage.Streams;
 
@@ -56,11 +55,7 @@ namespace ComicReader.Utils
         public static async Task<ContentDialogResult> ShowDialogAsync(ContentDialog dialog, XamlRoot root)
         {
             // https://learn.microsoft.com/en-us/windows/apps/design/controls/dialogs-and-flyouts/dialogs
-            if (ApiInformation.IsApiContractPresent("Windows.Foundation.UniversalApiContract", 8))
-            {
-                dialog.XamlRoot = root;
-            }
-
+            dialog.XamlRoot = root;
             return await dialog.ShowAsync();
         }
 
