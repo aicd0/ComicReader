@@ -235,22 +235,21 @@ namespace ComicReader.Views
             base.OnStart(p);
             Shared.NavigationPageShared = (NavigationPageShared)p.Params;
             Shared.OnCommandBarSelectAllToggleChanged = OnCommandBarSelectAllToggleChanged;
-        }
-
-        public override void OnResume()
-        {
-            base.OnResume();
             Shared.IsSelectMode = false;
             Shared.ComicItemSelectionMode = ListViewSelectionMode.None;
-            Shared.NavigationPageShared.SetSearchBox((string)GetTabId().RequestArgs);
-
-            ScrollViewer scrollViewer = SearchResultGridView.ChildrenBreadthFirst().OfType<ScrollViewer>().First();
-            scrollViewer.ViewChanged += OnScrollViewerViewChanged;
 
             Utils.C0.Run(async delegate
             {
                 await StartSearch();
             });
+        }
+
+        public override void OnResume()
+        {
+            base.OnResume();
+            Shared.NavigationPageShared.SetSearchBox((string)GetTabId().RequestArgs);
+            ScrollViewer scrollViewer = SearchResultGridView.ChildrenBreadthFirst().OfType<ScrollViewer>().First();
+            scrollViewer.ViewChanged += OnScrollViewerViewChanged;
         }
 
         public override void OnPause()
