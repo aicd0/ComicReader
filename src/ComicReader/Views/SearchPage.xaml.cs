@@ -13,6 +13,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -46,7 +47,7 @@ namespace ComicReader.Views
         }
 
         // UI elements
-        public Utils.ObservableCollectionPlus<ComicItemViewModel> SearchResults;
+        public ObservableCollection<ComicItemViewModel> SearchResults;
 
         private bool m_IsLoadingRingVisible;
         public bool IsLoadingRingVisible
@@ -123,7 +124,7 @@ namespace ComicReader.Views
             set
             {
                 m_IsSelectMode = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsSelectMode"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsSelectMode)}"));
             }
         }
 
@@ -134,7 +135,7 @@ namespace ComicReader.Views
             set
             {
                 m_ComicItemSelectionMode = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ComicItemSelectionMode"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(ComicItemSelectionMode)}"));
             }
         }
 
@@ -223,7 +224,7 @@ namespace ComicReader.Views
             {
                 Title = "",
                 FilterDetails = "",
-                SearchResults = new Utils.ObservableCollectionPlus<ComicItemViewModel>()
+                SearchResults = new ObservableCollection<ComicItemViewModel>()
             };
             _comicItemHandler = new ComicItemHandler(this);
 

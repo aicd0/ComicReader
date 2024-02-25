@@ -13,7 +13,14 @@ namespace ComicReader.Controls
         public ComicItemHorizontal()
         {
             InitializeComponent();
-            DataContextChanged += (s, e) => Bindings.Update();
+            DataContextChanged += delegate (FrameworkElement s, DataContextChangedEventArgs e)
+            {
+                Bindings.Update();
+                if (e.NewValue != null)
+                {
+                    Ctx.PropertyChanged += OnDataContextPropertyChanged;
+                }
+            };
         }
 
         public bool IsContextFlyoutEnabled
@@ -23,6 +30,11 @@ namespace ComicReader.Controls
         }
         public static readonly DependencyProperty IsContextFlyoutEnabledProperty =
             DependencyProperty.Register(nameof(IsContextFlyoutEnabled), typeof(bool), typeof(ComicItemHorizontal), new PropertyMetadata(true));
+
+        private void OnDataContextPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            Bindings.Update();
+        }
 
         private void OnMenuFlyoutOpening(object sender, object e)
         {

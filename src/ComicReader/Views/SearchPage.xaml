@@ -20,12 +20,6 @@
 
             <!--  Value Converters  -->
             <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
-
-            <!--  Style Selectors  -->
-            <converters:SearchResultItemContainerStyleSelector
-                x:Key="SearchResultItemContainerStyleSelector"
-                ExpandedStyle="{StaticResource SearchResultItemContainerExpandedStyle}"
-                NormalStyle="{StaticResource SearchResultItemContainerRevealStyle}" />
         </ResourceDictionary>
     </Page.Resources>
 
@@ -42,7 +36,7 @@
             x:Name="SearchResultGridView"
             Padding="15,15,15,0"
             ContainerContentChanging="OnGridViewContainerContentChanging"
-            ItemContainerStyleSelector="{StaticResource SearchResultItemContainerStyleSelector}"
+            ItemContainerStyle="{StaticResource SearchResultItemContainerExpandedStyle}"
             ItemsSource="{x:Bind Shared.SearchResults}"
             SelectionChanged="OnGridViewSelectionChanged"
             SelectionMode="{x:Bind Shared.ComicItemSelectionMode, Mode=OneWay}"
