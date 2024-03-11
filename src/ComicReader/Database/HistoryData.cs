@@ -61,7 +61,7 @@ namespace ComicReader.Database
         }
     }
 
-    class HistoryDataManager
+    internal class HistoryDataManager
     {
         public static async Task Add(long id, string title, bool final)
         {
@@ -90,9 +90,7 @@ namespace ComicReader.Database
 
             if (final)
             {
-                Utils.TaskQueue.DefaultQueue.Enqueue(
-                    XmlDatabaseManager.SaveSealed(XmlDatabaseItem.History));
-                EventBus.Default.With(EventId.SidePaneUpdate).Emit(0);
+                OnUpdated();
             }
         }
 
@@ -104,7 +102,7 @@ namespace ComicReader.Database
 
             if (final)
             {
-                Utils.TaskQueue.DefaultQueue.Enqueue(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.History));
+                OnUpdated();
             }
         }
 
@@ -113,7 +111,13 @@ namespace ComicReader.Database
             await XmlDatabaseManager.WaitLock();
             XmlDatabase.History.Items.Clear();
             XmlDatabaseManager.ReleaseLock();
-            Utils.TaskQueue.DefaultQueue.Enqueue(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.History));
+            OnUpdated();
+        }
+
+        private static void OnUpdated()
+        {
+            TaskQueue.DefaultQueue.Enqueue(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.History));
+            EventBus.Default.With(EventId.SidePaneUpdate).Emit(0);
         }
 
         private static void RemoveNoLock(long id)

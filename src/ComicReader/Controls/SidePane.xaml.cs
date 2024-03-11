@@ -1,5 +1,4 @@
-using ComicReader.Common.Router;
-using ComicReader.Views;
+using ComicReader.Router;
 using Microsoft.UI.Xaml.Controls;
 using System;
 
@@ -7,7 +6,8 @@ namespace ComicReader.Controls
 {
     sealed internal partial class SidePane : UserControl
     {
-        public NavigationPage Ctx => DataContext as NavigationPage;
+        public delegate void NavigatingCancelEventHandler(NavigationBundle bundle);
+        public event NavigatingCancelEventHandler Navigating;
 
         public SidePane()
         {
@@ -18,18 +18,15 @@ namespace ComicReader.Controls
         {
             string item = (string)((NavigationViewItem)args.SelectedItem).Content;
 
-            var nav_params = new NavigationParams
+            Route route = item switch
             {
-                TabId = Ctx.TabId,
-                Params = Ctx.Shared,
-            };
-            Type page_type = item switch
-            {
-                "Favorites" => typeof(FavoritePage),
-                "History" => typeof(HistoryPage),
+                "Favorites" => new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_FAVORITE),
+                "History" => new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_HISTORY),
                 _ => throw new Exception(),
             };
-            _ = ContentFrame.Navigate(page_type, nav_params);
+            NavigationBundle bundle = route.Process();
+            Navigating?.Invoke(bundle);
+            ContentFrame.Navigate(bundle.PageTrait.GetPageType(), bundle);
         }
     }
 }

@@ -1,7 +1,8 @@
-using ComicReader.Common;
-using ComicReader.Common.Router;
 using ComicReader.Database;
+using ComicReader.Router;
 using ComicReader.Utils;
+using ComicReader.Views.Base;
+using ComicReader.Views.Main;
 using Microsoft.Data.Sqlite;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -27,17 +28,6 @@ namespace ComicReader.Views
     public class SettingsPageShared : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
-
-        private MainPageShared m_MainPageShared;
-        public MainPageShared MainPageShared
-        {
-            get => m_MainPageShared;
-            set
-            {
-                m_MainPageShared = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("MainPageShared"));
-            }
-        }
 
         public Action OnSettingsChanged;
 
@@ -223,7 +213,9 @@ namespace ComicReader.Views
         }
     }
 
-    sealed internal partial class SettingsPage : NavigatablePage
+    internal class SettingPageBase : BasePage<EmptyViewModel>;
+
+    sealed internal partial class SettingsPage : SettingPageBase
     {
         public const string AppearanceKey = "Appearance";
         public SettingsPageShared Shared { get; set; }
@@ -242,15 +234,14 @@ namespace ComicReader.Views
             InitializeComponent();
         }
 
-        public override void OnStart(NavigationParams p)
+        protected override void OnStart(PageBundle bundle)
         {
-            base.OnStart(p);
-            p.TabId.Tab.Header = Utils.StringResourceProvider.GetResourceString("Settings");
-            p.TabId.Tab.IconSource = new SymbolIconSource() { Symbol = Symbol.Setting };
-            Shared.MainPageShared = (MainPageShared)p.Params;
+            base.OnStart(bundle);
+            GetMainPageAbility().SetTitle(StringResourceProvider.GetResourceString("Settings"));
+            GetMainPageAbility().SetIcon(new SymbolIconSource() { Symbol = Symbol.Setting });
         }
 
-        public override void OnResume()
+        protected override void OnResume()
         {
             base.OnResume();
             ComicData.OnUpdated += OnComicDataUpdated;
@@ -261,18 +252,15 @@ namespace ComicReader.Views
             });
         }
 
-        public override void OnPause()
+        protected override void OnPause()
         {
             base.OnPause();
             ComicData.OnUpdated -= OnComicDataUpdated;
         }
 
-        public override void OnSelected()
+        private IMainPageAbility GetMainPageAbility()
         {
-            Utils.C0.Run(async delegate
-            {
-                await Update();
-            });
+            return GetAbility<IMainPageAbility>();
         }
 
         // utilities

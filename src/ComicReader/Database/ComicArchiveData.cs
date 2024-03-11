@@ -8,7 +8,7 @@ using Windows.Storage.Streams;
 
 namespace ComicReader.Database
 {
-    public class ComicArchiveData : ComicData
+    internal class ComicArchiveData : ComicData
     {
         private StorageFile Archive;
         private List<string> Entries = new List<string>();

@@ -1,6 +1,6 @@
 using ComicReader.Common.Constants;
 using ComicReader.Native;
-using ComicReader.Views;
+using ComicReader.Views.Main;
 using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;

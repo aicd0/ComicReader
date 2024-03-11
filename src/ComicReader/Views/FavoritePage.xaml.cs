@@ -1,71 +1,36 @@
-using ComicReader.Common;
 using ComicReader.Common.Constants;
-using ComicReader.Common.Router;
 using ComicReader.Database;
 using ComicReader.DesignData;
+using ComicReader.Router;
 using ComicReader.Utils;
+using ComicReader.Views.Base;
+using ComicReader.Views.Main;
+using ComicReader.Views.Navigation;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 
 namespace ComicReader.Views
 {
-    internal class FavoritePageShared : INotifyPropertyChanged
+    internal class FavoritePageBase : BasePage<EmptyViewModel>;
+
+    sealed internal partial class FavoritePage : FavoritePageBase
     {
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        private NavigationPageShared m_NavigationPageShared;
-        public NavigationPageShared NavigationPageShared
-        {
-            get => m_NavigationPageShared;
-            set
-            {
-                m_NavigationPageShared = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("NavigationPageShared"));
-            }
-        }
-
-        private bool m_IsEmpty = false;
-        public bool IsEmpty
-        {
-            get => m_IsEmpty;
-            set
-            {
-                m_IsEmpty = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsEmpty"));
-            }
-        }
-    }
-
-    sealed internal partial class FavoritePage : StatefulPage
-    {
-        public FavoritePageShared Shared { get; set; }
         private ObservableCollection<FavoriteItemViewModel> DataSource { get; set; }
-        private TabIdentifier _tabId;
 
         public FavoritePage()
         {
-            Shared = new FavoritePageShared();
             DataSource = new ObservableCollection<FavoriteItemViewModel>();
 
             InitializeComponent();
         }
 
-        public override void OnStart(object p)
-        {
-            base.OnStart(p);
-            var q = (NavigationParams)p;
-            _tabId = q.TabId;
-            Shared.NavigationPageShared = (NavigationPageShared)q.Params;
-        }
-
-        public override void OnResume()
+        protected override void OnResume()
         {
             base.OnResume();
             ObserveData();
@@ -85,6 +50,16 @@ namespace ComicReader.Views
                     await Update();
                 });
             });
+        }
+
+        private IMainPageAbility GetMainPageAbility()
+        {
+            return GetAbility<IMainPageAbility>();
+        }
+
+        private INavigationPageAbility GetNavigationPageAbility()
+        {
+            return GetAbility<INavigationPageAbility>();
         }
 
         // utilities
@@ -114,10 +89,15 @@ namespace ComicReader.Views
             DataSource.Clear();
             helper(XmlDatabase.Favorites.RootNodes, DataSource, null);
             XmlDatabaseManager.ReleaseLock();
-            Shared.IsEmpty = DataSource.Count == 0;
+            UpdateView();
         }
 
-        public async Task Save()
+        private void UpdateView()
+        {
+            TbNoFavorite.Visibility = DataSource.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        private async Task Save()
         {
             void helper(List<FavoriteNodeData> it, ObservableCollection<FavoriteItemViewModel> et)
             {
@@ -158,7 +138,7 @@ namespace ComicReader.Views
             }
 
             await Save();
-            Shared.IsEmpty = DataSource.Count == 0;
+            UpdateView();
         }
 
         private async Task ResetItems()
@@ -198,7 +178,7 @@ namespace ComicReader.Views
             }
 
             await helper(DataSource);
-            Shared.IsEmpty = DataSource.Count == 0;
+            UpdateView();
         }
 
         private void CreateNewFolder(ObservableCollection<FavoriteItemViewModel> folder, FavoriteItemViewModel parent)
@@ -240,7 +220,7 @@ namespace ComicReader.Views
                 }
             }
 
-            Shared.IsEmpty = DataSource.Count == 0;
+            UpdateView();
         }
 
         private void SortFavorites(ObservableCollection<FavoriteItemViewModel> source)
@@ -317,8 +297,10 @@ namespace ComicReader.Views
                     }
                     else
                     {
-                        MainPage.Current.LoadTab(_tabId, ReaderPageTrait.Instance, comic);
-                        Shared.NavigationPageShared.IsSidePaneOpen = false;
+                        Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
+                            .WithParam(RouterConstants.ARG_COMIC_ID, comic.Id.ToString());
+                        GetMainPageAbility().OpenInCurrentTab(route);
+                        GetNavigationPageAbility().GetIsSidePaneOnLiveData().Emit(false);
                     }
                 }
             });
@@ -435,7 +417,10 @@ namespace ComicReader.Views
             {
                 var item = (FavoriteItemViewModel)((MenuFlyoutItem)sender).DataContext;
                 ComicData comic = await ComicData.FromId(item.Id, "FavoriteOpenInNewTabLoadComic");
-                MainPage.Current.LoadTab(null, ReaderPageTrait.Instance, comic);
+                Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
+                    .WithParam(RouterConstants.ARG_COMIC_ID, comic.Id.ToString());
+                GetMainPageAbility().OpenInCurrentTab(route);
+                MainPage.Current.OpenInNewTab(route);
             });
         }
 

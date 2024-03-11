@@ -17,7 +17,7 @@ using SealedTask = System.Func<System.Threading.Tasks.Task<ComicReader.Utils.Tas
 
 namespace ComicReader.Database
 {
-    public abstract class ComicData
+    internal abstract class ComicData
     {
         // Local fields.
         public long Id { get; private set; }
@@ -1246,7 +1246,7 @@ namespace ComicReader.Database
         }
     };
 
-    public class TagData
+    internal class TagData
     {
         public string Name;
         public HashSet<string> Tags = new HashSet<string>();
@@ -1281,7 +1281,7 @@ namespace ComicReader.Database
         }
     };
 
-    public enum ComicType : int
+    internal enum ComicType : int
     {
         Folder = 1,
         Archive = 2,

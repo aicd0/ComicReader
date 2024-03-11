@@ -1,3 +1,5 @@
+using ComicReader.Common.Constants;
+using ComicReader.Utils;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
@@ -34,7 +36,7 @@ namespace ComicReader.Database
         public List<FavoriteNodeData> Children = new List<FavoriteNodeData>();
     };
 
-    class FavoriteDataManager
+    internal class FavoriteDataManager
     {
         public static async Task<FavoriteNodeData> FromId(long id)
         {
@@ -119,8 +121,7 @@ namespace ComicReader.Database
 
             if (final)
             {
-                Utils.TaskQueue.DefaultQueue.Enqueue(
-                    XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Favorites));
+                OnUpdated();
             }
 
             return res;
@@ -153,9 +154,14 @@ namespace ComicReader.Database
 
             if (final)
             {
-                Utils.TaskQueue.DefaultQueue.Enqueue(
-                    XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Favorites));
+                OnUpdated();
             }
+        }
+
+        private static void OnUpdated()
+        {
+            TaskQueue.DefaultQueue.Enqueue(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Favorites));
+            EventBus.Default.With(EventId.SidePaneUpdate).Emit(0);
         }
     }
 }

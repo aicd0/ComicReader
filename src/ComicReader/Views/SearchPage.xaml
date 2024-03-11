@@ -1,8 +1,8 @@
-<common:NavigatablePage
+<base:SearchPageBase
     x:Class="ComicReader.Views.SearchPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:common="using:ComicReader.Common"
+    xmlns:base="using:ComicReader.Views"
     xmlns:controls="using:ComicReader.Controls"
     xmlns:converters="using:ComicReader.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -140,4 +140,4 @@
                 Fill="{ThemeResource CommandBarBorderBrush}" />
         </Grid>
     </Grid>
-</common:NavigatablePage>
+</base:SearchPageBase>

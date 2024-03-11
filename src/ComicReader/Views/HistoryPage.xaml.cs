@@ -1,65 +1,28 @@
-using ComicReader.Common;
 using ComicReader.Common.Constants;
-using ComicReader.Common.Router;
 using ComicReader.Database;
 using ComicReader.DesignData;
+using ComicReader.Router;
 using ComicReader.Utils;
+using ComicReader.Views.Base;
+using ComicReader.Views.Main;
+using ComicReader.Views.Navigation;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Threading.Tasks;
 
 namespace ComicReader.Views
 {
-    internal class HistoryPageShared : INotifyPropertyChanged
+    internal class HistoryPageBase : BasePage<EmptyViewModel>;
+
+    sealed internal partial class HistoryPage : HistoryPageBase
     {
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        private NavigationPageShared m_NavigationPageShared;
-        public NavigationPageShared NavigationPageShared
-        {
-            get => m_NavigationPageShared;
-            set
-            {
-                m_NavigationPageShared = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("NavigationPageShared"));
-            }
-        }
-
-        private bool m_IsEmpty = false;
-        public bool IsEmpty
-        {
-            get => m_IsEmpty;
-            set
-            {
-                m_IsEmpty = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsEmpty"));
-            }
-        }
-    }
-
-    sealed internal partial class HistoryPage : StatefulPage
-    {
-        public HistoryPageShared Shared { get; set; }
-        private TabIdentifier _tabId;
-
         public HistoryPage()
         {
-            Shared = new HistoryPageShared();
-
             InitializeComponent();
         }
 
-        public override void OnStart(object p)
-        {
-            base.OnStart(p);
-            var q = (NavigationParams)p;
-            _tabId = q.TabId;
-            Shared.NavigationPageShared = (NavigationPageShared)q.Params;
-        }
-
-        public override void OnResume()
+        protected override void OnResume()
         {
             base.OnResume();
             ObserveData();
@@ -119,10 +82,10 @@ namespace ComicReader.Views
 
             HistorySource.Source = source;
             MainListView.SelectedIndex = -1;
-            Shared.IsEmpty = source.Count == 0;
+            TbNoHistory.Visibility = source.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        private async Task OpenItem(HistoryItemViewModel item, bool new_tab)
+        private async Task OpenItem(HistoryItemViewModel item, bool newTab)
         {
             ComicData comic = await ComicData.FromId(item.Id, "HistoryLoadComic");
 
@@ -132,9 +95,29 @@ namespace ComicReader.Views
             }
             else
             {
-                MainPage.Current.LoadTab(new_tab ? null : _tabId, ReaderPageTrait.Instance, comic);
-                Shared.NavigationPageShared.IsSidePaneOpen = false;
+                Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
+                    .WithParam(RouterConstants.ARG_COMIC_ID, comic.Id.ToString());
+                if (newTab)
+                {
+                    MainPage.Current.OpenInNewTab(route);
+                }
+                else
+                {
+                    GetMainPageAbility().OpenInCurrentTab(route);
+                }
+
+                GetNavigationPageAbility().GetIsSidePaneOnLiveData().Emit(false);
             }
+        }
+
+        private IMainPageAbility GetMainPageAbility()
+        {
+            return GetAbility<IMainPageAbility>();
+        }
+
+        private INavigationPageAbility GetNavigationPageAbility()
+        {
+            return GetAbility<INavigationPageAbility>();
         }
 
         private async Task DeleteItem(HistoryItemViewModel item)
@@ -164,7 +147,7 @@ namespace ComicReader.Views
                 }
             }
 
-            Shared.IsEmpty = source.Count == 0;
+            TbNoHistory.Visibility = source.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         }
 
         // events

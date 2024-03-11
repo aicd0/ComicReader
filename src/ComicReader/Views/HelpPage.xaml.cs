@@ -1,35 +1,29 @@
-using ComicReader.Common;
-using ComicReader.Common.Router;
+using ComicReader.Router;
+using ComicReader.Views.Base;
+using ComicReader.Views.Main;
 using Microsoft.UI.Xaml.Controls;
 
 namespace ComicReader.Views
 {
-    sealed internal partial class HelpPage : NavigatablePage
+    internal class HelpPageBase : BasePage<EmptyViewModel>;
+
+    sealed internal partial class HelpPage : HelpPageBase
     {
         public HelpPage()
         {
             InitializeComponent();
         }
 
-        public override void OnStart(NavigationParams p)
+        protected override void OnStart(PageBundle bundle)
         {
-            base.OnStart(p);
-            p.TabId.Tab.Header = Utils.StringResourceProvider.GetResourceString("Help");
-            p.TabId.Tab.IconSource = new SymbolIconSource() { Symbol = Symbol.Help };
+            base.OnStart(bundle);
+            GetMainPageAbility().SetTitle(Utils.StringResourceProvider.GetResourceString("Help"));
+            GetMainPageAbility().SetIcon(new SymbolIconSource() { Symbol = Symbol.Help });
         }
 
-        public override void OnResume()
+        private IMainPageAbility GetMainPageAbility()
         {
-            base.OnResume();
-        }
-
-        public override void OnPause()
-        {
-            base.OnPause();
-        }
-
-        public override void OnSelected()
-        {
+            return GetAbility<IMainPageAbility>();
         }
     }
 }

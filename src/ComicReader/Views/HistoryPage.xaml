@@ -1,9 +1,9 @@
-<common:StatefulPage
+<base:HistoryPageBase
     x:Class="ComicReader.Views.HistoryPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:base="using:ComicReader.Views"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:common="using:ComicReader.Common"
     xmlns:data="using:ComicReader.DesignData"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Background="Transparent"
@@ -21,11 +21,11 @@
 
     <Grid>
         <TextBlock
+            x:Name="TbNoHistory"
             x:Uid="NoHistory"
             Margin="0,10"
             HorizontalAlignment="Center"
-            FontWeight="SemiBold"
-            Visibility="{x:Bind Shared.IsEmpty, Mode=OneWay}" />
+            FontWeight="SemiBold" />
         <ListView
             x:Name="MainListView"
             IsItemClickEnabled="True"
@@ -101,4 +101,4 @@
             </ListView.GroupStyle>
         </ListView>
     </Grid>
-</common:StatefulPage>
+</base:HistoryPageBase>

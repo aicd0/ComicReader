@@ -1,8 +1,8 @@
-<common:StatefulPage
-    x:Class="ComicReader.Views.NavigationPage"
+<base:NavigationPageBase
+    x:Class="ComicReader.Views.Navigation.NavigationPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:common="using:ComicReader.Common"
+    xmlns:base="using:ComicReader.Views.Navigation"
     xmlns:controls="using:ComicReader.Controls"
     xmlns:converters="using:ComicReader.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -13,10 +13,10 @@
     <Page.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="../Resources/Styles/AppBarButton.xaml" />
-                <ResourceDictionary Source="../Resources/Styles/AppBarToggleButton.xaml" />
-                <ResourceDictionary Source="../Resources/Styles/AutoSuggestBox.xaml" />
-                <ResourceDictionary Source="../Resources/Styles/TextBox.xaml" />
+                <ResourceDictionary Source="/Resources/Styles/AppBarButton.xaml" />
+                <ResourceDictionary Source="/Resources/Styles/AppBarToggleButton.xaml" />
+                <ResourceDictionary Source="/Resources/Styles/AutoSuggestBox.xaml" />
+                <ResourceDictionary Source="/Resources/Styles/TextBox.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <!--  Converters  -->
@@ -71,17 +71,17 @@
                                     IsEnabled="{x:Bind ContentFrame.CanGoForward, Mode=OneWay}"
                                     Style="{StaticResource NavigationPageTopTileAppBarButton}" />
                                 <AppBarButton
+                                    x:Name="AbbHomeButton"
                                     x:Uid="HomeButton"
                                     Click="OnHomeClick"
                                     Icon="Home"
-                                    Style="{StaticResource NavigationPageTopTileAppBarButton}"
-                                    Visibility="{x:Bind Shared.IsHomePage, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
+                                    Style="{StaticResource NavigationPageTopTileAppBarButton}" />
                                 <AppBarButton
+                                    x:Name="AbbRefreshButton"
                                     x:Uid="RefreshButton"
                                     Click="OnRefreshClick"
                                     Icon="Refresh"
-                                    Style="{StaticResource NavigationPageTopTileAppBarButton}"
-                                    Visibility="{x:Bind Shared.IsHomePage, Mode=OneWay}" />
+                                    Style="{StaticResource NavigationPageTopTileAppBarButton}" />
                             </StackPanel>
 
                             <!--  Search box  -->
@@ -98,8 +98,7 @@
                                 QuerySubmitted="OnSearchBoxQuerySubmitted"
                                 Style="{StaticResource NavigationPageSearchBoxStyle}"
                                 TextBoxStyle="{StaticResource NavigationPageSearchBoxTextBoxStyle}"
-                                TextChanged="OnSearchBoxTextChanged"
-                                Visibility="{x:Bind Shared.IsReaderPage, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
+                                TextChanged="OnSearchBoxTextChanged" />
 
                             <!--  Right buttons  -->
                             <StackPanel
@@ -142,33 +141,34 @@
 
                         <!--  Center buttons  -->
                         <StackPanel
+                            x:Name="SpCenterButtons"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center"
-                            Orientation="Horizontal"
-                            Visibility="{x:Bind Shared.IsReaderPage, Mode=OneWay}">
+                            Orientation="Horizontal">
 
                             <!--  Add to favorites  -->
                             <AppBarButton
+                                x:Name="AbbAddToFavorite"
                                 Click="OnAddToFavoritesClick"
-                                IsEnabled="{x:Bind Shared.IsExternal, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}"
-                                Style="{StaticResource NavigationPageTopTileAppBarButton}"
-                                ToolTipService.ToolTip="{x:Bind Shared.FavoriteButtonToolTip, Mode=OneWay}">
+                                Style="{StaticResource NavigationPageTopTileAppBarButton}">
                                 <AppBarButton.Content>
                                     <Grid>
-                                        <FontIcon Glyph="&#xE734;" Visibility="{x:Bind Shared.IsFavorite, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}" />
+                                        <FontIcon x:Name="FiFavoriteUnfilled" Glyph="&#xE734;" />
                                         <FontIcon
+                                            x:Name="FiFavoriteFilled"
                                             Foreground="{ThemeResource SystemAccentColor}"
-                                            Glyph="&#xE735;"
-                                            Visibility="{x:Bind Shared.IsFavorite, Mode=OneWay}" />
+                                            Glyph="&#xE735;" />
                                     </Grid>
                                 </AppBarButton.Content>
                             </AppBarButton>
 
                             <!--  Reader grid preview toggle  -->
                             <AppBarToggleButton
+                                x:Name="AbtbPreviewButton"
                                 x:Uid="AllPagesButton"
-                                IsChecked="{x:Bind Shared.IsPreviewButtonToggled, Mode=TwoWay}"
-                                Style="{StaticResource NavigationPageTopTileAppBarToggleButton}">
+                                Checked="AbtbPreviewButton_Checked"
+                                Style="{StaticResource NavigationPageTopTileAppBarToggleButton}"
+                                Unchecked="AbtbPreviewButton_Unchecked">
                                 <AppBarToggleButton.Content>
                                     <FontIcon Glyph="&#xF0E2;" />
                                 </AppBarToggleButton.Content>
@@ -187,7 +187,7 @@
                                                 <Setter Property="Padding" Value="15,15,15,8" />
                                             </Style>
                                         </Flyout.FlyoutPresenterStyle>
-                                        <controls:ReaderSettingPanel DataContext="{x:Bind Shared.ReaderSettings}" />
+                                        <controls:ReaderSettingPanel x:Name="RspReaderSetting" DataChanged="RspReaderSetting_DataChanged" />
                                     </Flyout>
                                 </AppBarButton.Flyout>
                             </AppBarButton>
@@ -214,15 +214,15 @@
                 Grid.Row="1"
                 Margin="0,0,-1,0"
                 DisplayMode="Overlay"
-                IsPaneOpen="{x:Bind Shared.IsSidePaneOpen, Mode=TwoWay}"
                 OpenPaneLength="380"
                 PaneBackground="{ThemeResource SidePaneBackground}"
+                PaneClosed="NavigationPageSidePane_PaneClosed"
                 PaneOpened="OnSidePaneOpened"
                 PanePlacement="Right">
                 <SplitView.Pane>
-                    <controls:SidePane DataContext="{x:Bind}" />
+                    <controls:SidePane Navigating="SidePane_Navigating" />
                 </SplitView.Pane>
             </SplitView>
         </Grid>
     </Grid>
-</common:StatefulPage>
+</base:NavigationPageBase>

@@ -1,8 +1,8 @@
-<common:NavigatablePage
+<base:ReaderPageBase
     x:Class="ComicReader.Views.Reader.ReaderPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:common="using:ComicReader.Common"
+    xmlns:base="using:ComicReader.Views.Reader"
     xmlns:controls="using:ComicReader.Controls"
     xmlns:converters="using:ComicReader.Converters"
     xmlns:cwu="using:CommunityToolkit.WinUI.UI"
@@ -279,13 +279,12 @@
 
     <Grid>
         <!--  Main section  -->
-        <Grid Visibility="{x:Bind Shared.IsGridViewVisible, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}">
+        <Grid x:Name="GMainSection">
             <TextBlock
+                x:Name="TbReaderStatus"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                Foreground="{ThemeResource ForegroundGrey2}"
-                Text="{x:Bind Shared.ReaderStatusText, Mode=OneWay}"
-                Visibility="{x:Bind Shared.IsReaderStatusTextBlockVisible, Mode=OneWay}" />
+                Foreground="{ThemeResource ForegroundGrey2}" />
 
             <!--  Reader  -->
             <Grid PointerEntered="OnReaderPointerEntered">
@@ -293,13 +292,11 @@
 
                 <!--  Vertical  -->
                 <ScrollViewer
+                    x:Name="SvVerticalReader"
                     HorizontalScrollBarVisibility="Auto"
                     HorizontalScrollMode="Enabled"
-                    IsEnabled="{x:Bind Shared.NavigationPageShared.IsVerticalReaderVisible, Mode=OneWay}"
-                    IsHitTestVisible="{x:Bind Shared.NavigationPageShared.IsVerticalReaderVisible, Mode=OneWay}"
                     Loaded="OnVerticalReaderScrollViewerLoaded"
                     MaxZoomFactor="100000"
-                    Opacity="{x:Bind Shared.NavigationPageShared.IsVerticalReaderVisible, Converter={StaticResource BooleanToDoubleConverter}, Mode=OneWay}"
                     SizeChanged="OnVerticalReaderScrollViewerSizeChanged"
                     Style="{StaticResource ReaderScrollViewerStyle}"
                     ViewChanged="OnVerticalReaderScrollViewerViewChanged"
@@ -332,14 +329,11 @@
 
                 <!--  Horizontal  -->
                 <ScrollViewer
-                    FlowDirection="{x:Bind Shared.ReaderSettings.PageFlowDirection, Mode=OneWay}"
+                    x:Name="SvHorizontalReader"
                     HorizontalScrollBarVisibility="Auto"
                     HorizontalScrollMode="Enabled"
-                    IsEnabled="{x:Bind Shared.NavigationPageShared.IsHorizontalReaderVisible, Mode=OneWay}"
-                    IsHitTestVisible="{x:Bind Shared.NavigationPageShared.IsHorizontalReaderVisible, Mode=OneWay}"
                     Loaded="OnHorizontalReaderScrollViewerLoaded"
                     MaxZoomFactor="100000"
-                    Opacity="{x:Bind Shared.NavigationPageShared.IsHorizontalReaderVisible, Converter={StaticResource BooleanToDoubleConverter}, Mode=OneWay}"
                     SizeChanged="OnHorizontalReaderScrollViewerSizeChanged"
                     Style="{StaticResource ReaderScrollViewerStyle}"
                     VerticalScrollBarVisibility="Hidden"
@@ -434,7 +428,7 @@
         </Grid>
 
         <!--  Grid Preview  -->
-        <Grid IsHitTestVisible="{x:Bind Shared.IsGridViewVisible, Mode=OneWay}" Opacity="{x:Bind Shared.IsGridViewVisible, Converter={StaticResource BooleanToDoubleConverter}, Mode=OneWay}">
+        <Grid x:Name="GGridView">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
@@ -517,11 +511,11 @@
 
                                 <!--  Rating  -->
                                 <muxc:RatingControl
+                                    x:Name="RcRating"
                                     Margin="0,10,0,0"
                                     HorizontalAlignment="Left"
                                     IsClearEnabled="True"
                                     ValueChanged="OnRatingControlValueChanged"
-                                    Visibility="{x:Bind Shared.NavigationPageShared.IsExternal, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}"
                                     Value="{x:Bind Shared.Rating, Mode=TwoWay}" />
 
                                 <Rectangle
@@ -618,9 +612,7 @@
                                 Margin="2,0,0,0"
                                 Checked="OnFavoritesChecked"
                                 Icon="Favorite"
-                                IsChecked="{x:Bind Shared.NavigationPageShared.IsFavorite, Mode=OneWay}"
                                 IsCompact="False"
-                                IsEnabled="{x:Bind Shared.NavigationPageShared.IsExternal, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}"
                                 Unchecked="OnFavoritesUnchecked" />
                         </StackPanel>
                     </Grid>
@@ -628,4 +620,4 @@
             </SplitView>
         </Grid>
     </Grid>
-</common:NavigatablePage>
+</base:ReaderPageBase>

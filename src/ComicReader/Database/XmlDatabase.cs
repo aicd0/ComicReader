@@ -20,21 +20,21 @@ namespace ComicReader.Database
         public virtual void Unpack() { }
     }
 
-    public class XmlDatabase
+    internal class XmlDatabase
     {
         public static SettingData Settings = new SettingData();
         public static FavoriteData Favorites = new FavoriteData();
         public static HistoryData History = new HistoryData();
     };
 
-    public enum XmlDatabaseItem
+    internal enum XmlDatabaseItem
     {
         Favorites,
         History,
         Settings
     }
 
-    public class XmlDatabaseManager
+    internal class XmlDatabaseManager
     {
         private static StorageFolder DatabaseFolder => ApplicationData.Current.LocalFolder;
 

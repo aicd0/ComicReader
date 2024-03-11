@@ -1,10 +1,12 @@
-using ComicReader.Common;
-using ComicReader.Common.Router;
 using ComicReader.Controls;
 using ComicReader.Database;
 using ComicReader.DesignData;
+using ComicReader.Router;
 using ComicReader.Utils;
 using ComicReader.Utils.Image;
+using ComicReader.Views.Base;
+using ComicReader.Views.Main;
+using ComicReader.Views.Navigation;
 using Microsoft.Data.Sqlite;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -23,17 +25,6 @@ namespace ComicReader.Views
     internal class SearchPageShared : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
-
-        private NavigationPageShared m_NavigationPageShared;
-        public NavigationPageShared NavigationPageShared
-        {
-            get => m_NavigationPageShared;
-            set
-            {
-                m_NavigationPageShared = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("NavigationPageShared"));
-            }
-        }
 
         public bool IsLoading;
 
@@ -208,15 +199,18 @@ namespace ComicReader.Views
         public Action<bool> OnCommandBarSelectAllToggleChanged;
     }
 
-    sealed internal partial class SearchPage : NavigatablePage
+    internal class SearchPageBase : BasePage<EmptyViewModel>;
+
+    sealed internal partial class SearchPage : SearchPageBase
     {
         private SearchPageShared Shared { get; set; }
 
         private readonly ComicItemViewModel.IItemHandler _comicItemHandler;
         private List<Match> m_matches = new List<Match>();
         private int m_match_index = 0;
-        private readonly Utils.CancellationLock m_search_lock = new Utils.CancellationLock();
-        private readonly Utils.CancellationSession _loadImageSession = new Utils.CancellationSession();
+        private readonly CancellationLock m_search_lock = new CancellationLock();
+        private readonly CancellationSession _loadImageSession = new CancellationSession();
+        private string _keyword = "";
 
         public SearchPage()
         {
@@ -231,10 +225,10 @@ namespace ComicReader.Views
             InitializeComponent();
         }
 
-        public override void OnStart(NavigationParams p)
+        protected override void OnStart(PageBundle bundle)
         {
-            base.OnStart(p);
-            Shared.NavigationPageShared = (NavigationPageShared)p.Params;
+            base.OnStart(bundle);
+            _keyword = bundle.GetString(RouterConstants.ARG_KEYWORD, "");
             Shared.OnCommandBarSelectAllToggleChanged = OnCommandBarSelectAllToggleChanged;
             Shared.IsSelectMode = false;
             Shared.ComicItemSelectionMode = ListViewSelectionMode.None;
@@ -245,18 +239,28 @@ namespace ComicReader.Views
             });
         }
 
-        public override void OnResume()
+        protected override void OnResume()
         {
             base.OnResume();
-            Shared.NavigationPageShared.SetSearchBox((string)GetTabId().RequestArgs);
+            GetNavigationPageAbility().SetSearchBox(_keyword);
             ScrollViewer scrollViewer = SearchResultGridView.ChildrenBreadthFirst().OfType<ScrollViewer>().First();
             scrollViewer.ViewChanged += OnScrollViewerViewChanged;
         }
 
-        public override void OnPause()
+        protected override void OnPause()
         {
             base.OnPause();
             _loadImageSession.Next();
+        }
+
+        private IMainPageAbility GetMainPageAbility()
+        {
+            return GetAbility<IMainPageAbility>();
+        }
+
+        private INavigationPageAbility GetNavigationPageAbility()
+        {
+            return GetAbility<INavigationPageAbility>();
         }
 
         // Unsorted
@@ -265,7 +269,7 @@ namespace ComicReader.Views
             await m_search_lock.LockAsync(async delegate (CancellationLock.Token token)
             {
                 SetSelectMode(false);
-                string keyword = (string)GetTabId().RequestArgs;
+                string keyword = _keyword;
 
                 // Extract filters and keywords from string.
                 var filter = Common.Search.Filter.Parse(keyword, out List<string> remaining);
@@ -306,8 +310,8 @@ namespace ComicReader.Views
                 }
 
                 // update tab header
-                GetTabId().Tab.Header = tab_title;
-                GetTabId().Tab.IconSource = new SymbolIconSource() { Symbol = Symbol.Find };
+                GetMainPageAbility().SetTitle(tab_title);
+                GetMainPageAbility().SetIcon(new SymbolIconSource() { Symbol = Symbol.Find });
 
                 // start searching
                 Shared.IsLoading = true;
@@ -535,7 +539,9 @@ namespace ComicReader.Views
             {
                 var item = (ComicItemViewModel)((FrameworkElement)sender).DataContext;
                 ComicData comic = await ComicData.FromId(item.Comic.Id, "SearchOpenLoadComic");
-                MainPage.Current.LoadTab(GetTabId(), ReaderPageTrait.Instance, comic);
+                Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
+                    .WithParam(RouterConstants.ARG_COMIC_ID, comic.Id.ToString());
+                GetMainPageAbility().OpenInCurrentTab(route);
             });
         }
 
@@ -570,7 +576,9 @@ namespace ComicReader.Views
         private void OnOpenInNewTabClicked(object sender, RoutedEventArgs e)
         {
             var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-            MainPage.Current.LoadTab(null, ReaderPageTrait.Instance, item.Comic);
+            Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
+                .WithParam(RouterConstants.ARG_COMIC_ID, item.Comic.Id.ToString());
+            MainPage.Current.OpenInNewTab(route);
         }
 
         private void OnAddToFavoritesClicked(object sender, RoutedEventArgs e)

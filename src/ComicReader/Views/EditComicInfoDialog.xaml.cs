@@ -5,7 +5,7 @@ using System.ComponentModel;
 
 namespace ComicReader.Views
 {
-    public class EditComicInfoDialogShared : INotifyPropertyChanged
+    internal class EditComicInfoDialogShared : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -21,7 +21,7 @@ namespace ComicReader.Views
         }
     }
 
-    public sealed partial class EditComicInfoDialog : ContentDialog
+    internal sealed partial class EditComicInfoDialog : ContentDialog
     {
         public EditComicInfoDialogShared Shared = new EditComicInfoDialogShared();
 

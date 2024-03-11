@@ -1,6 +1,6 @@
 using ComicReader.Database;
 using ComicReader.Utils;
-using ComicReader.Views;
+using ComicReader.Views.Main;
 using Microsoft.AppCenter;
 using Microsoft.AppCenter.Analytics;
 using Microsoft.AppCenter.Crashes;

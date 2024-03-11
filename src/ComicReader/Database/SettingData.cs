@@ -18,8 +18,8 @@ namespace ComicReader.Database
         public bool VerticalContinuous = true;
         public bool HorizontalContinuous = false;
         public bool TransitionAnimation = true;
-        public DesignData.PageArrangementType VerticalPageArrangement = DesignData.PageArrangementType.Single;
-        public DesignData.PageArrangementType HorizontalPageArrangement = DesignData.PageArrangementType.DualCoverMirror;
+        public PageArrangementType VerticalPageArrangement = PageArrangementType.Single;
+        public PageArrangementType HorizontalPageArrangement = PageArrangementType.DualCoverMirror;
         public bool SaveHistory = true;
 
         public bool DebugMode =
@@ -38,6 +38,15 @@ namespace ComicReader.Database
             get => XmlDatabase.Settings;
             set => XmlDatabase.Settings = value as SettingData;
         }
+    }
+
+    public enum PageArrangementType
+    {
+        Single, // 1 2 3 4 5
+        DualCover, // 1 23 45
+        DualCoverMirror, // 1 32 54
+        DualNoCover, // 12 34 5
+        DualNoCoverMirror, // 21 43 5
     }
 
     class SettingDataManager

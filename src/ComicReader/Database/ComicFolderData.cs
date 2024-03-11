@@ -9,7 +9,7 @@ using Windows.Storage.Streams;
 
 namespace ComicReader.Database
 {
-    public class ComicFolderData : ComicData
+    internal class ComicFolderData : ComicData
     {
         private StorageFolder Folder { get; set; }
         private StorageFile InfoFile { get; set; }

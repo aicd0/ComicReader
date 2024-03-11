@@ -1,8 +1,10 @@
 using ComicReader.Common;
 using ComicReader.Common.Constants;
-using ComicReader.Common.Router;
 using ComicReader.Database;
+using ComicReader.Router;
 using ComicReader.Utils;
+using ComicReader.Views.Base;
+using ComicReader.Views.Navigation;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -17,49 +19,35 @@ using Windows.ApplicationModel.Activation;
 using Windows.Storage;
 using Windows.Storage.Search;
 
-namespace ComicReader.Views
+namespace ComicReader.Views.Main
 {
-    public class MainPageShared
-    {
-        public DesignData.ReaderSettingViewModel ReaderSettings = new DesignData.ReaderSettingViewModel();
-    }
-
     sealed internal partial class MainPage : StatefulPage
     {
         public static MainPage Current = null;
         private static FileActivatedEventArgs s_startupFileArgs;
+        private LiveData<bool> _fullscreenLiveData = new(false);
 
-        public MainPageShared Shared;
-
-        private readonly List<TabIdentifier> _allTabs = new List<TabIdentifier>();
-        private TabIdentifier _currentTab;
+        private readonly List<TabInfo> _tabs = new List<TabInfo>();
+        private TabInfo _currentTab;
+        private int _nextTabId = 0;
         private Grid _tabContainerGrid;
         private ContentPresenter _tabContentPresenter;
         private double _rootTabHeight = 0;
         private double _navigationBarHeight = 0;
-        private Utils.KeyFrameAnimation _titleBarAnimation;
+        private KeyFrameAnimation _titleBarAnimation;
 
         public MainPage()
         {
             Current = this;
-
-            Shared = new MainPageShared();
-            Shared.ReaderSettings.IsVertical = Database.XmlDatabase.Settings.VerticalReading;
-            Shared.ReaderSettings.IsLeftToRight = Database.XmlDatabase.Settings.LeftToRight;
-            Shared.ReaderSettings.IsVerticalContinuous = Database.XmlDatabase.Settings.VerticalContinuous;
-            Shared.ReaderSettings.IsHorizontalContinuous = Database.XmlDatabase.Settings.HorizontalContinuous;
-            Shared.ReaderSettings.VerticalPageArrangement = Database.XmlDatabase.Settings.VerticalPageArrangement;
-            Shared.ReaderSettings.HorizontalPageArrangement = Database.XmlDatabase.Settings.HorizontalPageArrangement;
-
             InitializeComponent();
         }
 
-        public override void OnResume()
+        protected override void OnResume()
         {
             base.OnResume();
             ObserveData();
 
-            Utils.C0.Run(async delegate
+            C0.Run(async delegate
             {
                 bool page_started = false;
 
@@ -68,7 +56,9 @@ namespace ComicReader.Views
                     ComicData comic = await GetStartupComic(s_startupFileArgs);
                     if (comic != null)
                     {
-                        LoadTab(null, ReaderPageTrait.Instance, comic);
+                        Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
+                            .WithParam(RouterConstants.ARG_COMIC_ID, comic.Id.ToString());
+                        OpenInNewTab(route);
                         page_started = true;
                     }
                 }
@@ -79,16 +69,75 @@ namespace ComicReader.Views
                     ComicData comic = await ComicData.FromId(id, "FetchLastComic");
                     if (comic != null)
                     {
-                        LoadTab(null, ReaderPageTrait.Instance, comic);
+                        Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
+                            .WithParam(RouterConstants.ARG_COMIC_ID, comic.Id.ToString());
+                        OpenInNewTab(route);
                         page_started = true;
                     }
                 }
 
                 if (!page_started)
                 {
-                    LoadTab(null, HomePageTrait.Instance);
+                    var route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_HOME);
+                    OpenInNewTab(route);
                 }
             });
+        }
+
+        public void OpenInNewTab(Route route)
+        {
+            NavigationBundle bundle = route.Process();
+            LoadTab(-1, bundle);
+        }
+
+        public bool TrySwitchToTab(string url)
+        {
+            foreach (TabInfo tab in _tabs)
+            {
+                if (tab.CurrentBundle.Url == url)
+                {
+                    RootTabView.SelectedItem = tab.Item;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        public void ShowOrHideTitleBar(bool show)
+        {
+            if (_currentTab == null || !_currentTab.CurrentBundle.PageTrait.ImmersiveMode())
+            {
+                return;
+            }
+
+            if (_titleBarAnimation == null)
+            {
+                _titleBarAnimation = new KeyFrameAnimation
+                {
+                    Duration = 0.2,
+                    UpdateCallback = delegate (double value)
+                    {
+                        EventBus.Default.With<double>(EventId.TitleBarOpacity).Emit(value);
+                    }
+                };
+            }
+            else
+            {
+                _titleBarAnimation.RemoveAllKeyFrames();
+            }
+
+            _titleBarAnimation.StartValue = _tabContainerGrid.Opacity;
+            if (show)
+            {
+                _titleBarAnimation.InsertKeyFrame(1.0, 1.0);
+            }
+            else
+            {
+                _titleBarAnimation.InsertKeyFrame(1.0, 0.0);
+            }
+
+            _titleBarAnimation.Start();
         }
 
         private void ObserveData()
@@ -121,14 +170,14 @@ namespace ComicReader.Views
         {
             var target_file = (StorageFile)args.Files[0];
 
-            if (!Common.AppInfoProvider.IsSupportedExternalFileExtension(target_file.FileType))
+            if (!AppInfoProvider.IsSupportedExternalFileExtension(target_file.FileType))
             {
                 return null;
             }
 
             ComicData comic = null;
 
-            if (Common.AppInfoProvider.IsSupportedDocumentExtension(target_file.FileType))
+            if (AppInfoProvider.IsSupportedDocumentExtension(target_file.FileType))
             {
                 comic = await ComicData.FromLocation(target_file.Path, "MainGetStartupComicFromDocument");
 
@@ -144,15 +193,15 @@ namespace ComicReader.Views
                     }
                 }
             }
-            else if (Common.AppInfoProvider.IsSupportedArchiveExtension(target_file.FileType))
+            else if (AppInfoProvider.IsSupportedArchiveExtension(target_file.FileType))
             {
                 comic = await ComicData.FromLocation(target_file.Path, "MainGetStartupComicFromArchive");
                 comic ??= await ComicArchiveData.FromExternal(target_file);
             }
-            else if (Common.AppInfoProvider.IsSupportedImageExtension(target_file.FileType))
+            else if (AppInfoProvider.IsSupportedImageExtension(target_file.FileType))
             {
                 string dir = target_file.Path;
-                dir = Utils.StringUtils.ParentLocationFromLocation(dir);
+                dir = StringUtils.ParentLocationFromLocation(dir);
                 comic = await ComicData.FromLocation(dir, "MainGetStartupComicFromImage");
 
                 if (comic == null)
@@ -186,7 +235,7 @@ namespace ComicReader.Views
                         {
                             info_file = file;
                         }
-                        else if (Common.AppInfoProvider.IsSupportedImageExtension(file.FileType))
+                        else if (AppInfoProvider.IsSupportedImageExtension(file.FileType))
                         {
                             img_files.Add(file);
                         }
@@ -199,133 +248,94 @@ namespace ComicReader.Views
             return comic;
         }
 
-        // New tab
-        private bool TrySwitchToTab(IPageTrait pageTrait, object args)
+        private int AddTab(NavigationBundle bundle)
         {
-            foreach (TabIdentifier tab in _allTabs)
-            {
-                if (tab.PageTrait.GetPageType() != pageTrait.GetPageType())
-                {
-                    continue;
-                }
-
-                if (!tab.PageTrait.AllowJump())
-                {
-                    continue;
-                }
-
-                if (tab.PageTrait.GetUniqueString(args) == tab.PageTrait.GetUniqueString(tab.RequestArgs))
-                {
-                    RootTabView.SelectedItem = tab.Tab;
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
-        private TabIdentifier AddNewTab(IPageTrait pageTrait, object args = null)
-        {
-            // create a new tab and switch to it.
-            var new_tab = new TabViewItem
+            var item = new TabViewItem
             {
                 Header = "Loading...",
                 Content = new Frame()
             };
-            var id = new TabIdentifier
-            {
-                Tab = new_tab,
-                PageTrait = pageTrait,
-                RequestArgs = args,
-            };
-            id.TabEventBus.With<IPageTrait>(EventId.TabPageChanged).Observe(this, OnPageChanged);
-            _allTabs.Add(id);
-            RootTabView.TabItems.Add(new_tab);
-            RootTabView.SelectedItem = new_tab;
-            // remember tab content are not loaded at this moment, further process
-            // is required.
-            return id;
+
+            int tabId = _nextTabId++;
+            var tabInfo = new TabInfo(tabId, item);
+            tabInfo.CurrentBundle = bundle;
+            _tabs.Add(tabInfo);
+            RootTabView.TabItems.Add(item);
+            RootTabView.SelectedItem = item;
+            return tabId;
         }
 
-        public void LoadTab(TabIdentifier tab_id, IPageTrait pageTrait, object args = null, bool try_reuse = true)
+        private void LoadTab(int tabId, NavigationBundle bundle)
         {
-            // switch to an existed tab if possible
-            if (try_reuse && TrySwitchToTab(pageTrait, args))
+            if (tabId < -1)
             {
-                return;
+                throw new ArgumentException();
             }
 
-            if (tab_id == null)
+            if (tabId == -1)
             {
-                tab_id = AddNewTab(pageTrait, args);
-            }
-            else
-            {
-                tab_id.PageTrait = pageTrait;
-                tab_id.RequestArgs = args;
+                tabId = AddTab(bundle);
             }
 
-            _currentTab = tab_id;
-
-            var nav_params = new NavigationParams
+            TabInfo tabInfo = GetTabInfo(tabId);
+            var frame = (Frame)tabInfo.Item.Content;
+            bundle.Abilities[typeof(IMainPageAbility)] = new MainPageAbility(this, tabId);
+            if (bundle.PageTrait.HasNavigationBar())
             {
-                Params = Shared,
-                TabId = tab_id
-            };
-
-            var frame = (Frame)tab_id.Tab.Content;
-
-            // use different loading strategies based on page type.
-            if (pageTrait.HasNavigationBar())
-            {
-                // these pages are based on NavigationPage.
                 if (frame.Content == null || frame.Content.GetType() != typeof(NavigationPage))
                 {
-                    // navigate to NavigationPage first.
-                    if (!frame.Navigate(typeof(NavigationPage), nav_params))
+                    var route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_NAVIGATION);
+                    NavigationBundle navigationPageBundle = route.Process();
+                    navigationPageBundle.Abilities[typeof(IMainPageAbility)] = new MainPageAbility(this, tabId);
+                    if (!frame.Navigate(navigationPageBundle.PageTrait.GetPageType(), navigationPageBundle))
                     {
                         return;
                     }
                 }
 
-                var content_page = (NavigationPage)frame.Content;
-                content_page.Navigate();
+                var contentPage = (NavigationPage)frame.Content;
+                contentPage.Navigate(bundle);
             }
             else
             {
-                // these pages are based on MainPage.
-                frame.Navigate(pageTrait.GetPageType(), nav_params);
+                frame.Navigate(bundle.PageTrait.GetPageType(), bundle);
+            }
+
+            if (_currentTab == tabInfo)
+            {
+                OnPageChanged(tabInfo.CurrentBundle.PageTrait);
             }
         }
 
-        // TabView
-        private void OnAddTabButtonClicked(TabView sender, object args)
+        private TabInfo GetTabInfo(int tabId)
         {
-            LoadTab(null, HomePageTrait.Instance, try_reuse: false);
-        }
-
-        private TabIdentifier GetTabId(TabViewItem tab)
-        {
-            foreach (TabIdentifier id in _allTabs)
+            foreach (TabInfo tab in _tabs)
             {
-                if (id.Tab == tab)
+                if (tab.Id == tabId)
                 {
-                    return id;
+                    return tab;
                 }
             }
 
             return null;
         }
 
+        // TabView
+        private void OnAddTabButtonClicked(TabView sender, object args)
+        {
+            var route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_HOME);
+            OpenInNewTab(route);
+        }
+
         private void OnTabCloseRequested(TabView sender, TabViewTabCloseRequestedEventArgs args)
         {
-            for (int i = 0; i < _allTabs.Count; ++i)
+            for (int i = 0; i < _tabs.Count; ++i)
             {
-                TabIdentifier tab_id = _allTabs[i];
+                TabInfo tabInfo = _tabs[i];
 
-                if (tab_id.Tab == args.Tab)
+                if (tabInfo.Item == args.Tab)
                 {
-                    _allTabs.RemoveAt(i);
+                    _tabs.RemoveAt(i);
                     break;
                 }
             }
@@ -346,12 +356,19 @@ namespace ComicReader.Views
             }
 
             var tab = (TabViewItem)e.AddedItems[0];
-            _currentTab = GetTabId(tab);
+            _currentTab = null;
+            foreach (TabInfo tabInfo in _tabs)
+            {
+                if (tabInfo.Item == tab)
+                {
+                    _currentTab = tabInfo;
+                }
+            }
+
             System.Diagnostics.Debug.Assert(_currentTab != null);
             if (_currentTab != null)
             {
-                OnPageChanged(_currentTab.PageTrait);
-                _currentTab.DispatchTabSelected();
+                OnPageChanged(_currentTab.CurrentBundle.PageTrait);
             }
         }
 
@@ -378,7 +395,7 @@ namespace ComicReader.Views
                 return;
             }
 
-            if (_currentTab.PageTrait.ImmersiveMode())
+            if (_currentTab.CurrentBundle.PageTrait.ImmersiveMode())
             {
                 _tabContentPresenter.Margin = new Thickness(0, 0, 0, 0);
                 RootTabView.Background = (Brush)Application.Current.Resources["TitleBarBackground"];
@@ -388,42 +405,6 @@ namespace ComicReader.Views
                 _tabContentPresenter.Margin = new Thickness(0, _rootTabHeight, 0, 0);
                 RootTabView.Background = new SolidColorBrush(Colors.Transparent);
             }
-        }
-
-        public void ShowOrHideTitleBar(bool show)
-        {
-            if (_currentTab == null || !_currentTab.PageTrait.ImmersiveMode())
-            {
-                return;
-            }
-
-            if (_titleBarAnimation == null)
-            {
-                _titleBarAnimation = new Utils.KeyFrameAnimation
-                {
-                    Duration = 0.2,
-                    UpdateCallback = delegate (double value)
-                    {
-                        EventBus.Default.With<double>(EventId.TitleBarOpacity).Emit(value);
-                    }
-                };
-            }
-            else
-            {
-                _titleBarAnimation.RemoveAllKeyFrames();
-            }
-
-            _titleBarAnimation.StartValue = _tabContainerGrid.Opacity;
-            if (show)
-            {
-                _titleBarAnimation.InsertKeyFrame(1.0, 1.0);
-            }
-            else
-            {
-                _titleBarAnimation.InsertKeyFrame(1.0, 0.0);
-            }
-
-            _titleBarAnimation.Start();
         }
 
         private void OnTabContainerGridLoaded(object sender, RoutedEventArgs e)
@@ -475,7 +456,9 @@ namespace ComicReader.Views
                 ComicData comic = await Current.GetStartupComic(args);
                 if (comic != null)
                 {
-                    Current.LoadTab(null, ReaderPageTrait.Instance, comic);
+                    Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
+                        .WithParam(RouterConstants.ARG_COMIC_ID, comic.Id.ToString());
+                    Current.OpenInNewTab(route);
                 }
             });
         }
@@ -489,7 +472,7 @@ namespace ComicReader.Views
             }
 
             App.Window.AppWindow.SetPresenter(AppWindowPresenterKind.FullScreen);
-            EventBus.Default.With<bool>(EventId.FullscreenChanged).Emit(true);
+            _fullscreenLiveData.Emit(true);
         }
 
         public void ExitFullscreen()
@@ -500,7 +483,7 @@ namespace ComicReader.Views
             }
 
             App.Window.AppWindow.SetPresenter(AppWindowPresenterKind.Default);
-            EventBus.Default.With<bool>(EventId.FullscreenChanged).Emit(false);
+            _fullscreenLiveData.Emit(false);
         }
 
         private void OnRootGridSizeChanged(object sender, SizeChangedEventArgs e)
@@ -514,6 +497,44 @@ namespace ComicReader.Views
         private bool IsFullScreen()
         {
             return App.Window.AppWindow.Presenter.Kind == AppWindowPresenterKind.FullScreen;
+        }
+
+        private class MainPageAbility : IMainPageAbility
+        {
+            private MainPage _parent;
+            private int _tabId;
+
+            public MainPageAbility(MainPage parent, int tabId)
+            {
+                _parent = parent;
+                _tabId = tabId;
+            }
+
+            public LiveData<bool> GetIsFullscreenLiveData()
+            {
+                return _parent._fullscreenLiveData;
+            }
+
+            public void OpenInCurrentTab(Route route)
+            {
+                NavigationBundle bundle = route.Process();
+                _parent.LoadTab(_tabId, bundle);
+            }
+
+            public void SetIcon(IconSource icon)
+            {
+                _parent.GetTabInfo(_tabId).Item.IconSource = icon;
+            }
+
+            public void SetNavigationBundle(NavigationBundle bundle)
+            {
+                _parent.GetTabInfo(_tabId).CurrentBundle = bundle;
+            }
+
+            public void SetTitle(string title)
+            {
+                _parent.GetTabInfo(_tabId).Item.Header = title;
+            }
         }
     }
 }

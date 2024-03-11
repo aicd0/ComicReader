@@ -92,107 +92,108 @@
     <Grid>
         <StackPanel Orientation="Vertical">
             <ListView
+                x:Name="LvPageArrangement"
                 Margin="-50,0"
                 Padding="50,0"
-                SelectedIndex="{x:Bind Ctx.PageArrangementIndex, Mode=TwoWay}"
+                SelectionChanged="LvPageArrangement_SelectionChanged"
                 SelectionMode="Single">
 
                 <!--  Single  -->
                 <ListViewItem Style="{StaticResource PageArrangementListViewItemStyle}">
                     <StackPanel
+                        x:Name="SpDemoSingle"
                         Margin="3"
-                        FlowDirection="{x:Bind Ctx.DemoPageFlowDirection, Mode=OneWay}"
                         Orientation="Horizontal"
                         Spacing="6">
-                        <controls:PageDemoSingle Header="1" IsHighlight="{x:Bind Ctx.IsPageArrangementSingle, Mode=OneWay}" />
-                        <controls:PageDemoSingle Header="2" IsHighlight="{x:Bind Ctx.IsPageArrangementSingle, Mode=OneWay}" />
-                        <controls:PageDemoSingle Header="3" IsHighlight="{x:Bind Ctx.IsPageArrangementSingle, Mode=OneWay}" />
-                        <controls:PageDemoSingle Header="4" IsHighlight="{x:Bind Ctx.IsPageArrangementSingle, Mode=OneWay}" />
-                        <controls:PageDemoSingle Header="5" IsHighlight="{x:Bind Ctx.IsPageArrangementSingle, Mode=OneWay}" />
+                        <controls:PageDemoSingle x:Name="PdsDemoSingle1" Header="1" />
+                        <controls:PageDemoSingle x:Name="PdsDemoSingle2" Header="2" />
+                        <controls:PageDemoSingle x:Name="PdsDemoSingle3" Header="3" />
+                        <controls:PageDemoSingle x:Name="PdsDemoSingle4" Header="4" />
+                        <controls:PageDemoSingle x:Name="PdsDemoSingle5" Header="5" />
                     </StackPanel>
                 </ListViewItem>
 
                 <!--  DualCover  -->
                 <ListViewItem Style="{StaticResource PageArrangementListViewItemStyle}">
                     <StackPanel
+                        x:Name="SpDemoDualCover"
                         Margin="3"
-                        FlowDirection="{x:Bind Ctx.DemoPageFlowDirection, Mode=OneWay}"
                         Orientation="Horizontal"
                         Spacing="12">
-                        <controls:PageDemoSingle Header="1" IsHighlight="{x:Bind Ctx.IsPageArrangementDualCover, Mode=OneWay}" />
+                        <controls:PageDemoSingle x:Name="PdsDemoDual1" Header="1" />
                         <controls:PageDemoDual
+                            x:Name="PdsDemoDual2"
                             FlowDirection="LeftToRight"
                             HeaderL="2"
-                            HeaderR="3"
-                            IsHighlight="{x:Bind Ctx.IsPageArrangementDualCover, Mode=OneWay}" />
+                            HeaderR="3" />
                         <controls:PageDemoDual
+                            x:Name="PdsDemoDual3"
                             FlowDirection="LeftToRight"
                             HeaderL="4"
-                            HeaderR="5"
-                            IsHighlight="{x:Bind Ctx.IsPageArrangementDualCover, Mode=OneWay}" />
+                            HeaderR="5" />
                     </StackPanel>
                 </ListViewItem>
 
                 <!--  DualCoverMirror  -->
                 <ListViewItem Style="{StaticResource PageArrangementListViewItemStyle}">
                     <StackPanel
+                        x:Name="SpDemoDualCoverMirror"
                         Margin="3"
-                        FlowDirection="{x:Bind Ctx.DemoPageFlowDirection, Mode=OneWay}"
                         Orientation="Horizontal"
                         Spacing="12">
-                        <controls:PageDemoSingle Header="1" IsHighlight="{x:Bind Ctx.IsPageArrangementDualCoverMirror, Mode=OneWay}" />
+                        <controls:PageDemoSingle x:Name="PdsDemoDualCoverMirror1" Header="1" />
                         <controls:PageDemoDual
+                            x:Name="PdsDemoDualCoverMirror2"
                             FlowDirection="LeftToRight"
                             HeaderL="3"
-                            HeaderR="2"
-                            IsHighlight="{x:Bind Ctx.IsPageArrangementDualCoverMirror, Mode=OneWay}" />
+                            HeaderR="2" />
                         <controls:PageDemoDual
+                            x:Name="PdsDemoDualCoverMirror3"
                             FlowDirection="LeftToRight"
                             HeaderL="5"
-                            HeaderR="4"
-                            IsHighlight="{x:Bind Ctx.IsPageArrangementDualCoverMirror, Mode=OneWay}" />
+                            HeaderR="4" />
                     </StackPanel>
                 </ListViewItem>
 
                 <!--  DualNoCover  -->
                 <ListViewItem Style="{StaticResource PageArrangementListViewItemStyle}">
                     <StackPanel
+                        x:Name="SpDemoDualNoCover"
                         Margin="3"
-                        FlowDirection="{x:Bind Ctx.DemoPageFlowDirection, Mode=OneWay}"
                         Orientation="Horizontal"
                         Spacing="12">
                         <controls:PageDemoDual
+                            x:Name="PdsDemoDualNoCover1"
                             FlowDirection="LeftToRight"
                             HeaderL="1"
-                            HeaderR="2"
-                            IsHighlight="{x:Bind Ctx.IsPageArrangementDualNoCover, Mode=OneWay}" />
+                            HeaderR="2" />
                         <controls:PageDemoDual
+                            x:Name="PdsDemoDualNoCover2"
                             FlowDirection="LeftToRight"
                             HeaderL="3"
-                            HeaderR="4"
-                            IsHighlight="{x:Bind Ctx.IsPageArrangementDualNoCover, Mode=OneWay}" />
-                        <controls:PageDemoSingle Header="5" IsHighlight="{x:Bind Ctx.IsPageArrangementDualNoCover, Mode=OneWay}" />
+                            HeaderR="4" />
+                        <controls:PageDemoSingle x:Name="PdsDemoDualNoCover3" Header="5" />
                     </StackPanel>
                 </ListViewItem>
 
                 <!--  DualNoCoverMirror  -->
                 <ListViewItem Style="{StaticResource PageArrangementListViewItemStyle}">
                     <StackPanel
+                        x:Name="SpDemoDualNoCoverMirror"
                         Margin="3"
-                        FlowDirection="{x:Bind Ctx.DemoPageFlowDirection, Mode=OneWay}"
                         Orientation="Horizontal"
                         Spacing="12">
                         <controls:PageDemoDual
+                            x:Name="PdsDemoDualNoCoverMirror1"
                             FlowDirection="LeftToRight"
                             HeaderL="2"
-                            HeaderR="1"
-                            IsHighlight="{x:Bind Ctx.IsPageArrangementDualNoCoverMirror, Mode=OneWay}" />
+                            HeaderR="1" />
                         <controls:PageDemoDual
+                            x:Name="PdsDemoDualNoCoverMirror2"
                             FlowDirection="LeftToRight"
                             HeaderL="4"
-                            HeaderR="3"
-                            IsHighlight="{x:Bind Ctx.IsPageArrangementDualNoCoverMirror, Mode=OneWay}" />
-                        <controls:PageDemoSingle Header="5" IsHighlight="{x:Bind Ctx.IsPageArrangementDualNoCoverMirror, Mode=OneWay}" />
+                            HeaderR="3" />
+                        <controls:PageDemoSingle x:Name="PdsDemoDualNoCoverMirror3" Header="5" />
                     </StackPanel>
                 </ListViewItem>
             </ListView>
@@ -206,19 +207,19 @@
                 <StackPanel Grid.Column="0" Orientation="Horizontal">
                     <!--  Vertical/Horizontal  -->
                     <AppBarButton
+                        x:Name="AbbVertical"
                         x:Uid="VerticalButton"
-                        Click="{x:Bind Ctx.OnSetHorizontal}"
-                        Style="{StaticResource AppBarButtonCompactStyle}"
-                        Visibility="{x:Bind Ctx.IsVertical, Mode=OneWay}">
+                        Click="AbbVertical_Click"
+                        Style="{StaticResource AppBarButtonCompactStyle}">
                         <Grid>
                             <FontIcon Glyph="&#xE7C3;" />
                         </Grid>
                     </AppBarButton>
                     <AppBarButton
+                        x:Name="AbbHorizontal"
                         x:Uid="HorizontalButton"
-                        Click="{x:Bind Ctx.OnSetVertical}"
-                        Style="{StaticResource AppBarButtonCompactStyle}"
-                        Visibility="{x:Bind Ctx.IsVertical, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}">
+                        Click="AbbHorizontal_Click"
+                        Style="{StaticResource AppBarButtonCompactStyle}">
                         <Grid>
                             <FontIcon Glyph="&#xEF6B;" />
                         </Grid>
@@ -226,19 +227,19 @@
 
                     <!--  Flow Direction  -->
                     <AppBarButton
+                        x:Name="AbbLeftToRight"
                         x:Uid="LeftToRightButton"
-                        Click="{x:Bind Ctx.OnSetRightToLeft}"
-                        Style="{StaticResource AppBarButtonCompactStyle}"
-                        Visibility="{x:Bind Ctx.IsLeftToRightVisible, Mode=OneWay}">
+                        Click="AbbLeftToRight_Click"
+                        Style="{StaticResource AppBarButtonCompactStyle}">
                         <Grid>
                             <FontIcon Glyph="&#xEBE7;" />
                         </Grid>
                     </AppBarButton>
                     <AppBarButton
+                        x:Name="AbbRightToLeft"
                         x:Uid="RightToLeftButton"
-                        Click="{x:Bind Ctx.OnSetLeftToRight}"
-                        Style="{StaticResource AppBarButtonCompactStyle}"
-                        Visibility="{x:Bind Ctx.IsRightToLeftVisible, Mode=OneWay}">
+                        Click="AbbRightToLeft_Click"
+                        Style="{StaticResource AppBarButtonCompactStyle}">
                         <Grid>
                             <FontIcon Glyph="&#xEC52;" />
                         </Grid>
@@ -248,19 +249,19 @@
                 <StackPanel Grid.Column="2" Orientation="Horizontal">
                     <!--  Continuous reading  -->
                     <AppBarButton
+                        x:Name="AbbContinuous"
                         x:Uid="ContinuousButton"
-                        Click="{x:Bind Ctx.OnSetDiscrete}"
-                        Style="{StaticResource AppBarButtonCompactStyle}"
-                        Visibility="{x:Bind Ctx.IsContinuous, Mode=OneWay}">
+                        Click="AbbContinuous_Click"
+                        Style="{StaticResource AppBarButtonCompactStyle}">
                         <Grid>
                             <FontIcon Glyph="&#xE89A;" />
                         </Grid>
                     </AppBarButton>
                     <AppBarButton
+                        x:Name="AbbSeperate"
                         x:Uid="DiscreteButton"
-                        Click="{x:Bind Ctx.OnSetContinuous}"
-                        Style="{StaticResource AppBarButtonCompactStyle}"
-                        Visibility="{x:Bind Ctx.IsContinuous, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}">
+                        Click="AbbSeperate_Click"
+                        Style="{StaticResource AppBarButtonCompactStyle}">
                         <Grid>
                             <FontIcon Glyph="&#xE7C3;" />
                         </Grid>

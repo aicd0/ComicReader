@@ -1,8 +1,8 @@
-<common:StatefulPage
+<base:FavoritePageBase
     x:Class="ComicReader.Views.FavoritePage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:common="using:ComicReader.Common"
+    xmlns:base="using:ComicReader.Views"
     xmlns:converters="using:ComicReader.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:data="using:ComicReader.DesignData"
@@ -102,11 +102,11 @@
 
     <Grid>
         <TextBlock
+            x:Name="TbNoFavorite"
             x:Uid="NoFavorite"
             Margin="0,10"
             HorizontalAlignment="Center"
-            FontWeight="SemiBold"
-            Visibility="{x:Bind Shared.IsEmpty, Mode=OneWay}" />
+            FontWeight="SemiBold" />
         <muxc:TreeView
             x:Name="MainTreeView"
             DragItemsCompleted="MainTreeViewDragItemsCompleted"
@@ -122,4 +122,4 @@
             </muxc:TreeView.ContextFlyout>
         </muxc:TreeView>
     </Grid>
-</common:StatefulPage>
+</base:FavoritePageBase>

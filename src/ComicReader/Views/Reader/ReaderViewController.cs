@@ -26,7 +26,7 @@ using Windows.Foundation;
 
 namespace ComicReader.Views.Reader
 {
-    internal class ReaderModel
+    internal class ReaderViewController
     {
         // Constants
         public static readonly float MaxZoom = 250f;
@@ -38,27 +38,28 @@ namespace ComicReader.Views.Reader
         private static readonly int MaxPreloadFramesAfter = 10;
 
         // Constructor
-        public ReaderModel(ReaderPageShared shared, bool is_vertical)
+        public ReaderViewController(ReaderPageViewModel viewModel, ReaderPageShared shared, bool is_vertical)
         {
+            _viewModel = viewModel;
             m_shared = shared;
             IsVertical = is_vertical;
         }
 
         // Observer - Common
-        public bool IsCurrentReader => m_shared.ReaderSettings.IsVertical == IsVertical;
+        public bool IsCurrentReader => _viewModel.ReaderSettingsLiveData.GetValue().IsVertical == IsVertical;
         public bool IsVertical
         {
             get; private set;
         }
         public bool IsHorizontal => !IsVertical;
-        public bool IsLeftToRight => m_shared.ReaderSettings.IsLeftToRight;
+        public bool IsLeftToRight => _viewModel.ReaderSettingsLiveData.GetValue().IsLeftToRight;
         public bool IsLastPage => PageToFrame(Page, out _, out _) >= DataSource.Count - 1;
         public bool IsContinuous => IsVertical ?
-            m_shared.ReaderSettings.IsVerticalContinuous :
-            m_shared.ReaderSettings.IsHorizontalContinuous;
+            _viewModel.ReaderSettingsLiveData.GetValue().IsVerticalContinuous :
+            _viewModel.ReaderSettingsLiveData.GetValue().IsHorizontalContinuous;
         public PageArrangementType PageArrangement => IsVertical ?
-            m_shared.ReaderSettings.VerticalPageArrangement :
-            m_shared.ReaderSettings.HorizontalPageArrangement;
+            _viewModel.ReaderSettingsLiveData.GetValue().VerticalPageArrangement :
+            _viewModel.ReaderSettingsLiveData.GetValue().HorizontalPageArrangement;
 
         // Observer - Data source
         public ObservableCollection<ReaderFrameViewModel> DataSource { get; private set; } = new ObservableCollection<ReaderFrameViewModel>();
@@ -415,7 +416,7 @@ namespace ComicReader.Views.Reader
             double parallel_offset = IsVertical ? frame_position.Y : frame_position.X;
             double perpendicular_offset = IsVertical ? frame_position.X : frame_position.Y;
 
-            bool left_to_right = m_shared.ReaderSettings.IsLeftToRight;
+            bool left_to_right = IsLeftToRight;
 
             if (IsHorizontal && !left_to_right)
             {
@@ -845,7 +846,7 @@ namespace ComicReader.Views.Reader
 
         sealed internal class ScrollManager : Utils.BaseTransaction<bool>
         {
-            private readonly WeakReference<ReaderModel> mReader;
+            private readonly WeakReference<ReaderViewController> mReader;
             private float? mZoom = null;
             private ZoomType mZoomType = ZoomType.CenterInside;
             private double? mParallelOffset = null;
@@ -854,19 +855,19 @@ namespace ComicReader.Views.Reader
             private double? mPage = null;
             private bool mDisableAnimation = true;
 
-            private ScrollManager(ReaderModel reader)
+            private ScrollManager(ReaderViewController reader)
             {
-                mReader = new WeakReference<ReaderModel>(reader);
+                mReader = new WeakReference<ReaderViewController>(reader);
             }
 
-            public static ScrollManager BeginTransaction(ReaderModel reader)
+            public static ScrollManager BeginTransaction(ReaderViewController reader)
             {
                 return new ScrollManager(reader);
             }
 
             protected override bool CommitImpl()
             {
-                if (!mReader.TryGetTarget(out ReaderModel reader))
+                if (!mReader.TryGetTarget(out ReaderViewController reader))
                 {
                     return false;
                 }
@@ -1580,7 +1581,7 @@ namespace ComicReader.Views.Reader
                 await m_PageRearrangeLock.LockAsync(async delegate (CancellationLock.Token token)
                 {
                     // Set reader status to Loading.
-                    m_shared.ReaderStatus = ReaderStatusEnum.Loading;
+                    _viewModel.ReaderStatusLiveData.Emit(ReaderPageViewModel.ReaderStatusEnum.Loading);
 
                     // Save previous states.
                     double page = PageSource;
@@ -1611,13 +1612,14 @@ namespace ComicReader.Views.Reader
                     await UpdateImages(true);
 
                     // Recover reader status.
-                    m_shared.ReaderStatus = ReaderStatusEnum.Working;
+                    _viewModel.ReaderStatusLiveData.Emit(ReaderPageViewModel.ReaderStatusEnum.Working);
                 });
             });
         }
 
         // Internal - Variables
         private readonly ReaderPageShared m_shared;
+        private readonly ReaderPageViewModel _viewModel;
 
         // Internal - Loader States
         private bool LoadedFramework => ThisScrollViewer != null && ThisListView != null;

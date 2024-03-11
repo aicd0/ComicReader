@@ -1,7 +1,7 @@
-using ComicReader.Database;
+using ComicReader.Views.Home;
 using System;
 
-namespace ComicReader.Common.Router
+namespace ComicReader.Router
 {
     internal interface IPageTrait
     {
@@ -11,11 +11,37 @@ namespace ComicReader.Common.Router
 
         bool ImmersiveMode();
 
-        string GetUniqueString(object args);
-
-        bool AllowJump();
-
         bool SupportFullscreen();
+    }
+
+    internal class DefaultPageTrait : IPageTrait
+    {
+        private readonly Type _pageType;
+
+        public DefaultPageTrait(Type pageType)
+        {
+            _pageType = pageType;
+        }
+
+        public Type GetPageType()
+        {
+            return _pageType;
+        }
+
+        public bool HasNavigationBar()
+        {
+            return false;
+        }
+
+        public bool ImmersiveMode()
+        {
+            return false;
+        }
+
+        public bool SupportFullscreen()
+        {
+            return false;
+        }
     }
 
     internal class HomePageTrait : IPageTrait
@@ -24,7 +50,7 @@ namespace ComicReader.Common.Router
 
         public Type GetPageType()
         {
-            return typeof(Views.HomePage);
+            return typeof(HomePage);
         }
 
         public bool HasNavigationBar()
@@ -35,16 +61,6 @@ namespace ComicReader.Common.Router
         public bool ImmersiveMode()
         {
             return false;
-        }
-
-        public string GetUniqueString(object args)
-        {
-            return "blank";
-        }
-
-        public bool AllowJump()
-        {
-            return true;
         }
 
         public bool SupportFullscreen()
@@ -78,17 +94,6 @@ namespace ComicReader.Common.Router
         }
 
         public bool ImmersiveMode()
-        {
-            return false;
-        }
-
-        public string GetUniqueString(object args)
-        {
-            string keyword = (string)args;
-            return "Search/" + keyword;
-        }
-
-        public bool AllowJump()
         {
             return false;
         }
@@ -128,17 +133,6 @@ namespace ComicReader.Common.Router
             return true;
         }
 
-        public string GetUniqueString(object args)
-        {
-            var comic = (ComicData)args;
-            return "Reader/" + comic.Location;
-        }
-
-        public bool AllowJump()
-        {
-            return true;
-        }
-
         public bool SupportFullscreen()
         {
             return true;
@@ -174,16 +168,6 @@ namespace ComicReader.Common.Router
             return false;
         }
 
-        public string GetUniqueString(object args)
-        {
-            return "settings";
-        }
-
-        public bool AllowJump()
-        {
-            return true;
-        }
-
         public bool SupportFullscreen()
         {
             return false;
@@ -217,16 +201,6 @@ namespace ComicReader.Common.Router
         public bool ImmersiveMode()
         {
             return false;
-        }
-
-        public string GetUniqueString(object args)
-        {
-            return "help";
-        }
-
-        public bool AllowJump()
-        {
-            return true;
         }
 
         public bool SupportFullscreen()

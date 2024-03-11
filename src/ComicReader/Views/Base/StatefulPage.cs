@@ -2,18 +2,9 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 
-namespace ComicReader.Common
+namespace ComicReader.Views.Base
 {
-    internal interface IPageStateListener
-    {
-        void OnStart(object p);
-
-        void OnResume();
-
-        void OnPause();
-    }
-
-    internal class StatefulPage : Page, IPageStateListener
+    internal abstract class StatefulPage : Page
     {
         private bool _isStarted = false;
         private bool _isResumed = false;
@@ -56,6 +47,18 @@ namespace ComicReader.Common
                 case NavigationMode.Refresh:
                     break;
             }
+        }
+
+        protected virtual void OnStart(object p)
+        {
+        }
+
+        protected virtual void OnResume()
+        {
+        }
+
+        protected virtual void OnPause()
+        {
         }
 
         private void OnLoadedInternal(object sender, RoutedEventArgs e)
@@ -110,18 +113,6 @@ namespace ComicReader.Common
                 _isResumed = false;
                 OnPause();
             }
-        }
-
-        public virtual void OnStart(object p)
-        {
-        }
-
-        public virtual void OnResume()
-        {
-        }
-
-        public virtual void OnPause()
-        {
         }
     }
 }

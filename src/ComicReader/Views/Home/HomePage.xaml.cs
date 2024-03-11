@@ -1,10 +1,11 @@
-using ComicReader.Common;
-using ComicReader.Common.Router;
 using ComicReader.Controls;
 using ComicReader.Database;
 using ComicReader.DesignData;
+using ComicReader.Router;
 using ComicReader.Utils;
 using ComicReader.Utils.Image;
+using ComicReader.Views.Base;
+using ComicReader.Views.Main;
 using Microsoft.Data.Sqlite;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -13,51 +14,23 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Threading.Tasks;
 
-namespace ComicReader.Views
+namespace ComicReader.Views.Home
 {
-    internal class HomePageShared : INotifyPropertyChanged
+    internal class HomePageBase : BasePage<HomePageViewModel>;
+
+    sealed internal partial class HomePage : HomePageBase
     {
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        private NavigationPageShared m_NavigationPageShared;
-        public NavigationPageShared NavigationPageShared
-        {
-            get => m_NavigationPageShared;
-            set
-            {
-                m_NavigationPageShared = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("NavigationPageShared"));
-            }
-        }
-
-        private bool m_IsLibraryEmpty = false;
-        public bool IsLibraryEmpty
-        {
-            get => m_IsLibraryEmpty;
-            set
-            {
-                m_IsLibraryEmpty = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsLibraryEmpty"));
-            }
-        }
-    }
-
-    sealed internal partial class HomePage : NavigatablePage
-    {
-        public HomePageShared Shared { get; set; } = new HomePageShared();
-
         private readonly ComicItemViewModel.IItemHandler _comicItemHandler;
-        private Utils.ObservableCollectionPlus<ComicItemViewModel> ComicItemSource { get; set; }
-            = new Utils.ObservableCollectionPlus<ComicItemViewModel>();
+        private ObservableCollectionPlus<ComicItemViewModel> ComicItemSource { get; set; }
+            = new ObservableCollectionPlus<ComicItemViewModel>();
         public ObservableCollection<FolderItemViewModel> FolderItemDataSource { get; set; }
             = new ObservableCollection<FolderItemViewModel>();
 
-        private readonly Utils.CancellationLock m_update_folder_lock = new Utils.CancellationLock();
-        private readonly Utils.CancellationLock _updateLibraryLock = new Utils.CancellationLock();
-        private readonly Utils.CancellationSession _updateLibrarySession = new Utils.CancellationSession();
+        private readonly CancellationLock m_update_folder_lock = new CancellationLock();
+        private readonly CancellationLock _updateLibraryLock = new CancellationLock();
+        private readonly CancellationSession _updateLibrarySession = new CancellationSession();
 
         public HomePage()
         {
@@ -65,19 +38,12 @@ namespace ComicReader.Views
             InitializeComponent();
         }
 
-        public override void OnStart(NavigationParams p)
-        {
-            base.OnStart(p);
-            Shared.NavigationPageShared = (NavigationPageShared)p.Params;
-        }
-
-        public override void OnResume()
+        protected override void OnResume()
         {
             base.OnResume();
             ComicData.OnUpdated += OnComicDataUpdated;
-
-            GetTabId().Tab.Header = Utils.StringResourceProvider.GetResourceString("NewTab");
-            GetTabId().Tab.IconSource = new SymbolIconSource() { Symbol = Symbol.Document };
+            GetMainPageAbility().SetTitle("NewTab");
+            GetMainPageAbility().SetIcon(new SymbolIconSource() { Symbol = Symbol.Document });
 
             Utils.C0.Run(async delegate
             {
@@ -85,26 +51,23 @@ namespace ComicReader.Views
             });
         }
 
-        public override void OnPause()
+        protected override void OnPause()
         {
             base.OnPause();
             ComicData.OnUpdated -= OnComicDataUpdated;
             _updateLibrarySession.Next();
         }
 
-        public override void OnSelected()
-        {
-            Utils.C0.Run(async delegate
-            {
-                await Update();
-            });
-        }
-
         // Utilities
-        public async Task Update()
+        private async Task Update()
         {
             await UpdateFolders();
             await UpdateLibrary();
+        }
+
+        private IMainPageAbility GetMainPageAbility()
+        {
+            return GetAbility<IMainPageAbility>();
         }
 
         private void ComicDataToViewModel(ComicData comic, ComicItemViewModel model)
@@ -215,7 +178,9 @@ namespace ComicReader.Views
                     x.Rating == y.Rating &&
                     x.Progress == y.Progress &&
                     x.IsFavorite == y.IsFavorite);
-                Shared.IsLibraryEmpty = ComicItemSource.Count == 0;
+                bool isEmpty = ComicItemSource.Count == 0;
+                HbShowAllButton.IsEnabled = !isEmpty;
+                SpLibraryEmpty.Visibility = isEmpty ? Visibility.Visible : Visibility.Collapsed;
             });
         }
 
@@ -318,18 +283,24 @@ namespace ComicReader.Views
 
         private void OnSeeAllBtClicked(object sender, RoutedEventArgs e)
         {
-            MainPage.Current.LoadTab(GetTabId(), SearchPageTrait.Instance, "<all>");
+            Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_SEARCH)
+                .WithParam(RouterConstants.ARG_KEYWORD, "<all>");
+            GetMainPageAbility().OpenInCurrentTab(route);
         }
 
         private void OnSeeHiddenBtClick(object sender, RoutedEventArgs e)
         {
-            MainPage.Current.LoadTab(GetTabId(), SearchPageTrait.Instance, "<hidden>");
+            Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_SEARCH)
+                .WithParam(RouterConstants.ARG_KEYWORD, "<hidden>");
+            GetMainPageAbility().OpenInCurrentTab(route);
         }
 
         private void OnOpenInNewTabClicked(object sender, RoutedEventArgs e)
         {
             var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-            MainPage.Current.LoadTab(null, ReaderPageTrait.Instance, item.Comic);
+            Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
+                .WithParam(RouterConstants.ARG_COMIC_ID, item.Comic.Id.ToString());
+            MainPage.Current.OpenInNewTab(route);
         }
 
         private void OnComicItemTapped(object sender, TappedRoutedEventArgs e)
@@ -340,7 +311,9 @@ namespace ComicReader.Views
             }
 
             var item = (ComicItemViewModel)((Grid)sender).DataContext;
-            MainPage.Current.LoadTab(GetTabId(), ReaderPageTrait.Instance, item.Comic);
+            Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
+                .WithParam(RouterConstants.ARG_COMIC_ID, item.Comic.Id.ToString());
+            GetMainPageAbility().OpenInCurrentTab(route);
         }
 
         private void OnAddToFavoritesClicked(object sender, RoutedEventArgs e)
@@ -402,7 +375,9 @@ namespace ComicReader.Views
             }
             else
             {
-                MainPage.Current.LoadTab(GetTabId(), SearchPageTrait.Instance, "<dir: " + item.Path + ">");
+                Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_SEARCH)
+                    .WithParam(RouterConstants.ARG_KEYWORD, "<dir: " + item.Path + ">");
+                GetMainPageAbility().OpenInCurrentTab(route);
             }
         }
 

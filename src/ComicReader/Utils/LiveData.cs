@@ -12,6 +12,16 @@ namespace ComicReader.Utils
         private bool _dispatchingValue = false;
         private bool _dispatchInvalidated = false;
 
+        public LiveData()
+        {
+            _value = default;
+        }
+
+        public LiveData(T initial)
+        {
+            _value = initial;
+        }
+
         public void Observe(Page owner, Observer<T> observer)
         {
             ObserveInternal(owner, observer, false);
@@ -20,6 +30,18 @@ namespace ComicReader.Utils
         public void ObserveSticky(Page owner, Observer<T> observer)
         {
             ObserveInternal(owner, observer, true);
+        }
+
+        public void Emit(T value)
+        {
+            _value = value;
+            _version++;
+            DispatchValue(null, value);
+        }
+
+        public T GetValue()
+        {
+            return _value;
         }
 
         private void ObserveInternal(Page owner, Observer<T> observer, bool sticky)
@@ -51,13 +73,6 @@ namespace ComicReader.Utils
             {
                 DispatchValue(observer, _value);
             }
-        }
-
-        public void Emit(T value)
-        {
-            _value = value;
-            _version++;
-            DispatchValue(null, value);
         }
 
         private void DispatchValue(Observer<T> initiator, T value)

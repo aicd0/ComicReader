@@ -7,7 +7,7 @@ using Windows.Storage.Streams;
 
 namespace ComicReader.Database
 {
-    public class ComicPdfData : ComicData
+    internal class ComicPdfData : ComicData
     {
         private const int WrongPassword = unchecked((int)0x8007052b); // HRESULT_FROM_WIN32(ERROR_WRONG_PASSWORD)
         private const int GenericFail = unchecked((int)0x80004005);   // E_FAIL
