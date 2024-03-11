@@ -18,6 +18,7 @@ internal class ReaderPageViewModel : BaseViewModel
     private readonly CancellationLock _loadComicLock = new();
     private readonly CancellationSession _loadImageSession = new CancellationSession();
     private volatile bool _updatingProgress = false;
+    private bool _isFavorite = false;
 
     public LiveData<ReaderStatusEnum> ReaderStatusLiveData { get; } = new(ReaderStatusEnum.Loading);
     public LiveData<bool> GridViewVisibleLiveData { get; } = new();
@@ -169,22 +170,25 @@ internal class ReaderPageViewModel : BaseViewModel
         }
     }
 
-    public async Task SetIsFavorite(bool isFavorite)
+    public void SetIsFavorite(bool isFavorite)
     {
-        LiveData<bool> liveData = GetNavigationPageAbility().GetIsFavoriteLiveData();
-        if (liveData.GetValue() == isFavorite)
-        {
-            return;
-        }
+        GetNavigationPageAbility().GetIsFavoriteLiveData().Emit(isFavorite);
 
-        liveData.Emit(isFavorite);
-        if (isFavorite)
+        if (_isFavorite != isFavorite)
         {
-            await FavoriteDataManager.Add(_comic.Id, _comic.Title1, final: true);
-        }
-        else
-        {
-            await FavoriteDataManager.RemoveWithId(_comic.Id, final: true);
+            _isFavorite = isFavorite;
+
+            Utils.C0.Run(async delegate
+            {
+                if (_isFavorite)
+                {
+                    await FavoriteDataManager.Add(_comic.Id, _comic.Title1, true);
+                }
+                else
+                {
+                    await FavoriteDataManager.RemoveWithId(_comic.Id, true);
+                }
+            });
         }
     }
 
@@ -220,8 +224,8 @@ internal class ReaderPageViewModel : BaseViewModel
 
         if (!_comic.IsExternal)
         {
-            bool isFavorite = await FavoriteDataManager.FromId(_comic.Id) != null;
-            GetNavigationPageAbility().GetIsFavoriteLiveData().Emit(isFavorite);
+            _isFavorite = await FavoriteDataManager.FromId(_comic.Id) != null;
+            SetIsFavorite(_isFavorite);
             page.Shared.Rating = _comic.Rating;
         }
     }

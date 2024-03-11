@@ -294,15 +294,11 @@ namespace ComicReader.Views.Reader
                 FavoriteBt.IsEnabled = !isExternal;
             });
 
-            GetNavigationPageAbility().GetIsFavoriteLiveData().Observe(this, delegate (bool isFavorite)
+            GetNavigationPageAbility().GetIsFavoriteLiveData().Observe(this, new ChangedObserver<bool>(delegate (bool isFavorite)
             {
                 FavoriteBt.IsChecked = isFavorite;
-
-                Utils.C0.Run(async delegate
-                {
-                    await ViewModel.SetIsFavorite(isFavorite);
-                });
-            });
+                ViewModel.SetIsFavorite(isFavorite);
+            }));
 
             ViewModel.ReaderStatusLiveData.Observe(this, delegate (ReaderStatusEnum status)
             {
@@ -647,18 +643,12 @@ namespace ComicReader.Views.Reader
 
         private void OnFavoritesChecked(object sender, RoutedEventArgs e)
         {
-            Utils.C0.Run(async delegate
-            {
-                await ViewModel.SetIsFavorite(true);
-            });
+            ViewModel.SetIsFavorite(true);
         }
 
         private void OnFavoritesUnchecked(object sender, RoutedEventArgs e)
         {
-            Utils.C0.Run(async delegate
-            {
-                await ViewModel.SetIsFavorite(false);
-            });
+            ViewModel.SetIsFavorite(false);
         }
 
         // Info Pane

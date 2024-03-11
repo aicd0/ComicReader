@@ -84,7 +84,7 @@ namespace ComicReader.Database
             return helper(XmlDatabase.Favorites.RootNodes);
         }
 
-        public static async Task<bool> RemoveWithId(long id, bool final)
+        public static async Task<bool> RemoveWithId(long id, bool sendEvent)
         {
             bool helper(List<FavoriteNodeData> e)
             {
@@ -118,16 +118,11 @@ namespace ComicReader.Database
             await XmlDatabaseManager.WaitLock();
             bool res = helper(XmlDatabase.Favorites.RootNodes);
             XmlDatabaseManager.ReleaseLock();
-
-            if (final)
-            {
-                OnUpdated();
-            }
-
+            OnUpdated(sendEvent);
             return res;
         }
 
-        public static async Task Add(long id, string title, bool final)
+        public static async Task Add(long id, string title, bool sendEvent)
         {
             await XmlDatabaseManager.WaitLock();
 
@@ -152,16 +147,17 @@ namespace ComicReader.Database
                 XmlDatabaseManager.ReleaseLock();
             }
 
-            if (final)
-            {
-                OnUpdated();
-            }
+            OnUpdated(sendEvent);
         }
 
-        private static void OnUpdated()
+        private static void OnUpdated(bool sendEvent)
         {
             TaskQueue.DefaultQueue.Enqueue(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Favorites));
-            EventBus.Default.With(EventId.SidePaneUpdate).Emit(0);
+
+            if (sendEvent)
+            {
+                EventBus.Default.With(EventId.SidePaneUpdate).Emit(0);
+            }
         }
     }
 }

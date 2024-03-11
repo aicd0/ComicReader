@@ -122,7 +122,7 @@ namespace ComicReader.Views
 
         private async Task DeleteItem(HistoryItemViewModel item)
         {
-            await HistoryDataManager.Remove(item.Id, true);
+            await HistoryDataManager.Remove(item.Id, false);
             var source = (ObservableCollection<HistoryGroupViewModel>)HistorySource.Source;
 
             for (int i = 0; i < source.Count; ++i)

@@ -63,7 +63,7 @@ namespace ComicReader.Database
 
     internal class HistoryDataManager
     {
-        public static async Task Add(long id, string title, bool final)
+        public static async Task Add(long id, string title, bool sendEvent)
         {
             await XmlDatabaseManager.WaitLock();
             try
@@ -88,36 +88,33 @@ namespace ComicReader.Database
                 XmlDatabaseManager.ReleaseLock();
             }
 
-            if (final)
-            {
-                OnUpdated();
-            }
+            OnUpdated(sendEvent);
         }
 
-        public static async Task Remove(long id, bool final)
+        public static async Task Remove(long id, bool sendEvent)
         {
             await XmlDatabaseManager.WaitLock();
             RemoveNoLock(id);
             XmlDatabaseManager.ReleaseLock();
-
-            if (final)
-            {
-                OnUpdated();
-            }
+            OnUpdated(sendEvent);
         }
 
-        public static async Task Clear()
+        public static async Task Clear(bool sendEvent)
         {
             await XmlDatabaseManager.WaitLock();
             XmlDatabase.History.Items.Clear();
             XmlDatabaseManager.ReleaseLock();
-            OnUpdated();
+            OnUpdated(sendEvent);
         }
 
-        private static void OnUpdated()
+        private static void OnUpdated(bool sendEvent)
         {
             TaskQueue.DefaultQueue.Enqueue(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.History));
-            EventBus.Default.With(EventId.SidePaneUpdate).Emit(0);
+
+            if (sendEvent)
+            {
+                EventBus.Default.With(EventId.SidePaneUpdate).Emit(0);
+            }
         }
 
         private static void RemoveNoLock(long id)

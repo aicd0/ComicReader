@@ -432,7 +432,7 @@ namespace ComicReader.Views
         {
             Utils.C0.Run(async delegate
             {
-                await HistoryDataManager.Clear();
+                await HistoryDataManager.Clear(true);
                 Shared.IsClearHistoryEnabled = false;
             });
         }

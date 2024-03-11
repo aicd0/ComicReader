@@ -1,12 +1,13 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using System;
 using System.Collections.Generic;
 
 namespace ComicReader.Utils
 {
     internal class LiveData<T>
     {
-        private readonly List<Observer<T>> _observers = new List<Observer<T>>();
+        private readonly List<IObserver<T>> _observers = new List<IObserver<T>>();
         private T _value;
         private int _version = 0;
         private bool _dispatchingValue = false;
@@ -22,12 +23,24 @@ namespace ComicReader.Utils
             _value = initial;
         }
 
-        public void Observe(Page owner, Observer<T> observer)
+        public void Observe(Page owner, Action<T> observer)
+        {
+            var wrapper = new Observer<T>(observer);
+            Observe(owner, wrapper);
+        }
+
+        public void ObserveSticky(Page owner, Action<T> observer)
+        {
+            var wrapper = new Observer<T>(observer);
+            ObserveSticky(owner, wrapper);
+        }
+
+        public void Observe(Page owner, IObserver<T> observer)
         {
             ObserveInternal(owner, observer, false);
         }
 
-        public void ObserveSticky(Page owner, Observer<T> observer)
+        public void ObserveSticky(Page owner, IObserver<T> observer)
         {
             ObserveInternal(owner, observer, true);
         }
@@ -44,7 +57,7 @@ namespace ComicReader.Utils
             return _value;
         }
 
-        private void ObserveInternal(Page owner, Observer<T> observer, bool sticky)
+        private void ObserveInternal(Page owner, IObserver<T> observer, bool sticky)
         {
             if (owner == null || observer == null)
             {
@@ -75,7 +88,7 @@ namespace ComicReader.Utils
             }
         }
 
-        private void DispatchValue(Observer<T> initiator, T value)
+        private void DispatchValue(IObserver<T> initiator, T value)
         {
             if (_dispatchingValue)
             {
@@ -93,7 +106,7 @@ namespace ComicReader.Utils
                 }
                 else
                 {
-                    foreach (Observer<T> observer in _observers)
+                    foreach (IObserver<T> observer in _observers)
                     {
                         ConsiderNotify(observer, value);
                         if (_dispatchInvalidated)
@@ -106,11 +119,29 @@ namespace ComicReader.Utils
             _dispatchingValue = false;
         }
 
-        private void ConsiderNotify(Observer<T> observer, T value)
+        private void ConsiderNotify(IObserver<T> observer, T value)
         {
-            observer(value);
+            observer.OnChanged(value);
+        }
+
+        private class Observer<U> : IObserver<U>
+        {
+            private readonly Action<U> _action;
+
+            public Observer(Action<U> action)
+            {
+                _action = action;
+            }
+
+            public void OnChanged(U value)
+            {
+                _action(value);
+            }
         }
     }
 
-    internal delegate void Observer<T>(T value);
+    internal interface IObserver<T>
+    {
+        void OnChanged(T value);
+    }
 }

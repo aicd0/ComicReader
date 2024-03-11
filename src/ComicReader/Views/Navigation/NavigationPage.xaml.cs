@@ -264,7 +264,8 @@ namespace ComicReader.Views.Navigation
 
         private void OnAddToFavoritesClick(object sender, RoutedEventArgs e)
         {
-            ViewModel.IsFavoriteLiveData.Emit(!ViewModel.IsFavoriteLiveData.GetValue());
+            bool isFavorite = !ViewModel.IsFavoriteLiveData.GetValue();
+            ViewModel.IsFavoriteLiveData.Emit(isFavorite);
         }
 
         private void OnComicInfoClick(object sender, RoutedEventArgs e)

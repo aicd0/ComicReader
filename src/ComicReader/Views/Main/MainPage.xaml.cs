@@ -301,10 +301,7 @@ namespace ComicReader.Views.Main
                 frame.Navigate(bundle.PageTrait.GetPageType(), bundle);
             }
 
-            if (_currentTab == tabInfo)
-            {
-                OnPageChanged(tabInfo.CurrentBundle.PageTrait);
-            }
+            OnPageChanged();
         }
 
         private TabInfo GetTabInfo(int tabId)
@@ -366,25 +363,28 @@ namespace ComicReader.Views.Main
             }
 
             System.Diagnostics.Debug.Assert(_currentTab != null);
-            if (_currentTab != null)
-            {
-                OnPageChanged(_currentTab.CurrentBundle.PageTrait);
-            }
+            OnPageChanged();
         }
 
-        private void OnPageChanged(IPageTrait pageTrait)
+        private void OnPageChanged()
         {
             UpdateTopPadding();
 
-            if (!pageTrait.ImmersiveMode())
+            TabInfo currentTab = _currentTab;
+            if (currentTab != null)
             {
-                _titleBarAnimation?.Stop();
-                EventBus.Default.With<double>(EventId.TitleBarOpacity).Emit(1.0);
-            }
+                IPageTrait pageTrait = currentTab.CurrentBundle.PageTrait;
 
-            if (!pageTrait.SupportFullscreen())
-            {
-                ExitFullscreen();
+                if (!pageTrait.ImmersiveMode())
+                {
+                    _titleBarAnimation?.Stop();
+                    EventBus.Default.With<double>(EventId.TitleBarOpacity).Emit(1.0);
+                }
+
+                if (!pageTrait.SupportFullscreen())
+                {
+                    ExitFullscreen();
+                }
             }
         }
 
@@ -529,6 +529,7 @@ namespace ComicReader.Views.Main
             public void SetNavigationBundle(NavigationBundle bundle)
             {
                 _parent.GetTabInfo(_tabId).CurrentBundle = bundle;
+                _parent.OnPageChanged();
             }
 
             public void SetTitle(string title)
