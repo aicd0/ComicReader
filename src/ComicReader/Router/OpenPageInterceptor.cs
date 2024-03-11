@@ -1,4 +1,5 @@
-﻿using ComicReader.Views;
+﻿using ComicReader.Views.Favorite;
+using ComicReader.Views.History;
 using ComicReader.Views.Navigation;
 using System;
 

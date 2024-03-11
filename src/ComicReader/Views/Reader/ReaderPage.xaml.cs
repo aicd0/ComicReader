@@ -3,7 +3,6 @@
 #endif
 
 using ComicReader.Common.Constants;
-using ComicReader.Controls;
 using ComicReader.Database;
 using ComicReader.DesignData;
 using ComicReader.Router;

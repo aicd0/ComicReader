@@ -1,15 +1,14 @@
-<base:HomePageBase
+<home:HomePageBase
     x:Class="ComicReader.Views.Home.HomePage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:base="using:ComicReader.Views.Home"
-    xmlns:controls="using:ComicReader.Controls"
     xmlns:converters="using:ComicReader.Converters"
     xmlns:cwu="using:CommunityToolkit.WinUI.UI"
     xmlns:cwuc="using:CommunityToolkit.WinUI.UI.Controls"
     xmlns:cwum="using:CommunityToolkit.WinUI.UI.Media"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:data="using:ComicReader.DesignData"
+    xmlns:home="using:ComicReader.Views.Home"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Background="Transparent"
     mc:Ignorable="d">
@@ -120,14 +119,14 @@
             </Style>
 
             <DataTemplate x:Key="FolderItemNormalTemplate" x:DataType="data:FolderItemViewModel">
-                <controls:FolderItemDetailed
+                <home:FolderItemDetailed
                     Title="{x:Bind Folder}"
                     Detail="{x:Bind Path}"
                     Glyph="&#xE8B7;" />
             </DataTemplate>
 
             <DataTemplate x:Key="FolderItemAddNewTemplate" x:DataType="data:FolderItemViewModel">
-                <controls:FolderItemDetailed x:Uid="AddFolderControl" Glyph="&#xE8F4;" />
+                <home:FolderItemDetailed x:Uid="AddFolderControl" Glyph="&#xE8F4;" />
             </DataTemplate>
 
             <converters:FolderItemTemplateSelector
@@ -190,7 +189,7 @@
                     Style="{StaticResource HomePageAdaptiveGridViewStyle}">
                     <cwuc:AdaptiveGridView.ItemTemplate>
                         <DataTemplate x:DataType="data:ComicItemViewModel">
-                            <controls:ComicItemVertical DataContext="{x:Bind}" />
+                            <home:ComicItemVertical DataContext="{x:Bind}" />
                         </DataTemplate>
                     </cwuc:AdaptiveGridView.ItemTemplate>
                 </cwuc:AdaptiveGridView>
@@ -236,4 +235,4 @@
             </StackPanel>
         </ScrollViewer>
     </Grid>
-</base:HomePageBase>
+</home:HomePageBase>

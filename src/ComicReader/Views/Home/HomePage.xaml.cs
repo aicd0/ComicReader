@@ -1,4 +1,3 @@
-using ComicReader.Controls;
 using ComicReader.Database;
 using ComicReader.DesignData;
 using ComicReader.Router;

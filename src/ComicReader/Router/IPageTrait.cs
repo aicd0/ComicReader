@@ -1,4 +1,7 @@
+using ComicReader.Views.Help;
 using ComicReader.Views.Home;
+using ComicReader.Views.Search;
+using ComicReader.Views.Settings;
 using System;
 
 namespace ComicReader.Router
@@ -85,7 +88,7 @@ namespace ComicReader.Router
 
         public Type GetPageType()
         {
-            return typeof(Views.SearchPage);
+            return typeof(SearchPage);
         }
 
         public bool HasNavigationBar()
@@ -155,7 +158,7 @@ namespace ComicReader.Router
 
         public Type GetPageType()
         {
-            return typeof(Views.SettingsPage);
+            return typeof(SettingsPage);
         }
 
         public bool HasNavigationBar()
@@ -190,7 +193,7 @@ namespace ComicReader.Router
 
         public Type GetPageType()
         {
-            return typeof(Views.HelpPage);
+            return typeof(HelpPage);
         }
 
         public bool HasNavigationBar()

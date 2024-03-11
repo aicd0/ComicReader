@@ -1,6 +1,7 @@
 using ComicReader.Database;
 using ComicReader.Utils;
 using ComicReader.Views.Main;
+using ComicReader.Views.Settings;
 using Microsoft.AppCenter;
 using Microsoft.AppCenter.Analytics;
 using Microsoft.AppCenter.Crashes;
@@ -22,7 +23,7 @@ namespace ComicReader
         public App()
         {
             // get and apply the appearance setting.
-            object appearance_setting = ApplicationData.Current.LocalSettings.Values[Views.SettingsPage.AppearanceKey];
+            object appearance_setting = ApplicationData.Current.LocalSettings.Values[SettingsPage.AppearanceKey];
             if (appearance_setting != null)
             {
                 Current.RequestedTheme = (ApplicationTheme)(int)appearance_setting;

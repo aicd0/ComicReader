@@ -109,4 +109,12 @@
         <PackageReference Include="Microsoft.Graphics.Win2D" Version="1.1.1" />
         <PackageReference Include="Microsoft.Windows.Compatibility" Version="8.0.2" />
     </ItemGroup>
+    <ItemGroup>
+      <Folder Include="Views\Favorite\" />
+      <Folder Include="Views\History\" />
+      <Folder Include="Views\Help\" />
+      <Folder Include="Views\Reader\SettingPanel\" />
+      <Folder Include="Views\Search\" />
+      <Folder Include="Views\Settings\" />
+    </ItemGroup>
 </Project>
