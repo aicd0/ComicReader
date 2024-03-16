@@ -1,23 +1,31 @@
-﻿using ComicReader.Utils;
+﻿namespace ComicReader.Views.Navigation;
 
-namespace ComicReader.Views.Navigation;
 internal interface INavigationPageAbility
 {
-    LiveData<bool> GetPreviewButtonToggledLiveData();
+    public delegate void ExpandInfoPaneEventHandler();
+    public delegate void GridViewModeChangedEventHandler(bool enabled);
+    public delegate void FavoriteChangedEventHandler(bool isFavorite);
+    public delegate void ReaderSettingsChangedEventHandler(ReaderSettingDataModel settings);
 
-    LiveData<ReaderSettingDataModel> GetReaderSettingLiveData();
+    void RegisterReaderSettingsChangedEventHandler(ReaderSettingsChangedEventHandler handler);
 
-    LiveData<bool> GetIsExternalLiveData();
+    void SetReaderSettings(ReaderSettingDataModel settings);
 
-    LiveData<bool> GetIsFavoriteLiveData();
+    void SetExternalComic(bool isExternal);
 
-    LiveData<bool> GetIsPreviewModeLiveData();
+    void RegisterFavoriteChangedEventHandler(FavoriteChangedEventHandler onFavoriteChanged);
 
-    LiveData<bool> GetExpandInfoPaneLiveData();
+    void SetFavorite(bool isFavorite);
 
-    LiveData<bool> GetIsSidePaneOnLiveData();
+    void RegisterGridViewModeChangedHandler(GridViewModeChangedEventHandler handler);
 
-    LiveData<bool> GetRefreshLiveData();
+    void SetGridViewMode(bool enabled);
+
+    void RegisterExpandInfoPaneHandler(ExpandInfoPaneEventHandler handler);
+
+    bool GetIsSidePaneOpen();
+
+    void SetIsSidePaneOpen(bool isOpen);
 
     void SetSearchBox(string text);
 }

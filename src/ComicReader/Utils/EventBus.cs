@@ -7,19 +7,19 @@ namespace ComicReader.Utils
         public static readonly EventBus Default = new EventBus();
         private readonly Dictionary<string, object> _topics = new Dictionary<string, object>();
 
-        public LiveData<T> With<T>(string eventId)
+        public MutableLiveData<T> With<T>(string eventId)
         {
             if (_topics.TryGetValue(eventId, out object topic))
             {
-                return topic as LiveData<T>;
+                return topic as MutableLiveData<T>;
             }
 
-            var newTopic = new LiveData<T>();
+            var newTopic = new MutableLiveData<T>();
             _topics.Add(eventId, newTopic);
             return newTopic;
         }
 
-        public LiveData<object> With(string eventId)
+        public MutableLiveData<object> With(string eventId)
         {
             return With<object>(eventId);
         }

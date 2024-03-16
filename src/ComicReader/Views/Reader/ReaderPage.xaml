@@ -300,8 +300,12 @@
                     Style="{StaticResource ReaderScrollViewerStyle}"
                     ViewChanged="OnVerticalReaderScrollViewerViewChanged"
                     ZoomMode="Enabled">
-                    <Grid HorizontalAlignment="Center" IsHitTestVisible="False">
+                    <Grid
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Top"
+                        IsHitTestVisible="False">
                         <ListView
+                            VerticalAlignment="Top"
                             ContainerContentChanging="OnReaderContainerContentChanging"
                             ItemsSource="{x:Bind VerticalReader.DataSource, Mode=OneWay}"
                             Loaded="OnVerticalReaderListViewLoaded"

@@ -300,7 +300,7 @@ sealed internal partial class FavoritePage : FavoritePageBase
                     Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
                         .WithParam(RouterConstants.ARG_COMIC_ID, comic.Id.ToString());
                     GetMainPageAbility().OpenInCurrentTab(route);
-                    GetNavigationPageAbility().GetIsSidePaneOnLiveData().Emit(false);
+                    GetNavigationPageAbility().SetIsSidePaneOpen(false);
                 }
             }
         });

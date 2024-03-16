@@ -25,7 +25,6 @@ namespace ComicReader.Views.Main
     {
         public static MainPage Current = null;
         private static FileActivatedEventArgs s_startupFileArgs;
-        private LiveData<bool> _fullscreenLiveData = new(false);
 
         private readonly List<TabInfo> _tabs = new List<TabInfo>();
         private TabInfo _currentTab;
@@ -35,6 +34,8 @@ namespace ComicReader.Views.Main
         private double _rootTabHeight = 0;
         private double _navigationBarHeight = 0;
         private KeyFrameAnimation _titleBarAnimation;
+
+        private event IMainPageAbility.FullscreenChangedEventHandler FullscreenChanged;
 
         public MainPage()
         {
@@ -472,7 +473,7 @@ namespace ComicReader.Views.Main
             }
 
             App.Window.AppWindow.SetPresenter(AppWindowPresenterKind.FullScreen);
-            _fullscreenLiveData.Emit(true);
+            FullscreenChanged?.Invoke(true);
         }
 
         public void ExitFullscreen()
@@ -483,7 +484,7 @@ namespace ComicReader.Views.Main
             }
 
             App.Window.AppWindow.SetPresenter(AppWindowPresenterKind.Default);
-            _fullscreenLiveData.Emit(false);
+            FullscreenChanged?.Invoke(false);
         }
 
         private void OnRootGridSizeChanged(object sender, SizeChangedEventArgs e)
@@ -510,15 +511,15 @@ namespace ComicReader.Views.Main
                 _tabId = tabId;
             }
 
-            public LiveData<bool> GetIsFullscreenLiveData()
-            {
-                return _parent._fullscreenLiveData;
-            }
-
             public void OpenInCurrentTab(Route route)
             {
                 NavigationBundle bundle = route.Process();
                 _parent.LoadTab(_tabId, bundle);
+            }
+
+            public void RegisterFullscreenChangedHandler(IMainPageAbility.FullscreenChangedEventHandler handler)
+            {
+                _parent.FullscreenChanged += handler;
             }
 
             public void SetIcon(IconSource icon)

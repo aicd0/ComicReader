@@ -216,8 +216,6 @@
                 DisplayMode="Overlay"
                 OpenPaneLength="380"
                 PaneBackground="{ThemeResource SidePaneBackground}"
-                PaneClosed="NavigationPageSidePane_PaneClosed"
-                PaneOpened="OnSidePaneOpened"
                 PanePlacement="Right">
                 <SplitView.Pane>
                     <navigation:SidePane Navigating="SidePane_Navigating" />

@@ -145,6 +145,11 @@ namespace ComicReader.Views.Reader
                 ReaderFrameViewModel frame = DataSource[begin];
                 FrameOffsetData frame_offsets = FrameOffsets(begin);
 
+                if (frame_offsets == null)
+                {
+                    return false;
+                }
+
                 // Convert offset to page.
                 int page_min;
                 int page_max;

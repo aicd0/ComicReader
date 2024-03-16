@@ -19,61 +19,20 @@ namespace ComicReader.Views.Navigation
         private double _navigationBarHeight = 0;
         private NavigationBundle _currentBundle;
 
+        private event INavigationPageAbility.ExpandInfoPaneEventHandler ExpandInfoPane;
+        private event INavigationPageAbility.GridViewModeChangedEventHandler GridViewModeChanged;
+        private event INavigationPageAbility.ReaderSettingsChangedEventHandler ReaderSettingsChanged;
+        private event INavigationPageAbility.FavoriteChangedEventHandler FavoriteChanged;
+
         public NavigationPage()
         {
             InitializeComponent();
-        }
-
-        protected override void OnStart(PageBundle bundle)
-        {
-            base.OnStart(bundle);
-            RspReaderSetting.SetData(ViewModel.ReaderSettingLiveData.GetValue());
         }
 
         protected override void OnResume()
         {
             base.OnResume();
             ObserveData();
-        }
-
-        public LiveData<bool> GetPreviewButtonToggledLiveData()
-        {
-            return ViewModel.IsPreviewButtonToggledLiveData;
-        }
-
-        public LiveData<ReaderSettingDataModel> GetReaderSettingLiveData()
-        {
-            return ViewModel.ReaderSettingLiveData;
-        }
-
-        public LiveData<bool> GetIsExternalLiveData()
-        {
-            return ViewModel.IsExternalLiveData;
-        }
-
-        public LiveData<bool> GetIsFavoriteLiveData()
-        {
-            return ViewModel.IsFavoriteLiveData;
-        }
-
-        public LiveData<bool> GetIsPreviewModeLiveData()
-        {
-            return ViewModel.IsPreviewButtonToggledLiveData;
-        }
-
-        public LiveData<bool> GetExpandInfoPaneLiveData()
-        {
-            return ViewModel.ExpandInfoPaneLiveData;
-        }
-
-        public LiveData<bool> GetIsSidePaneOnLiveData()
-        {
-            return ViewModel.IsSidePaneOnLiveData;
-        }
-
-        public LiveData<bool> GetRefreshLiveData()
-        {
-            return ViewModel.RefreshLiveData;
         }
 
         private void ObserveData()
@@ -90,27 +49,20 @@ namespace ComicReader.Views.Navigation
                 TopTile.IsHitTestVisible = opacity > 0.5;
             });
 
-            ViewModel.IsPreviewButtonToggledLiveData.ObserveSticky(this, delegate (bool toggled)
+            ViewModel.GridViewModeEnabledLiveData.ObserveSticky(this, new ChangedObserver<bool>(delegate (bool toggled)
             {
-                if (AbtbPreviewButton.IsChecked != toggled)
-                {
-                    AbtbPreviewButton.IsChecked = toggled;
-                }
-            });
+                AbtbPreviewButton.IsChecked = toggled;
+            }));
 
-            ViewModel.IsFavoriteLiveData.Observe(this, delegate (bool isFavorite)
+            ViewModel.IsFavoriteLiveData.ObserveSticky(this, new ChangedObserver<bool>(delegate (bool isFavorite)
             {
                 FiFavoriteFilled.Visibility = isFavorite ? Visibility.Visible : Visibility.Collapsed;
                 FiFavoriteUnfilled.Visibility = isFavorite ? Visibility.Collapsed : Visibility.Visible;
                 string toolTip = isFavorite ? StringResourceProvider.GetResourceString("RemoveFromFavorites") :
                     StringResourceProvider.GetResourceString("AddToFavorites");
                 ToolTipService.SetToolTip(AbbAddToFavorite, toolTip);
-            });
-
-            ViewModel.IsExternalLiveData.Observe(this, delegate (bool isExternal)
-            {
-                AbbAddToFavorite.IsEnabled = !isExternal;
-            });
+                FavoriteChanged?.Invoke(isFavorite);
+            }));
         }
 
         public void Navigate(NavigationBundle bundle)
@@ -239,7 +191,7 @@ namespace ComicReader.Views.Navigation
 
         private void OnRefreshClick(object sender, RoutedEventArgs e)
         {
-            ViewModel.RefreshLiveData.Emit(true);
+            // TODO implement refresh feature
         }
 
         private void OnFavoritesClick(object sender, RoutedEventArgs e)
@@ -265,18 +217,12 @@ namespace ComicReader.Views.Navigation
         private void OnAddToFavoritesClick(object sender, RoutedEventArgs e)
         {
             bool isFavorite = !ViewModel.IsFavoriteLiveData.GetValue();
-            ViewModel.IsFavoriteLiveData.Emit(isFavorite);
+            ViewModel.SetIsFavorite(isFavorite);
         }
 
         private void OnComicInfoClick(object sender, RoutedEventArgs e)
         {
-            ViewModel.ExpandInfoPaneLiveData.Emit(true);
-        }
-
-        // Side pane
-        private void OnSidePaneOpened(SplitView sender, object args)
-        {
-            ViewModel.IsSidePaneOnLiveData.Emit(true);
+            ExpandInfoPane?.Invoke();
         }
 
         // Pointer events
@@ -308,28 +254,73 @@ namespace ComicReader.Views.Navigation
 
         private void AbtbPreviewButton_Checked(object sender, RoutedEventArgs e)
         {
-            ViewModel.IsPreviewButtonToggledLiveData.Emit(true);
+            GridViewModeChanged?.Invoke(true);
         }
 
         private void AbtbPreviewButton_Unchecked(object sender, RoutedEventArgs e)
         {
-            ViewModel.IsPreviewButtonToggledLiveData.Emit(false);
+            GridViewModeChanged?.Invoke(false);
         }
 
         private void RspReaderSetting_DataChanged(ReaderSettingDataModel data)
         {
-            ViewModel.ReaderSettingLiveData.Emit(data);
-        }
-
-        private void NavigationPageSidePane_PaneClosed(SplitView sender, object args)
-        {
-            ViewModel.IsSidePaneOnLiveData.Emit(false);
+            ReaderSettingsChanged?.Invoke(data);
         }
 
         private void SidePane_Navigating(NavigationBundle bundle)
         {
             TransferAbilities(bundle);
             bundle.Abilities[typeof(INavigationPageAbility)] = this;
+        }
+
+        public void SetIsSidePaneOpen(bool isOpen)
+        {
+            NavigationPageSidePane.IsPaneOpen = isOpen;
+        }
+
+        public bool GetIsSidePaneOpen()
+        {
+            return NavigationPageSidePane.IsPaneOpen;
+        }
+
+        public void RegisterReaderSettingsChangedEventHandler(INavigationPageAbility.ReaderSettingsChangedEventHandler handler)
+        {
+            ReaderSettingsChanged += handler;
+        }
+
+        public void SetExternalComic(bool isExternal)
+        {
+            AbbAddToFavorite.IsEnabled = !isExternal;
+        }
+
+        public void RegisterFavoriteChangedEventHandler(INavigationPageAbility.FavoriteChangedEventHandler onFavoriteChanged)
+        {
+            FavoriteChanged += onFavoriteChanged;
+        }
+
+        public void SetFavorite(bool isFavorite)
+        {
+            ViewModel.SetIsFavorite(isFavorite);
+        }
+
+        public void RegisterGridViewModeChangedHandler(INavigationPageAbility.GridViewModeChangedEventHandler handler)
+        {
+            GridViewModeChanged += handler;
+        }
+
+        public void SetGridViewMode(bool enabled)
+        {
+            ViewModel.SetGridViewMode(enabled);
+        }
+
+        public void RegisterExpandInfoPaneHandler(INavigationPageAbility.ExpandInfoPaneEventHandler handler)
+        {
+            ExpandInfoPane += handler;
+        }
+
+        public void SetReaderSettings(ReaderSettingDataModel settings)
+        {
+            RspReaderSetting.SetData(settings);
         }
     }
 }

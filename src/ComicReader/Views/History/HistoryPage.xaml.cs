@@ -106,7 +106,7 @@ sealed internal partial class HistoryPage : HistoryPageBase
                 GetMainPageAbility().OpenInCurrentTab(route);
             }
 
-            GetNavigationPageAbility().GetIsSidePaneOnLiveData().Emit(false);
+            GetNavigationPageAbility().SetIsSidePaneOpen(false);
         }
     }
 

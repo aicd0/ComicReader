@@ -20,13 +20,33 @@ internal class ReaderPageViewModel : BaseViewModel
     private volatile bool _updatingProgress = false;
     private bool _isFavorite = false;
 
-    public LiveData<ReaderStatusEnum> ReaderStatusLiveData { get; } = new(ReaderStatusEnum.Loading);
-    public LiveData<bool> GridViewVisibleLiveData { get; } = new();
-    public LiveData<bool> VerticalReaderVisibleLiveData { get; } = new();
-    public LiveData<bool> HorizontalReaderVisibleLiveData { get; } = new();
-    public LiveData<ReaderSettingDataModel> ReaderSettingsLiveData
+    public MutableLiveData<ReaderStatusEnum> ReaderStatusLiveData { get; } = new(ReaderStatusEnum.Loading);
+
+    private MutableLiveData<bool> _gridViewVisibleLiveData = new();
+    public LiveData<bool> GridViewVisibleLiveData => _gridViewVisibleLiveData;
+
+    private MutableLiveData<bool> _verticalReaderVisibleLiveData = new(false);
+    public LiveData<bool> VerticalReaderVisibleLiveData => _verticalReaderVisibleLiveData;
+
+    private MutableLiveData<bool> _horizontalReaderVisibleLiveData = new();
+    public LiveData<bool> HorizontalReaderVisibleLiveData => _horizontalReaderVisibleLiveData;
+
+    private MutableLiveData<ReaderSettingDataModel> _readerSettingsLiveData = new(AppDataRepository.ReaderSettings);
+    public LiveData<ReaderSettingDataModel> ReaderSettingsLiveData => _readerSettingsLiveData;
+
+    private MutableLiveData<bool> _isExternalComicLiveData = new(true);
+    public LiveData<bool> IsExternalComicLiveData => _isExternalComicLiveData;
+
+    private bool _gridViewModeEnabled = false;
+    public bool GridViewModeEnabled
     {
-        get => GetNavigationPageAbility().GetReaderSettingLiveData();
+        get => _gridViewModeEnabled;
+        set
+        {
+            _gridViewModeEnabled = value;
+            UpdateReaderUI();
+            GetNavigationPageAbility().SetGridViewMode(value);
+        }
     }
 
     public override void OnPause()
@@ -39,17 +59,22 @@ internal class ReaderPageViewModel : BaseViewModel
         }
     }
 
+    public void SetReaderSettings(ReaderSettingDataModel settings)
+    {
+        _readerSettingsLiveData.Emit(settings);
+    }
+
     public void UpdateReaderUI()
     {
         bool isWorking = ReaderStatusLiveData.GetValue() == ReaderStatusEnum.Working;
-        bool previewVisible = isWorking && GetNavigationPageAbility().GetPreviewButtonToggledLiveData().GetValue();
+        bool previewVisible = isWorking && _gridViewModeEnabled;
         bool readerVisible = isWorking && !previewVisible;
         bool verticalReaderVisible = readerVisible && ReaderSettingsLiveData.GetValue().IsVertical;
         bool horizontalReaderVisible = readerVisible && !verticalReaderVisible;
 
-        GridViewVisibleLiveData.Emit(previewVisible);
-        VerticalReaderVisibleLiveData.Emit(verticalReaderVisible);
-        HorizontalReaderVisibleLiveData.Emit(horizontalReaderVisible);
+        _gridViewVisibleLiveData.Emit(previewVisible);
+        _verticalReaderVisibleLiveData.Emit(verticalReaderVisible);
+        _horizontalReaderVisibleLiveData.Emit(horizontalReaderVisible);
     }
 
     public async Task LoadComic(ComicData comic, ReaderPage page)
@@ -172,7 +197,7 @@ internal class ReaderPageViewModel : BaseViewModel
 
     public void SetIsFavorite(bool isFavorite)
     {
-        GetNavigationPageAbility().GetIsFavoriteLiveData().Emit(isFavorite);
+        GetNavigationPageAbility().SetFavorite(isFavorite);
 
         if (_isFavorite != isFavorite)
         {
@@ -204,7 +229,7 @@ internal class ReaderPageViewModel : BaseViewModel
             return;
         }
 
-        GetNavigationPageAbility().GetIsExternalLiveData().Emit(_comic.IsExternal);
+        _isExternalComicLiveData.Emit(_comic.IsExternal);
 
         if (_comic.Title1.Length == 0)
         {

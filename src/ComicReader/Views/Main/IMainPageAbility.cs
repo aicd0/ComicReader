@@ -1,10 +1,12 @@
 ﻿using ComicReader.Router;
-using ComicReader.Utils;
 using Microsoft.UI.Xaml.Controls;
 
 namespace ComicReader.Views.Main;
+
 internal interface IMainPageAbility
 {
+    public delegate void FullscreenChangedEventHandler(bool isFullscreen);
+
     void SetNavigationBundle(NavigationBundle bundle);
 
     void OpenInCurrentTab(Route route);
@@ -13,5 +15,5 @@ internal interface IMainPageAbility
 
     void SetIcon(IconSource icon);
 
-    LiveData<bool> GetIsFullscreenLiveData();
+    void RegisterFullscreenChangedHandler(FullscreenChangedEventHandler handler);
 }

@@ -203,7 +203,8 @@ namespace ComicReader.Views.Reader
         {
             base.OnResume();
             ObserveData();
-            GetNavigationPageAbility().GetPreviewButtonToggledLiveData().Emit(false);
+            GetNavigationPageAbility().SetGridViewMode(false);
+            GetNavigationPageAbility().SetReaderSettings(ViewModel.ReaderSettingsLiveData.GetValue());
             OnReaderContinuousChanged();
             ViewModel.UpdateReaderUI();
 
@@ -232,17 +233,20 @@ namespace ComicReader.Views.Reader
 
         private void ObserveData()
         {
-            GetNavigationPageAbility().GetIsPreviewModeLiveData().Observe(this, delegate (bool isPreviewMode)
+            GetNavigationPageAbility().RegisterGridViewModeChangedHandler(delegate (bool enabled)
             {
-                ViewModel.UpdateReaderUI();
+                ViewModel.GridViewModeEnabled = enabled;
             });
 
-            GetNavigationPageAbility().GetExpandInfoPaneLiveData().Observe(this, delegate
+            GetNavigationPageAbility().RegisterExpandInfoPaneHandler(delegate
             {
-                ExpandInfoPane();
+                if (InfoPane != null)
+                {
+                    InfoPane.IsPaneOpen = true;
+                }
             });
 
-            GetMainPageAbility().GetIsFullscreenLiveData().Observe(this, delegate (bool isFullscreen)
+            GetMainPageAbility().RegisterFullscreenChangedHandler(delegate (bool isFullscreen)
             {
                 Shared.IsFullscreen = isFullscreen;
             });
@@ -258,7 +262,7 @@ namespace ComicReader.Views.Reader
                 BottomGrid.Opacity = opacity;
             });
 
-            GetNavigationPageAbility().GetReaderSettingLiveData().Observe(this, delegate (ReaderSettingDataModel setting)
+            GetNavigationPageAbility().RegisterReaderSettingsChangedEventHandler(delegate (ReaderSettingDataModel setting)
             {
                 SvHorizontalReader.FlowDirection = setting.IsLeftToRight ? FlowDirection.LeftToRight : FlowDirection.RightToLeft;
                 ViewModel.UpdateReaderUI();
@@ -287,17 +291,20 @@ namespace ComicReader.Views.Reader
                 }
             });
 
-            GetNavigationPageAbility().GetIsExternalLiveData().Observe(this, delegate (bool isExternal)
+            ViewModel.IsExternalComicLiveData.ObserveSticky(this, delegate (bool isExternal)
             {
                 RcRating.Visibility = isExternal ? Visibility.Collapsed : Visibility.Visible;
                 FavoriteBt.IsEnabled = !isExternal;
+                GetNavigationPageAbility().SetExternalComic(isExternal);
             });
 
-            GetNavigationPageAbility().GetIsFavoriteLiveData().Observe(this, new ChangedObserver<bool>(delegate (bool isFavorite)
+            GetNavigationPageAbility().RegisterFavoriteChangedEventHandler(delegate (bool isFavorite)
             {
                 FavoriteBt.IsChecked = isFavorite;
                 ViewModel.SetIsFavorite(isFavorite);
-            }));
+            });
+
+            GetNavigationPageAbility().RegisterReaderSettingsChangedEventHandler(ViewModel.SetReaderSettings);
 
             ViewModel.ReaderStatusLiveData.Observe(this, delegate (ReaderStatusEnum status)
             {
@@ -345,7 +352,7 @@ namespace ComicReader.Views.Reader
         // Utilities
         public ReaderViewController GetCurrentReader()
         {
-            if (GetNavigationPageAbility().GetReaderSettingLiveData().GetValue().IsVertical)
+            if (ViewModel.ReaderSettingsLiveData.GetValue().IsVertical)
             {
                 return VerticalReader;
             }
@@ -409,7 +416,7 @@ namespace ComicReader.Views.Reader
 
         private void OnReaderContinuousChanged()
         {
-            _gestureRecognizer.AutoProcessInertia = GetNavigationPageAbility().GetReaderSettingLiveData().GetValue().IsContinuous;
+            _gestureRecognizer.AutoProcessInertia = ViewModel.ReaderSettingsLiveData.GetValue().IsContinuous;
         }
 
         private void OnReaderScrollViewerViewChanged(ReaderViewController control, ScrollViewerViewChangedEventArgs e)
@@ -504,7 +511,7 @@ namespace ComicReader.Views.Reader
         private void OnGridViewItemClicked(object sender, ItemClickEventArgs e)
         {
             var ctx = (ReaderImagePreviewViewModel)e.ClickedItem;
-            GetNavigationPageAbility().GetIsPreviewModeLiveData().Emit(false);
+            ViewModel.GridViewModeEnabled = false;
 
             ReaderViewController reader = GetCurrentReader();
             if (reader == null)
@@ -650,15 +657,6 @@ namespace ComicReader.Views.Reader
             ViewModel.SetIsFavorite(false);
         }
 
-        // Info Pane
-        public void ExpandInfoPane()
-        {
-            if (InfoPane != null)
-            {
-                InfoPane.IsPaneOpen = true;
-            }
-        }
-
         private void OnRatingControlValueChanged(RatingControl sender, object args)
         {
             ViewModel.GetComic().SaveRating((int)sender.Value);
@@ -746,12 +744,12 @@ namespace ComicReader.Views.Reader
                 return;
             }
 
-            if (GetNavigationPageAbility().GetIsPreviewModeLiveData().GetValue())
+            if (ViewModel.GridViewModeEnabled)
             {
                 return;
             }
 
-            if (GetNavigationPageAbility().GetIsSidePaneOnLiveData().GetValue())
+            if (GetNavigationPageAbility().GetIsSidePaneOpen())
             {
                 return;
             }
@@ -854,7 +852,7 @@ namespace ComicReader.Views.Reader
                 switch (e.Key)
                 {
                     case VirtualKey.Right:
-                        if (reader.IsHorizontal && !GetNavigationPageAbility().GetReaderSettingLiveData().GetValue().IsLeftToRight)
+                        if (reader.IsHorizontal && !ViewModel.ReaderSettingsLiveData.GetValue().IsLeftToRight)
                         {
                             await reader.MoveFrame(-1);
                         }
@@ -866,7 +864,7 @@ namespace ComicReader.Views.Reader
                         break;
 
                     case VirtualKey.Left:
-                        if (reader.IsHorizontal && !GetNavigationPageAbility().GetReaderSettingLiveData().GetValue().IsLeftToRight)
+                        if (reader.IsHorizontal && !ViewModel.ReaderSettingsLiveData.GetValue().IsLeftToRight)
                         {
                             await reader.MoveFrame(1);
                         }
