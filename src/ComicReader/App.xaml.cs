@@ -10,15 +10,12 @@ using Microsoft.Windows.AppLifecycle;
 using System;
 using Windows.ApplicationModel.Activation;
 using Windows.Storage;
-using WinRT.Interop;
 
 namespace ComicReader
 {
     public partial class App : Application
     {
         public static MainWindow Window { get; private set; }
-
-        public static IntPtr WindowHandle { get; private set; }
 
         public App()
         {
@@ -62,7 +59,6 @@ namespace ComicReader
 
             // Initialize MainWindow here
             Window = new MainWindow();
-            WindowHandle = WindowNative.GetWindowHandle(Window);
             Window.Activate();
 
             mainInstance.Activated += OnActivated;

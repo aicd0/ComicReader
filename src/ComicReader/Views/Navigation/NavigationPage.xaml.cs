@@ -8,25 +8,23 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
+using System;
 
 namespace ComicReader.Views.Navigation
 {
     internal class NavigationPageBase : BasePage<NavigationPageViewModel>;
 
-    sealed internal partial class NavigationPage : NavigationPageBase, INavigationPageAbility
+    sealed internal partial class NavigationPage : NavigationPageBase
     {
         private double _rootTabHeight = 0;
         private double _navigationBarHeight = 0;
         private NavigationBundle _currentBundle;
-
-        private event INavigationPageAbility.ExpandInfoPaneEventHandler ExpandInfoPane;
-        private event INavigationPageAbility.GridViewModeChangedEventHandler GridViewModeChanged;
-        private event INavigationPageAbility.ReaderSettingsChangedEventHandler ReaderSettingsChanged;
-        private event INavigationPageAbility.FavoriteChangedEventHandler FavoriteChanged;
+        private NavigationPageAbility _ability;
 
         public NavigationPage()
         {
             InitializeComponent();
+            _ability = new(this);
         }
 
         protected override void OnResume()
@@ -61,7 +59,7 @@ namespace ComicReader.Views.Navigation
                 string toolTip = isFavorite ? StringResourceProvider.GetResourceString("RemoveFromFavorites") :
                     StringResourceProvider.GetResourceString("AddToFavorites");
                 ToolTipService.SetToolTip(AbbAddToFavorite, toolTip);
-                FavoriteChanged?.Invoke(isFavorite);
+                _ability.SendFavoriteChangedEvent(isFavorite);
             }));
         }
 
@@ -69,7 +67,7 @@ namespace ComicReader.Views.Navigation
         {
             ContentFrame.Navigated += OnPageChanged;
             TransferAbilities(bundle);
-            bundle.Abilities[typeof(INavigationPageAbility)] = this;
+            bundle.Abilities[typeof(INavigationPageAbility)] = _ability;
             if (!ContentFrame.Navigate(bundle.PageTrait.GetPageType(), bundle))
             {
                 return;
@@ -222,7 +220,7 @@ namespace ComicReader.Views.Navigation
 
         private void OnComicInfoClick(object sender, RoutedEventArgs e)
         {
-            ExpandInfoPane?.Invoke();
+            _ability.SendExpandInfoPaneEvent();
         }
 
         // Pointer events
@@ -254,73 +252,140 @@ namespace ComicReader.Views.Navigation
 
         private void AbtbPreviewButton_Checked(object sender, RoutedEventArgs e)
         {
-            GridViewModeChanged?.Invoke(true);
+            _ability.SendGridViewModeChangedEvent(true);
         }
 
         private void AbtbPreviewButton_Unchecked(object sender, RoutedEventArgs e)
         {
-            GridViewModeChanged?.Invoke(false);
+            _ability.SendGridViewModeChangedEvent(false);
         }
 
         private void RspReaderSetting_DataChanged(ReaderSettingDataModel data)
         {
-            ReaderSettingsChanged?.Invoke(data);
+            _ability.SendReaderSettingsChangedEvent(data);
         }
 
         private void SidePane_Navigating(NavigationBundle bundle)
         {
             TransferAbilities(bundle);
-            bundle.Abilities[typeof(INavigationPageAbility)] = this;
+            bundle.Abilities[typeof(INavigationPageAbility)] = _ability;
         }
 
-        public void SetIsSidePaneOpen(bool isOpen)
+        private class NavigationPageAbility : INavigationPageAbility
         {
-            NavigationPageSidePane.IsPaneOpen = isOpen;
-        }
+            private const string EVENT_EXPAND_INFO_PANE = "ExpandInfoPane";
+            private const string EVENT_FAVORITE_CHANGED = "FavoriteChanged";
+            private const string EVENT_GRID_VIEW_MODE_CHANGED = "GridViewModeChanged";
+            private const string EVENT_READER_SETTINGS_CHANGED = "ReaderSettingsChanged";
 
-        public bool GetIsSidePaneOpen()
-        {
-            return NavigationPageSidePane.IsPaneOpen;
-        }
+            private WeakReference<NavigationPage> _parent;
+            private EventBus _eventBus = new EventBus();
 
-        public void RegisterReaderSettingsChangedEventHandler(INavigationPageAbility.ReaderSettingsChangedEventHandler handler)
-        {
-            ReaderSettingsChanged += handler;
-        }
+            public NavigationPageAbility(NavigationPage parent)
+            {
+                _parent = new WeakReference<NavigationPage>(parent);
+            }
 
-        public void SetExternalComic(bool isExternal)
-        {
-            AbbAddToFavorite.IsEnabled = !isExternal;
-        }
+            public bool GetIsSidePaneOpen()
+            {
+                if (!_parent.TryGetTarget(out NavigationPage parent))
+                    return false;
+                return parent.NavigationPageSidePane.IsPaneOpen;
+            }
 
-        public void RegisterFavoriteChangedEventHandler(INavigationPageAbility.FavoriteChangedEventHandler onFavoriteChanged)
-        {
-            FavoriteChanged += onFavoriteChanged;
-        }
+            public void SetExternalComic(bool isExternal)
+            {
+                if (!_parent.TryGetTarget(out NavigationPage parent))
+                    return;
+                parent.AbbAddToFavorite.IsEnabled = !isExternal;
+            }
 
-        public void SetFavorite(bool isFavorite)
-        {
-            ViewModel.SetIsFavorite(isFavorite);
-        }
+            public void SetFavorite(bool isFavorite)
+            {
+                if (!_parent.TryGetTarget(out NavigationPage parent))
+                    return;
+                parent.ViewModel.SetIsFavorite(isFavorite);
+            }
 
-        public void RegisterGridViewModeChangedHandler(INavigationPageAbility.GridViewModeChangedEventHandler handler)
-        {
-            GridViewModeChanged += handler;
-        }
+            public void SetGridViewMode(bool enabled)
+            {
+                if (!_parent.TryGetTarget(out NavigationPage parent))
+                    return;
+                parent.ViewModel.SetGridViewMode(enabled);
+            }
 
-        public void SetGridViewMode(bool enabled)
-        {
-            ViewModel.SetGridViewMode(enabled);
-        }
+            public void SetIsSidePaneOpen(bool isOpen)
+            {
+                if (!_parent.TryGetTarget(out NavigationPage parent))
+                    return;
+                parent.NavigationPageSidePane.IsPaneOpen = isOpen;
+            }
 
-        public void RegisterExpandInfoPaneHandler(INavigationPageAbility.ExpandInfoPaneEventHandler handler)
-        {
-            ExpandInfoPane += handler;
-        }
+            public void SetReaderSettings(ReaderSettingDataModel settings)
+            {
+                if (!_parent.TryGetTarget(out NavigationPage parent))
+                    return;
+                parent.RspReaderSetting.SetData(settings);
+            }
 
-        public void SetReaderSettings(ReaderSettingDataModel settings)
-        {
-            RspReaderSetting.SetData(settings);
+            public void SetSearchBox(string text)
+            {
+                if (!_parent.TryGetTarget(out NavigationPage parent))
+                    return;
+                parent.SetSearchBox(text);
+            }
+
+            public void RegisterExpandInfoPaneHandler(Page owner, INavigationPageAbility.ExpandInfoPaneEventHandler handler)
+            {
+                _eventBus.With<bool>(EVENT_EXPAND_INFO_PANE).Observe(owner, delegate
+                {
+                    handler();
+                });
+            }
+
+            public void SendExpandInfoPaneEvent()
+            {
+                _eventBus.With<bool>(EVENT_EXPAND_INFO_PANE).Emit(true);
+            }
+
+            public void RegisterFavoriteChangedEventHandler(Page owner, INavigationPageAbility.FavoriteChangedEventHandler handler)
+            {
+                _eventBus.With<bool>(EVENT_FAVORITE_CHANGED).Observe(owner, delegate (bool isFavorite)
+                {
+                    handler(isFavorite);
+                });
+            }
+
+            public void SendFavoriteChangedEvent(bool isFavorite)
+            {
+                _eventBus.With<bool>(EVENT_FAVORITE_CHANGED).Emit(isFavorite);
+            }
+
+            public void RegisterGridViewModeChangedHandler(Page owner, INavigationPageAbility.GridViewModeChangedEventHandler handler)
+            {
+                _eventBus.With<bool>(EVENT_GRID_VIEW_MODE_CHANGED).Observe(owner, delegate (bool isGridViewMode)
+                {
+                    handler(isGridViewMode);
+                });
+            }
+
+            public void SendGridViewModeChangedEvent(bool isGridViewMode)
+            {
+                _eventBus.With<bool>(EVENT_GRID_VIEW_MODE_CHANGED).Emit(isGridViewMode);
+            }
+
+            public void RegisterReaderSettingsChangedEventHandler(Page owner, INavigationPageAbility.ReaderSettingsChangedEventHandler handler)
+            {
+                _eventBus.With<ReaderSettingDataModel>(EVENT_READER_SETTINGS_CHANGED).Observe(owner, delegate (ReaderSettingDataModel settings)
+                {
+                    handler(settings);
+                });
+            }
+
+            public void SendReaderSettingsChangedEvent(ReaderSettingDataModel settings)
+            {
+                _eventBus.With<ReaderSettingDataModel>(EVENT_READER_SETTINGS_CHANGED).Emit(settings);
+            }
         }
     }
 }

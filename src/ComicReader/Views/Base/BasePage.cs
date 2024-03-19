@@ -45,7 +45,7 @@ internal abstract class BasePage<VM> : StatefulPage where VM : BaseViewModel, ne
 
     protected void TransferAbilities(NavigationBundle bundle)
     {
-        foreach (KeyValuePair<Type, object> entry in _bundle.Abilities)
+        foreach (KeyValuePair<Type, IPageAbility> entry in _bundle.Abilities)
         {
             bundle.Abilities[entry.Key] = entry.Value;
         }
@@ -53,7 +53,7 @@ internal abstract class BasePage<VM> : StatefulPage where VM : BaseViewModel, ne
 
     protected T GetAbility<T>() where T : class
     {
-        if (_bundle.Abilities.TryGetValue(typeof(T), out object value))
+        if (_bundle.Abilities.TryGetValue(typeof(T), out IPageAbility value))
         {
             return (T)value;
         }

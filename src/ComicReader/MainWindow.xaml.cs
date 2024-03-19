@@ -7,15 +7,19 @@ using Microsoft.UI.Xaml.Media;
 using System;
 using System.Text.Json;
 using Windows.Storage;
+using WinRT.Interop;
 
 namespace ComicReader
 {
     public sealed partial class MainWindow : Window
     {
+        public IntPtr WindowHandle { get; private set; }
+
         public MainWindow()
         {
             InitializeComponent();
             TrySetAcrylicBackdrop();
+            WindowHandle = WindowNative.GetWindowHandle(this);
         }
 
         private void OnPageFrameLoaded(object sender, RoutedEventArgs e)
@@ -39,7 +43,7 @@ namespace ComicReader
                     return;
                 }
 
-                NativeMethods.SetWindowPlacement(App.WindowHandle, ref windowPlacement);
+                NativeMethods.SetWindowPlacement(WindowHandle, ref windowPlacement);
             }
         }
 
@@ -55,7 +59,7 @@ namespace ComicReader
         private void OnWindowSizeChanged(object sender, WindowSizeChangedEventArgs args)
         {
             var placement = new NativeModels.WindowPlacement();
-            NativeMethods.GetWindowPlacement(App.WindowHandle, out placement);
+            NativeMethods.GetWindowPlacement(WindowHandle, out placement);
             string serialized = JsonSerializer.Serialize(placement);
             ApplicationData.Current.LocalSettings.Values[LocalSettings.WindowStates] = serialized;
         }

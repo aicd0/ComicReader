@@ -2,6 +2,7 @@
 //#define DEBUG_LOG_POINTER
 #endif
 
+using ComicReader.Common;
 using ComicReader.Common.Constants;
 using ComicReader.Database;
 using ComicReader.DesignData;
@@ -194,7 +195,7 @@ namespace ComicReader.Views.Reader
                 _ = ViewModel.LoadComic(comic, this);
                 if (!comic.IsExternal)
                 {
-                    Common.AppStatusPreserver.Instance.SetReadingComic(comic.Id);
+                    AppStatusPreserver.Instance.SetReadingComic(comic.Id);
                 }
             });
         }
@@ -233,12 +234,21 @@ namespace ComicReader.Views.Reader
 
         private void ObserveData()
         {
-            GetNavigationPageAbility().RegisterGridViewModeChangedHandler(delegate (bool enabled)
+            GetMainPageAbility().RegisterTabUnselectedHandler(this, delegate
+            {
+                ComicData comic = ViewModel.GetComic();
+                if (comic != null)
+                {
+                    AppStatusPreserver.Instance.UnsetReadingComic(comic.Id);
+                }
+            });
+
+            GetNavigationPageAbility().RegisterGridViewModeChangedHandler(this, delegate (bool enabled)
             {
                 ViewModel.GridViewModeEnabled = enabled;
             });
 
-            GetNavigationPageAbility().RegisterExpandInfoPaneHandler(delegate
+            GetNavigationPageAbility().RegisterExpandInfoPaneHandler(this, delegate
             {
                 if (InfoPane != null)
                 {
@@ -246,7 +256,7 @@ namespace ComicReader.Views.Reader
                 }
             });
 
-            GetMainPageAbility().RegisterFullscreenChangedHandler(delegate (bool isFullscreen)
+            GetMainPageAbility().RegisterFullscreenChangedHandler(this, delegate (bool isFullscreen)
             {
                 Shared.IsFullscreen = isFullscreen;
             });
@@ -262,7 +272,7 @@ namespace ComicReader.Views.Reader
                 BottomGrid.Opacity = opacity;
             });
 
-            GetNavigationPageAbility().RegisterReaderSettingsChangedEventHandler(delegate (ReaderSettingDataModel setting)
+            GetNavigationPageAbility().RegisterReaderSettingsChangedEventHandler(this, delegate (ReaderSettingDataModel setting)
             {
                 SvHorizontalReader.FlowDirection = setting.IsLeftToRight ? FlowDirection.LeftToRight : FlowDirection.RightToLeft;
                 ViewModel.UpdateReaderUI();
@@ -298,13 +308,13 @@ namespace ComicReader.Views.Reader
                 GetNavigationPageAbility().SetExternalComic(isExternal);
             });
 
-            GetNavigationPageAbility().RegisterFavoriteChangedEventHandler(delegate (bool isFavorite)
+            GetNavigationPageAbility().RegisterFavoriteChangedEventHandler(this, delegate (bool isFavorite)
             {
                 FavoriteBt.IsChecked = isFavorite;
                 ViewModel.SetIsFavorite(isFavorite);
             });
 
-            GetNavigationPageAbility().RegisterReaderSettingsChangedEventHandler(ViewModel.SetReaderSettings);
+            GetNavigationPageAbility().RegisterReaderSettingsChangedEventHandler(this, ViewModel.SetReaderSettings);
 
             ViewModel.ReaderStatusLiveData.Observe(this, delegate (ReaderStatusEnum status)
             {

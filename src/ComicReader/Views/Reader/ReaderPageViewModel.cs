@@ -53,10 +53,6 @@ internal class ReaderPageViewModel : BaseViewModel
     {
         base.OnPause();
         _loadImageSession.Next();
-        if (_comic != null && !_comic.IsExternal)
-        {
-            Common.AppStatusPreserver.Instance.UnsetReadingComic(_comic.Id);
-        }
     }
 
     public void SetReaderSettings(ReaderSettingDataModel settings)

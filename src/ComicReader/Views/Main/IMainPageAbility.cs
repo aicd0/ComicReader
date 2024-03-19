@@ -1,10 +1,12 @@
 ﻿using ComicReader.Router;
+using ComicReader.Views.Base;
 using Microsoft.UI.Xaml.Controls;
 
 namespace ComicReader.Views.Main;
 
-internal interface IMainPageAbility
+internal interface IMainPageAbility : IPageAbility
 {
+    public delegate void TabUnselectedEventHandler();
     public delegate void FullscreenChangedEventHandler(bool isFullscreen);
 
     void SetNavigationBundle(NavigationBundle bundle);
@@ -15,5 +17,7 @@ internal interface IMainPageAbility
 
     void SetIcon(IconSource icon);
 
-    void RegisterFullscreenChangedHandler(FullscreenChangedEventHandler handler);
+    void RegisterTabUnselectedHandler(Page owner, TabUnselectedEventHandler handler);
+
+    void RegisterFullscreenChangedHandler(Page owner, FullscreenChangedEventHandler handler);
 }

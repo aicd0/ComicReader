@@ -34,7 +34,7 @@ internal abstract class BaseViewModel
         {
             if (_bundle.TryGetTarget(out NavigationBundle bundle))
             {
-                if (bundle.Abilities.TryGetValue(typeof(T), out object ability))
+                if (bundle.Abilities.TryGetValue(typeof(T), out IPageAbility ability))
                 {
                     return (T)ability;
                 }

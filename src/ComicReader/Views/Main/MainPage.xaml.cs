@@ -35,8 +35,6 @@ namespace ComicReader.Views.Main
         private double _navigationBarHeight = 0;
         private KeyFrameAnimation _titleBarAnimation;
 
-        private event IMainPageAbility.FullscreenChangedEventHandler FullscreenChanged;
-
         public MainPage()
         {
             Current = this;
@@ -47,42 +45,43 @@ namespace ComicReader.Views.Main
         {
             base.OnResume();
             ObserveData();
+            _ = OpenStartupTab();
+        }
 
-            C0.Run(async delegate
+        private async Task OpenStartupTab()
+        {
+            bool page_started = false;
+
+            if (s_startupFileArgs != null)
             {
-                bool page_started = false;
-
-                if (s_startupFileArgs != null)
+                ComicData comic = await GetStartupComic(s_startupFileArgs);
+                if (comic != null)
                 {
-                    ComicData comic = await GetStartupComic(s_startupFileArgs);
-                    if (comic != null)
-                    {
-                        Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
-                            .WithParam(RouterConstants.ARG_COMIC_ID, comic.Id.ToString());
-                        OpenInNewTab(route);
-                        page_started = true;
-                    }
-                }
-
-                if (!page_started)
-                {
-                    long id = AppStatusPreserver.Instance.GetLastComic();
-                    ComicData comic = await ComicData.FromId(id, "FetchLastComic");
-                    if (comic != null)
-                    {
-                        Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
-                            .WithParam(RouterConstants.ARG_COMIC_ID, comic.Id.ToString());
-                        OpenInNewTab(route);
-                        page_started = true;
-                    }
-                }
-
-                if (!page_started)
-                {
-                    var route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_HOME);
+                    Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
+                        .WithParam(RouterConstants.ARG_COMIC_ID, comic.Id.ToString());
                     OpenInNewTab(route);
+                    page_started = true;
                 }
-            });
+            }
+
+            if (!page_started)
+            {
+                long id = AppStatusPreserver.Instance.GetLastComic();
+                ComicData comic = await ComicData.FromId(id, "FetchLastComic");
+                if (comic != null)
+                {
+                    Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
+                        .WithParam(RouterConstants.ARG_COMIC_ID, comic.Id.ToString());
+                    OpenInNewTab(route);
+                    page_started = true;
+                }
+            }
+
+            if (!page_started)
+            {
+                var route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_HOME);
+                OpenInNewTab(route);
+            }
         }
 
         public void OpenInNewTab(Route route)
@@ -353,17 +352,27 @@ namespace ComicReader.Views.Main
                 return;
             }
 
-            var tab = (TabViewItem)e.AddedItems[0];
-            _currentTab = null;
+            TabInfo lastSelectedTab = _currentTab;
+            var newSelectedTabItem = (TabViewItem)e.AddedItems[0];
+            TabInfo newSelectedTab = null;
             foreach (TabInfo tabInfo in _tabs)
             {
-                if (tabInfo.Item == tab)
+                if (tabInfo.Item == newSelectedTabItem)
                 {
-                    _currentTab = tabInfo;
+                    newSelectedTab = tabInfo;
                 }
             }
+            System.Diagnostics.Debug.Assert(newSelectedTab != null);
+            _currentTab = newSelectedTab;
 
-            System.Diagnostics.Debug.Assert(_currentTab != null);
+            if (lastSelectedTab != null)
+            {
+                DispatchToTab(lastSelectedTab, delegate (MainPageAbility ability)
+                {
+                    ability.SendTabUnselectedEvent();
+                });
+            }
+
             OnPageChanged();
         }
 
@@ -473,7 +482,11 @@ namespace ComicReader.Views.Main
             }
 
             App.Window.AppWindow.SetPresenter(AppWindowPresenterKind.FullScreen);
-            FullscreenChanged?.Invoke(true);
+
+            DispatchToAllTabs(delegate (MainPageAbility ability)
+            {
+                ability.SendFullscreenChangedEvent(true);
+            });
         }
 
         public void ExitFullscreen()
@@ -484,7 +497,27 @@ namespace ComicReader.Views.Main
             }
 
             App.Window.AppWindow.SetPresenter(AppWindowPresenterKind.Default);
-            FullscreenChanged?.Invoke(false);
+
+            DispatchToAllTabs(delegate (MainPageAbility ability)
+            {
+                ability.SendFullscreenChangedEvent(false);
+            });
+        }
+
+        private void DispatchToTab(TabInfo tab, Action<MainPageAbility> action)
+        {
+            if (tab.CurrentBundle.Abilities.TryGetValue(typeof(IMainPageAbility), out IPageAbility ability))
+            {
+                action(ability as MainPageAbility);
+            }
+        }
+
+        private void DispatchToAllTabs(Action<MainPageAbility> action)
+        {
+            foreach (TabInfo tab in _tabs)
+            {
+                DispatchToTab(tab, action);
+            }
         }
 
         private void OnRootGridSizeChanged(object sender, SizeChangedEventArgs e)
@@ -502,40 +535,73 @@ namespace ComicReader.Views.Main
 
         private class MainPageAbility : IMainPageAbility
         {
-            private MainPage _parent;
+            private const string EVENT_TAB_UNSELECTED = "TabUnselected";
+            private const string EVENT_FULLSCREEN_CHANGED = "FullscreenChanged";
+
+            private WeakReference<MainPage> _parent;
+            private EventBus _eventBus = new EventBus();
             private int _tabId;
 
             public MainPageAbility(MainPage parent, int tabId)
             {
-                _parent = parent;
+                _parent = new WeakReference<MainPage>(parent);
                 _tabId = tabId;
             }
 
             public void OpenInCurrentTab(Route route)
             {
+                if (!_parent.TryGetTarget(out MainPage parent))
+                    return;
                 NavigationBundle bundle = route.Process();
-                _parent.LoadTab(_tabId, bundle);
-            }
-
-            public void RegisterFullscreenChangedHandler(IMainPageAbility.FullscreenChangedEventHandler handler)
-            {
-                _parent.FullscreenChanged += handler;
+                parent.LoadTab(_tabId, bundle);
             }
 
             public void SetIcon(IconSource icon)
             {
-                _parent.GetTabInfo(_tabId).Item.IconSource = icon;
+                if (!_parent.TryGetTarget(out MainPage parent))
+                    return;
+                parent.GetTabInfo(_tabId).Item.IconSource = icon;
             }
 
             public void SetNavigationBundle(NavigationBundle bundle)
             {
-                _parent.GetTabInfo(_tabId).CurrentBundle = bundle;
-                _parent.OnPageChanged();
+                if (!_parent.TryGetTarget(out MainPage parent))
+                    return;
+                parent.GetTabInfo(_tabId).CurrentBundle = bundle;
+                parent.OnPageChanged();
             }
 
             public void SetTitle(string title)
             {
-                _parent.GetTabInfo(_tabId).Item.Header = title;
+                if (!_parent.TryGetTarget(out MainPage parent))
+                    return;
+                parent.GetTabInfo(_tabId).Item.Header = title;
+            }
+
+            public void RegisterTabUnselectedHandler(Page owner, IMainPageAbility.TabUnselectedEventHandler handler)
+            {
+                _eventBus.With<bool>(EVENT_TAB_UNSELECTED).Observe(owner, delegate
+                {
+                    handler();
+                });
+            }
+
+            public void SendTabUnselectedEvent()
+            {
+                _eventBus.With<bool>(EVENT_TAB_UNSELECTED).Emit(true);
+            }
+
+            public void RegisterFullscreenChangedHandler(Page owner, IMainPageAbility.FullscreenChangedEventHandler handler)
+            {
+                _eventBus.With<bool>(EVENT_FULLSCREEN_CHANGED).Observe(owner, delegate (bool isFullscreen)
+                {
+                    handler(isFullscreen);
+                });
+            }
+
+            public void SendFullscreenChangedEvent(bool isFullscreen)
+            {
+                _eventBus.With<bool>(EVENT_FULLSCREEN_CHANGED).Emit(isFullscreen);
             }
         }
     }
