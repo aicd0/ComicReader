@@ -66,14 +66,17 @@ namespace ComicReader.Views.Main
 
             if (!page_started)
             {
-                long id = AppStatusPreserver.Instance.GetLastComic();
-                ComicData comic = await ComicData.FromId(id, "FetchLastComic");
-                if (comic != null)
+                long id = AppStatusPreserver.GetReadingComic();
+                if (id >= 0)
                 {
-                    Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
-                        .WithParam(RouterConstants.ARG_COMIC_ID, comic.Id.ToString());
-                    OpenInNewTab(route);
-                    page_started = true;
+                    ComicData comic = await ComicData.FromId(id, "FetchLastComic");
+                    if (comic != null)
+                    {
+                        Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
+                            .WithParam(RouterConstants.ARG_COMIC_ID, comic.Id.ToString());
+                        OpenInNewTab(route);
+                        page_started = true;
+                    }
                 }
             }
 

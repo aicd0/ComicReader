@@ -18,6 +18,8 @@ namespace ComicReader.Utils.KVDatabase
             return lib;
         }
 
+        public abstract void Remove(string lib, string key);
+
         public abstract void SetString(string lib, string key, string value);
 
         public abstract string GetString(string lib, string key);
@@ -40,6 +42,21 @@ namespace ComicReader.Utils.KVDatabase
         public bool GetBoolean(string lib, string key, bool defaultValue)
         {
             bool? value = GetBoolean(lib, key);
+            if (value.HasValue)
+            {
+                return value.Value;
+            }
+
+            return defaultValue;
+        }
+
+        public abstract void SetLong(string lib, string key, long value);
+
+        public abstract long? GetLong(string lib, string key);
+
+        public long GetLong(string lib, string key, long defaultValue)
+        {
+            long? value = GetLong(lib, key);
             if (value.HasValue)
             {
                 return value.Value;

@@ -13,6 +13,15 @@ namespace ComicReader.Utils.KVDatabase
 
         private KVDatabaseMethodLiteDB() { }
 
+        public override void Remove(string lib, string key)
+        {
+            using (var db = new LiteDatabase(DatabasePath))
+            {
+                ILiteCollection<KVPair> col = db.GetCollection<KVPair>(lib);
+                col.Delete(key);
+            }
+        }
+
         public override void SetString(string lib, string key, string value)
         {
             SetValue(lib, key, value);
@@ -38,6 +47,26 @@ namespace ComicReader.Utils.KVDatabase
             }
 
             return s.Equals("true");
+        }
+
+        public override void SetLong(string lib, string key, long value)
+        {
+            string s = value.ToString();
+            SetValue(lib, key, s);
+        }
+
+        public override long? GetLong(string lib, string key)
+        {
+            string s = GetValue(lib, key);
+            if (s == null)
+            {
+                return null;
+            }
+            if (long.TryParse(s, out long result))
+            {
+                return result;
+            }
+            return null;
         }
 
         private string GetValue(string lib, string key)

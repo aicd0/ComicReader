@@ -193,10 +193,6 @@ namespace ComicReader.Views.Reader
                 GetMainPageAbility().SetTitle(comic.Title);
                 GetMainPageAbility().SetIcon(new SymbolIconSource { Symbol = Symbol.Pictures });
                 _ = ViewModel.LoadComic(comic, this);
-                if (!comic.IsExternal)
-                {
-                    AppStatusPreserver.Instance.SetReadingComic(comic.Id);
-                }
             });
         }
 
@@ -208,6 +204,12 @@ namespace ComicReader.Views.Reader
             GetNavigationPageAbility().SetReaderSettings(ViewModel.ReaderSettingsLiveData.GetValue());
             OnReaderContinuousChanged();
             ViewModel.UpdateReaderUI();
+
+            ComicData comic = ViewModel.GetComic();
+            if (comic != null && !comic.IsExternal)
+            {
+                AppStatusPreserver.SetReadingComic(comic.Id);
+            }
 
             Utils.C0.Run(async delegate
             {
@@ -234,14 +236,7 @@ namespace ComicReader.Views.Reader
 
         private void ObserveData()
         {
-            GetMainPageAbility().RegisterTabUnselectedHandler(this, delegate
-            {
-                ComicData comic = ViewModel.GetComic();
-                if (comic != null)
-                {
-                    AppStatusPreserver.Instance.UnsetReadingComic(comic.Id);
-                }
-            });
+            GetMainPageAbility().RegisterTabUnselectedHandler(this, AppStatusPreserver.UnsetReadingComic);
 
             GetNavigationPageAbility().RegisterGridViewModeChangedHandler(this, delegate (bool enabled)
             {
