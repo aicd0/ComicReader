@@ -133,7 +133,6 @@ namespace ComicReader.Views.Reader
 
     sealed internal partial class ReaderPage : ReaderPageBase
     {
-        const string ARG_COMIC_ID = "comic_id";
         private const string KEY_TIP_SHOWN = "ReaderTipShown";
 
         public ReaderPageShared Shared { get; set; } = new ReaderPageShared();
@@ -188,9 +187,18 @@ namespace ComicReader.Views.Reader
                     ReaderTip.IsOpen = !tipShown;
                 }
 
-                long comic_id = bundle.GetLong(ARG_COMIC_ID, -1);
+                long comic_id = bundle.GetLong(RouterConstants.ARG_COMIC_ID, -1);
                 ComicData comic = await ComicData.FromId(comic_id, "ReaderGetComic");
-                GetMainPageAbility().SetTitle(comic.Title);
+                if (comic == null)
+                {
+                    string token = bundle.GetString(RouterConstants.ARG_COMIC_TOKEN, "");
+                    comic = AppDataRepository.RetrieveComicData(token);
+                }
+
+                if (comic != null)
+                {
+                    GetMainPageAbility().SetTitle(comic.Title);
+                }
                 GetMainPageAbility().SetIcon(new SymbolIconSource { Symbol = Symbol.Pictures });
                 _ = ViewModel.LoadComic(comic, this);
             });

@@ -1,17 +1,39 @@
 ﻿using ComicReader.Views.Navigation;
+using System.Collections.Concurrent;
+using System.Threading;
 
 namespace ComicReader.Database;
 internal static class AppDataRepository
 {
-    public static ReaderSettingDataModel ReaderSettings { get; } = new();
+    private static int _nextComicToken = 0;
+
+    private static ReaderSettingDataModel sReaderSettings = new();
+    private static ConcurrentDictionary<string, ComicData> sComicMap = new();
 
     public static void Initialize()
     {
-        ReaderSettings.IsVertical = XmlDatabase.Settings.VerticalReading;
-        ReaderSettings.IsLeftToRight = XmlDatabase.Settings.LeftToRight;
-        ReaderSettings.IsVerticalContinuous = XmlDatabase.Settings.VerticalContinuous;
-        ReaderSettings.IsHorizontalContinuous = XmlDatabase.Settings.HorizontalContinuous;
-        ReaderSettings.VerticalPageArrangement = XmlDatabase.Settings.VerticalPageArrangement;
-        ReaderSettings.HorizontalPageArrangement = XmlDatabase.Settings.HorizontalPageArrangement;
+        sReaderSettings.IsVertical = XmlDatabase.Settings.VerticalReading;
+        sReaderSettings.IsLeftToRight = XmlDatabase.Settings.LeftToRight;
+        sReaderSettings.IsVerticalContinuous = XmlDatabase.Settings.VerticalContinuous;
+        sReaderSettings.IsHorizontalContinuous = XmlDatabase.Settings.HorizontalContinuous;
+        sReaderSettings.VerticalPageArrangement = XmlDatabase.Settings.VerticalPageArrangement;
+        sReaderSettings.HorizontalPageArrangement = XmlDatabase.Settings.HorizontalPageArrangement;
+    }
+
+    public static ReaderSettingDataModel GetReaderSetting()
+    {
+        return sReaderSettings;
+    }
+
+    public static ComicData RetrieveComicData(string token)
+    {
+        return sComicMap.TryRemove(token, out ComicData comicData) ? comicData : null;
+    }
+
+    public static string PutComicData(ComicData comicData)
+    {
+        string token = (Interlocked.Increment(ref _nextComicToken) - 1).ToString();
+        sComicMap[token] = comicData;
+        return token;
     }
 }

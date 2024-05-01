@@ -31,7 +31,7 @@ internal class ReaderPageViewModel : BaseViewModel
     private MutableLiveData<bool> _horizontalReaderVisibleLiveData = new();
     public LiveData<bool> HorizontalReaderVisibleLiveData => _horizontalReaderVisibleLiveData;
 
-    private MutableLiveData<ReaderSettingDataModel> _readerSettingsLiveData = new(AppDataRepository.ReaderSettings);
+    private MutableLiveData<ReaderSettingDataModel> _readerSettingsLiveData = new(AppDataRepository.GetReaderSetting());
     public LiveData<ReaderSettingDataModel> ReaderSettingsLiveData => _readerSettingsLiveData;
 
     private MutableLiveData<bool> _isExternalComicLiveData = new(true);
@@ -75,13 +75,19 @@ internal class ReaderPageViewModel : BaseViewModel
 
     public async Task LoadComic(ComicData comic, ReaderPage page)
     {
-        if (comic == null || comic == _comic)
+        if (comic == _comic)
         {
             return;
         }
 
         await _loadComicLock.LockAsync(async delegate (CancellationLock.Token token)
         {
+            if (comic == null)
+            {
+                ReaderStatusLiveData.Emit(ReaderStatusEnum.Error);
+                return;
+            }
+
             ReaderStatusLiveData.Emit(ReaderStatusEnum.Loading);
 
             page.VerticalReader.Reset();

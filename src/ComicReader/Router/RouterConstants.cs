@@ -14,5 +14,6 @@ internal static class RouterConstants
     public const string HOST_NAVIGATION = "navigation";
 
     public const string ARG_COMIC_ID = "comic_id";
+    public const string ARG_COMIC_TOKEN = "comic_token";
     public const string ARG_KEYWORD = "keyword";
 }

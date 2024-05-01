@@ -1,7 +1,8 @@
 {
   "profiles": {
     "ComicReader (Package)": {
-      "commandName": "MsixPackage"
+      "commandName": "MsixPackage",
+      "doNotLaunchApp": false
     },
     "ComicReader (Unpackaged)": {
       "commandName": "Project"

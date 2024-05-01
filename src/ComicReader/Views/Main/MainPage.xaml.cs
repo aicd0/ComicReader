@@ -54,14 +54,7 @@ namespace ComicReader.Views.Main
 
             if (s_startupFileArgs != null)
             {
-                ComicData comic = await GetStartupComic(s_startupFileArgs);
-                if (comic != null)
-                {
-                    Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
-                        .WithParam(RouterConstants.ARG_COMIC_ID, comic.Id.ToString());
-                    OpenInNewTab(route);
-                    page_started = true;
-                }
+                page_started = await OpenStartupComic(s_startupFileArgs);
             }
 
             if (!page_started)
@@ -458,22 +451,27 @@ namespace ComicReader.Views.Main
 
         public static void OnFileActivated(FileActivatedEventArgs args)
         {
-            _ = C0.Sync(async delegate
+            if (args == null || Current == null || Current.RootTabView == null || !Current.RootTabView.IsLoaded)
             {
-                if (args == null || Current == null || Current.RootTabView == null || !Current.RootTabView.IsLoaded)
-                {
-                    s_startupFileArgs = args;
-                    return;
-                }
+                s_startupFileArgs = args;
+                return;
+            }
+            _ = OpenStartupComic(args);
+        }
 
-                ComicData comic = await Current.GetStartupComic(args);
-                if (comic != null)
-                {
-                    Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
-                        .WithParam(RouterConstants.ARG_COMIC_ID, comic.Id.ToString());
-                    Current.OpenInNewTab(route);
-                }
-            });
+        private static async Task<bool> OpenStartupComic(FileActivatedEventArgs args)
+        {
+            ComicData comic = await Current.GetStartupComic(args);
+            if (comic == null)
+            {
+                return false;
+            }
+
+            string token = AppDataRepository.PutComicData(comic);
+            Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
+                .WithParam(RouterConstants.ARG_COMIC_TOKEN, token);
+            Current.OpenInNewTab(route);
+            return true;
         }
 
         // Fullscreen
