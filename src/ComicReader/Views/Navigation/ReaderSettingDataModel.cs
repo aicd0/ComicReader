@@ -37,5 +37,17 @@ namespace ComicReader.Views.Navigation
                 return IsVertical ? VerticalPageArrangement : HorizontalPageArrangement;
             }
         }
+
+        public ReaderSettingDataModel Clone()
+        {
+            var clone = new ReaderSettingDataModel();
+            clone.IsVertical = IsVertical;
+            clone.IsLeftToRight = IsLeftToRight;
+            clone.IsVerticalContinuous = IsVerticalContinuous;
+            clone.IsHorizontalContinuous = IsHorizontalContinuous;
+            clone.VerticalPageArrangement = VerticalPageArrangement;
+            clone.HorizontalPageArrangement = HorizontalPageArrangement;
+            return clone;
+        }
     }
 }

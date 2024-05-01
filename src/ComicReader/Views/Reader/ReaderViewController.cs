@@ -38,10 +38,10 @@ namespace ComicReader.Views.Reader
         private static readonly int MaxPreloadFramesAfter = 10;
 
         // Constructor
-        public ReaderViewController(ReaderPageViewModel viewModel, ReaderPageShared shared, bool is_vertical)
+        public ReaderViewController(ReaderPageViewModel viewModel, string name, bool is_vertical)
         {
+            _name = name;
             _viewModel = viewModel;
-            m_shared = shared;
             IsVertical = is_vertical;
         }
 
@@ -815,14 +815,14 @@ namespace ComicReader.Views.Reader
         }
 
         // Modifier - Scrolling
-        public async Task<bool> MoveFrame(int increment)
+        public async Task<bool> MoveFrame(int increment, string reason)
         {
             if (!await UpdatePage(true))
             {
                 return false;
             }
 
-            MoveFrameInternal(increment, !XmlDatabase.Settings.TransitionAnimation);
+            MoveFrameInternal(increment, !XmlDatabase.Settings.TransitionAnimation, reason);
             return true;
         }
 
@@ -831,7 +831,7 @@ namespace ComicReader.Views.Reader
         /// </summary>
         /// <param name="increment"></param>
         /// <param name="disable_animation"></param>
-        private bool MoveFrameInternal(int increment, bool disable_animation)
+        private bool MoveFrameInternal(int increment, bool disable_animation, string reason)
         {
             if (DataSource.Count == 0)
             {
@@ -846,7 +846,7 @@ namespace ComicReader.Views.Reader
             double page = DataSource[frame].Page;
             float? zoom = Zoom > 101f ? 100f : (float?)null;
 
-            return SetScrollViewer2(zoom, page, disable_animation);
+            return SetScrollViewer2(zoom, page, disable_animation, reason);
         }
 
         sealed internal class ScrollManager : Utils.BaseTransaction<bool>
@@ -859,15 +859,17 @@ namespace ComicReader.Views.Reader
             private double? mVerticalOffset = null;
             private double? mPage = null;
             private bool mDisableAnimation = true;
+            private string mReason;
 
-            private ScrollManager(ReaderViewController reader)
+            private ScrollManager(ReaderViewController reader, string reason)
             {
                 mReader = new WeakReference<ReaderViewController>(reader);
+                mReason = reason;
             }
 
-            public static ScrollManager BeginTransaction(ReaderViewController reader)
+            public static ScrollManager BeginTransaction(ReaderViewController reader, string reason)
             {
-                return new ScrollManager(reader);
+                return new ScrollManager(reader, reason);
             }
 
             protected override bool CommitImpl()
@@ -885,15 +887,15 @@ namespace ComicReader.Views.Reader
                 bool result;
                 if (mParallelOffset.HasValue)
                 {
-                    result = reader.SetScrollViewer1(mZoom, mParallelOffset, mDisableAnimation);
+                    result = reader.SetScrollViewer1(mZoom, mParallelOffset, mDisableAnimation, mReason);
                 }
                 else if (mPage.HasValue)
                 {
-                    result = reader.SetScrollViewer2(mZoom, mPage, mDisableAnimation);
+                    result = reader.SetScrollViewer2(mZoom, mPage, mDisableAnimation, mReason);
                 }
                 else
                 {
-                    result = reader.SetScrollViewer3(mZoom, mZoomType, mHorizontalOffset, mVerticalOffset, mDisableAnimation);
+                    result = reader.SetScrollViewer3(mZoom, mZoomType, mHorizontalOffset, mVerticalOffset, mDisableAnimation, mReason);
                 }
 
                 return result;
@@ -966,7 +968,7 @@ namespace ComicReader.Views.Reader
             }
         }
 
-        private bool SetScrollViewer1(float? zoom, double? parallel_offset, bool disable_animation)
+        private bool SetScrollViewer1(float? zoom, double? parallel_offset, bool disable_animation, string reason)
         {
             double? horizontal_offset = IsHorizontal ? parallel_offset : null;
             double? vertical_offset = IsVertical ? parallel_offset : null;
@@ -977,10 +979,10 @@ namespace ComicReader.Views.Reader
                 horizontalOffset = horizontal_offset,
                 verticalOffset = vertical_offset,
                 disableAnimation = disable_animation,
-            });
+            }, reason);
         }
 
-        private bool SetScrollViewer2(float? zoom, double? page, bool disable_animation)
+        private bool SetScrollViewer2(float? zoom, double? page, bool disable_animation, string reason)
         {
             double? horizontal_offset = null;
             double? vertical_offset = null;
@@ -1011,7 +1013,7 @@ namespace ComicReader.Views.Reader
                 horizontalOffset = horizontal_offset,
                 verticalOffset = vertical_offset,
                 disableAnimation = disable_animation,
-            });
+            }, reason);
         }
 
         private bool SetScrollViewer3(
@@ -1019,7 +1021,8 @@ namespace ComicReader.Views.Reader
             ZoomType zoomType,
             double? horizontal_offset,
             double? vertical_offset,
-            bool disable_animation
+            bool disable_animation,
+            string reason
         )
         {
             return SetScrollViewerInternal(new SetScrollViewerContext
@@ -1029,10 +1032,10 @@ namespace ComicReader.Views.Reader
                 horizontalOffset = horizontal_offset,
                 verticalOffset = vertical_offset,
                 disableAnimation = disable_animation,
-            });
+            }, reason);
         }
 
-        private bool SetScrollViewerInternal(SetScrollViewerContext ctx)
+        private bool SetScrollViewerInternal(SetScrollViewerContext ctx, string reason)
         {
             if (!LoadedFramework)
             {
@@ -1041,6 +1044,7 @@ namespace ComicReader.Views.Reader
 
 #if DEBUG_LOG_JUMP
             Log("ParamIn: "
+                + "Reason=" + reason + ","
                 + "Z=" + ctx.zoom.ToString() + ","
                 + "H=" + ctx.horizontalOffset.ToString() + ","
                 + "V=" + ctx.verticalOffset.ToString() + ","
@@ -1351,7 +1355,7 @@ namespace ComicReader.Views.Reader
             if (IsContinuous || Zoom > 105)
             {
                 // Continuous scrolling.
-                ScrollManager.BeginTransaction(this)
+                ScrollManager.BeginTransaction(this, "ContinuousScrollingUsingPointerWheel")
                     .ParallelOffset(ParallelOffsetFinal + delta * 140.0)
                     .EnableAnimation()
                     .Commit();
@@ -1359,7 +1363,7 @@ namespace ComicReader.Views.Reader
             else
             {
                 // Page turning.
-                await MoveFrame(delta);
+                await MoveFrame(delta, "PageTuringUsingPointerWheel");
             }
 
             m_manipulation_disabled = true;
@@ -1401,7 +1405,7 @@ namespace ComicReader.Views.Reader
                 zoom = Zoom * scale;
             }
 
-            ScrollManager.BeginTransaction(this)
+            ScrollManager.BeginTransaction(this, "ContinuousScrollingUsingManipulation")
                 .Zoom(zoom)
                 .HorizontalOffset(HorizontalOffsetFinal - dx)
                 .VerticalOffset(VerticalOffsetFinal - dy)
@@ -1425,11 +1429,11 @@ namespace ComicReader.Views.Reader
 
             if (velocity > 1.0)
             {
-                await MoveFrame(-1);
+                await MoveFrame(-1, "MoveToLastPageUsingManipulation");
             }
             else if (velocity < -1.0)
             {
-                await MoveFrame(1);
+                await MoveFrame(1, "MoveToNextPageUsingManipulation");
             }
 
 #if DEBUG_LOG_MANIPULATION
@@ -1470,7 +1474,7 @@ namespace ComicReader.Views.Reader
                 {
                     await Utils.C0.Sync(delegate
                     {
-                        SetScrollViewer1(Zoom, null, true);
+                        SetScrollViewer1(Zoom, null, true, "AdjustZooming");
                         AdjustPadding();
                     });
                     LoadedFirstPage = true;
@@ -1496,7 +1500,7 @@ namespace ComicReader.Views.Reader
                 if (!LoadedInitialPage && LoadedFirstPage)
                 {
                     // Try jump to the initial page.
-                    LoadedInitialPage = SetScrollViewer2(null, InitialPage, true);
+                    LoadedInitialPage = SetScrollViewer2(null, InitialPage, true, "JumpToInitialPage");
 #if DEBUG_LOG_LOAD
                     if (LoadedInitialPage)
                     {
@@ -1553,12 +1557,12 @@ namespace ComicReader.Views.Reader
                 SyncFinalVal();
 
                 // Notify the scroll viewer to update its inner states.
-                SetScrollViewer1(null, null, false);
+                SetScrollViewer1(null, null, false, "AdjustInnerStateAfterViewChanged");
 
                 if (!IsContinuous && Zoom < ForceContinuousZoomThreshold)
                 {
                     // Stick our view to the center of two pages.
-                    MoveFrameInternal(0, false);
+                    MoveFrameInternal(0, false, "StickToCenter");
                 }
 
 #if DEBUG_LOG_VIEW_CHANGE
@@ -1611,7 +1615,7 @@ namespace ComicReader.Views.Reader
                     // Do NOT disable animation here or else TransformToVisual (which will be
                     // called later in OnViewChanged) will give erroneous results.
                     // Still don't know why. Been stuck here for 4h.
-                    SetScrollViewer2(zoom, page, false);
+                    SetScrollViewer2(zoom, page, false, "JumpToPreviousPageAfterRearrange");
 
                     // Update images.
                     await UpdateImages(true);
@@ -1623,7 +1627,7 @@ namespace ComicReader.Views.Reader
         }
 
         // Internal - Variables
-        private readonly ReaderPageShared m_shared;
+        private readonly string _name;
         private readonly ReaderPageViewModel _viewModel;
 
         // Internal - Loader States
@@ -1747,7 +1751,7 @@ namespace ComicReader.Views.Reader
                 return;
             }
 
-            Utils.Debug.Log("Reader: " + text + ".");
+            Utils.Debug.Log("Reader(" + _name + "): " + text + ".");
         }
     }
 }

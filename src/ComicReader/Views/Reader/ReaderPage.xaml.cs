@@ -142,9 +142,6 @@ namespace ComicReader.Views.Reader
 
         public readonly TagItemHandler _tagItemHandler;
         private readonly GestureHandler _gestureHandler;
-        private bool _isVertical = false;
-        private bool _isContinuous = false;
-        private PageArrangementType _pageArrangement = PageArrangementType.Single;
 
         // Pointer events
         private ReaderGestureRecognizer _gestureRecognizer = new ReaderGestureRecognizer();
@@ -169,8 +166,8 @@ namespace ComicReader.Views.Reader
             Shared.ComicTags = new ObservableCollection<TagCollectionViewModel>();
             Shared.IsEditable = false;
 
-            VerticalReader = new ReaderViewController(ViewModel, Shared, true);
-            HorizontalReader = new ReaderViewController(ViewModel, Shared, false);
+            VerticalReader = new ReaderViewController(ViewModel, "Vertical", true);
+            HorizontalReader = new ReaderViewController(ViewModel, "Horizontal", false);
             PreviewDataSource = new ObservableCollection<ReaderImagePreviewViewModel>();
 
             InitializeComponent();
@@ -277,28 +274,23 @@ namespace ComicReader.Views.Reader
 
             GetNavigationPageAbility().RegisterReaderSettingsChangedEventHandler(this, delegate (ReaderSettingDataModel setting)
             {
+                ReaderSettingDataModel lastSetting = ViewModel.ReaderSettingsLiveData.GetValue();
+                ViewModel.SetReaderSettings(setting);
                 SvHorizontalReader.FlowDirection = setting.IsLeftToRight ? FlowDirection.LeftToRight : FlowDirection.RightToLeft;
                 ViewModel.UpdateReaderUI();
 
-                bool isOrientationChanged = _isVertical != setting.IsVertical;
-                _isVertical = setting.IsVertical;
-                bool isContinuousChanged = _isContinuous != setting.IsContinuous;
-                _isContinuous = setting.IsContinuous;
-                bool isPageArrangementChanged = _pageArrangement != setting.PageArrangement;
-                _pageArrangement = setting.PageArrangement;
-
-                if (isOrientationChanged)
+                if (lastSetting.IsVertical != setting.IsVertical)
                 {
                     OnReaderSwitched();
                 }
 
-                if (isContinuousChanged)
+                if (lastSetting.IsContinuous != setting.IsContinuous)
                 {
                     OnReaderContinuousChanged();
                     GetCurrentReader()?.OnPageRearrangeEventSealed();
                 }
 
-                if (isPageArrangementChanged)
+                if (lastSetting.PageArrangement != setting.PageArrangement)
                 {
                     GetCurrentReader()?.OnPageRearrangeEventSealed();
                 }
@@ -420,7 +412,10 @@ namespace ComicReader.Views.Reader
                 float zoom = Math.Min(100f, last_reader.Zoom);
 
                 await Utils.C0.WaitFor(() => reader.Loaded, 1000);
-                ReaderViewController.ScrollManager.BeginTransaction(reader).Zoom(zoom).Page(page).Commit();
+                ReaderViewController.ScrollManager.BeginTransaction(reader, "RestoreStateAfterReaderSwitched")
+                    .Zoom(zoom)
+                    .Page(page)
+                    .Commit();
                 await reader.UpdateImages(true);
                 ViewModel.UpdateReaderUI();
                 await last_reader.UpdateImages(false);
@@ -532,7 +527,9 @@ namespace ComicReader.Views.Reader
                 return;
             }
 
-            ReaderViewController.ScrollManager.BeginTransaction(reader).Page(ctx.Page).Commit();
+            ReaderViewController.ScrollManager.BeginTransaction(reader, "JumpToGridItem")
+                .Page(ctx.Page)
+                .Commit();
         }
 
         // Pointer events
@@ -620,14 +617,14 @@ namespace ComicReader.Views.Reader
 
                 if (Math.Abs(reader.Zoom - 100) <= 1)
                 {
-                    ReaderViewController.ScrollManager.BeginTransaction(reader)
+                    ReaderViewController.ScrollManager.BeginTransaction(reader, "FitScreenUsingCenterCrop")
                         .Zoom(100, Common.Structs.ZoomType.CenterCrop)
                         .EnableAnimation()
                         .Commit();
                 }
                 else
                 {
-                    ReaderViewController.ScrollManager.BeginTransaction(reader)
+                    ReaderViewController.ScrollManager.BeginTransaction(reader, "FitScreenUsingCenterInside")
                         .Zoom(100)
                         .EnableAnimation()
                         .Commit();
@@ -867,11 +864,11 @@ namespace ComicReader.Views.Reader
                     case VirtualKey.Right:
                         if (reader.IsHorizontal && !ViewModel.ReaderSettingsLiveData.GetValue().IsLeftToRight)
                         {
-                            await reader.MoveFrame(-1);
+                            await reader.MoveFrame(-1, "JumpToPreviousPageUsingRightKey");
                         }
                         else
                         {
-                            await reader.MoveFrame(1);
+                            await reader.MoveFrame(1, "JumpToNextPageUsingRightKey");
                         }
 
                         break;
@@ -879,41 +876,45 @@ namespace ComicReader.Views.Reader
                     case VirtualKey.Left:
                         if (reader.IsHorizontal && !ViewModel.ReaderSettingsLiveData.GetValue().IsLeftToRight)
                         {
-                            await reader.MoveFrame(1);
+                            await reader.MoveFrame(1, "JumpToNextPageUsingLeftKey");
                         }
                         else
                         {
-                            await reader.MoveFrame(-1);
+                            await reader.MoveFrame(-1, "JumpToPreviousPageUsingLeftKey");
                         }
 
                         break;
 
                     case VirtualKey.Up:
-                        await reader.MoveFrame(-1);
+                        await reader.MoveFrame(-1, "JumpToPerviousPageUsingUpKey");
                         break;
 
                     case VirtualKey.Down:
-                        await reader.MoveFrame(1);
+                        await reader.MoveFrame(1, "JumpToNextPageUsingDownKey");
                         break;
 
                     case VirtualKey.PageUp:
-                        await reader.MoveFrame(-1);
+                        await reader.MoveFrame(-1, "JumpToPerviousPageUsingPgUpKey");
                         break;
 
                     case VirtualKey.PageDown:
-                        await reader.MoveFrame(1);
+                        await reader.MoveFrame(1, "JumpToNextPageUsingPgDownKey");
                         break;
 
                     case VirtualKey.Home:
-                        ReaderViewController.ScrollManager.BeginTransaction(reader).Page(1).Commit();
+                        ReaderViewController.ScrollManager.BeginTransaction(reader, "JumpToFirstPageUsingHomeKey")
+                            .Page(1)
+                            .Commit();
                         break;
 
                     case VirtualKey.End:
-                        ReaderViewController.ScrollManager.BeginTransaction(reader).Page(reader.PageCount).Commit();
+                        ReaderViewController.ScrollManager.BeginTransaction(reader, "JumpToLastPageUsingEndKey")
+                            .Page(reader.PageCount)
+                            .Commit();
                         break;
 
                     case VirtualKey.Space:
-                        await reader.MoveFrame(1);
+                        await reader.MoveFrame(1, "JumpToNextPageUsingSpaceKey");
                         break;
 
                     default:

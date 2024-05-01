@@ -1,4 +1,5 @@
 using ComicReader.Common.Constants;
+using ComicReader.Database;
 using ComicReader.Router;
 using ComicReader.Utils;
 using ComicReader.Views.Base;
@@ -263,6 +264,20 @@ namespace ComicReader.Views.Navigation
         private void RspReaderSetting_DataChanged(ReaderSettingDataModel data)
         {
             _ability.SendReaderSettingsChangedEvent(data);
+            Utils.C0.Run(async delegate
+            {
+                await XmlDatabaseManager.WaitLock();
+
+                Database.XmlDatabase.Settings.VerticalReading = data.IsVertical;
+                Database.XmlDatabase.Settings.LeftToRight = data.IsLeftToRight;
+                Database.XmlDatabase.Settings.VerticalContinuous = data.IsVerticalContinuous;
+                Database.XmlDatabase.Settings.HorizontalContinuous = data.IsHorizontalContinuous;
+                Database.XmlDatabase.Settings.VerticalPageArrangement = data.VerticalPageArrangement;
+                Database.XmlDatabase.Settings.HorizontalPageArrangement = data.HorizontalPageArrangement;
+
+                XmlDatabaseManager.ReleaseLock();
+                Utils.TaskQueue.DefaultQueue.Enqueue(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
+            });
         }
 
         private void SidePane_Navigating(NavigationBundle bundle)
@@ -384,7 +399,7 @@ namespace ComicReader.Views.Navigation
 
             public void SendReaderSettingsChangedEvent(ReaderSettingDataModel settings)
             {
-                _eventBus.With<ReaderSettingDataModel>(EVENT_READER_SETTINGS_CHANGED).Emit(settings);
+                _eventBus.With<ReaderSettingDataModel>(EVENT_READER_SETTINGS_CHANGED).Emit(settings.Clone());
             }
         }
     }
