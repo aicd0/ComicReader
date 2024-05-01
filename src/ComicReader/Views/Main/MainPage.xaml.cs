@@ -268,6 +268,11 @@ namespace ComicReader.Views.Main
                 throw new ArgumentException();
             }
 
+            if (TrySwitchToTab(bundle.Url))
+            {
+                return;
+            }
+
             if (tabId == -1)
             {
                 tabId = AddTab(bundle);
