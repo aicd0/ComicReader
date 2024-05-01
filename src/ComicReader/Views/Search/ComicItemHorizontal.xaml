@@ -40,6 +40,22 @@
                     Icon="Unfavorite"
                     Visibility="{x:Bind Ctx.IsFavorite}" />
                 <MenuFlyoutItem
+                    x:Uid="MenuFlyoutMarkAsRead"
+                    Click="{x:Bind Ctx.ItemHandler.OnMarkAsReadClicked}"
+                    Visibility="{x:Bind Ctx.IsRead, Converter={StaticResource BooleanToVisibilityNegationConverter}}">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="&#xE930;" />
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem
+                    x:Uid="MenuFlyoutMarkAsUnread"
+                    Click="{x:Bind Ctx.ItemHandler.OnMarkAsUnreadClicked}"
+                    Visibility="{x:Bind Ctx.IsUnread, Converter={StaticResource BooleanToVisibilityNegationConverter}}">
+                    <MenuFlyoutItem.Icon>
+                        <FontIcon Glyph="&#xECCA;" />
+                    </MenuFlyoutItem.Icon>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem
                     x:Uid="MenuFlyoutHide"
                     Click="{x:Bind Ctx.ItemHandler.OnHideClicked}"
                     Visibility="{x:Bind Ctx.IsHide, Converter={StaticResource BooleanToVisibilityNegationConverter}}">

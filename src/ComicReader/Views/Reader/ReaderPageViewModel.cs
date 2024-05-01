@@ -111,7 +111,7 @@ internal class ReaderPageViewModel : BaseViewModel
             if (!_comic.IsExternal)
             {
                 // Mark as read.
-                _comic.SetAsRead();
+                _comic.SetAsStarted();
 
                 // Add to history
                 await HistoryDataManager.Add(_comic.Id, _comic.Title1, true);

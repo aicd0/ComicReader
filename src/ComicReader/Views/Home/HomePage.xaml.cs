@@ -69,25 +69,12 @@ namespace ComicReader.Views.Home
             return GetAbility<IMainPageAbility>();
         }
 
-        private void ComicDataToViewModel(ComicData comic, ComicItemViewModel model)
+        private void BindComicData(ComicItemViewModel model, ComicData comic)
         {
             model.Comic = comic;
             model.Title = comic.Title;
             model.Rating = comic.Rating;
-
-            if (comic.Progress < 0)
-            {
-                model.Progress = Utils.StringResourceProvider.GetResourceString("Unread");
-            }
-            else if (comic.Progress >= 100)
-            {
-                model.Progress = Utils.StringResourceProvider.GetResourceString("Finished");
-            }
-            else
-            {
-                model.Progress = comic.Progress.ToString() + "%";
-            }
-
+            model.UpdateProgress(true);
             model.IsFavorite = FavoriteDataManager.FromIdNoLock(comic.Id) != null;
             model.ItemHandler = _comicItemHandler;
         }
@@ -166,7 +153,7 @@ namespace ComicReader.Views.Home
                     }
 
                     var model = new ComicItemViewModel();
-                    ComicDataToViewModel(comic, model);
+                    BindComicData(model, comic);
                     comic_items.Add(model);
                 }
 
@@ -315,6 +302,19 @@ namespace ComicReader.Views.Home
             GetMainPageAbility().OpenInCurrentTab(route);
         }
 
+        private void MarkAsReadOrUnread(ComicItemViewModel item, bool read)
+        {
+            if (read)
+            {
+                item.Comic.SetAsRead();
+            }
+            else
+            {
+                item.Comic.SetAsUnread();
+            }
+            BindComicData(item, item.Comic);
+        }
+
         private void OnAddToFavoritesClicked(object sender, RoutedEventArgs e)
         {
             Utils.C0.Run(async delegate
@@ -428,6 +428,18 @@ namespace ComicReader.Views.Home
             public void OnItemTapped(object sender, TappedRoutedEventArgs e)
             {
                 _page.OnComicItemTapped(sender, e);
+            }
+
+            public void OnMarkAsReadClicked(object sender, RoutedEventArgs e)
+            {
+                var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
+                _page.MarkAsReadOrUnread(item, true);
+            }
+
+            public void OnMarkAsUnreadClicked(object sender, RoutedEventArgs e)
+            {
+                var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
+                _page.MarkAsReadOrUnread(item, false);
             }
 
             public void OnOpenInNewTabClicked(object sender, RoutedEventArgs e)

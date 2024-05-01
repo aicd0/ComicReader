@@ -599,4 +599,16 @@ Category2: tag4/tag5
   <data name="ReaderTip.Title" xml:space="preserve">
     <value>Tip</value>
   </data>
+  <data name="MenuFlyoutMarkAsRead.Text" xml:space="preserve">
+    <value>Mark as finished</value>
+  </data>
+  <data name="MenuFlyoutMarkAsUnread.Text" xml:space="preserve">
+    <value>Mark as unread</value>
+  </data>
+  <data name="MarkAsReadAppBarButton.Label" xml:space="preserve">
+    <value>Mark as finished</value>
+  </data>
+  <data name="MarkAsUnreadAppBarButton.Label" xml:space="preserve">
+    <value>Mark as unread</value>
+  </data>
 </root>

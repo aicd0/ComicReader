@@ -30,11 +30,11 @@ namespace ComicReader.Database
         public int Progress { get; protected set; } = -1;
         public DateTimeOffset LastVisit { get; protected set; } = DateTimeOffset.MinValue;
         public double LastPosition { get; protected set; } = 0.0;
-        public List<double> ImageAspectRatios { get; set; } = new List<double>();
-        protected string CoverFileCache { get; set; } = "";
+        public List<double> ImageAspectRatios { get; private set; } = new List<double>();
+        protected string CoverFileCache { get; private set; } = "";
 
         // Foriegn fields.
-        public List<TagData> Tags { get; set; } = new List<TagData>();
+        public List<TagData> Tags { get; private set; } = new List<TagData>();
 
         // Not in database.
         public string Title
@@ -45,7 +45,7 @@ namespace ComicReader.Database
                 {
                     if (Title2.Length == 0)
                     {
-                        return Utils.StringResourceProvider.GetResourceString("UntitledCollection");
+                        return StringResourceProvider.GetResourceString("UntitledCollection");
                     }
                     else
                     {
@@ -64,6 +64,8 @@ namespace ComicReader.Database
         }
 
         public bool IsExternal { get; private set; }
+        public bool IsRead => Progress >= 100;
+        public bool IsUnread => Progress < 0;
         public abstract bool IsEditable { get; }
         public abstract int ImageCount { get; }
         protected StorageFolder CacheFolder => ApplicationData.Current.LocalCacheFolder;
@@ -247,6 +249,16 @@ namespace ComicReader.Database
         }
 
         public void SetAsRead()
+        {
+            _ = SaveProgressAsync(100, LastPosition);
+        }
+
+        public void SetAsUnread()
+        {
+            _ = SaveProgressAsync(-1, 0);
+        }
+
+        public void SetAsStarted()
         {
             LastVisit = DateTimeOffset.Now;
             Progress = Math.Max(Progress, 0);

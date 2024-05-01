@@ -195,6 +195,28 @@ internal class SearchPageShared : INotifyPropertyChanged
         }
     }
 
+    private bool _isCommandBarMarkAsReadEnabled = false;
+    public bool IsCommandBarMarkAsReadEnabled
+    {
+        get => _isCommandBarMarkAsReadEnabled;
+        set
+        {
+            _isCommandBarMarkAsReadEnabled = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsCommandBarMarkAsReadEnabled"));
+        }
+    }
+
+    private bool _isCommandBarMarkAsUnreadEnabled = false;
+    public bool IsCommandBarMarkAsUnreadEnabled
+    {
+        get => _isCommandBarMarkAsUnreadEnabled;
+        set
+        {
+            _isCommandBarMarkAsUnreadEnabled = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsCommandBarMarkAsUnreadEnabled"));
+        }
+    }
+
     public Action<bool> OnCommandBarSelectAllToggleChanged;
 }
 
@@ -408,38 +430,16 @@ sealed internal partial class SearchPage : SearchPageBase
             .ToList();
     }
 
-    private async Task<ComicItemViewModel> ComicDataToViewModel(ComicData comic)
+    private async Task BindComicData(ComicItemViewModel model, ComicData comic)
     {
-        string progress;
-
-        if (comic.Progress >= 0)
-        {
-            if (comic.Progress >= 100)
-            {
-                progress = Utils.StringResourceProvider.GetResourceString("Finished");
-            }
-            else
-            {
-                progress = Utils.StringResourceProvider.GetResourceString("FinishPercentage")
-                    .Replace("$percentage", comic.Progress.ToString());
-            }
-        }
-        else
-        {
-            progress = "";
-        }
-
-        return new ComicItemViewModel
-        {
-            Comic = comic,
-            Title = comic.Title,
-            Detail = "#" + comic.Id,
-            Rating = comic.Rating,
-            Progress = progress,
-            IsFavorite = await FavoriteDataManager.FromId(comic.Id) != null,
-            IsSelectMode = Shared.IsSelectMode,
-            ItemHandler = _comicItemHandler,
-        };
+        model.Comic = comic;
+        model.Title = comic.Title;
+        model.Detail = "#" + comic.Id;
+        model.Rating = comic.Rating;
+        model.UpdateProgress(false);
+        model.IsFavorite = await FavoriteDataManager.FromId(comic.Id) != null;
+        model.IsSelectMode = Shared.IsSelectMode;
+        model.ItemHandler = _comicItemHandler;
     }
 
     private async Task LoadMoreResults(int count)
@@ -467,7 +467,8 @@ sealed internal partial class SearchPage : SearchPageBase
                     continue;
                 }
 
-                ComicItemViewModel item = await ComicDataToViewModel(comic);
+                ComicItemViewModel item = new();
+                await BindComicData(item, comic);
                 Shared.SearchResults.Add(item);
                 ++i;
             }
@@ -620,6 +621,22 @@ sealed internal partial class SearchPage : SearchPageBase
         });
     }
 
+    private void MarkAsReadOrUnread(ComicItemViewModel item, bool read)
+    {
+        Utils.C0.Run(async delegate
+        {
+            if (read)
+            {
+                item.Comic.SetAsRead();
+            }
+            else
+            {
+                item.Comic.SetAsUnread();
+            }
+            await BindComicData(item, item.Comic);
+        });
+    }
+
     private void SetSelectMode(bool val)
     {
         if (val == Shared.IsSelectMode)
@@ -648,6 +665,11 @@ sealed internal partial class SearchPage : SearchPageBase
 
     private void OnGridViewSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
+        UpdateCommandBarButtonStates();
+    }
+
+    private void UpdateCommandBarButtonStates()
+    {
         IList<object> selected_items = SearchResultGridView.SelectedItems;
 
         bool all_selected = selected_items.Count == Shared.SearchResults.Count;
@@ -655,6 +677,8 @@ sealed internal partial class SearchPage : SearchPageBase
         bool unfavorite_enabled = false;
         bool hide_enabled = false;
         bool unhide_enabled = false;
+        bool markAsReadEnabled = false;
+        bool markAsUnreadEnabled = false;
 
         foreach (object item in selected_items)
         {
@@ -679,6 +703,16 @@ sealed internal partial class SearchPage : SearchPageBase
             {
                 hide_enabled = true;
             }
+
+            if (!model.IsRead)
+            {
+                markAsReadEnabled = true;
+            }
+
+            if (!model.IsUnread)
+            {
+                markAsUnreadEnabled = true;
+            }
         }
 
         Shared.CommandBarSelectAllToggleOmitOnce = true;
@@ -687,6 +721,8 @@ sealed internal partial class SearchPage : SearchPageBase
         Shared.IsCommandBarUnFavoriteEnabled = unfavorite_enabled;
         Shared.IsCommandBarHideEnabled = hide_enabled;
         Shared.IsCommandBarUnHideEnabled = unhide_enabled;
+        Shared.IsCommandBarMarkAsReadEnabled = markAsReadEnabled;
+        Shared.IsCommandBarMarkAsUnreadEnabled = markAsUnreadEnabled;
     }
 
     private void OnCommandBarSelectAllToggleChanged(bool toggled)
@@ -706,21 +742,18 @@ sealed internal partial class SearchPage : SearchPageBase
         Utils.C0.Run(async delegate
         {
             var selected_items = new List<object>(SearchResultGridView.SelectedItems);
-
             for (int i = 0; i < selected_items.Count; ++i)
             {
                 var model = selected_items[i] as ComicItemViewModel;
-
                 if (model.IsFavorite)
                 {
                     continue;
                 }
-
                 model.IsFavorite = true;
                 await FavoriteDataManager.Add(model.Comic.Id, model.Title, i == selected_items.Count - 1);
             }
 
-            SetSelectMode(false);
+            UpdateCommandBarButtonStates();
         });
     }
 
@@ -729,21 +762,18 @@ sealed internal partial class SearchPage : SearchPageBase
         Utils.C0.Run(async delegate
         {
             var selected_items = new List<object>(SearchResultGridView.SelectedItems);
-
             for (int i = 0; i < selected_items.Count; ++i)
             {
                 var model = selected_items[i] as ComicItemViewModel;
-
                 if (!model.IsFavorite)
                 {
                     continue;
                 }
-
                 model.IsFavorite = false;
                 await FavoriteDataManager.RemoveWithId(model.Comic.Id, i == selected_items.Count - 1);
             }
 
-            SetSelectMode(false);
+            UpdateCommandBarButtonStates();
         });
     }
 
@@ -791,6 +821,38 @@ sealed internal partial class SearchPage : SearchPageBase
         });
     }
 
+    private void CommandBarMarkAsReadClicked(object sender, RoutedEventArgs e)
+    {
+        var selected_items = new List<object>(SearchResultGridView.SelectedItems);
+        for (int i = 0; i < selected_items.Count; ++i)
+        {
+            var item = selected_items[i] as ComicItemViewModel;
+            if (item.IsRead)
+            {
+                continue;
+            }
+            MarkAsReadOrUnread(item, true);
+        }
+
+        UpdateCommandBarButtonStates();
+    }
+
+    private void CommandBarMarkAsUnreadClicked(object sender, RoutedEventArgs e)
+    {
+        var selected_items = new List<object>(SearchResultGridView.SelectedItems);
+        for (int i = 0; i < selected_items.Count; ++i)
+        {
+            var item = selected_items[i] as ComicItemViewModel;
+            if (item.IsUnread)
+            {
+                continue;
+            }
+            MarkAsReadOrUnread(item, false);
+        }
+
+        UpdateCommandBarButtonStates();
+    }
+
     private class ComicItemHandler : ComicItemViewModel.IItemHandler
     {
         private readonly SearchPage _page;
@@ -813,6 +875,18 @@ sealed internal partial class SearchPage : SearchPageBase
         public void OnItemTapped(object sender, TappedRoutedEventArgs e)
         {
             _page.OnComicItemTapped(sender, e);
+        }
+
+        public void OnMarkAsReadClicked(object sender, RoutedEventArgs e)
+        {
+            var item = (ComicItemViewModel)((FrameworkElement)sender).DataContext;
+            _page.MarkAsReadOrUnread(item, true);
+        }
+
+        public void OnMarkAsUnreadClicked(object sender, RoutedEventArgs e)
+        {
+            var item = (ComicItemViewModel)((FrameworkElement)sender).DataContext;
+            _page.MarkAsReadOrUnread(item, false);
         }
 
         public void OnOpenInNewTabClicked(object sender, RoutedEventArgs e)

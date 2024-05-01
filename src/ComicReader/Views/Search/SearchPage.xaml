@@ -117,6 +117,22 @@
                     Icon="UnFavorite"
                     IsEnabled="{x:Bind Shared.IsCommandBarUnFavoriteEnabled, Mode=OneWay}" />
                 <AppBarButton
+                    x:Uid="MarkAsReadAppBarButton"
+                    Click="CommandBarMarkAsReadClicked"
+                    IsEnabled="{x:Bind Shared.IsCommandBarMarkAsReadEnabled, Mode=OneWay}">
+                    <AppBarButton.Icon>
+                        <FontIcon Glyph="&#xE930;" />
+                    </AppBarButton.Icon>
+                </AppBarButton>
+                <AppBarButton
+                    x:Uid="MarkAsUnreadAppBarButton"
+                    Click="CommandBarMarkAsUnreadClicked"
+                    IsEnabled="{x:Bind Shared.IsCommandBarMarkAsUnreadEnabled, Mode=OneWay}">
+                    <AppBarButton.Icon>
+                        <FontIcon Glyph="&#xECCA;" />
+                    </AppBarButton.Icon>
+                </AppBarButton>
+                <AppBarButton
                     x:Uid="HideAppBarButton"
                     Click="CommandBarHideClicked"
                     IsEnabled="{x:Bind Shared.IsCommandBarHideEnabled, Mode=OneWay}">

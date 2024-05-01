@@ -9,13 +9,31 @@ namespace ComicReader.DesignData
 {
     internal class ComicItemViewModel : INotifyPropertyChanged
     {
+        //
+        // events
+        //
+
         public event PropertyChangedEventHandler PropertyChanged;
+
+        //
+        // properties
+        //
 
         public ComicData Comic;
         public string Title { get; set; }
         public string Detail { get; set; }
         public int Rating { get; set; } = -1;
-        public string Progress { get; set; }
+
+        private string _progress = string.Empty;
+        public string Progress
+        {
+            get => _progress;
+            private set
+            {
+                _progress = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Progress"));
+            }
+        }
 
         private bool m_IsFavorite = false;
         public bool IsFavorite
@@ -33,6 +51,8 @@ namespace ComicReader.DesignData
 
         public bool IsRatingVisible => Rating != -1;
         public bool IsHide => Comic.Hidden;
+        public bool IsRead => Comic.IsRead;
+        public bool IsUnread => Comic.IsUnread;
 
         private bool m_IsSelectMode = false;
         public bool IsSelectMode
@@ -45,7 +65,41 @@ namespace ComicReader.DesignData
             }
         }
 
-        // handlers
+        //
+        // functions
+        //
+
+        public void UpdateProgress(bool compat)
+        {
+            if (Comic.IsUnread)
+            {
+                Progress = StringResourceProvider.GetResourceString("Unread");
+            }
+            else if (Comic.IsRead)
+            {
+                Progress = StringResourceProvider.GetResourceString("Finished");
+            }
+            else
+            {
+                if (compat)
+                {
+                    Progress = Comic.Progress.ToString() + "%";
+                }
+                else
+                {
+                    Progress = StringResourceProvider.GetResourceString("FinishPercentage")
+                        .Replace("$percentage", Comic.Progress.ToString());
+                }
+            }
+
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsRead"));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsUnread"));
+        }
+
+        //
+        // handler
+        //
+
         private WeakReference<IItemHandler> _itemHandler;
         public IItemHandler ItemHandler
         {
@@ -72,6 +126,10 @@ namespace ComicReader.DesignData
             void OnHideClicked(object sender, RoutedEventArgs e);
 
             void OnUnhideClicked(object sender, RoutedEventArgs e);
+
+            void OnMarkAsReadClicked(object sender, RoutedEventArgs e);
+
+            void OnMarkAsUnreadClicked(object sender, RoutedEventArgs e);
 
             void OnSelectClicked(object sender, RoutedEventArgs e);
         }
@@ -117,6 +175,14 @@ namespace ComicReader.DesignData
             }
 
             public void OnUnhideClicked(object sender, RoutedEventArgs e)
+            {
+            }
+
+            public void OnMarkAsReadClicked(object sender, RoutedEventArgs e)
+            {
+            }
+
+            public void OnMarkAsUnreadClicked(object sender, RoutedEventArgs e)
             {
             }
         }
