@@ -52,7 +52,7 @@ namespace ComicReader.Utils
                 }
                 catch (Exception e)
                 {
-                    Utils.Debug.LogException("GetFolderFromToken", e);
+                    Debug.LogException("GetFolderFromToken", e);
                     out_of_date_tokens.Add(base_token);
                     continue;
                 }
@@ -70,7 +70,7 @@ namespace ComicReader.Utils
 
             foreach (string out_of_date_token in out_of_date_tokens)
             {
-                Utils.Storage.RemoveFromFutureAccessList(out_of_date_token);
+                RemoveFromFutureAccessList(out_of_date_token);
             }
 
             if (result != null)
@@ -83,22 +83,22 @@ namespace ComicReader.Utils
 
         public static async Task<StorageFile> TryGetFile(string path)
         {
-            string token = Utils.StringUtils.TokenFromPath(path);
+            string token = StringUtils.TokenFromPath(path);
 
             if (s_FileResources.ContainsKey(token))
             {
                 return s_FileResources[token];
             }
 
-            string folder_path = Utils.StringUtils.ParentLocationFromLocation(path);
-            StorageFolder folder = await Utils.Storage.TryGetFolder(folder_path);
+            string folder_path = StringUtils.ParentLocationFromLocation(path);
+            StorageFolder folder = await TryGetFolder(folder_path);
 
             if (folder == null)
             {
                 return null;
             }
 
-            string filename = Utils.StringUtils.ItemNameFromPath(path);
+            string filename = StringUtils.ItemNameFromPath(path);
             IStorageItem item = await folder.TryGetItemAsync(filename);
 
             if (item == null || !item.IsOfType(StorageItemTypes.File))
@@ -113,7 +113,7 @@ namespace ComicReader.Utils
 
         public static void AddToFutureAccessList(IStorageItem item)
         {
-            string token = Utils.StringUtils.TokenFromPath(item.Path);
+            string token = StringUtils.TokenFromPath(item.Path);
             StorageApplicationPermissions.FutureAccessList.AddOrReplace(token, item);
             Log("Added '" + token + "' to future access list.");
         }
@@ -137,7 +137,7 @@ namespace ComicReader.Utils
 
         public static async Task<StorageFolder> TryGetFolder(StorageFolder base_folder, string path)
         {
-            string base_path = Utils.StringUtils.ToPathNoTail(base_folder.Path);
+            string base_path = StringUtils.ToPathNoTail(base_folder.Path);
 
             if (base_path.Length > path.Length)
             {
@@ -180,7 +180,7 @@ namespace ComicReader.Utils
 
         private static void Log(string text)
         {
-            Utils.Debug.Log("Storage: " + text);
+            Debug.Log("Storage: " + text);
         }
     }
 }

@@ -1,4 +1,3 @@
-using Microsoft.AppCenter.Analytics;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -7,11 +6,11 @@ using SealedTask = System.Func<System.Threading.Tasks.Task<ComicReader.Utils.Tas
 
 namespace ComicReader.Utils
 {
-    class Debug
+    internal class Debug
     {
         private const string LogFileName = "log.txt";
 
-        private static readonly Utils.TaskQueue LogQueue = new Utils.TaskQueue();
+        private static readonly TaskQueue LogQueue = new();
 
         private static StorageFolder LogFolder => ApplicationData.Current.LocalFolder;
 
@@ -59,7 +58,6 @@ namespace ComicReader.Utils
                 properties["detail"] = e.ToString();
             }
 
-            Analytics.TrackEvent(eventName, properties);
             Log("[Exception] " + eventName + ":\n" + StringUtils.DictionaryToString(properties));
         }
 
