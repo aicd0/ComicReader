@@ -3,6 +3,7 @@ using ComicReader.Common.Constants;
 using ComicReader.Database;
 using ComicReader.Router;
 using ComicReader.Utils;
+using ComicReader.Utils.Lifecycle;
 using ComicReader.Views.Base;
 using ComicReader.Views.Navigation;
 using Microsoft.UI;

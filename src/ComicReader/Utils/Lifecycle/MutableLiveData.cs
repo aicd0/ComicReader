@@ -1,6 +1,6 @@
-﻿namespace ComicReader.Utils;
+﻿namespace ComicReader.Utils.Lifecycle;
 
-internal class MutableLiveData<T> : LiveData<T>
+internal class MutableLiveData<T> : LiveData<T>, IMutableLiveData<T>
 {
     public MutableLiveData() : base() { }
 

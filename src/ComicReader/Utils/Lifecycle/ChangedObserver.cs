@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ComicReader.Utils;
+namespace ComicReader.Utils.Lifecycle;
 
 internal class ChangedObserver<T> : IObserver<T> where T : IEquatable<T>
 {

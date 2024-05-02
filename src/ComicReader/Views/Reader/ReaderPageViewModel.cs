@@ -2,6 +2,7 @@
 using ComicReader.DesignData;
 using ComicReader.Utils;
 using ComicReader.Utils.Image;
+using ComicReader.Utils.Lifecycle;
 using ComicReader.Views.Base;
 using ComicReader.Views.Navigation;
 using Microsoft.UI.Xaml;

@@ -2,7 +2,7 @@ using ComicReader.Common.Constants;
 using ComicReader.Database;
 using ComicReader.DesignData;
 using ComicReader.Router;
-using ComicReader.Utils;
+using ComicReader.Utils.Lifecycle;
 using ComicReader.Views.Base;
 using ComicReader.Views.Main;
 using ComicReader.Views.Navigation;

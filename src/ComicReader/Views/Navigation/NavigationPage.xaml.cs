@@ -2,6 +2,7 @@ using ComicReader.Common.Constants;
 using ComicReader.Database;
 using ComicReader.Router;
 using ComicReader.Utils;
+using ComicReader.Utils.Lifecycle;
 using ComicReader.Views.Base;
 using ComicReader.Views.Main;
 using Microsoft.UI.Input;
@@ -66,13 +67,11 @@ namespace ComicReader.Views.Navigation
 
         public void Navigate(NavigationBundle bundle)
         {
-            ContentFrame.Navigated += OnPageChanged;
             TransferAbilities(bundle);
             bundle.Abilities[typeof(INavigationPageAbility)] = _ability;
-            if (!ContentFrame.Navigate(bundle.PageTrait.GetPageType(), bundle))
-            {
-                return;
-            }
+
+            _ability.ClearSubscriptions();
+            ContentFrame.Navigate(bundle.PageTrait.GetPageType(), bundle);
         }
 
         public bool GoBack()
@@ -87,6 +86,7 @@ namespace ComicReader.Views.Navigation
                 return false;
             }
 
+            _ability.ClearSubscriptions();
             ContentFrame.GoBack();
             return true;
         }
@@ -103,6 +103,7 @@ namespace ComicReader.Views.Navigation
                 return false;
             }
 
+            _ability.ClearSubscriptions();
             ContentFrame.GoForward();
             return true;
         }
@@ -299,6 +300,11 @@ namespace ComicReader.Views.Navigation
             public NavigationPageAbility(NavigationPage parent)
             {
                 _parent = new WeakReference<NavigationPage>(parent);
+            }
+
+            public void ClearSubscriptions()
+            {
+                _eventBus.Clear();
             }
 
             public bool GetIsSidePaneOpen()

@@ -1,4 +1,4 @@
-﻿using ComicReader.Utils;
+﻿using ComicReader.Utils.Lifecycle;
 using ComicReader.Views.Base;
 
 namespace ComicReader.Views.Navigation;

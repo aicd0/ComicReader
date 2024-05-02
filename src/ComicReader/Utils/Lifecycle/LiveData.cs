@@ -3,15 +3,16 @@ using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Collections.Generic;
 
-namespace ComicReader.Utils;
+namespace ComicReader.Utils.Lifecycle;
 
-internal class LiveData<T>
+internal class LiveData<T> : ILiveData<T>, ILiveDataNoType
 {
-    private readonly List<IObserver<T>> _observers = new List<IObserver<T>>();
+    private readonly Dictionary<IObserver<T>, ObserverWrapper> _observers = new();
     private T _value;
     private int _version = 0;
     private bool _dispatchingValue = false;
     private bool _dispatchInvalidated = false;
+    private bool _clearing = false;
 
     protected LiveData()
     {
@@ -50,6 +51,17 @@ internal class LiveData<T>
         return _value;
     }
 
+    public void Clear()
+    {
+        var snapshot = new List<ObserverWrapper>(_observers.Values);
+        _clearing = true;
+        foreach (ObserverWrapper wrapper in snapshot)
+        {
+            wrapper.Remove();
+        }
+        _clearing = false;
+    }
+
     protected void EmitInternal(T value)
     {
         _value = value;
@@ -59,8 +71,14 @@ internal class LiveData<T>
 
     private void ObserveInternal(Page owner, IObserver<T> observer, bool sticky)
     {
+        if (_clearing)
+        {
+            return;
+        }
+
         if (owner == null || observer == null)
         {
+            System.Diagnostics.Debug.Assert(false);
             return;
         }
 
@@ -69,19 +87,17 @@ internal class LiveData<T>
             return;
         }
 
-        void unloadedHandler(object sender, RoutedEventArgs e)
+        if (_observers.TryGetValue(observer, out ObserverWrapper wrapper))
         {
-            if ((sender as Page).IsLoaded)
+            if (wrapper.IsSameOwner(owner))
             {
-                return;
+                System.Diagnostics.Debug.Assert(false);
             }
-
-            _observers.Remove(observer);
-            owner.Unloaded -= unloadedHandler;
+            return;
         }
 
-        owner.Unloaded += unloadedHandler;
-        _observers.Add(observer);
+        _observers[observer] = new ObserverWrapper(this, owner, observer);
+
         if (sticky && _version > 0)
         {
             DispatchValue(observer, _value);
@@ -106,7 +122,8 @@ internal class LiveData<T>
             }
             else
             {
-                foreach (IObserver<T> observer in _observers)
+                var snapshot = new List<IObserver<T>>(_observers.Keys);
+                foreach (IObserver<T> observer in snapshot)
                 {
                     ConsiderNotify(observer, value);
                     if (_dispatchInvalidated)
@@ -138,9 +155,41 @@ internal class LiveData<T>
             _action(value);
         }
     }
-}
 
-internal interface IObserver<T>
-{
-    void OnChanged(T value);
+    private class ObserverWrapper
+    {
+        private readonly LiveData<T> _liveData;
+        private readonly Page _owner;
+        private readonly IObserver<T> _observer;
+
+        public ObserverWrapper(LiveData<T> liveData, Page owner, IObserver<T> observer)
+        {
+            _liveData = liveData;
+            _owner = owner;
+            _observer = observer;
+
+            _owner.Unloaded += UnloadedHandler;
+        }
+
+        public bool IsSameOwner(Page owner)
+        {
+            return _owner == owner;
+        }
+
+        public void Remove()
+        {
+            _liveData._observers.Remove(_observer);
+            _owner.Unloaded -= UnloadedHandler;
+        }
+
+        private void UnloadedHandler(object sender, RoutedEventArgs e)
+        {
+            if (_owner.IsLoaded)
+            {
+                return;
+            }
+
+            Remove();
+        }
+    }
 }

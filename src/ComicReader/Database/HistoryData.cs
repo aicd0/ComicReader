@@ -1,5 +1,6 @@
 using ComicReader.Common.Constants;
 using ComicReader.Utils;
+using ComicReader.Utils.Lifecycle;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
