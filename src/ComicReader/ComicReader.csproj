@@ -113,7 +113,6 @@
       <Folder Include="Views\Favorite\" />
       <Folder Include="Views\History\" />
       <Folder Include="Views\Help\" />
-      <Folder Include="Views\Reader\SettingPanel\" />
       <Folder Include="Views\Search\" />
       <Folder Include="Views\Settings\" />
     </ItemGroup>

@@ -1,11 +1,11 @@
 <UserControl
-    x:Class="ComicReader.Views.Reader.SettingPanel.ReaderSettingPanel"
+    x:Class="ComicReader.Views.Reader.ReaderSettingPanel"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:converters="using:ComicReader.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:readersettingpanel="using:ComicReader.Views.Reader.SettingPanel"
+    xmlns:reader="using:ComicReader.Views.Reader"
     d:DesignHeight="300"
     d:DesignWidth="400"
     mc:Ignorable="d">
@@ -105,11 +105,11 @@
                         Margin="3"
                         Orientation="Horizontal"
                         Spacing="6">
-                        <readersettingpanel:PageDemoSingle x:Name="PdsDemoSingle1" Header="1" />
-                        <readersettingpanel:PageDemoSingle x:Name="PdsDemoSingle2" Header="2" />
-                        <readersettingpanel:PageDemoSingle x:Name="PdsDemoSingle3" Header="3" />
-                        <readersettingpanel:PageDemoSingle x:Name="PdsDemoSingle4" Header="4" />
-                        <readersettingpanel:PageDemoSingle x:Name="PdsDemoSingle5" Header="5" />
+                        <reader:PageDemoSingle x:Name="PdsDemoSingle1" Header="1" />
+                        <reader:PageDemoSingle x:Name="PdsDemoSingle2" Header="2" />
+                        <reader:PageDemoSingle x:Name="PdsDemoSingle3" Header="3" />
+                        <reader:PageDemoSingle x:Name="PdsDemoSingle4" Header="4" />
+                        <reader:PageDemoSingle x:Name="PdsDemoSingle5" Header="5" />
                     </StackPanel>
                 </ListViewItem>
 
@@ -120,13 +120,13 @@
                         Margin="3"
                         Orientation="Horizontal"
                         Spacing="12">
-                        <readersettingpanel:PageDemoSingle x:Name="PdsDemoDual1" Header="1" />
-                        <readersettingpanel:PageDemoDual
+                        <reader:PageDemoSingle x:Name="PdsDemoDual1" Header="1" />
+                        <reader:PageDemoDual
                             x:Name="PdsDemoDual2"
                             FlowDirection="LeftToRight"
                             HeaderL="2"
                             HeaderR="3" />
-                        <readersettingpanel:PageDemoDual
+                        <reader:PageDemoDual
                             x:Name="PdsDemoDual3"
                             FlowDirection="LeftToRight"
                             HeaderL="4"
@@ -141,13 +141,13 @@
                         Margin="3"
                         Orientation="Horizontal"
                         Spacing="12">
-                        <readersettingpanel:PageDemoSingle x:Name="PdsDemoDualCoverMirror1" Header="1" />
-                        <readersettingpanel:PageDemoDual
+                        <reader:PageDemoSingle x:Name="PdsDemoDualCoverMirror1" Header="1" />
+                        <reader:PageDemoDual
                             x:Name="PdsDemoDualCoverMirror2"
                             FlowDirection="LeftToRight"
                             HeaderL="3"
                             HeaderR="2" />
-                        <readersettingpanel:PageDemoDual
+                        <reader:PageDemoDual
                             x:Name="PdsDemoDualCoverMirror3"
                             FlowDirection="LeftToRight"
                             HeaderL="5"
@@ -162,17 +162,17 @@
                         Margin="3"
                         Orientation="Horizontal"
                         Spacing="12">
-                        <readersettingpanel:PageDemoDual
+                        <reader:PageDemoDual
                             x:Name="PdsDemoDualNoCover1"
                             FlowDirection="LeftToRight"
                             HeaderL="1"
                             HeaderR="2" />
-                        <readersettingpanel:PageDemoDual
+                        <reader:PageDemoDual
                             x:Name="PdsDemoDualNoCover2"
                             FlowDirection="LeftToRight"
                             HeaderL="3"
                             HeaderR="4" />
-                        <readersettingpanel:PageDemoSingle x:Name="PdsDemoDualNoCover3" Header="5" />
+                        <reader:PageDemoSingle x:Name="PdsDemoDualNoCover3" Header="5" />
                     </StackPanel>
                 </ListViewItem>
 
@@ -183,17 +183,17 @@
                         Margin="3"
                         Orientation="Horizontal"
                         Spacing="12">
-                        <readersettingpanel:PageDemoDual
+                        <reader:PageDemoDual
                             x:Name="PdsDemoDualNoCoverMirror1"
                             FlowDirection="LeftToRight"
                             HeaderL="2"
                             HeaderR="1" />
-                        <readersettingpanel:PageDemoDual
+                        <reader:PageDemoDual
                             x:Name="PdsDemoDualNoCoverMirror2"
                             FlowDirection="LeftToRight"
                             HeaderL="4"
                             HeaderR="3" />
-                        <readersettingpanel:PageDemoSingle x:Name="PdsDemoDualNoCoverMirror3" Header="5" />
+                        <reader:PageDemoSingle x:Name="PdsDemoDualNoCoverMirror3" Header="5" />
                     </StackPanel>
                 </ListViewItem>
             </ListView>

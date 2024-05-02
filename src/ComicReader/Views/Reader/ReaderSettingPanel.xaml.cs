@@ -3,7 +3,7 @@ using ComicReader.Views.Navigation;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
-namespace ComicReader.Views.Reader.SettingPanel;
+namespace ComicReader.Views.Reader;
 
 internal sealed partial class ReaderSettingPanel : UserControl
 {

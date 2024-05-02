@@ -6,7 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:navigation="using:ComicReader.Views.Navigation"
-    xmlns:readersettingpanel="using:ComicReader.Views.Reader.SettingPanel"
+    xmlns:reader="using:ComicReader.Views.Reader"
     Background="{ThemeResource NavigationPageBackground}"
     mc:Ignorable="d">
 
@@ -187,7 +187,7 @@
                                                 <Setter Property="Padding" Value="15,15,15,8" />
                                             </Style>
                                         </Flyout.FlyoutPresenterStyle>
-                                        <readersettingpanel:ReaderSettingPanel x:Name="RspReaderSetting" DataChanged="RspReaderSetting_DataChanged" />
+                                        <reader:ReaderSettingPanel x:Name="RspReaderSetting" DataChanged="RspReaderSetting_DataChanged" />
                                     </Flyout>
                                 </AppBarButton.Flyout>
                             </AppBarButton>
