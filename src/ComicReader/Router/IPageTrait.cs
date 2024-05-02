@@ -15,6 +15,8 @@ namespace ComicReader.Router
         bool ImmersiveMode();
 
         bool SupportFullscreen();
+
+        bool SupportMultiInstance();
     }
 
     internal class DefaultPageTrait : IPageTrait
@@ -45,6 +47,11 @@ namespace ComicReader.Router
         {
             return false;
         }
+
+        public bool SupportMultiInstance()
+        {
+            return true;
+        }
     }
 
     internal class HomePageTrait : IPageTrait
@@ -69,6 +76,11 @@ namespace ComicReader.Router
         public bool SupportFullscreen()
         {
             return false;
+        }
+
+        public bool SupportMultiInstance()
+        {
+            return true;
         }
 
         private static IPageTrait _instance;
@@ -106,6 +118,11 @@ namespace ComicReader.Router
             return false;
         }
 
+        public bool SupportMultiInstance()
+        {
+            return true;
+        }
+
         private static IPageTrait _instance;
         public static IPageTrait Instance
         {
@@ -137,6 +154,11 @@ namespace ComicReader.Router
         }
 
         public bool SupportFullscreen()
+        {
+            return true;
+        }
+
+        public bool SupportMultiInstance()
         {
             return true;
         }
@@ -176,6 +198,11 @@ namespace ComicReader.Router
             return false;
         }
 
+        public bool SupportMultiInstance()
+        {
+            return false;
+        }
+
         private static IPageTrait _instance;
         public static IPageTrait Instance
         {
@@ -207,6 +234,11 @@ namespace ComicReader.Router
         }
 
         public bool SupportFullscreen()
+        {
+            return false;
+        }
+
+        public bool SupportMultiInstance()
         {
             return false;
         }

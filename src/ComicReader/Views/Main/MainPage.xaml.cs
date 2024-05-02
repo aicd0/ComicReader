@@ -86,11 +86,16 @@ namespace ComicReader.Views.Main
             LoadTab(-1, route);
         }
 
-        public bool TrySwitchToTab(string url)
+        private bool TrySwitchToTab(NavigationBundle bundle)
         {
+            if (bundle.PageTrait.SupportMultiInstance())
+            {
+                return false;
+            }
+
             foreach (TabInfo tab in _tabs)
             {
-                if (tab.CurrentBundle.Url == url)
+                if (tab.CurrentBundle.Url == bundle.Url)
                 {
                     RootTabView.SelectedItem = tab.Item;
                     return true;
@@ -269,7 +274,7 @@ namespace ComicReader.Views.Main
             }
 
             NavigationBundle bundle = route.Process();
-            if (TrySwitchToTab(bundle.Url))
+            if (TrySwitchToTab(bundle))
             {
                 return;
             }
