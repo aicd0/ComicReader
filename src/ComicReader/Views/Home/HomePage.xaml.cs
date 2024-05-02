@@ -84,12 +84,7 @@ namespace ComicReader.Views.Home
             // IMPORTANT: Use TaskCompletionSource to guarantee all async tasks
             // in Sync block has completed.
             var completion_src = new TaskCompletionSource<bool>();
-
-            Utils.C0.Sync(async delegate
-            {
-                await UpdateLibrary();
-                completion_src.SetResult(true);
-            }).Wait();
+            Threading.RunInMainThreadAsync(UpdateLibrary).Wait();
 
             completion_src.Task.Wait();
         }

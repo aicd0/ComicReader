@@ -1,5 +1,3 @@
-using CommunityToolkit.WinUI;
-using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System;
@@ -13,336 +11,331 @@ using System.Threading.Tasks;
 using Windows.Security.Cryptography;
 using Windows.Storage.Streams;
 
-namespace ComicReader.Utils
+namespace ComicReader.Utils;
+
+internal class C0
 {
-    public class C0
+    public static void Run(Action action)
     {
-        public static void Run(Action action)
-        {
-            action();
-        }
+        action();
+    }
 
-        public static async Task Sync(Action callback)
-        {
-            await App.Window.DispatcherQueue.EnqueueAsync(callback, DispatcherQueuePriority.Normal);
-        }
+    public static async Task WaitFor(Func<bool> signal, int timeout_milliseconds = -1)
+    {
+        DateTimeOffset start_time = DateTimeOffset.Now;
 
-        public static async Task WaitFor(Func<bool> signal, int timeout_milliseconds = -1)
+        await Task.Run(delegate
         {
-            DateTimeOffset start_time = DateTimeOffset.Now;
+            var sw = new SpinWait();
 
-            await Task.Run(delegate
+            while (!signal())
             {
-                var sw = new SpinWait();
-
-                while (!signal())
+                if (timeout_milliseconds >= 0)
                 {
-                    if (timeout_milliseconds >= 0)
+                    TimeSpan time_elapsed = DateTimeOffset.Now - start_time;
+
+                    if ((int)time_elapsed.TotalMilliseconds > timeout_milliseconds)
                     {
-                        TimeSpan time_elapsed = DateTimeOffset.Now - start_time;
-
-                        if ((int)time_elapsed.TotalMilliseconds > timeout_milliseconds)
-                        {
-                            break;
-                        }
+                        break;
                     }
-
-                    sw.SpinOnce();
                 }
-            });
-        }
 
-        public static async Task<ContentDialogResult> ShowDialogAsync(ContentDialog dialog, XamlRoot root)
-        {
-            // https://learn.microsoft.com/en-us/windows/apps/design/controls/dialogs-and-flyouts/dialogs
-            dialog.XamlRoot = root;
-            return await dialog.ShowAsync();
-        }
-
-        public static IBuffer GetBufferFromString(string text)
-        {
-            if (text.Length == 0)
-            {
-                return new Windows.Storage.Streams.Buffer(0);
+                sw.SpinOnce();
             }
-            else
-            {
-                return CryptographicBuffer.ConvertStringToBinary(
-                    text, BinaryStringEncoding.Utf8);
-            }
-        }
+        });
+    }
 
-        public static Stream GetStreamFromString(string text)
+    public static async Task<ContentDialogResult> ShowDialogAsync(ContentDialog dialog, XamlRoot root)
+    {
+        // https://learn.microsoft.com/en-us/windows/apps/design/controls/dialogs-and-flyouts/dialogs
+        // https://github.com/microsoft/microsoft-ui-xaml/issues/4167
+        dialog.XamlRoot = root;
+        return await dialog.ShowAsync();
+    }
+
+    public static IBuffer GetBufferFromString(string text)
+    {
+        if (text.Length == 0)
         {
-            IBuffer buffer = GetBufferFromString(text);
-            return WindowsRuntimeBufferExtensions.AsStream(buffer);
+            return new Windows.Storage.Streams.Buffer(0);
+        }
+        else
+        {
+            return CryptographicBuffer.ConvertStringToBinary(
+                text, BinaryStringEncoding.Utf8);
         }
     }
 
-    interface IC1<out T> { }
-    public class C1<T> : IC1<T>
+    public static Stream GetStreamFromString(string text)
     {
-        public class DefaultEqualityComparer : EqualityComparer<T>
-        {
-            public override bool Equals(T x, T y)
-            {
-                return x.Equals(y);
-            }
+        IBuffer buffer = GetBufferFromString(text);
+        return WindowsRuntimeBufferExtensions.AsStream(buffer);
+    }
+}
 
-            public override int GetHashCode(T obj)
-            {
-                return obj.GetHashCode();
-            }
+interface IC1<out T> { }
+public class C1<T> : IC1<T>
+{
+    public class DefaultEqualityComparer : EqualityComparer<T>
+    {
+        public override bool Equals(T x, T y)
+        {
+            return x.Equals(y);
         }
 
-        public static void NotifyCollectionChanged(ObservableCollection<T> collection, T item)
+        public override int GetHashCode(T obj)
         {
-            int idx = collection.IndexOf(item);
-            collection.Insert(idx + 1, item);
-            collection.RemoveAt(idx);
+            return obj.GetHashCode();
+        }
+    }
+
+    public static void NotifyCollectionChanged(ObservableCollection<T> collection, T item)
+    {
+        int idx = collection.IndexOf(item);
+        collection.Insert(idx + 1, item);
+        collection.RemoveAt(idx);
+    }
+
+    private enum ModificationType
+    {
+        Unset,
+        Skip,
+        Delete,
+        Add
+    }
+
+    class Modification
+    {
+        public ModificationType Type = ModificationType.Unset;
+        public int MinSteps;
+    }
+
+    public static void UpdateCollectionWithMinimumEditing(ObservableCollection<T> dst_collection,
+        IEnumerable<T> src_collection, Func<T, T, bool> equal_func)
+    {
+        // DP Problem: Edit Distance
+        var modifications = new List<List<Modification>>(dst_collection.Count + 1);
+
+        for (int i = 0; i < dst_collection.Count + 1; i++)
+        {
+            var row = new List<Modification>(src_collection.Count() + 1);
+
+            for (int j = 0; j < src_collection.Count() + 1; j++)
+            {
+                row.Add(new Modification());
+            }
+
+            modifications.Add(row);
         }
 
-        private enum ModificationType
+        // Initialize cache.
+        for (int i = 1; i < modifications[0].Count; ++i)
         {
-            Unset,
-            Skip,
-            Delete,
-            Add
+            Modification mod = modifications[0][i];
+            mod.Type = ModificationType.Add;
+            mod.MinSteps = i;
         }
 
-        class Modification
+        for (int i = 1; i < modifications.Count; ++i)
         {
-            public ModificationType Type = ModificationType.Unset;
-            public int MinSteps;
+            Modification mod = modifications[i][0];
+            mod.Type = ModificationType.Delete;
+            mod.MinSteps = i;
         }
 
-        public static void UpdateCollectionWithMinimumEditing(ObservableCollection<T> dst_collection,
-            IEnumerable<T> src_collection, Func<T, T, bool> equal_func)
+        // Update the whole cache.
+        for (int i = 1; i < modifications.Count; ++i)
         {
-            // DP Problem: Edit Distance
-            var modifications = new List<List<Modification>>(dst_collection.Count + 1);
+            List<Modification> row = modifications[i];
+            List<Modification> last_row = modifications[i - 1];
 
-            for (int i = 0; i < dst_collection.Count + 1; i++)
+            for (int j = 1; j < row.Count; ++j)
             {
-                var row = new List<Modification>(src_collection.Count() + 1);
-
-                for (int j = 0; j < src_collection.Count() + 1; j++)
+                if (equal_func(dst_collection[i - 1], src_collection.ElementAt(j - 1)))
                 {
-                    row.Add(new Modification());
-                }
-
-                modifications.Add(row);
-            }
-
-            // Initialize cache.
-            for (int i = 1; i < modifications[0].Count; ++i)
-            {
-                Modification mod = modifications[0][i];
-                mod.Type = ModificationType.Add;
-                mod.MinSteps = i;
-            }
-
-            for (int i = 1; i < modifications.Count; ++i)
-            {
-                Modification mod = modifications[i][0];
-                mod.Type = ModificationType.Delete;
-                mod.MinSteps = i;
-            }
-
-            // Update the whole cache.
-            for (int i = 1; i < modifications.Count; ++i)
-            {
-                List<Modification> row = modifications[i];
-                List<Modification> last_row = modifications[i - 1];
-
-                for (int j = 1; j < row.Count; ++j)
-                {
-                    if (equal_func(dst_collection[i - 1], src_collection.ElementAt(j - 1)))
-                    {
-                        row[j].Type = ModificationType.Skip;
-                        row[j].MinSteps = last_row[j - 1].MinSteps;
-                    }
-                    else
-                    {
-                        if (row[j - 1].MinSteps < last_row[j].MinSteps)
-                        {
-                            row[j].Type = ModificationType.Add;
-                            row[j].MinSteps = row[j - 1].MinSteps + 1;
-                        }
-                        else
-                        {
-                            row[j].Type = ModificationType.Delete;
-                            row[j].MinSteps = last_row[j].MinSteps + 1;
-                        }
-                    }
-                }
-            }
-
-            // Backtracking to find the best solution.
-            var solution = new List<ModificationType>();
-
-            {
-                int i = dst_collection.Count;
-                int j = src_collection.Count();
-
-                while (i + j > 0)
-                {
-                    ModificationType type = modifications[i][j].Type;
-                    solution.Add(type);
-
-                    if (type == ModificationType.Skip)
-                    {
-                        i--;
-                        j--;
-                    }
-                    else if (type == ModificationType.Add)
-                    {
-                        j--;
-                    }
-                    else
-                    {
-                        i--;
-                    }
-                }
-            }
-
-            // Perform the solution.
-            {
-                int i = 0;
-                int j = 0;
-
-                for (int k = solution.Count - 1; k >= 0; --k)
-                {
-                    ModificationType type = solution[k];
-
-                    if (type == ModificationType.Skip)
-                    {
-                        ++i;
-                        ++j;
-                    }
-                    else if (type == ModificationType.Add)
-                    {
-                        dst_collection.Insert(i, src_collection.ElementAt(j));
-                        ++i;
-                        ++j;
-                    }
-                    else
-                    {
-                        dst_collection.RemoveAt(i);
-                    }
-                }
-            }
-        }
-
-        public static void UpdateCollectionWithDeleteFirstMatch(ObservableCollection<T> dst_collection,
-            IEnumerable<T> src_collection, Func<T, T, bool> equal_func)
-        {
-            for (int i = 0; i < src_collection.Count(); ++i)
-            {
-                if (i < dst_collection.Count)
-                {
-                    if (!equal_func(dst_collection[i], src_collection.ElementAt(i)))
-                    {
-                        dst_collection.RemoveAt(i);
-                        --i;
-                    }
+                    row[j].Type = ModificationType.Skip;
+                    row[j].MinSteps = last_row[j - 1].MinSteps;
                 }
                 else
                 {
-                    dst_collection.Add(src_collection.ElementAt(i));
+                    if (row[j - 1].MinSteps < last_row[j].MinSteps)
+                    {
+                        row[j].Type = ModificationType.Add;
+                        row[j].MinSteps = row[j - 1].MinSteps + 1;
+                    }
+                    else
+                    {
+                        row[j].Type = ModificationType.Delete;
+                        row[j].MinSteps = last_row[j].MinSteps + 1;
+                    }
                 }
             }
         }
 
-        public static void UpdateCollection(ObservableCollection<T> dst_collection,
-            IEnumerable<T> src_collection, Func<T, T, bool> equal_func)
+        // Backtracking to find the best solution.
+        var solution = new List<ModificationType>();
+
         {
-            if (dst_collection.Count * src_collection.Count() <= 512)
+            int i = dst_collection.Count;
+            int j = src_collection.Count();
+
+            while (i + j > 0)
             {
-                UpdateCollectionWithMinimumEditing(dst_collection, src_collection, equal_func);
+                ModificationType type = modifications[i][j].Type;
+                solution.Add(type);
+
+                if (type == ModificationType.Skip)
+                {
+                    i--;
+                    j--;
+                }
+                else if (type == ModificationType.Add)
+                {
+                    j--;
+                }
+                else
+                {
+                    i--;
+                }
             }
-            else
+        }
+
+        // Perform the solution.
+        {
+            int i = 0;
+            int j = 0;
+
+            for (int k = solution.Count - 1; k >= 0; --k)
             {
-                UpdateCollectionWithDeleteFirstMatch(dst_collection, src_collection, equal_func);
+                ModificationType type = solution[k];
+
+                if (type == ModificationType.Skip)
+                {
+                    ++i;
+                    ++j;
+                }
+                else if (type == ModificationType.Add)
+                {
+                    dst_collection.Insert(i, src_collection.ElementAt(j));
+                    ++i;
+                    ++j;
+                }
+                else
+                {
+                    dst_collection.RemoveAt(i);
+                }
             }
         }
     }
 
-    public interface IC3<out T, out U, out V> { }
-    public class C3<T, U, V> : IC3<T, U, V>
+    public static void UpdateCollectionWithDeleteFirstMatch(ObservableCollection<T> dst_collection,
+        IEnumerable<T> src_collection, Func<T, T, bool> equal_func)
     {
-        private class KeyEqualityComparer : EqualityComparer<KeyValuePair<V, object>>
+        for (int i = 0; i < src_collection.Count(); ++i)
         {
-            IEqualityComparer<V> m_comparer;
-
-            public KeyEqualityComparer(IEqualityComparer<V> comparer)
+            if (i < dst_collection.Count)
             {
-                m_comparer = comparer;
+                if (!equal_func(dst_collection[i], src_collection.ElementAt(i)))
+                {
+                    dst_collection.RemoveAt(i);
+                    --i;
+                }
             }
-
-            public override bool Equals(KeyValuePair<V, object> x, KeyValuePair<V, object> y)
+            else
             {
-                return m_comparer.Equals(x.Key, y.Key);
-            }
-
-            public override int GetHashCode(KeyValuePair<V, object> obj)
-            {
-                return m_comparer.GetHashCode(obj.Key);
+                dst_collection.Add(src_collection.ElementAt(i));
             }
         }
+    }
 
-        public static IEnumerable<T> Except(IEnumerable<T> first, IEnumerable<U> second,
-            Func<T, V> key_first, Func<U, V> key_second, IEqualityComparer<V> comparer)
+    public static void UpdateCollection(ObservableCollection<T> dst_collection,
+        IEnumerable<T> src_collection, Func<T, T, bool> equal_func)
+    {
+        if (dst_collection.Count * src_collection.Count() <= 512)
         {
-            var pairs_1 = new List<KeyValuePair<V, object>>();
-            var pairs_2 = new List<KeyValuePair<V, object>>();
+            UpdateCollectionWithMinimumEditing(dst_collection, src_collection, equal_func);
+        }
+        else
+        {
+            UpdateCollectionWithDeleteFirstMatch(dst_collection, src_collection, equal_func);
+        }
+    }
+}
 
-            foreach (T val in first)
-            {
-                pairs_1.Add(new KeyValuePair<V, object>(key_first(val), val));
-            }
+public interface IC3<out T, out U, out V> { }
+public class C3<T, U, V> : IC3<T, U, V>
+{
+    private class KeyEqualityComparer : EqualityComparer<KeyValuePair<V, object>>
+    {
+        IEqualityComparer<V> m_comparer;
 
-            foreach (U val in second)
-            {
-                pairs_2.Add(new KeyValuePair<V, object>(key_second(val), val));
-            }
-
-            IEnumerable<KeyValuePair<V, object>> processed = pairs_1.Except(pairs_2, new KeyEqualityComparer(comparer));
-            var output = new List<T>();
-
-            foreach (KeyValuePair<V, object> val in processed)
-            {
-                output.Add((T)val.Value);
-            }
-
-            return output;
+        public KeyEqualityComparer(IEqualityComparer<V> comparer)
+        {
+            m_comparer = comparer;
         }
 
-        public static IEnumerable<T> Intersect(IEnumerable<T> first, IEnumerable<U> second,
-            Func<T, V> key_first, Func<U, V> key_second, IEqualityComparer<V> comparer)
+        public override bool Equals(KeyValuePair<V, object> x, KeyValuePair<V, object> y)
         {
-            var pairs_1 = new List<KeyValuePair<V, object>>();
-            var pairs_2 = new List<KeyValuePair<V, object>>();
-
-            foreach (T val in first)
-            {
-                pairs_1.Add(new KeyValuePair<V, object>(key_first(val), val));
-            }
-
-            foreach (U val in second)
-            {
-                pairs_2.Add(new KeyValuePair<V, object>(key_second(val), val));
-            }
-
-            IEnumerable<KeyValuePair<V, object>> processed = pairs_1.Intersect(pairs_2, new KeyEqualityComparer(comparer));
-            var output = new List<T>();
-
-            foreach (KeyValuePair<V, object> val in processed)
-            {
-                output.Add((T)val.Value);
-            }
-
-            return output;
+            return m_comparer.Equals(x.Key, y.Key);
         }
+
+        public override int GetHashCode(KeyValuePair<V, object> obj)
+        {
+            return m_comparer.GetHashCode(obj.Key);
+        }
+    }
+
+    public static IEnumerable<T> Except(IEnumerable<T> first, IEnumerable<U> second,
+        Func<T, V> key_first, Func<U, V> key_second, IEqualityComparer<V> comparer)
+    {
+        var pairs_1 = new List<KeyValuePair<V, object>>();
+        var pairs_2 = new List<KeyValuePair<V, object>>();
+
+        foreach (T val in first)
+        {
+            pairs_1.Add(new KeyValuePair<V, object>(key_first(val), val));
+        }
+
+        foreach (U val in second)
+        {
+            pairs_2.Add(new KeyValuePair<V, object>(key_second(val), val));
+        }
+
+        IEnumerable<KeyValuePair<V, object>> processed = pairs_1.Except(pairs_2, new KeyEqualityComparer(comparer));
+        var output = new List<T>();
+
+        foreach (KeyValuePair<V, object> val in processed)
+        {
+            output.Add((T)val.Value);
+        }
+
+        return output;
+    }
+
+    public static IEnumerable<T> Intersect(IEnumerable<T> first, IEnumerable<U> second,
+        Func<T, V> key_first, Func<U, V> key_second, IEqualityComparer<V> comparer)
+    {
+        var pairs_1 = new List<KeyValuePair<V, object>>();
+        var pairs_2 = new List<KeyValuePair<V, object>>();
+
+        foreach (T val in first)
+        {
+            pairs_1.Add(new KeyValuePair<V, object>(key_first(val), val));
+        }
+
+        foreach (U val in second)
+        {
+            pairs_2.Add(new KeyValuePair<V, object>(key_second(val), val));
+        }
+
+        IEnumerable<KeyValuePair<V, object>> processed = pairs_1.Intersect(pairs_2, new KeyEqualityComparer(comparer));
+        var output = new List<T>();
+
+        foreach (KeyValuePair<V, object> val in processed)
+        {
+            output.Add((T)val.Value);
+        }
+
+        return output;
     }
 }

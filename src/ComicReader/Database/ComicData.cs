@@ -988,7 +988,7 @@ namespace ComicReader.Database
             CommandBlock2NoLock(async delegate (SqliteCommand command)
             {
                 command.CommandText = "DELETE FROM " + SqliteDatabaseManager.ComicTable +
-                    " WHERE " + ComicData.Field.Location + " LIKE @pattern";
+                    " WHERE " + Field.Location + " LIKE @pattern";
                 command.Parameters.AddWithValue("@pattern", location + "%");
                 await command.ExecuteNonQueryAsync();
             });

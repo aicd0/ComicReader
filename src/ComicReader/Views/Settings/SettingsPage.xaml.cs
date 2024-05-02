@@ -345,18 +345,11 @@ sealed internal partial class SettingsPage : SettingPageBase
 
     private void OnComicDataUpdated()
     {
-        // IMPORTANT: Use TaskCompletionSource to guarantee all async tasks
-        // in Sync block has completed.
-        var completion_src = new TaskCompletionSource<bool>();
-
-        Utils.C0.Sync(async delegate
+        Threading.RunInMainThreadAsync(async delegate
         {
             UpdateRescanStatus();
             await UpdateStatistis();
-            completion_src.SetResult(true);
         }).Wait();
-
-        completion_src.Task.Wait();
     }
 
     private async Task UpdateStatistis()

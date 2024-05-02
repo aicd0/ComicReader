@@ -47,7 +47,7 @@ namespace ComicReader.Utils
             double startValue = StartValue;
             double duration = Duration;
             int animator = Interlocked.Increment(ref _currentAnimator);
-            _ = Utils.C0.Sync(async delegate
+            _ = Threading.RunInMainThreadAsync(async delegate
             {
                 long startTick = DateTime.Now.Ticks;
                 double startTime = 0.0;

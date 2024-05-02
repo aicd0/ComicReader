@@ -742,7 +742,7 @@ namespace ComicReader.Views.Reader
                         return;
                     }
 
-                    _ = Utils.C0.Sync(delegate
+                    _ = Threading.RunInMainThread(delegate
                     {
                         BottomTileHide(0);
                     });

@@ -163,12 +163,7 @@ namespace ComicReader.Utils.Image
                 }
 
                 stream.Seek(0);
-                bool img_load_success = true;
-
-                // IMPORTANT: Use TaskCompletionSource to guarantee all async tasks
-                // in Sync block has completed.
-                var completion_src = new TaskCompletionSource<bool>();
-                await Utils.C0.Sync(async delegate
+                bool imgLoadSuccess = await Threading.RunInMainThreadAsync(async delegate
                 {
                     image = new BitmapImage();
                     try
@@ -177,29 +172,25 @@ namespace ComicReader.Utils.Image
                     }
                     catch (Exception e)
                     {
-                        img_load_success = false;
                         Log("Skipped token " + token.Index.ToString() + ", image corrupted. " + e.ToString());
+                        return false;
                     }
-
-                    completion_src.SetResult(true);
+                    return true;
                 });
-                await completion_src.Task;
-                if (!img_load_success)
+                if (!imgLoadSuccess)
                 {
                     return TaskException.Failure;
                 }
             }
 
-            var taskResult = new TaskCompletionSource<TaskException>();
-            await Utils.C0.Sync(delegate
+            return await Threading.RunInMainThread(delegate
             {
                 if (token.SessionToken.Cancelled)
                 {
 #if DEBUG_LOG_LOAD
                     Log("Task cancelled");
 #endif
-                    taskResult.SetResult(TaskException.Cancellation);
-                    return;
+                    return TaskException.Cancellation;
                 }
 
                 if (!use_origin_size)
@@ -226,9 +217,8 @@ namespace ComicReader.Utils.Image
 #if DEBUG_LOG_LOAD
                 Log("Token " + token_processed.ToString() + "(idx=" + token.Index.ToString() + ") loaded");
 #endif
-                taskResult.SetResult(TaskException.Success);
+                return TaskException.Success;
             });
-            return taskResult.Task.Result;
         }
 
         private static void Log(string text)

@@ -83,8 +83,7 @@ namespace ComicReader.Views.Main
 
         public void OpenInNewTab(Route route)
         {
-            NavigationBundle bundle = route.Process();
-            LoadTab(-1, bundle);
+            LoadTab(-1, route);
         }
 
         public bool TrySwitchToTab(string url)
@@ -262,13 +261,14 @@ namespace ComicReader.Views.Main
             return tabId;
         }
 
-        private void LoadTab(int tabId, NavigationBundle bundle)
+        private void LoadTab(int tabId, Route route)
         {
             if (tabId < -1)
             {
                 throw new ArgumentException();
             }
 
+            NavigationBundle bundle = route.Process();
             if (TrySwitchToTab(bundle.Url))
             {
                 return;
@@ -286,8 +286,8 @@ namespace ComicReader.Views.Main
             {
                 if (frame.Content == null || frame.Content.GetType() != typeof(NavigationPage))
                 {
-                    var route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_NAVIGATION);
-                    NavigationBundle navigationPageBundle = route.Process();
+                    var navigationRoute = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_NAVIGATION);
+                    NavigationBundle navigationPageBundle = navigationRoute.Process();
                     navigationPageBundle.Abilities[typeof(IMainPageAbility)] = new MainPageAbility(this, tabId);
                     if (!frame.Navigate(navigationPageBundle.PageTrait.GetPageType(), navigationPageBundle))
                     {
@@ -304,6 +304,48 @@ namespace ComicReader.Views.Main
             }
 
             OnPageChanged();
+        }
+
+        private void CloseTab(int tabId, bool allowExit)
+        {
+            if (tabId < 0)
+            {
+                return;
+            }
+
+            TabInfo closingTab = null;
+            for (int i = 0; i < _tabs.Count; ++i)
+            {
+                TabInfo tabInfo = _tabs[i];
+                if (tabInfo.Id == tabId)
+                {
+                    closingTab = tabInfo;
+                    break;
+                }
+            }
+
+            if (closingTab == null)
+            {
+                return;
+            }
+            _tabs.Remove(closingTab);
+
+            if (RootTabView.TabItems.Count > 1)
+            {
+                RootTabView.TabItems.Remove(closingTab.Item);
+            }
+            else
+            {
+                if (allowExit)
+                {
+                    Application.Current.Exit();
+                }
+                else
+                {
+                    var route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_HOME);
+                    LoadTab(tabId, route);
+                }
+            }
         }
 
         private TabInfo GetTabInfo(int tabId)
@@ -328,23 +370,18 @@ namespace ComicReader.Views.Main
 
         private void OnTabCloseRequested(TabView sender, TabViewTabCloseRequestedEventArgs args)
         {
+            int closingTabId = -1;
             for (int i = 0; i < _tabs.Count; ++i)
             {
                 TabInfo tabInfo = _tabs[i];
-
                 if (tabInfo.Item == args.Tab)
                 {
-                    _tabs.RemoveAt(i);
+                    closingTabId = tabInfo.Id;
                     break;
                 }
             }
 
-            RootTabView.TabItems.Remove(args.Tab);
-
-            if (sender.TabItems.Count == 0)
-            {
-                Application.Current.Exit();
-            }
+            CloseTab(closingTabId, true);
         }
 
         private void OnTabViewSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -559,8 +596,7 @@ namespace ComicReader.Views.Main
             {
                 if (!_parent.TryGetTarget(out MainPage parent))
                     return;
-                NavigationBundle bundle = route.Process();
-                parent.LoadTab(_tabId, bundle);
+                parent.LoadTab(_tabId, route);
             }
 
             public void SetIcon(IconSource icon)

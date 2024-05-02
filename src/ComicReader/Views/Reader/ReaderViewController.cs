@@ -1472,7 +1472,7 @@ namespace ComicReader.Views.Reader
                 // Initialize the framework if first page was loaded.
                 if (!LoadedFirstPage && (ctx.PageL == 1 || ctx.PageR == 1))
                 {
-                    await Utils.C0.Sync(delegate
+                    await Threading.RunInMainThread(delegate
                     {
                         SetScrollViewer1(Zoom, null, true, "AdjustZooming");
                         AdjustPadding();
@@ -1486,7 +1486,7 @@ namespace ComicReader.Views.Reader
                 // Update margin if last page was loaded.
                 if (!LoadedLastPage && (ctx.PageL == PageCount || ctx.PageR == PageCount))
                 {
-                    await Utils.C0.Sync(delegate
+                    await Threading.RunInMainThread(delegate
                     {
                         AdjustPadding();
                     });
