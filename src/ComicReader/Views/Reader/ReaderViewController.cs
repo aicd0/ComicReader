@@ -409,6 +409,11 @@ namespace ComicReader.Views.Reader
             }
 
             ReaderFrameViewModel item = DataSource[frame];
+            if (!item.Ready)
+            {
+                return null;
+            }
+
             Grid container = item.ItemContainer?.Container;
             if (container == null)
             {

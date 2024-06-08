@@ -31,8 +31,7 @@ public class TaskQueue
 {
     private const string TAG = "TaskQueue";
     private const int WATCH_DOG_DELAY = 5000;
-    private const long WATCH_DOG_LOG_THRESHOLD = 5000;
-    private const long WATCH_DOG_ALERT_THRESHOLD = 15000;
+    private const long WATCH_DOG_ALERT_THRESHOLD = 10000;
 
     public static readonly TaskQueue DefaultQueue = new TaskQueue("Default");
     private static int sWatchDogStarted = 0;
@@ -105,10 +104,6 @@ public class TaskQueue
         {
             long timeUsed = now - entry.Value;
             if (timeUsed > WATCH_DOG_ALERT_THRESHOLD)
-            {
-                Logger.F(TAG, $"CheckHangingTasks(task={entry.Key},timeUsed={timeUsed})");
-            }
-            else if (timeUsed > WATCH_DOG_LOG_THRESHOLD)
             {
                 Logger.I(TAG, $"CheckHangingTasks(task={entry.Key},timeUsed={timeUsed})");
             }
