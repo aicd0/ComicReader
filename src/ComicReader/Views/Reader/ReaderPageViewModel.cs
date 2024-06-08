@@ -19,7 +19,6 @@ internal class ReaderPageViewModel : BaseViewModel
     private readonly CancellationLock _loadComicLock = new();
     private readonly CancellationSession _loadImageSession = new CancellationSession();
     private volatile bool _updatingProgress = false;
-    private bool _isFavorite = false;
 
     public MutableLiveData<ReaderStatusEnum> ReaderStatusLiveData { get; } = new(ReaderStatusEnum.Loading);
 
@@ -202,13 +201,11 @@ internal class ReaderPageViewModel : BaseViewModel
     {
         GetNavigationPageAbility().SetFavorite(isFavorite);
 
-        if (_isFavorite != isFavorite)
+        if (!_comic.IsExternal)
         {
-            _isFavorite = isFavorite;
-
             Utils.C0.Run(async delegate
             {
-                if (_isFavorite)
+                if (isFavorite)
                 {
                     await FavoriteDataManager.Add(_comic.Id, _comic.Title1, true);
                 }
@@ -250,10 +247,11 @@ internal class ReaderPageViewModel : BaseViewModel
 
         LoadComicTag(page);
 
+        bool isFavorite = !_comic.IsExternal && await FavoriteDataManager.FromId(_comic.Id) != null;
+        SetIsFavorite(isFavorite);
+
         if (!_comic.IsExternal)
         {
-            _isFavorite = await FavoriteDataManager.FromId(_comic.Id) != null;
-            SetIsFavorite(_isFavorite);
             page.Shared.Rating = _comic.Rating;
         }
     }
