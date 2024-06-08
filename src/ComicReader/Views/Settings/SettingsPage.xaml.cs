@@ -395,7 +395,7 @@ sealed internal partial class SettingsPage : SettingPageBase
         XmlDatabase.Settings.DebugMode = Shared.AdvancedDebugMode;
 
         XmlDatabaseManager.ReleaseLock();
-        Utils.TaskQueue.DefaultQueue.Enqueue(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
+        TaskQueue.DefaultQueue.Enqueue("SettingsPage#Save", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
     }
 
     private void OnSettingsChanged()
@@ -447,6 +447,6 @@ sealed internal partial class SettingsPage : SettingPageBase
     private void OnRescanFilesClicked(object sender, RoutedEventArgs e)
     {
         Shared.IsRescanning = true;
-        Utils.TaskQueue.DefaultQueue.Enqueue(ComicData.UpdateSealed(lazy_load: false));
+        TaskQueue.DefaultQueue.Enqueue("OnRescanFilesClicked", ComicData.UpdateSealed(lazy_load: false));
     }
 }

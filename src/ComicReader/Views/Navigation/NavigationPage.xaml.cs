@@ -12,415 +12,416 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using System;
 
-namespace ComicReader.Views.Navigation
+namespace ComicReader.Views.Navigation;
+
+internal class NavigationPageBase : BasePage<NavigationPageViewModel>;
+
+sealed internal partial class NavigationPage : NavigationPageBase
 {
-    internal class NavigationPageBase : BasePage<NavigationPageViewModel>;
+    private const string TAG = "NavigationPage";
 
-    sealed internal partial class NavigationPage : NavigationPageBase
+    private double _rootTabHeight = 0;
+    private double _navigationBarHeight = 0;
+    private NavigationBundle _currentBundle;
+    private NavigationPageAbility _ability;
+
+    public NavigationPage()
     {
-        private double _rootTabHeight = 0;
-        private double _navigationBarHeight = 0;
-        private NavigationBundle _currentBundle;
-        private NavigationPageAbility _ability;
+        InitializeComponent();
+        _ability = new(this);
+    }
 
-        public NavigationPage()
+    protected override void OnResume()
+    {
+        base.OnResume();
+        ObserveData();
+    }
+
+    private void ObserveData()
+    {
+        EventBus.Default.With<double>(EventId.RootTabHeightChange).ObserveSticky(this, delegate (double h)
         {
-            InitializeComponent();
-            _ability = new(this);
-        }
-
-        protected override void OnResume()
-        {
-            base.OnResume();
-            ObserveData();
-        }
-
-        private void ObserveData()
-        {
-            EventBus.Default.With<double>(EventId.RootTabHeightChange).ObserveSticky(this, delegate (double h)
-            {
-                _rootTabHeight = h;
-                UpdateTopPadding();
-            });
-
-            EventBus.Default.With<double>(EventId.TitleBarOpacity).ObserveSticky(this, delegate (double opacity)
-            {
-                TopTile.Opacity = opacity;
-                TopTile.IsHitTestVisible = opacity > 0.5;
-            });
-
-            ViewModel.GridViewModeEnabledLiveData.ObserveSticky(this, new ChangedObserver<bool>(delegate (bool toggled)
-            {
-                AbtbPreviewButton.IsChecked = toggled;
-            }));
-
-            ViewModel.IsFavoriteLiveData.ObserveSticky(this, new ChangedObserver<bool>(delegate (bool isFavorite)
-            {
-                FiFavoriteFilled.Visibility = isFavorite ? Visibility.Visible : Visibility.Collapsed;
-                FiFavoriteUnfilled.Visibility = isFavorite ? Visibility.Collapsed : Visibility.Visible;
-                string toolTip = isFavorite ? StringResourceProvider.GetResourceString("RemoveFromFavorites") :
-                    StringResourceProvider.GetResourceString("AddToFavorites");
-                ToolTipService.SetToolTip(AbbAddToFavorite, toolTip);
-                _ability.SendFavoriteChangedEvent(isFavorite);
-            }));
-        }
-
-        public void Navigate(NavigationBundle bundle)
-        {
-            TransferAbilities(bundle);
-            bundle.Abilities[typeof(INavigationPageAbility)] = _ability;
-
-            ContentFrame.Navigate(bundle.PageTrait.GetPageType(), bundle);
-        }
-
-        public bool GoBack()
-        {
-            if (ContentFrame == null)
-            {
-                return false;
-            }
-
-            if (!ContentFrame.CanGoBack)
-            {
-                return false;
-            }
-
-            ContentFrame.GoBack();
-            return true;
-        }
-
-        public bool GoForward()
-        {
-            if (ContentFrame == null)
-            {
-                return false;
-            }
-
-            if (!ContentFrame.CanGoForward)
-            {
-                return false;
-            }
-
-            ContentFrame.GoForward();
-            return true;
-        }
-
-        private void OnPageChanged(object sender, NavigationEventArgs e)
-        {
-            _ability.SendLeavingEvent();
-            _ability.ClearSubscriptions();
-
-            _currentBundle = e.Parameter as NavigationBundle;
-            GetMainPageAbility().SetNavigationBundle(_currentBundle);
-
-            NavigationPageSidePane.IsPaneOpen = false;
-            bool isHomePage = _currentBundle.PageTrait is HomePageTrait;
-            bool isReaderPage = _currentBundle.PageTrait is ReaderPageTrait;
-            AbbHomeButton.Visibility = isHomePage ? Visibility.Collapsed : Visibility.Visible;
-            AbbRefreshButton.Visibility = isHomePage ? Visibility.Visible : Visibility.Collapsed;
-            SearchBox.Visibility = isReaderPage ? Visibility.Collapsed : Visibility.Visible;
-            SpCenterButtons.Visibility = isReaderPage ? Visibility.Visible : Visibility.Collapsed;
-            SetSearchBox("");
+            _rootTabHeight = h;
             UpdateTopPadding();
-        }
+        });
 
-        private IMainPageAbility GetMainPageAbility()
+        EventBus.Default.With<double>(EventId.TitleBarOpacity).ObserveSticky(this, delegate (double opacity)
         {
-            return GetAbility<IMainPageAbility>();
-        }
+            TopTile.Opacity = opacity;
+            TopTile.IsHitTestVisible = opacity > 0.5;
+        });
 
-        private void OnTopTileSizeChanged(object sender, SizeChangedEventArgs e)
+        ViewModel.GridViewModeEnabledLiveData.ObserveSticky(this, new ChangedObserver<bool>(delegate (bool toggled)
         {
-            _navigationBarHeight = e.NewSize.Height;
-            EventBus.Default.With<double>(EventId.NavigationBarHeightChange).Emit(_navigationBarHeight);
-            UpdateTopPadding();
-        }
+            AbtbPreviewButton.IsChecked = toggled;
+        }));
 
-        private void UpdateTopPadding()
+        ViewModel.IsFavoriteLiveData.ObserveSticky(this, new ChangedObserver<bool>(delegate (bool isFavorite)
         {
-            if (_currentBundle.PageTrait.ImmersiveMode())
-            {
-                TopTile.Margin = new Thickness(0, _rootTabHeight, 0, 0);
-                ContentGrid.Margin = new Thickness(0, 0, 0, 0);
-            }
-            else
-            {
-                // MainPage has done that job for us.
-                TopTile.Margin = new Thickness(0, 0, 0, 0);
-                ContentGrid.Margin = new Thickness(0, _navigationBarHeight, 0, 0);
-            }
-        }
+            FiFavoriteFilled.Visibility = isFavorite ? Visibility.Visible : Visibility.Collapsed;
+            FiFavoriteUnfilled.Visibility = isFavorite ? Visibility.Collapsed : Visibility.Visible;
+            string toolTip = isFavorite ? StringResourceProvider.GetResourceString("RemoveFromFavorites") :
+                StringResourceProvider.GetResourceString("AddToFavorites");
+            ToolTipService.SetToolTip(AbbAddToFavorite, toolTip);
+            _ability.SendFavoriteChangedEvent(isFavorite);
+        }));
+    }
 
-        // Search box
-        public void SetSearchBox(string keywords)
+    public void Navigate(NavigationBundle bundle)
+    {
+        TransferAbilities(bundle);
+        bundle.Abilities[typeof(INavigationPageAbility)] = _ability;
+
+        ContentFrame.Navigate(bundle.PageTrait.GetPageType(), bundle);
+    }
+
+    public bool GoBack()
+    {
+        if (ContentFrame == null)
         {
-            SearchBox.Focus(FocusState.Programmatic);
-            SearchBox.Text = keywords;
+            return false;
         }
 
-        private void OnSearchBoxTextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args) { }
-
-        private void OnSearchBoxQuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
+        if (!ContentFrame.CanGoBack)
         {
-            if (args.QueryText.Trim().Length == 0)
-            {
-                return;
-            }
-
-            Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_SEARCH)
-                .WithParam(RouterConstants.ARG_KEYWORD, args.QueryText);
-            GetMainPageAbility().OpenInCurrentTab(route);
+            return false;
         }
 
-        // Buttons
-        private void OnGoBackClick(object sender, RoutedEventArgs e)
+        ContentFrame.GoBack();
+        return true;
+    }
+
+    public bool GoForward()
+    {
+        if (ContentFrame == null)
+        {
+            return false;
+        }
+
+        if (!ContentFrame.CanGoForward)
+        {
+            return false;
+        }
+
+        ContentFrame.GoForward();
+        return true;
+    }
+
+    private void OnPageChanged(object sender, NavigationEventArgs e)
+    {
+        _ability.SendLeavingEvent();
+        _ability.ClearSubscriptions();
+
+        _currentBundle = e.Parameter as NavigationBundle;
+        GetMainPageAbility().SetNavigationBundle(_currentBundle);
+
+        NavigationPageSidePane.IsPaneOpen = false;
+        bool isHomePage = _currentBundle.PageTrait is HomePageTrait;
+        bool isReaderPage = _currentBundle.PageTrait is ReaderPageTrait;
+        AbbHomeButton.Visibility = isHomePage ? Visibility.Collapsed : Visibility.Visible;
+        AbbRefreshButton.Visibility = isHomePage ? Visibility.Visible : Visibility.Collapsed;
+        SearchBox.Visibility = isReaderPage ? Visibility.Collapsed : Visibility.Visible;
+        SpCenterButtons.Visibility = isReaderPage ? Visibility.Visible : Visibility.Collapsed;
+        SetSearchBox("");
+        UpdateTopPadding();
+    }
+
+    private IMainPageAbility GetMainPageAbility()
+    {
+        return GetAbility<IMainPageAbility>();
+    }
+
+    private void OnTopTileSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        _navigationBarHeight = e.NewSize.Height;
+        EventBus.Default.With<double>(EventId.NavigationBarHeightChange).Emit(_navigationBarHeight);
+        UpdateTopPadding();
+    }
+
+    private void UpdateTopPadding()
+    {
+        if (_currentBundle.PageTrait.ImmersiveMode())
+        {
+            TopTile.Margin = new Thickness(0, _rootTabHeight, 0, 0);
+            ContentGrid.Margin = new Thickness(0, 0, 0, 0);
+        }
+        else
+        {
+            // MainPage has done that job for us.
+            TopTile.Margin = new Thickness(0, 0, 0, 0);
+            ContentGrid.Margin = new Thickness(0, _navigationBarHeight, 0, 0);
+        }
+    }
+
+    // Search box
+    public void SetSearchBox(string keywords)
+    {
+        SearchBox.Focus(FocusState.Programmatic);
+        SearchBox.Text = keywords;
+    }
+
+    private void OnSearchBoxTextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args) { }
+
+    private void OnSearchBoxQuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
+    {
+        if (args.QueryText.Trim().Length == 0)
+        {
+            return;
+        }
+
+        Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_SEARCH)
+            .WithParam(RouterConstants.ARG_KEYWORD, args.QueryText);
+        GetMainPageAbility().OpenInCurrentTab(route);
+    }
+
+    // Buttons
+    private void OnGoBackClick(object sender, RoutedEventArgs e)
+    {
+        _ = GoBack();
+    }
+
+    private void OnGoForwardClick(object sender, RoutedEventArgs e)
+    {
+        _ = GoForward();
+    }
+
+    private void OnHomeClick(object sender, RoutedEventArgs e)
+    {
+        var route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_HOME);
+        GetMainPageAbility().OpenInCurrentTab(route);
+    }
+
+    private void OnRefreshClick(object sender, RoutedEventArgs e)
+    {
+        // TODO implement refresh feature
+    }
+
+    private void OnFavoritesClick(object sender, RoutedEventArgs e)
+    {
+        if (NavigationPageSidePane != null)
+        {
+            NavigationPageSidePane.IsPaneOpen = !NavigationPageSidePane.IsPaneOpen;
+        }
+    }
+
+    private void OnMoreSettingsClick(object sender, RoutedEventArgs e)
+    {
+        var route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_SETTING);
+        MainPage.Current.OpenInNewTab(route);
+    }
+
+    private void OnMoreHelpClick(object sender, RoutedEventArgs e)
+    {
+        var route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_HELP);
+        MainPage.Current.OpenInNewTab(route);
+    }
+
+    private void OnAddToFavoritesClick(object sender, RoutedEventArgs e)
+    {
+        bool isFavorite = !ViewModel.IsFavoriteLiveData.GetValue();
+        ViewModel.SetIsFavorite(isFavorite);
+    }
+
+    private void OnComicInfoClick(object sender, RoutedEventArgs e)
+    {
+        _ability.SendExpandInfoPaneEvent();
+    }
+
+    // Pointer events
+    private PointerPoint m_last_pointer_point = null;
+
+    private void OnPagePointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        m_last_pointer_point = e.GetCurrentPoint(sender as UIElement);
+    }
+
+    private void OnPagePointerReleased(object sender, PointerRoutedEventArgs e)
+    {
+        if (m_last_pointer_point == null)
+        {
+            return;
+        }
+
+        if (m_last_pointer_point.Properties.IsXButton1Pressed)
         {
             _ = GoBack();
         }
-
-        private void OnGoForwardClick(object sender, RoutedEventArgs e)
+        else if (m_last_pointer_point.Properties.IsXButton2Pressed)
         {
             _ = GoForward();
         }
 
-        private void OnHomeClick(object sender, RoutedEventArgs e)
+        m_last_pointer_point = null;
+    }
+
+    private void AbtbPreviewButton_Checked(object sender, RoutedEventArgs e)
+    {
+        _ability.SendGridViewModeChangedEvent(true);
+    }
+
+    private void AbtbPreviewButton_Unchecked(object sender, RoutedEventArgs e)
+    {
+        _ability.SendGridViewModeChangedEvent(false);
+    }
+
+    private void RspReaderSetting_DataChanged(ReaderSettingDataModel data)
+    {
+        _ability.SendReaderSettingsChangedEvent(data);
+        Utils.C0.Run(async delegate
         {
-            var route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_HOME);
-            GetMainPageAbility().OpenInCurrentTab(route);
+            await XmlDatabaseManager.WaitLock();
+
+            Database.XmlDatabase.Settings.VerticalReading = data.IsVertical;
+            Database.XmlDatabase.Settings.LeftToRight = data.IsLeftToRight;
+            Database.XmlDatabase.Settings.VerticalContinuous = data.IsVerticalContinuous;
+            Database.XmlDatabase.Settings.HorizontalContinuous = data.IsHorizontalContinuous;
+            Database.XmlDatabase.Settings.VerticalPageArrangement = data.VerticalPageArrangement;
+            Database.XmlDatabase.Settings.HorizontalPageArrangement = data.HorizontalPageArrangement;
+
+            XmlDatabaseManager.ReleaseLock();
+            TaskQueue.DefaultQueue.Enqueue($"{TAG}#RspReaderSetting_DataChanged", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
+        });
+    }
+
+    private void SidePane_Navigating(NavigationBundle bundle)
+    {
+        TransferAbilities(bundle);
+        bundle.Abilities[typeof(INavigationPageAbility)] = _ability;
+    }
+
+    private class NavigationPageAbility : INavigationPageAbility
+    {
+        private const string EVENT_LEAVING = "Leaving";
+        private const string EVENT_EXPAND_INFO_PANE = "ExpandInfoPane";
+        private const string EVENT_FAVORITE_CHANGED = "FavoriteChanged";
+        private const string EVENT_GRID_VIEW_MODE_CHANGED = "GridViewModeChanged";
+        private const string EVENT_READER_SETTINGS_CHANGED = "ReaderSettingsChanged";
+
+        private WeakReference<NavigationPage> _parent;
+        private EventBus _eventBus = new EventBus();
+
+        public NavigationPageAbility(NavigationPage parent)
+        {
+            _parent = new WeakReference<NavigationPage>(parent);
         }
 
-        private void OnRefreshClick(object sender, RoutedEventArgs e)
+        public void ClearSubscriptions()
         {
-            // TODO implement refresh feature
+            _eventBus.Clear();
         }
 
-        private void OnFavoritesClick(object sender, RoutedEventArgs e)
+        public bool GetIsSidePaneOpen()
         {
-            if (NavigationPageSidePane != null)
-            {
-                NavigationPageSidePane.IsPaneOpen = !NavigationPageSidePane.IsPaneOpen;
-            }
+            if (!_parent.TryGetTarget(out NavigationPage parent))
+                return false;
+            return parent.NavigationPageSidePane.IsPaneOpen;
         }
 
-        private void OnMoreSettingsClick(object sender, RoutedEventArgs e)
+        public void SetExternalComic(bool isExternal)
         {
-            var route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_SETTING);
-            MainPage.Current.OpenInNewTab(route);
-        }
-
-        private void OnMoreHelpClick(object sender, RoutedEventArgs e)
-        {
-            var route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_HELP);
-            MainPage.Current.OpenInNewTab(route);
-        }
-
-        private void OnAddToFavoritesClick(object sender, RoutedEventArgs e)
-        {
-            bool isFavorite = !ViewModel.IsFavoriteLiveData.GetValue();
-            ViewModel.SetIsFavorite(isFavorite);
-        }
-
-        private void OnComicInfoClick(object sender, RoutedEventArgs e)
-        {
-            _ability.SendExpandInfoPaneEvent();
-        }
-
-        // Pointer events
-        private PointerPoint m_last_pointer_point = null;
-
-        private void OnPagePointerPressed(object sender, PointerRoutedEventArgs e)
-        {
-            m_last_pointer_point = e.GetCurrentPoint(sender as UIElement);
-        }
-
-        private void OnPagePointerReleased(object sender, PointerRoutedEventArgs e)
-        {
-            if (m_last_pointer_point == null)
-            {
+            if (!_parent.TryGetTarget(out NavigationPage parent))
                 return;
-            }
-
-            if (m_last_pointer_point.Properties.IsXButton1Pressed)
-            {
-                _ = GoBack();
-            }
-            else if (m_last_pointer_point.Properties.IsXButton2Pressed)
-            {
-                _ = GoForward();
-            }
-
-            m_last_pointer_point = null;
+            parent.AbbAddToFavorite.IsEnabled = !isExternal;
         }
 
-        private void AbtbPreviewButton_Checked(object sender, RoutedEventArgs e)
+        public void SetFavorite(bool isFavorite)
         {
-            _ability.SendGridViewModeChangedEvent(true);
+            if (!_parent.TryGetTarget(out NavigationPage parent))
+                return;
+            parent.ViewModel.SetIsFavorite(isFavorite);
         }
 
-        private void AbtbPreviewButton_Unchecked(object sender, RoutedEventArgs e)
+        public void SetGridViewMode(bool enabled)
         {
-            _ability.SendGridViewModeChangedEvent(false);
+            if (!_parent.TryGetTarget(out NavigationPage parent))
+                return;
+            parent.ViewModel.SetGridViewMode(enabled);
         }
 
-        private void RspReaderSetting_DataChanged(ReaderSettingDataModel data)
+        public void SetIsSidePaneOpen(bool isOpen)
         {
-            _ability.SendReaderSettingsChangedEvent(data);
-            Utils.C0.Run(async delegate
+            if (!_parent.TryGetTarget(out NavigationPage parent))
+                return;
+            parent.NavigationPageSidePane.IsPaneOpen = isOpen;
+        }
+
+        public void SetReaderSettings(ReaderSettingDataModel settings)
+        {
+            if (!_parent.TryGetTarget(out NavigationPage parent))
+                return;
+            parent.RspReaderSetting.SetData(settings);
+        }
+
+        public void SetSearchBox(string text)
+        {
+            if (!_parent.TryGetTarget(out NavigationPage parent))
+                return;
+            parent.SetSearchBox(text);
+        }
+
+        public void RegisterLeavingHandler(Page owner, INavigationPageAbility.CommonEventHandler handler)
+        {
+            _eventBus.With<bool>(EVENT_LEAVING).Observe(owner, delegate
             {
-                await XmlDatabaseManager.WaitLock();
-
-                Database.XmlDatabase.Settings.VerticalReading = data.IsVertical;
-                Database.XmlDatabase.Settings.LeftToRight = data.IsLeftToRight;
-                Database.XmlDatabase.Settings.VerticalContinuous = data.IsVerticalContinuous;
-                Database.XmlDatabase.Settings.HorizontalContinuous = data.IsHorizontalContinuous;
-                Database.XmlDatabase.Settings.VerticalPageArrangement = data.VerticalPageArrangement;
-                Database.XmlDatabase.Settings.HorizontalPageArrangement = data.HorizontalPageArrangement;
-
-                XmlDatabaseManager.ReleaseLock();
-                Utils.TaskQueue.DefaultQueue.Enqueue(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
+                handler();
             });
         }
 
-        private void SidePane_Navigating(NavigationBundle bundle)
+        public void SendLeavingEvent()
         {
-            TransferAbilities(bundle);
-            bundle.Abilities[typeof(INavigationPageAbility)] = _ability;
+            _eventBus.With<bool>(EVENT_LEAVING).Emit(true);
         }
 
-        private class NavigationPageAbility : INavigationPageAbility
+        public void RegisterExpandInfoPaneHandler(Page owner, INavigationPageAbility.CommonEventHandler handler)
         {
-            private const string EVENT_LEAVING = "Leaving";
-            private const string EVENT_EXPAND_INFO_PANE = "ExpandInfoPane";
-            private const string EVENT_FAVORITE_CHANGED = "FavoriteChanged";
-            private const string EVENT_GRID_VIEW_MODE_CHANGED = "GridViewModeChanged";
-            private const string EVENT_READER_SETTINGS_CHANGED = "ReaderSettingsChanged";
-
-            private WeakReference<NavigationPage> _parent;
-            private EventBus _eventBus = new EventBus();
-
-            public NavigationPageAbility(NavigationPage parent)
+            _eventBus.With<bool>(EVENT_EXPAND_INFO_PANE).Observe(owner, delegate
             {
-                _parent = new WeakReference<NavigationPage>(parent);
-            }
+                handler();
+            });
+        }
 
-            public void ClearSubscriptions()
-            {
-                _eventBus.Clear();
-            }
+        public void SendExpandInfoPaneEvent()
+        {
+            _eventBus.With<bool>(EVENT_EXPAND_INFO_PANE).Emit(true);
+        }
 
-            public bool GetIsSidePaneOpen()
+        public void RegisterFavoriteChangedEventHandler(Page owner, INavigationPageAbility.FavoriteChangedEventHandler handler)
+        {
+            _eventBus.With<bool>(EVENT_FAVORITE_CHANGED).Observe(owner, delegate (bool isFavorite)
             {
-                if (!_parent.TryGetTarget(out NavigationPage parent))
-                    return false;
-                return parent.NavigationPageSidePane.IsPaneOpen;
-            }
+                handler(isFavorite);
+            });
+        }
 
-            public void SetExternalComic(bool isExternal)
-            {
-                if (!_parent.TryGetTarget(out NavigationPage parent))
-                    return;
-                parent.AbbAddToFavorite.IsEnabled = !isExternal;
-            }
+        public void SendFavoriteChangedEvent(bool isFavorite)
+        {
+            _eventBus.With<bool>(EVENT_FAVORITE_CHANGED).Emit(isFavorite);
+        }
 
-            public void SetFavorite(bool isFavorite)
+        public void RegisterGridViewModeChangedHandler(Page owner, INavigationPageAbility.GridViewModeChangedEventHandler handler)
+        {
+            _eventBus.With<bool>(EVENT_GRID_VIEW_MODE_CHANGED).Observe(owner, delegate (bool isGridViewMode)
             {
-                if (!_parent.TryGetTarget(out NavigationPage parent))
-                    return;
-                parent.ViewModel.SetIsFavorite(isFavorite);
-            }
+                handler(isGridViewMode);
+            });
+        }
 
-            public void SetGridViewMode(bool enabled)
-            {
-                if (!_parent.TryGetTarget(out NavigationPage parent))
-                    return;
-                parent.ViewModel.SetGridViewMode(enabled);
-            }
+        public void SendGridViewModeChangedEvent(bool isGridViewMode)
+        {
+            _eventBus.With<bool>(EVENT_GRID_VIEW_MODE_CHANGED).Emit(isGridViewMode);
+        }
 
-            public void SetIsSidePaneOpen(bool isOpen)
+        public void RegisterReaderSettingsChangedEventHandler(Page owner, INavigationPageAbility.ReaderSettingsChangedEventHandler handler)
+        {
+            _eventBus.With<ReaderSettingDataModel>(EVENT_READER_SETTINGS_CHANGED).Observe(owner, delegate (ReaderSettingDataModel settings)
             {
-                if (!_parent.TryGetTarget(out NavigationPage parent))
-                    return;
-                parent.NavigationPageSidePane.IsPaneOpen = isOpen;
-            }
+                handler(settings);
+            });
+        }
 
-            public void SetReaderSettings(ReaderSettingDataModel settings)
-            {
-                if (!_parent.TryGetTarget(out NavigationPage parent))
-                    return;
-                parent.RspReaderSetting.SetData(settings);
-            }
-
-            public void SetSearchBox(string text)
-            {
-                if (!_parent.TryGetTarget(out NavigationPage parent))
-                    return;
-                parent.SetSearchBox(text);
-            }
-
-            public void RegisterLeavingHandler(Page owner, INavigationPageAbility.CommonEventHandler handler)
-            {
-                _eventBus.With<bool>(EVENT_LEAVING).Observe(owner, delegate
-                {
-                    handler();
-                });
-            }
-
-            public void SendLeavingEvent()
-            {
-                _eventBus.With<bool>(EVENT_LEAVING).Emit(true);
-            }
-
-            public void RegisterExpandInfoPaneHandler(Page owner, INavigationPageAbility.CommonEventHandler handler)
-            {
-                _eventBus.With<bool>(EVENT_EXPAND_INFO_PANE).Observe(owner, delegate
-                {
-                    handler();
-                });
-            }
-
-            public void SendExpandInfoPaneEvent()
-            {
-                _eventBus.With<bool>(EVENT_EXPAND_INFO_PANE).Emit(true);
-            }
-
-            public void RegisterFavoriteChangedEventHandler(Page owner, INavigationPageAbility.FavoriteChangedEventHandler handler)
-            {
-                _eventBus.With<bool>(EVENT_FAVORITE_CHANGED).Observe(owner, delegate (bool isFavorite)
-                {
-                    handler(isFavorite);
-                });
-            }
-
-            public void SendFavoriteChangedEvent(bool isFavorite)
-            {
-                _eventBus.With<bool>(EVENT_FAVORITE_CHANGED).Emit(isFavorite);
-            }
-
-            public void RegisterGridViewModeChangedHandler(Page owner, INavigationPageAbility.GridViewModeChangedEventHandler handler)
-            {
-                _eventBus.With<bool>(EVENT_GRID_VIEW_MODE_CHANGED).Observe(owner, delegate (bool isGridViewMode)
-                {
-                    handler(isGridViewMode);
-                });
-            }
-
-            public void SendGridViewModeChangedEvent(bool isGridViewMode)
-            {
-                _eventBus.With<bool>(EVENT_GRID_VIEW_MODE_CHANGED).Emit(isGridViewMode);
-            }
-
-            public void RegisterReaderSettingsChangedEventHandler(Page owner, INavigationPageAbility.ReaderSettingsChangedEventHandler handler)
-            {
-                _eventBus.With<ReaderSettingDataModel>(EVENT_READER_SETTINGS_CHANGED).Observe(owner, delegate (ReaderSettingDataModel settings)
-                {
-                    handler(settings);
-                });
-            }
-
-            public void SendReaderSettingsChangedEvent(ReaderSettingDataModel settings)
-            {
-                _eventBus.With<ReaderSettingDataModel>(EVENT_READER_SETTINGS_CHANGED).Emit(settings.Clone());
-            }
+        public void SendReaderSettingsChangedEvent(ReaderSettingDataModel settings)
+        {
+            _eventBus.With<ReaderSettingDataModel>(EVENT_READER_SETTINGS_CHANGED).Emit(settings.Clone());
         }
     }
 }

@@ -1,7 +1,3 @@
-#if DEBUG
-#define DEBUG_LOG_TASK
-#endif
-
 using ComicReader.Utils;
 using Microsoft.Data.Sqlite;
 using System;
@@ -13,7 +9,6 @@ using System.Threading.Tasks;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
 using Windows.Storage.Streams;
-using SealedTask = System.Func<System.Threading.Tasks.Task<ComicReader.Utils.TaskException>, ComicReader.Utils.TaskException>;
 
 namespace ComicReader.Database;
 
@@ -102,7 +97,7 @@ internal abstract class ComicData
     }
 
     // Locks.
-    private static readonly Utils.TaskQueue _tableQueue = new Utils.TaskQueue();
+    private static readonly Utils.TaskQueue _tableQueue = new Utils.TaskQueue("ComicData");
     private static readonly Utils.CancellationLock _updateLock = new Utils.CancellationLock();
 
     private bool _imageUpdated = false;
@@ -364,8 +359,8 @@ internal abstract class ComicData
         Tags.Add(default_tag);
     }
 
-    public SealedTask SaveToInfoFileSealed() =>
-        (Task<TaskException> _) => SaveToInfoFile().Result;
+    public Func<TaskException> SaveToInfoFileSealed() =>
+        () => SaveToInfoFile().Result;
 
     public string TagString()
     {
@@ -534,8 +529,8 @@ internal abstract class ComicData
         }
     }
 
-    public static SealedTask UpdateSealed(bool lazy_load) =>
-        (Task<TaskException> _) => UpdateUnsealed(lazy_load).Result;
+    public static Func<TaskException> UpdateSealed(bool lazy_load) =>
+        () => UpdateUnsealed(lazy_load).Result;
 
     protected ComicData(ComicType type, bool is_external)
     {
@@ -809,15 +804,9 @@ internal abstract class ComicData
     private static async Task<T> Enqueue<T>(Func<T> op, string taskName)
     {
         var taskResult = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
-        _tableQueue.Enqueue(delegate (Task<TaskException> t)
+        _tableQueue.Enqueue($"{TAG}#Enqueue#{taskName}", delegate
         {
-#if DEBUG_LOG_TASK
-            Log("Starting task: " + taskName);
-#endif
             taskResult.SetResult(op());
-#if DEBUG_LOG_TASK
-            Log("Completing task: " + taskName);
-#endif
             return TaskException.Success;
         });
         return await taskResult.Task;

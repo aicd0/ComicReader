@@ -27,33 +27,19 @@ namespace ComicReader.Utils
 
     public class TaskQueue
     {
-        public static readonly TaskQueue DefaultQueue = new TaskQueue();
+        private const string TAG = "TaskQueue";
+        public static readonly TaskQueue DefaultQueue = new TaskQueue("Default");
 
-        private bool _logRoutineStarted = false;
-        private int _lastLogCount = -1;
-        private bool _logPendingTask = false;
-        public bool LogPendingTask
-        {
-            get => _logPendingTask;
-            set
-            {
-                if (_logPendingTask != value)
-                {
-                    _logPendingTask = value;
-                    if (value)
-                    {
-                        StartLogRoutine();
-                    }
-                }
-            }
-        }
-
+        private string _name;
         private int _pendingTaskCount = 0;
         private Task<TaskException> _queue = Task.Factory.StartNew(() => TaskException.Success);
 
-        public int PendingTaskCount => _pendingTaskCount;
+        public TaskQueue(string name)
+        {
+            _name = name;
+        }
 
-        public void Enqueue(Func<Task<TaskException>, TaskException> ope)
+        public void Enqueue(string name, Func<TaskException> ope)
         {
             Interlocked.Increment(ref _pendingTaskCount);
             lock (_queue)
@@ -61,33 +47,17 @@ namespace ComicReader.Utils
                 _queue = _queue.ContinueWith(delegate (Task<TaskException> t)
                 {
                     Interlocked.Decrement(ref _pendingTaskCount);
-                    return t.Result;
-                }).ContinueWith(ope);
+                    Log($"start: {name} (left={_pendingTaskCount})");
+                    TaskException result = ope();
+                    Log($"end: {name} (left={_pendingTaskCount})");
+                    return result;
+                });
             }
         }
 
-        private void StartLogRoutine()
+        private void Log(string message)
         {
-            if (_logRoutineStarted)
-            {
-                return;
-            }
-
-            Utils.C0.Run(async delegate
-            {
-                while (_logPendingTask)
-                {
-                    if (_lastLogCount != _pendingTaskCount)
-                    {
-                        _lastLogCount = _pendingTaskCount;
-                        System.Diagnostics.Debug.WriteLine("PendingTaskCount: " + _pendingTaskCount.ToString());
-                    }
-
-                    await Task.Delay(1000);
-                }
-
-                _logRoutineStarted = false;
-            });
+            Logger.I(TAG + "_" + _name, message);
         }
     }
 }

@@ -48,7 +48,7 @@ internal sealed partial class EditComicInfoDialog : ContentDialog
             m_comic.ParseInfo(text);
             m_comic.SaveBasic();
 
-            Utils.TaskQueue.DefaultQueue.Enqueue(m_comic.SaveToInfoFileSealed());
+            Utils.TaskQueue.DefaultQueue.Enqueue("ContentDialogPrimaryButtonClick", m_comic.SaveToInfoFileSealed());
         });
     }
 

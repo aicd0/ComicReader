@@ -659,7 +659,7 @@ namespace ComicReader.Views.Reader
 
         // Modifier - Image Loader
         private CancellationSession _updateImageSession = new CancellationSession();
-        private TaskQueue _updateImageQueue = new TaskQueue();
+        private TaskQueue _updateImageQueue = new TaskQueue("ReaderUploadImage");
 
         public async Task<bool> UpdateImages(bool use_final)
         {

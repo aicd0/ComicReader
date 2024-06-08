@@ -1,23 +1,48 @@
 ﻿using System;
+using System.Collections.Concurrent;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.Storage;
-using SealedTask = System.Func<System.Threading.Tasks.Task<ComicReader.Utils.TaskException>, ComicReader.Utils.TaskException>;
 
 namespace ComicReader.Utils;
 
 internal static class Logger
 {
-    private const int LEVEL_DEBUG = 0;
-    private const int LEVEL_INFO = 1;
-    private const int LEVEL_WARN = 2;
-    private const int LEVEL_ERROR = 3;
-    private const int LEVEL_FATAL = 4;
+    private const string TAG = "Logger";
+    private const int LEVEL_CONSOLE = 0;
+    private const int LEVEL_DEBUG = 1;
+    private const int LEVEL_INFO = 2;
+    private const int LEVEL_WARN = 3;
+    private const int LEVEL_ERROR = 4;
+    private const int LEVEL_FATAL = 5;
+    private const int LOG_INTERVAL = 5000;
 
-    private const string LogFileName = "log.txt";
+    private static int sInitialized = 0;
+    private static readonly ConcurrentQueue<string> sBuffer = new();
 
-    private static readonly TaskQueue LogQueue = new();
+    public static void Initialize()
+    {
+        if (Interlocked.CompareExchange(ref sInitialized, 1, 0) != 0)
+        {
+            F(TAG, "Multiple initializations");
+            return;
+        }
 
-    private static StorageFolder LogFolder => ApplicationData.Current.LocalFolder;
+        C0.Run(async delegate
+        {
+            Console("Logger initialized");
+            while (true)
+            {
+                if (sBuffer.Count > 0)
+                {
+                    await FlushToFile();
+                }
+
+                await Task.Delay(LOG_INTERVAL);
+            }
+        });
+    }
 
     public static void D(string tag, string message)
     {
@@ -59,6 +84,11 @@ internal static class Logger
         Log(LEVEL_FATAL, tag, message, exception);
     }
 
+    private static void Console(string message)
+    {
+        Log(LEVEL_CONSOLE, TAG, message, null);
+    }
+
     private static void Log(int level, string tag, string message, Exception exception)
     {
         if (!Database.XmlDatabase.Settings.DebugMode)
@@ -69,6 +99,9 @@ internal static class Logger
         string levelTag;
         switch (level)
         {
+            case LEVEL_CONSOLE:
+                levelTag = "C";
+                break;
             case LEVEL_DEBUG:
                 levelTag = "D";
                 break;
@@ -96,33 +129,61 @@ internal static class Logger
         }
 
 #if DEBUG
-        System.Diagnostics.Debug.Print(realMessage);
+        LogToConsole(realMessage);
         if (level >= LEVEL_FATAL)
         {
             throw new Exception(message, exception);
         }
 #endif
-        LogQueue.Enqueue(LogToFileSealed(realMessage));
+        if (level >= LEVEL_INFO)
+        {
+            LogToFile(realMessage);
+        }
     }
 
-    private static SealedTask LogToFileSealed(string content)
+    private static void LogToFile(string message)
     {
-        return (Task<TaskException> _) => LogToFile(content).Result;
+        sBuffer.Enqueue(message);
     }
 
-    private static async Task<TaskException> LogToFile(string content)
+    private static async Task FlushToFile()
     {
-        StorageFile log_file;
+        StringBuilder sb = new();
+        int logCount = 0;
+        while (true)
+        {
+            if (sBuffer.TryDequeue(out string msg))
+            {
+                sb.Append(msg);
+                sb.Append('\n');
+                logCount++;
+            }
+            else
+            {
+                break;
+            }
+        }
+        string content = sb.ToString();
+
+        DateTime dateTime = DateTime.Now;
+        string fileName = "log_" + dateTime.ToString("yyyyMMdd") + ".txt";
+        StorageFile logFile;
         try
         {
-            log_file = await LogFolder.CreateFileAsync(LogFileName, CreationCollisionOption.OpenIfExists);
+            StorageFolder logDir = await ApplicationData.Current.LocalCacheFolder.CreateFolderAsync("logs", CreationCollisionOption.OpenIfExists);
+            logFile = await logDir.CreateFileAsync(fileName, CreationCollisionOption.OpenIfExists);
+            await FileIO.AppendTextAsync(logFile, content);
         }
-        catch (Exception)
+        catch (Exception e)
         {
-            return TaskException.Failure;
+            F(TAG, e.ToString());
+            return;
         }
+        Console($"flushed {logCount} logs to {logFile.Path}");
+    }
 
-        await FileIO.AppendTextAsync(log_file, content + "\n");
-        return TaskException.Success;
+    private static void LogToConsole(string message)
+    {
+        System.Diagnostics.Debug.Print(message);
     }
 }

@@ -53,6 +53,9 @@ public partial class App : Application
             return;
         }
 
+        // Initialize logger
+        Logger.Initialize();
+
         // Initialize database here
         TaskException result = await DatabaseManager.Init();
         System.Diagnostics.Debug.Assert(result.Successful());

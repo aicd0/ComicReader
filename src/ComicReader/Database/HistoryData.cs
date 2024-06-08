@@ -7,130 +7,131 @@ using System.Globalization;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace ComicReader.Database
+namespace ComicReader.Database;
+
+public class HistoryData : XmlData
 {
-    public class HistoryData : XmlData
+    public List<HistoryItemData> Items = new List<HistoryItemData>();
+
+    // serialization
+    public override string FileName => "History";
+
+    [XmlIgnore]
+    public override XmlData Target
     {
-        public List<HistoryItemData> Items = new List<HistoryItemData>();
+        get => XmlDatabase.History;
+        set => XmlDatabase.History = value as HistoryData;
+    }
 
-        // serialization
-        public override string FileName => "History";
-
-        [XmlIgnore]
-        public override XmlData Target
+    public override void Pack()
+    {
+        foreach (HistoryItemData i in Items)
         {
-            get => XmlDatabase.History;
-            set => XmlDatabase.History = value as HistoryData;
-        }
-
-        public override void Pack()
-        {
-            foreach (HistoryItemData i in Items)
-            {
-                i.Pack();
-            }
-        }
-
-        public override void Unpack()
-        {
-            foreach (HistoryItemData i in Items)
-            {
-                i.Unpack();
-            }
+            i.Pack();
         }
     }
 
-    public class HistoryItemData
+    public override void Unpack()
     {
-        [XmlAttribute]
-        public long Id;
-        [XmlAttribute]
-        public string Title;
-        [XmlIgnore]
-        public DateTimeOffset DateTime = DateTimeOffset.MinValue;
-        [XmlAttribute]
-        public string DateTimePack;
-
-        public void Pack()
+        foreach (HistoryItemData i in Items)
         {
-            DateTimePack = DateTime.ToString(CultureInfo.InvariantCulture);
-        }
-
-        public void Unpack()
-        {
-            DateTime = DateTimeOffset.Parse(DateTimePack, CultureInfo.InvariantCulture);
+            i.Unpack();
         }
     }
+}
 
-    internal class HistoryDataManager
+public class HistoryItemData
+{
+    [XmlAttribute]
+    public long Id;
+    [XmlAttribute]
+    public string Title;
+    [XmlIgnore]
+    public DateTimeOffset DateTime = DateTimeOffset.MinValue;
+    [XmlAttribute]
+    public string DateTimePack;
+
+    public void Pack()
     {
-        public static async Task Add(long id, string title, bool sendEvent)
+        DateTimePack = DateTime.ToString(CultureInfo.InvariantCulture);
+    }
+
+    public void Unpack()
+    {
+        DateTime = DateTimeOffset.Parse(DateTimePack, CultureInfo.InvariantCulture);
+    }
+}
+
+internal class HistoryDataManager
+{
+    private const string TAG = "HistoryDataManager";
+
+    public static async Task Add(long id, string title, bool sendEvent)
+    {
+        await XmlDatabaseManager.WaitLock();
+        try
         {
-            await XmlDatabaseManager.WaitLock();
-            try
+            if (!XmlDatabase.Settings.SaveHistory)
             {
-                if (!XmlDatabase.Settings.SaveHistory)
-                {
-                    return;
-                }
-
-                var record = new HistoryItemData
-                {
-                    Id = id,
-                    DateTime = DateTimeOffset.Now,
-                    Title = title
-                };
-
-                RemoveNoLock(id);
-                XmlDatabase.History.Items.Insert(0, record);
-            }
-            finally
-            {
-                XmlDatabaseManager.ReleaseLock();
+                return;
             }
 
-            OnUpdated(sendEvent);
-        }
+            var record = new HistoryItemData
+            {
+                Id = id,
+                DateTime = DateTimeOffset.Now,
+                Title = title
+            };
 
-        public static async Task Remove(long id, bool sendEvent)
-        {
-            await XmlDatabaseManager.WaitLock();
             RemoveNoLock(id);
+            XmlDatabase.History.Items.Insert(0, record);
+        }
+        finally
+        {
             XmlDatabaseManager.ReleaseLock();
-            OnUpdated(sendEvent);
         }
 
-        public static async Task Clear(bool sendEvent)
+        OnUpdated(sendEvent);
+    }
+
+    public static async Task Remove(long id, bool sendEvent)
+    {
+        await XmlDatabaseManager.WaitLock();
+        RemoveNoLock(id);
+        XmlDatabaseManager.ReleaseLock();
+        OnUpdated(sendEvent);
+    }
+
+    public static async Task Clear(bool sendEvent)
+    {
+        await XmlDatabaseManager.WaitLock();
+        XmlDatabase.History.Items.Clear();
+        XmlDatabaseManager.ReleaseLock();
+        OnUpdated(sendEvent);
+    }
+
+    private static void OnUpdated(bool sendEvent)
+    {
+        TaskQueue.DefaultQueue.Enqueue($"{TAG}#OnUpdated", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.History));
+
+        if (sendEvent)
         {
-            await XmlDatabaseManager.WaitLock();
-            XmlDatabase.History.Items.Clear();
-            XmlDatabaseManager.ReleaseLock();
-            OnUpdated(sendEvent);
+            EventBus.Default.With(EventId.SidePaneUpdate).Emit(0);
         }
+    }
 
-        private static void OnUpdated(bool sendEvent)
+    private static void RemoveNoLock(long id)
+    {
+        List<HistoryItemData> items = XmlDatabase.History.Items;
+
+        for (int i = 0; i < items.Count; ++i)
         {
-            TaskQueue.DefaultQueue.Enqueue(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.History));
+            HistoryItemData record = items[i];
 
-            if (sendEvent)
+            if (record.Id == id)
             {
-                EventBus.Default.With(EventId.SidePaneUpdate).Emit(0);
-            }
-        }
-
-        private static void RemoveNoLock(long id)
-        {
-            List<HistoryItemData> items = XmlDatabase.History.Items;
-
-            for (int i = 0; i < items.Count; ++i)
-            {
-                HistoryItemData record = items[i];
-
-                if (record.Id == id)
-                {
-                    items.RemoveAt(i);
-                    --i;
-                }
+                items.RemoveAt(i);
+                --i;
             }
         }
     }

@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using System.Xml.Serialization;
 using Windows.Storage;
 using Windows.Storage.Streams;
-using SealedTask = System.Func<System.Threading.Tasks.Task<ComicReader.Utils.TaskException>, ComicReader.Utils.TaskException>;
 
 namespace ComicReader.Database;
 
@@ -93,8 +92,8 @@ internal class XmlDatabaseManager
         return TaskException.Success;
     }
 
-    public static SealedTask SaveSealed(XmlDatabaseItem item) =>
-        (Task<TaskException> _) => SaveUnsealed(item).Result;
+    public static Func<TaskException> SaveSealed(XmlDatabaseItem item) =>
+        () => SaveUnsealed(item).Result;
 
     public static async Task<TaskException> SaveUnsealed(XmlDatabaseItem item)
     {

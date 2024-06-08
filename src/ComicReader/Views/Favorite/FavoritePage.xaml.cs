@@ -21,6 +21,7 @@ internal class FavoritePageBase : BasePage<EmptyViewModel>;
 
 sealed internal partial class FavoritePage : FavoritePageBase
 {
+    private const string TAG = "FavoritePage";
     private ObservableCollection<FavoriteItemViewModel> DataSource { get; set; }
 
     public FavoritePage()
@@ -123,7 +124,7 @@ sealed internal partial class FavoritePage : FavoritePageBase
         XmlDatabase.Favorites.RootNodes.Clear();
         helper(XmlDatabase.Favorites.RootNodes, DataSource);
         XmlDatabaseManager.ReleaseLock();
-        Utils.TaskQueue.DefaultQueue.Enqueue(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Favorites));
+        Utils.TaskQueue.DefaultQueue.Enqueue($"{TAG}#Save", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Favorites));
     }
 
     private async Task DeleteItem(FavoriteItemViewModel item)

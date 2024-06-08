@@ -51,6 +51,8 @@ namespace ComicReader.Database
 
     class SettingDataManager
     {
+        private const string TAG = "SettingDataManager";
+
         public static async Task<TaskException> AddComicFolder(StorageFolder folder, bool final)
         {
             await XmlDatabaseManager.WaitLock();
@@ -65,7 +67,7 @@ namespace ComicReader.Database
 
             if (final)
             {
-                Utils.TaskQueue.DefaultQueue.Enqueue(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
+                TaskQueue.DefaultQueue.Enqueue($"{TAG}#AddComicFolder", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
             }
 
             return TaskException.Success;
@@ -115,7 +117,7 @@ namespace ComicReader.Database
 
             if (final)
             {
-                Utils.TaskQueue.DefaultQueue.Enqueue(XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
+                TaskQueue.DefaultQueue.Enqueue($"{TAG}#RemoveComicFolder", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
             }
         }
 

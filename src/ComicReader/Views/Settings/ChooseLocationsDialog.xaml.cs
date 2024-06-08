@@ -49,7 +49,7 @@ public sealed partial class ChooseLocationsDialog : ContentDialog
     private void ContentDialogPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
     {
         // Update comics.
-        Utils.TaskQueue.DefaultQueue.Enqueue(ComicData.UpdateSealed(lazy_load: true));
+        Utils.TaskQueue.DefaultQueue.Enqueue("ContentDialogPrimaryButtonClick", ComicData.UpdateSealed(lazy_load: true));
     }
 
     private void ListViewLoaded(object sender, RoutedEventArgs e)
