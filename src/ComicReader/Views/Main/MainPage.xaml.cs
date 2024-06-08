@@ -27,6 +27,7 @@ namespace ComicReader.Views.Main
         public static MainPage Current = null;
         private static FileActivatedEventArgs s_startupFileArgs;
 
+        private bool _isFirstStartUp = true;
         private readonly List<TabInfo> _tabs = new List<TabInfo>();
         private TabInfo _currentTab;
         private int _nextTabId = 0;
@@ -46,16 +47,21 @@ namespace ComicReader.Views.Main
         {
             base.OnResume();
             ObserveData();
-            _ = OpenStartupTab();
+
+            if (_isFirstStartUp)
+            {
+                _isFirstStartUp = false;
+                _ = OnFirstStartUp();
+            }
         }
 
-        private async Task OpenStartupTab()
+        private async Task OnFirstStartUp()
         {
             bool page_started = false;
 
             if (s_startupFileArgs != null)
             {
-                page_started = await OpenStartupComic(s_startupFileArgs);
+                page_started = await OpenFileActivatedComic(s_startupFileArgs);
             }
 
             if (!page_started)
@@ -267,6 +273,14 @@ namespace ComicReader.Views.Main
         }
 
         private void LoadTab(int tabId, Route route)
+        {
+            _ = Threading.RunInMainThread(delegate
+            {
+                LoadTabInternal(tabId, route);
+            });
+        }
+
+        private void LoadTabInternal(int tabId, Route route)
         {
             if (tabId < -1)
             {
@@ -499,15 +513,16 @@ namespace ComicReader.Views.Main
 
         public static void OnFileActivated(FileActivatedEventArgs args)
         {
-            if (args == null || Current == null || Current.RootTabView == null || !Current.RootTabView.IsLoaded)
+            if (args == null || Current == null || Current._isFirstStartUp)
             {
                 s_startupFileArgs = args;
                 return;
             }
-            _ = OpenStartupComic(args);
+
+            _ = OpenFileActivatedComic(args);
         }
 
-        private static async Task<bool> OpenStartupComic(FileActivatedEventArgs args)
+        private static async Task<bool> OpenFileActivatedComic(FileActivatedEventArgs args)
         {
             ComicData comic = await Current.GetStartupComic(args);
             if (comic == null)

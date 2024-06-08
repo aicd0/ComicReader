@@ -1,7 +1,6 @@
-namespace ComicReader
+namespace ComicReader;
+
+internal static class Keys
 {
-    internal static class Keys
-    {
-        public static readonly string AppSecret = "";
-    }
+    public static readonly string AppSecret = "";
 }

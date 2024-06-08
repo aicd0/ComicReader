@@ -9,59 +9,58 @@ using System.Text.Json;
 using Windows.Storage;
 using WinRT.Interop;
 
-namespace ComicReader
+namespace ComicReader;
+
+public sealed partial class MainWindow : Window
 {
-    public sealed partial class MainWindow : Window
+    public IntPtr WindowHandle { get; private set; }
+
+    public MainWindow()
     {
-        public IntPtr WindowHandle { get; private set; }
+        InitializeComponent();
+        TrySetAcrylicBackdrop();
+        WindowHandle = WindowNative.GetWindowHandle(this);
+    }
 
-        public MainWindow()
-        {
-            InitializeComponent();
-            TrySetAcrylicBackdrop();
-            WindowHandle = WindowNative.GetWindowHandle(this);
-        }
+    private void OnPageFrameLoaded(object sender, RoutedEventArgs e)
+    {
+        TryRecoverWindowStates();
+        PageFrame.Navigate(typeof(MainPage));
+    }
 
-        private void OnPageFrameLoaded(object sender, RoutedEventArgs e)
+    private void TryRecoverWindowStates()
+    {
+        object windowStates = ApplicationData.Current.LocalSettings.Values[LocalSettings.WindowStates];
+        if (windowStates is string)
         {
-            TryRecoverWindowStates();
-            PageFrame.Navigate(typeof(MainPage));
-        }
-
-        private void TryRecoverWindowStates()
-        {
-            object windowStates = ApplicationData.Current.LocalSettings.Values[LocalSettings.WindowStates];
-            if (windowStates is string)
+            NativeModels.WindowPlacement windowPlacement;
+            try
             {
-                NativeModels.WindowPlacement windowPlacement;
-                try
-                {
-                    windowPlacement = JsonSerializer.Deserialize<NativeModels.WindowPlacement>((string)windowStates);
-                }
-                catch (Exception)
-                {
-                    return;
-                }
-
-                NativeMethods.SetWindowPlacement(WindowHandle, ref windowPlacement);
+                windowPlacement = JsonSerializer.Deserialize<NativeModels.WindowPlacement>((string)windowStates);
             }
-        }
-
-        private void TrySetAcrylicBackdrop()
-        {
-            if (DesktopAcrylicController.IsSupported())
+            catch (Exception)
             {
-                var desktopAcrylicBackdrop = new DesktopAcrylicBackdrop();
-                SystemBackdrop = desktopAcrylicBackdrop;
+                return;
             }
-        }
 
-        private void OnWindowSizeChanged(object sender, WindowSizeChangedEventArgs args)
-        {
-            var placement = new NativeModels.WindowPlacement();
-            NativeMethods.GetWindowPlacement(WindowHandle, out placement);
-            string serialized = JsonSerializer.Serialize(placement);
-            ApplicationData.Current.LocalSettings.Values[LocalSettings.WindowStates] = serialized;
+            NativeMethods.SetWindowPlacement(WindowHandle, ref windowPlacement);
         }
+    }
+
+    private void TrySetAcrylicBackdrop()
+    {
+        if (DesktopAcrylicController.IsSupported())
+        {
+            var desktopAcrylicBackdrop = new DesktopAcrylicBackdrop();
+            SystemBackdrop = desktopAcrylicBackdrop;
+        }
+    }
+
+    private void OnWindowSizeChanged(object sender, WindowSizeChangedEventArgs args)
+    {
+        var placement = new NativeModels.WindowPlacement();
+        NativeMethods.GetWindowPlacement(WindowHandle, out placement);
+        string serialized = JsonSerializer.Serialize(placement);
+        ApplicationData.Current.LocalSettings.Values[LocalSettings.WindowStates] = serialized;
     }
 }

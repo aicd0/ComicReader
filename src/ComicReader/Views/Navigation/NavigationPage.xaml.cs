@@ -70,7 +70,6 @@ namespace ComicReader.Views.Navigation
             TransferAbilities(bundle);
             bundle.Abilities[typeof(INavigationPageAbility)] = _ability;
 
-            _ability.ClearSubscriptions();
             ContentFrame.Navigate(bundle.PageTrait.GetPageType(), bundle);
         }
 
@@ -86,7 +85,6 @@ namespace ComicReader.Views.Navigation
                 return false;
             }
 
-            _ability.ClearSubscriptions();
             ContentFrame.GoBack();
             return true;
         }
@@ -103,13 +101,15 @@ namespace ComicReader.Views.Navigation
                 return false;
             }
 
-            _ability.ClearSubscriptions();
             ContentFrame.GoForward();
             return true;
         }
 
         private void OnPageChanged(object sender, NavigationEventArgs e)
         {
+            _ability.SendLeavingEvent();
+            _ability.ClearSubscriptions();
+
             _currentBundle = e.Parameter as NavigationBundle;
             GetMainPageAbility().SetNavigationBundle(_currentBundle);
 
@@ -289,6 +289,7 @@ namespace ComicReader.Views.Navigation
 
         private class NavigationPageAbility : INavigationPageAbility
         {
+            private const string EVENT_LEAVING = "Leaving";
             private const string EVENT_EXPAND_INFO_PANE = "ExpandInfoPane";
             private const string EVENT_FAVORITE_CHANGED = "FavoriteChanged";
             private const string EVENT_GRID_VIEW_MODE_CHANGED = "GridViewModeChanged";
@@ -356,7 +357,20 @@ namespace ComicReader.Views.Navigation
                 parent.SetSearchBox(text);
             }
 
-            public void RegisterExpandInfoPaneHandler(Page owner, INavigationPageAbility.ExpandInfoPaneEventHandler handler)
+            public void RegisterLeavingHandler(Page owner, INavigationPageAbility.CommonEventHandler handler)
+            {
+                _eventBus.With<bool>(EVENT_LEAVING).Observe(owner, delegate
+                {
+                    handler();
+                });
+            }
+
+            public void SendLeavingEvent()
+            {
+                _eventBus.With<bool>(EVENT_LEAVING).Emit(true);
+            }
+
+            public void RegisterExpandInfoPaneHandler(Page owner, INavigationPageAbility.CommonEventHandler handler)
             {
                 _eventBus.With<bool>(EVENT_EXPAND_INFO_PANE).Observe(owner, delegate
                 {

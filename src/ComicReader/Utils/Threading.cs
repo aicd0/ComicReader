@@ -9,16 +9,34 @@ internal class Threading
 {
     public static async Task RunInMainThread(Action callback)
     {
-        await App.Window.DispatcherQueue.EnqueueAsync(callback, DispatcherQueuePriority.Normal);
+        if (IsOnMainThread())
+        {
+            callback();
+        }
+        else
+        {
+            await App.Window.DispatcherQueue.EnqueueAsync(callback, DispatcherQueuePriority.Normal);
+        }
     }
 
     public static async Task<T> RunInMainThread<T>(Func<T> callback)
     {
+        if (IsOnMainThread())
+        {
+            return callback();
+        }
+
         return await App.Window.DispatcherQueue.EnqueueAsync(callback, DispatcherQueuePriority.Normal);
     }
 
     public static async Task RunInMainThreadAsync(Func<Task> callback)
     {
+        if (IsOnMainThread())
+        {
+            await callback();
+            return;
+        }
+
         var completionSrc = new TaskCompletionSource<bool>();
         await App.Window.DispatcherQueue.EnqueueAsync(async delegate
         {
@@ -30,11 +48,21 @@ internal class Threading
 
     public static async Task<T> RunInMainThreadAsync<T>(Func<Task<T>> callback)
     {
+        if (IsOnMainThread())
+        {
+            return await callback();
+        }
+
         var completionSrc = new TaskCompletionSource<T>();
         await App.Window.DispatcherQueue.EnqueueAsync(async delegate
         {
             completionSrc.SetResult(await callback());
         }, DispatcherQueuePriority.Normal);
         return await completionSrc.Task;
+    }
+
+    private static bool IsOnMainThread()
+    {
+        return App.Window.DispatcherQueue.HasThreadAccess;
     }
 }

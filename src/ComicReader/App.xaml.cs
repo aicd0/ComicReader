@@ -11,66 +11,65 @@ using System;
 using Windows.ApplicationModel.Activation;
 using Windows.Storage;
 
-namespace ComicReader
+namespace ComicReader;
+
+public partial class App : Application
 {
-    public partial class App : Application
+    public static MainWindow Window { get; private set; }
+
+    public App()
     {
-        public static MainWindow Window { get; private set; }
-
-        public App()
+        // get and apply the appearance setting.
+        object appearance_setting = ApplicationData.Current.LocalSettings.Values[SettingsPage.AppearanceKey];
+        if (appearance_setting != null)
         {
-            // get and apply the appearance setting.
-            object appearance_setting = ApplicationData.Current.LocalSettings.Values[SettingsPage.AppearanceKey];
-            if (appearance_setting != null)
-            {
-                Current.RequestedTheme = (ApplicationTheme)(int)appearance_setting;
-            }
-
-            InitializeComponent();
-
-            if (Keys.AppSecret.Length > 0)
-            {
-                AppCenter.Start(Keys.AppSecret, typeof(Analytics), typeof(Crashes));
-            }
+            Current.RequestedTheme = (ApplicationTheme)(int)appearance_setting;
         }
 
-        protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs e)
+        InitializeComponent();
+
+        if (Keys.AppSecret.Length > 0)
         {
-            // Read: https://docs.microsoft.com/en-us/windows/apps/windows-app-sdk/migrate-to-windows-app-sdk/guides/applifecycle#single-instancing-in-applicationonlaunched
-            // If this is the first instance launched, then register it as the "main" instance.
-            // If this isn't the first instance launched, then "main" will already be registered,
-            // so retrieve it.
-            var mainInstance = AppInstance.FindOrRegisterForKey("main");
-            AppActivationArguments activatedEventArgs = AppInstance.GetCurrent().GetActivatedEventArgs();
+            AppCenter.Start(Keys.AppSecret, typeof(Analytics), typeof(Crashes));
+        }
+    }
 
-            // If the instance that's executing the OnLaunched handler right now
-            // isn't the "main" instance.
-            if (!mainInstance.IsCurrent)
-            {
-                // Redirect the activation (and args) to the "main" instance, and exit.
-                await mainInstance.RedirectActivationToAsync(activatedEventArgs);
-                System.Diagnostics.Process.GetCurrentProcess().Kill();
-                return;
-            }
+    protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs e)
+    {
+        // Read: https://docs.microsoft.com/en-us/windows/apps/windows-app-sdk/migrate-to-windows-app-sdk/guides/applifecycle#single-instancing-in-applicationonlaunched
+        // If this is the first instance launched, then register it as the "main" instance.
+        // If this isn't the first instance launched, then "main" will already be registered,
+        // so retrieve it.
+        var mainInstance = AppInstance.FindOrRegisterForKey("main");
+        AppActivationArguments activatedEventArgs = AppInstance.GetCurrent().GetActivatedEventArgs();
 
-            // Initialize database here
-            TaskException result = await DatabaseManager.Init();
-            System.Diagnostics.Debug.Assert(result.Successful());
-
-            // Initialize MainWindow here
-            Window = new MainWindow();
-            Window.Activate();
-
-            mainInstance.Activated += OnActivated;
-            OnActivated(null, activatedEventArgs);
+        // If the instance that's executing the OnLaunched handler right now
+        // isn't the "main" instance.
+        if (!mainInstance.IsCurrent)
+        {
+            // Redirect the activation (and args) to the "main" instance, and exit.
+            await mainInstance.RedirectActivationToAsync(activatedEventArgs);
+            System.Diagnostics.Process.GetCurrentProcess().Kill();
+            return;
         }
 
-        private void OnActivated(object sender, AppActivationArguments e)
+        // Initialize database here
+        TaskException result = await DatabaseManager.Init();
+        System.Diagnostics.Debug.Assert(result.Successful());
+
+        // Initialize MainWindow here
+        Window = new MainWindow();
+        Window.Activate();
+
+        mainInstance.Activated += OnActivated;
+        OnActivated(null, activatedEventArgs);
+    }
+
+    private void OnActivated(object sender, AppActivationArguments e)
+    {
+        if (e.Kind == ExtendedActivationKind.File)
         {
-            if (e.Kind == ExtendedActivationKind.File)
-            {
-                MainPage.OnFileActivated((FileActivatedEventArgs)e.Data);
-            }
+            MainPage.OnFileActivated((FileActivatedEventArgs)e.Data);
         }
     }
 }
