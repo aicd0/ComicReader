@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.Graphics.Imaging;
 using Windows.Storage;
@@ -98,7 +99,7 @@ internal abstract class ComicData
 
     // Locks.
     private static readonly Utils.TaskQueue _tableQueue = new Utils.TaskQueue("ComicData");
-    private static readonly Utils.CancellationLock _updateLock = new Utils.CancellationLock();
+    private static int _pendingUpdateTaskCount = 0;
 
     private bool _imageUpdated = false;
 
@@ -528,9 +529,6 @@ internal abstract class ComicData
             return FromNoLock(query);
         }
     }
-
-    public static Func<TaskException> UpdateSealed(bool lazy_load) =>
-        () => UpdateUnsealed(lazy_load).Result;
 
     protected ComicData(ComicType type, bool is_external)
     {
@@ -986,219 +984,223 @@ internal abstract class ComicData
         });
     }
 
-    private static async Task<TaskException> UpdateUnsealed(bool lazy_load)
+    public static void UpdateAllComics(string reason, bool lazy)
     {
-        return await _updateLock.LockAsync(async delegate (CancellationLock.Token token)
+        int pendingCount = Interlocked.Increment(ref _pendingUpdateTaskCount);
+        Log($"UpdateAllComics#Enqueue(pending={pendingCount},reason={reason},lazy={lazy})");
+        TaskQueue.DefaultQueue.Enqueue($"{TAG}#UpdateAllComics", delegate
         {
-            try
+            int pendingCount = Interlocked.Decrement(ref _pendingUpdateTaskCount);
+            if (pendingCount > 0)
             {
-                Log("Updating comics" + (lazy_load ? " (lazy load)" : ""));
+                Log($"UpdateAllComics#Skip(pending={pendingCount})");
+                return TaskException.Cancellation;
+            }
+            long session = Random.Shared.NextInt64();
+            Log($"UpdateAllComics#Start(session={session},lazy={lazy})");
+            IsRescanning = true;
+            TaskException result = UpdateAllComicsInternal(lazy).Result;
+            OnUpdated?.Invoke();
+            IsRescanning = false;
+            Log($"UpdateAllComics#End(session={session})");
+            return result;
+        });
+    }
 
-                if (!lazy_load)
-                {
-                    IsRescanning = true;
-                    OnUpdated?.Invoke();
-                }
+    private static async Task<TaskException> UpdateAllComicsInternal(bool lazy)
+    {
+        // Fetch all locations in the database.
+        var loc_exist = new List<string>();
 
-                // Fetch all locations in the database.
-                var loc_exist = new List<string>();
+        await CommandBlock2(async delegate (SqliteCommand command)
+        {
+            command.CommandText = "SELECT " + ComicData.Field.Location +
+                " FROM " + SqliteDatabaseManager.ComicTable;
+            SqliteDataReader query = await command.ExecuteReaderAsync();
 
-                await CommandBlock2(async delegate (SqliteCommand command)
-                {
-                    command.CommandText = "SELECT " + ComicData.Field.Location +
-                        " FROM " + SqliteDatabaseManager.ComicTable;
-                    SqliteDataReader query = await command.ExecuteReaderAsync();
+            while (query.Read())
+            {
+                loc_exist.Add(query.GetString(0));
+            }
+        }, "GetLocationsFromDatabase");
 
-                    while (query.Read())
-                    {
-                        loc_exist.Add(query.GetString(0));
-                    }
-                }, "GetLocationsFromDatabase");
+        // Get all root folders from setting.
+        var root_folders = new List<string>(XmlDatabase.Settings.ComicFolders.Count);
 
-                // Get all root folders from setting.
-                var root_folders = new List<string>(XmlDatabase.Settings.ComicFolders.Count);
+        await XmlDatabaseManager.WaitLock();
+        foreach (string folder_path in XmlDatabase.Settings.ComicFolders)
+        {
+            root_folders.Add(folder_path);
+        }
 
+        XmlDatabaseManager.ReleaseLock();
+
+        // Get all subfolders in root folders.
+        var loc_in_lib = new List<string>();
+        var loc_ignore = new List<string>();
+        var watch = new Utils.Stopwatch();
+        watch.Start();
+
+        foreach (string folder_path in root_folders)
+        {
+            Log("Scanning folder '" + folder_path + "'");
+            StorageFolder root_folder = await Utils.Storage.TryGetFolder(folder_path);
+
+            // Remove unreachable folders from database.
+            if (root_folder == null)
+            {
+                Log("Failed to reach folder '" + folder_path + "', skipped");
                 await XmlDatabaseManager.WaitLock();
-                foreach (string folder_path in XmlDatabase.Settings.ComicFolders)
-                {
-                    root_folders.Add(folder_path);
-                }
-
+                XmlDatabase.Settings.ComicFolders.Remove(folder_path);
                 XmlDatabaseManager.ReleaseLock();
+                continue;
+            }
 
-                // Get all subfolders in root folders.
-                var loc_in_lib = new List<string>();
-                var loc_ignore = new List<string>();
-                var watch = new Utils.Stopwatch();
-                watch.Start();
+            var ctx = new Utils.StorageItemSearchEngine.SearchContext(folder_path, Utils.StorageItemSearchEngine.PathType.Folder);
 
-                foreach (string folder_path in root_folders)
+            while (await ctx.Search(1024))
+            {
+                // Cancel this task if more requests have come in.
+                if (_pendingUpdateTaskCount > 0)
                 {
-                    Log("Scanning folder '" + folder_path + "'");
-                    StorageFolder root_folder = await Utils.Storage.TryGetFolder(folder_path);
+                    return TaskException.Cancellation;
+                }
 
-                    // Remove unreachable folders from database.
-                    if (root_folder == null)
+                Log("Scanning " + ctx.ItemFound.ToString() + " items.");
+                var loc_scanned_dict = new Dictionary<string, ComicType>();
+
+                foreach (string file_path in ctx.Files)
+                {
+                    string filename = Utils.StringUtils.ItemNameFromPath(file_path);
+                    string extension = Utils.StringUtils.ExtensionFromFilename(filename).ToLower();
+
+                    if (Common.AppInfoProvider.IsSupportedImageExtension(extension))
                     {
-                        Log("Failed to reach folder '" + folder_path + "', skipped");
-                        await XmlDatabaseManager.WaitLock();
-                        XmlDatabase.Settings.ComicFolders.Remove(folder_path);
-                        XmlDatabaseManager.ReleaseLock();
-                        continue;
+                        string loc = Utils.StringUtils.ParentLocationFromLocation(file_path);
+
+                        if (!loc_scanned_dict.ContainsKey(loc))
+                        {
+                            loc_scanned_dict[loc] =
+                                ArchiveAccess.IsArchivePath(file_path) ?
+                                ComicType.Archive : ComicType.Folder;
+                        }
                     }
-
-                    var ctx = new Utils.StorageItemSearchEngine.SearchContext(folder_path, Utils.StorageItemSearchEngine.PathType.Folder);
-
-                    while (await ctx.Search(1024))
+                    else
                     {
-                        // Cancel this task if more requests have come in.
-                        if (token.CancellationRequested)
+                        switch (extension)
                         {
-                            return TaskException.Cancellation;
-                        }
-
-                        Log("Scanning " + ctx.ItemFound.ToString() + " items.");
-                        var loc_scanned_dict = new Dictionary<string, ComicType>();
-
-                        foreach (string file_path in ctx.Files)
-                        {
-                            string filename = Utils.StringUtils.ItemNameFromPath(file_path);
-                            string extension = Utils.StringUtils.ExtensionFromFilename(filename).ToLower();
-
-                            if (Common.AppInfoProvider.IsSupportedImageExtension(extension))
-                            {
-                                string loc = Utils.StringUtils.ParentLocationFromLocation(file_path);
-
-                                if (!loc_scanned_dict.ContainsKey(loc))
-                                {
-                                    loc_scanned_dict[loc] =
-                                        ArchiveAccess.IsArchivePath(file_path) ?
-                                        ComicType.Archive : ComicType.Folder;
-                                }
-                            }
-                            else
-                            {
-                                switch (extension)
-                                {
-                                    case ".pdf":
-                                        loc_scanned_dict[file_path] = ComicType.PDF;
-                                        break;
-                                    default:
-                                        break;
-                                }
-                            }
-                        }
-
-                        var loc_scanned = new List<string>();
-
-                        foreach (KeyValuePair<string, ComicType> item in loc_scanned_dict)
-                        {
-                            loc_scanned.Add(item.Key);
-                        }
-
-                        loc_in_lib.AddRange(loc_scanned);
-
-                        foreach (string dir in ctx.NoAccessItems)
-                        {
-                            loc_ignore.Add(dir);
-                        }
-
-                        // Generate a task queue for updating.
-                        var queue = new List<UpdateItemInfo>();
-
-                        // Get folders added.
-                        var loc_added = Utils.C3<string, string, string>.Except(
-                            loc_scanned, loc_exist,
-                            Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
-                            new Utils.C1<string>.DefaultEqualityComparer()).ToList();
-
-                        foreach (string loc in loc_added)
-                        {
-                            queue.Add(new UpdateItemInfo
-                            {
-                                Location = loc,
-                                ItemType = loc_scanned_dict[loc],
-                                IsExist = false,
-                            });
-                        }
-
-                        if (!lazy_load)
-                        {
-                            var loc_kept = Utils.C3<string, string, string>.Intersect(
-                                loc_scanned, loc_exist,
-                                Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
-                                new Utils.C1<string>.DefaultEqualityComparer()).ToList();
-
-                            foreach (string loc in loc_kept)
-                            {
-                                queue.Add(new UpdateItemInfo
-                                {
-                                    Location = loc,
-                                    ItemType = loc_scanned_dict[loc],
-                                    IsExist = true,
-                                });
-                            }
-                        }
-
-                        await TransactionBlock(async delegate
-                        {
-                            foreach (UpdateItemInfo info in queue)
-                            {
-                                await UpdateComicNoLock(info.Location, info.ItemType, info.IsExist);
-                            }
-                        }, "Update comic");
-
-                        if (watch.LapSpan().TotalSeconds > 2)
-                        {
-                            OnUpdated?.Invoke();
-                            watch.Lap();
+                            case ".pdf":
+                                loc_scanned_dict[file_path] = ComicType.PDF;
+                                break;
+                            default:
+                                break;
                         }
                     }
                 }
 
-                // Get removed folders.
-                var loc_removed = Utils.C3<string, string, string>.Except(loc_exist, loc_in_lib,
+                var loc_scanned = new List<string>();
+
+                foreach (KeyValuePair<string, ComicType> item in loc_scanned_dict)
+                {
+                    loc_scanned.Add(item.Key);
+                }
+
+                loc_in_lib.AddRange(loc_scanned);
+
+                foreach (string dir in ctx.NoAccessItems)
+                {
+                    loc_ignore.Add(dir);
+                }
+
+                // Generate a task queue for updating.
+                var queue = new List<UpdateItemInfo>();
+
+                // Get folders added.
+                var loc_added = Utils.C3<string, string, string>.Except(
+                    loc_scanned, loc_exist,
                     Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
                     new Utils.C1<string>.DefaultEqualityComparer()).ToList();
 
-                await TransactionBlock(delegate
+                foreach (string loc in loc_added)
                 {
-                    // Remove folders from database.
-                    foreach (string loc in loc_removed)
+                    queue.Add(new UpdateItemInfo
                     {
-                        // Skip directories in ignoring list.
-                        bool ignore = false;
+                        Location = loc,
+                        ItemType = loc_scanned_dict[loc],
+                        IsExist = false,
+                    });
+                }
 
-                        foreach (string base_loc in loc_ignore)
+                if (!lazy)
+                {
+                    var loc_kept = Utils.C3<string, string, string>.Intersect(
+                        loc_scanned, loc_exist,
+                        Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
+                        new Utils.C1<string>.DefaultEqualityComparer()).ToList();
+
+                    foreach (string loc in loc_kept)
+                    {
+                        queue.Add(new UpdateItemInfo
                         {
-                            if (Utils.StringUtils.FolderContain(base_loc, loc))
-                            {
-                                ignore = true;
-                                break;
-                            }
-                        }
-
-                        if (ignore)
-                        {
-                            continue;
-                        }
-
-                        // Remove.
-                        Log("Removing item '" + loc + "'");
-                        RemoveWithLocationNoLock(loc);
+                            Location = loc,
+                            ItemType = loc_scanned_dict[loc],
+                            IsExist = true,
+                        });
                     }
+                }
 
-                    return Task.CompletedTask;
-                }, "RemoveLocationsFromDatabase");
-                return TaskException.Success;
+                await TransactionBlock(async delegate
+                {
+                    foreach (UpdateItemInfo info in queue)
+                    {
+                        await UpdateComicNoLock(info.Location, info.ItemType, info.IsExist);
+                    }
+                }, "Update comic");
+
+                if (watch.LapSpan().TotalSeconds > 2)
+                {
+                    OnUpdated?.Invoke();
+                    watch.Lap();
+                }
             }
-            finally
+        }
+
+        // Get removed folders.
+        var loc_removed = Utils.C3<string, string, string>.Except(loc_exist, loc_in_lib,
+            Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
+            new Utils.C1<string>.DefaultEqualityComparer()).ToList();
+
+        await TransactionBlock(delegate
+        {
+            // Remove folders from database.
+            foreach (string loc in loc_removed)
             {
-                Log("Comic update completed");
-                IsRescanning = false;
-                OnUpdated?.Invoke();
+                // Skip directories in ignoring list.
+                bool ignore = false;
+
+                foreach (string base_loc in loc_ignore)
+                {
+                    if (Utils.StringUtils.FolderContain(base_loc, loc))
+                    {
+                        ignore = true;
+                        break;
+                    }
+                }
+
+                if (ignore)
+                {
+                    continue;
+                }
+
+                // Remove.
+                Log("Removing item '" + loc + "'");
+                RemoveWithLocationNoLock(loc);
             }
-        });
+
+            return Task.CompletedTask;
+        }, "RemoveLocationsFromDatabase");
+
+        return TaskException.Success;
     }
 
     protected static void Log(string message)

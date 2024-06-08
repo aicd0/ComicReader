@@ -447,6 +447,6 @@ sealed internal partial class SettingsPage : SettingPageBase
     private void OnRescanFilesClicked(object sender, RoutedEventArgs e)
     {
         Shared.IsRescanning = true;
-        TaskQueue.DefaultQueue.Enqueue("OnRescanFilesClicked", ComicData.UpdateSealed(lazy_load: false));
+        ComicData.UpdateAllComics("OnRescanFilesClicked", lazy: false);
     }
 }

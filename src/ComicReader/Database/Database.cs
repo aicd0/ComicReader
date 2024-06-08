@@ -21,7 +21,7 @@ public class DatabaseManager
         await XmlDatabaseManager.Load();
         AppDataRepository.Initialize();
         await Update();
-        TaskQueue.DefaultQueue.Enqueue("DatabaseManager#Init", ComicData.UpdateSealed(lazy_load: true));
+        ComicData.UpdateAllComics("DatabaseManager#init", lazy: true);
         return TaskException.Success;
     }
 

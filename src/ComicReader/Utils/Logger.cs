@@ -118,7 +118,7 @@ internal static class Logger
                 levelTag = "F";
                 break;
             default:
-                System.Diagnostics.Debug.Assert(false);
+                FailOnDebug();
                 levelTag = "U";
                 break;
         }
@@ -132,7 +132,7 @@ internal static class Logger
         LogToConsole(realMessage);
         if (level >= LEVEL_FATAL)
         {
-            throw new Exception(message, exception);
+            FailOnDebug();
         }
 #endif
         if (level >= LEVEL_INFO)
@@ -185,5 +185,10 @@ internal static class Logger
     private static void LogToConsole(string message)
     {
         System.Diagnostics.Debug.Print(message);
+    }
+
+    private static void FailOnDebug()
+    {
+        System.Diagnostics.Debug.Assert(false);
     }
 }
