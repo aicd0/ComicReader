@@ -190,7 +190,7 @@ sealed internal partial class ReaderPage : ReaderPageBase
             if (comic == null)
             {
                 string token = bundle.GetString(RouterConstants.ARG_COMIC_TOKEN, "");
-                comic = AppDataRepository.RetrieveComicData(token);
+                comic = AppDataRepository.GetComicData(token);
             }
 
             if (comic != null)

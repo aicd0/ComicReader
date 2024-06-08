@@ -25,9 +25,9 @@ internal static class AppDataRepository
         return sReaderSettings;
     }
 
-    public static ComicData RetrieveComicData(string token)
+    public static ComicData GetComicData(string token)
     {
-        return sComicMap.TryRemove(token, out ComicData comicData) ? comicData : null;
+        return sComicMap.TryGetValue(token, out ComicData comicData) ? comicData : null;
     }
 
     public static string PutComicData(ComicData comicData)
