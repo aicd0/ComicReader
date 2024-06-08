@@ -47,9 +47,9 @@ namespace ComicReader.Database
             }
         }
 
-        private static void Log(string content)
+        private static void Log(string message)
         {
-            Utils.Debug.Log("Database: " + content);
+            Logger.I("Database", message);
         }
     }
 }

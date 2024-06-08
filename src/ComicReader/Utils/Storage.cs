@@ -52,7 +52,7 @@ namespace ComicReader.Utils
                 }
                 catch (Exception e)
                 {
-                    Debug.LogException("GetFolderFromToken", e);
+                    Logger.F("GetFolderFromToken", "", e);
                     out_of_date_tokens.Add(base_token);
                     continue;
                 }
@@ -178,9 +178,9 @@ namespace ComicReader.Utils
             return (StorageFile)item;
         }
 
-        private static void Log(string text)
+        private static void Log(string message)
         {
-            Debug.Log("Storage: " + text);
+            Logger.I("Storag", message);
         }
     }
 }

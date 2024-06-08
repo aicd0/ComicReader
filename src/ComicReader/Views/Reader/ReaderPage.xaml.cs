@@ -932,9 +932,9 @@ sealed internal partial class ReaderPage : ReaderPageBase
     }
 
     // Debug
-    public void Log(string text)
+    public void Log(string message)
     {
-        Utils.Debug.Log("ReaderPage: " + text + ".");
+        Logger.I("ReaderPage", message);
     }
 
     public class TagItemHandler : TagViewModel.IItemHandler

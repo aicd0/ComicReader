@@ -221,9 +221,9 @@ namespace ComicReader.Utils.Image
             });
         }
 
-        private static void Log(string text)
+        private static void Log(string message)
         {
-            Utils.Debug.Log("Image Loader: " + text + ".");
+            Logger.I("ImageLoader", message);
         }
 
         private static double GetScaleAdjustment()

@@ -1744,14 +1744,9 @@ namespace ComicReader.Views.Reader
         }
 
         // Internal - Debug
-        private void Log(string text)
+        private void Log(string message)
         {
-            if (!IsCurrentReader)
-            {
-                return;
-            }
-
-            Utils.Debug.Log("Reader(" + _name + "): " + text + ".");
+            Logger.I("Reader_" + _name, message);
         }
     }
 }

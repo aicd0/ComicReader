@@ -8,133 +8,134 @@ using Windows.Storage;
 using Windows.Storage.Streams;
 using SealedTask = System.Func<System.Threading.Tasks.Task<ComicReader.Utils.TaskException>, ComicReader.Utils.TaskException>;
 
-namespace ComicReader.Database
+namespace ComicReader.Database;
+
+public abstract class XmlData
 {
-    public abstract class XmlData
-    {
-        public abstract string FileName { get; }
-        [XmlIgnore]
-        public abstract XmlData Target { get; set; }
+    public abstract string FileName { get; }
+    [XmlIgnore]
+    public abstract XmlData Target { get; set; }
 
-        public virtual void Pack() { }
-        public virtual void Unpack() { }
+    public virtual void Pack() { }
+    public virtual void Unpack() { }
+}
+
+internal class XmlDatabase
+{
+    public static SettingData Settings = new SettingData();
+    public static FavoriteData Favorites = new FavoriteData();
+    public static HistoryData History = new HistoryData();
+};
+
+internal enum XmlDatabaseItem
+{
+    Favorites,
+    History,
+    Settings
+}
+
+internal class XmlDatabaseManager
+{
+    private const string TAG = "XmlDatabaseManager";
+
+    private static StorageFolder DatabaseFolder => ApplicationData.Current.LocalFolder;
+
+    private static bool m_database_ready = false;
+    private static SemaphoreSlim m_database_lock = new SemaphoreSlim(1);
+
+    public static async Task WaitLock()
+    {
+        await Utils.C0.WaitFor(() => m_database_ready);
+        await m_database_lock.WaitAsync();
     }
 
-    internal class XmlDatabase
+    public static void ReleaseLock()
     {
-        public static SettingData Settings = new SettingData();
-        public static FavoriteData Favorites = new FavoriteData();
-        public static HistoryData History = new HistoryData();
-    };
-
-    internal enum XmlDatabaseItem
-    {
-        Favorites,
-        History,
-        Settings
+        m_database_lock.Release();
     }
 
-    internal class XmlDatabaseManager
+    public static async Task<TaskException> Load()
     {
-        private static StorageFolder DatabaseFolder => ApplicationData.Current.LocalFolder;
+        await Load(XmlDatabase.Settings);
+        await Load(XmlDatabase.Favorites);
+        await Load(XmlDatabase.History);
 
-        private static bool m_database_ready = false;
-        private static SemaphoreSlim m_database_lock = new SemaphoreSlim(1);
+        m_database_ready = true;
+        return TaskException.Success;
+    }
 
-        public static async Task WaitLock()
+    private static async Task<TaskException> Load(XmlData obj)
+    {
+        object file = await Utils.Storage.TryGetFile(DatabaseFolder, obj.FileName);
+        if (file == null)
         {
-            await Utils.C0.WaitFor(() => m_database_ready);
-            await m_database_lock.WaitAsync();
+            return TaskException.FileNotFound;
         }
 
-        public static void ReleaseLock()
+        IRandomAccessStream stream = await (file as StorageFile).OpenAsync(FileAccessMode.Read);
+        var serializer = new XmlSerializer(obj.GetType());
+        serializer.UnknownAttribute += (object x, XmlAttributeEventArgs y) => Log("UnknownAttribute: " + y.ToString());
+        serializer.UnknownElement += (object x, XmlElementEventArgs y) => Log("UnknownElement: " + y.ToString());
+        serializer.UnknownNode += (object x, XmlNodeEventArgs y) => Log("UnknownNode: " + y.ToString());
+        serializer.UnreferencedObject += (object x, UnreferencedObjectEventArgs y) => Log("UnreferencedObject: " + y.ToString());
+
+        try
         {
-            m_database_lock.Release();
+            obj.Target = serializer.Deserialize(stream.AsStream()) as XmlData;
+        }
+        catch (Exception)
+        {
+            return TaskException.Failure;
         }
 
-        public static async Task<TaskException> Load()
-        {
-            await Load(XmlDatabase.Settings);
-            await Load(XmlDatabase.Favorites);
-            await Load(XmlDatabase.History);
+        obj.Target.Unpack();
+        stream.Dispose();
+        return TaskException.Success;
+    }
 
-            m_database_ready = true;
-            return TaskException.Success;
+    public static SealedTask SaveSealed(XmlDatabaseItem item) =>
+        (Task<TaskException> _) => SaveUnsealed(item).Result;
+
+    public static async Task<TaskException> SaveUnsealed(XmlDatabaseItem item)
+    {
+        Logger.I(TAG, "Saving: " + item.ToString());
+        switch (item)
+        {
+            case XmlDatabaseItem.Favorites:
+                await Save(XmlDatabase.Favorites);
+                break;
+            case XmlDatabaseItem.History:
+                await Save(XmlDatabase.History);
+                break;
+            case XmlDatabaseItem.Settings:
+                await Save(XmlDatabase.Settings);
+                break;
+            default:
+                Logger.F(TAG, "SaveXmlDatabaseUnknownItem");
+                return TaskException.InvalidParameters;
         }
 
-        private static async Task<TaskException> Load(XmlData obj)
-        {
-            object file = await Utils.Storage.TryGetFile(DatabaseFolder, obj.FileName);
-            if (file == null)
-            {
-                return TaskException.FileNotFound;
-            }
+        return TaskException.Success;
+    }
 
-            IRandomAccessStream stream = await (file as StorageFile).OpenAsync(FileAccessMode.Read);
-            var serializer = new XmlSerializer(obj.GetType());
-            serializer.UnknownAttribute += (object x, XmlAttributeEventArgs y) => Log("UnknownAttribute: " + y.ToString());
-            serializer.UnknownElement += (object x, XmlElementEventArgs y) => Log("UnknownElement: " + y.ToString());
-            serializer.UnknownNode += (object x, XmlNodeEventArgs y) => Log("UnknownNode: " + y.ToString());
-            serializer.UnreferencedObject += (object x, UnreferencedObjectEventArgs y) => Log("UnreferencedObject: " + y.ToString());
+    private static async Task Save(XmlData obj)
+    {
+        await WaitLock();
+        StorageFile file = await DatabaseFolder.CreateFileAsync(
+            obj.FileName, CreationCollisionOption.ReplaceExisting);
+        IRandomAccessStream stream = await file.OpenAsync(
+            FileAccessMode.ReadWrite);
 
-            try
-            {
-                obj.Target = serializer.Deserialize(stream.AsStream()) as XmlData;
-            }
-            catch (Exception)
-            {
-                return TaskException.Failure;
-            }
+        obj.Pack();
+        var serializer = new XmlSerializer(obj.GetType());
+        serializer.Serialize(stream.AsStream(), obj);
 
-            obj.Target.Unpack();
-            stream.Dispose();
-            return TaskException.Success;
-        }
+        stream.Dispose();
+        ReleaseLock();
+    }
 
-        public static SealedTask SaveSealed(XmlDatabaseItem item) =>
-            (Task<TaskException> _) => SaveUnsealed(item).Result;
-
-        public static async Task<TaskException> SaveUnsealed(XmlDatabaseItem item)
-        {
-            Utils.Debug.Log("Saving: " + item.ToString());
-            switch (item)
-            {
-                case XmlDatabaseItem.Favorites:
-                    await Save(XmlDatabase.Favorites);
-                    break;
-                case XmlDatabaseItem.History:
-                    await Save(XmlDatabase.History);
-                    break;
-                case XmlDatabaseItem.Settings:
-                    await Save(XmlDatabase.Settings);
-                    break;
-                default:
-                    Utils.Debug.LogException("SaveXmlDatabaseUnknownItem", null);
-                    return TaskException.InvalidParameters;
-            }
-
-            return TaskException.Success;
-        }
-
-        private static async Task Save(XmlData obj)
-        {
-            await WaitLock();
-            StorageFile file = await DatabaseFolder.CreateFileAsync(
-                obj.FileName, CreationCollisionOption.ReplaceExisting);
-            IRandomAccessStream stream = await file.OpenAsync(
-                FileAccessMode.ReadWrite);
-
-            obj.Pack();
-            var serializer = new XmlSerializer(obj.GetType());
-            serializer.Serialize(stream.AsStream(), obj);
-
-            stream.Dispose();
-            ReleaseLock();
-        }
-
-        private static void Log(string content)
-        {
-            Utils.Debug.Log("XmlDatabase: " + content);
-        }
+    private static void Log(string message)
+    {
+        Logger.I(TAG, message);
     }
 }
