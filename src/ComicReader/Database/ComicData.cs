@@ -1000,8 +1000,8 @@ internal abstract class ComicData
             Log($"UpdateAllComics#Start(session={session},lazy={lazy})");
             IsRescanning = true;
             TaskException result = UpdateAllComicsInternal(lazy).Result;
-            OnUpdated?.Invoke();
             IsRescanning = false;
+            OnUpdated?.Invoke();
             Log($"UpdateAllComics#End(session={session})");
             return result;
         });
