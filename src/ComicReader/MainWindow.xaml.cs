@@ -1,5 +1,6 @@
 using ComicReader.Common.Constants;
 using ComicReader.Native;
+using ComicReader.Utils;
 using ComicReader.Views.Main;
 using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Xaml;
@@ -18,14 +19,33 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        TrySetAcrylicBackdrop();
         WindowHandle = WindowNative.GetWindowHandle(this);
+
+        Title = StringResourceProvider.GetResourceString("AppDisplayName");
+        TrySetAcrylicBackdrop();
     }
 
-    private void OnPageFrameLoaded(object sender, RoutedEventArgs e)
+    private void Window_SizeChanged(object sender, WindowSizeChangedEventArgs args)
+    {
+        var placement = new NativeModels.WindowPlacement();
+        NativeMethods.GetWindowPlacement(WindowHandle, out placement);
+        string serialized = JsonSerializer.Serialize(placement);
+        ApplicationData.Current.LocalSettings.Values[LocalSettings.WindowStates] = serialized;
+    }
+
+    private void PageFrame_Loaded(object sender, RoutedEventArgs e)
     {
         TryRecoverWindowStates();
         PageFrame.Navigate(typeof(MainPage));
+    }
+
+    private void TrySetAcrylicBackdrop()
+    {
+        if (DesktopAcrylicController.IsSupported())
+        {
+            var desktopAcrylicBackdrop = new DesktopAcrylicBackdrop();
+            SystemBackdrop = desktopAcrylicBackdrop;
+        }
     }
 
     private void TryRecoverWindowStates()
@@ -45,22 +65,5 @@ public sealed partial class MainWindow : Window
 
             NativeMethods.SetWindowPlacement(WindowHandle, ref windowPlacement);
         }
-    }
-
-    private void TrySetAcrylicBackdrop()
-    {
-        if (DesktopAcrylicController.IsSupported())
-        {
-            var desktopAcrylicBackdrop = new DesktopAcrylicBackdrop();
-            SystemBackdrop = desktopAcrylicBackdrop;
-        }
-    }
-
-    private void OnWindowSizeChanged(object sender, WindowSizeChangedEventArgs args)
-    {
-        var placement = new NativeModels.WindowPlacement();
-        NativeMethods.GetWindowPlacement(WindowHandle, out placement);
-        string serialized = JsonSerializer.Serialize(placement);
-        ApplicationData.Current.LocalSettings.Values[LocalSettings.WindowStates] = serialized;
     }
 }
