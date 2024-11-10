@@ -98,7 +98,7 @@ internal abstract class ComicData
     }
 
     // Locks.
-    private static readonly Utils.TaskQueue _tableQueue = new Utils.TaskQueue("ComicData");
+    private static readonly Utils.TaskQueue _tableQueue = new("ComicData");
     private static int _pendingUpdateTaskCount = 0;
 
     private bool _imageUpdated = false;
@@ -1255,7 +1255,7 @@ internal abstract class ComicData
 internal class TagData
 {
     public string Name;
-    public HashSet<string> Tags = new HashSet<string>();
+    public HashSet<string> Tags = new();
 
     public static TagData Parse(string src)
     {

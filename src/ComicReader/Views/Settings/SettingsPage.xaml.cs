@@ -31,7 +31,7 @@ public class SettingsPageShared : INotifyPropertyChanged
 
     public Action OnSettingsChanged;
 
-    private List<Tuple<string, int>> m_Encodings = new List<Tuple<string, int>>();
+    private List<Tuple<string, int>> m_Encodings = new();
     public List<Tuple<string, int>> Encodings
     {
         get => m_Encodings;
@@ -291,7 +291,7 @@ sealed internal partial class SettingsPage : SettingPageBase
         {
             var encodings = new List<Tuple<string, int>>
             {
-                new Tuple<string, int>(Utils.StringResourceProvider.GetResourceString("Default"), -1)
+                new(Utils.StringResourceProvider.GetResourceString("Default"), -1)
             };
 
             foreach (Encoding info in Common.AppInfoProvider.SupportedEncodings.Values)

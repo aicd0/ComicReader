@@ -57,7 +57,7 @@ public class Win32IO
 
         private class Node
         {
-            public List<string> Paths = new List<string>();
+            public List<string> Paths = new();
             public int Index = 0;
 
             public string CurrentPath => Paths[Index];
@@ -69,7 +69,7 @@ public class Win32IO
         public int ItemFound => Folders.Count + Files.Count;
 
         private bool m_initial_search = true;
-        private readonly List<Node> m_stack = new List<Node>();
+        private readonly List<Node> m_stack = new();
         private readonly NativeModels.FindExInfoLevel FindInfoLevel;
         private readonly NativeModels.FIndexSearchOps IndexSearchOps = NativeModels.FIndexSearchOps.FindExSearchNameMatch;
         private readonly int AdditionalFlags;

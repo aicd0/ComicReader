@@ -1,14 +1,13 @@
 using Microsoft.Windows.ApplicationModel.Resources;
 
-namespace ComicReader.Utils
-{
-    class StringResourceProvider
-    {
-        private static readonly ResourceLoader sResourceLoader = new();
+namespace ComicReader.Utils;
 
-        public static string GetResourceString(string resource)
-        {
-            return sResourceLoader.GetString(resource) ?? "?";
-        }
+class StringResourceProvider
+{
+    private static readonly ResourceLoader sResourceLoader = new();
+
+    public static string GetResourceString(string resource)
+    {
+        return sResourceLoader.GetString(resource) ?? "?";
     }
 }

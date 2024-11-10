@@ -227,10 +227,10 @@ sealed internal partial class SearchPage : SearchPageBase
     private SearchPageShared Shared { get; set; }
 
     private readonly ComicItemViewModel.IItemHandler _comicItemHandler;
-    private List<Match> m_matches = new List<Match>();
+    private List<Match> m_matches = new();
     private int m_match_index = 0;
-    private readonly CancellationLock m_search_lock = new CancellationLock();
-    private readonly CancellationSession _loadImageSession = new CancellationSession();
+    private readonly CancellationLock m_search_lock = new();
+    private readonly CancellationSession _loadImageSession = new();
     private string _keyword = "";
 
     public SearchPage()

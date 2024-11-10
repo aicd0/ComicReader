@@ -1,11 +1,10 @@
-namespace ComicReader.Common.Constants
+namespace ComicReader.Common.Constants;
+
+internal class EventId
 {
-    internal class EventId
-    {
-        public const string NavigationBarHeightChange = "NavigationBarHeightChange";
-        public const string RootTabHeightChange = "RootTabHeightChange";
-        public const string SidePaneUpdate = "SidePaneUpdate";
-        public const string TitleBarHeightChange = "TitleBarHeightChange";
-        public const string TitleBarOpacity = "TitleBarOpacity";
-    }
+    public const string NavigationBarHeightChange = "NavigationBarHeightChange";
+    public const string RootTabHeightChange = "RootTabHeightChange";
+    public const string SidePaneUpdate = "SidePaneUpdate";
+    public const string TitleBarHeightChange = "TitleBarHeightChange";
+    public const string TitleBarOpacity = "TitleBarOpacity";
 }

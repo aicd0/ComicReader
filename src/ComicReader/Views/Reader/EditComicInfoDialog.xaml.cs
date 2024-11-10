@@ -23,7 +23,7 @@ internal class EditComicInfoDialogShared : INotifyPropertyChanged
 
 internal sealed partial class EditComicInfoDialog : ContentDialog
 {
-    public EditComicInfoDialogShared Shared = new EditComicInfoDialogShared();
+    public EditComicInfoDialogShared Shared = new();
 
     private readonly ComicData m_comic;
 

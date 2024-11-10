@@ -145,7 +145,7 @@ sealed internal partial class ReaderPage : ReaderPageBase
     private readonly GestureHandler _gestureHandler;
 
     // Pointer events
-    private ReaderGestureRecognizer _gestureRecognizer = new ReaderGestureRecognizer();
+    private readonly ReaderGestureRecognizer _gestureRecognizer = new();
     private bool mPendingTap = false;
     private bool mTapCancelled = false;
 
@@ -316,19 +316,12 @@ sealed internal partial class ReaderPage : ReaderPageBase
         ViewModel.ReaderStatusLiveData.Observe(this, delegate (ReaderStatusEnum status)
         {
             string readerStatusText = "";
-            switch (status)
+            readerStatusText = status switch
             {
-                case ReaderStatusEnum.Loading:
-                    readerStatusText = Utils.StringResourceProvider.GetResourceString("ReaderStatusLoading");
-                    break;
-                case ReaderStatusEnum.Error:
-                    readerStatusText = Utils.StringResourceProvider.GetResourceString("ReaderStatusError");
-                    break;
-                default:
-                    readerStatusText = "";
-                    break;
-            }
-
+                ReaderStatusEnum.Loading => Utils.StringResourceProvider.GetResourceString("ReaderStatusLoading"),
+                ReaderStatusEnum.Error => Utils.StringResourceProvider.GetResourceString("ReaderStatusError"),
+                _ => "",
+            };
             TbReaderStatus.Text = readerStatusText;
             TbReaderStatus.Visibility = readerStatusText.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
             ViewModel.UpdateReaderUI();
@@ -376,14 +369,8 @@ sealed internal partial class ReaderPage : ReaderPageBase
             return;
         }
 
-        int page = reader.Page;
-
-        if (page <= 0)
-        {
-            page = (int)Math.Round(reader.InitialPage);
-        }
-
-        PageIndicator.Text = page.ToString() + " / " + reader.PageCount.ToString();
+        int currentPage = reader.GetCurrentPage();
+        PageIndicator.Text = currentPage.ToString() + " / " + reader.PageCount.ToString();
     }
 
     // Reader

@@ -1,9 +1,10 @@
 ﻿using System.Collections.Generic;
 
 namespace ComicReader.Router;
+
 internal static class AppRouter
 {
-    private static List<IRouterInterceptor> sInterceptors = new List<IRouterInterceptor>
+    private static readonly List<IRouterInterceptor> sInterceptors = new()
     {
         new CheckRouteInterceptor(),
         new OpenPageInterceptor(),

@@ -1,43 +1,42 @@
 using System;
 
-namespace ComicReader.Utils
+namespace ComicReader.Utils;
+
+interface IBaseTransaction<out T> { }
+
+public abstract class BaseTransaction<T> : IBaseTransaction<T>
 {
-    interface IBaseTransaction<out T> { }
+    private bool _committed = false;
 
-    public abstract class BaseTransaction<T> : IBaseTransaction<T>
+    public T Commit()
     {
-        private bool _committed = false;
-
-        public T Commit()
+        if (_committed)
         {
-            if (_committed)
-            {
-                throw new Exception("Cannot commit a transaction twice");
-            }
-
-            _committed = true;
-            return CommitImpl();
+            throw new Exception("Cannot commit a transaction twice");
         }
 
-        protected abstract T CommitImpl();
+        _committed = true;
+        return CommitImpl();
     }
 
-    // Specialization for 'void'
-    public abstract class BaseTransaction
+    protected abstract T CommitImpl();
+}
+
+// Specialization for 'void'
+public abstract class BaseTransaction
+{
+    private bool _committed = false;
+
+    public void Commit()
     {
-        private bool _committed = false;
-
-        public void Commit()
+        if (_committed)
         {
-            if (_committed)
-            {
-                throw new Exception("Cannot commit a transaction twice");
-            }
-
-            _committed = true;
-            CommitImpl();
+            throw new Exception("Cannot commit a transaction twice");
         }
 
-        protected abstract void CommitImpl();
+        _committed = true;
+        CommitImpl();
     }
+
+    protected abstract void CommitImpl();
 }

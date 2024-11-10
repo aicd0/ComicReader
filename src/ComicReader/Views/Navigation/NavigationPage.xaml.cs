@@ -23,7 +23,7 @@ sealed internal partial class NavigationPage : NavigationPageBase
     private double _rootTabHeight = 0;
     private double _navigationBarHeight = 0;
     private NavigationBundle _currentBundle;
-    private NavigationPageAbility _ability;
+    private readonly NavigationPageAbility _ability;
 
     public NavigationPage()
     {
@@ -297,8 +297,8 @@ sealed internal partial class NavigationPage : NavigationPageBase
         private const string EVENT_GRID_VIEW_MODE_CHANGED = "GridViewModeChanged";
         private const string EVENT_READER_SETTINGS_CHANGED = "ReaderSettingsChanged";
 
-        private WeakReference<NavigationPage> _parent;
-        private EventBus _eventBus = new EventBus();
+        private readonly WeakReference<NavigationPage> _parent;
+        private readonly EventBus _eventBus = new();
 
         public NavigationPageAbility(NavigationPage parent)
         {
@@ -313,49 +313,70 @@ sealed internal partial class NavigationPage : NavigationPageBase
         public bool GetIsSidePaneOpen()
         {
             if (!_parent.TryGetTarget(out NavigationPage parent))
+            {
                 return false;
+            }
+
             return parent.NavigationPageSidePane.IsPaneOpen;
         }
 
         public void SetExternalComic(bool isExternal)
         {
             if (!_parent.TryGetTarget(out NavigationPage parent))
+            {
                 return;
+            }
+
             parent.AbbAddToFavorite.IsEnabled = !isExternal;
         }
 
         public void SetFavorite(bool isFavorite)
         {
             if (!_parent.TryGetTarget(out NavigationPage parent))
+            {
                 return;
+            }
+
             parent.ViewModel.SetIsFavorite(isFavorite);
         }
 
         public void SetGridViewMode(bool enabled)
         {
             if (!_parent.TryGetTarget(out NavigationPage parent))
+            {
                 return;
+            }
+
             parent.ViewModel.SetGridViewMode(enabled);
         }
 
         public void SetIsSidePaneOpen(bool isOpen)
         {
             if (!_parent.TryGetTarget(out NavigationPage parent))
+            {
                 return;
+            }
+
             parent.NavigationPageSidePane.IsPaneOpen = isOpen;
         }
 
         public void SetReaderSettings(ReaderSettingDataModel settings)
         {
             if (!_parent.TryGetTarget(out NavigationPage parent))
+            {
                 return;
+            }
+
             parent.RspReaderSetting.SetData(settings);
         }
 
         public void SetSearchBox(string text)
         {
             if (!_parent.TryGetTarget(out NavigationPage parent))
+            {
                 return;
+            }
+
             parent.SetSearchBox(text);
         }
 

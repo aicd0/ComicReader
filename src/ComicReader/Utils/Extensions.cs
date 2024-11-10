@@ -3,47 +3,46 @@ using Microsoft.UI.Xaml.Media;
 using System;
 using System.Collections.Generic;
 
-namespace ComicReader.Utils
+namespace ComicReader.Utils;
+
+internal static class Extensions
 {
-    internal static class Extensions
+    public static bool Successful(this TaskException r)
     {
-        public static bool Successful(this TaskException r)
+        return r == TaskException.Success;
+    }
+
+    public static IEnumerable<DependencyObject> ChildrenBreadthFirst(this DependencyObject obj, bool includeSelf = false)
+    {
+        if (includeSelf)
         {
-            return r == TaskException.Success;
+            yield return obj;
         }
 
-        public static IEnumerable<DependencyObject> ChildrenBreadthFirst(this DependencyObject obj, bool includeSelf = false)
+        var queue = new Queue<DependencyObject>();
+        queue.Enqueue(obj);
+
+        while (queue.Count > 0)
         {
-            if (includeSelf)
+            obj = queue.Dequeue();
+            int count = VisualTreeHelper.GetChildrenCount(obj);
+
+            for (int i = 0; i < count; i++)
             {
-                yield return obj;
-            }
-
-            var queue = new Queue<DependencyObject>();
-            queue.Enqueue(obj);
-
-            while (queue.Count > 0)
-            {
-                obj = queue.Dequeue();
-                int count = VisualTreeHelper.GetChildrenCount(obj);
-
-                for (int i = 0; i < count; i++)
-                {
-                    DependencyObject child = VisualTreeHelper.GetChild(obj, i);
-                    yield return child;
-                    queue.Enqueue(child);
-                }
+                DependencyObject child = VisualTreeHelper.GetChild(obj, i);
+                yield return child;
+                queue.Enqueue(child);
             }
         }
+    }
 
-        public static T Get<T>(this WeakReference<T> r) where T : class
+    public static T Get<T>(this WeakReference<T> r) where T : class
+    {
+        if (r.TryGetTarget(out T obj))
         {
-            if (r.TryGetTarget(out T obj))
-            {
-                return obj;
-            }
-
-            return null;
+            return obj;
         }
+
+        return null;
     }
 }

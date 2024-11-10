@@ -1,46 +1,45 @@
 using System.Collections.Generic;
 
-namespace ComicReader.Utils.Lifecycle
+namespace ComicReader.Utils.Lifecycle;
+
+internal class EventBus
 {
-    internal class EventBus
+    public static readonly EventBus Default = new();
+    private static readonly IMutableLiveData<object> sEmptyLiveData = new EmptyLiveData<object>();
+
+    private readonly Dictionary<string, ILiveDataNoType> _topics = new();
+    private bool _clearing = false;
+
+    public IMutableLiveData<T> With<T>(string eventId)
     {
-        public static readonly EventBus Default = new EventBus();
-        private static readonly IMutableLiveData<object> sEmptyLiveData = new EmptyLiveData<object>();
-
-        private readonly Dictionary<string, ILiveDataNoType> _topics = new();
-        private bool _clearing = false;
-
-        public IMutableLiveData<T> With<T>(string eventId)
+        if (_clearing)
         {
-            if (_clearing)
-            {
-                return sEmptyLiveData as IMutableLiveData<T>;
-            }
-
-            if (_topics.TryGetValue(eventId, out ILiveDataNoType topic))
-            {
-                return topic as IMutableLiveData<T>;
-            }
-
-            var newTopic = new MutableLiveData<T>();
-            _topics.Add(eventId, newTopic);
-            return newTopic;
+            return sEmptyLiveData as IMutableLiveData<T>;
         }
 
-        public IMutableLiveData<object> With(string eventId)
+        if (_topics.TryGetValue(eventId, out ILiveDataNoType topic))
         {
-            return With<object>(eventId);
+            return topic as IMutableLiveData<T>;
         }
 
-        public void Clear()
+        var newTopic = new MutableLiveData<T>();
+        _topics.Add(eventId, newTopic);
+        return newTopic;
+    }
+
+    public IMutableLiveData<object> With(string eventId)
+    {
+        return With<object>(eventId);
+    }
+
+    public void Clear()
+    {
+        _clearing = true;
+        foreach (ILiveDataNoType topic in _topics.Values)
         {
-            _clearing = true;
-            foreach (ILiveDataNoType topic in _topics.Values)
-            {
-                topic.Clear();
-            }
-            _clearing = false;
-            _topics.Clear();
+            topic.Clear();
         }
+        _clearing = false;
+        _topics.Clear();
     }
 }

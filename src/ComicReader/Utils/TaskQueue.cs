@@ -33,11 +33,11 @@ public class TaskQueue
     private const int WATCH_DOG_DELAY = 5000;
     private const long WATCH_DOG_ALERT_THRESHOLD = 10000;
 
-    public static readonly TaskQueue DefaultQueue = new TaskQueue("Default");
+    public static readonly TaskQueue DefaultQueue = new("Default");
     private static int sWatchDogStarted = 0;
-    private static ConcurrentDictionary<string, long> sStartedTasks = new();
+    private static readonly ConcurrentDictionary<string, long> sStartedTasks = new();
 
-    private string _name;
+    private readonly string _name;
     private int _pendingTaskCount = 0;
     private Task<TaskException> _queue = Task.Factory.StartNew(() => TaskException.Success);
 

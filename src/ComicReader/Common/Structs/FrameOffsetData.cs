@@ -1,19 +1,18 @@
-namespace ComicReader.Common.Structs
-{
-    internal class FrameOffsetData
-    {
-        public double ParallelBegin;
-        public double ParallelCenter;
-        public double ParallelEnd;
-        public double PerpendicularCenter;
+namespace ComicReader.Common.Structs;
 
-        public override string ToString()
-        {
-            return "{" +
-                "PB=" + ParallelBegin.ToString() + "," +
-                "PB=" + ParallelCenter.ToString() + "," +
-                "PE=" + ParallelEnd.ToString() + "," +
-                "PnC=" + PerpendicularCenter.ToString() + "}";
-        }
+internal class FrameOffsetData
+{
+    public double ParallelBegin;
+    public double ParallelCenter;
+    public double ParallelEnd;
+    public double PerpendicularCenter;
+
+    public override string ToString()
+    {
+        return "{" +
+            "PB=" + ParallelBegin.ToString() + "," +
+            "PB=" + ParallelCenter.ToString() + "," +
+            "PE=" + ParallelEnd.ToString() + "," +
+            "PnC=" + PerpendicularCenter.ToString() + "}";
     }
 }

@@ -1,23 +1,22 @@
-﻿namespace ComicReader.Common.Structs
+﻿namespace ComicReader.Common.Structs;
+
+internal enum ZoomType
 {
-    internal enum ZoomType
-    {
-        CenterInside,
-        CenterCrop,
-    }
+    CenterInside,
+    CenterCrop,
+}
 
-    internal class SetScrollViewerContext
-    {
-        // Zoom
-        public float? zoom = null;
-        public ZoomType zoomType = ZoomType.CenterInside;
-        public double? pageToApplyZoom = null;
+internal class SetScrollViewerContext
+{
+    // Zoom
+    public float? zoom = null;
+    public ZoomType zoomType = ZoomType.CenterInside;
+    public double? pageToApplyZoom = null;
 
-        // Offset
-        public double? horizontalOffset = null;
-        public double? verticalOffset = null;
+    // Offset
+    public double? horizontalOffset = null;
+    public double? verticalOffset = null;
 
-        // Animation
-        public bool disableAnimation = false;
-    }
+    // Animation
+    public bool disableAnimation = false;
 }

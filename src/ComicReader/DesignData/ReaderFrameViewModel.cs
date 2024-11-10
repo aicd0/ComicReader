@@ -12,12 +12,12 @@ internal class ReaderFrameViewModel : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler PropertyChanged;
 
-    private object _lock = new();
+    private readonly object _lock = new();
 
-    private readonly ReaderImageViewModel _imageL = new ReaderImageViewModel();
+    private readonly ReaderImageViewModel _imageL = new();
     public ReaderImageViewModel ImageL => _imageL;
 
-    private readonly ReaderImageViewModel _imageR = new ReaderImageViewModel();
+    private readonly ReaderImageViewModel _imageR = new();
     public ReaderImageViewModel ImageR => _imageR;
 
     private double m_FrameWidth = 0.0;
@@ -42,7 +42,7 @@ internal class ReaderFrameViewModel : INotifyPropertyChanged
         }
     }
 
-    private Thickness m_FrameMargin = new Thickness(0.0, 0.0, 0.0, 0.0);
+    private Thickness m_FrameMargin = new(0.0, 0.0, 0.0, 0.0);
     public Thickness FrameMargin
     {
         get => m_FrameMargin;

@@ -1,98 +1,97 @@
 ﻿using System;
 
-namespace ComicReader.Utils
+namespace ComicReader.Utils;
+
+public class Stopwatch
 {
-    public class Stopwatch
+    bool m_reset = true;
+    bool m_stoped = true;
+    private DateTimeOffset m_start_time = DateTimeOffset.MinValue;
+    private DateTimeOffset m_lap_time = DateTimeOffset.MinValue;
+    private DateTimeOffset m_stop_time = DateTimeOffset.MinValue;
+
+    public Stopwatch()
     {
-        bool m_reset = true;
-        bool m_stoped = true;
-        private DateTimeOffset m_start_time = DateTimeOffset.MinValue;
-        private DateTimeOffset m_lap_time = DateTimeOffset.MinValue;
-        private DateTimeOffset m_stop_time = DateTimeOffset.MinValue;
+        Reset();
+    }
 
-        public Stopwatch()
+    public void Start()
+    {
+        if (m_reset)
         {
-            Reset();
+            m_start_time = DateTimeOffset.Now;
+            m_lap_time = m_start_time;
+        }
+        else if (m_stoped)
+        {
+            TimeSpan interval = DateTimeOffset.Now - m_stop_time;
+            m_start_time += interval;
+            m_lap_time += interval;
         }
 
-        public void Start()
-        {
-            if (m_reset)
-            {
-                m_start_time = DateTimeOffset.Now;
-                m_lap_time = m_start_time;
-            }
-            else if (m_stoped)
-            {
-                TimeSpan interval = DateTimeOffset.Now - m_stop_time;
-                m_start_time += interval;
-                m_lap_time += interval;
-            }
+        m_reset = false;
+        m_stoped = false;
+    }
 
-            m_reset = false;
-            m_stoped = false;
+    public void Stop()
+    {
+        if (!m_stoped)
+        {
+            m_stop_time = DateTimeOffset.Now;
         }
 
-        public void Stop()
-        {
-            if (!m_stoped)
-            {
-                m_stop_time = DateTimeOffset.Now;
-            }
+        m_stoped = true;
+    }
 
-            m_stoped = true;
+    public void Reset()
+    {
+        m_reset = true;
+    }
+
+    public TimeSpan Span()
+    {
+        if (m_reset)
+        {
+            return TimeSpan.Zero;
         }
 
-        public void Reset()
+        if (m_stoped)
         {
-            m_reset = true;
+            return m_stop_time - m_start_time;
         }
 
-        public TimeSpan Span()
+        return DateTimeOffset.Now - m_start_time;
+    }
+
+    public void Lap()
+    {
+        if (m_reset)
         {
-            if (m_reset)
-            {
-                return TimeSpan.Zero;
-            }
-
-            if (m_stoped)
-            {
-                return m_stop_time - m_start_time;
-            }
-
-            return DateTimeOffset.Now - m_start_time;
+            return;
         }
 
-        public void Lap()
+        if (m_stoped)
         {
-            if (m_reset)
-            {
-                return;
-            }
+            m_lap_time = m_stop_time;
+        }
+        else
+        {
+            m_lap_time = DateTimeOffset.Now;
+        }
+    }
 
-            if (m_stoped)
-            {
-                m_lap_time = m_stop_time;
-            }
-            else
-            {
-                m_lap_time = DateTimeOffset.Now;
-            }
+    public TimeSpan LapSpan()
+    {
+        if (m_reset)
+        {
+            return TimeSpan.Zero;
         }
 
-        public TimeSpan LapSpan()
+        if (m_stoped)
         {
-            if (m_reset)
-            {
-                return TimeSpan.Zero;
-            }
-
-            if (m_stoped)
-            {
-                return m_stop_time - m_lap_time;
-            }
-
-            return DateTimeOffset.Now - m_lap_time;
+            return m_stop_time - m_lap_time;
         }
+
+        return DateTimeOffset.Now - m_lap_time;
     }
 }

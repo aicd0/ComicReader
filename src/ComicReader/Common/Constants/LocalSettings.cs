@@ -1,7 +1,6 @@
-namespace ComicReader.Common.Constants
+namespace ComicReader.Common.Constants;
+
+internal class LocalSettings
 {
-    internal class LocalSettings
-    {
-        public const string WindowStates = "WindowStates";
-    }
+    public const string WindowStates = "WindowStates";
 }

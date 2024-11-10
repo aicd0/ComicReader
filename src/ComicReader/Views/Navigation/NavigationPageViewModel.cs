@@ -4,7 +4,7 @@ using ComicReader.Views.Base;
 namespace ComicReader.Views.Navigation;
 internal class NavigationPageViewModel : BaseViewModel
 {
-    private readonly MutableLiveData<bool> _gridViewModeEnabled = new MutableLiveData<bool>(false);
+    private readonly MutableLiveData<bool> _gridViewModeEnabled = new(false);
     public LiveData<bool> GridViewModeEnabledLiveData => _gridViewModeEnabled;
 
     private readonly MutableLiveData<bool> _isFavoriteLiveData = new(false);

@@ -1,48 +1,47 @@
 using Microsoft.UI.Xaml.Media.Imaging;
 
-namespace ComicReader.DesignData
+namespace ComicReader.DesignData;
+
+internal class ReaderImageViewModel
 {
-    internal class ReaderImageViewModel
+
+    private BitmapImage _image;
+    public BitmapImage Image
     {
-
-        private BitmapImage _image;
-        public BitmapImage Image
+        get => _image;
+        set
         {
-            get => _image;
-            set
+            BitmapImage newValue;
+            if (ImageSet)
             {
-                BitmapImage newValue;
-                if (ImageSet)
-                {
-                    newValue = value;
-                }
-                else
-                {
-                    newValue = null;
-                }
+                newValue = value;
+            }
+            else
+            {
+                newValue = null;
+            }
 
-                if (_image != newValue)
+            if (_image != newValue)
+            {
+                _image = newValue;
+                if (newValue == null)
                 {
-                    _image = newValue;
-                    if (newValue == null)
-                    {
-                        ImageSet = false;
-                    }
+                    ImageSet = false;
                 }
             }
         }
+    }
 
-        private bool _imageSet = false;
-        public bool ImageSet
+    private bool _imageSet = false;
+    public bool ImageSet
+    {
+        get => _imageSet;
+        set
         {
-            get => _imageSet;
-            set
+            _imageSet = value;
+            if (!value)
             {
-                _imageSet = value;
-                if (!value)
-                {
-                    Image = null;
-                }
+                Image = null;
             }
         }
     }

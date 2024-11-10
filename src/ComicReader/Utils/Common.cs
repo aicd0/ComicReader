@@ -267,7 +267,7 @@ public class C3<T, U, V> : IC3<T, U, V>
 {
     private class KeyEqualityComparer : EqualityComparer<KeyValuePair<V, object>>
     {
-        IEqualityComparer<V> m_comparer;
+        readonly IEqualityComparer<V> m_comparer;
 
         public KeyEqualityComparer(IEqualityComparer<V> comparer)
         {

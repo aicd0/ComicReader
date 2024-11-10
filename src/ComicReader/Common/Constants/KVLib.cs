@@ -1,8 +1,7 @@
-namespace ComicReader.Common.Constants
+namespace ComicReader.Common.Constants;
+
+internal class KVLib
 {
-    internal class KVLib
-    {
-        public const string APP = "app";
-        public const string TIPS = "tips";
-    }
+    public const string APP = "app";
+    public const string TIPS = "tips";
 }

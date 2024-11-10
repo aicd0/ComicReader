@@ -6,139 +6,138 @@ using System.Xml.Serialization;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 
-namespace ComicReader.Database
-{
-    public class SettingData : XmlData
-    {
-        public int DatabaseVersion = -1;
-        public List<string> ComicFolders = new List<string>();
-        public int DefaultArchiveCodePage = -1;
-        public bool VerticalReading = true;
-        public bool LeftToRight = false;
-        public bool VerticalContinuous = true;
-        public bool HorizontalContinuous = false;
-        public bool TransitionAnimation = true;
-        public PageArrangementType VerticalPageArrangement = PageArrangementType.Single;
-        public PageArrangementType HorizontalPageArrangement = PageArrangementType.DualCoverMirror;
-        public bool SaveHistory = true;
+namespace ComicReader.Database;
 
-        public bool DebugMode =
+public class SettingData : XmlData
+{
+    public int DatabaseVersion = -1;
+    public List<string> ComicFolders = new();
+    public int DefaultArchiveCodePage = -1;
+    public bool VerticalReading = true;
+    public bool LeftToRight = false;
+    public bool VerticalContinuous = true;
+    public bool HorizontalContinuous = false;
+    public bool TransitionAnimation = true;
+    public PageArrangementType VerticalPageArrangement = PageArrangementType.Single;
+    public PageArrangementType HorizontalPageArrangement = PageArrangementType.DualCoverMirror;
+    public bool SaveHistory = true;
+
+    public bool DebugMode =
 #if DEBUG
-        true;
+    true;
 #else
-        false;
+    false;
 #endif
 
-        // serialization
-        public override string FileName => "Settings";
+    // serialization
+    public override string FileName => "Settings";
 
-        [XmlIgnore]
-        public override XmlData Target
-        {
-            get => XmlDatabase.Settings;
-            set => XmlDatabase.Settings = value as SettingData;
-        }
-    }
-
-    public enum PageArrangementType
+    [XmlIgnore]
+    public override XmlData Target
     {
-        Single, // 1 2 3 4 5
-        DualCover, // 1 23 45
-        DualCoverMirror, // 1 32 54
-        DualNoCover, // 12 34 5
-        DualNoCoverMirror, // 21 43 5
+        get => XmlDatabase.Settings;
+        set => XmlDatabase.Settings = value as SettingData;
     }
+}
 
-    class SettingDataManager
+public enum PageArrangementType
+{
+    Single, // 1 2 3 4 5
+    DualCover, // 1 23 45
+    DualCoverMirror, // 1 32 54
+    DualNoCover, // 12 34 5
+    DualNoCoverMirror, // 21 43 5
+}
+
+class SettingDataManager
+{
+    private const string TAG = "SettingDataManager";
+
+    public static async Task<TaskException> AddComicFolder(StorageFolder folder, bool final)
     {
-        private const string TAG = "SettingDataManager";
-
-        public static async Task<TaskException> AddComicFolder(StorageFolder folder, bool final)
+        await XmlDatabaseManager.WaitLock();
+        try
         {
-            await XmlDatabaseManager.WaitLock();
-            try
-            {
-                AddComicFolderNoLock(folder);
-            }
-            finally
-            {
-                XmlDatabaseManager.ReleaseLock();
-            }
-
-            if (final)
-            {
-                TaskQueue.DefaultQueue.Enqueue($"{TAG}#AddComicFolder", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
-            }
-
-            return TaskException.Success;
+            AddComicFolderNoLock(folder);
         }
-
-        private static TaskException AddComicFolderNoLock(StorageFolder folder)
+        finally
         {
-            if (!Utils.Storage.AllowAddToFutureAccessList())
-            {
-                return TaskException.MaximumExceeded;
-            }
-
-            Utils.Storage.AddToFutureAccessList(folder);
-
-            string path = folder.Path;
-            bool folder_added = false;
-            foreach (string old_path in XmlDatabase.Settings.ComicFolders)
-            {
-                if (StringUtils.FolderContain(old_path, path))
-                {
-                    return TaskException.ItemExists;
-                }
-                else if (StringUtils.FolderContain(path, old_path))
-                {
-                    XmlDatabase.Settings.ComicFolders[XmlDatabase.Settings.ComicFolders.IndexOf(old_path)] = path;
-                    folder_added = true;
-                    break;
-                }
-            }
-
-            if (!folder_added)
-            {
-                XmlDatabase.Settings.ComicFolders.Add(path);
-            }
-
-            return TaskException.Success;
-        }
-
-        public static async Task RemoveComicFolder(string path, bool final)
-        {
-            await XmlDatabaseManager.WaitLock();
-            _ = XmlDatabase.Settings.ComicFolders.Remove(path);
-
-            string token = Utils.StringUtils.TokenFromPath(path);
-            Utils.Storage.RemoveFromFutureAccessList(token);
             XmlDatabaseManager.ReleaseLock();
+        }
 
-            if (final)
+        if (final)
+        {
+            TaskQueue.DefaultQueue.Enqueue($"{TAG}#AddComicFolder", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
+        }
+
+        return TaskException.Success;
+    }
+
+    private static TaskException AddComicFolderNoLock(StorageFolder folder)
+    {
+        if (!Utils.Storage.AllowAddToFutureAccessList())
+        {
+            return TaskException.MaximumExceeded;
+        }
+
+        Utils.Storage.AddToFutureAccessList(folder);
+
+        string path = folder.Path;
+        bool folder_added = false;
+        foreach (string old_path in XmlDatabase.Settings.ComicFolders)
+        {
+            if (StringUtils.FolderContain(old_path, path))
             {
-                TaskQueue.DefaultQueue.Enqueue($"{TAG}#RemoveComicFolder", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
+                return TaskException.ItemExists;
+            }
+            else if (StringUtils.FolderContain(path, old_path))
+            {
+                XmlDatabase.Settings.ComicFolders[XmlDatabase.Settings.ComicFolders.IndexOf(old_path)] = path;
+                folder_added = true;
+                break;
             }
         }
 
-        public static async Task<bool> AddComicFolderUsingPicker()
+        if (!folder_added)
         {
-            FolderPicker picker = InitializeWithWindow(new FolderPicker(), App.Window.WindowHandle);
-            picker.FileTypeFilter.Add("*");
-            StorageFolder folder = await picker.PickSingleFolderAsync();
-            if (folder == null)
-            {
-                return false;
-            }
-
-            TaskException r = await AddComicFolder(folder, true);
-            return r.Successful();
+            XmlDatabase.Settings.ComicFolders.Add(path);
         }
 
-        private static FolderPicker InitializeWithWindow(FolderPicker obj, IntPtr windowHandle)
+        return TaskException.Success;
+    }
+
+    public static async Task RemoveComicFolder(string path, bool final)
+    {
+        await XmlDatabaseManager.WaitLock();
+        _ = XmlDatabase.Settings.ComicFolders.Remove(path);
+
+        string token = Utils.StringUtils.TokenFromPath(path);
+        Utils.Storage.RemoveFromFutureAccessList(token);
+        XmlDatabaseManager.ReleaseLock();
+
+        if (final)
         {
-            WinRT.Interop.InitializeWithWindow.Initialize(obj, windowHandle);
-            return obj;
+            TaskQueue.DefaultQueue.Enqueue($"{TAG}#RemoveComicFolder", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
         }
+    }
+
+    public static async Task<bool> AddComicFolderUsingPicker()
+    {
+        FolderPicker picker = InitializeWithWindow(new FolderPicker(), App.Window.WindowHandle);
+        picker.FileTypeFilter.Add("*");
+        StorageFolder folder = await picker.PickSingleFolderAsync();
+        if (folder == null)
+        {
+            return false;
+        }
+
+        TaskException r = await AddComicFolder(folder, true);
+        return r.Successful();
+    }
+
+    private static FolderPicker InitializeWithWindow(FolderPicker obj, IntPtr windowHandle)
+    {
+        WinRT.Interop.InitializeWithWindow.Initialize(obj, windowHandle);
+        return obj;
     }
 }

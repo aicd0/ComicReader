@@ -5,13 +5,13 @@ using System.Text.RegularExpressions;
 namespace ComicReader.Router;
 internal class Route
 {
-    private static Regex sSchemeRegex = new Regex("^[a-z0-9]+$", RegexOptions.IgnoreCase);
-    private static Regex sHostRegex = new Regex("^[a-z0-9\\.]+$", RegexOptions.IgnoreCase);
-    private static Regex sPortRegex = new Regex("^[0-9]*$", RegexOptions.None);
-    private static Regex sPathRegex = new Regex("^[a-z0-9_/]*$", RegexOptions.IgnoreCase);
-    private static Regex sQueryKeyRegex = new Regex("^[a-z0-9_]+$", RegexOptions.IgnoreCase);
-    private static Regex sQueryValueRegex = new Regex("^[a-z0-9%_]+$", RegexOptions.IgnoreCase);
-    private static Regex sFragmentRegex = new Regex("^[a-z0-9]*$", RegexOptions.IgnoreCase);
+    private static readonly Regex sSchemeRegex = new("^[a-z0-9]+$", RegexOptions.IgnoreCase);
+    private static readonly Regex sHostRegex = new("^[a-z0-9\\.]+$", RegexOptions.IgnoreCase);
+    private static readonly Regex sPortRegex = new("^[0-9]*$", RegexOptions.None);
+    private static readonly Regex sPathRegex = new("^[a-z0-9_/]*$", RegexOptions.IgnoreCase);
+    private static readonly Regex sQueryKeyRegex = new("^[a-z0-9_]+$", RegexOptions.IgnoreCase);
+    private static readonly Regex sQueryValueRegex = new("^[a-z0-9%_]+$", RegexOptions.IgnoreCase);
+    private static readonly Regex sFragmentRegex = new("^[a-z0-9]*$", RegexOptions.IgnoreCase);
 
     private readonly string _url;
     private readonly Dictionary<string, string> _params = new();

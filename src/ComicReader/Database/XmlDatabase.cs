@@ -21,9 +21,9 @@ public abstract class XmlData
 
 internal class XmlDatabase
 {
-    public static SettingData Settings = new SettingData();
-    public static FavoriteData Favorites = new FavoriteData();
-    public static HistoryData History = new HistoryData();
+    public static SettingData Settings = new();
+    public static FavoriteData Favorites = new();
+    public static HistoryData History = new();
 };
 
 internal enum XmlDatabaseItem
@@ -40,7 +40,7 @@ internal class XmlDatabaseManager
     private static StorageFolder DatabaseFolder => ApplicationData.Current.LocalFolder;
 
     private static bool m_database_ready = false;
-    private static SemaphoreSlim m_database_lock = new SemaphoreSlim(1);
+    private static readonly SemaphoreSlim m_database_lock = new(1);
 
     public static async Task WaitLock()
     {

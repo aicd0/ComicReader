@@ -9,7 +9,7 @@ namespace ComicReader.Database;
 
 public class FavoriteData : XmlData
 {
-    public List<FavoriteNodeData> RootNodes = new List<FavoriteNodeData>();
+    public List<FavoriteNodeData> RootNodes = new();
 
     // serialization
     public override string FileName => "Favorites";
@@ -34,7 +34,7 @@ public class FavoriteNodeData
     public string Name;
     [XmlAttribute]
     public long Id;
-    public List<FavoriteNodeData> Children = new List<FavoriteNodeData>();
+    public List<FavoriteNodeData> Children = new();
 };
 
 internal class FavoriteDataManager

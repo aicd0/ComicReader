@@ -18,7 +18,7 @@ namespace ComicReader.Utils.Image;
 
 internal static class ImageLoader
 {
-    private static readonly TaskQueue s_loadQueue = new TaskQueue("ImageLoader");
+    private static readonly TaskQueue s_loadQueue = new("ImageLoader");
     private static double s_rawPixelPerPixel = -1;
 
     public sealed class Transaction : BaseTransaction<TaskException>

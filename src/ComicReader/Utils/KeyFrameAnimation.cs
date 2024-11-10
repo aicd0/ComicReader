@@ -4,129 +4,123 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ComicReader.Utils
+namespace ComicReader.Utils;
+
+internal class KeyFrameAnimation
 {
-    internal class KeyFrameAnimation
+    private const int MAX_FPS = 120;
+
+    private readonly List<KeyFrame> _keyFrames = new();
+    private int _currentAnimator = 0;
+
+    public double Duration { get; set; } = 1.0;
+
+    public double StartValue { get; set; } = 0.0;
+
+    public Action<double> UpdateCallback { get; set; }
+
+    public Action StopCallback { get; set; }
+
+    public void InsertKeyFrame(double time, double value, CurveType curve = CurveType.Linear)
     {
-        private const int MAX_FPS = 120;
-
-        private List<KeyFrame> _keyFrames = new List<KeyFrame>();
-        private int _currentAnimator = 0;
-
-        public double Duration { get; set; } = 1.0;
-
-        public double StartValue { get; set; } = 0.0;
-
-        public Action<double> UpdateCallback { get; set; }
-
-        public Action StopCallback { get; set; }
-
-        public void InsertKeyFrame(double time, double value, CurveType curve = CurveType.Linear)
+        System.Diagnostics.Debug.Assert(time >= 0 && time <= 1);
+        time = Math.Max(0, Math.Min(1, time));
+        _keyFrames.Add(new KeyFrame
         {
-            System.Diagnostics.Debug.Assert(time >= 0 && time <= 1);
-            time = Math.Max(0, Math.Min(1, time));
-            _keyFrames.Add(new KeyFrame
-            {
-                Time = time,
-                Value = value,
-                Curve = curve,
-            });
-        }
+            Time = time,
+            Value = value,
+            Curve = curve,
+        });
+    }
 
-        public void RemoveAllKeyFrames()
-        {
-            _keyFrames.Clear();
-        }
+    public void RemoveAllKeyFrames()
+    {
+        _keyFrames.Clear();
+    }
 
-        public void Start()
+    public void Start()
+    {
+        var keyFrames = _keyFrames.OrderBy(delegate (KeyFrame keyFrame)
         {
-            var keyFrames = _keyFrames.OrderBy(delegate (KeyFrame keyFrame)
+            return keyFrame.Time;
+        }).ToList();
+        double startValue = StartValue;
+        double duration = Duration;
+        int animator = Interlocked.Increment(ref _currentAnimator);
+        _ = Threading.RunInMainThreadAsync(async delegate
+        {
+            long startTick = DateTime.Now.Ticks;
+            double startTime = 0.0;
+            bool callbackInvoked = true;
+            UpdateCallback?.Invoke(startValue);
+            foreach (KeyFrame keyFrame in keyFrames)
             {
-                return keyFrame.Time;
-            }).ToList();
-            double startValue = StartValue;
-            double duration = Duration;
-            int animator = Interlocked.Increment(ref _currentAnimator);
-            _ = Threading.RunInMainThreadAsync(async delegate
-            {
-                long startTick = DateTime.Now.Ticks;
-                double startTime = 0.0;
-                bool callbackInvoked = true;
-                UpdateCallback?.Invoke(startValue);
-                foreach (KeyFrame keyFrame in keyFrames)
+                while (true)
                 {
-                    while (true)
+                    if (callbackInvoked)
                     {
-                        if (callbackInvoked)
+                        await Task.Delay(1000 / MAX_FPS);
+                        if (animator != _currentAnimator)
                         {
-                            await Task.Delay(1000 / MAX_FPS);
-                            if (animator != _currentAnimator)
-                            {
-                                return;
-                            }
-
-                            callbackInvoked = false;
+                            return;
                         }
 
-                        long tickElapsed = DateTime.Now.Ticks - startTick;
-                        double timeElapsed = (tickElapsed / 10000000.0 / duration);
-                        if (timeElapsed > keyFrame.Time)
-                        {
-                            break;
-                        }
-
-                        double time = (timeElapsed - startTime) / (keyFrame.Time - startTime);
-                        double value = GetValue(time, keyFrame.Curve) * (keyFrame.Value - startValue) + startValue;
-                        UpdateCallback?.Invoke(value);
-                        callbackInvoked = true;
+                        callbackInvoked = false;
                     }
 
-                    startValue = keyFrame.Value;
-                    startTime = keyFrame.Time;
+                    long tickElapsed = DateTime.Now.Ticks - startTick;
+                    double timeElapsed = (tickElapsed / 10000000.0 / duration);
+                    if (timeElapsed > keyFrame.Time)
+                    {
+                        break;
+                    }
+
+                    double time = (timeElapsed - startTime) / (keyFrame.Time - startTime);
+                    double value = GetValue(time, keyFrame.Curve) * (keyFrame.Value - startValue) + startValue;
+                    UpdateCallback?.Invoke(value);
+                    callbackInvoked = true;
                 }
 
-                if (keyFrames.Count > 0)
-                {
-                    KeyFrame lastFrame = keyFrames[keyFrames.Count - 1];
-                    UpdateCallback?.Invoke(lastFrame.Value);
-                }
-
-                StopCallback?.Invoke();
-            });
-        }
-
-        public void Stop()
-        {
-            Interlocked.Increment(ref _currentAnimator);
-        }
-
-        private static double GetValue(double time, CurveType curve)
-        {
-            double value;
-            switch (curve)
-            {
-                case CurveType.Linear:
-                    value = time;
-                    break;
-                default:
-                    throw new ArgumentException();
+                startValue = keyFrame.Value;
+                startTime = keyFrame.Time;
             }
 
-            return value;
-        }
+            if (keyFrames.Count > 0)
+            {
+                KeyFrame lastFrame = keyFrames[keyFrames.Count - 1];
+                UpdateCallback?.Invoke(lastFrame.Value);
+            }
 
-        private class KeyFrame
+            StopCallback?.Invoke();
+        });
+    }
+
+    public void Stop()
+    {
+        Interlocked.Increment(ref _currentAnimator);
+    }
+
+    private static double GetValue(double time, CurveType curve)
+    {
+        double value = curve switch
         {
-            public double Time { get; set; }
+            CurveType.Linear => time,
+            _ => throw new ArgumentException(),
+        };
+        return value;
+    }
 
-            public double Value { get; set; }
+    private class KeyFrame
+    {
+        public double Time { get; set; }
 
-            public CurveType Curve { get; set; }
-        }
+        public double Value { get; set; }
 
-        public enum CurveType
-        {
-            Linear,
-        }
+        public CurveType Curve { get; set; }
+    }
+
+    public enum CurveType
+    {
+        Linear,
     }
 }

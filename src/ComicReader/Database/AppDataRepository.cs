@@ -7,8 +7,8 @@ internal static class AppDataRepository
 {
     private static int _nextComicToken = 0;
 
-    private static ReaderSettingDataModel sReaderSettings = new();
-    private static ConcurrentDictionary<string, ComicData> sComicMap = new();
+    private static readonly ReaderSettingDataModel sReaderSettings = new();
+    private static readonly ConcurrentDictionary<string, ComicData> sComicMap = new();
 
     public static void Initialize()
     {

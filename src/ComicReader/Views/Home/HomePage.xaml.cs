@@ -27,9 +27,9 @@ sealed internal partial class HomePage : HomePageBase
     public ObservableCollection<FolderItemViewModel> FolderItemDataSource { get; set; }
         = new ObservableCollection<FolderItemViewModel>();
 
-    private readonly CancellationLock m_update_folder_lock = new CancellationLock();
-    private readonly CancellationLock _updateLibraryLock = new CancellationLock();
-    private readonly CancellationSession _updateLibrarySession = new CancellationSession();
+    private readonly CancellationLock m_update_folder_lock = new();
+    private readonly CancellationLock _updateLibraryLock = new();
+    private readonly CancellationSession _updateLibrarySession = new();
 
     public HomePage()
     {
@@ -212,8 +212,7 @@ sealed internal partial class HomePage : HomePageBase
             // Add to folder item source.
             var new_folder_source = new Collection<FolderItemViewModel>
             {
-                new FolderItemViewModel
-                {
+                new() {
                     OnItemTapped = OnFolderItemTapped,
                     IsAddNew = true
                 }

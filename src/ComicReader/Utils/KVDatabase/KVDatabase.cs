@@ -1,20 +1,19 @@
-﻿namespace ComicReader.Utils.KVDatabase
+﻿namespace ComicReader.Utils.KVDatabase;
+
+internal class KVDatabase
 {
-    internal class KVDatabase
+    private KVDatabase() { }
+
+    public KVDatabaseMethod GetDefaultMethod()
     {
-        private KVDatabase() { }
+        return KVDatabaseMethodLiteDB.GetInstance();
+    }
 
-        public KVDatabaseMethod GetDefaultMethod()
-        {
-            return KVDatabaseMethodLiteDB.GetInstance();
-        }
+    static KVDatabase mInstance;
 
-        static KVDatabase mInstance;
-
-        public static KVDatabase GetInstance()
-        {
-            mInstance ??= new KVDatabase();
-            return mInstance;
-        }
+    public static KVDatabase GetInstance()
+    {
+        mInstance ??= new KVDatabase();
+        return mInstance;
     }
 }

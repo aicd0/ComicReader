@@ -2,32 +2,31 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
 using System;
 
-namespace ComicReader.DesignData
+namespace ComicReader.DesignData;
+
+public class FolderItemViewModel
 {
-    public class FolderItemViewModel
+    public string Folder { get; set; }
+    public string Path { get; set; }
+    public bool IsAddNew { get; set; }
+
+    // events
+    public TappedEventHandler OnItemTapped { get; set; }
+    public RoutedEventHandler OnRemoveClicked { get; set; }
+
+    // methods
+    public static Func<FolderItemViewModel, FolderItemViewModel, bool> ContentEquals = delegate (FolderItemViewModel a, FolderItemViewModel b)
     {
-        public string Folder { get; set; }
-        public string Path { get; set; }
-        public bool IsAddNew { get; set; }
-
-        // events
-        public TappedEventHandler OnItemTapped { get; set; }
-        public RoutedEventHandler OnRemoveClicked { get; set; }
-
-        // methods
-        public static Func<FolderItemViewModel, FolderItemViewModel, bool> ContentEquals = delegate (FolderItemViewModel a, FolderItemViewModel b)
+        if (a.IsAddNew != b.IsAddNew)
         {
-            if (a.IsAddNew != b.IsAddNew)
-            {
-                return false;
-            }
+            return false;
+        }
 
-            if (a.IsAddNew)
-            {
-                return true;
-            }
+        if (a.IsAddNew)
+        {
+            return true;
+        }
 
-            return a.Path == b.Path;
-        };
-    }
+        return a.Path == b.Path;
+    };
 }

@@ -4,253 +4,252 @@ using ComicReader.Views.Search;
 using ComicReader.Views.Settings;
 using System;
 
-namespace ComicReader.Router
+namespace ComicReader.Router;
+
+internal interface IPageTrait
 {
-    internal interface IPageTrait
+    Type GetPageType();
+
+    bool HasNavigationBar();
+
+    bool ImmersiveMode();
+
+    bool SupportFullscreen();
+
+    bool SupportMultiInstance();
+}
+
+internal class DefaultPageTrait : IPageTrait
+{
+    private readonly Type _pageType;
+
+    public DefaultPageTrait(Type pageType)
     {
-        Type GetPageType();
-
-        bool HasNavigationBar();
-
-        bool ImmersiveMode();
-
-        bool SupportFullscreen();
-
-        bool SupportMultiInstance();
+        _pageType = pageType;
     }
 
-    internal class DefaultPageTrait : IPageTrait
+    public Type GetPageType()
     {
-        private readonly Type _pageType;
-
-        public DefaultPageTrait(Type pageType)
-        {
-            _pageType = pageType;
-        }
-
-        public Type GetPageType()
-        {
-            return _pageType;
-        }
-
-        public bool HasNavigationBar()
-        {
-            return false;
-        }
-
-        public bool ImmersiveMode()
-        {
-            return false;
-        }
-
-        public bool SupportFullscreen()
-        {
-            return false;
-        }
-
-        public bool SupportMultiInstance()
-        {
-            return true;
-        }
+        return _pageType;
     }
 
-    internal class HomePageTrait : IPageTrait
+    public bool HasNavigationBar()
     {
-        private HomePageTrait() { }
-
-        public Type GetPageType()
-        {
-            return typeof(HomePage);
-        }
-
-        public bool HasNavigationBar()
-        {
-            return true;
-        }
-
-        public bool ImmersiveMode()
-        {
-            return false;
-        }
-
-        public bool SupportFullscreen()
-        {
-            return false;
-        }
-
-        public bool SupportMultiInstance()
-        {
-            return true;
-        }
-
-        private static IPageTrait _instance;
-        public static IPageTrait Instance
-        {
-            get
-            {
-                _instance ??= new HomePageTrait();
-                return _instance;
-            }
-        }
+        return false;
     }
 
-    internal class SearchPageTrait : IPageTrait
+    public bool ImmersiveMode()
     {
-        private SearchPageTrait() { }
-
-        public Type GetPageType()
-        {
-            return typeof(SearchPage);
-        }
-
-        public bool HasNavigationBar()
-        {
-            return true;
-        }
-
-        public bool ImmersiveMode()
-        {
-            return false;
-        }
-
-        public bool SupportFullscreen()
-        {
-            return false;
-        }
-
-        public bool SupportMultiInstance()
-        {
-            return true;
-        }
-
-        private static IPageTrait _instance;
-        public static IPageTrait Instance
-        {
-            get
-            {
-                _instance ??= new SearchPageTrait();
-                return _instance;
-            }
-        }
+        return false;
     }
 
-    internal class ReaderPageTrait : IPageTrait
+    public bool SupportFullscreen()
     {
-        private ReaderPageTrait() { }
-
-        public Type GetPageType()
-        {
-            return typeof(Views.Reader.ReaderPage);
-        }
-
-        public bool HasNavigationBar()
-        {
-            return true;
-        }
-
-        public bool ImmersiveMode()
-        {
-            return true;
-        }
-
-        public bool SupportFullscreen()
-        {
-            return true;
-        }
-
-        public bool SupportMultiInstance()
-        {
-            return true;
-        }
-
-        private static IPageTrait _instance;
-        public static IPageTrait Instance
-        {
-            get
-            {
-                _instance ??= new ReaderPageTrait();
-                return _instance;
-            }
-        }
+        return false;
     }
 
-    internal class SettingPageTrait : IPageTrait
+    public bool SupportMultiInstance()
     {
-        private SettingPageTrait() { }
+        return true;
+    }
+}
 
-        public Type GetPageType()
-        {
-            return typeof(SettingsPage);
-        }
+internal class HomePageTrait : IPageTrait
+{
+    private HomePageTrait() { }
 
-        public bool HasNavigationBar()
-        {
-            return false;
-        }
-
-        public bool ImmersiveMode()
-        {
-            return false;
-        }
-
-        public bool SupportFullscreen()
-        {
-            return false;
-        }
-
-        public bool SupportMultiInstance()
-        {
-            return false;
-        }
-
-        private static IPageTrait _instance;
-        public static IPageTrait Instance
-        {
-            get
-            {
-                _instance ??= new SettingPageTrait();
-                return _instance;
-            }
-        }
+    public Type GetPageType()
+    {
+        return typeof(HomePage);
     }
 
-    internal class HelpPageTrait : IPageTrait
+    public bool HasNavigationBar()
     {
-        private HelpPageTrait() { }
+        return true;
+    }
 
-        public Type GetPageType()
+    public bool ImmersiveMode()
+    {
+        return false;
+    }
+
+    public bool SupportFullscreen()
+    {
+        return false;
+    }
+
+    public bool SupportMultiInstance()
+    {
+        return true;
+    }
+
+    private static IPageTrait _instance;
+    public static IPageTrait Instance
+    {
+        get
         {
-            return typeof(HelpPage);
+            _instance ??= new HomePageTrait();
+            return _instance;
         }
+    }
+}
 
-        public bool HasNavigationBar()
+internal class SearchPageTrait : IPageTrait
+{
+    private SearchPageTrait() { }
+
+    public Type GetPageType()
+    {
+        return typeof(SearchPage);
+    }
+
+    public bool HasNavigationBar()
+    {
+        return true;
+    }
+
+    public bool ImmersiveMode()
+    {
+        return false;
+    }
+
+    public bool SupportFullscreen()
+    {
+        return false;
+    }
+
+    public bool SupportMultiInstance()
+    {
+        return true;
+    }
+
+    private static IPageTrait _instance;
+    public static IPageTrait Instance
+    {
+        get
         {
-            return false;
+            _instance ??= new SearchPageTrait();
+            return _instance;
         }
+    }
+}
 
-        public bool ImmersiveMode()
+internal class ReaderPageTrait : IPageTrait
+{
+    private ReaderPageTrait() { }
+
+    public Type GetPageType()
+    {
+        return typeof(Views.Reader.ReaderPage);
+    }
+
+    public bool HasNavigationBar()
+    {
+        return true;
+    }
+
+    public bool ImmersiveMode()
+    {
+        return true;
+    }
+
+    public bool SupportFullscreen()
+    {
+        return true;
+    }
+
+    public bool SupportMultiInstance()
+    {
+        return true;
+    }
+
+    private static IPageTrait _instance;
+    public static IPageTrait Instance
+    {
+        get
         {
-            return false;
+            _instance ??= new ReaderPageTrait();
+            return _instance;
         }
+    }
+}
 
-        public bool SupportFullscreen()
+internal class SettingPageTrait : IPageTrait
+{
+    private SettingPageTrait() { }
+
+    public Type GetPageType()
+    {
+        return typeof(SettingsPage);
+    }
+
+    public bool HasNavigationBar()
+    {
+        return false;
+    }
+
+    public bool ImmersiveMode()
+    {
+        return false;
+    }
+
+    public bool SupportFullscreen()
+    {
+        return false;
+    }
+
+    public bool SupportMultiInstance()
+    {
+        return false;
+    }
+
+    private static IPageTrait _instance;
+    public static IPageTrait Instance
+    {
+        get
         {
-            return false;
+            _instance ??= new SettingPageTrait();
+            return _instance;
         }
+    }
+}
 
-        public bool SupportMultiInstance()
-        {
-            return false;
-        }
+internal class HelpPageTrait : IPageTrait
+{
+    private HelpPageTrait() { }
 
-        private static IPageTrait _instance;
-        public static IPageTrait Instance
+    public Type GetPageType()
+    {
+        return typeof(HelpPage);
+    }
+
+    public bool HasNavigationBar()
+    {
+        return false;
+    }
+
+    public bool ImmersiveMode()
+    {
+        return false;
+    }
+
+    public bool SupportFullscreen()
+    {
+        return false;
+    }
+
+    public bool SupportMultiInstance()
+    {
+        return false;
+    }
+
+    private static IPageTrait _instance;
+    public static IPageTrait Instance
+    {
+        get
         {
-            get
-            {
-                _instance ??= new HelpPageTrait();
-                return _instance;
-            }
+            _instance ??= new HelpPageTrait();
+            return _instance;
         }
     }
 }

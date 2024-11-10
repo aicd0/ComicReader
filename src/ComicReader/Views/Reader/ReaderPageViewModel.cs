@@ -17,24 +17,24 @@ internal class ReaderPageViewModel : BaseViewModel
 {
     private ComicData _comic;
     private readonly CancellationLock _loadComicLock = new();
-    private readonly CancellationSession _loadImageSession = new CancellationSession();
+    private readonly CancellationSession _loadImageSession = new();
     private volatile bool _updatingProgress = false;
 
     public MutableLiveData<ReaderStatusEnum> ReaderStatusLiveData { get; } = new(ReaderStatusEnum.Loading);
 
-    private MutableLiveData<bool> _gridViewVisibleLiveData = new();
+    private readonly MutableLiveData<bool> _gridViewVisibleLiveData = new();
     public LiveData<bool> GridViewVisibleLiveData => _gridViewVisibleLiveData;
 
-    private MutableLiveData<bool> _verticalReaderVisibleLiveData = new(false);
+    private readonly MutableLiveData<bool> _verticalReaderVisibleLiveData = new(false);
     public LiveData<bool> VerticalReaderVisibleLiveData => _verticalReaderVisibleLiveData;
 
-    private MutableLiveData<bool> _horizontalReaderVisibleLiveData = new();
+    private readonly MutableLiveData<bool> _horizontalReaderVisibleLiveData = new();
     public LiveData<bool> HorizontalReaderVisibleLiveData => _horizontalReaderVisibleLiveData;
 
-    private MutableLiveData<ReaderSettingDataModel> _readerSettingsLiveData = new(AppDataRepository.GetReaderSetting());
+    private readonly MutableLiveData<ReaderSettingDataModel> _readerSettingsLiveData = new(AppDataRepository.GetReaderSetting());
     public LiveData<ReaderSettingDataModel> ReaderSettingsLiveData => _readerSettingsLiveData;
 
-    private MutableLiveData<bool> _isExternalComicLiveData = new(true);
+    private readonly MutableLiveData<bool> _isExternalComicLiveData = new(true);
     public LiveData<bool> IsExternalComicLiveData => _isExternalComicLiveData;
 
     private bool _gridViewModeEnabled = false;
@@ -96,13 +96,13 @@ internal class ReaderPageViewModel : BaseViewModel
             ReaderViewController reader = page.GetCurrentReader();
             System.Diagnostics.Debug.Assert(reader != null);
 
-            reader.OnLoaded = () =>
+            reader.SetOnLoadedListener(() =>
             {
                 ReaderStatusLiveData.Emit(ReaderStatusEnum.Working);
                 page.UpdatePage(reader);
                 page.BottomTileShow();
                 page.BottomTileHide(5000);
-            };
+            });
 
             _comic = comic;
             page.VerticalReader.Comic = _comic;
@@ -133,7 +133,7 @@ internal class ReaderPageViewModel : BaseViewModel
             if (!_comic.IsExternal)
             {
                 // Set initial page.
-                reader.InitialPage = _comic.LastPosition;
+                reader.SetInitialPage(_comic.LastPosition);
 
                 // Load frames.
                 for (int i = 0; i < _comic.ImageAspectRatios.Count; ++i)

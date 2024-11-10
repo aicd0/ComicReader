@@ -11,7 +11,7 @@ namespace ComicReader.Database;
 
 public class HistoryData : XmlData
 {
-    public List<HistoryItemData> Items = new List<HistoryItemData>();
+    public List<HistoryItemData> Items = new();
 
     // serialization
     public override string FileName => "History";
