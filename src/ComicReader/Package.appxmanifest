@@ -8,7 +8,7 @@
   IgnorableNamespaces="uap mp">
 
   <Identity
-    Name="49915aicd.ComicReaderUWPDebug"
+    Name="49915aicd.ComicReaderUWP.Dev"
     Publisher="CN=aicd0"
     Version="1.5.1.0" />
 
