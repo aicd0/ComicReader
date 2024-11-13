@@ -611,4 +611,7 @@ Category2: tag4/tag5
   <data name="MarkAsUnreadAppBarButton.Label" xml:space="preserve">
     <value>Mark as unread</value>
   </data>
+  <data name="DevAppDisplayName" xml:space="preserve">
+    <value>Comic Reader [Dev]</value>
+  </data>
 </root>

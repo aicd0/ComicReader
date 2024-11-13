@@ -611,4 +611,7 @@
   <data name="MarkAsUnreadAppBarButton.Label" xml:space="preserve">
     <value>标记为未读</value>
   </data>
+  <data name="DevAppDisplayName" xml:space="preserve">
+    <value>漫画阅读器 [Dev]</value>
+  </data>
 </root>
