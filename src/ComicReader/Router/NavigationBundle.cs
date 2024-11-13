@@ -1,6 +1,10 @@
-﻿using ComicReader.Views.Base;
+﻿// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
+
+using ComicReader.Views.Base;
 
 namespace ComicReader.Router;
 

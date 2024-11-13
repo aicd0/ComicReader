@@ -1,5 +1,9 @@
-using Microsoft.UI.Xaml.Media.Imaging;
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
 using System.ComponentModel;
+
+using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace ComicReader.DesignData;
 

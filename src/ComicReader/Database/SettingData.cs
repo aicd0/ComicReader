@@ -1,8 +1,13 @@
-using ComicReader.Utils;
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
+
+using ComicReader.Utils;
+
 using Windows.Storage;
 using Windows.Storage.Pickers;
 

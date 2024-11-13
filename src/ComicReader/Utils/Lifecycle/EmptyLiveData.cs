@@ -1,5 +1,9 @@
-﻿using Microsoft.UI.Xaml.Controls;
+﻿// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
 using System;
+
+using Microsoft.UI.Xaml.Controls;
 
 namespace ComicReader.Utils.Lifecycle;
 

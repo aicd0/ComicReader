@@ -1,3 +1,13 @@
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Linq;
+using System.Threading.Tasks;
+
 using ComicReader.Database;
 using ComicReader.DesignData;
 using ComicReader.Router;
@@ -6,18 +16,13 @@ using ComicReader.Utils.Image;
 using ComicReader.Views.Base;
 using ComicReader.Views.Main;
 using ComicReader.Views.Navigation;
+
 using Microsoft.Data.Sqlite;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Imaging;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace ComicReader.Views.Search;
 
@@ -222,7 +227,7 @@ internal class SearchPageShared : INotifyPropertyChanged
 
 internal class SearchPageBase : BasePage<EmptyViewModel>;
 
-sealed internal partial class SearchPage : SearchPageBase
+internal sealed partial class SearchPage : SearchPageBase
 {
     private SearchPageShared Shared { get; set; }
 

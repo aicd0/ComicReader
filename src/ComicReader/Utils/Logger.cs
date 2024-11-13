@@ -1,8 +1,12 @@
-﻿using System;
+﻿// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
+using System;
 using System.Collections.Concurrent;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+
 using Windows.Storage;
 
 namespace ComicReader.Utils;

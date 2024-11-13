@@ -1,9 +1,13 @@
-using ComicReader.Common.Constants;
-using ComicReader.Utils;
-using ComicReader.Utils.Lifecycle;
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
+
+using ComicReader.Common.Constants;
+using ComicReader.Utils;
+using ComicReader.Utils.Lifecycle;
 
 namespace ComicReader.Database;
 

@@ -1,4 +1,7 @@
-﻿namespace ComicReader.Router;
+﻿// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
+namespace ComicReader.Router;
 internal static class RouterConstants
 {
     public const string SCHEME_APP_NO_PREFIX = "comicreader";

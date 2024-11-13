@@ -1,8 +1,12 @@
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+
 using Windows.Storage;
 using Windows.Storage.AccessCache;
 

@@ -1,17 +1,23 @@
-using ComicReader.Database;
-using ComicReader.Router;
-using ComicReader.Utils;
-using ComicReader.Views.Base;
-using ComicReader.Views.Main;
-using Microsoft.Data.Sqlite;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.Text;
 using System.Threading.Tasks;
+
+using ComicReader.Database;
+using ComicReader.Router;
+using ComicReader.Utils;
+using ComicReader.Views.Base;
+using ComicReader.Views.Main;
+
+using Microsoft.Data.Sqlite;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+
 using Windows.ApplicationModel;
 using Windows.Storage;
 
@@ -215,7 +221,7 @@ public class SettingsPageShared : INotifyPropertyChanged
 
 internal class SettingPageBase : BasePage<EmptyViewModel>;
 
-sealed internal partial class SettingsPage : SettingPageBase
+internal sealed partial class SettingsPage : SettingPageBase
 {
     public const string AppearanceKey = "Appearance";
     public SettingsPageShared Shared { get; set; }

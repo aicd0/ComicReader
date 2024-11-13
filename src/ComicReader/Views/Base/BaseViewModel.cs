@@ -1,5 +1,9 @@
-﻿using ComicReader.Router;
+﻿// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
 using System;
+
+using ComicReader.Router;
 
 namespace ComicReader.Views.Base;
 internal abstract class BaseViewModel

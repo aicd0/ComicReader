@@ -1,6 +1,10 @@
-using Microsoft.Win32.SafeHandles;
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
 using System;
 using System.Runtime.InteropServices;
+
+using Microsoft.Win32.SafeHandles;
 
 namespace ComicReader.Native;
 

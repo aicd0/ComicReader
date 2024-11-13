@@ -1,17 +1,24 @@
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
 #if DEBUG
 //#define DEBUG_LOG_LOAD
 //#define DEBUG_LOG_QUEUE
 #endif
 
-using ComicReader.Database;
-using ComicReader.Native;
-using Microsoft.UI;
-using Microsoft.UI.Windowing;
-using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+
+using ComicReader.Database;
+using ComicReader.Native;
+
+using Microsoft.UI;
+using Microsoft.UI.Windowing;
+using Microsoft.UI.Xaml.Media.Imaging;
+
 using Windows.Storage.Streams;
+
 using WinRT.Interop;
 
 namespace ComicReader.Utils.Image;

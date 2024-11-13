@@ -1,13 +1,19 @@
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
+using System;
+
 using ComicReader.Database;
 using ComicReader.Utils;
 using ComicReader.Views.Main;
 using ComicReader.Views.Settings;
+
 using Microsoft.AppCenter;
 using Microsoft.AppCenter.Analytics;
 using Microsoft.AppCenter.Crashes;
 using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppLifecycle;
-using System;
+
 using Windows.ApplicationModel.Activation;
 using Windows.Storage;
 

@@ -1,5 +1,10 @@
-using LiteDB;
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
 using System.IO;
+
+using LiteDB;
+
 using Windows.Storage;
 
 namespace ComicReader.Utils.KVDatabase;

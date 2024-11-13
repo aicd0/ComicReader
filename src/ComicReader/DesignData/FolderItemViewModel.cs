@@ -1,6 +1,10 @@
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
+using System;
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
-using System;
 
 namespace ComicReader.DesignData;
 

@@ -1,11 +1,12 @@
-// Licensed to the .NET Foundation under one or more agreements.
-// The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
+using System;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
-using System;
+
 using Windows.Foundation.Collections;
 
 namespace ComicReader.Common.AdaptiveGridView;

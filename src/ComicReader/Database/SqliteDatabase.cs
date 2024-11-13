@@ -1,7 +1,12 @@
-using Microsoft.Data.Sqlite;
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
 using System;
 using System.IO;
 using System.Threading.Tasks;
+
+using Microsoft.Data.Sqlite;
+
 using Windows.Storage;
 
 namespace ComicReader.Database;

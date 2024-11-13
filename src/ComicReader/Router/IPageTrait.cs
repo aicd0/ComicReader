@@ -1,8 +1,12 @@
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
+using System;
+
 using ComicReader.Views.Help;
 using ComicReader.Views.Home;
 using ComicReader.Views.Search;
 using ComicReader.Views.Settings;
-using System;
 
 namespace ComicReader.Router;
 

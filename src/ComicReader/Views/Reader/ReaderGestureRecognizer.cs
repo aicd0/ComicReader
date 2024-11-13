@@ -1,7 +1,12 @@
-using ComicReader.Utils;
-using Microsoft.UI.Input;
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
+
+using ComicReader.Utils;
+
+using Microsoft.UI.Input;
 
 namespace ComicReader.Views.Reader;
 

@@ -1,13 +1,20 @@
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
+using System;
+using System.Text.Json;
+
 using ComicReader.Common.Constants;
 using ComicReader.Native;
 using ComicReader.Utils;
 using ComicReader.Views.Main;
+
 using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
-using System;
-using System.Text.Json;
+
 using Windows.Storage;
+
 using WinRT.Interop;
 
 namespace ComicReader;

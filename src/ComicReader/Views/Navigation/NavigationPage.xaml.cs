@@ -1,3 +1,8 @@
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
+using System;
+
 using ComicReader.Common.Constants;
 using ComicReader.Database;
 using ComicReader.Router;
@@ -5,18 +10,18 @@ using ComicReader.Utils;
 using ComicReader.Utils.Lifecycle;
 using ComicReader.Views.Base;
 using ComicReader.Views.Main;
+
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
-using System;
 
 namespace ComicReader.Views.Navigation;
 
 internal class NavigationPageBase : BasePage<NavigationPageViewModel>;
 
-sealed internal partial class NavigationPage : NavigationPageBase
+internal sealed partial class NavigationPage : NavigationPageBase
 {
     private const string TAG = "NavigationPage";
 

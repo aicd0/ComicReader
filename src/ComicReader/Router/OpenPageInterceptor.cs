@@ -1,7 +1,11 @@
-﻿using ComicReader.Views.Favorite;
+﻿// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
+using System;
+
+using ComicReader.Views.Favorite;
 using ComicReader.Views.History;
 using ComicReader.Views.Navigation;
-using System;
 
 namespace ComicReader.Router;
 

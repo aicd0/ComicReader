@@ -1,6 +1,14 @@
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
 #if DEBUG
 //#define DEBUG_LOG_POINTER
 #endif
+
+using System;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Common.Constants;
@@ -13,17 +21,16 @@ using ComicReader.Utils.Lifecycle;
 using ComicReader.Views.Base;
 using ComicReader.Views.Main;
 using ComicReader.Views.Navigation;
+
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-using System;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Threading.Tasks;
+
 using Windows.Storage;
 using Windows.System;
 using Windows.UI.Core;
+
 using static ComicReader.Views.Reader.ReaderPageViewModel;
 
 namespace ComicReader.Views.Reader;
@@ -132,7 +139,7 @@ internal class ReaderPageShared : INotifyPropertyChanged
 
 internal class ReaderPageBase : BasePage<ReaderPageViewModel>;
 
-sealed internal partial class ReaderPage : ReaderPageBase
+internal sealed partial class ReaderPage : ReaderPageBase
 {
     private const string KEY_TIP_SHOWN = "ReaderTipShown";
 

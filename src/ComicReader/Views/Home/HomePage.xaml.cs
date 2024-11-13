@@ -1,3 +1,11 @@
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;
+
 using ComicReader.Database;
 using ComicReader.DesignData;
 using ComicReader.Router;
@@ -5,21 +13,18 @@ using ComicReader.Utils;
 using ComicReader.Utils.Image;
 using ComicReader.Views.Base;
 using ComicReader.Views.Main;
+
 using Microsoft.Data.Sqlite;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Imaging;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Threading.Tasks;
 
 namespace ComicReader.Views.Home;
 
 internal class HomePageBase : BasePage<HomePageViewModel>;
 
-sealed internal partial class HomePage : HomePageBase
+internal sealed partial class HomePage : HomePageBase
 {
     private readonly ComicItemViewModel.IItemHandler _comicItemHandler;
     private ObservableCollectionPlus<ComicItemViewModel> ComicItemSource { get; set; }

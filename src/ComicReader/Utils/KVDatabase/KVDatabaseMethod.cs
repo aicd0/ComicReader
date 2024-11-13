@@ -1,8 +1,11 @@
-﻿using System.Collections.Generic;
+﻿// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
+using System.Collections.Generic;
 
 namespace ComicReader.Utils.KVDatabase;
 
-abstract internal class KVDatabaseMethod
+internal abstract class KVDatabaseMethod
 {
     private readonly Dictionary<string, KVDatabaseLib> mLibs = new();
 

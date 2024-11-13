@@ -1,4 +1,7 @@
-﻿using ComicReader.Utils.Lifecycle;
+﻿// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
+using ComicReader.Utils.Lifecycle;
 using ComicReader.Views.Base;
 
 namespace ComicReader.Views.Navigation;

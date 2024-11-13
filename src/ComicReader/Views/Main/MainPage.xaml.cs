@@ -1,3 +1,11 @@
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+
 using ComicReader.Common;
 using ComicReader.Common.Constants;
 using ComicReader.Database;
@@ -6,23 +14,21 @@ using ComicReader.Utils;
 using ComicReader.Utils.Lifecycle;
 using ComicReader.Views.Base;
 using ComicReader.Views.Navigation;
+
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+
 using Windows.ApplicationModel.Activation;
 using Windows.Storage;
 using Windows.Storage.Search;
 
 namespace ComicReader.Views.Main;
 
-sealed internal partial class MainPage : StatefulPage
+internal sealed partial class MainPage : StatefulPage
 {
     public static MainPage Current = null;
     private static FileActivatedEventArgs s_startupFileArgs;

@@ -1,3 +1,6 @@
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
 #define DEBUG_LOG_LOAD
 #if DEBUG
 //#define DEBUG_LOG_JUMP
@@ -7,21 +10,24 @@
 //#define DEBUG_LOG_UPDATE_IMAGE
 #endif
 
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;
+
 using ComicReader.Common.Structs;
 using ComicReader.Database;
 using ComicReader.DesignData;
 using ComicReader.Utils;
 using ComicReader.Utils.Image;
+
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Threading.Tasks;
+
 using Windows.Foundation;
 
 namespace ComicReader.Views.Reader;
@@ -899,7 +905,7 @@ internal class ReaderViewController
         return SetScrollViewer2(zoom, page, disable_animation, reason);
     }
 
-    sealed internal class ScrollManager : Utils.BaseTransaction<bool>
+    internal sealed class ScrollManager : Utils.BaseTransaction<bool>
     {
         private readonly WeakReference<ReaderViewController> mReader;
         private float? mZoom = null;

@@ -1,10 +1,15 @@
-using ComicReader.Router;
-using Microsoft.UI.Xaml.Controls;
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
 using System;
+
+using ComicReader.Router;
+
+using Microsoft.UI.Xaml.Controls;
 
 namespace ComicReader.Views.Navigation;
 
-sealed internal partial class SidePane : UserControl
+internal sealed partial class SidePane : UserControl
 {
     public delegate void NavigatingCancelEventHandler(NavigationBundle bundle);
     public event NavigatingCancelEventHandler Navigating;

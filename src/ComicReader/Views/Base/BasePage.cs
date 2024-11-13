@@ -1,9 +1,14 @@
-﻿using ComicReader.Router;
+﻿// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
+using System;
+using System.Collections.Generic;
+
+using ComicReader.Router;
+
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
-using System;
-using System.Collections.Generic;
 
 namespace ComicReader.Views.Base;
 internal abstract class BasePage<VM> : StatefulPage where VM : BaseViewModel, new()

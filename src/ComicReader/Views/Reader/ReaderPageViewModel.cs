@@ -1,16 +1,21 @@
-﻿using ComicReader.Database;
+﻿// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;
+
+using ComicReader.Database;
 using ComicReader.DesignData;
 using ComicReader.Utils;
 using ComicReader.Utils.Image;
 using ComicReader.Utils.Lifecycle;
 using ComicReader.Views.Base;
 using ComicReader.Views.Navigation;
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media.Imaging;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Threading.Tasks;
 
 namespace ComicReader.Views.Reader;
 internal class ReaderPageViewModel : BaseViewModel

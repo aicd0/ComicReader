@@ -1,9 +1,14 @@
-using ComicReader.Database;
-using ComicReader.Utils;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Input;
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
 using System;
 using System.ComponentModel;
+
+using ComicReader.Database;
+using ComicReader.Utils;
+
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Input;
 
 namespace ComicReader.DesignData;
 

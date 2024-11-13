@@ -1,7 +1,12 @@
-﻿using CommunityToolkit.WinUI;
-using Microsoft.UI.Dispatching;
+﻿// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
 using System;
 using System.Threading.Tasks;
+
+using CommunityToolkit.WinUI;
+
+using Microsoft.UI.Dispatching;
 
 namespace ComicReader.Utils;
 

@@ -1,3 +1,9 @@
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;
+
 using ComicReader.Common.Constants;
 using ComicReader.Database;
 using ComicReader.DesignData;
@@ -6,16 +12,15 @@ using ComicReader.Utils.Lifecycle;
 using ComicReader.Views.Base;
 using ComicReader.Views.Main;
 using ComicReader.Views.Navigation;
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using System.Collections.ObjectModel;
-using System.Threading.Tasks;
 
 namespace ComicReader.Views.History;
 
 internal class HistoryPageBase : BasePage<EmptyViewModel>;
 
-sealed internal partial class HistoryPage : HistoryPageBase
+internal sealed partial class HistoryPage : HistoryPageBase
 {
     public HistoryPage()
     {

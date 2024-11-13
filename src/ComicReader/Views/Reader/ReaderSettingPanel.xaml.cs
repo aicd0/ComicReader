@@ -1,5 +1,9 @@
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
 using ComicReader.Database;
 using ComicReader.Views.Navigation;
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 

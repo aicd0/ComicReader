@@ -1,6 +1,11 @@
-using ComicReader.Utils;
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
 using System;
 using System.Threading.Tasks;
+
+using ComicReader.Utils;
+
 using Windows.Data.Pdf;
 using Windows.Storage;
 using Windows.Storage.Streams;

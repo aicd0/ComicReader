@@ -1,4 +1,7 @@
-﻿namespace ComicReader.Utils.KVDatabase;
+﻿// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
+namespace ComicReader.Utils.KVDatabase;
 
 internal class KVDatabase
 {

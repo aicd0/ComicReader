@@ -1,7 +1,12 @@
-﻿using ComicReader.Database;
-using Microsoft.Data.Sqlite;
+﻿// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
 using System.Collections.Generic;
 using System.Linq;
+
+using ComicReader.Database;
+
+using Microsoft.Data.Sqlite;
 
 namespace ComicReader.Common.Search;
 

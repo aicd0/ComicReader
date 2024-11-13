@@ -1,6 +1,10 @@
-﻿using ComicReader.Views.Navigation;
+﻿// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
 using System.Collections.Concurrent;
 using System.Threading;
+
+using ComicReader.Views.Navigation;
 
 namespace ComicReader.Database;
 internal static class AppDataRepository

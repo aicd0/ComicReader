@@ -1,3 +1,6 @@
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
 using Microsoft.Windows.ApplicationModel.Resources;
 
 namespace ComicReader.Utils;

@@ -1,5 +1,6 @@
-using ComicReader.Utils;
-using Microsoft.Data.Sqlite;
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,6 +8,11 @@ using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+
+using ComicReader.Utils;
+
+using Microsoft.Data.Sqlite;
+
 using Windows.Graphics.Imaging;
 using Windows.Storage;
 using Windows.Storage.Streams;
