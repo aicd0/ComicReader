@@ -3,24 +3,33 @@
 
 using System.ComponentModel;
 
-using Microsoft.UI.Xaml.Media.Imaging;
+using ComicReader.Common.SimpleImageView;
 
 namespace ComicReader.DesignData;
 
-public class ReaderImagePreviewViewModel : INotifyPropertyChanged
+internal class ReaderImagePreviewViewModel : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler PropertyChanged;
 
-    private BitmapImage m_ImageSource = null;
-    public BitmapImage ImageSource
+    private SimpleImageView.Model _Image;
+    public SimpleImageView.Model Image
     {
-        get => m_ImageSource;
+        get => _Image;
         set
         {
-            m_ImageSource = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("ImageSource"));
+            _Image = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Image"));
         }
     }
 
-    public int Page { get; set; } = -1;
+    private int _Page = -1;
+    public int Page
+    {
+        get => _Page;
+        set
+        {
+            _Page = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Page"));
+        }
+    }
 }

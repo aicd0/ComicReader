@@ -715,7 +715,7 @@ internal class ReaderViewController
 
     // Modifier - Image Loader
     private readonly CancellationSession _updateImageSession = new();
-    private readonly TaskQueue _updateImageQueue = new("ReaderUploadImage");
+    private readonly TaskQueue _updateImageQueue = new("ReaderUpdateImage");
 
     public async Task<bool> UpdateImages(bool use_final)
     {

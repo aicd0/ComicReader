@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Common.Constants;
+using ComicReader.Common.SimpleImageView;
 using ComicReader.Database;
 using ComicReader.DesignData;
 using ComicReader.Router;
@@ -205,7 +206,27 @@ internal sealed partial class ReaderPage : ReaderPageBase
                 GetMainPageAbility().SetTitle(comic.Title);
             }
             GetMainPageAbility().SetIcon(new SymbolIconSource { Symbol = Symbol.Pictures });
-            _ = ViewModel.LoadComic(comic, this);
+            await ViewModel.LoadComic(comic, this);
+
+            // Update previews.
+            double preview_width = (double)Application.Current.Resources["ReaderPreviewImageWidth"];
+            double preview_height = (double)Application.Current.Resources["ReaderPreviewImageHeight"];
+            PreviewDataSource.Clear();
+            for (int i = 0; i < comic.ImageCount; ++i)
+            {
+                PreviewDataSource.Add(new ReaderImagePreviewViewModel
+                {
+                    Image = new SimpleImageView.Model
+                    {
+                        Source = new ComicImageSource(comic, i),
+                        Width = preview_width,
+                        Height = preview_height,
+                        Dispatcher = new TaskQueueDispatcher(TaskQueue.DefaultQueue, "ReaderLoadPreview"),
+                        DebugDescription = i.ToString()
+                    },
+                    Page = i + 1,
+                });
+            }
         });
     }
 
@@ -974,5 +995,12 @@ internal sealed partial class ReaderPage : ReaderPageBase
         {
             _page.OnReaderTapped(sender, e);
         }
+    }
+
+    private void OnGridViewContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
+    {
+        var item = args.Item as ReaderImagePreviewViewModel;
+        var viewHolder = args.ItemContainer.ContentTemplateRoot as ReaderPreviewImage;
+        viewHolder.SetModel(item, args.InRecycleQueue);
     }
 }

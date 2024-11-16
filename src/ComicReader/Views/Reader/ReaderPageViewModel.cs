@@ -14,7 +14,6 @@ using ComicReader.Utils.Lifecycle;
 using ComicReader.Views.Base;
 using ComicReader.Views.Navigation;
 
-using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace ComicReader.Views.Reader;
@@ -22,8 +21,9 @@ internal class ReaderPageViewModel : BaseViewModel
 {
     private ComicData _comic;
     private readonly CancellationLock _loadComicLock = new();
-    private readonly CancellationSession _loadImageSession = new();
     private volatile bool _updatingProgress = false;
+    private readonly CancellationSession _frameInfoLoaderSession = new();
+    private readonly TaskQueue _frameInfoLoaderQueue = new("LoadFrameInfo");
 
     public MutableLiveData<ReaderStatusEnum> ReaderStatusLiveData { get; } = new(ReaderStatusEnum.Loading);
 
@@ -57,7 +57,7 @@ internal class ReaderPageViewModel : BaseViewModel
     public override void OnPause()
     {
         base.OnPause();
-        _loadImageSession.Next();
+        _frameInfoLoaderSession.Next();
     }
 
     public void SetReaderSettings(ReaderSettingDataModel settings)
@@ -268,31 +268,28 @@ internal class ReaderPageViewModel : BaseViewModel
 
     private void LoadImages(ReaderPage page)
     {
-        CancellationSession.Token token = _loadImageSession.Next();
+        CancellationSession.Token token = _frameInfoLoaderSession.Next();
 
-        double preview_width = (double)Application.Current.Resources["ReaderPreviewImageWidth"];
-        double preview_height = (double)Application.Current.Resources["ReaderPreviewImageHeight"];
-        page.PreviewDataSource.Clear();
-
-        var preview_img_loader_tokens = new List<ImageLoader.Token>();
+        var tokens = new List<ImageLoader.Token>();
         ComicData comic = _comic; // Stores locally.
         var save_timer = new Utils.Stopwatch();
 
         for (int i = 0; i < comic.ImageCount; ++i)
         {
             int index = i; // Stores locally.
-            preview_img_loader_tokens.Add(new ImageLoader.Token
+            tokens.Add(new ImageLoader.Token
             {
                 SessionToken = token,
                 Comic = comic,
                 Index = index,
-                Callback = new LoadPreviewImageCallback(_comic, page, index, save_timer)
+                Callback = new FrameInfoLoaderCallback(_comic, page, index, save_timer)
             });
         }
 
         save_timer.Start();
-        new ImageLoader.Transaction(preview_img_loader_tokens)
-            .SetWidthConstraint(preview_width).SetHeightConstraint(preview_height).Commit();
+        new ImageLoader.Transaction(tokens)
+            .SetQueue(_frameInfoLoaderQueue)
+            .Commit();
     }
 
     private void LoadComicTag(ReaderPage page)
@@ -325,14 +322,14 @@ internal class ReaderPageViewModel : BaseViewModel
         page.Shared.ComicTags = new_collection;
     }
 
-    private class LoadPreviewImageCallback : ImageLoader.ICallback
+    private class FrameInfoLoaderCallback : ImageLoader.ICallback
     {
         private readonly ReaderPage _page;
         private readonly int _index;
         private readonly ComicData _comic;
         private readonly Stopwatch _saveTimer;
 
-        public LoadPreviewImageCallback(ComicData comic, ReaderPage page, int index, Stopwatch saveTimer)
+        public FrameInfoLoaderCallback(ComicData comic, ReaderPage page, int index, Stopwatch saveTimer)
         {
             _page = page;
             _index = index;
@@ -352,13 +349,6 @@ internal class ReaderPageViewModel : BaseViewModel
             {
                 image_aspect_ratio = (double)image.PixelWidth / image.PixelHeight;
             }
-
-            // Update previews.
-            _page.PreviewDataSource.Add(new ReaderImagePreviewViewModel
-            {
-                ImageSource = image,
-                Page = _index + 1,
-            });
 
             Utils.C0.Run(async delegate
             {

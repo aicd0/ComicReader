@@ -437,28 +437,27 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <Grid x:Name="PreviewTitleBarPlaceHolder" Grid.Row="0" />
-            <ScrollViewer Grid.Row="1">
-                <GridView
-                    Padding="10"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    IsItemClickEnabled="True"
-                    ItemClick="OnGridViewItemClicked"
-                    ItemsSource="{x:Bind PreviewDataSource, Mode=OneWay}"
-                    SelectionMode="Single">
-                    <GridView.ItemContainerStyle>
-                        <Style TargetType="GridViewItem">
-                            <Setter Property="Margin" Value="10" />
-                            <Setter Property="cw:Effects.Shadow" Value="{StaticResource CommonShadow}" />
-                        </Style>
-                    </GridView.ItemContainerStyle>
-                    <GridView.ItemTemplate>
-                        <DataTemplate x:DataType="data:ReaderImagePreviewViewModel">
-                            <reader:ReaderPreviewImage DataContext="{x:Bind}" />
-                        </DataTemplate>
-                    </GridView.ItemTemplate>
-                </GridView>
-            </ScrollViewer>
+            <GridView
+                Grid.Row="1"
+                Padding="10"
+                VerticalAlignment="Center"
+                ContainerContentChanging="OnGridViewContainerContentChanging"
+                IsItemClickEnabled="True"
+                ItemClick="OnGridViewItemClicked"
+                ItemsSource="{x:Bind PreviewDataSource}"
+                SelectionMode="Single">
+                <GridView.ItemContainerStyle>
+                    <Style TargetType="GridViewItem">
+                        <Setter Property="Margin" Value="10" />
+                        <Setter Property="cw:Effects.Shadow" Value="{StaticResource CommonShadow}" />
+                    </Style>
+                </GridView.ItemContainerStyle>
+                <GridView.ItemTemplate>
+                    <DataTemplate x:DataType="data:ReaderImagePreviewViewModel">
+                        <reader:ReaderPreviewImage DataContext="{x:Bind}" />
+                    </DataTemplate>
+                </GridView.ItemTemplate>
+            </GridView>
         </Grid>
 
         <Grid>
