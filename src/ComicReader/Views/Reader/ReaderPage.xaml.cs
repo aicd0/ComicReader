@@ -30,7 +30,6 @@ using Microsoft.UI.Xaml.Input;
 
 using Windows.Storage;
 using Windows.System;
-using Windows.UI.Core;
 
 using static ComicReader.Views.Reader.ReaderPageViewModel;
 
@@ -145,17 +144,9 @@ internal sealed partial class ReaderPage : ReaderPageBase
     private const string KEY_TIP_SHOWN = "ReaderTipShown";
 
     public ReaderPageShared Shared { get; set; } = new ReaderPageShared();
-    public ReaderViewController VerticalReader { get; set; }
-    public ReaderViewController HorizontalReader { get; set; }
     public ObservableCollection<ReaderImagePreviewViewModel> PreviewDataSource { get; set; }
 
     public readonly TagItemHandler _tagItemHandler;
-    private readonly GestureHandler _gestureHandler;
-
-    // Pointer events
-    private readonly ReaderGestureRecognizer _gestureRecognizer = new();
-    private bool mPendingTap = false;
-    private bool mTapCancelled = false;
 
     // Bottom Tile
     private bool mBottomTileShowed = false;
@@ -165,9 +156,9 @@ internal sealed partial class ReaderPage : ReaderPageBase
 
     public ReaderPage()
     {
+        InitializeComponent();
+
         _tagItemHandler = new TagItemHandler(this);
-        _gestureHandler = new GestureHandler(this);
-        _gestureRecognizer.SetHandler(_gestureHandler);
 
         Shared.ComicTitle1 = "";
         Shared.ComicTitle2 = "";
@@ -175,11 +166,27 @@ internal sealed partial class ReaderPage : ReaderPageBase
         Shared.ComicTags = new ObservableCollection<TagCollectionViewModel>();
         Shared.IsEditable = false;
 
-        VerticalReader = new ReaderViewController(ViewModel, "Vertical", true);
-        HorizontalReader = new ReaderViewController(ViewModel, "Horizontal", false);
         PreviewDataSource = new ObservableCollection<ReaderImagePreviewViewModel>();
 
-        InitializeComponent();
+        VerticalReader.SetIsVertical(true);
+        VerticalReader.Controller = new ReaderViewController(ViewModel, "Vertical", true);
+        HorizontalReader.SetIsVertical(false);
+        HorizontalReader.Controller = new ReaderViewController(ViewModel, "Horizontal", false);
+
+        ReaderView[] readers = [VerticalReader, HorizontalReader];
+        foreach (ReaderView reader in readers)
+        {
+            reader.ReaderEventTapped += delegate
+            {
+                BottomTileSetHold(!mBottomTileShowed);
+            };
+            reader.ReaderEventPageChanged += delegate (ReaderView sender, bool isIntermediate)
+            {
+                UpdatePage(sender.Controller);
+                ViewModel.UpdateProgress(sender.Controller, save: !isIntermediate);
+                BottomTileSetHold(false);
+            };
+        }
     }
 
     protected override void OnStart(PageBundle bundle)
@@ -206,7 +213,7 @@ internal sealed partial class ReaderPage : ReaderPageBase
                 GetMainPageAbility().SetTitle(comic.Title);
             }
             GetMainPageAbility().SetIcon(new SymbolIconSource { Symbol = Symbol.Pictures });
-            await ViewModel.LoadComic(comic, this);
+            await ViewModel.LoadComic(comic, this, HorizontalReader, VerticalReader);
 
             // Update previews.
             double preview_width = (double)Application.Current.Resources["ReaderPreviewImageWidth"];
@@ -236,7 +243,6 @@ internal sealed partial class ReaderPage : ReaderPageBase
         ObserveData();
         GetNavigationPageAbility().SetGridViewMode(false);
         GetNavigationPageAbility().SetReaderSettings(ViewModel.ReaderSettingsLiveData.GetValue());
-        OnReaderContinuousChanged();
         ViewModel.UpdateReaderUI();
 
         ComicData comic = ViewModel.GetComic();
@@ -254,8 +260,8 @@ internal sealed partial class ReaderPage : ReaderPageBase
     protected override void OnPause()
     {
         base.OnPause();
-        HorizontalReader.StopLoadingImage();
-        VerticalReader.StopLoadingImage();
+        HorizontalReader.Controller.StopLoadingImage();
+        VerticalReader.Controller.StopLoadingImage();
     }
 
     private IMainPageAbility GetMainPageAbility()
@@ -306,7 +312,7 @@ internal sealed partial class ReaderPage : ReaderPageBase
         {
             ReaderSettingDataModel lastSetting = ViewModel.ReaderSettingsLiveData.GetValue();
             ViewModel.SetReaderSettings(setting);
-            SvHorizontalReader.FlowDirection = setting.IsLeftToRight ? FlowDirection.LeftToRight : FlowDirection.RightToLeft;
+            HorizontalReader.SetFlowDirection(setting.IsLeftToRight);
             ViewModel.UpdateReaderUI();
 
             if (lastSetting.IsVertical != setting.IsVertical)
@@ -316,7 +322,7 @@ internal sealed partial class ReaderPage : ReaderPageBase
 
             if (lastSetting.IsContinuous != setting.IsContinuous)
             {
-                OnReaderContinuousChanged();
+                GetReader().SetIsContinuous(setting.IsContinuous);
                 GetCurrentReader()?.OnPageRearrangeEventSealed();
             }
 
@@ -364,21 +370,29 @@ internal sealed partial class ReaderPage : ReaderPageBase
 
         ViewModel.VerticalReaderVisibleLiveData.Observe(this, delegate (bool visible)
         {
-            SvVerticalReader.IsEnabled = visible;
-            SvVerticalReader.IsHitTestVisible = visible;
-            SvVerticalReader.Opacity = visible ? 1 : 0;
+            VerticalReader.SetVisibility(visible);
         });
 
         ViewModel.HorizontalReaderVisibleLiveData.Observe(this, delegate (bool visible)
         {
-            SvHorizontalReader.IsEnabled = visible;
-            SvHorizontalReader.IsHitTestVisible = visible;
-            SvHorizontalReader.Opacity = visible ? 1 : 0;
+            HorizontalReader.SetVisibility(visible);
         });
     }
 
     // Utilities
     public ReaderViewController GetCurrentReader()
+    {
+        if (ViewModel.ReaderSettingsLiveData.GetValue().IsVertical)
+        {
+            return VerticalReader.Controller;
+        }
+        else
+        {
+            return HorizontalReader.Controller;
+        }
+    }
+
+    public ReaderView GetReader()
     {
         if (ViewModel.ReaderSettingsLiveData.GetValue().IsVertical)
         {
@@ -413,8 +427,7 @@ internal sealed partial class ReaderPage : ReaderPageBase
                 return;
             }
 
-            OnReaderContinuousChanged();
-            ReaderViewController last_reader = reader.IsVertical ? HorizontalReader : VerticalReader;
+            ReaderViewController last_reader = reader.IsVertical ? HorizontalReader.Controller : VerticalReader.Controller;
             System.Diagnostics.Debug.Assert(last_reader != null);
 
             if (last_reader == null)
@@ -439,99 +452,6 @@ internal sealed partial class ReaderPage : ReaderPageBase
         });
     }
 
-    private void OnReaderContinuousChanged()
-    {
-        _gestureRecognizer.AutoProcessInertia = ViewModel.ReaderSettingsLiveData.GetValue().IsContinuous;
-    }
-
-    private void OnReaderScrollViewerViewChanged(ReaderViewController control, ScrollViewerViewChangedEventArgs e)
-    {
-        Utils.C0.Run(async delegate
-        {
-            if (await control.OnViewChanged(!e.IsIntermediate))
-            {
-                UpdatePage(control);
-                ViewModel.UpdateProgress(control, save: !e.IsIntermediate);
-                BottomTileSetHold(false);
-            }
-        });
-    }
-
-    private void OnReaderScrollViewerSizeChanged(ReaderViewController control)
-    {
-        control.OnSizeChanged();
-    }
-
-    private void OnReaderScrollViewerPointerWheelChanged(object sender, PointerRoutedEventArgs e)
-    {
-        Utils.C0.Run(async delegate
-        {
-            // Ctrl key down indicates the user is zooming the page. In that case we shouldn't handle the event.
-            CoreVirtualKeyStates ctrl_state = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control);
-
-            if (ctrl_state.HasFlag(CoreVirtualKeyStates.Down))
-            {
-                return;
-            }
-
-            ReaderViewController reader = GetCurrentReader();
-
-            if (reader == null)
-            {
-                return;
-            }
-
-            await reader.OnReaderScrollViewerPointerWheelChanged(e);
-        });
-    }
-
-    private void OnReaderContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
-    {
-        var item = args.Item as ReaderFrameViewModel;
-        var viewHolder = args.ItemContainer.ContentTemplateRoot as ReaderFrame;
-        viewHolder.Bind(item);
-    }
-
-    private void OnVerticalReaderScrollViewerViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
-    {
-        OnReaderScrollViewerViewChanged(VerticalReader, e);
-    }
-
-    private void OnHorizontalReaderScrollViewerViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
-    {
-        OnReaderScrollViewerViewChanged(HorizontalReader, e);
-    }
-
-    private void OnVerticalReaderScrollViewerSizeChanged(object sender, SizeChangedEventArgs e)
-    {
-        OnReaderScrollViewerSizeChanged(VerticalReader);
-    }
-
-    private void OnHorizontalReaderScrollViewerSizeChanged(object sender, SizeChangedEventArgs e)
-    {
-        OnReaderScrollViewerSizeChanged(HorizontalReader);
-    }
-
-    private void OnVerticalReaderScrollViewerLoaded(object sender, RoutedEventArgs e)
-    {
-        VerticalReader.ThisScrollViewer = sender as ScrollViewer;
-    }
-
-    private void OnVerticalReaderListViewLoaded(object sender, RoutedEventArgs e)
-    {
-        VerticalReader.ThisListView = sender as ListView;
-    }
-
-    private void OnHorizontalReaderScrollViewerLoaded(object sender, RoutedEventArgs e)
-    {
-        HorizontalReader.ThisScrollViewer = sender as ScrollViewer;
-    }
-
-    private void OnHorizontalReaderListViewLoaded(object sender, RoutedEventArgs e)
-    {
-        HorizontalReader.ThisListView = sender as ListView;
-    }
-
     // Preview
     private void OnGridViewItemClicked(object sender, ItemClickEventArgs e)
     {
@@ -550,130 +470,6 @@ internal sealed partial class ReaderPage : ReaderPageBase
     }
 
     // Pointer events
-    private void OnReaderPointerPressed(object sender, PointerRoutedEventArgs e)
-    {
-        (sender as UIElement).CapturePointer(e.Pointer);
-        PointerPoint pointer_point = e.GetCurrentPoint(ManipulationReference);
-        _gestureRecognizer.ProcessDownEvent(pointer_point);
-#if DEBUG_LOG_POINTER
-        Log("Pointer pressed");
-#endif
-    }
-
-    private void OnReaderPointerMoved(object sender, PointerRoutedEventArgs e)
-    {
-        _gestureRecognizer.ProcessMoveEvents(e.GetIntermediatePoints(ManipulationReference));
-#if DEBUG_LOG_POINTER
-        //Log("Pointer moved");
-#endif
-    }
-
-    private void OnReaderPointerReleased(object sender, PointerRoutedEventArgs e)
-    {
-        PointerPoint pointer_point = e.GetCurrentPoint(ManipulationReference);
-        _gestureRecognizer.ProcessUpEvent(pointer_point);
-        (sender as UIElement).ReleasePointerCapture(e.Pointer);
-
-        if (!_gestureRecognizer.AutoProcessInertia)
-        {
-            _gestureRecognizer.CompleteGesture();
-        }
-
-#if DEBUG_LOG_POINTER
-        Log("Pointer released");
-#endif
-    }
-
-    private void OnReaderPointerCanceled(object sender, PointerRoutedEventArgs e)
-    {
-        PointerPoint pointer_point = e.GetCurrentPoint(ManipulationReference);
-        _gestureRecognizer.ProcessUpEvent(pointer_point);
-        (sender as UIElement).ReleasePointerCapture(e.Pointer);
-
-        if (!_gestureRecognizer.AutoProcessInertia)
-        {
-            _gestureRecognizer.CompleteGesture();
-        }
-
-#if DEBUG_LOG_POINTER
-        Log("Pointer canceled");
-#endif
-    }
-
-    private void OnReaderTapped(object sender, TappedEventArgs e)
-    {
-        if (e.TapCount == 1)
-        {
-            if (mPendingTap)
-            {
-                return;
-            }
-
-            mPendingTap = true;
-            mTapCancelled = false;
-            Utils.C0.Run(async delegate
-            {
-                await Task.Delay(100);
-                mPendingTap = false;
-                if (mTapCancelled)
-                {
-                    return;
-                }
-
-                BottomTileSetHold(!mBottomTileShowed);
-            });
-        }
-        else if (e.TapCount == 2)
-        {
-            mTapCancelled = true;
-            ReaderViewController reader = GetCurrentReader();
-            if (reader == null)
-            {
-                return;
-            }
-
-            if (Math.Abs(reader.Zoom - 100) <= 1)
-            {
-                ReaderViewController.ScrollManager.BeginTransaction(reader, "FitScreenUsingCenterCrop")
-                    .Zoom(100, Common.Structs.ZoomType.CenterCrop)
-                    .EnableAnimation()
-                    .Commit();
-            }
-            else
-            {
-                ReaderViewController.ScrollManager.BeginTransaction(reader, "FitScreenUsingCenterInside")
-                    .Zoom(100)
-                    .EnableAnimation()
-                    .Commit();
-            }
-        }
-    }
-
-    private void OnReaderManipulationStarted(object sender, ManipulationStartedEventArgs e)
-    {
-        GetCurrentReader()?.OnReaderManipulationStarted(e);
-    }
-
-    private void OnReaderManipulationUpdated(object sender, ManipulationUpdatedEventArgs e)
-    {
-        GetCurrentReader()?.OnReaderManipulationUpdated(e);
-    }
-
-    private void OnReaderManipulationCompleted(object sender, ManipulationCompletedEventArgs e)
-    {
-        ReaderViewController reader = GetCurrentReader();
-
-        if (reader == null)
-        {
-            return;
-        }
-
-        Utils.C0.Run(async delegate
-        {
-            await reader.OnReaderManipulationCompleted(e);
-        });
-    }
-
     private void OnFavoritesChecked(object sender, RoutedEventArgs e)
     {
         ViewModel.SetIsFavorite(true);
@@ -862,90 +658,6 @@ internal sealed partial class ReaderPage : ReaderPageBase
         Shared.IsFullscreen = false;
     }
 
-    // Keys
-    private void OnReaderKeyDown(object sender, KeyRoutedEventArgs e)
-    {
-        ReaderViewController reader = GetCurrentReader();
-
-        if (reader == null)
-        {
-            return;
-        }
-
-        Utils.C0.Run(async delegate
-        {
-            bool handled = true;
-
-            switch (e.Key)
-            {
-                case VirtualKey.Right:
-                    if (reader.IsHorizontal && !ViewModel.ReaderSettingsLiveData.GetValue().IsLeftToRight)
-                    {
-                        await reader.MoveFrame(-1, "JumpToPreviousPageUsingRightKey");
-                    }
-                    else
-                    {
-                        await reader.MoveFrame(1, "JumpToNextPageUsingRightKey");
-                    }
-
-                    break;
-
-                case VirtualKey.Left:
-                    if (reader.IsHorizontal && !ViewModel.ReaderSettingsLiveData.GetValue().IsLeftToRight)
-                    {
-                        await reader.MoveFrame(1, "JumpToNextPageUsingLeftKey");
-                    }
-                    else
-                    {
-                        await reader.MoveFrame(-1, "JumpToPreviousPageUsingLeftKey");
-                    }
-
-                    break;
-
-                case VirtualKey.Up:
-                    await reader.MoveFrame(-1, "JumpToPerviousPageUsingUpKey");
-                    break;
-
-                case VirtualKey.Down:
-                    await reader.MoveFrame(1, "JumpToNextPageUsingDownKey");
-                    break;
-
-                case VirtualKey.PageUp:
-                    await reader.MoveFrame(-1, "JumpToPerviousPageUsingPgUpKey");
-                    break;
-
-                case VirtualKey.PageDown:
-                    await reader.MoveFrame(1, "JumpToNextPageUsingPgDownKey");
-                    break;
-
-                case VirtualKey.Home:
-                    ReaderViewController.ScrollManager.BeginTransaction(reader, "JumpToFirstPageUsingHomeKey")
-                        .Page(1)
-                        .Commit();
-                    break;
-
-                case VirtualKey.End:
-                    ReaderViewController.ScrollManager.BeginTransaction(reader, "JumpToLastPageUsingEndKey")
-                        .Page(reader.PageCount)
-                        .Commit();
-                    break;
-
-                case VirtualKey.Space:
-                    await reader.MoveFrame(1, "JumpToNextPageUsingSpaceKey");
-                    break;
-
-                default:
-                    handled = false;
-                    break;
-            }
-
-            if (handled)
-            {
-                e.Handled = true;
-            }
-        });
-    }
-
     // Debug
     public void Log(string message)
     {
@@ -964,36 +676,6 @@ internal sealed partial class ReaderPage : ReaderPageBase
         public void OnClicked(object sender, RoutedEventArgs e)
         {
             _page.OnInfoPaneTagClicked(sender, e);
-        }
-    }
-
-    private class GestureHandler : ReaderGestureRecognizer.IHandler
-    {
-        private readonly ReaderPage _page;
-
-        public GestureHandler(ReaderPage page)
-        {
-            _page = page;
-        }
-
-        public void ManipulationCompleted(object sender, ManipulationCompletedEventArgs e)
-        {
-            _page.OnReaderManipulationCompleted(sender, e);
-        }
-
-        public void ManipulationStarted(object sender, ManipulationStartedEventArgs e)
-        {
-            _page.OnReaderManipulationStarted(sender, e);
-        }
-
-        public void ManipulationUpdated(object sender, ManipulationUpdatedEventArgs e)
-        {
-            _page.OnReaderManipulationUpdated(sender, e);
-        }
-
-        public void Tapped(object sender, TappedEventArgs e)
-        {
-            _page.OnReaderTapped(sender, e);
         }
     }
 

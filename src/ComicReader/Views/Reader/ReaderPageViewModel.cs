@@ -17,6 +17,7 @@ using ComicReader.Views.Navigation;
 using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace ComicReader.Views.Reader;
+
 internal class ReaderPageViewModel : BaseViewModel
 {
     private ComicData _comic;
@@ -78,7 +79,7 @@ internal class ReaderPageViewModel : BaseViewModel
         _horizontalReaderVisibleLiveData.Emit(horizontalReaderVisible);
     }
 
-    public async Task LoadComic(ComicData comic, ReaderPage page)
+    public async Task LoadComic(ComicData comic, ReaderPage page, ReaderView horizontalReader, ReaderView verticalReader)
     {
         if (comic == _comic)
         {
@@ -95,8 +96,8 @@ internal class ReaderPageViewModel : BaseViewModel
 
             ReaderStatusLiveData.Emit(ReaderStatusEnum.Loading);
 
-            page.VerticalReader.Reset();
-            page.HorizontalReader.Reset();
+            verticalReader.Controller.Reset();
+            horizontalReader.Controller.Reset();
 
             ReaderViewController reader = page.GetCurrentReader();
             System.Diagnostics.Debug.Assert(reader != null);
@@ -110,8 +111,8 @@ internal class ReaderPageViewModel : BaseViewModel
             });
 
             _comic = comic;
-            page.VerticalReader.Comic = _comic;
-            page.HorizontalReader.Comic = _comic;
+            verticalReader.Controller.Comic = _comic;
+            horizontalReader.Controller.Comic = _comic;
 
             if (!_comic.IsExternal)
             {
@@ -143,15 +144,15 @@ internal class ReaderPageViewModel : BaseViewModel
                 // Load frames.
                 for (int i = 0; i < _comic.ImageAspectRatios.Count; ++i)
                 {
-                    await page.VerticalReader.LoadFrame(i);
-                    await page.HorizontalReader.LoadFrame(i);
+                    await verticalReader.Controller.LoadFrame(i);
+                    await horizontalReader.Controller.LoadFrame(i);
                 }
 
                 // Refresh reader.
                 await reader.UpdateImages(true);
             }
 
-            LoadImages(page);
+            LoadImages(horizontalReader, verticalReader);
             await reader.Finalize();
 
             // Refresh reader.
@@ -266,7 +267,7 @@ internal class ReaderPageViewModel : BaseViewModel
         return GetAbility<INavigationPageAbility>();
     }
 
-    private void LoadImages(ReaderPage page)
+    private void LoadImages(ReaderView horizontalReader, ReaderView verticalReader)
     {
         CancellationSession.Token token = _frameInfoLoaderSession.Next();
 
@@ -282,7 +283,7 @@ internal class ReaderPageViewModel : BaseViewModel
                 SessionToken = token,
                 Comic = comic,
                 Index = index,
-                Callback = new FrameInfoLoaderCallback(_comic, page, index, save_timer)
+                Callback = new FrameInfoLoaderCallback(comic, horizontalReader, verticalReader, index, save_timer)
             });
         }
 
@@ -324,14 +325,16 @@ internal class ReaderPageViewModel : BaseViewModel
 
     private class FrameInfoLoaderCallback : ImageLoader.ICallback
     {
-        private readonly ReaderPage _page;
+        private readonly ReaderView _horizontalReader;
+        private readonly ReaderView _verticalReader;
         private readonly int _index;
         private readonly ComicData _comic;
         private readonly Stopwatch _saveTimer;
 
-        public FrameInfoLoaderCallback(ComicData comic, ReaderPage page, int index, Stopwatch saveTimer)
+        public FrameInfoLoaderCallback(ComicData comic, ReaderView horizontalReader, ReaderView verticalReader, int index, Stopwatch saveTimer)
         {
-            _page = page;
+            _horizontalReader = horizontalReader;
+            _verticalReader = verticalReader;
             _index = index;
             _comic = comic;
             _saveTimer = saveTimer;
@@ -363,15 +366,15 @@ internal class ReaderPageViewModel : BaseViewModel
                     while (_index > _comic.ImageAspectRatios.Count)
                     {
                         _comic.ImageAspectRatios.Add(-1);
-                        await _page.VerticalReader.LoadFrame(_comic.ImageAspectRatios.Count - 1);
-                        await _page.HorizontalReader.LoadFrame(_comic.ImageAspectRatios.Count - 1);
+                        await _verticalReader.Controller.LoadFrame(_comic.ImageAspectRatios.Count - 1);
+                        await _horizontalReader.Controller.LoadFrame(_comic.ImageAspectRatios.Count - 1);
                     }
 
                     _comic.ImageAspectRatios.Add(image_aspect_ratio);
                 }
 
-                await _page.VerticalReader.LoadFrame(_index);
-                await _page.HorizontalReader.LoadFrame(_index);
+                await _verticalReader.Controller.LoadFrame(_index);
+                await _horizontalReader.Controller.LoadFrame(_index);
 
                 // Save for each 5 sec.
                 if (_saveTimer.LapSpan().TotalSeconds > 5.0 || _index == _comic.ImageCount - 1)
