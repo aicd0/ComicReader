@@ -1,6 +1,8 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Threading.Tasks;
+
 using ComicReader.Database;
 
 using Windows.Storage.Streams;
@@ -18,9 +20,9 @@ internal class ComicImageSource : IImageSource
         _index = index;
     }
 
-    public IRandomAccessStream GetImageStream()
+    public async Task<IRandomAccessStream> GetImageStream()
     {
-        return _comic.GetImageStream(_index).Result;
+        return await _comic.GetImageStream(_index);
     }
 
     public string GetUniqueKey()

@@ -3,8 +3,6 @@
 
 using System;
 
-using ComicReader.Utils;
-
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
@@ -69,12 +67,13 @@ internal partial class SimpleImageView : UserControl
         }
 
         UnloadImage();
-
         _currentImageHash = newHash;
+
         CancellationSession.SessionToken token = _cancellationSession.Token;
+        IImageResultHandler handler = _handler;
         Action loadAction = delegate
         {
-            LoadSingleImage(token, model, _handler);
+            LoadImage(token, model, handler);
         };
         model.Dispatcher.Queue(loadAction, model.DebugDescription);
     }
@@ -90,34 +89,13 @@ internal partial class SimpleImageView : UserControl
         }
     }
 
-    private static void LoadSingleImage(CancellationSession.SessionToken token, Model model, WeakImageResultHandler handler)
+    private static void LoadImage(CancellationSession.SessionToken token, Model model, IImageResultHandler handler)
     {
-        if (token.IsCancellationRequested)
-        {
-            // cancelled
-            return;
-        }
-
-        BitmapImage image = ImageCacheDatabase.GetImage(token, model.Source, model.FrameWidth, model.FrameHeight, model.StretchMode);
-        if (image == null)
-        {
-            // failure
-            return;
-        }
-
-        _ = Threading.RunInMainThread(delegate
-        {
-            if (token.IsCancellationRequested)
-            {
-                // cancelled
-                return;
-            }
-
-            handler.OnSuccess(image);
-        });
+        ImageCacheManager.LoadImage(token, model.Source, model.FrameWidth,
+            model.FrameHeight, model.StretchMode, handler);
     }
 
-    private class WeakImageResultHandler
+    private class WeakImageResultHandler : IImageResultHandler
     {
         private readonly WeakReference<SimpleImageView> _imageView;
 
