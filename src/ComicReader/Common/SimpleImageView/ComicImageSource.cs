@@ -7,7 +7,7 @@ using Windows.Storage.Streams;
 
 namespace ComicReader.Common.SimpleImageView;
 
-internal class ComicImageSource : SimpleImageView.IImageSource
+internal class ComicImageSource : IImageSource
 {
     private readonly ComicData _comic;
     private readonly int _index;
@@ -21,5 +21,10 @@ internal class ComicImageSource : SimpleImageView.IImageSource
     public IRandomAccessStream GetImageStream()
     {
         return _comic.GetImageStream(_index).Result;
+    }
+
+    public string GetUniqueKey()
+    {
+        return _comic.Location + ":" + _index.ToString();
     }
 }
