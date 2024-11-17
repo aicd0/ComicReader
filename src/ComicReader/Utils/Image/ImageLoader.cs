@@ -147,7 +147,7 @@ internal static class ImageLoader
         double frame_ratio = width / height;
 
         ComicData comic = token.Comic;
-        TaskException result = await comic.UpdateImages(cover_only: token.Index < 0, reload: false);
+        TaskException result = await comic.UpdateImages(reload: false);
         if (!result.Successful())
         {
             // Skip tokens whose comic folder cannot be reached.

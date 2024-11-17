@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,7 +12,6 @@ using ComicReader.Utils;
 
 using Microsoft.Data.Sqlite;
 
-using Windows.Graphics.Imaging;
 using Windows.Storage;
 using Windows.Storage.Streams;
 
@@ -35,7 +33,7 @@ internal abstract class ComicData
     public DateTimeOffset LastVisit { get; protected set; } = DateTimeOffset.MinValue;
     public double LastPosition { get; protected set; } = 0.0;
     public List<double> ImageAspectRatios { get; private set; } = new List<double>();
-    protected string CoverFileCache { get; private set; } = "";
+    public string CoverFileCache { get; private set; } = "";
 
     // Foriegn fields.
     public List<TagData> Tags { get; private set; } = new List<TagData>();
@@ -305,8 +303,10 @@ internal abstract class ComicData
         }, "SaveImageAspectRatios");
     }
 
-    public void SaveCoverFileCache()
+    public void SetCoverFileCacheKey(string key)
     {
+        CoverFileCache = key;
+
         _ = Enqueue(delegate
         {
             return SaveNoLock(delegate
@@ -444,19 +444,11 @@ internal abstract class ComicData
         }
     }
 
-    public async Task<TaskException> UpdateImages(bool cover_only, bool reload)
+    public async Task<TaskException> UpdateImages(bool reload)
     {
         if (reload)
         {
             _imageUpdated = false;
-        }
-
-        if (cover_only)
-        {
-            if (await GetCoverCache() != null)
-            {
-                return TaskException.Success;
-            }
         }
 
         if (!_imageUpdated)
@@ -474,11 +466,6 @@ internal abstract class ComicData
         if (ImageCount == 0)
         {
             return TaskException.EmptySet;
-        }
-
-        if (cover_only && !IsExternal)
-        {
-            await CreateCoverCache();
         }
 
         return TaskException.Success;
@@ -541,59 +528,6 @@ internal abstract class ComicData
         Id = -1;
         Type = type;
         IsExternal = is_external;
-    }
-
-    protected virtual async Task<TaskException> CreateCoverCache()
-    {
-        double req_width = 300.0;
-        double req_height = 300.0;
-
-        using (IRandomAccessStream stream = await InternalGetImageStream(0))
-        {
-            if (stream == null)
-            {
-                return TaskException.Failure;
-            }
-
-            BitmapDecoder decoder = await BitmapDecoder.CreateAsync(stream);
-            double width_ratio = req_width / decoder.PixelWidth;
-            double height_ratio = req_height / decoder.PixelHeight;
-            double scale_ratio = Math.Min(width_ratio, height_ratio);
-            scale_ratio = Math.Min(1.0, scale_ratio);
-            uint aspect_height = (uint)Math.Floor(decoder.PixelHeight * scale_ratio);
-            uint aspect_width = (uint)Math.Floor(decoder.PixelWidth * scale_ratio);
-
-            try
-            {
-                using (SoftwareBitmap softwareBitmap = await decoder.GetSoftwareBitmapAsync())
-                {
-                    var resized_stream = new InMemoryRandomAccessStream();
-                    BitmapEncoder encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.JpegEncoderId, resized_stream);
-                    encoder.SetSoftwareBitmap(softwareBitmap);
-                    encoder.BitmapTransform.InterpolationMode = BitmapInterpolationMode.Fant;
-                    encoder.BitmapTransform.ScaledHeight = aspect_height;
-                    encoder.BitmapTransform.ScaledWidth = aspect_width;
-
-                    await encoder.FlushAsync();
-                    resized_stream.Seek(0);
-                    byte[] out_buffer = new byte[resized_stream.Size];
-                    await resized_stream.ReadAsync(out_buffer.AsBuffer(), (uint)resized_stream.Size, InputStreamOptions.None);
-
-                    string filename = StringUtils.RandomFileName(16) + ".jpg";
-                    StorageFile sample_file = await CacheFolder.CreateFileAsync(filename, CreationCollisionOption.ReplaceExisting);
-                    await FileIO.WriteBytesAsync(sample_file, out_buffer);
-                    CoverFileCache = filename;
-                }
-            }
-            catch (Exception e)
-            {
-                Logger.F(TAG, "GenCoverCache", e);
-                return TaskException.Unknown;
-            }
-        }
-
-        SaveCoverFileCache();
-        return TaskException.Success;
     }
 
     protected virtual async Task<StorageFile> GetCoverCache()

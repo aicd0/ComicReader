@@ -123,7 +123,7 @@ internal class ReaderPageViewModel : BaseViewModel
                 await HistoryDataManager.Add(_comic.Id, _comic.Title1, true);
 
                 // Update image files.
-                TaskException result = await _comic.UpdateImages(cover_only: false, reload: true);
+                TaskException result = await _comic.UpdateImages(reload: true);
                 if (!result.Successful())
                 {
                     page.Log("Failed to load images of '" + _comic.Location + "'. " + result.ToString());

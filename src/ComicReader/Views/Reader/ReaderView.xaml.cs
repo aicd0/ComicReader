@@ -197,6 +197,10 @@ internal partial class ReaderView : UserControl
     {
         var item = args.Item as ReaderFrameViewModel;
         var viewHolder = args.ItemContainer.ContentTemplateRoot as ReaderFrame;
+        if (viewHolder == null)
+        {
+            return;
+        }
         viewHolder.Bind(item);
     }
 

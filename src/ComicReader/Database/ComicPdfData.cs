@@ -46,7 +46,7 @@ internal class ComicPdfData : ComicData
             Location = file.Path,
         };
 
-        await comic.UpdateImages(cover_only: false, reload: true);
+        await comic.UpdateImages(reload: true);
         return comic;
     }
 

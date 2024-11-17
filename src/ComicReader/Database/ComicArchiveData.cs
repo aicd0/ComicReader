@@ -47,7 +47,7 @@ internal class ComicArchiveData : ComicData
         };
 
         _ = await comic.LoadFromInfoFile();
-        _ = await comic.UpdateImages(cover_only: false, reload: true);
+        _ = await comic.UpdateImages(reload: true);
         return comic;
     }
 

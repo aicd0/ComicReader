@@ -235,7 +235,7 @@ internal class ComicFolderData : ComicData
 
     public override string GetImageCacheKey(int index)
     {
-        if (index >= ImageFiles.Count)
+        if (index < 0 || index >= ImageFiles.Count)
         {
             Logger.F(TAG, "GetImageCacheKey");
             return null;

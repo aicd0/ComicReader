@@ -6,11 +6,11 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
+using ComicReader.Common.SimpleImageView;
 using ComicReader.Database;
 using ComicReader.DesignData;
 using ComicReader.Router;
 using ComicReader.Utils;
-using ComicReader.Utils.Image;
 using ComicReader.Views.Base;
 using ComicReader.Views.Main;
 
@@ -34,7 +34,7 @@ internal sealed partial class HomePage : HomePageBase
 
     private readonly CancellationLock m_update_folder_lock = new();
     private readonly CancellationLock _updateLibraryLock = new();
-    private readonly CancellationSession _updateLibrarySession = new();
+    private readonly Common.SimpleImageView.CancellationSession _updateLibrarySession = new();
 
     public HomePage()
     {
@@ -169,7 +169,7 @@ internal sealed partial class HomePage : HomePageBase
     {
         double image_width = (double)Application.Current.Resources["ComicItemVerticalDesiredWidth"] - 40.0;
         double image_height = (double)Application.Current.Resources["ComicItemVerticalImageHeight"];
-        var image_loader_tokens = new List<ImageLoader.Token>();
+        var tokens = new List<SimpleImageLoader.Token>();
 
         if (item.Image.ImageSet)
         {
@@ -177,22 +177,22 @@ internal sealed partial class HomePage : HomePageBase
         }
 
         item.Image.ImageSet = true;
-        image_loader_tokens.Add(new ImageLoader.Token
+        tokens.Add(new SimpleImageLoader.Token
         {
-            SessionToken = _updateLibrarySession.CurrentToken,
-            Comic = item.Comic,
-            Index = -1,
-            Callback = new LoadImageCallback(viewHolder, item)
+            Model = new SimpleImageView.Model
+            {
+                Width = image_width,
+                Height = image_height,
+                Multiplication = 1.4,
+                Source = new ComicCoverImageSource(item.Comic)
+            },
+            ImageResultHandler = new LoadImageCallback(viewHolder, item)
         });
 
-        new ImageLoader.Transaction(image_loader_tokens)
-            .SetWidthConstraint(image_width)
-            .SetHeightConstraint(image_height)
-            .SetDecodePixelMultiplication(1.4)
-            .Commit();
+        new SimpleImageLoader.Transaction(_updateLibrarySession.Token, tokens).Commit();
     }
 
-    private class LoadImageCallback : ImageLoader.ICallback
+    private class LoadImageCallback : IImageResultHandler
     {
         private readonly ComicItemVertical _viewHolder;
         private readonly ComicItemViewModel _viewModel;

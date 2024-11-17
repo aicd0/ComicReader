@@ -37,20 +37,24 @@ internal class ImageCacheManager
         }
 
         StorageFile cacheFile = null;
+        ImageCacheDatabase.CacheRecord cacheRecord = null;
         string uniqueKey = source.GetUniqueKey();
-        ImageCacheDatabase.CacheRecord cacheRecord = ImageCacheDatabase.GetCacheRecord(uniqueKey);
-        if (cacheRecord != null)
+        if (uniqueKey != null)
         {
-            if (CalculateDesiredDimension(frameWidth, frameHeight, stretchMode, cacheRecord.AspectRatio, out int desiredWidth, out int desiredHeight))
+            cacheRecord = ImageCacheDatabase.GetCacheRecord(uniqueKey);
+            if (cacheRecord != null)
             {
-                string targetCacheEntryKey = CalculateTargetCacheEntry(desiredWidth * desiredHeight);
-                string entry = cacheRecord.GetEntry(targetCacheEntryKey);
-                if (entry.Length > 0)
+                if (CalculateDesiredDimension(frameWidth, frameHeight, stretchMode, cacheRecord.AspectRatio, out int desiredWidth, out int desiredHeight))
                 {
-                    IStorageItem item = ImageCacheDatabase.CacheFolder.TryGetItemAsync(entry).Get();
-                    if (item is StorageFile)
+                    string targetCacheEntryKey = CalculateTargetCacheEntry(desiredWidth * desiredHeight);
+                    string entry = cacheRecord.GetEntry(targetCacheEntryKey);
+                    if (entry.Length > 0)
                     {
-                        cacheFile = item as StorageFile;
+                        IStorageItem item = ImageCacheDatabase.CacheFolder.TryGetItemAsync(entry).Get();
+                        if (item is StorageFile)
+                        {
+                            cacheFile = item as StorageFile;
+                        }
                     }
                 }
             }
@@ -111,7 +115,7 @@ internal class ImageCacheManager
             return;
         }
 
-        if (sourceHeight > 0 && sourceWidth > 0)
+        if (sourceHeight > 0 && sourceWidth > 0 && uniqueKey != null)
         {
             if (cacheRecord != null)
             {
