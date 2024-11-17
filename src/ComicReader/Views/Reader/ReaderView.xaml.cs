@@ -43,12 +43,15 @@ internal partial class ReaderView : UserControl
     public ReaderViewController Controller { get; set; }
     private ReaderViewController ControllerInternal => Controller;
 
+    public int CurrentPage => ControllerInternal?.GetCurrentPage() ?? 0;
+    public int PageCount => ControllerInternal?.PageCount ?? 0;
+
     public ReaderView()
     {
         InitializeComponent();
 
-        Loaded += OnLoaded;
-        Unloaded += OnUnloaded;
+        Loaded += OnLoadedOrUnloaded;
+        Unloaded += OnLoadedOrUnloaded;
 
         _gestureReference = this;
         _gestureHandler = new(this);
@@ -104,16 +107,23 @@ internal partial class ReaderView : UserControl
         UpdateUI();
     }
 
-    private void OnLoaded(object sender, RoutedEventArgs e)
+    private void OnLoadedOrUnloaded(object sender, RoutedEventArgs e)
     {
-        _isLoaded = IsLoaded;
-        UpdateUI();
-    }
+        bool isLoaded = IsLoaded;
+        if (_isLoaded == isLoaded)
+        {
+            return;
+        }
+        _isLoaded = isLoaded;
 
-    private void OnUnloaded(object sender, RoutedEventArgs e)
-    {
-        _isLoaded = IsLoaded;
-        UpdateUI();
+        if (isLoaded)
+        {
+            UpdateUI();
+        }
+        else
+        {
+            ControllerInternal.StopLoadingImage();
+        }
     }
 
     private void UpdateUI()
@@ -424,14 +434,9 @@ internal partial class ReaderView : UserControl
         }
     }
 
-    private class GestureHandler : ReaderGestureRecognizer.IHandler
+    private class GestureHandler(ReaderView view) : ReaderGestureRecognizer.IHandler
     {
-        private readonly ReaderView _view;
-
-        public GestureHandler(ReaderView view)
-        {
-            _view = view;
-        }
+        private readonly ReaderView _view = view;
 
         public void ManipulationCompleted(object sender, ManipulationCompletedEventArgs e)
         {

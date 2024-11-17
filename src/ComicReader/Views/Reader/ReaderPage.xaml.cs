@@ -182,7 +182,7 @@ internal sealed partial class ReaderPage : ReaderPageBase
             };
             reader.ReaderEventPageChanged += delegate (ReaderView sender, bool isIntermediate)
             {
-                UpdatePage(sender.Controller);
+                UpdatePage(sender);
                 ViewModel.UpdateProgress(sender.Controller, save: !isIntermediate);
                 BottomTileSetHold(false);
             };
@@ -257,13 +257,6 @@ internal sealed partial class ReaderPage : ReaderPageBase
         });
     }
 
-    protected override void OnPause()
-    {
-        base.OnPause();
-        HorizontalReader.Controller.StopLoadingImage();
-        VerticalReader.Controller.StopLoadingImage();
-    }
-
     private IMainPageAbility GetMainPageAbility()
     {
         return GetAbility<IMainPageAbility>();
@@ -322,13 +315,15 @@ internal sealed partial class ReaderPage : ReaderPageBase
 
             if (lastSetting.IsContinuous != setting.IsContinuous)
             {
-                GetReader().SetIsContinuous(setting.IsContinuous);
-                GetCurrentReader()?.OnPageRearrangeEventSealed();
+                ReaderView reader = GetReader();
+                reader.SetIsContinuous(setting.IsContinuous);
+                reader.Controller?.OnPageRearrangeEventSealed();
             }
 
             if (lastSetting.PageArrangement != setting.PageArrangement)
             {
-                GetCurrentReader()?.OnPageRearrangeEventSealed();
+                ReaderView reader = GetReader();
+                reader.Controller?.OnPageRearrangeEventSealed();
             }
         });
 
@@ -380,18 +375,6 @@ internal sealed partial class ReaderPage : ReaderPageBase
     }
 
     // Utilities
-    public ReaderViewController GetCurrentReader()
-    {
-        if (ViewModel.ReaderSettingsLiveData.GetValue().IsVertical)
-        {
-            return VerticalReader.Controller;
-        }
-        else
-        {
-            return HorizontalReader.Controller;
-        }
-    }
-
     public ReaderView GetReader()
     {
         if (ViewModel.ReaderSettingsLiveData.GetValue().IsVertical)
@@ -404,14 +387,14 @@ internal sealed partial class ReaderPage : ReaderPageBase
         }
     }
 
-    public void UpdatePage(ReaderViewController reader)
+    public void UpdatePage(ReaderView reader)
     {
         if (PageIndicator == null)
         {
             return;
         }
 
-        int currentPage = reader.GetCurrentPage();
+        int currentPage = reader.CurrentPage;
         PageIndicator.Text = currentPage.ToString() + " / " + reader.PageCount.ToString();
     }
 
@@ -420,14 +403,14 @@ internal sealed partial class ReaderPage : ReaderPageBase
     {
         Utils.C0.Run(async delegate
         {
-            ReaderViewController reader = GetCurrentReader();
-            if (reader == null)
+            ReaderView reader = GetReader();
+            if (reader.Controller == null)
             {
                 System.Diagnostics.Debug.Assert(false);
                 return;
             }
 
-            ReaderViewController last_reader = reader.IsVertical ? HorizontalReader.Controller : VerticalReader.Controller;
+            ReaderViewController last_reader = reader.Controller.IsVertical ? HorizontalReader.Controller : VerticalReader.Controller;
             System.Diagnostics.Debug.Assert(last_reader != null);
 
             if (last_reader == null)
@@ -435,18 +418,18 @@ internal sealed partial class ReaderPage : ReaderPageBase
                 return;
             }
 
-            System.Diagnostics.Debug.Assert(reader.IsCurrentReader);
+            System.Diagnostics.Debug.Assert(reader.Controller.IsCurrentReader);
             System.Diagnostics.Debug.Assert(!last_reader.IsCurrentReader);
 
             double page = last_reader.PageSource;
             float zoom = Math.Min(100f, last_reader.Zoom);
 
-            await Utils.C0.WaitFor(() => reader.Loaded, 1000);
-            ReaderViewController.ScrollManager.BeginTransaction(reader, "RestoreStateAfterReaderSwitched")
+            await Utils.C0.WaitFor(() => reader.Controller.Loaded, 1000);
+            ReaderViewController.ScrollManager.BeginTransaction(reader.Controller, "RestoreStateAfterReaderSwitched")
                 .Zoom(zoom)
                 .Page(page)
                 .Commit();
-            await reader.UpdateImages(true);
+            await reader.Controller.UpdateImages(true);
             ViewModel.UpdateReaderUI();
             await last_reader.UpdateImages(false);
         });
@@ -458,13 +441,8 @@ internal sealed partial class ReaderPage : ReaderPageBase
         var ctx = (ReaderImagePreviewViewModel)e.ClickedItem;
         ViewModel.GridViewModeEnabled = false;
 
-        ReaderViewController reader = GetCurrentReader();
-        if (reader == null)
-        {
-            return;
-        }
-
-        ReaderViewController.ScrollManager.BeginTransaction(reader, "JumpToGridItem")
+        ReaderView reader = GetReader();
+        ReaderViewController.ScrollManager.BeginTransaction(reader.Controller, "JumpToGridItem")
             .Page(ctx.Page)
             .Commit();
     }

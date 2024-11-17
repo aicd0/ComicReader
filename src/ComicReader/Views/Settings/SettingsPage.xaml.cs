@@ -333,20 +333,29 @@ internal sealed partial class SettingsPage : SettingPageBase
         await UpdateStatistis();
 
         // Feedback.
-        string app_name = Utils.StringResourceProvider.GetResourceString("AppDisplayName");
-        string contribution_before_link = Utils.StringResourceProvider.GetResourceString("ContributionRunBeforeLink");
-        contribution_before_link = contribution_before_link.Replace("$appname", app_name);
-        ContributionRunBeforeLink.Text = contribution_before_link;
-        ContributionRunAfterLink.Text = Utils.StringResourceProvider.GetResourceString("ContributionRunAfterLink");
+        {
+            string appName = Utils.StringResourceProvider.GetResourceString("AppDisplayName");
+            string contribution_before_link = Utils.StringResourceProvider.GetResourceString("ContributionRunBeforeLink");
+            contribution_before_link = contribution_before_link.Replace("$appname", appName);
+            ContributionRunBeforeLink.Text = contribution_before_link;
+            ContributionRunAfterLink.Text = Utils.StringResourceProvider.GetResourceString("ContributionRunAfterLink");
+        }
 
         // About.
-        PackageVersion version = Package.Current.Id.Version;
-        AboutBuildVersionControl.Text = app_name + " " + version.Major + "." + version.Minor + "." + version.Build + "." + version.Revision;
+        {
+#if DEBUG
+            string appName = Utils.StringResourceProvider.GetResourceString("DevAppDisplayName");
+#else
+            string appName = Utils.StringResourceProvider.GetResourceString("AppDisplayName");
+#endif
+            PackageVersion version = Package.Current.Id.Version;
+            AboutBuildVersionControl.Text = appName + " " + version.Major + "." + version.Minor + "." + version.Build + "." + version.Revision;
 
-        string author = "aicd0";
-        string about_copyright = Utils.StringResourceProvider.GetResourceString("AboutCopyright");
-        about_copyright = about_copyright.Replace("$author", author);
-        AboutCopyrightControl.Text = about_copyright;
+            string author = "aicd0";
+            string about_copyright = Utils.StringResourceProvider.GetResourceString("AboutCopyright");
+            about_copyright = about_copyright.Replace("$author", author);
+            AboutCopyrightControl.Text = about_copyright;
+        }
     }
 
     private void OnComicDataUpdated()

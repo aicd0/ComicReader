@@ -99,10 +99,10 @@ internal class ReaderPageViewModel : BaseViewModel
             verticalReader.Controller.Reset();
             horizontalReader.Controller.Reset();
 
-            ReaderViewController reader = page.GetCurrentReader();
+            ReaderView reader = page.GetReader();
             System.Diagnostics.Debug.Assert(reader != null);
 
-            reader.SetOnLoadedListener(() =>
+            reader.Controller.SetOnLoadedListener(() =>
             {
                 ReaderStatusLiveData.Emit(ReaderStatusEnum.Working);
                 page.UpdatePage(reader);
@@ -139,7 +139,7 @@ internal class ReaderPageViewModel : BaseViewModel
             if (!_comic.IsExternal)
             {
                 // Set initial page.
-                reader.SetInitialPage(_comic.LastPosition);
+                reader.Controller.SetInitialPage(_comic.LastPosition);
 
                 // Load frames.
                 for (int i = 0; i < _comic.ImageAspectRatios.Count; ++i)
@@ -149,14 +149,14 @@ internal class ReaderPageViewModel : BaseViewModel
                 }
 
                 // Refresh reader.
-                await reader.UpdateImages(true);
+                await reader.Controller.UpdateImages(true);
             }
 
             LoadImages(horizontalReader, verticalReader);
-            await reader.Finalize();
+            await reader.Controller.Finalize();
 
             // Refresh reader.
-            await reader.UpdateImages(true);
+            await reader.Controller.UpdateImages(true);
             page.UpdatePage(reader);
         });
     }

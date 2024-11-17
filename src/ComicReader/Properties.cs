@@ -3,7 +3,7 @@
 
 namespace ComicReader;
 
-internal static class Keys
+internal static class Properties
 {
     public static readonly string AppSecret = "";
 }

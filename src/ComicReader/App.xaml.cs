@@ -34,9 +34,9 @@ public partial class App : Application
 
         InitializeComponent();
 
-        if (Keys.AppSecret.Length > 0)
+        if (Properties.AppSecret.Length > 0)
         {
-            AppCenter.Start(Keys.AppSecret, typeof(Analytics), typeof(Crashes));
+            AppCenter.Start(Properties.AppSecret, typeof(Analytics), typeof(Crashes));
         }
     }
 
