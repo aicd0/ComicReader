@@ -183,7 +183,7 @@
                     ItemContainerStyle="{StaticResource ComicItemContainerStyle}"
                     ItemHeight="310"
                     ItemsSource="{x:Bind ComicItemSource}"
-                    OneRowModeEnabled="True"
+                    MaxRows="2"
                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                     ScrollViewer.HorizontalScrollMode="Disabled"
                     StretchContentForSingleRow="False"

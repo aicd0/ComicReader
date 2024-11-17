@@ -99,7 +99,7 @@ internal sealed partial class HomePage : HomePageBase
             }
 
             // Get recent visited comics.
-            var records = new Utils.FixedHeap<Tuple<long, DateTimeOffset>>(16,
+            var records = new Utils.FixedHeap<Tuple<long, DateTimeOffset>>(100,
                 (Tuple<long, DateTimeOffset> x, Tuple<long, DateTimeOffset> y) => { return x.Item2.CompareTo(y.Item2); });
 
             await ComicData.CommandBlock2(async delegate (SqliteCommand command)
