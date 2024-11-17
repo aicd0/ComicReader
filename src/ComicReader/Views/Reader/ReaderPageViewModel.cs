@@ -9,7 +9,6 @@ using System.Threading.Tasks;
 using ComicReader.Database;
 using ComicReader.DesignData;
 using ComicReader.Utils;
-using ComicReader.Utils.Image;
 using ComicReader.Utils.Lifecycle;
 using ComicReader.Views.Base;
 using ComicReader.Views.Navigation;

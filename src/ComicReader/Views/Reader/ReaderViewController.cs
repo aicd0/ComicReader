@@ -19,7 +19,6 @@ using ComicReader.Common.Structs;
 using ComicReader.Database;
 using ComicReader.DesignData;
 using ComicReader.Utils;
-using ComicReader.Utils.Image;
 
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;

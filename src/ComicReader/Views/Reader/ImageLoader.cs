@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 
 using ComicReader.Database;
 using ComicReader.Native;
+using ComicReader.Utils;
 
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
@@ -21,7 +22,7 @@ using Windows.Storage.Streams;
 
 using WinRT.Interop;
 
-namespace ComicReader.Utils.Image;
+namespace ComicReader.Views.Reader;
 
 internal static class ImageLoader
 {
@@ -199,7 +200,7 @@ internal static class ImageLoader
                 double image_ratio = (double)image.PixelWidth / image.PixelHeight;
                 double image_height;
                 double image_width;
-                if ((image_ratio > frame_ratio) == (stretch_mode == StretchModeEnum.Uniform))
+                if (image_ratio > frame_ratio == (stretch_mode == StretchModeEnum.Uniform))
                 {
                     image_width = width * raw_pixels_per_view_pixel;
                     image_height = image_width / image_ratio;
@@ -229,10 +230,10 @@ internal static class ImageLoader
 
     private static double GetScaleAdjustment()
     {
-        IntPtr hWnd = WindowNative.GetWindowHandle(App.Window);
+        nint hWnd = WindowNative.GetWindowHandle(App.Window);
         WindowId wndId = Win32Interop.GetWindowIdFromWindow(hWnd);
         var displayArea = DisplayArea.GetFromWindowId(wndId, DisplayAreaFallback.Primary);
-        IntPtr hMonitor = Win32Interop.GetMonitorFromDisplayId(displayArea.DisplayId);
+        nint hMonitor = Win32Interop.GetMonitorFromDisplayId(displayArea.DisplayId);
 
         // Get DPI.
         int result = NativeMethods.GetDpiForMonitor(hMonitor, NativeModels.MonitorDPIType.MDT_Default, out uint dpiX, out uint _);
