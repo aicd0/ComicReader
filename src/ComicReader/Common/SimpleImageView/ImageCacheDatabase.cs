@@ -87,7 +87,7 @@ internal static class ImageCacheDatabase
 
         lock (_cacheRecordCache)
         {
-            _cacheRecordCache.Add(cacheKey, firstRecord);
+            _cacheRecordCache[cacheKey] = firstRecord;
         }
 
         return firstRecord;
@@ -99,7 +99,7 @@ internal static class ImageCacheDatabase
 
         lock (_cacheRecordCache)
         {
-            _cacheRecordCache.Add(cacheKey, record);
+            _cacheRecordCache[cacheKey] = record;
         }
 
         lock (_lock)
