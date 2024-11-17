@@ -624,6 +624,8 @@ internal abstract class ComicData
 
     protected abstract Task<IRandomAccessStream> InternalGetImageStream(int index);
 
+    public abstract string GetImageCacheKey(int index);
+
     private static async Task UpdateComicNoLock(string location, ComicType type, bool is_exist)
     {
         Log((is_exist ? "Updat" : "Add") + "ing comic '" + location + "'");

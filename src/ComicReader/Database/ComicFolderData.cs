@@ -16,6 +16,8 @@ namespace ComicReader.Database;
 
 internal class ComicFolderData : ComicData
 {
+    private const string TAG = "ComicFolderData";
+
     private StorageFolder Folder { get; set; }
     private StorageFile InfoFile { get; set; }
     private List<StorageFile> ImageFiles { get; set; } = new List<StorageFile>();
@@ -216,7 +218,7 @@ internal class ComicFolderData : ComicData
     {
         if (index >= ImageFiles.Count)
         {
-            Log("Image index " + index.ToString() + " out of boundary " + ImageFiles.Count.ToString());
+            Logger.F(TAG, "InternalGetImageStream");
             return null;
         }
 
@@ -229,5 +231,16 @@ internal class ComicFolderData : ComicData
             Log("Failed to access '" + ImageFiles[index].Path + "'. " + e.ToString());
             return null;
         }
+    }
+
+    public override string GetImageCacheKey(int index)
+    {
+        if (index >= ImageFiles.Count)
+        {
+            Logger.F(TAG, "GetImageCacheKey");
+            return null;
+        }
+
+        return ImageFiles[index].Path;
     }
 }

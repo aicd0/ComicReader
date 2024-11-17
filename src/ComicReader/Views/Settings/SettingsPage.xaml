@@ -160,6 +160,22 @@
                             <StackPanel Orientation="Vertical">
                                 <StackPanel Orientation="Horizontal">
                                     <Button
+                                        x:Uid="ClearCacheButton"
+                                        Click="OnClearCacheClick"
+                                        IsEnabled="{x:Bind Shared.IsClearingCache, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}" />
+                                    <ProgressRing
+                                        Margin="20,0,0,0"
+                                        VerticalAlignment="Center"
+                                        IsActive="{x:Bind Shared.IsClearingCache, Mode=OneWay}" />
+                                </StackPanel>
+                                <Grid Height="8" />
+                                <TextBlock
+                                    Foreground="{ThemeResource ForegroundGrey2}"
+                                    Style="{StaticResource SettingsPageBodyTextBlock}"
+                                    Text="{x:Bind Shared.CacheSize, Mode=OneWay}" />
+                                <Grid Height="12" />
+                                <StackPanel Orientation="Horizontal">
+                                    <Button
                                         x:Uid="RescanFilesButton"
                                         Click="OnRescanFilesClicked"
                                         IsEnabled="{x:Bind Shared.IsRescanning, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}" />

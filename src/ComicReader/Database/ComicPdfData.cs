@@ -14,6 +14,7 @@ namespace ComicReader.Database;
 
 internal class ComicPdfData : ComicData
 {
+    private const string TAG = "ComicPdfData";
     private const int WrongPassword = unchecked((int)0x8007052b); // HRESULT_FROM_WIN32(ERROR_WRONG_PASSWORD)
     private const int GenericFail = unchecked((int)0x80004005);   // E_FAIL
 
@@ -140,7 +141,7 @@ internal class ComicPdfData : ComicData
 
         if (index >= ImageCount)
         {
-            Log("Image index " + index.ToString() + " out of boundary " + ImageCount.ToString());
+            Logger.F(TAG, "InternalGetImageStream");
             return null;
         }
 
@@ -150,5 +151,10 @@ internal class ComicPdfData : ComicData
             await page.RenderToStreamAsync(stream);
             return stream;
         }
+    }
+
+    public override string GetImageCacheKey(int index)
+    {
+        return ThisFile.Path + ":" + index.ToString();
     }
 }

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -217,6 +218,28 @@ public class SettingsPageShared : INotifyPropertyChanged
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsRescanning"));
         }
     }
+
+    private bool _isClearingCache = false;
+    public bool IsClearingCache
+    {
+        get => _isClearingCache;
+        set
+        {
+            _isClearingCache = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsClearingCache"));
+        }
+    }
+
+    private string _cacheSize = StringResourceProvider.GetResourceString("Calculating");
+    public string CacheSize
+    {
+        get => StringResourceProvider.GetResourceString("ClearCacheDetail").Replace("$size", _cacheSize);
+        set
+        {
+            _cacheSize = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("CacheSize"));
+        }
+    }
 }
 
 internal class SettingPageBase : BasePage<EmptyViewModel>;
@@ -275,22 +298,22 @@ internal sealed partial class SettingsPage : SettingPageBase
         m_updating = true;
 
         // Appearance.
-        object appearance_setting = ApplicationData.Current.LocalSettings.Values[AppearanceKey];
-
-        if (appearance_setting == null)
         {
-            Shared.CurrentAppearance = AppearanceSetting.UseSystemSetting;
+            object appearance_setting = ApplicationData.Current.LocalSettings.Values[AppearanceKey];
+            if (appearance_setting == null)
+            {
+                Shared.CurrentAppearance = AppearanceSetting.UseSystemSetting;
+            }
+            else if ((ApplicationTheme)(int)appearance_setting == ApplicationTheme.Light)
+            {
+                Shared.CurrentAppearance = AppearanceSetting.Light;
+            }
+            else if ((ApplicationTheme)(int)appearance_setting == ApplicationTheme.Dark)
+            {
+                Shared.CurrentAppearance = AppearanceSetting.Dark;
+            }
+            Shared.Appearance = Shared.CurrentAppearance;
         }
-        else if ((ApplicationTheme)(int)appearance_setting == ApplicationTheme.Light)
-        {
-            Shared.CurrentAppearance = AppearanceSetting.Light;
-        }
-        else if ((ApplicationTheme)(int)appearance_setting == ApplicationTheme.Dark)
-        {
-            Shared.CurrentAppearance = AppearanceSetting.Dark;
-        }
-
-        Shared.Appearance = Shared.CurrentAppearance;
 
         // Supported code pages.
         if (Shared.Encodings.Count == 0)
@@ -305,10 +328,8 @@ internal sealed partial class SettingsPage : SettingPageBase
                 string title = info.EncodingName + " [" + info.CodePage.ToString() + "]";
                 encodings.Add(new Tuple<string, int>(title, info.CodePage));
             }
-
             Shared.Encodings = encodings;
         }
-
         if (!Common.AppInfoProvider.SupportedEncodings.ContainsKey(XmlDatabase.Settings.DefaultArchiveCodePage))
         {
             XmlDatabase.Settings.DefaultArchiveCodePage = -1;
@@ -316,15 +337,16 @@ internal sealed partial class SettingsPage : SettingPageBase
 
         // From Xml.
         await XmlDatabaseManager.WaitLock();
-
         Shared.DefaultArchiveCodePage = XmlDatabase.Settings.DefaultArchiveCodePage;
         Shared.TransitionAnimation = XmlDatabase.Settings.TransitionAnimation;
         Shared.IsClearHistoryEnabled = XmlDatabase.History.Items.Count > 0;
         Shared.HistorySaveBrowsingHistory = XmlDatabase.Settings.SaveHistory;
         Shared.AdvancedDebugMode = XmlDatabase.Settings.DebugMode;
-
         XmlDatabaseManager.ReleaseLock();
         m_updating = false;
+
+        // Cache size
+        UpdateCacheSize();
 
         // Rescan status.
         UpdateRescanStatus();
@@ -450,12 +472,7 @@ internal sealed partial class SettingsPage : SettingPageBase
         Utils.C0.Run(async delegate
         {
             var uri = new Uri(@"https://github.com/aicd0/ComicReader/issues/new/choose");
-            bool success = await Windows.System.Launcher.LaunchUriAsync(uri);
-
-            if (!success)
-            {
-                // ...
-            }
+            await Windows.System.Launcher.LaunchUriAsync(uri);
         });
     }
 
@@ -463,5 +480,86 @@ internal sealed partial class SettingsPage : SettingPageBase
     {
         Shared.IsRescanning = true;
         ComicData.UpdateAllComics("OnRescanFilesClicked", lazy: false);
+    }
+
+    private void OnClearCacheClick(object sender, RoutedEventArgs e)
+    {
+        Shared.IsClearingCache = true;
+        TaskQueue.DefaultQueue.Enqueue("ClearCache", delegate
+        {
+            ClearCache();
+            string size = GetCacheSize();
+            _ = Threading.RunInMainThread(() =>
+            {
+                Shared.IsClearingCache = false;
+                Shared.CacheSize = size;
+            });
+            return TaskException.Success;
+        });
+    }
+
+    //
+    // cache
+    //
+
+    private void UpdateCacheSize()
+    {
+        TaskQueue.DefaultQueue.Enqueue("CalculateCacheSize", delegate
+        {
+            string size = GetCacheSize();
+            _ = Threading.RunInMainThread(() =>
+            {
+                Shared.CacheSize = size;
+            });
+            return TaskException.Success;
+        });
+    }
+
+    private static void ClearCache()
+    {
+        var di = new DirectoryInfo(ApplicationData.Current.LocalCacheFolder.Path);
+        foreach (FileInfo file in di.GetFiles())
+        {
+            file.Delete();
+        }
+        foreach (DirectoryInfo dir in di.GetDirectories())
+        {
+            dir.Delete(true);
+        }
+    }
+
+    private static string GetCacheSize()
+    {
+        var d = new DirectoryInfo(ApplicationData.Current.LocalCacheFolder.Path);
+        long size = CalculateDirSize(d);
+        string[] sizes = { "B", "KB", "MB", "GB", "TB" };
+        int order = 0;
+        while (size >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            size /= 1024;
+        }
+
+        // Adjust the format string to your preferences. For example "{0:0.#}{1}" would
+        // show a single decimal place, and no space.
+        return string.Format("{0:0.##} {1}", size, sizes[order]);
+    }
+
+    private static long CalculateDirSize(DirectoryInfo d)
+    {
+        long size = 0;
+        // Add file sizes.
+        FileInfo[] fis = d.GetFiles();
+        foreach (FileInfo fi in fis)
+        {
+            size += fi.Length;
+        }
+        // Add subdirectory sizes.
+        DirectoryInfo[] dis = d.GetDirectories();
+        foreach (DirectoryInfo di in dis)
+        {
+            size += CalculateDirSize(di);
+        }
+        return size;
     }
 }

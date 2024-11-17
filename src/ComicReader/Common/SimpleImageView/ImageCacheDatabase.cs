@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -70,9 +69,9 @@ internal static class ImageCacheDatabase
                 using SqliteDataReader query = command.ExecuteReader();
                 while (query.Read())
                 {
-                    int width = query.GetInt32(1);
-                    int height = query.GetInt32(2);
-                    string entries = query.GetString(3);
+                    int width = query.GetInt32(0);
+                    int height = query.GetInt32(1);
+                    string entries = query.GetString(2);
                     CacheRecord record = new(key, width, height, entries);
                     records.Add(record);
                 }
@@ -107,11 +106,9 @@ internal static class ImageCacheDatabase
         {
             using (SqliteCommand command = NewCommand())
             {
-                command.CommandText = $"UPDATE {CACHE_TABLE} SET " +
-                    $"{CACHE_TABLE_FIELD_WIDTH}=@width," +
-                    $"{CACHE_TABLE_FIELD_HEIGHT}=@height," +
-                    $"{CACHE_TABLE_FIELD_ENTRIES}=@entries" +
-                    $" WHERE {CACHE_TABLE_FIELD_KEY}=@key";
+                command.CommandText = $"INSERT OR REPLACE INTO {CACHE_TABLE}({CACHE_TABLE_FIELD_KEY}," +
+                    $"{CACHE_TABLE_FIELD_WIDTH},{CACHE_TABLE_FIELD_HEIGHT},{CACHE_TABLE_FIELD_ENTRIES})" +
+                    $" VALUES(@key,@width,@height,@entries)";
                 command.Parameters.AddWithValue("@key", cacheKey);
                 command.Parameters.AddWithValue("@width", width);
                 command.Parameters.AddWithValue("@height", height);
@@ -148,8 +145,9 @@ internal static class ImageCacheDatabase
 
     private static async Task<SqliteConnection> CreateConnection()
     {
-        string databasePath = Path.Combine(CacheFolder.Path, "main.db");
-        var connection = new SqliteConnection($"Filename={databasePath}");
+        string databaseFilename = "main.db";
+        StorageFile databaseFile = await CacheFolder.CreateFileAsync(databaseFilename, CreationCollisionOption.OpenIfExists);
+        var connection = new SqliteConnection($"Filename={databaseFile.Path}");
         connection.Open();
 
         using (SqliteCommand command = connection.CreateCommand())

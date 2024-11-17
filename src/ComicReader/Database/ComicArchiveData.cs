@@ -15,6 +15,8 @@ namespace ComicReader.Database;
 
 internal class ComicArchiveData : ComicData
 {
+    private const string TAG = "ComicArchiveData";
+
     private StorageFile Archive;
     private List<string> Entries = new();
 
@@ -232,7 +234,7 @@ internal class ComicArchiveData : ComicData
     {
         if (index >= Entries.Count)
         {
-            Log("Image index " + index.ToString() + " out of boundary " + Entries.Count.ToString());
+            Logger.F(TAG, "InternalGetImageStream");
             return null;
         }
 
@@ -247,5 +249,17 @@ internal class ComicArchiveData : ComicData
 
         IRandomAccessStream win_stream = stream.AsRandomAccessStream();
         return win_stream;
+    }
+
+    public override string GetImageCacheKey(int index)
+    {
+        if (index >= Entries.Count)
+        {
+            Logger.F(TAG, "InternalGetImageStream");
+            return null;
+        }
+
+        string subPath = IsExternal ? Entries[index] : GetSubPathFromFilename(Entries[index]);
+        return Archive.Path + ArchiveAccess.FileSeperator + subPath;
     }
 }

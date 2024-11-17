@@ -27,6 +27,6 @@ internal class ComicImageSource : IImageSource
 
     public string GetUniqueKey()
     {
-        return _comic.Location + ":" + _index.ToString();
+        return _comic.GetImageCacheKey(_index);
     }
 }
