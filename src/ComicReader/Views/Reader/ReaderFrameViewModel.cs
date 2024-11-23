@@ -138,4 +138,9 @@ internal class ReaderFrameViewModel : INotifyPropertyChanged
     public int PageL { get; set; } = -1;
     public int PageR { get; set; } = -1;
     public double Page => PageL != -1 && PageR != -1 ? (PageL + PageR) * 0.5 : PageL == -1 ? PageR : PageL;
+
+    public void RebindEntireViewModel()
+    {
+        PropertyChanged?.Invoke(null, new PropertyChangedEventArgs(nameof(ReaderFrameViewModel)));
+    }
 };

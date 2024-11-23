@@ -28,10 +28,21 @@ internal sealed partial class ReaderFrame : UserControl
 
     public void Bind(ReaderFrameViewModel model)
     {
-        ViewModel = model;
-        Bindings.Update();
-        _isReady = null;
-        DispatchReadyStateChangeEvent();
+        if (model == null)
+        {
+            if (ViewModel != null)
+            {
+                ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+            }
+            ViewModel = null;
+        }
+        else
+        {
+            ViewModel = model;
+            ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+        }
+
+        RebindViewModel();
     }
 
     public void SetReadyStateChangeHandler(ReadyStateChangeListener handler)
@@ -46,6 +57,21 @@ internal sealed partial class ReaderFrame : UserControl
 
     private void OnFrameSizeChanged(object sender, SizeChangedEventArgs e)
     {
+        DispatchReadyStateChangeEvent();
+    }
+
+    private void OnViewModelPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ReaderFrameViewModel))
+        {
+            RebindViewModel();
+        }
+    }
+
+    private void RebindViewModel()
+    {
+        Bindings.Update();
+        _isReady = null;
         DispatchReadyStateChangeEvent();
     }
 

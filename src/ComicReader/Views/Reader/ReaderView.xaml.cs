@@ -253,7 +253,7 @@ internal partial class ReaderView : UserControl
             }
             if (index == lastFrameIndex)
             {
-                _isFirstFrameLoaded = false;
+                _isLastFrameLoaded = false;
             }
             UpdateLoader();
         });
@@ -304,15 +304,15 @@ internal partial class ReaderView : UserControl
 
         if (_isFirstFrameLoaded && !_isFirstFrameActionPerformed)
         {
+            _isFirstFrameActionPerformed = true;
             SetScrollViewer1(Zoom, null, true, "AdjustZooming");
             AdjustPadding();
-            _isFirstFrameActionPerformed = true;
         }
 
         if (_isLastFrameLoaded && !_isLastFrameActionPerformed)
         {
-            AdjustPadding();
             _isLastFrameActionPerformed = true;
+            AdjustPadding();
         }
 
         if (_isFirstFrameLoaded && !_isInitialFrameLoaded)
@@ -493,6 +493,8 @@ internal partial class ReaderView : UserControl
 
         item.ImageSourceLeft = _dataModel.GetValueOrDefault(item.PageL - 1)?.ImageSource;
         item.ImageSourceRight = _dataModel.GetValueOrDefault(item.PageR - 1)?.ImageSource;
+
+        item.RebindEntireViewModel();
     }
 
     private bool UpdatePage(bool useFinal)
