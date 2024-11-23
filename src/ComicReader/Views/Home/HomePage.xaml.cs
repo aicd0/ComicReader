@@ -23,9 +23,7 @@ using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace ComicReader.Views.Home;
 
-internal class HomePageBase : BasePage<HomePageViewModel>;
-
-internal sealed partial class HomePage : HomePageBase
+internal sealed partial class HomePage : BasePage
 {
     private readonly ComicItemViewModel.IItemHandler _comicItemHandler;
     private ObservableCollectionPlus<ComicItemViewModel> ComicItemSource { get; set; }

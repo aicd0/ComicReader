@@ -1,11 +1,11 @@
-<favorite:FavoritePageBase
+<base:BasePage
     x:Class="ComicReader.Views.Favorite.FavoritePage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:base="using:ComicReader.Views.Base"
     xmlns:converters="using:ComicReader.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:data="using:ComicReader.DesignData"
-    xmlns:favorite="using:ComicReader.Views.Favorite"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
     Background="Transparent"
@@ -122,4 +122,4 @@
             </muxc:TreeView.ContextFlyout>
         </muxc:TreeView>
     </Grid>
-</favorite:FavoritePageBase>
+</base:BasePage>

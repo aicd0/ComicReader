@@ -242,9 +242,7 @@ public class SettingsPageShared : INotifyPropertyChanged
     }
 }
 
-internal class SettingPageBase : BasePage<EmptyViewModel>;
-
-internal sealed partial class SettingsPage : SettingPageBase
+internal sealed partial class SettingsPage : BasePage
 {
     public const string AppearanceKey = "Appearance";
     public SettingsPageShared Shared { get; set; }

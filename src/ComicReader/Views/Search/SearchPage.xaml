@@ -1,7 +1,8 @@
-<search:SearchPageBase
+<base:BasePage
     x:Class="ComicReader.Views.Search.SearchPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:base="using:ComicReader.Views.Base"
     xmlns:converters="using:ComicReader.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:data="using:ComicReader.DesignData"
@@ -155,4 +156,4 @@
                 Fill="{ThemeResource CommandBarBorderBrush}" />
         </Grid>
     </Grid>
-</search:SearchPageBase>
+</base:BasePage>

@@ -11,12 +11,11 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
 
 namespace ComicReader.Views.Base;
-internal abstract class BasePage<VM> : StatefulPage where VM : BaseViewModel, new()
+
+internal abstract class BasePage : StatefulPage
 {
     private NavigationBundle _bundle;
     private PointerPoint _lastPointerPoint;
-
-    protected VM ViewModel { get; } = new VM();
 
     public BasePage()
     {
@@ -27,25 +26,11 @@ internal abstract class BasePage<VM> : StatefulPage where VM : BaseViewModel, ne
     {
         base.OnStart(p);
         _bundle = (NavigationBundle)p;
-        ViewModel.SetNavigationBundle(_bundle);
         OnStart(_bundle.Bundle);
     }
 
     protected virtual void OnStart(PageBundle bundle)
     {
-        ViewModel.OnStart();
-    }
-
-    protected override void OnResume()
-    {
-        base.OnResume();
-        ViewModel.OnResume();
-    }
-
-    protected override void OnPause()
-    {
-        base.OnPause();
-        ViewModel.OnPause();
     }
 
     protected void TransferAbilities(NavigationBundle bundle)

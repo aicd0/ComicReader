@@ -18,9 +18,7 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace ComicReader.Views.History;
 
-internal class HistoryPageBase : BasePage<EmptyViewModel>;
-
-internal sealed partial class HistoryPage : HistoryPageBase
+internal sealed partial class HistoryPage : BasePage
 {
     public HistoryPage()
     {

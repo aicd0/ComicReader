@@ -9,9 +9,7 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace ComicReader.Views.Help;
 
-internal class HelpPageBase : BasePage<EmptyViewModel>;
-
-internal sealed partial class HelpPage : HelpPageBase
+internal sealed partial class HelpPage : BasePage
 {
     public HelpPage()
     {

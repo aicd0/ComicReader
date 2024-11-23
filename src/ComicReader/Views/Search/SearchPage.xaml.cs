@@ -226,9 +226,7 @@ internal class SearchPageShared : INotifyPropertyChanged
     public Action<bool> OnCommandBarSelectAllToggleChanged;
 }
 
-internal class SearchPageBase : BasePage<EmptyViewModel>;
-
-internal sealed partial class SearchPage : SearchPageBase
+internal sealed partial class SearchPage : BasePage
 {
     private SearchPageShared Shared { get; set; }
 

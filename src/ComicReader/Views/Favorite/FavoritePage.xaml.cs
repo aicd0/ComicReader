@@ -22,9 +22,7 @@ using Microsoft.UI.Xaml.Input;
 
 namespace ComicReader.Views.Favorite;
 
-internal class FavoritePageBase : BasePage<EmptyViewModel>;
-
-internal sealed partial class FavoritePage : FavoritePageBase
+internal sealed partial class FavoritePage : BasePage
 {
     private const string TAG = "FavoritePage";
     private ObservableCollection<FavoriteItemViewModel> DataSource { get; set; }
