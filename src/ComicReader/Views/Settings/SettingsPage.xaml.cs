@@ -245,6 +245,9 @@ public class SettingsPageShared : INotifyPropertyChanged
 internal sealed partial class SettingsPage : BasePage
 {
     public const string AppearanceKey = "Appearance";
+
+    private const string TAG = "SettingsPage";
+
     public SettingsPageShared Shared { get; set; }
 
     // Initialize m_updating to TRUE to avoid copying values from
@@ -518,11 +521,25 @@ internal sealed partial class SettingsPage : BasePage
         var di = new DirectoryInfo(ApplicationData.Current.LocalCacheFolder.Path);
         foreach (FileInfo file in di.GetFiles())
         {
-            file.Delete();
+            try
+            {
+                file.Delete();
+            }
+            catch (IOException e)
+            {
+                Logger.E(TAG, "ClearCache", e);
+            }
         }
         foreach (DirectoryInfo dir in di.GetDirectories())
         {
-            dir.Delete(true);
+            try
+            {
+                dir.Delete(true);
+            }
+            catch (IOException e)
+            {
+                Logger.E(TAG, "ClearCache", e);
+            }
         }
     }
 

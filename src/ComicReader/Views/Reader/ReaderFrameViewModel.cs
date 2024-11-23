@@ -47,6 +47,8 @@ internal class ReaderFrameViewModel : INotifyPropertyChanged
         }
     }
 
+    public IImageSource ImageSourceLeft { get; set; }
+
     private bool _imageLeftSet;
     public bool ImageLeftSet
     {
@@ -88,6 +90,8 @@ internal class ReaderFrameViewModel : INotifyPropertyChanged
             }
         }
     }
+
+    public IImageSource ImageSourceRight { get; set; }
 
     private bool _imageRightSet;
     public bool ImageRightSet
@@ -131,7 +135,6 @@ internal class ReaderFrameViewModel : INotifyPropertyChanged
         }
     }
 
-    public IImageSource ImageSource { get; set; }
     public int PageL { get; set; } = -1;
     public int PageR { get; set; } = -1;
     public double Page => PageL != -1 && PageR != -1 ? (PageL + PageR) * 0.5 : PageL == -1 ? PageR : PageL;

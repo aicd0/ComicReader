@@ -210,7 +210,15 @@ internal sealed partial class ReaderPage : BasePage
                 GetMainPageAbility().SetTitle(comic.Title);
             }
             GetMainPageAbility().SetIcon(new SymbolIconSource { Symbol = Symbol.Pictures });
-            await LoadComic(comic, HorizontalReader, VerticalReader);
+
+            ReaderSettingDataModel readerSetting = _readerSettingsLiveData.GetValue();
+            VerticalReader.SetVisibility(readerSetting.IsVertical);
+            HorizontalReader.SetVisibility(!readerSetting.IsVertical);
+            ReaderView reader = GetReader();
+            reader.SetIsContinuous(readerSetting.IsContinuous);
+            reader.SetPageArrangement(readerSetting.PageArrangement);
+            reader.SetFlowDirection(readerSetting.IsLeftToRight);
+            await LoadComic(comic, reader);
 
             // Update previews.
             double preview_width = (double)Application.Current.Resources["ReaderPreviewImageWidth"];
@@ -314,13 +322,12 @@ internal sealed partial class ReaderPage : BasePage
             {
                 ReaderView reader = GetReader();
                 reader.SetIsContinuous(setting.IsContinuous);
-                reader.OnPageRearrangeEventSealed();
             }
 
             if (lastSetting.PageArrangement != setting.PageArrangement)
             {
                 ReaderView reader = GetReader();
-                reader.OnPageRearrangeEventSealed();
+                reader.SetPageArrangement(setting.PageArrangement);
             }
         });
 
@@ -391,7 +398,7 @@ internal sealed partial class ReaderPage : BasePage
             return;
         }
 
-        int currentPage = reader.CurrentPage;
+        int currentPage = reader.CurrentPageDisplay;
         PageIndicator.Text = currentPage.ToString() + " / " + reader.PageCount.ToString();
     }
 
@@ -408,16 +415,10 @@ internal sealed partial class ReaderPage : BasePage
             return;
         }
 
-        double page = last_reader.PageSource;
-        float zoom = Math.Min(100f, last_reader.Zoom);
-
         ReaderView.ScrollManager.BeginTransaction(reader, "RestoreStateAfterReaderSwitched")
-            .Zoom(zoom)
-            .Page(page)
+            .CopyFrom(last_reader)
             .Commit();
-        reader.UpdateImages(true);
         UpdateReaderUI();
-        last_reader.UpdateImages(false);
     }
 
     // Preview
@@ -699,7 +700,7 @@ internal sealed partial class ReaderPage : BasePage
         _horizontalReaderVisibleLiveData.Emit(horizontalReaderVisible);
     }
 
-    public async Task LoadComic(ComicData comic, ReaderView horizontalReader, ReaderView verticalReader)
+    public async Task LoadComic(ComicData comic, ReaderView reader)
     {
         if (comic == _comic)
         {
@@ -714,12 +715,7 @@ internal sealed partial class ReaderPage : BasePage
 
         ReaderStatusLiveData.Emit(ReaderStatusEnum.Loading);
 
-        verticalReader.Reset();
-        horizontalReader.Reset();
-
-        ReaderView reader = GetReader();
-        System.Diagnostics.Debug.Assert(reader != null);
-
+        reader.StopLoadingImages();
         reader.SetReaderStateChangeHandler(delegate (ReaderView.ReaderState state)
         {
             switch (state)
@@ -766,7 +762,7 @@ internal sealed partial class ReaderPage : BasePage
         if (!_comic.IsExternal)
         {
             // Set initial page.
-            reader.SetInitialPosition(_comic.LastPosition);
+            reader.SetInitialPage(_comic.LastPosition);
         }
 
         var images = new List<IImageSource>();
@@ -776,16 +772,13 @@ internal sealed partial class ReaderPage : BasePage
         }
         reader.StartLoadingImages(images);
 
-        reader.DoFinalize();
-
         // Refresh reader.
-        reader.UpdateImages(true);
         UpdatePage(reader);
     }
 
     public void UpdateProgress(ReaderView reader, bool save)
     {
-        double page = reader.CurrentPosition;
+        double page = reader.CurrentPage;
 
         if (page <= 0.0)
         {
