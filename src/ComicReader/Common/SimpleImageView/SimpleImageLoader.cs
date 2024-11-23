@@ -12,11 +12,11 @@ internal static class SimpleImageLoader
 {
     public sealed class Transaction : BaseTransaction<TaskException>
     {
-        private readonly CancellationSession.SessionToken _sessionToken;
+        private readonly CancellationSession.IToken _sessionToken;
         private readonly List<Token> _tokens;
         private TaskQueue _queue = TaskQueue.DefaultQueue;
 
-        public Transaction(CancellationSession.SessionToken token, List<Token> tokens)
+        public Transaction(CancellationSession.IToken token, List<Token> tokens)
         {
             _sessionToken = token;
             _tokens = tokens;

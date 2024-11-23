@@ -10,13 +10,12 @@
 
     <Grid
         x:Name="MainFrame"
-        DataContextChanged="OnFrameDataContextChanged"
         Loaded="OnFrameLoaded"
         SizeChanged="OnFrameSizeChanged">
         <Grid
-            Width="{x:Bind Ctx.FrameWidth, Mode=OneWay}"
-            Height="{x:Bind Ctx.FrameHeight, Mode=OneWay}"
-            Margin="{x:Bind Ctx.FrameMargin, Mode=OneWay}">
+            Width="{x:Bind ViewModel.FrameWidth, Mode=OneWay}"
+            Height="{x:Bind ViewModel.FrameHeight, Mode=OneWay}"
+            Margin="{x:Bind ViewModel.FrameMargin, Mode=OneWay}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />

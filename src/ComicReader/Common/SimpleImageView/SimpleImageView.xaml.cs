@@ -69,7 +69,7 @@ internal partial class SimpleImageView : UserControl
         UnloadImage();
         _currentImageHash = newHash;
 
-        CancellationSession.SessionToken token = _cancellationSession.Token;
+        CancellationSession.IToken token = _cancellationSession.Token;
         IImageResultHandler handler = _handler;
         Action loadAction = delegate
         {
@@ -89,7 +89,7 @@ internal partial class SimpleImageView : UserControl
         }
     }
 
-    private static void LoadImage(CancellationSession.SessionToken token, Model model, IImageResultHandler handler)
+    private static void LoadImage(CancellationSession.IToken token, Model model, IImageResultHandler handler)
     {
         ImageCacheManager.LoadImage(token, model.Source, model.FrameWidth,
             model.FrameHeight, model.StretchMode, handler);

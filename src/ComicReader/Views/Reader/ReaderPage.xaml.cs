@@ -169,9 +169,9 @@ internal sealed partial class ReaderPage : ReaderPageBase
         PreviewDataSource = new ObservableCollection<ReaderImagePreviewViewModel>();
 
         VerticalReader.SetIsVertical(true);
-        VerticalReader.Controller = new ReaderViewController(ViewModel, "Vertical", true);
+        VerticalReader.SetViewModel(ViewModel);
         HorizontalReader.SetIsVertical(false);
-        HorizontalReader.Controller = new ReaderViewController(ViewModel, "Horizontal", false);
+        VerticalReader.SetViewModel(ViewModel);
 
         ReaderView[] readers = [VerticalReader, HorizontalReader];
         foreach (ReaderView reader in readers)
@@ -183,7 +183,7 @@ internal sealed partial class ReaderPage : ReaderPageBase
             reader.ReaderEventPageChanged += delegate (ReaderView sender, bool isIntermediate)
             {
                 UpdatePage(sender);
-                ViewModel.UpdateProgress(sender.Controller, save: !isIntermediate);
+                ViewModel.UpdateProgress(sender, save: !isIntermediate);
                 BottomTileSetHold(false);
             };
         }
@@ -317,13 +317,13 @@ internal sealed partial class ReaderPage : ReaderPageBase
             {
                 ReaderView reader = GetReader();
                 reader.SetIsContinuous(setting.IsContinuous);
-                reader.Controller?.OnPageRearrangeEventSealed();
+                reader.OnPageRearrangeEventSealed();
             }
 
             if (lastSetting.PageArrangement != setting.PageArrangement)
             {
                 ReaderView reader = GetReader();
-                reader.Controller?.OnPageRearrangeEventSealed();
+                reader.OnPageRearrangeEventSealed();
             }
         });
 
@@ -401,38 +401,29 @@ internal sealed partial class ReaderPage : ReaderPageBase
     // Reader
     public void OnReaderSwitched()
     {
-        Utils.C0.Run(async delegate
+        ReaderView reader = GetReader();
+
+        ReaderView last_reader = reader.IsVertical ? HorizontalReader : VerticalReader;
+        System.Diagnostics.Debug.Assert(last_reader != null);
+
+        if (last_reader == null)
         {
-            ReaderView reader = GetReader();
-            if (reader.Controller == null)
-            {
-                System.Diagnostics.Debug.Assert(false);
-                return;
-            }
+            return;
+        }
 
-            ReaderViewController last_reader = reader.Controller.IsVertical ? HorizontalReader.Controller : VerticalReader.Controller;
-            System.Diagnostics.Debug.Assert(last_reader != null);
+        System.Diagnostics.Debug.Assert(reader.IsCurrentReader);
+        System.Diagnostics.Debug.Assert(!last_reader.IsCurrentReader);
 
-            if (last_reader == null)
-            {
-                return;
-            }
+        double page = last_reader.PageSource;
+        float zoom = Math.Min(100f, last_reader.Zoom);
 
-            System.Diagnostics.Debug.Assert(reader.Controller.IsCurrentReader);
-            System.Diagnostics.Debug.Assert(!last_reader.IsCurrentReader);
-
-            double page = last_reader.PageSource;
-            float zoom = Math.Min(100f, last_reader.Zoom);
-
-            await Utils.C0.WaitFor(() => reader.Controller.Loaded, 1000);
-            ReaderViewController.ScrollManager.BeginTransaction(reader.Controller, "RestoreStateAfterReaderSwitched")
-                .Zoom(zoom)
-                .Page(page)
-                .Commit();
-            await reader.Controller.UpdateImages(true);
-            ViewModel.UpdateReaderUI();
-            await last_reader.UpdateImages(false);
-        });
+        ReaderView.ScrollManager.BeginTransaction(reader, "RestoreStateAfterReaderSwitched")
+            .Zoom(zoom)
+            .Page(page)
+            .Commit();
+        reader.UpdateImages(true);
+        ViewModel.UpdateReaderUI();
+        last_reader.UpdateImages(false);
     }
 
     // Preview
@@ -442,7 +433,7 @@ internal sealed partial class ReaderPage : ReaderPageBase
         ViewModel.GridViewModeEnabled = false;
 
         ReaderView reader = GetReader();
-        ReaderViewController.ScrollManager.BeginTransaction(reader.Controller, "JumpToGridItem")
+        ReaderView.ScrollManager.BeginTransaction(reader, "JumpToGridItem")
             .Page(ctx.Page)
             .Commit();
     }

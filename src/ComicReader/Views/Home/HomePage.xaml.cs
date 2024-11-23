@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
+using ComicReader.Common;
 using ComicReader.Common.SimpleImageView;
 using ComicReader.Database;
 using ComicReader.DesignData;
@@ -34,7 +35,7 @@ internal sealed partial class HomePage : HomePageBase
 
     private readonly CancellationLock m_update_folder_lock = new();
     private readonly CancellationLock _updateLibraryLock = new();
-    private readonly Common.SimpleImageView.CancellationSession _updateLibrarySession = new();
+    private readonly CancellationSession _updateLibrarySession = new();
 
     public HomePage()
     {

@@ -8,6 +8,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 
+using ComicReader.Common;
 using ComicReader.Common.SimpleImageView;
 using ComicReader.Database;
 using ComicReader.DesignData;
@@ -235,7 +236,7 @@ internal sealed partial class SearchPage : SearchPageBase
     private List<Match> m_matches = new();
     private int m_match_index = 0;
     private readonly CancellationLock m_search_lock = new();
-    private readonly Common.SimpleImageView.CancellationSession _loadImageSession = new();
+    private readonly CancellationSession _loadImageSession = new();
     private string _keyword = "";
 
     public SearchPage()

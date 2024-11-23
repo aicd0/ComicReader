@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
@@ -57,9 +58,17 @@ internal static class ImageCacheDatabase
             }
         }
 
-        List<CacheRecord> records = new();
         lock (_lock)
         {
+            lock (_cacheRecordCache)
+            {
+                if (_cacheRecordCache.TryGetValue(cacheKey, out CacheRecord record))
+                {
+                    return record;
+                }
+            }
+
+            List<CacheRecord> records = new();
             using (SqliteCommand command = NewCommand())
             {
                 command.CommandText = $"SELECT {CACHE_TABLE_FIELD_WIDTH},{CACHE_TABLE_FIELD_HEIGHT}" +
@@ -76,45 +85,24 @@ internal static class ImageCacheDatabase
                     records.Add(record);
                 }
             }
-        }
-        System.Diagnostics.Debug.Assert(records.Count <= 1);
+            System.Diagnostics.Debug.Assert(records.Count <= 1);
 
-        if (records.Count == 0)
-        {
-            return null;
-        }
-        CacheRecord firstRecord = records[0];
-
-        lock (_cacheRecordCache)
-        {
-            _cacheRecordCache[cacheKey] = firstRecord;
-        }
-
-        return firstRecord;
-    }
-
-    private static void PutCacheRecord(string key, int width, int height, string entries, CacheRecord record)
-    {
-        string cacheKey = ToHashedKey(key);
-
-        lock (_cacheRecordCache)
-        {
-            _cacheRecordCache[cacheKey] = record;
-        }
-
-        lock (_lock)
-        {
-            using (SqliteCommand command = NewCommand())
+            if (records.Count == 0)
             {
-                command.CommandText = $"INSERT OR REPLACE INTO {CACHE_TABLE}({CACHE_TABLE_FIELD_KEY}," +
-                    $"{CACHE_TABLE_FIELD_WIDTH},{CACHE_TABLE_FIELD_HEIGHT},{CACHE_TABLE_FIELD_ENTRIES})" +
-                    $" VALUES(@key,@width,@height,@entries)";
-                command.Parameters.AddWithValue("@key", cacheKey);
-                command.Parameters.AddWithValue("@width", width);
-                command.Parameters.AddWithValue("@height", height);
-                command.Parameters.AddWithValue("@entries", entries);
-                command.ExecuteNonQuery();
+                return null;
             }
+            CacheRecord firstRecord = records[0];
+
+            lock (_cacheRecordCache)
+            {
+                if (_cacheRecordCache.TryGetValue(cacheKey, out CacheRecord record))
+                {
+                    return record;
+                }
+                _cacheRecordCache[cacheKey] = firstRecord;
+            }
+
+            return firstRecord;
         }
     }
 
@@ -168,10 +156,11 @@ internal static class ImageCacheDatabase
         private readonly string _key;
         private readonly int _width;
         private readonly int _height;
-        private readonly Dictionary<string, string> _entries;
+        private readonly ConcurrentDictionary<string, string> _entries;
         private bool _updated;
 
-        public double AspectRatio => (double)_width / _height;
+        public int Width => _width;
+        public int Height => _height;
 
         public CacheRecord(string key, int width, int height)
         {
@@ -189,7 +178,7 @@ internal static class ImageCacheDatabase
             _height = height;
             try
             {
-                _entries = JsonSerializer.Deserialize<Dictionary<string, string>>(cacheEntriesJson);
+                _entries = JsonSerializer.Deserialize<ConcurrentDictionary<string, string>>(cacheEntriesJson);
             }
             catch (Exception e)
             {
@@ -206,8 +195,36 @@ internal static class ImageCacheDatabase
                 return;
             }
 
-            string entries = JsonSerializer.Serialize(_entries);
-            PutCacheRecord(_key, _width, _height, entries, this);
+            string cacheKey = ToHashedKey(_key);
+
+            lock (_lock)
+            {
+                lock (_cacheRecordCache)
+                {
+                    if (_cacheRecordCache.TryGetValue(cacheKey, out CacheRecord record))
+                    {
+                        foreach (KeyValuePair<string, string> entry in record._entries)
+                        {
+                            _entries.TryAdd(entry.Key, entry.Value);
+                        }
+                    }
+                    _cacheRecordCache[cacheKey] = this;
+                }
+
+                string entries = JsonSerializer.Serialize(_entries);
+
+                using (SqliteCommand command = NewCommand())
+                {
+                    command.CommandText = $"INSERT OR REPLACE INTO {CACHE_TABLE}({CACHE_TABLE_FIELD_KEY}," +
+                        $"{CACHE_TABLE_FIELD_WIDTH},{CACHE_TABLE_FIELD_HEIGHT},{CACHE_TABLE_FIELD_ENTRIES})" +
+                        $" VALUES(@key,@width,@height,@entries)";
+                    command.Parameters.AddWithValue("@key", cacheKey);
+                    command.Parameters.AddWithValue("@width", _width);
+                    command.Parameters.AddWithValue("@height", _height);
+                    command.Parameters.AddWithValue("@entries", entries);
+                    command.ExecuteNonQuery();
+                }
+            }
         }
 
         public string GetEntry(string key)
@@ -221,7 +238,7 @@ internal static class ImageCacheDatabase
 
         public void PutEntry(string key, string entry)
         {
-            _entries.Add(key, entry);
+            _entries[key] = entry;
             _updated = true;
         }
 

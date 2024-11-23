@@ -267,12 +267,12 @@
                 <Setter Property="MinWidth" Value="0" />
             </Style>
 
-            <DataTemplate x:Key="VerticalReaderListViewItemTemplate" x:DataType="data:ReaderFrameViewModel">
-                <reader:ReaderFrame DataContext="{x:Bind}" />
+            <DataTemplate x:Key="VerticalReaderListViewItemTemplate" x:DataType="reader:ReaderFrameUIModel">
+                <reader:ReaderFrame />
             </DataTemplate>
 
-            <DataTemplate x:Key="HorizontalReaderListViewItemTemplate" x:DataType="data:ReaderFrameViewModel">
-                <reader:ReaderFrame DataContext="{x:Bind}" FlowDirection="LeftToRight" />
+            <DataTemplate x:Key="HorizontalReaderListViewItemTemplate" x:DataType="reader:ReaderFrameUIModel">
+                <reader:ReaderFrame FlowDirection="LeftToRight" />
             </DataTemplate>
 
             <ItemsPanelTemplate x:Key="VerticalReaderListViewItemPanelTemplate">
@@ -289,10 +289,11 @@
         x:Name="SvReader"
         HorizontalScrollBarVisibility="Auto"
         HorizontalScrollMode="Enabled"
-        Loaded="OnReaderScrollViewerLoaded"
+        Loaded="OnReaderScrollViewerLoadedOrUnloaded"
         MaxZoomFactor="100000"
         SizeChanged="OnReaderScrollViewerSizeChanged"
         Style="{StaticResource ReaderScrollViewerStyle}"
+        Unloaded="OnReaderScrollViewerLoadedOrUnloaded"
         ViewChanged="OnReaderScrollViewerViewChanged"
         ZoomMode="Enabled">
         <Grid
@@ -304,12 +305,13 @@
                 x:Name="LvReader"
                 VerticalAlignment="Top"
                 ContainerContentChanging="OnReaderContainerContentChanging"
-                ItemsSource="{x:Bind ControllerInternal.DataSource, Mode=OneWay}"
-                Loaded="OnReaderListViewLoaded"
+                ItemsSource="{x:Bind FrameUIModel, Mode=OneWay}"
+                Loaded="OnReaderListViewLoadedOrUnloaded"
                 PreviewKeyDown="OnReaderKeyDown"
                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                 ScrollViewer.VerticalScrollBarVisibility="Disabled"
-                SelectionMode="None" />
+                SelectionMode="None"
+                Unloaded="OnReaderListViewLoadedOrUnloaded" />
         </Grid>
     </ScrollViewer>
 

@@ -27,7 +27,7 @@ internal class ImageCacheManager
     private const int CACHE_ENTRY_RESOLUTION_SMALL = 100000;
     private static double s_rawPixelPerPixel = -1;
 
-    public static void LoadImage(CancellationSession.SessionToken token, IImageSource source,
+    public static void LoadImage(CancellationSession.IToken token, IImageSource source,
         double frameWidth, double frameHeight, StretchModeEnum stretchMode, IImageResultHandler handler)
     {
         if (token.IsCancellationRequested)
@@ -44,7 +44,8 @@ internal class ImageCacheManager
             cacheRecord = ImageCacheDatabase.GetCacheRecord(uniqueKey);
             if (cacheRecord != null)
             {
-                if (CalculateDesiredDimension(frameWidth, frameHeight, stretchMode, cacheRecord.AspectRatio, out int desiredWidth, out int desiredHeight))
+                double aspectRatio = (double)cacheRecord.Width / cacheRecord.Height;
+                if (CalculateDesiredDimension(frameWidth, frameHeight, stretchMode, aspectRatio, out int desiredWidth, out int desiredHeight))
                 {
                     string targetCacheEntryKey = CalculateTargetCacheEntry(desiredWidth * desiredHeight);
                     string entry = cacheRecord.GetEntry(targetCacheEntryKey);
@@ -240,7 +241,6 @@ internal class ImageCacheManager
 
     private static async Task<BitmapImage> TryLoadImageFromFile(StorageFile file)
     {
-        BitmapImage image = null;
         IRandomAccessStream stream = null;
         try
         {
@@ -250,9 +250,11 @@ internal class ImageCacheManager
         {
             Logger.E(TAG, "TryLoadImageFromFile", e);
         }
+
+        BitmapImage image = null;
         if (stream != null)
         {
-            try
+            using (stream)
             {
                 stream.Seek(0);
                 image = new BitmapImage();
@@ -266,17 +268,12 @@ internal class ImageCacheManager
                     Logger.E(TAG, "TryLoadImageFromFile", e);
                 }
             }
-            finally
-            {
-                stream.Dispose();
-            }
         }
         return image;
     }
 
     private static async Task<BitmapImage> TryLoadImageFromSource(IImageSource source)
     {
-        BitmapImage image = null;
         IRandomAccessStream stream = null;
         try
         {
@@ -286,9 +283,11 @@ internal class ImageCacheManager
         {
             Logger.E(TAG, "TryLoadImageFromSource", e);
         }
+
+        BitmapImage image = null;
         if (stream != null)
         {
-            try
+            using (stream)
             {
                 stream.Seek(0);
                 image = new BitmapImage();
@@ -301,10 +300,6 @@ internal class ImageCacheManager
                     image = null;
                     Logger.E(TAG, "TryLoadImageFromSource", e);
                 }
-            }
-            finally
-            {
-                stream.Dispose();
             }
         }
         return image;

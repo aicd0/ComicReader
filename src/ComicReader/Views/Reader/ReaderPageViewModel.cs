@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
+using ComicReader.Common.SimpleImageView;
 using ComicReader.Database;
 using ComicReader.DesignData;
 using ComicReader.Utils;
@@ -13,17 +14,12 @@ using ComicReader.Utils.Lifecycle;
 using ComicReader.Views.Base;
 using ComicReader.Views.Navigation;
 
-using Microsoft.UI.Xaml.Media.Imaging;
-
 namespace ComicReader.Views.Reader;
 
 internal class ReaderPageViewModel : BaseViewModel
 {
     private ComicData _comic;
-    private readonly CancellationLock _loadComicLock = new();
     private volatile bool _updatingProgress = false;
-    private readonly CancellationSession _frameInfoLoaderSession = new();
-    private readonly TaskQueue _frameInfoLoaderQueue = new("LoadFrameInfo");
 
     public MutableLiveData<ReaderStatusEnum> ReaderStatusLiveData { get; } = new(ReaderStatusEnum.Loading);
 
@@ -54,12 +50,6 @@ internal class ReaderPageViewModel : BaseViewModel
         }
     }
 
-    public override void OnPause()
-    {
-        base.OnPause();
-        _frameInfoLoaderSession.Next();
-    }
-
     public void SetReaderSettings(ReaderSettingDataModel settings)
     {
         _readerSettingsLiveData.Emit(settings);
@@ -85,84 +75,75 @@ internal class ReaderPageViewModel : BaseViewModel
             return;
         }
 
-        await _loadComicLock.LockAsync(async delegate (CancellationLock.Token token)
+        if (comic == null)
         {
-            if (comic == null)
+            ReaderStatusLiveData.Emit(ReaderStatusEnum.Error);
+            return;
+        }
+
+        ReaderStatusLiveData.Emit(ReaderStatusEnum.Loading);
+
+        verticalReader.Reset();
+        horizontalReader.Reset();
+
+        ReaderView reader = page.GetReader();
+        System.Diagnostics.Debug.Assert(reader != null);
+
+        reader.SetInitialPageLoadedHandler(delegate
+        {
+            ReaderStatusLiveData.Emit(ReaderStatusEnum.Working);
+            page.UpdatePage(reader);
+            page.BottomTileShow();
+            page.BottomTileHide(5000);
+        });
+
+        _comic = comic;
+
+        if (!_comic.IsExternal)
+        {
+            // Mark as read.
+            _comic.SetAsStarted();
+
+            // Add to history
+            await HistoryDataManager.Add(_comic.Id, _comic.Title1, true);
+
+            // Update image files.
+            TaskException result = await _comic.UpdateImages(reload: true);
+            if (!result.Successful())
             {
+                page.Log("Failed to load images of '" + _comic.Location + "'. " + result.ToString());
                 ReaderStatusLiveData.Emit(ReaderStatusEnum.Error);
                 return;
             }
+        }
 
-            ReaderStatusLiveData.Emit(ReaderStatusEnum.Loading);
+        // Load info.
+        await LoadComicInfo(page);
 
-            verticalReader.Controller.Reset();
-            horizontalReader.Controller.Reset();
+        // Load image frames.
+        if (!_comic.IsExternal)
+        {
+            // Set initial page.
+            reader.SetInitialPosition(_comic.LastPosition);
+        }
 
-            ReaderView reader = page.GetReader();
-            System.Diagnostics.Debug.Assert(reader != null);
+        var images = new List<IImageSource>();
+        for (int i = 0; i < _comic.ImageCount; ++i)
+        {
+            images.Add(new ComicImageSource(comic, i));
+        }
+        reader.StartLoadingImages(images);
 
-            reader.Controller.SetOnLoadedListener(() =>
-            {
-                ReaderStatusLiveData.Emit(ReaderStatusEnum.Working);
-                page.UpdatePage(reader);
-                page.BottomTileShow();
-                page.BottomTileHide(5000);
-            });
+        reader.DoFinalize();
 
-            _comic = comic;
-            verticalReader.Controller.Comic = _comic;
-            horizontalReader.Controller.Comic = _comic;
-
-            if (!_comic.IsExternal)
-            {
-                // Mark as read.
-                _comic.SetAsStarted();
-
-                // Add to history
-                await HistoryDataManager.Add(_comic.Id, _comic.Title1, true);
-
-                // Update image files.
-                TaskException result = await _comic.UpdateImages(reload: true);
-                if (!result.Successful())
-                {
-                    page.Log("Failed to load images of '" + _comic.Location + "'. " + result.ToString());
-                    ReaderStatusLiveData.Emit(ReaderStatusEnum.Error);
-                    return;
-                }
-            }
-
-            // Load info.
-            await LoadComicInfo(page);
-
-            // Load image frames.
-            if (!_comic.IsExternal)
-            {
-                // Set initial page.
-                reader.Controller.SetInitialPage(_comic.LastPosition);
-
-                // Load frames.
-                for (int i = 0; i < _comic.ImageAspectRatios.Count; ++i)
-                {
-                    await verticalReader.Controller.LoadFrame(i);
-                    await horizontalReader.Controller.LoadFrame(i);
-                }
-
-                // Refresh reader.
-                await reader.Controller.UpdateImages(true);
-            }
-
-            LoadImages(horizontalReader, verticalReader);
-            await reader.Controller.Finalize();
-
-            // Refresh reader.
-            await reader.Controller.UpdateImages(true);
-            page.UpdatePage(reader);
-        });
+        // Refresh reader.
+        reader.UpdateImages(true);
+        page.UpdatePage(reader);
     }
 
-    public void UpdateProgress(ReaderViewController reader, bool save)
+    public void UpdateProgress(ReaderView reader, bool save)
     {
-        double page = reader.PageSource;
+        double page = reader.CurrentPosition;
 
         if (page <= 0.0)
         {
@@ -266,32 +247,6 @@ internal class ReaderPageViewModel : BaseViewModel
         return GetAbility<INavigationPageAbility>();
     }
 
-    private void LoadImages(ReaderView horizontalReader, ReaderView verticalReader)
-    {
-        CancellationSession.Token token = _frameInfoLoaderSession.Next();
-
-        var tokens = new List<ImageLoader.Token>();
-        ComicData comic = _comic; // Stores locally.
-        var save_timer = new Utils.Stopwatch();
-
-        for (int i = 0; i < comic.ImageCount; ++i)
-        {
-            int index = i; // Stores locally.
-            tokens.Add(new ImageLoader.Token
-            {
-                SessionToken = token,
-                Comic = comic,
-                Index = index,
-                Callback = new FrameInfoLoaderCallback(comic, horizontalReader, verticalReader, index, save_timer)
-            });
-        }
-
-        save_timer.Start();
-        new ImageLoader.Transaction(tokens)
-            .SetQueue(_frameInfoLoaderQueue)
-            .Commit();
-    }
-
     private void LoadComicTag(ReaderPage page)
     {
         if (_comic == null)
@@ -320,69 +275,6 @@ internal class ReaderPageViewModel : BaseViewModel
         }
 
         page.Shared.ComicTags = new_collection;
-    }
-
-    private class FrameInfoLoaderCallback : ImageLoader.ICallback
-    {
-        private readonly ReaderView _horizontalReader;
-        private readonly ReaderView _verticalReader;
-        private readonly int _index;
-        private readonly ComicData _comic;
-        private readonly Stopwatch _saveTimer;
-
-        public FrameInfoLoaderCallback(ComicData comic, ReaderView horizontalReader, ReaderView verticalReader, int index, Stopwatch saveTimer)
-        {
-            _horizontalReader = horizontalReader;
-            _verticalReader = verticalReader;
-            _index = index;
-            _comic = comic;
-            _saveTimer = saveTimer;
-        }
-
-        public void OnSuccess(BitmapImage image)
-        {
-            // Save image aspect ratio info.
-            double image_aspect_ratio;
-            if (image.PixelWidth <= 0 || image.PixelHeight <= 0)
-            {
-                image_aspect_ratio = -1;
-            }
-            else
-            {
-                image_aspect_ratio = (double)image.PixelWidth / image.PixelHeight;
-            }
-
-            Utils.C0.Run(async delegate
-            {
-                if (_index < _comic.ImageAspectRatios.Count)
-                {
-                    _comic.ImageAspectRatios[_index] = image_aspect_ratio;
-                }
-                else
-                {
-                    // Normally image aspect ratio items will be added one by one.
-                    // In some cases (like corrupted images), few indices will be skipped.
-                    while (_index > _comic.ImageAspectRatios.Count)
-                    {
-                        _comic.ImageAspectRatios.Add(-1);
-                        await _verticalReader.Controller.LoadFrame(_comic.ImageAspectRatios.Count - 1);
-                        await _horizontalReader.Controller.LoadFrame(_comic.ImageAspectRatios.Count - 1);
-                    }
-
-                    _comic.ImageAspectRatios.Add(image_aspect_ratio);
-                }
-
-                await _verticalReader.Controller.LoadFrame(_index);
-                await _horizontalReader.Controller.LoadFrame(_index);
-
-                // Save for each 5 sec.
-                if (_saveTimer.LapSpan().TotalSeconds > 5.0 || _index == _comic.ImageCount - 1)
-                {
-                    _comic.SaveImageAspectRatios();
-                    _saveTimer.Lap();
-                }
-            });
-        }
     }
 
     public enum ReaderStatusEnum

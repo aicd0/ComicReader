@@ -4,7 +4,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -32,7 +31,6 @@ internal abstract class ComicData
     public int Progress { get; protected set; } = -1;
     public DateTimeOffset LastVisit { get; protected set; } = DateTimeOffset.MinValue;
     public double LastPosition { get; protected set; } = 0.0;
-    public List<double> ImageAspectRatios { get; private set; } = new List<double>();
     public string CoverFileCache { get; private set; } = "";
 
     // Foriegn fields.
@@ -81,7 +79,6 @@ internal abstract class ComicData
     private int ValueProgress => Progress;
     private DateTimeOffset ValueLastVisit => LastVisit;
     private double ValueLastPosition => LastPosition;
-    private string ValueImageAspectRatios => JsonSerializer.Serialize(ImageAspectRatios);
     private string ValueCoverFileCache => CoverFileCache;
 
     // Subscriptions.
@@ -123,7 +120,6 @@ internal abstract class ComicData
                     Field.Progress + "=@progress," +
                     Field.LastVisit + "=@last_visit," +
                     Field.LastPosition + "=@last_pos," +
-                    Field.ImageAspectRatios + "=@ratios," +
                     Field.CoverFileCache + "=@cover" +
                     " WHERE " + Field.Id + "=@id";
                 command.Parameters.AddWithValue("@id", Id);
@@ -136,7 +132,6 @@ internal abstract class ComicData
                 command.Parameters.AddWithValue("@progress", ValueProgress);
                 command.Parameters.AddWithValue("@last_visit", ValueLastVisit);
                 command.Parameters.AddWithValue("@last_pos", ValueLastPosition);
-                command.Parameters.AddWithValue("@ratios", ValueImageAspectRatios);
                 command.Parameters.AddWithValue("@cover", ValueCoverFileCache);
                 command.ExecuteNonQuery();
             }
@@ -282,25 +277,6 @@ internal abstract class ComicData
                 }
             });
         }, "SetAsRead");
-    }
-
-    public void SaveImageAspectRatios()
-    {
-        _ = Enqueue(delegate
-        {
-            return SaveNoLock(delegate
-            {
-                using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
-                {
-                    command.CommandText = "UPDATE " + SqliteDatabaseManager.ComicTable + " SET " +
-                        Field.ImageAspectRatios + "=@ratios" +
-                        " WHERE " + Field.Id + "=@id";
-                    command.Parameters.AddWithValue("@id", Id);
-                    command.Parameters.AddWithValue("@ratios", ValueImageAspectRatios);
-                    command.ExecuteNonQuery();
-                }
-            });
-        }, "SaveImageAspectRatios");
     }
 
     public void SetCoverFileCacheKey(string key)
@@ -596,7 +572,7 @@ internal abstract class ComicData
 
     private void From(long id, string title1, string title2, bool hidden,
         int rating, int progress, DateTimeOffset last_visit, double last_position,
-        List<double> image_aspect_ratios, string cover_file_cache, List<TagData> tags)
+        string cover_file_cache, List<TagData> tags)
     {
         Id = id;
         Title1 = title1;
@@ -606,7 +582,6 @@ internal abstract class ComicData
         Progress = progress;
         LastVisit = last_visit;
         LastPosition = last_position;
-        ImageAspectRatios = image_aspect_ratios;
         CoverFileCache = cover_file_cache;
         Tags = tags;
     }
@@ -678,8 +653,7 @@ internal abstract class ComicData
                 Field.Progress + "," +
                 Field.LastVisit + "," +
                 Field.LastPosition + "," +
-                Field.ImageAspectRatios + "," +
-                Field.CoverFileCache + ") VALUES (@type,@location,@title1,@title2,@hidden,@rating,@progress,@last_visit,@last_pos,@ratios,@cover);" +
+                Field.CoverFileCache + ") VALUES (@type,@location,@title1,@title2,@hidden,@rating,@progress,@last_visit,@last_pos,@cover);" +
                 "SELECT LAST_INSERT_ROWID();";
             command.Parameters.AddWithValue("@type", ValueType);
             command.Parameters.AddWithValue("@location", ValueLocation);
@@ -690,7 +664,6 @@ internal abstract class ComicData
             command.Parameters.AddWithValue("@progress", ValueProgress);
             command.Parameters.AddWithValue("@last_visit", ValueLastVisit);
             command.Parameters.AddWithValue("@last_pos", ValueLastPosition);
-            command.Parameters.AddWithValue("@ratios", ValueImageAspectRatios);
             command.Parameters.AddWithValue("@cover", ValueCoverFileCache);
             rowid = (long)command.ExecuteScalar();
         }
@@ -812,8 +785,7 @@ internal abstract class ComicData
         int progress = query.GetInt32(7);
         DateTimeOffset last_visit = query.GetDateTimeOffset(8);
         double last_position = query.GetDouble(9);
-        string image_aspect_ratios_serialized = query.GetString(10);
-        string extended_string_1 = query.GetString(11);
+        string coverFileCache = query.GetString(10);
 
         // Tags
         var tags = new List<TagData>();
@@ -855,19 +827,6 @@ internal abstract class ComicData
             }
         }
 
-        // ImageAspectRatios
-        bool reset_image_aspect_ratios = false;
-        var image_aspect_ratios = new List<double>();
-
-        try
-        {
-            image_aspect_ratios = JsonSerializer.Deserialize<List<double>>(image_aspect_ratios_serialized);
-        }
-        catch (JsonException)
-        {
-            reset_image_aspect_ratios = true;
-        }
-
         // Create an instance of ComicData.
         ComicData comic = FromDatabase(type, location);
         if (comic == null)
@@ -876,14 +835,7 @@ internal abstract class ComicData
         }
 
         comic.From(id, title1, title2, hidden, rating, progress,
-            last_visit, last_position, image_aspect_ratios,
-            extended_string_1, tags);
-
-        // Post-procedures.
-        if (reset_image_aspect_ratios)
-        {
-            comic.SaveImageAspectRatios();
-        }
+            last_visit, last_position, coverFileCache, tags);
 
         return comic;
     }
@@ -1173,7 +1125,6 @@ internal abstract class ComicData
         public const string Progress = "progress";
         public const string LastVisit = "last_visit";
         public const string LastPosition = "last_pos";
-        public const string ImageAspectRatios = "image_aspect_ratios";
         public const string CoverFileCache = "cover_file_name";
 
         // Field tag category.
