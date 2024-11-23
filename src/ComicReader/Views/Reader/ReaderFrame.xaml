@@ -13,15 +13,22 @@
         Loaded="OnFrameLoaded"
         SizeChanged="OnFrameSizeChanged">
         <Grid
-            Width="{x:Bind ViewModel.FrameWidth, Mode=OneWay}"
-            Height="{x:Bind ViewModel.FrameHeight, Mode=OneWay}"
-            Margin="{x:Bind ViewModel.FrameMargin, Mode=OneWay}">
+            Width="{x:Bind ViewModelNotNull.FrameWidth, Mode=OneWay}"
+            Height="{x:Bind ViewModelNotNull.FrameHeight, Mode=OneWay}"
+            Margin="{x:Bind ViewModelNotNull.FrameMargin, Mode=OneWay}">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <Image x:Name="ImageLeft" Grid.Column="0" />
-            <Image x:Name="ImageRight" Grid.Column="1" />
+            <Image
+                x:Name="ImageLeft"
+                Grid.Column="0"
+                Source="{x:Bind ViewModelNotNull.ImageLeft, Mode=OneWay}" />
+            <Image
+                x:Name="ImageRight"
+                Grid.Column="1"
+                Source="{x:Bind ViewModelNotNull.ImageRight, Mode=OneWay}" />
         </Grid>
     </Grid>
+
 </UserControl>

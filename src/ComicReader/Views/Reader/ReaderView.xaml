@@ -267,11 +267,11 @@
                 <Setter Property="MinWidth" Value="0" />
             </Style>
 
-            <DataTemplate x:Key="VerticalReaderListViewItemTemplate" x:DataType="reader:ReaderFrameUIModel">
+            <DataTemplate x:Key="VerticalReaderListViewItemTemplate" x:DataType="reader:ReaderFrameViewModel">
                 <reader:ReaderFrame />
             </DataTemplate>
 
-            <DataTemplate x:Key="HorizontalReaderListViewItemTemplate" x:DataType="reader:ReaderFrameUIModel">
+            <DataTemplate x:Key="HorizontalReaderListViewItemTemplate" x:DataType="reader:ReaderFrameViewModel">
                 <reader:ReaderFrame FlowDirection="LeftToRight" />
             </DataTemplate>
 
@@ -305,7 +305,7 @@
                 x:Name="LvReader"
                 VerticalAlignment="Top"
                 ContainerContentChanging="OnReaderContainerContentChanging"
-                ItemsSource="{x:Bind FrameUIModel, Mode=OneWay}"
+                ItemsSource="{x:Bind FrameDataSource, Mode=OneWay}"
                 Loaded="OnReaderListViewLoadedOrUnloaded"
                 PreviewKeyDown="OnReaderKeyDown"
                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
