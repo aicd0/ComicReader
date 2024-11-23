@@ -518,18 +518,19 @@ internal partial class ReaderView : UserControl
 
         if (args.InRecycleQueue)
         {
-            viewHolder.Bind(null);
+            _frameManager.RemoveFrame(args.ItemIndex);
             viewHolder.SetReadyStateChangeHandler(null);
+            viewHolder.Bind(null);
         }
         else
         {
             int index = args.ItemIndex;
-            viewHolder.Bind(item);
             viewHolder.SetReadyStateChangeHandler(delegate (FrameworkElement container, bool isReady)
             {
                 _frameManager.PutFrame(index, container, isReady);
-                Log($"FrameReadyChanged(i={index},ready={isReady})");
+                Log($"FrameReadyChanged(i={index},hash={container.GetHashCode()},ready={isReady})");
             });
+            viewHolder.Bind(item);
         }
     }
 
@@ -831,12 +832,6 @@ internal partial class ReaderView : UserControl
         return page;
     }
 
-    //
-    private ObservableCollection<ReaderFrameUIModel> GetUIModel()
-    {
-        return FrameUIModel;
-    }
-
     // Observer - Common
     public bool IsCurrentReader => _viewModel.ReaderSettingsLiveData.GetValue().IsVertical == IsVertical;
     public bool IsHorizontal => !IsVertical;
@@ -889,18 +884,18 @@ internal partial class ReaderView : UserControl
         }
 
         // Locate current frame using binary search.
-        if (GetUIModel().Count == 0)
+        if (FrameUIModel.Count == 0)
         {
             return false;
         }
 
         int begin = 0;
-        int end = GetUIModel().Count - 1;
+        int end = FrameUIModel.Count - 1;
 
         while (begin < end)
         {
             int i = (begin + end + 1) / 2;
-            ReaderFrameUIModel item = GetUIModel()[i];
+            ReaderFrameUIModel item = FrameUIModel[i];
             FrameOffsetData offsets = FrameOffsets(i);
 
             if (offsets == null)
@@ -918,7 +913,7 @@ internal partial class ReaderView : UserControl
             }
         }
 
-        ReaderFrameUIModel frame = GetUIModel()[begin];
+        ReaderFrameUIModel frame = FrameUIModel[begin];
         FrameOffsetData frame_offsets = FrameOffsets(begin);
 
         if (frame_offsets == null)
@@ -980,12 +975,12 @@ internal partial class ReaderView : UserControl
     // Observer - Scroll Viewer
     private ZoomCoefficientResult ZoomCoefficient(int frame_idx)
     {
-        if (GetUIModel().Count == 0)
+        if (FrameUIModel.Count == 0)
         {
             return null;
         }
 
-        if (frame_idx < 0 || frame_idx >= GetUIModel().Count)
+        if (frame_idx < 0 || frame_idx >= FrameUIModel.Count)
         {
             System.Diagnostics.Debug.Assert(false);
             return null;
@@ -993,8 +988,8 @@ internal partial class ReaderView : UserControl
 
         double viewport_width = ThisScrollViewer.ViewportWidth;
         double viewport_height = ThisScrollViewer.ViewportHeight;
-        double frame_width = GetUIModel()[frame_idx].FrameWidth;
-        double frame_height = GetUIModel()[frame_idx].FrameHeight;
+        double frame_width = FrameUIModel[frame_idx].FrameWidth;
+        double frame_height = FrameUIModel[frame_idx].FrameHeight;
 
         double minValue = Math.Min(viewport_width, viewport_height);
         minValue = Math.Min(minValue, frame_width);
@@ -1183,11 +1178,11 @@ internal partial class ReaderView : UserControl
             return null;
         }
 
-        if (frame < 0 || frame >= GetUIModel().Count)
+        if (frame < 0 || frame >= FrameUIModel.Count)
         {
             return null;
         }
-        ReaderFrameUIModel item = GetUIModel()[frame];
+        ReaderFrameUIModel item = FrameUIModel[frame];
 
         GeneralTransform frame_transform = container.TransformToVisual(ThisListView);
         Point frame_position = frame_transform.TransformPoint(new Point(0.0, 0.0));
@@ -1237,9 +1232,9 @@ internal partial class ReaderView : UserControl
 
     private void ResetFrames()
     {
-        for (int i = 0; i < GetUIModel().Count; ++i)
+        for (int i = 0; i < FrameUIModel.Count; ++i)
         {
-            ReaderFrameUIModel item = GetUIModel()[i];
+            ReaderFrameUIModel item = FrameUIModel[i];
             item.PageL = -1;
             item.PageR = -1;
             item.ImageL.ImageSet = false;
@@ -1419,17 +1414,17 @@ internal partial class ReaderView : UserControl
     /// <param name="disable_animation"></param>
     private bool MoveFrameInternal(int increment, bool disable_animation, string reason)
     {
-        if (GetUIModel().Count == 0)
+        if (FrameUIModel.Count == 0)
         {
             return false;
         }
 
         int frame = PageToFrame(PageFinal, out _, out _);
         frame += increment;
-        frame = Math.Min(GetUIModel().Count - 1, frame);
+        frame = Math.Min(FrameUIModel.Count - 1, frame);
         frame = Math.Max(0, frame);
 
-        double page = GetUIModel()[frame].Page;
+        double page = FrameUIModel[frame].Page;
         float? zoom = Zoom > 101f ? 100f : (float?)null;
 
         return SetScrollViewer2(zoom, page, disable_animation, reason);
@@ -1670,7 +1665,7 @@ internal partial class ReaderView : UserControl
         {
             int page_new = ctx.pageToApplyZoom.HasValue ? (int)ctx.pageToApplyZoom.Value : Page;
             frame_new = PageToFrame(page_new, out _, out _);
-            if (frame_new < 0 || frame_new >= GetUIModel().Count)
+            if (frame_new < 0 || frame_new >= FrameUIModel.Count)
             {
                 frame_new = 0;
             }
@@ -1693,7 +1688,7 @@ internal partial class ReaderView : UserControl
         else
         {
             int frame = PageToFrame(Page, out _, out _);
-            if (frame < 0 || frame >= GetUIModel().Count)
+            if (frame < 0 || frame >= FrameUIModel.Count)
             {
                 frame = 0;
             }
@@ -1790,7 +1785,7 @@ internal partial class ReaderView : UserControl
 
     private void AdjustParallelOffset()
     {
-        if (GetUIModel().Count == 0)
+        if (FrameUIModel.Count == 0)
         {
             return;
         }
@@ -1811,12 +1806,12 @@ internal partial class ReaderView : UserControl
             movement_forward = Math.Min(space, image_center_to_screen_center);
         }
 
-        if (_frameManager.GetContainer(GetUIModel().Count - 1) != null)
+        if (_frameManager.GetContainer(FrameUIModel.Count - 1) != null)
         {
             double space = PaddingEndFinal * ZoomFactorFinal - (ExtentParallelLengthFinal
                 - ParallelOffsetFinal - ViewportParallelLength);
             double image_center_offset = ExtentParallelLengthFinal - (PaddingEndFinal
-                + FrameParallelLength(GetUIModel().Count - 1) * 0.5) * ZoomFactorFinal;
+                + FrameParallelLength(FrameUIModel.Count - 1) * 0.5) * ZoomFactorFinal;
             double image_center_to_screen_center = screen_center_offset - image_center_offset;
             movement_backward = Math.Min(space, image_center_to_screen_center);
         }
@@ -1866,7 +1861,7 @@ internal partial class ReaderView : UserControl
             return;
         }
 
-        if (GetUIModel().Count == 0)
+        if (FrameUIModel.Count == 0)
         {
             return;
         }
@@ -1900,7 +1895,7 @@ internal partial class ReaderView : UserControl
         double padding_end = PaddingEndFinal;
         do
         {
-            int frame_idx = GetUIModel().Count - 1;
+            int frame_idx = FrameUIModel.Count - 1;
 
             if (_frameManager.GetContainer(frame_idx) == null)
             {
@@ -2107,13 +2102,13 @@ internal partial class ReaderView : UserControl
 
     public void DoFinalize()
     {
-        for (int i = GetUIModel().Count - 1; i >= 0; --i)
+        for (int i = FrameUIModel.Count - 1; i >= 0; --i)
         {
-            ReaderFrameUIModel frame = GetUIModel()[i];
+            ReaderFrameUIModel frame = FrameUIModel[i];
 
             if (frame.PageL == -1 && frame.PageR == -1)
             {
-                GetUIModel().RemoveAt(i);
+                FrameUIModel.RemoveAt(i);
             }
             else
             {

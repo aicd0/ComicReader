@@ -48,6 +48,16 @@ internal class ReaderFrameManager
         }
     }
 
+    public void RemoveFrame(int index)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(index);
+
+        if (_frameInfoDictionary.Remove(index))
+        {
+            DecreaseReadyIndex(index);
+        }
+    }
+
     public FrameworkElement GetContainer(int index)
     {
         if (_frameInfoDictionary.TryGetValue(index, out FrameInfo frameInfo))

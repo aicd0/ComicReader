@@ -68,7 +68,7 @@ internal sealed partial class ReaderFrame : UserControl
     private ReaderFrameUIModel UIModel { get; set; }
     private FrameworkElement Container => MainFrame;
 
-    private bool _isReady = false;
+    private bool? _isReady = null;
 
     public ReaderFrame()
     {
@@ -93,7 +93,7 @@ internal sealed partial class ReaderFrame : UserControl
             ImageRight.Source = model.ImageR.Image;
         }
 
-        _isReady = false;
+        _isReady = null;
         DispatchReadyStateChangeEvent();
     }
 
