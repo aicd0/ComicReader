@@ -16,6 +16,7 @@ using ComicReader.Common.Debug;
 using ComicReader.Common.KVStorage;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Common.SimpleImageView;
+using ComicReader.Common.Threading;
 using ComicReader.Database;
 using ComicReader.DesignData;
 using ComicReader.Router;
@@ -519,7 +520,7 @@ internal sealed partial class ReaderPage : BasePage
                     return;
                 }
 
-                _ = Threading.RunInMainThread(delegate
+                _ = MainThreadUtils.RunInMainThread(delegate
                 {
                     BottomTileHide(0);
                 });

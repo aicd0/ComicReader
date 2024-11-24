@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Common.Debug;
+using ComicReader.Common.Threading;
 using ComicReader.Native;
 
 using Microsoft.UI;
@@ -67,7 +68,7 @@ internal class ImageCacheManager
         int sourceHeight = 0;
 
         BitmapImage image = null;
-        Threading.RunInMainThreadAsync(async delegate
+        MainThreadUtils.RunInMainThreadAsync(async delegate
         {
             if (token.IsCancellationRequested)
             {
@@ -139,7 +140,7 @@ internal class ImageCacheManager
             cacheRecord.Save();
         }
 
-        _ = Threading.RunInMainThread(delegate
+        _ = MainThreadUtils.RunInMainThread(delegate
         {
             if (token.IsCancellationRequested)
             {

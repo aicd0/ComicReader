@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 
+using ComicReader.Common.Threading;
+
 namespace ComicReader.Common.SimpleImageView;
 
 internal static class SimpleImageLoader

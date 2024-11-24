@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Common.SimpleImageView;
+using ComicReader.Common.Threading;
 using ComicReader.Database;
 using ComicReader.DesignData;
 using ComicReader.Router;
@@ -84,7 +85,7 @@ internal sealed partial class HomePage : BasePage
 
     private void OnComicDataUpdated()
     {
-        Threading.RunInMainThreadAsync(UpdateLibrary).Wait();
+        MainThreadUtils.RunInMainThreadAsync(UpdateLibrary).Wait();
     }
 
     public async Task UpdateLibrary()

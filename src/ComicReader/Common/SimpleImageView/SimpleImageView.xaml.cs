@@ -3,6 +3,8 @@
 
 using System;
 
+using ComicReader.Common.Threading;
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;

@@ -18,6 +18,7 @@ using System.Threading.Tasks;
 using ComicReader.Common;
 using ComicReader.Common.Debug;
 using ComicReader.Common.SimpleImageView;
+using ComicReader.Common.Threading;
 using ComicReader.Database;
 
 using Microsoft.UI.Input;
@@ -271,7 +272,7 @@ internal partial class ReaderView : UserControl
             TaskQueue.DefaultQueue.Enqueue("ReaderLoadImageInfo", delegate
             {
                 ImageInfoManager.ImageInfo imageInfo = ImageInfoManager.GetImageInfo(image);
-                _ = Threading.RunInMainThread(delegate
+                _ = MainThreadUtils.RunInMainThread(delegate
                 {
                     if (token.IsCancellationRequested)
                     {

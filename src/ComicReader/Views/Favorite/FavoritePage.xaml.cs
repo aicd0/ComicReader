@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Common.Lifecycle;
+using ComicReader.Common.Threading;
 using ComicReader.Database;
 using ComicReader.DesignData;
 using ComicReader.Router;

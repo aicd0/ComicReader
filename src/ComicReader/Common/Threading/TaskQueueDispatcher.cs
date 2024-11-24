@@ -3,7 +3,7 @@
 
 using System;
 
-namespace ComicReader.Common.SimpleImageView;
+namespace ComicReader.Common.Threading;
 
 internal sealed class TaskQueueDispatcher : IDispatcher
 {

@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Common.Debug;
+using ComicReader.Common.Threading;
 
 using Microsoft.Data.Sqlite;
 

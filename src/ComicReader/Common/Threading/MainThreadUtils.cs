@@ -8,9 +8,9 @@ using CommunityToolkit.WinUI;
 
 using Microsoft.UI.Dispatching;
 
-namespace ComicReader.Common;
+namespace ComicReader.Common.Threading;
 
-internal class Threading
+internal class MainThreadUtils
 {
     public static async Task RunInMainThread(Action callback)
     {

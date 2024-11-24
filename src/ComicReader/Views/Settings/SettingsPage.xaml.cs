@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Common.Debug;
+using ComicReader.Common.Threading;
 using ComicReader.Database;
 using ComicReader.Router;
 using ComicReader.Views.Base;
@@ -384,7 +385,7 @@ internal sealed partial class SettingsPage : BasePage
 
     private void OnComicDataUpdated()
     {
-        Threading.RunInMainThreadAsync(async delegate
+        MainThreadUtils.RunInMainThreadAsync(async delegate
         {
             UpdateRescanStatus();
             await UpdateStatistis();
@@ -491,7 +492,7 @@ internal sealed partial class SettingsPage : BasePage
         {
             ClearCache();
             string size = GetCacheSize();
-            _ = Threading.RunInMainThread(() =>
+            _ = MainThreadUtils.RunInMainThread(() =>
             {
                 Shared.IsClearingCache = false;
                 Shared.CacheSize = size;
@@ -509,7 +510,7 @@ internal sealed partial class SettingsPage : BasePage
         TaskQueue.DefaultQueue.Enqueue("CalculateCacheSize", delegate
         {
             string size = GetCacheSize();
-            _ = Threading.RunInMainThread(() =>
+            _ = MainThreadUtils.RunInMainThread(() =>
             {
                 Shared.CacheSize = size;
             });

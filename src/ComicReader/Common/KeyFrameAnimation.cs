@@ -7,6 +7,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
+using ComicReader.Common.Threading;
+
 namespace ComicReader.Common;
 
 internal class KeyFrameAnimation
@@ -50,7 +52,7 @@ internal class KeyFrameAnimation
         double startValue = StartValue;
         double duration = Duration;
         int animator = Interlocked.Increment(ref _currentAnimator);
-        _ = Threading.RunInMainThreadAsync(async delegate
+        _ = MainThreadUtils.RunInMainThreadAsync(async delegate
         {
             long startTick = DateTime.Now.Ticks;
             double startTime = 0.0;

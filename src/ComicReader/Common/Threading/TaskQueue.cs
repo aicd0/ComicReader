@@ -9,28 +9,7 @@ using System.Threading.Tasks;
 
 using ComicReader.Common.Debug;
 
-namespace ComicReader.Common;
-
-public enum TaskException
-{
-    Cancellation,
-    EmptySet,
-    Failure,
-    FileCorrupted,
-    FileNotFound,
-    IncorrectPassword,
-    InvalidParameters,
-    ItemExists,
-    MaximumExceeded,
-    NameCollision,
-    NoPermission,
-    NotImplemented,
-    NotSupported,
-    StopIteration,
-    Success,
-    Unknown,
-    UnknownEnum,
-}
+namespace ComicReader.Common.Threading;
 
 public class TaskQueue
 {

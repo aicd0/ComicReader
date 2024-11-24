@@ -5,6 +5,7 @@ using System;
 
 using ComicReader.Common;
 using ComicReader.Common.Lifecycle;
+using ComicReader.Common.Threading;
 using ComicReader.Database;
 using ComicReader.Router;
 using ComicReader.Views.Base;

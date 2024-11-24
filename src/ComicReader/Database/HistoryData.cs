@@ -9,6 +9,7 @@ using System.Xml.Serialization;
 
 using ComicReader.Common;
 using ComicReader.Common.Lifecycle;
+using ComicReader.Common.Threading;
 
 namespace ComicReader.Database;
 
