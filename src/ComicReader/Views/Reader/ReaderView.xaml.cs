@@ -357,10 +357,12 @@ internal partial class ReaderView : UserControl
             _uiStateUpdatedOrientation = false;
             bool isVertical = _isVertical;
             SvReader.VerticalScrollBarVisibility = isVertical ? ScrollBarVisibility.Visible : ScrollBarVisibility.Hidden;
+            SvReader.HorizontalScrollBarVisibility = isVertical ? ScrollBarVisibility.Hidden : ScrollBarVisibility.Visible;
             SvReader.VerticalScrollMode = isVertical ? ScrollMode.Enabled : ScrollMode.Disabled;
-            GReader.HorizontalAlignment = isVertical ? HorizontalAlignment.Center : HorizontalAlignment.Stretch;
             GReader.VerticalAlignment = isVertical ? VerticalAlignment.Top : VerticalAlignment.Center;
-            LvReader.VerticalAlignment = isVertical ? VerticalAlignment.Top : VerticalAlignment.Stretch;
+            GReader.HorizontalAlignment = isVertical ? HorizontalAlignment.Center : HorizontalAlignment.Center;
+            LvReader.VerticalAlignment = isVertical ? VerticalAlignment.Top : VerticalAlignment.Center;
+            LvReader.HorizontalAlignment = isVertical ? HorizontalAlignment.Center : HorizontalAlignment.Center;
             LvReader.ItemContainerStyle = (Style)Resources[isVertical ? "VerticalReaderListViewItemStyle" : "HorizontalReaderListViewItemStyle"];
             LvReader.ItemTemplate = (DataTemplate)Resources[isVertical ? "VerticalReaderListViewItemTemplate" : "HorizontalReaderListViewItemTemplate"];
             LvReader.ItemsPanel = (ItemsPanelTemplate)Resources[isVertical ? "VerticalReaderListViewItemPanelTemplate" : "HorizontalReaderListViewItemPanelTemplate"];

@@ -147,6 +147,7 @@ internal sealed partial class ReaderPage : BasePage
     //
 
     private bool? _isFavorite = null;
+    private ReaderSettingDataModel _readerSettingModel = AppDataRepository.GetReaderSetting();
 
     private bool _buttomTileShowed = false;
     private bool _buttomTileHold = false;
@@ -255,7 +256,7 @@ internal sealed partial class ReaderPage : BasePage
             }
             GetMainPageAbility().SetIcon(new SymbolIconSource { Symbol = Symbol.Pictures });
 
-            ReaderSettingDataModel readerSetting = _readerSettingsLiveData.GetValue();
+            ReaderSettingDataModel readerSetting = _readerSettingModel;
             VerticalReader.SetVisibility(readerSetting.IsVertical);
             HorizontalReader.SetVisibility(!readerSetting.IsVertical);
             ReaderView reader = GetReader();
@@ -292,7 +293,7 @@ internal sealed partial class ReaderPage : BasePage
         base.OnResume();
         ObserveData();
         GetNavigationPageAbility().SetGridViewMode(false);
-        GetNavigationPageAbility().SetReaderSettings(ReaderSettingsLiveData.GetValue());
+        GetNavigationPageAbility().SetReaderSettings(_readerSettingModel);
         UpdateReaderUI();
 
         ComicData comic = GetComic();
@@ -343,8 +344,8 @@ internal sealed partial class ReaderPage : BasePage
 
         GetNavigationPageAbility().RegisterReaderSettingsChangedEventHandler(this, delegate (ReaderSettingDataModel setting)
         {
-            ReaderSettingDataModel lastSetting = ReaderSettingsLiveData.GetValue();
-            SetReaderSettings(setting);
+            ReaderSettingDataModel lastSetting = _readerSettingModel;
+            _readerSettingModel = setting;
             HorizontalReader.SetFlowDirection(setting.IsLeftToRight);
             UpdateReaderUI();
 
@@ -353,17 +354,9 @@ internal sealed partial class ReaderPage : BasePage
                 OnReaderSwitched();
             }
 
-            if (lastSetting.IsContinuous != setting.IsContinuous)
-            {
-                ReaderView reader = GetReader();
-                reader.SetIsContinuous(setting.IsContinuous);
-            }
-
-            if (lastSetting.PageArrangement != setting.PageArrangement)
-            {
-                ReaderView reader = GetReader();
-                reader.SetPageArrangement(setting.PageArrangement);
-            }
+            ReaderView reader = GetReader();
+            reader.SetIsContinuous(setting.IsContinuous);
+            reader.SetPageArrangement(setting.PageArrangement);
         });
 
         IsExternalComicLiveData.ObserveSticky(this, delegate (bool isExternal)
@@ -379,8 +372,6 @@ internal sealed partial class ReaderPage : BasePage
             SetIsFavorite(isFavorite);
         });
 
-        GetNavigationPageAbility().RegisterReaderSettingsChangedEventHandler(this, SetReaderSettings);
-
         ReaderStatusLiveData.Observe(this, delegate (ReaderStatusEnum status)
         {
             string readerStatusText = "";
@@ -393,23 +384,6 @@ internal sealed partial class ReaderPage : BasePage
             TbReaderStatus.Text = readerStatusText;
             TbReaderStatus.Visibility = readerStatusText.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
             UpdateReaderUI();
-        });
-
-        GridViewVisibleLiveData.Observe(this, delegate (bool visible)
-        {
-            GGridView.IsHitTestVisible = visible;
-            GGridView.Opacity = visible ? 1 : 0;
-            GMainSection.Visibility = visible ? Visibility.Collapsed : Visibility.Visible;
-        });
-
-        VerticalReaderVisibleLiveData.Observe(this, delegate (bool visible)
-        {
-            VerticalReader.SetVisibility(visible);
-        });
-
-        HorizontalReaderVisibleLiveData.Observe(this, delegate (bool visible)
-        {
-            HorizontalReader.SetVisibility(visible);
         });
     }
 
@@ -433,7 +407,7 @@ internal sealed partial class ReaderPage : BasePage
 
     public ReaderView GetReader()
     {
-        if (ReaderSettingsLiveData.GetValue().IsVertical)
+        if (_readerSettingModel.IsVertical)
         {
             return VerticalReader;
         }
@@ -708,18 +682,6 @@ internal sealed partial class ReaderPage : BasePage
 
     public MutableLiveData<ReaderStatusEnum> ReaderStatusLiveData { get; } = new(ReaderStatusEnum.Loading);
 
-    private readonly MutableLiveData<bool> _gridViewVisibleLiveData = new();
-    public LiveData<bool> GridViewVisibleLiveData => _gridViewVisibleLiveData;
-
-    private readonly MutableLiveData<bool> _verticalReaderVisibleLiveData = new(false);
-    public LiveData<bool> VerticalReaderVisibleLiveData => _verticalReaderVisibleLiveData;
-
-    private readonly MutableLiveData<bool> _horizontalReaderVisibleLiveData = new();
-    public LiveData<bool> HorizontalReaderVisibleLiveData => _horizontalReaderVisibleLiveData;
-
-    private readonly MutableLiveData<ReaderSettingDataModel> _readerSettingsLiveData = new(AppDataRepository.GetReaderSetting());
-    public LiveData<ReaderSettingDataModel> ReaderSettingsLiveData => _readerSettingsLiveData;
-
     private readonly MutableLiveData<bool> _isExternalComicLiveData = new(true);
     public LiveData<bool> IsExternalComicLiveData => _isExternalComicLiveData;
 
@@ -735,22 +697,20 @@ internal sealed partial class ReaderPage : BasePage
         }
     }
 
-    public void SetReaderSettings(ReaderSettingDataModel settings)
-    {
-        _readerSettingsLiveData.Emit(settings);
-    }
-
     public void UpdateReaderUI()
     {
         bool isWorking = ReaderStatusLiveData.GetValue() == ReaderStatusEnum.Working;
         bool previewVisible = isWorking && _gridViewModeEnabled;
         bool readerVisible = isWorking && !previewVisible;
-        bool verticalReaderVisible = readerVisible && ReaderSettingsLiveData.GetValue().IsVertical;
+        bool verticalReaderVisible = readerVisible && _readerSettingModel.IsVertical;
         bool horizontalReaderVisible = readerVisible && !verticalReaderVisible;
 
-        _gridViewVisibleLiveData.Emit(previewVisible);
-        _verticalReaderVisibleLiveData.Emit(verticalReaderVisible);
-        _horizontalReaderVisibleLiveData.Emit(horizontalReaderVisible);
+        GGridView.IsHitTestVisible = previewVisible;
+        GGridView.Opacity = previewVisible ? 1 : 0;
+        GMainSection.Visibility = previewVisible ? Visibility.Collapsed : Visibility.Visible;
+
+        VerticalReader.SetVisibility(verticalReaderVisible);
+        HorizontalReader.SetVisibility(horizontalReaderVisible);
     }
 
     public async Task LoadComic(ComicData comic)
