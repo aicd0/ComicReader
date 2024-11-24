@@ -565,37 +565,51 @@ internal partial class ReaderView : UserControl
 
         int begin = 0;
         int end = FrameDataSource.Count - 1;
+        FrameOffsetData frameOffsets = null;
 
-        while (begin < end)
+        while (true)
         {
             int i = (begin + end + 1) / 2;
-            ReaderFrameViewModel item = FrameDataSource[i];
             FrameOffsetData offsets = FrameOffsets(i);
 
             if (offsets == null)
             {
-                return false;
+                end = i - 1;
+                if (begin >= end)
+                {
+                    frameOffsets = null;
+                    break;
+                }
+                continue;
             }
 
             if (offsets.ParallelBegin < offset)
             {
                 begin = i;
+                frameOffsets = offsets;
+                if (begin >= end)
+                {
+                    break;
+                }
             }
             else
             {
                 end = i - 1;
+                if (begin >= end)
+                {
+                    frameOffsets ??= FrameOffsets(begin);
+                    break;
+                }
             }
         }
 
-        ReaderFrameViewModel frame = FrameDataSource[begin];
-        FrameOffsetData frame_offsets = FrameOffsets(begin);
-
-        if (frame_offsets == null)
+        if (frameOffsets == null)
         {
             return false;
         }
 
-        // Convert offset to page.
+        ReaderFrameViewModel frame = FrameDataSource[begin];
+
         int pageMin;
         int pageMax;
 
@@ -621,14 +635,14 @@ internal partial class ReaderView : UserControl
 
         double page;
 
-        if (offset < frame_offsets.ParallelCenter)
+        if (offset < frameOffsets.ParallelCenter)
         {
-            double pageFrac = (offset - frame_offsets.ParallelBegin) / (frame_offsets.ParallelCenter - frame_offsets.ParallelBegin);
+            double pageFrac = (offset - frameOffsets.ParallelBegin) / (frameOffsets.ParallelCenter - frameOffsets.ParallelBegin);
             page = pageMin - 0.5 + pageFrac * 0.5;
         }
         else
         {
-            double pageFrac = (offset - frame_offsets.ParallelCenter) / (frame_offsets.ParallelEnd - frame_offsets.ParallelCenter);
+            double pageFrac = (offset - frameOffsets.ParallelCenter) / (frameOffsets.ParallelEnd - frameOffsets.ParallelCenter);
             page = pageMax + pageFrac * 0.5;
         }
 
@@ -975,6 +989,8 @@ internal partial class ReaderView : UserControl
 
     private int PageToFrame(int page, out bool left_side, out int neighbor)
     {
+        DebugUtils.Assert(int.IsPositive(page));
+
         switch (_pageArrangement)
         {
             case PageArrangementType.Single:
@@ -1005,7 +1021,7 @@ internal partial class ReaderView : UserControl
 
     private int ToDiscretePage(double pageContinuous)
     {
-        return (int)Math.Round(pageContinuous);
+        return Math.Max(1, (int)Math.Round(pageContinuous));
     }
 
     private void ConvertOffset(ref double? toHorizontal, ref double? toVertical, double? fromParallel, double? fromPerpendicular)
@@ -1254,11 +1270,15 @@ internal partial class ReaderView : UserControl
 
     private Tuple<double, double> PageOffset(double page)
     {
-        int page_int = (int)page;
-        page_int = Math.Max(page_int, 1);
-        page_int = Math.Min(page_int, PageCount);
+        DebugUtils.Assert(double.IsFinite(page));
 
-        int frame = PageToFrame(page_int, out _, out int neighbor);
+        int pageInt = (int)page;
+        page = Math.Min(page, PageCount);
+        pageInt = Math.Min(pageInt, PageCount);
+        page = Math.Max(page, 1);
+        pageInt = Math.Max(pageInt, 1);
+
+        int frame = PageToFrame(pageInt, out _, out int neighbor);
         FrameOffsetData offsets = FrameOffsets(frame);
 
         if (offsets == null)
@@ -1266,43 +1286,44 @@ internal partial class ReaderView : UserControl
             return null;
         }
 
-        double perpendicular_offset = offsets.PerpendicularCenter * ZoomFactorFinal - ViewportPerpendicularLength * 0.5;
+        double perpendicularOffset = offsets.PerpendicularCenter * ZoomFactorFinal - ViewportPerpendicularLength * 0.5;
 
-        int page_min;
-        int page_max;
+        int pageMin;
+        int pageMax;
 
         if (neighbor == -1)
         {
-            page_min = page_max = page_int;
+            pageMin = pageMax = pageInt;
         }
         else
         {
-            page_min = Math.Min(page_int, neighbor);
-            page_max = Math.Max(page_int, neighbor);
+            pageMin = Math.Min(pageInt, neighbor);
+            pageMax = Math.Max(pageInt, neighbor);
         }
 
-        double parallel_offset;
+        double parallelOffset;
 
-        if (page_min <= page && page <= page_max)
+        if (pageMin <= page && page <= pageMax)
         {
-            parallel_offset = offsets.ParallelCenter;
+            parallelOffset = offsets.ParallelCenter;
         }
-        else if (page < page_min)
+        else if (page < pageMin)
         {
-            double page_frac = (0.5 - page_min + page) * 2.0;
-            parallel_offset = offsets.ParallelBegin + page_frac * (offsets.ParallelCenter - offsets.ParallelBegin);
+            double page_frac = (0.5 - pageMin + page) * 2.0;
+            parallelOffset = offsets.ParallelBegin + page_frac * (offsets.ParallelCenter - offsets.ParallelBegin);
         }
         else
         {
-            double page_frac = (page - page_max) * 2.0;
-            parallel_offset = offsets.ParallelCenter + page_frac * (offsets.ParallelEnd - offsets.ParallelCenter);
+            double page_frac = (page - pageMax) * 2.0;
+            parallelOffset = offsets.ParallelCenter + page_frac * (offsets.ParallelEnd - offsets.ParallelCenter);
         }
 
-        parallel_offset = parallel_offset * ZoomFactorFinal - ViewportParallelLength * 0.5;
-        var result = new Tuple<double, double>(parallel_offset, perpendicular_offset);
+        parallelOffset = parallelOffset * ZoomFactorFinal - ViewportParallelLength * 0.5;
+        var result = new Tuple<double, double>(parallelOffset, perpendicularOffset);
 
         DebugUtils.Assert(double.IsFinite(result.Item1));
         DebugUtils.Assert(double.IsFinite(result.Item2));
+
         return result;
     }
 
@@ -1655,7 +1676,7 @@ internal partial class ReaderView : UserControl
         double? horizontal_offset = _isVertical ? null : parallel_offset;
         double? vertical_offset = _isVertical ? parallel_offset : null;
 
-        return SetScrollViewerInternal(new SetScrollViewerContext
+        return SetScrollViewerInternal(new ScrollRequest
         {
             zoom = zoom,
             horizontalOffset = horizontal_offset,
@@ -1664,10 +1685,10 @@ internal partial class ReaderView : UserControl
         }, reason);
     }
 
-    private bool SetScrollViewer2(float? zoom, double? page, bool disable_animation, string reason)
+    private bool SetScrollViewer2(float? zoom, double? page, bool disableAnimation, string reason)
     {
-        double? horizontal_offset = null;
-        double? vertical_offset = null;
+        double? horizontalOffset = null;
+        double? verticalOffset = null;
 
         if (page.HasValue)
         {
@@ -1685,16 +1706,16 @@ internal partial class ReaderView : UserControl
                 return true;
             }
 
-            ConvertOffset(ref horizontal_offset, ref vertical_offset, offsets.Item1, offsets.Item2);
+            ConvertOffset(ref horizontalOffset, ref verticalOffset, offsets.Item1, offsets.Item2);
         }
 
-        return SetScrollViewerInternal(new SetScrollViewerContext
+        return SetScrollViewerInternal(new ScrollRequest
         {
             zoom = zoom,
             pageToApplyZoom = page,
-            horizontalOffset = horizontal_offset,
-            verticalOffset = vertical_offset,
-            disableAnimation = disable_animation,
+            horizontalOffset = horizontalOffset,
+            verticalOffset = verticalOffset,
+            disableAnimation = disableAnimation,
         }, reason);
     }
 
@@ -1707,7 +1728,7 @@ internal partial class ReaderView : UserControl
         string reason
     )
     {
-        return SetScrollViewerInternal(new SetScrollViewerContext
+        return SetScrollViewerInternal(new ScrollRequest
         {
             zoom = zoom,
             zoomType = zoomType,
@@ -1717,59 +1738,96 @@ internal partial class ReaderView : UserControl
         }, reason);
     }
 
-    private bool SetScrollViewerInternal(SetScrollViewerContext ctx, string reason)
+    private bool SetScrollViewerInternal(ScrollRequest request, string reason)
     {
         if (!_isLoaded)
         {
             return false;
         }
 
-        DebugUtils.Assert(float.IsFinite(ctx.zoom ?? 0));
-        DebugUtils.Assert(double.IsFinite(ctx.horizontalOffset ?? 0));
-        DebugUtils.Assert(double.IsFinite(ctx.verticalOffset ?? 0));
+        DebugUtils.Assert(float.IsFinite(request.zoom ?? 0));
+        DebugUtils.Assert(!float.IsNegative(request.zoom ?? 0));
+        DebugUtils.Assert(double.IsFinite(request.horizontalOffset ?? 0));
+        DebugUtils.Assert(double.IsFinite(request.verticalOffset ?? 0));
 
-        Log("Jump", "ParamIn:"
+        Log("Jump", "Request:"
             + $" Reason={reason}"
-            + $",Z={ctx.zoom}"
-            + $",H={ctx.horizontalOffset}"
-            + $",V={ctx.verticalOffset}"
-            + $",D={ctx.disableAnimation}");
+            + $",P={request.pageToApplyZoom}"
+            + $",Z={request.zoom}"
+            + $",H={request.horizontalOffset}"
+            + $",V={request.verticalOffset}"
+            + $",D={request.disableAnimation}");
 
-        SetScrollViewerZoom(ctx, out float? zoom_out);
+        var context = new ScrollContext
+        {
+            ZoomPercentage = request.zoom,
+            DisableAnimation = request.disableAnimation,
+            HorizontalOffset = request.horizontalOffset,
+            VerticalOffset = request.verticalOffset,
+        };
 
-        DebugUtils.Assert(float.IsFinite(zoom_out ?? 0));
-        DebugUtils.Assert(float.IsFinite(ctx.zoom ?? 0));
-        DebugUtils.Assert(double.IsFinite(ctx.horizontalOffset ?? 0));
-        DebugUtils.Assert(double.IsFinite(ctx.verticalOffset ?? 0));
+        SetScrollViewerZoom(request, context);
 
-        Log("Jump", "ParamOut:"
-            + $" Z={zoom_out}"
-            + $",H={ctx.horizontalOffset}"
-            + $",V={ctx.verticalOffset}"
-            + $",D={ctx.disableAnimation}"
-            + $",ZN={ctx.zoom}");
+        DebugUtils.Assert(float.IsFinite(context.ZoomPercentage ?? 0));
+        DebugUtils.Assert(!float.IsNegative(context.ZoomPercentage ?? 0));
+        DebugUtils.Assert(float.IsFinite(context.ZoomFactor ?? 0));
+        DebugUtils.Assert(!float.IsNegative(context.ZoomFactor ?? 0));
+        DebugUtils.Assert(double.IsFinite(context.HorizontalOffset ?? 0));
+        DebugUtils.Assert(double.IsFinite(context.VerticalOffset ?? 0));
 
-        if (!ChangeView(zoom_out, ctx.horizontalOffset, ctx.verticalOffset, ctx.disableAnimation))
+        if (context.HorizontalOffset.HasValue)
+        {
+            context.HorizontalOffset = Math.Max(0, context.HorizontalOffset.Value);
+        }
+        if (context.VerticalOffset.HasValue)
+        {
+            context.VerticalOffset = Math.Max(0, context.VerticalOffset.Value);
+        }
+
+        Log("Jump", "ParamAfterZoom:"
+            + $" Z={context.ZoomPercentage}"
+            + $",ZF={context.ZoomFactor}"
+            + $",H={context.HorizontalOffset}"
+            + $",V={context.VerticalOffset}"
+            + $",D={context.DisableAnimation}");
+
+        AdjustParallelOffset(context);
+
+        DebugUtils.Assert(float.IsFinite(context.ZoomPercentage ?? 0));
+        DebugUtils.Assert(!float.IsNegative(context.ZoomPercentage ?? 0));
+        DebugUtils.Assert(float.IsFinite(context.ZoomFactor ?? 0));
+        DebugUtils.Assert(!float.IsNegative(context.ZoomFactor ?? 0));
+        DebugUtils.Assert(double.IsFinite(context.HorizontalOffset ?? 0));
+        DebugUtils.Assert(double.IsFinite(context.VerticalOffset ?? 0));
+
+        Log("Jump", "ParamAfterFix:"
+            + $" Z={context.ZoomPercentage}"
+            + $",ZF={context.ZoomFactor}"
+            + $",H={context.HorizontalOffset}"
+            + $",V={context.VerticalOffset}"
+            + $",D={context.DisableAnimation}");
+
+        if (!ChangeView(context.ZoomFactor, context.HorizontalOffset, context.VerticalOffset, context.DisableAnimation))
         {
             return false;
         }
 
-        if (ctx.pageToApplyZoom.HasValue)
+        if (request.pageToApplyZoom.HasValue)
         {
-            SCCurrentPageFinal = ToDiscretePage(ctx.pageToApplyZoom.Value);
+            SCCurrentPageFinal = ToDiscretePage(request.pageToApplyZoom.Value);
         }
 
-        Zoom = ctx.zoom.Value;
+        Zoom = context.ZoomPercentage.Value;
         return true;
     }
 
-    private void SetScrollViewerZoom(SetScrollViewerContext ctx, out float? zoom_factor)
+    private void SetScrollViewerZoom(ScrollRequest request, ScrollContext context)
     {
         // Calculate zoom coefficient prediction.
         ZoomCoefficientResult zoom_coefficient_new;
         int frame_new;
         {
-            int page_new = ctx.pageToApplyZoom.HasValue ? (int)ctx.pageToApplyZoom.Value : CurrentPageInt;
+            int page_new = request.pageToApplyZoom.HasValue ? (int)request.pageToApplyZoom.Value : CurrentPageInt;
             frame_new = PageToFrame(page_new, out _, out _);
             if (frame_new < 0 || frame_new >= FrameDataSource.Count)
             {
@@ -1779,17 +1837,17 @@ internal partial class ReaderView : UserControl
             zoom_coefficient_new = ZoomCoefficient(frame_new);
             if (zoom_coefficient_new == null)
             {
-                ctx.zoom = Zoom;
-                zoom_factor = null;
+                context.ZoomPercentage = Zoom;
+                context.ZoomFactor = null;
                 return;
             }
         }
 
         // Calculate zoom in percentage.
         double zoom;
-        if (ctx.zoom.HasValue)
+        if (request.zoom.HasValue)
         {
-            zoom = ctx.zoom.Value;
+            zoom = request.zoom.Value;
         }
         else
         {
@@ -1812,7 +1870,7 @@ internal partial class ReaderView : UserControl
             zoom = (float)(ZoomFactorFinal / zoom_coefficient.Min());
         }
 
-        if (ctx.zoomType == ZoomType.CenterCrop)
+        if (request.zoomType == ZoomType.CenterCrop)
         {
             zoom *= zoom_coefficient_new.Max() / zoom_coefficient_new.Min();
         }
@@ -1820,33 +1878,33 @@ internal partial class ReaderView : UserControl
         double maxZoom = Math.Max(MAX_ZOOM, 100 * zoom_coefficient_new.Max() / zoom_coefficient_new.Min());
         zoom = Math.Min(zoom, maxZoom);
         zoom = Math.Max(zoom, MIN_ZOOM);
-        ctx.zoom = (float)zoom;
+        context.ZoomPercentage = (float)zoom;
 
         // A zoom factor vary less than 1% will be ignored.
         float zoom_factor_new = (float)(zoom * zoom_coefficient_new.Min());
 
         if (Math.Abs(zoom_factor_new / ZoomFactorFinal - 1.0f) <= 0.01f)
         {
-            zoom_factor = null;
+            context.ZoomFactor = null;
             return;
         }
 
-        zoom_factor = zoom_factor_new;
+        context.ZoomFactor = zoom_factor_new;
 
         // Apply zooming.
-        ctx.horizontalOffset ??= HorizontalOffsetFinal;
-        ctx.verticalOffset ??= VerticalOffsetFinal;
+        context.HorizontalOffset ??= HorizontalOffsetFinal;
+        context.VerticalOffset ??= VerticalOffsetFinal;
 
-        ctx.horizontalOffset += ThisScrollViewer.ViewportWidth * 0.5;
-        ctx.horizontalOffset *= (float)zoom_factor / ZoomFactorFinal;
-        ctx.horizontalOffset -= ThisScrollViewer.ViewportWidth * 0.5;
+        context.HorizontalOffset += ThisScrollViewer.ViewportWidth * 0.5;
+        context.HorizontalOffset *= (float)context.ZoomFactor / ZoomFactorFinal;
+        context.HorizontalOffset -= ThisScrollViewer.ViewportWidth * 0.5;
 
-        ctx.verticalOffset += ThisScrollViewer.ViewportHeight * 0.5;
-        ctx.verticalOffset *= (float)zoom_factor / ZoomFactorFinal;
-        ctx.verticalOffset -= ThisScrollViewer.ViewportHeight * 0.5;
+        context.VerticalOffset += ThisScrollViewer.ViewportHeight * 0.5;
+        context.VerticalOffset *= (float)context.ZoomFactor / ZoomFactorFinal;
+        context.VerticalOffset -= ThisScrollViewer.ViewportHeight * 0.5;
 
-        ctx.horizontalOffset = Math.Max(0.0, ctx.horizontalOffset.Value);
-        ctx.verticalOffset = Math.Max(0.0, ctx.verticalOffset.Value);
+        context.HorizontalOffset = Math.Max(0.0, context.HorizontalOffset.Value);
+        context.VerticalOffset = Math.Max(0.0, context.VerticalOffset.Value);
     }
 
     private bool ChangeView(float? zoom_factor, double? horizontal_offset, double? vertical_offset, bool disable_animation)
@@ -1886,68 +1944,82 @@ internal partial class ReaderView : UserControl
         return true;
     }
 
-    private void AdjustParallelOffset()
+    private void AdjustParallelOffset(ScrollContext context)
     {
         if (FrameDataSource.Count == 0)
         {
             return;
         }
 
-        double? movement_forward = null;
-        double? movement_backward = null;
-        double screen_center_offset = ViewportParallelLength * 0.5 + ParallelOffsetFinal;
-
-        if (_frameManager.GetContainer(0) != null)
+        double zoom = context.ZoomFactor ?? ZoomFactorFinal;
+        double parallelOffset;
+        if (_isVertical)
         {
-            double space = PaddingStartFinal * ZoomFactorFinal - ParallelOffsetFinal;
-            double image_center_offset = (PaddingStartFinal + FrameParallelLength(0) * 0.5) * ZoomFactorFinal;
-            double image_center_to_screen_center = image_center_offset - screen_center_offset;
-            movement_forward = Math.Min(space, image_center_to_screen_center);
-        }
-
-        if (_frameManager.GetContainer(FrameDataSource.Count - 1) != null)
-        {
-            double space = PaddingEndFinal * ZoomFactorFinal - (ExtentParallelLengthFinal
-                - ParallelOffsetFinal - ViewportParallelLength);
-            double image_center_offset = ExtentParallelLengthFinal - (PaddingEndFinal
-                + FrameParallelLength(FrameDataSource.Count - 1) * 0.5) * ZoomFactorFinal;
-            double image_center_to_screen_center = screen_center_offset - image_center_offset;
-            movement_backward = Math.Min(space, image_center_to_screen_center);
-        }
-
-        if (movement_forward.HasValue && movement_backward.HasValue)
-        {
-            if (movement_forward.Value >= 0 && movement_backward.Value >= 0)
+            if (!context.VerticalOffset.HasValue)
             {
                 return;
             }
-
-            if (movement_forward.Value <= 0 && movement_backward.Value <= 0)
-            {
-                return;
-            }
-
-            if (movement_forward.Value + movement_backward.Value >= 0)
-            {
-                return;
-            }
-        }
-
-        if (movement_forward.HasValue && movement_forward.Value > 0)
-        {
-            double parallel_offset = ParallelOffsetFinal + movement_forward.Value;
-            ChangeView(null, HorizontalVal(parallel_offset, null),
-                VerticalVal(parallel_offset, null), false);
-        }
-        else if (movement_backward.HasValue && movement_backward.Value > 0)
-        {
-            double parallel_offset = ParallelOffsetFinal - movement_backward.Value;
-            ChangeView(null, HorizontalVal(parallel_offset, null),
-                VerticalVal(parallel_offset, null), false);
+            parallelOffset = context.VerticalOffset.Value;
         }
         else
         {
+            if (!context.HorizontalOffset.HasValue)
+            {
+                return;
+            }
+            parallelOffset = context.HorizontalOffset.Value;
+        }
+
+        double screenCenterOffset = ViewportParallelLength * 0.5 + parallelOffset;
+
+        double? movementForward = null;
+        FrameworkElement firstContainer = _frameManager.GetContainer(0);
+        if (firstContainer != null)
+        {
+            double frameParallelLength = _isVertical ? firstContainer.ActualHeight : firstContainer.ActualWidth;
+            double space = PaddingStartFinal * zoom - parallelOffset;
+            double imageCenterOffset = (PaddingStartFinal + frameParallelLength * 0.5) * zoom;
+            double imageCenterToScreenCenter = imageCenterOffset - screenCenterOffset;
+            movementForward = Math.Min(space, imageCenterToScreenCenter);
+        }
+
+        double? movementBackward = null;
+        FrameworkElement lastContainer = _frameManager.GetContainer(FrameDataSource.Count - 1);
+        if (lastContainer != null)
+        {
+            double frameParallelLength = _isVertical ? lastContainer.ActualHeight : lastContainer.ActualWidth;
+            double extentParallelLength = ExtentParallelLength * zoom / ZoomFactor;
+            double space = PaddingEndFinal * zoom - (extentParallelLength - parallelOffset - ViewportParallelLength);
+            double imageCenterOffset = extentParallelLength - (PaddingEndFinal + frameParallelLength * 0.5) * zoom;
+            double imageCenterToScreenCenter = screenCenterOffset - imageCenterOffset;
+            movementBackward = Math.Min(space, imageCenterToScreenCenter);
+        }
+
+        double movement = 0.0;
+        bool canMove = false;
+        if (movementForward.HasValue && movementForward.Value > 0)
+        {
+            canMove = true;
+            movement += movementForward.Value;
+        }
+        if (movementBackward.HasValue && movementBackward.Value > 0)
+        {
+            canMove = true;
+            movement -= movementBackward.Value;
+        }
+
+        if (!canMove)
+        {
             return;
+        }
+
+        if (_isVertical)
+        {
+            context.VerticalOffset += movement;
+        }
+        else
+        {
+            context.HorizontalOffset += movement;
         }
 
         m_manipulation_disabled = true;
@@ -2125,14 +2197,7 @@ internal partial class ReaderView : UserControl
             return false;
         }
 
-        if (!_isVisible)
-        {
-            // Clear images.
-            UpdateImages();
-            return false;
-        }
-
-        if (!UpdatePage(false))
+        if (!UpdatePage(true))
         {
             return false;
         }
@@ -2201,5 +2266,35 @@ internal partial class ReaderView : UserControl
     private double FinalVal(double val)
     {
         return val / ZoomFactor * ZoomFactorFinal;
+    }
+
+    public enum ZoomType
+    {
+        CenterInside,
+        CenterCrop,
+    }
+
+    public class ScrollRequest
+    {
+        // Zoom
+        public float? zoom = null;
+        public ZoomType zoomType = ZoomType.CenterInside;
+        public double? pageToApplyZoom = null;
+
+        // Offset
+        public double? horizontalOffset = null;
+        public double? verticalOffset = null;
+
+        // Animation
+        public bool disableAnimation = false;
+    }
+
+    private class ScrollContext
+    {
+        public float? ZoomPercentage = null;
+        public float? ZoomFactor = null;
+        public double? HorizontalOffset = null;
+        public double? VerticalOffset = null;
+        public bool DisableAnimation = false;
     }
 }
