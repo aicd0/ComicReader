@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-using ComicReader.Utils;
+using ComicReader.Common;
 
 using Windows.Storage;
 using Windows.Storage.Pickers;
@@ -80,12 +80,12 @@ class SettingDataManager
 
     private static TaskException AddComicFolderNoLock(StorageFolder folder)
     {
-        if (!Utils.Storage.AllowAddToFutureAccessList())
+        if (!Storage.AllowAddToFutureAccessList())
         {
             return TaskException.MaximumExceeded;
         }
 
-        Utils.Storage.AddToFutureAccessList(folder);
+        Storage.AddToFutureAccessList(folder);
 
         string path = folder.Path;
         bool folder_added = false;
@@ -116,8 +116,8 @@ class SettingDataManager
         await XmlDatabaseManager.WaitLock();
         _ = XmlDatabase.Settings.ComicFolders.Remove(path);
 
-        string token = Utils.StringUtils.TokenFromPath(path);
-        Utils.Storage.RemoveFromFutureAccessList(token);
+        string token = StringUtils.TokenFromPath(path);
+        Storage.RemoveFromFutureAccessList(token);
         XmlDatabaseManager.ReleaseLock();
 
         if (final)

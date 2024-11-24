@@ -3,8 +3,6 @@
 
 using System;
 
-using ComicReader.Utils;
-
 namespace ComicReader.Common.SimpleImageView;
 
 internal sealed class TaskQueueDispatcher : SimpleImageView.IDispatcher

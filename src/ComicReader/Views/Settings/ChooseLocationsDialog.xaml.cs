@@ -4,6 +4,7 @@
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
+using ComicReader.Common;
 using ComicReader.Database;
 using ComicReader.DesignData;
 
@@ -29,7 +30,7 @@ public sealed partial class ChooseLocationsDialog : ContentDialog
     {
         FolderItemDataSource.Clear();
 
-        if (Utils.Storage.AllowAddToFutureAccessList())
+        if (Storage.AllowAddToFutureAccessList())
         {
             FolderItemDataSource.Add(new FolderItemViewModel
             {
@@ -58,7 +59,7 @@ public sealed partial class ChooseLocationsDialog : ContentDialog
 
     private void ListViewLoaded(object sender, RoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             await Update();
         });
@@ -67,7 +68,7 @@ public sealed partial class ChooseLocationsDialog : ContentDialog
     private void AddNewPointerPressed(object sender, PointerRoutedEventArgs e)
     {
         // Add a folder.
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             if (!IsPrimaryButtonEnabled)
             {
@@ -95,7 +96,7 @@ public sealed partial class ChooseLocationsDialog : ContentDialog
     private void RemoveFolderPointerPressed(object sender, PointerRoutedEventArgs e)
     {
         // remove a folder
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             if (!IsPrimaryButtonEnabled)
             {

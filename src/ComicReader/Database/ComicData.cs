@@ -7,7 +7,8 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-using ComicReader.Utils;
+using ComicReader.Common;
+using ComicReader.Common.Debug;
 
 using Microsoft.Data.Sqlite;
 
@@ -93,13 +94,13 @@ internal abstract class ComicData
     {
         get
         {
-            _defaultTagsString ??= Utils.StringResourceProvider.GetResourceString("DefaultTags");
+            _defaultTagsString ??= StringResourceProvider.GetResourceString("DefaultTags");
             return _defaultTagsString;
         }
     }
 
     // Locks.
-    private static readonly Utils.TaskQueue _tableQueue = new("ComicData");
+    private static readonly TaskQueue _tableQueue = new("ComicData");
     private static int _pendingUpdateTaskCount = 0;
 
     private bool _imageUpdated = false;
@@ -306,7 +307,7 @@ internal abstract class ComicData
         Title2 = "";
         Tags.Clear();
 
-        var sub_paths = Location.Split(Utils.ArchiveAccess.FileSeperator).ToList();
+        var sub_paths = Location.Split(ArchiveAccess.FileSeperator).ToList();
         var tags = new List<string>();
 
         foreach (string path in sub_paths)
@@ -320,7 +321,7 @@ internal abstract class ComicData
 
             if (Type != ComicType.Folder)
             {
-                sub_tags[sub_tags.Count - 1] = Utils.StringUtils.DisplayNameFromFilename(sub_tags[sub_tags.Count - 1]);
+                sub_tags[sub_tags.Count - 1] = StringUtils.DisplayNameFromFilename(sub_tags[sub_tags.Count - 1]);
             }
 
             tags.AddRange(sub_tags);
@@ -351,7 +352,7 @@ internal abstract class ComicData
 
         foreach (TagData tag in Tags)
         {
-            text += tag.Name + ": " + Utils.StringUtils.Join("/", tag.Tags) + "\n";
+            text += tag.Name + ": " + StringUtils.Join("/", tag.Tags) + "\n";
         }
 
         return text;
@@ -390,12 +391,12 @@ internal abstract class ComicData
             if (!title1_set && (name == "title1" || name == "title" || name == "t1" || name == "to"))
             {
                 title1_set = true;
-                Title1 = Utils.StringUtils.Join("/", tag_data.Tags);
+                Title1 = StringUtils.Join("/", tag_data.Tags);
             }
             else if (!title2_set && (name == "title2" || name == "t2"))
             {
                 title2_set = true;
-                Title2 = Utils.StringUtils.Join("/", tag_data.Tags);
+                Title2 = StringUtils.Join("/", tag_data.Tags);
             }
             else
             {
@@ -932,13 +933,13 @@ internal abstract class ComicData
         // Get all subfolders in root folders.
         var loc_in_lib = new List<string>();
         var loc_ignore = new List<string>();
-        var watch = new Utils.Stopwatch();
+        var watch = new Stopwatch();
         watch.Start();
 
         foreach (string folder_path in root_folders)
         {
             Log("Scanning folder '" + folder_path + "'");
-            StorageFolder root_folder = await Utils.Storage.TryGetFolder(folder_path);
+            StorageFolder root_folder = await Storage.TryGetFolder(folder_path);
 
             // Remove unreachable folders from database.
             if (root_folder == null)
@@ -950,7 +951,7 @@ internal abstract class ComicData
                 continue;
             }
 
-            var ctx = new Utils.StorageItemSearchEngine.SearchContext(folder_path, Utils.StorageItemSearchEngine.PathType.Folder);
+            var ctx = new SearchContext(folder_path, PathType.Folder);
 
             while (await ctx.Search(1024))
             {
@@ -965,12 +966,12 @@ internal abstract class ComicData
 
                 foreach (string file_path in ctx.Files)
                 {
-                    string filename = Utils.StringUtils.ItemNameFromPath(file_path);
-                    string extension = Utils.StringUtils.ExtensionFromFilename(filename).ToLower();
+                    string filename = StringUtils.ItemNameFromPath(file_path);
+                    string extension = StringUtils.ExtensionFromFilename(filename).ToLower();
 
                     if (Common.AppInfoProvider.IsSupportedImageExtension(extension))
                     {
-                        string loc = Utils.StringUtils.ParentLocationFromLocation(file_path);
+                        string loc = StringUtils.ParentLocationFromLocation(file_path);
 
                         if (!loc_scanned_dict.ContainsKey(loc))
                         {
@@ -1010,10 +1011,10 @@ internal abstract class ComicData
                 var queue = new List<UpdateItemInfo>();
 
                 // Get folders added.
-                var loc_added = Utils.C3<string, string, string>.Except(
+                var loc_added = C3<string, string, string>.Except(
                     loc_scanned, loc_exist,
-                    Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
-                    new Utils.C1<string>.DefaultEqualityComparer()).ToList();
+                    StringUtils.UniquePath, StringUtils.UniquePath,
+                    new C1<string>.DefaultEqualityComparer()).ToList();
 
                 foreach (string loc in loc_added)
                 {
@@ -1027,10 +1028,10 @@ internal abstract class ComicData
 
                 if (!lazy)
                 {
-                    var loc_kept = Utils.C3<string, string, string>.Intersect(
+                    var loc_kept = C3<string, string, string>.Intersect(
                         loc_scanned, loc_exist,
-                        Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
-                        new Utils.C1<string>.DefaultEqualityComparer()).ToList();
+                        StringUtils.UniquePath, StringUtils.UniquePath,
+                        new C1<string>.DefaultEqualityComparer()).ToList();
 
                     foreach (string loc in loc_kept)
                     {
@@ -1060,9 +1061,9 @@ internal abstract class ComicData
         }
 
         // Get removed folders.
-        var loc_removed = Utils.C3<string, string, string>.Except(loc_exist, loc_in_lib,
-            Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
-            new Utils.C1<string>.DefaultEqualityComparer()).ToList();
+        var loc_removed = C3<string, string, string>.Except(loc_exist, loc_in_lib,
+            StringUtils.UniquePath, StringUtils.UniquePath,
+            new C1<string>.DefaultEqualityComparer()).ToList();
 
         await TransactionBlock(delegate
         {
@@ -1074,7 +1075,7 @@ internal abstract class ComicData
 
                 foreach (string base_loc in loc_ignore)
                 {
-                    if (Utils.StringUtils.FolderContain(base_loc, loc))
+                    if (StringUtils.FolderContain(base_loc, loc))
                     {
                         ignore = true;
                         break;

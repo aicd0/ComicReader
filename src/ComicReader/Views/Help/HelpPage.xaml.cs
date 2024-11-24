@@ -1,6 +1,7 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+using ComicReader.Common;
 using ComicReader.Router;
 using ComicReader.Views.Base;
 using ComicReader.Views.Main;
@@ -19,7 +20,7 @@ internal sealed partial class HelpPage : BasePage
     protected override void OnStart(PageBundle bundle)
     {
         base.OnStart(bundle);
-        GetMainPageAbility().SetTitle(Utils.StringResourceProvider.GetResourceString("Help"));
+        GetMainPageAbility().SetTitle(StringResourceProvider.GetResourceString("Help"));
         GetMainPageAbility().SetIcon(new SymbolIconSource() { Symbol = Symbol.Help });
     }
 

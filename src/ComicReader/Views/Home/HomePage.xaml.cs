@@ -11,7 +11,6 @@ using ComicReader.Common.SimpleImageView;
 using ComicReader.Database;
 using ComicReader.DesignData;
 using ComicReader.Router;
-using ComicReader.Utils;
 using ComicReader.Views.Base;
 using ComicReader.Views.Main;
 
@@ -48,7 +47,7 @@ internal sealed partial class HomePage : BasePage
         GetMainPageAbility().SetTitle("NewTab");
         GetMainPageAbility().SetIcon(new SymbolIconSource() { Symbol = Symbol.Document });
 
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             await Update();
         });
@@ -98,7 +97,7 @@ internal sealed partial class HomePage : BasePage
             }
 
             // Get recent visited comics.
-            var records = new Utils.FixedHeap<Tuple<long, DateTimeOffset>>(100,
+            var records = new FixedHeap<Tuple<long, DateTimeOffset>>(100,
                 (Tuple<long, DateTimeOffset> x, Tuple<long, DateTimeOffset> y) => { return x.Item2.CompareTo(y.Item2); });
 
             await ComicData.CommandBlock2(async delegate (SqliteCommand command)
@@ -152,7 +151,7 @@ internal sealed partial class HomePage : BasePage
             }
 
             // Save results.
-            Utils.C1<ComicItemViewModel>.UpdateCollection(ComicItemSource, comic_items,
+            C1<ComicItemViewModel>.UpdateCollection(ComicItemSource, comic_items,
                 (ComicItemViewModel x, ComicItemViewModel y) =>
                 x.Comic.Title == y.Comic.Title &&
                 x.Rating == y.Rating &&
@@ -230,7 +229,7 @@ internal sealed partial class HomePage : BasePage
                 {
                     OnItemTapped = OnFolderItemTapped,
                     OnRemoveClicked = FolderItemRemoveClick,
-                    Folder = Utils.StringUtils.ItemNameFromPath(path),
+                    Folder = StringUtils.ItemNameFromPath(path),
                     Path = path,
                     IsAddNew = false
                 };
@@ -239,7 +238,7 @@ internal sealed partial class HomePage : BasePage
             }
 
             XmlDatabaseManager.ReleaseLock();
-            Utils.C1<FolderItemViewModel>.UpdateCollection(FolderItemDataSource, new_folder_source, FolderItemViewModel.ContentEquals);
+            C1<FolderItemViewModel>.UpdateCollection(FolderItemDataSource, new_folder_source, FolderItemViewModel.ContentEquals);
         });
     }
 
@@ -310,7 +309,7 @@ internal sealed partial class HomePage : BasePage
 
     private void OnAddToFavoritesClicked(object sender, RoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
             item.IsFavorite = true;
@@ -320,7 +319,7 @@ internal sealed partial class HomePage : BasePage
 
     private void OnRemoveFromFavoritesClicked(object sender, RoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
             item.IsFavorite = false;
@@ -330,7 +329,7 @@ internal sealed partial class HomePage : BasePage
 
     private void OnHideComicClicked(object sender, RoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
             await item.Comic.SaveHiddenAsync(true);
@@ -341,7 +340,7 @@ internal sealed partial class HomePage : BasePage
 
     private void AddNewFolder()
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             if (!await SettingDataManager.AddComicFolderUsingPicker())
             {
@@ -375,7 +374,7 @@ internal sealed partial class HomePage : BasePage
 
     private void FolderItemRemoveClick(object sender, RoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             var item = (FolderItemViewModel)((MenuFlyoutItem)sender).DataContext;
             await SettingDataManager.RemoveComicFolder(item.Path, final: true);

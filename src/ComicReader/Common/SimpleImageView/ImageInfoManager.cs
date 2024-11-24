@@ -5,7 +5,7 @@ using System;
 using System.Drawing;
 using System.IO;
 
-using ComicReader.Utils;
+using ComicReader.Common.Debug;
 
 using Windows.Storage.Streams;
 

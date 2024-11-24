@@ -9,9 +9,10 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
+using ComicReader.Common;
+using ComicReader.Common.Debug;
 using ComicReader.Database;
 using ComicReader.Router;
-using ComicReader.Utils;
 using ComicReader.Views.Base;
 using ComicReader.Views.Main;
 
@@ -276,7 +277,7 @@ internal sealed partial class SettingsPage : BasePage
         base.OnResume();
         ComicData.OnUpdated += OnComicDataUpdated;
 
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             await Update();
         });
@@ -321,7 +322,7 @@ internal sealed partial class SettingsPage : BasePage
         {
             var encodings = new List<Tuple<string, int>>
             {
-                new(Utils.StringResourceProvider.GetResourceString("Default"), -1)
+                new(StringResourceProvider.GetResourceString("Default"), -1)
             };
 
             foreach (Encoding info in Common.AppInfoProvider.SupportedEncodings.Values)
@@ -357,17 +358,17 @@ internal sealed partial class SettingsPage : BasePage
 
         // Feedback.
         {
-            string appName = Utils.StringResourceProvider.GetResourceString("AppDisplayName");
-            string contribution_before_link = Utils.StringResourceProvider.GetResourceString("ContributionRunBeforeLink");
+            string appName = StringResourceProvider.GetResourceString("AppDisplayName");
+            string contribution_before_link = StringResourceProvider.GetResourceString("ContributionRunBeforeLink");
             contribution_before_link = contribution_before_link.Replace("$appname", appName);
             ContributionRunBeforeLink.Text = contribution_before_link;
-            ContributionRunAfterLink.Text = Utils.StringResourceProvider.GetResourceString("ContributionRunAfterLink");
+            ContributionRunAfterLink.Text = StringResourceProvider.GetResourceString("ContributionRunAfterLink");
         }
 
         // About.
         {
 #if DEBUG
-            string appName = Utils.StringResourceProvider.GetResourceString("DevAppDisplayName");
+            string appName = StringResourceProvider.GetResourceString("DevAppDisplayName");
 #else
             string appName = Utils.StringResourceProvider.GetResourceString("AppDisplayName");
 #endif
@@ -375,7 +376,7 @@ internal sealed partial class SettingsPage : BasePage
             AboutBuildVersionControl.Text = appName + " " + version.Major + "." + version.Minor + "." + version.Build + "." + version.Revision;
 
             string author = "aicd0";
-            string about_copyright = Utils.StringResourceProvider.GetResourceString("AboutCopyright");
+            string about_copyright = StringResourceProvider.GetResourceString("AboutCopyright");
             about_copyright = about_copyright.Replace("$author", author);
             AboutCopyrightControl.Text = about_copyright;
         }
@@ -398,7 +399,7 @@ internal sealed partial class SettingsPage : BasePage
             command.CommandText = "SELECT COUNT(*) FROM " + SqliteDatabaseManager.ComicTable;
             comicCount = (long)await command.ExecuteScalarAsync();
         }, "SettingUpdateStatistics");
-        string total_comic_string = Utils.StringResourceProvider.GetResourceString("TotalComics");
+        string total_comic_string = StringResourceProvider.GetResourceString("TotalComics");
         StatisticsTextBlock.Text = total_comic_string +
             comicCount.ToString("#,#0", CultureInfo.InvariantCulture);
     }
@@ -443,7 +444,7 @@ internal sealed partial class SettingsPage : BasePage
             return;
         }
 
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             await Save();
         });
@@ -452,7 +453,7 @@ internal sealed partial class SettingsPage : BasePage
     // events
     private void ChooseLocationsClick(object sender, RoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             var dialog = new ChooseLocationsDialog();
             await C0.ShowDialogAsync(dialog, XamlRoot);
@@ -461,7 +462,7 @@ internal sealed partial class SettingsPage : BasePage
 
     private void OnHistoryClearAllClicked(object sender, RoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             await HistoryDataManager.Clear(true);
             Shared.IsClearHistoryEnabled = false;
@@ -470,7 +471,7 @@ internal sealed partial class SettingsPage : BasePage
 
     private void OnSendFeedbackButtonClicked(object sender, RoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             var uri = new Uri(@"https://github.com/aicd0/ComicReader/issues/new/choose");
             await Windows.System.Launcher.LaunchUriAsync(uri);

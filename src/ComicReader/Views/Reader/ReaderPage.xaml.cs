@@ -12,14 +12,13 @@ using System.ComponentModel;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
-using ComicReader.Common.Constants;
+using ComicReader.Common.Debug;
+using ComicReader.Common.KVStorage;
+using ComicReader.Common.Lifecycle;
 using ComicReader.Common.SimpleImageView;
 using ComicReader.Database;
 using ComicReader.DesignData;
 using ComicReader.Router;
-using ComicReader.Utils;
-using ComicReader.Utils.KVDatabase;
-using ComicReader.Utils.Lifecycle;
 using ComicReader.Views.Base;
 using ComicReader.Views.Main;
 using ComicReader.Views.Navigation;
@@ -189,7 +188,7 @@ internal sealed partial class ReaderPage : BasePage
     protected override void OnStart(PageBundle bundle)
     {
         base.OnStart(bundle);
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             bool tipShown = KVDatabase.GetInstance().GetDefaultMethod().GetBoolean(KVLib.TIPS, KEY_TIP_SHOWN, false);
             if (!tipShown)
@@ -256,7 +255,7 @@ internal sealed partial class ReaderPage : BasePage
             AppStatusPreserver.SetReadingComic(comic.Id);
         }
 
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             await LoadComicInfo();
         });
@@ -351,8 +350,8 @@ internal sealed partial class ReaderPage : BasePage
             string readerStatusText = "";
             readerStatusText = status switch
             {
-                ReaderStatusEnum.Loading => Utils.StringResourceProvider.GetResourceString("ReaderStatusLoading"),
-                ReaderStatusEnum.Error => Utils.StringResourceProvider.GetResourceString("ReaderStatusError"),
+                ReaderStatusEnum.Loading => StringResourceProvider.GetResourceString("ReaderStatusLoading"),
+                ReaderStatusEnum.Error => StringResourceProvider.GetResourceString("ReaderStatusError"),
                 _ => "",
             };
             TbReaderStatus.Text = readerStatusText;
@@ -451,11 +450,11 @@ internal sealed partial class ReaderPage : BasePage
 
     private void OnDirectoryTapped(object sender, TappedRoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             ComicData comic = GetComic();
 
-            StorageFolder folder = await Utils.Storage.TryGetFolder(comic.Location);
+            StorageFolder folder = await Storage.TryGetFolder(comic.Location);
 
             if (folder != null)
             {
@@ -474,7 +473,7 @@ internal sealed partial class ReaderPage : BasePage
 
     private void OnEditInfoClick(object sender, RoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             ComicData comic = GetComic();
             if (comic == null)
@@ -830,7 +829,7 @@ internal sealed partial class ReaderPage : BasePage
 
         if (!_comic.IsExternal)
         {
-            Utils.C0.Run(async delegate
+            C0.Run(async delegate
             {
                 if (isFavorite)
                 {

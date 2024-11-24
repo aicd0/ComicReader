@@ -4,7 +4,8 @@
 using System;
 using System.Threading.Tasks;
 
-using ComicReader.Utils;
+using ComicReader.Common;
+using ComicReader.Common.Debug;
 
 using Windows.Data.Pdf;
 using Windows.Storage;
@@ -38,7 +39,7 @@ internal class ComicPdfData : ComicData
 
     public static async Task<ComicData> FromExternal(StorageFile file)
     {
-        Utils.Storage.AddTrustedFile(file);
+        Storage.AddTrustedFile(file);
 
         var comic = new ComicPdfData(true)
         {
@@ -62,8 +63,8 @@ internal class ComicPdfData : ComicData
             return TaskException.InvalidParameters;
         }
 
-        string base_path = Utils.ArchiveAccess.GetBasePath(Location);
-        StorageFile file = await Utils.Storage.TryGetFile(base_path);
+        string base_path = ArchiveAccess.GetBasePath(Location);
+        StorageFile file = await Storage.TryGetFile(base_path);
 
         if (file == null)
         {

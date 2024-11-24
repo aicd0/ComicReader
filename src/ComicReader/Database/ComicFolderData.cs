@@ -6,7 +6,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-using ComicReader.Utils;
+using ComicReader.Common;
+using ComicReader.Common.Debug;
 
 using Windows.Storage;
 using Windows.Storage.Search;
@@ -45,7 +46,7 @@ internal class ComicFolderData : ComicData
         }
 
         image_files = image_files
-            .OrderBy(x => Utils.StringUtils.SmartFileNameKeySelector(x.DisplayName), Utils.StringUtils.SmartFileNameComparer)
+            .OrderBy(x => StringUtils.SmartFileNameKeySelector(x.DisplayName), StringUtils.SmartFileNameComparer)
             .ToList();
 
         var comic = new ComicFolderData(true)
@@ -75,7 +76,7 @@ internal class ComicFolderData : ComicData
             return TaskException.InvalidParameters;
         }
 
-        StorageFolder folder = await Utils.Storage.TryGetFolder(Location);
+        StorageFolder folder = await Storage.TryGetFolder(Location);
 
         if (folder == null)
         {
@@ -162,7 +163,7 @@ internal class ComicFolderData : ComicData
         }
 
         string text = InfoString();
-        IBuffer buffer = Utils.C0.GetBufferFromString(text);
+        IBuffer buffer = C0.GetBufferFromString(text);
 
         try
         {
@@ -208,7 +209,7 @@ internal class ComicFolderData : ComicData
 
         // Sort by display name.
         ImageFiles = img_files
-            .OrderBy(x => Utils.StringUtils.SmartFileNameKeySelector(x.DisplayName), Utils.StringUtils.SmartFileNameComparer)
+            .OrderBy(x => StringUtils.SmartFileNameKeySelector(x.DisplayName), StringUtils.SmartFileNameComparer)
             .ToList();
         Log(img_files.Count.ToString() + " images added.");
         return TaskException.Success;

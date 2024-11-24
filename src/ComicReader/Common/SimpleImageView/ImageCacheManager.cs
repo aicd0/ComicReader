@@ -5,8 +5,9 @@ using System;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 
+using ComicReader.Common;
+using ComicReader.Common.Debug;
 using ComicReader.Native;
-using ComicReader.Utils;
 
 using Microsoft.UI;
 using Microsoft.UI.Windowing;

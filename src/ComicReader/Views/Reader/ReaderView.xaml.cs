@@ -16,10 +16,9 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
+using ComicReader.Common.Debug;
 using ComicReader.Common.SimpleImageView;
-using ComicReader.Common.Structs;
 using ComicReader.Database;
-using ComicReader.Utils;
 
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
@@ -388,7 +387,7 @@ internal partial class ReaderView : UserControl
 
     private void ResetFrames()
     {
-        int lastFrameIndex = PageToFrame(PageCount + 1, out bool _, out int _);
+        int lastFrameIndex = PageToFrame(PageCount, out bool _, out int _);
 
         for (int i = FrameDataSource.Count - 1; i > lastFrameIndex; --i)
         {
@@ -861,7 +860,7 @@ internal partial class ReaderView : UserControl
 
             _tapPending = true;
             _tapCancelled = false;
-            Utils.C0.Run(async delegate
+            C0.Run(async delegate
             {
                 await Task.Delay(100);
                 _tapPending = false;
@@ -879,7 +878,7 @@ internal partial class ReaderView : UserControl
             if (Math.Abs(Zoom - 100) <= 1)
             {
                 ScrollManager.BeginTransaction(this, "FitScreenUsingCenterCrop")
-                    .Zoom(100, Common.Structs.ZoomType.CenterCrop)
+                    .Zoom(100, ZoomType.CenterCrop)
                     .EnableAnimation()
                     .Commit();
             }
@@ -1467,7 +1466,7 @@ internal partial class ReaderView : UserControl
         return SetScrollViewer2(zoom, page, disable_animation, reason);
     }
 
-    internal sealed class ScrollManager : Utils.BaseTransaction<bool>
+    internal sealed class ScrollManager : BaseTransaction<bool>
     {
         private readonly WeakReference<ReaderView> mReader;
         private float? mZoom = null;
@@ -2096,7 +2095,7 @@ internal partial class ReaderView : UserControl
                 + $" Z={ZoomFactorFinal}"
                 + $",H={HorizontalOffsetFinal}"
                 + $",V={VerticalOffsetFinal}"
-                + $",P={PageSource}");
+                + $",P={CurrentPage}");
 #endif
         }
 

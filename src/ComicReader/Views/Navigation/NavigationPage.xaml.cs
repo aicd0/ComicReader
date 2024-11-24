@@ -3,11 +3,10 @@
 
 using System;
 
-using ComicReader.Common.Constants;
+using ComicReader.Common;
+using ComicReader.Common.Lifecycle;
 using ComicReader.Database;
 using ComicReader.Router;
-using ComicReader.Utils;
-using ComicReader.Utils.Lifecycle;
 using ComicReader.Views.Base;
 using ComicReader.Views.Main;
 
@@ -266,7 +265,7 @@ internal sealed partial class NavigationPage : BasePage
     private void RspReaderSetting_DataChanged(ReaderSettingDataModel data)
     {
         _ability.SendReaderSettingsChangedEvent(data);
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             await XmlDatabaseManager.WaitLock();
 

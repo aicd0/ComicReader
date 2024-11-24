@@ -6,7 +6,8 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-using ComicReader.Utils;
+using ComicReader.Common;
+using ComicReader.Common.Debug;
 
 using Windows.Storage;
 using Windows.Storage.Streams;
@@ -37,7 +38,7 @@ internal class ComicArchiveData : ComicData
 
     public static async Task<ComicData> FromExternal(StorageFile archive)
     {
-        Utils.Storage.AddTrustedFile(archive);
+        Storage.AddTrustedFile(archive);
 
         var comic = new ComicArchiveData(true)
         {
@@ -63,8 +64,8 @@ internal class ComicArchiveData : ComicData
             return TaskException.InvalidParameters;
         }
 
-        string base_path = Utils.ArchiveAccess.GetBasePath(Location);
-        StorageFile file = await Utils.Storage.TryGetFile(base_path);
+        string base_path = ArchiveAccess.GetBasePath(Location);
+        StorageFile file = await Storage.TryGetFile(base_path);
 
         if (file == null)
         {
@@ -78,7 +79,7 @@ internal class ComicArchiveData : ComicData
     private string GetSubPathFromFilename(string filename)
     {
         System.Diagnostics.Debug.Assert(!IsExternal);
-        string sub_path = Utils.ArchiveAccess.GetSubPath(Location);
+        string sub_path = ArchiveAccess.GetSubPath(Location);
 
         if (sub_path.Length == 0)
         {
@@ -103,8 +104,8 @@ internal class ComicArchiveData : ComicData
 
         if (IsExternal)
         {
-            var ctx = new Utils.StorageItemSearchEngine.SearchContext(Location, Utils.StorageItemSearchEngine.PathType.File);
-            string base_path = Utils.ArchiveAccess.GetBasePath(Location) + Utils.ArchiveAccess.FileSeperator;
+            var ctx = new SearchContext(Location, PathType.File);
+            string base_path = ArchiveAccess.GetBasePath(Location) + ArchiveAccess.FileSeperator;
 
             while (await ctx.Search(512))
             {
@@ -116,7 +117,7 @@ internal class ComicArchiveData : ComicData
                         continue;
                     }
 
-                    string filename = Utils.StringUtils.ItemNameFromPath(filepath);
+                    string filename = StringUtils.ItemNameFromPath(filepath);
 
                     if (filename.Equals(ComicInfoFileName))
                     {
@@ -141,7 +142,7 @@ internal class ComicArchiveData : ComicData
             sub_path = GetSubPathFromFilename(ComicInfoFileName);
         }
 
-        using (Stream stream = await Utils.ArchiveAccess.TryGetFileStream(Archive, sub_path))
+        using (Stream stream = await ArchiveAccess.TryGetFileStream(Archive, sub_path))
         {
             if (stream == null)
             {
@@ -177,8 +178,8 @@ internal class ComicArchiveData : ComicData
 
         if (IsExternal)
         {
-            var ctx = new Utils.StorageItemSearchEngine.SearchContext(Location, Utils.StorageItemSearchEngine.PathType.File);
-            string base_path = Utils.ArchiveAccess.GetBasePath(Location) + Utils.ArchiveAccess.FileSeperator;
+            var ctx = new SearchContext(Location, PathType.File);
+            string base_path = ArchiveAccess.GetBasePath(Location) + ArchiveAccess.FileSeperator;
 
             while (await ctx.Search(512))
             {
@@ -190,8 +191,8 @@ internal class ComicArchiveData : ComicData
                         continue;
                     }
 
-                    string filename = Utils.StringUtils.ItemNameFromPath(filepath);
-                    string extension = Utils.StringUtils.ExtensionFromFilename(filename);
+                    string filename = StringUtils.ItemNameFromPath(filepath);
+                    string extension = StringUtils.ExtensionFromFilename(filename);
 
                     if (Common.AppInfoProvider.IsSupportedImageExtension(extension))
                     {
@@ -202,10 +203,10 @@ internal class ComicArchiveData : ComicData
         }
         else
         {
-            string sub_path = Utils.ArchiveAccess.GetSubPath(Location);
+            string sub_path = ArchiveAccess.GetSubPath(Location);
             var subfiles = new List<string>();
 
-            result = await Utils.ArchiveAccess.TryGetSubFiles(Archive, sub_path, subfiles);
+            result = await ArchiveAccess.TryGetSubFiles(Archive, sub_path, subfiles);
             if (!result.Successful())
             {
                 return result;
@@ -213,7 +214,7 @@ internal class ComicArchiveData : ComicData
 
             foreach (string subfile in subfiles)
             {
-                string extension = Utils.StringUtils.ExtensionFromFilename(subfile);
+                string extension = StringUtils.ExtensionFromFilename(subfile);
 
                 if (!Common.AppInfoProvider.IsSupportedImageExtension(extension))
                 {
@@ -225,7 +226,7 @@ internal class ComicArchiveData : ComicData
         }
 
         Entries = entries
-            .OrderBy(x => Utils.StringUtils.SmartFileNameKeySelector(x), Utils.StringUtils.SmartFileNameComparer)
+            .OrderBy(x => StringUtils.SmartFileNameKeySelector(x), StringUtils.SmartFileNameComparer)
             .ToList();
         return TaskException.Success;
     }
@@ -239,7 +240,7 @@ internal class ComicArchiveData : ComicData
         }
 
         string sub_path = IsExternal ? Entries[index] : GetSubPathFromFilename(Entries[index]);
-        Stream stream = await Utils.ArchiveAccess.TryGetFileStream(Archive, sub_path);
+        Stream stream = await ArchiveAccess.TryGetFileStream(Archive, sub_path);
 
         if (stream == null)
         {
