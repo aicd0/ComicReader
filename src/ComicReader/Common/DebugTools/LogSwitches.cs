@@ -7,7 +7,7 @@ namespace ComicReader.Common.DebugTools;
 
 internal static class LogSwitches
 {
-    private static readonly bool ENABLE_LOG_FILTER = false;
+    private static readonly bool ENABLE_LOG_FILTER = true;
     private static readonly bool ENABLE_LEVEL_BLACKLIST = false;
     private static readonly bool ENABLE_TAG_BLACKLIST = true;
     private static readonly bool ENABLE_TAG_WHITELIST = true;
@@ -31,7 +31,8 @@ internal static class LogSwitches
     private static readonly Dictionary<LogTag, bool> TAG_WHITELIST = new()
     {
         { LogTag.N("Logger"), false },
-        { LogTag.N("ReaderLoadTime"), true },
+        { LogTag.N("ReaderVertical", "Jump"), true },
+        { LogTag.N("ReaderVertical", "ViewChanged"), true },
     };
 
     public static bool CanLog(int level, LogTag tag)

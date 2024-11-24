@@ -165,7 +165,7 @@ internal static class Logger
                 levelTag = "U";
                 break;
         }
-        string realMessage = $"{DateTimeOffset.Now.ToString("G")} [{levelTag},{tag}] {message}";
+        string realMessage = $"{DateTimeOffset.Now:yyyy/M/d HH:mm:ss.fff} [{levelTag},{tag}] {message}";
         if (exception != null)
         {
             realMessage += "\n" + exception.ToString();

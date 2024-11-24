@@ -42,7 +42,7 @@ internal partial class ReaderView : UserControl
 
     private const string TAG = nameof(ReaderView);
     private const float MAX_ZOOM = 250F;
-    private const float MIN_ZOOM = 90F;
+    private const float MIN_ZOOM = 50F;
     private const float FORCE_CONTINUOUS_ZOOM_THRESHOLD = 105F;
     private const int MIN_PRELOAD_FRAMES_BEFORE = 5;
     private const int MAX_PRELOAD_FRAMES_BEFORE = 10;
@@ -257,30 +257,62 @@ internal partial class ReaderView : UserControl
         // Dispatch event
         DispatchReaderStateChangeEvent(ReaderState.Loading);
 
-        for (int i = 0; i < images.Count; i++)
+        _loadInfoDispatcher.Submit(delegate
         {
-            int index = i;
-            IImageSource image = images[i];
-            _loadInfoDispatcher.Submit(delegate
+            void dispatchToMainThread(List<Tuple<int, double, IImageSource>> pendingList)
             {
-                ImageInfoManager.ImageInfo imageInfo = ImageInfoManager.GetImageInfo(image);
+                if (pendingList.Count == 0)
+                {
+                    return;
+                }
+                List<Tuple<int, double, IImageSource>> pendingListCopy = new(pendingList);
+                pendingList.Clear();
                 _ = MainThreadUtils.RunInMainThread(delegate
                 {
                     if (token.IsCancellationRequested)
                     {
                         return;
                     }
-                    long loadTime = DateTimeOffset.Now.ToUnixTimeMilliseconds() - _metricsStartLoadTime;
-                    LogLoadTime("GetInfo", $"time={loadTime},index={index}");
-                    double aspectRatio = 0.0;
-                    if (imageInfo != null)
+
+                    foreach (Tuple<int, double, IImageSource> item in pendingListCopy)
                     {
-                        aspectRatio = (double)imageInfo.Width / imageInfo.Height;
+                        int index = item.Item1;
+                        long loadTime = DateTimeOffset.Now.ToUnixTimeMilliseconds() - _metricsStartLoadTime;
+                        LogLoadTime("GetInfo", $"time={loadTime},index={index}");
+                        SetImageData(index, item.Item2, item.Item3);
                     }
-                    SetImageData(index, aspectRatio, image);
                 });
-            }, "ReaderLoadImageInfo");
-        }
+            }
+
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+            List<Tuple<int, double, IImageSource>> pendingList = new();
+
+            for (int i = 0; i < images.Count; i++)
+            {
+                if (token.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                IImageSource image = images[i];
+                ImageInfoManager.ImageInfo imageInfo = ImageInfoManager.GetImageInfo(image);
+                double aspectRatio = 0.0;
+                if (imageInfo != null)
+                {
+                    aspectRatio = (double)imageInfo.Width / imageInfo.Height;
+                }
+                pendingList.Add(new Tuple<int, double, IImageSource>(i, aspectRatio, image));
+
+                if (stopwatch.LapSpan().TotalMilliseconds > 500)
+                {
+                    stopwatch.Lap();
+                    dispatchToMainThread(pendingList);
+                }
+            }
+
+            dispatchToMainThread(pendingList);
+        }, "ReaderLoadImageInfo");
     }
 
     private void ResetLoader()
@@ -1677,7 +1709,7 @@ internal partial class ReaderView : UserControl
         }
 
 #if DEBUG_LOG_JUMP
-        Log("ParamIn:"
+        Log("Jump", "ParamIn:"
             + $" Reason={reason}"
             + $",Z={ctx.zoom}"
             + $",H={ctx.horizontalOffset}"
@@ -1688,7 +1720,7 @@ internal partial class ReaderView : UserControl
         SetScrollViewerZoom(ctx, out float? zoom_out);
 
 #if DEBUG_LOG_JUMP
-        Log("ParamOut:"
+        Log("Jump", "ParamOut:"
             + $" Z={zoom_out}"
             + $",H={ctx.horizontalOffset}"
             + $",V={ctx.verticalOffset}"
@@ -1707,7 +1739,6 @@ internal partial class ReaderView : UserControl
         }
 
         Zoom = ctx.zoom.Value;
-        AdjustParallelOffset();
         return true;
     }
 
@@ -1825,7 +1856,7 @@ internal partial class ReaderView : UserControl
         }
 
 #if DEBUG_LOG_JUMP
-        Log("Commit:"
+        Log("Jump", "Commit:"
             + " Z=" + ZoomFactorFinal.ToString()
             + ",H=" + HorizontalOffsetFinal.ToString()
             + ",V=" + VerticalOffsetFinal.ToString()
@@ -2101,8 +2132,7 @@ internal partial class ReaderView : UserControl
             }
 
 #if DEBUG_LOG_VIEW_CHANGE
-            Log("ViewChanged:"
-                + $" Z={ZoomFactorFinal}"
+            Log("ViewChanged", $"Z={ZoomFactorFinal}"
                 + $",H={HorizontalOffsetFinal}"
                 + $",V={VerticalOffsetFinal}"
                 + $",P={CurrentPage}");
