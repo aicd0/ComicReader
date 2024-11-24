@@ -7,5 +7,5 @@ namespace ComicReader.Common.Threading;
 
 internal interface IDispatcher
 {
-    void Queue(Action action, string debugDescription);
+    void Submit(Action action, string debugDescription);
 }

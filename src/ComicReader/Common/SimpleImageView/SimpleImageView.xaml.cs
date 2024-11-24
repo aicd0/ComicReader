@@ -74,7 +74,7 @@ internal partial class SimpleImageView : UserControl
         {
             LoadImage(token, model, handler);
         };
-        model.Dispatcher.Queue(loadAction, model.DebugDescription);
+        model.Dispatcher.Submit(loadAction, model.DebugDescription);
     }
 
     private void UnloadImage()

@@ -143,6 +143,8 @@ internal sealed partial class ReaderPage : BasePage
 
     private bool? _isFavorite = null;
 
+    private readonly TaskQueueDispatcher _loadPreviewDispatcher = new(new TaskQueue("ReaderLoadPreview"), "");
+
     public ReaderPageShared Shared { get; set; } = new ReaderPageShared();
     public ObservableCollection<ReaderImagePreviewViewModel> PreviewDataSource { get; set; }
 
@@ -234,7 +236,7 @@ internal sealed partial class ReaderPage : BasePage
                         Source = new ComicImageSource(comic, i),
                         Width = preview_width,
                         Height = preview_height,
-                        Dispatcher = new TaskQueueDispatcher(TaskQueue.DefaultQueue, "ReaderLoadPreview"),
+                        Dispatcher = _loadPreviewDispatcher,
                         Callback = new LoadPreviewCallback(i),
                         DebugDescription = i.ToString()
                     },

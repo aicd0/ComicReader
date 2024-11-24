@@ -79,8 +79,10 @@ internal partial class ReaderView : UserControl
     private readonly ReaderGestureRecognizer _gestureRecognizer = new();
 
     private double _initialPage = 0.0;
-    private readonly ReaderFrameManager _frameManager = new();
     private List<IImageSource> _originalDataModel;
+    private readonly TaskQueueDispatcher _loadInfoDispatcher = new(new TaskQueue("ReaderViewLoadInfoQueue"), "");
+    private readonly TaskQueueDispatcher _loadImageDispatcher = new(new TaskQueue("ReaderViewLoadImageQueue"), "");
+    private readonly ReaderFrameManager _frameManager = new();
     private readonly Dictionary<int, ImageDataModel> _dataModel = [];
     private readonly CancellationSession _dataModelSession;
     private readonly CancellationSession _loadImageSession;
@@ -220,7 +222,7 @@ internal partial class ReaderView : UserControl
 
     public void StopLoadingImages()
     {
-        _loadImageSession.Next();
+        _dataModelSession.Next();
     }
 
     //
@@ -269,7 +271,7 @@ internal partial class ReaderView : UserControl
         {
             int index = i;
             IImageSource image = images[i];
-            TaskQueue.DefaultQueue.Enqueue("ReaderLoadImageInfo", delegate
+            _loadInfoDispatcher.Submit(delegate
             {
                 ImageInfoManager.ImageInfo imageInfo = ImageInfoManager.GetImageInfo(image);
                 _ = MainThreadUtils.RunInMainThread(delegate
@@ -287,8 +289,7 @@ internal partial class ReaderView : UserControl
                     }
                     SetImageData(index, aspectRatio, image);
                 });
-                return TaskException.Success;
-            });
+            }, "ReaderLoadImageInfo");
         }
     }
 
@@ -1316,7 +1317,6 @@ internal partial class ReaderView : UserControl
 
     // Modifier - Image Loader
     //private readonly CancellationSession _updateImageSession = new();
-    private readonly TaskQueue _updateImageQueue = new("ReaderUpdateImage");
 
     private void UpdateImages(bool remove_out_of_view = true)
     {
@@ -1389,7 +1389,6 @@ internal partial class ReaderView : UserControl
                     img_loader_tokens.Add(new SimpleImageLoader.Token
                     {
                         Source = m.ImageSourceLeft,
-                        Dispatcher = new TaskQueueDispatcher(_updateImageQueue, "ReaderLoadImage"),
                         ImageResultHandler = new LoadImageResultHandler(m, true, this, i)
                     });
                 }
@@ -1400,7 +1399,6 @@ internal partial class ReaderView : UserControl
                     img_loader_tokens.Add(new SimpleImageLoader.Token
                     {
                         Source = m.ImageSourceRight,
-                        Dispatcher = new TaskQueueDispatcher(_updateImageQueue, "ReaderLoadImage"),
                         ImageResultHandler = new LoadImageResultHandler(m, false, this, i)
                     });
                 }
@@ -1422,7 +1420,7 @@ internal partial class ReaderView : UserControl
             }
 
             new SimpleImageLoader.Transaction(_loadImageSession.Token, img_loader_tokens)
-                .SetDispatcher(new TaskQueueDispatcher(_updateImageQueue, "ReaderViewLoadImageDispatcher"))
+                .SetDispatcher(_loadImageDispatcher)
                 .Commit();
         }
     }

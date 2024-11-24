@@ -16,7 +16,7 @@ internal sealed class TaskQueueDispatcher : IDispatcher
         _debugDescription = debugDescription;
     }
 
-    public void Queue(Action action, string debugDescription)
+    public void Submit(Action action, string debugDescription)
     {
         string taskName = $"{_debugDescription}_{debugDescription}";
         _taskQueue.Enqueue(taskName, delegate

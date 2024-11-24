@@ -32,7 +32,7 @@ internal static class SimpleImageLoader
 
         protected override TaskException CommitImpl()
         {
-            _dispatcher.Queue(delegate
+            _dispatcher.Submit(delegate
             {
                 foreach (Token token in _tokens)
                 {
@@ -53,7 +53,6 @@ internal static class SimpleImageLoader
         public double Height { get; set; } = double.PositiveInfinity;
         public StretchModeEnum StretchMode { get; set; } = StretchModeEnum.Uniform;
         public double Multiplication { get; set; } = 1.0;
-        public IDispatcher Dispatcher { get; set; }
         public IImageResultHandler ImageResultHandler { get; set; }
     }
 }
