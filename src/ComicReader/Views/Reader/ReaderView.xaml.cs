@@ -16,7 +16,7 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
-using ComicReader.Common.Debug;
+using ComicReader.Common.DebugTools;
 using ComicReader.Common.SimpleImageView;
 using ComicReader.Common.Threading;
 using ComicReader.Database;
@@ -120,8 +120,8 @@ internal partial class ReaderView : UserControl
     public delegate void ReaderEventPageChangedEventHandler(ReaderView sender, bool isIntermediate);
     public event ReaderEventPageChangedEventHandler ReaderEventPageChanged;
 
-    public delegate void ReaderEventReaderStateChangeHandler(ReaderState state);
-    private event ReaderEventReaderStateChangeHandler ReaderEventReaderStateChanged;
+    public delegate void ReaderEventReaderStateChangeHandler(ReaderView sender, ReaderState state);
+    public event ReaderEventReaderStateChangeHandler ReaderEventReaderStateChanged;
 
     public int PageCount { get; private set; } = 0;
     public double CurrentPage { get; private set; } = 0.0;
@@ -209,20 +209,10 @@ internal partial class ReaderView : UserControl
         _initialPage = page;
     }
 
-    public void SetReaderStateChangeHandler(ReaderEventReaderStateChangeHandler handler)
-    {
-        ReaderEventReaderStateChanged = handler;
-    }
-
     public void StartLoadingImages(List<IImageSource> images)
     {
         _originalDataModel = new List<IImageSource>(images);
         Reload(_originalDataModel);
-    }
-
-    public void StopLoadingImages()
-    {
-        _dataModelSession.Next();
     }
 
     //
@@ -351,6 +341,15 @@ internal partial class ReaderView : UserControl
             SvReader.IsEnabled = isVisible;
             SvReader.IsHitTestVisible = isVisible;
             SvReader.Opacity = isVisible ? 1 : 0;
+
+            if (isVisible)
+            {
+                UpdateImages(true);
+            }
+            else
+            {
+                _loadImageSession.Next();
+            }
         }
 
         if (_uiStateUpdatedOrientation)
@@ -646,7 +645,7 @@ internal partial class ReaderView : UserControl
         }
         else
         {
-            StopLoadingImages();
+            _dataModelSession.Next();
         }
     }
 
@@ -931,7 +930,7 @@ internal partial class ReaderView : UserControl
         }
         _state = state;
 
-        ReaderEventReaderStateChanged?.Invoke(state);
+        ReaderEventReaderStateChanged?.Invoke(this, state);
     }
 
     private int PageToFrame(int page, out bool left_side, out int neighbor)
@@ -1009,19 +1008,13 @@ internal partial class ReaderView : UserControl
 
     private void LogLoadTime(string tag, string message)
     {
-        Log("LoadTime", tag, message);
+        Logger.I(LogTag.N("LoadTime", tag), message);
     }
 
     private void Log(string tag, string message)
     {
         string name = _isVertical ? "Vertical" : "Horizontal";
         Logger.I(LogTag.N($"Reader{name}", tag), message);
-    }
-
-    private void Log(string tag1, string tag2, string message)
-    {
-        string name = _isVertical ? "Vertical" : "Horizontal";
-        Logger.I(LogTag.N($"Reader{name}", tag1, tag2), message);
     }
 
     //

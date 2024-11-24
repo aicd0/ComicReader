@@ -4,7 +4,7 @@
 using System;
 
 using ComicReader.Common;
-using ComicReader.Common.Debug;
+using ComicReader.Common.DebugTools;
 using ComicReader.Database;
 using ComicReader.Views.Main;
 using ComicReader.Views.Settings;

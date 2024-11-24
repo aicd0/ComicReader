@@ -95,7 +95,7 @@
                 <Button
                     Click="OnFullscreenBtClicked"
                     Style="{StaticResource ReaderFullscreenButtonStyle}"
-                    Visibility="{x:Bind Shared.IsFullscreen, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}">
+                    Visibility="{x:Bind ViewModel.IsFullscreen, Converter={StaticResource BooleanToVisibilityNegationConverter}, Mode=OneWay}">
                     <Button.Content>
                         <FontIcon Glyph="&#xE740;" />
                     </Button.Content>
@@ -103,7 +103,7 @@
                 <Button
                     Click="OnBackToWindowBtClicked"
                     Style="{StaticResource ReaderFullscreenButtonStyle}"
-                    Visibility="{x:Bind Shared.IsFullscreen, Mode=OneWay}">
+                    Visibility="{x:Bind ViewModel.IsFullscreen, Mode=OneWay}">
                     <Button.Content>
                         <FontIcon Glyph="&#xE73F;" />
                     </Button.Content>
@@ -184,7 +184,7 @@
                                     FontSize="20"
                                     FontWeight="SemiLight"
                                     IsTextSelectionEnabled="True"
-                                    Text="{x:Bind Shared.ComicTitle1, Mode=OneWay}"
+                                    Text="{x:Bind ViewModel.ComicTitle1, Mode=OneWay}"
                                     TextWrapping="Wrap" />
 
                                 <!--  Title2  -->
@@ -193,9 +193,9 @@
                                     FontSize="20"
                                     FontWeight="SemiLight"
                                     IsTextSelectionEnabled="True"
-                                    Text="{x:Bind Shared.ComicTitle2, Mode=OneWay}"
+                                    Text="{x:Bind ViewModel.ComicTitle2, Mode=OneWay}"
                                     TextWrapping="Wrap"
-                                    Visibility="{x:Bind Shared.IsComicTitle2Visible, Mode=OneWay}" />
+                                    Visibility="{x:Bind ViewModel.IsComicTitle2Visible, Mode=OneWay}" />
 
                                 <!--  Rating  -->
                                 <muxc:RatingControl
@@ -204,7 +204,7 @@
                                     HorizontalAlignment="Left"
                                     IsClearEnabled="True"
                                     ValueChanged="OnRatingControlValueChanged"
-                                    Value="{x:Bind Shared.Rating, Mode=TwoWay}" />
+                                    Value="{x:Bind ViewModel.Rating, Mode=TwoWay}" />
 
                                 <Rectangle
                                     Height="1"
@@ -217,7 +217,7 @@
                                         <Run
                                             FontSize="13"
                                             FontWeight="SemiLight"
-                                            Text="{x:Bind Shared.ComicDir, Mode=OneWay}" />
+                                            Text="{x:Bind ViewModel.ComicDir, Mode=OneWay}" />
                                         <InlineUIContainer>
                                             <FontIcon
                                                 x:Uid="OpenInFileExplorer"
@@ -225,7 +225,7 @@
                                                 FontSize="13"
                                                 Glyph="&#xE838;"
                                                 Tapped="OnDirectoryTapped"
-                                                Visibility="{x:Bind Shared.CanDirOpenInFileExplorer, Mode=OneWay}" />
+                                                Visibility="{x:Bind ViewModel.CanDirOpenInFileExplorer, Mode=OneWay}" />
                                         </InlineUIContainer>
                                     </Paragraph>
                                 </RichTextBlock>
@@ -235,11 +235,11 @@
                                     Height="1"
                                     Margin="0,20"
                                     Fill="{ThemeResource ComicInfoSeparatorForeground}"
-                                    Visibility="{x:Bind Shared.IsComicTagsVisible, Mode=OneWay}" />
+                                    Visibility="{x:Bind ViewModel.IsComicTagsVisible, Mode=OneWay}" />
 
                                 <ListView
                                     Margin="0,0,0,0"
-                                    ItemsSource="{x:Bind Shared.ComicTags, Mode=OneWay}"
+                                    ItemsSource="{x:Bind ViewModel.ComicTags, Mode=OneWay}"
                                     SelectionMode="None">
                                     <ListView.ItemContainerStyle>
                                         <Style TargetType="ListViewItem">
@@ -292,7 +292,7 @@
                                 Click="OnEditInfoClick"
                                 Icon="Edit"
                                 IsCompact="False"
-                                IsEnabled="{x:Bind Shared.IsEditable, Mode=OneWay}" />
+                                IsEnabled="{x:Bind ViewModel.IsEditable, Mode=OneWay}" />
                             <AppBarToggleButton
                                 x:Name="FavoriteBt"
                                 x:Uid="FavoriteToggleButton"

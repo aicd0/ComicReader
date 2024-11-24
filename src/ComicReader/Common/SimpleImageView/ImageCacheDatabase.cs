@@ -10,7 +10,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-using ComicReader.Common.Debug;
+using ComicReader.Common.DebugTools;
 
 using Microsoft.Data.Sqlite;
 

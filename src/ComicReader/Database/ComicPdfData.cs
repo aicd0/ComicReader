@@ -5,7 +5,7 @@ using System;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
-using ComicReader.Common.Debug;
+using ComicReader.Common.DebugTools;
 
 using Windows.Data.Pdf;
 using Windows.Storage;

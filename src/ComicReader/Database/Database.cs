@@ -4,7 +4,7 @@
 using System.Threading.Tasks;
 
 using ComicReader.Common;
-using ComicReader.Common.Debug;
+using ComicReader.Common.DebugTools;
 
 namespace ComicReader.Database;
 

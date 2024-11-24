@@ -7,7 +7,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-using ComicReader.Common.Debug;
+using ComicReader.Common.DebugTools;
 
 namespace ComicReader.Common.Threading;
 

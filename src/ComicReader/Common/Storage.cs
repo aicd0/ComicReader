@@ -7,7 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-using ComicReader.Common.Debug;
+using ComicReader.Common.DebugTools;
 
 using Windows.Storage;
 using Windows.Storage.AccessCache;
