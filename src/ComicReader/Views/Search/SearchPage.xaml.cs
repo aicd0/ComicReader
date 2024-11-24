@@ -8,11 +8,11 @@ using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 
+using ComicReader.Common;
+using ComicReader.Common.SimpleImageView;
 using ComicReader.Database;
 using ComicReader.DesignData;
 using ComicReader.Router;
-using ComicReader.Utils;
-using ComicReader.Utils.Image;
 using ComicReader.Views.Base;
 using ComicReader.Views.Main;
 using ComicReader.Views.Navigation;
@@ -225,9 +225,7 @@ internal class SearchPageShared : INotifyPropertyChanged
     public Action<bool> OnCommandBarSelectAllToggleChanged;
 }
 
-internal class SearchPageBase : BasePage<EmptyViewModel>;
-
-internal sealed partial class SearchPage : SearchPageBase
+internal sealed partial class SearchPage : BasePage
 {
     private SearchPageShared Shared { get; set; }
 
@@ -259,7 +257,7 @@ internal sealed partial class SearchPage : SearchPageBase
         Shared.IsSelectMode = false;
         Shared.ComicItemSelectionMode = ListViewSelectionMode.None;
 
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             await StartSearch();
         });
@@ -298,7 +296,7 @@ internal sealed partial class SearchPage : SearchPageBase
             string keyword = _keyword;
 
             // Extract filters and keywords from string.
-            var filter = Common.Search.Filter.Parse(keyword, out List<string> remaining);
+            var filter = Filter.Parse(keyword, out List<string> remaining);
             var keywords = new List<string>();
 
             foreach (string text in remaining)
@@ -318,9 +316,9 @@ internal sealed partial class SearchPage : SearchPageBase
 
             if (keywords.Count != 0)
             {
-                string keyword_combined = Utils.StringUtils.Join(" ", keywords);
+                string keyword_combined = StringUtils.Join(" ", keywords);
                 title_text = "\"" + keyword_combined + "\"";
-                tab_title = Utils.StringResourceProvider.GetResourceString("SearchResultsOf");
+                tab_title = StringResourceProvider.GetResourceString("SearchResultsOf");
                 tab_title = tab_title.Replace("$keyword", keyword_combined);
             }
             else if (filter_brief.Length != 0)
@@ -331,8 +329,8 @@ internal sealed partial class SearchPage : SearchPageBase
             }
             else
             {
-                title_text = Utils.StringResourceProvider.GetResourceString("AllMatchedResults");
-                tab_title = Utils.StringResourceProvider.GetResourceString("SearchResults");
+                title_text = StringResourceProvider.GetResourceString("AllMatchedResults");
+                tab_title = StringResourceProvider.GetResourceString("SearchResults");
             }
 
             // update tab header
@@ -350,7 +348,7 @@ internal sealed partial class SearchPage : SearchPageBase
             Shared.Title = title_text;
             Shared.FilterDetails = filter_details;
 
-            string no_results = Utils.StringResourceProvider.GetResourceString("NoResults");
+            string no_results = StringResourceProvider.GetResourceString("NoResults");
             no_results = no_results.Replace("$keyword", keyword);
 
             Shared.NoResultText = no_results;
@@ -367,7 +365,7 @@ internal sealed partial class SearchPage : SearchPageBase
         public string SortTitle = "";
     }
 
-    private async Task SearchMain(List<string> keywords, Common.Search.Filter filter)
+    private async Task SearchMain(List<string> keywords, Filter filter)
     {
         for (int i = 0; i < keywords.Count; ++i)
         {
@@ -395,7 +393,7 @@ internal sealed partial class SearchPage : SearchPageBase
                     if (keywords.Count != 0)
                     {
                         string match_text = title1 + " " + title2;
-                        similarity = Utils.StringUtils.QuickMatch(keywords, match_text);
+                        similarity = StringUtils.QuickMatch(keywords, match_text);
 
                         if (similarity < 1)
                         {
@@ -424,13 +422,13 @@ internal sealed partial class SearchPage : SearchPageBase
         }, "SearchComics");
 
         // Intersect two.
-        m_matches = Utils.C3<Match, long, long>.Intersect(keyword_matched, filter_matched,
+        m_matches = C3<Match, long, long>.Intersect(keyword_matched, filter_matched,
             (Match x) => x.Id, (long x) => x,
-            new Utils.C1<long>.DefaultEqualityComparer()).ToList();
+            new C1<long>.DefaultEqualityComparer()).ToList();
 
         // Sort by similarity.
         m_matches = m_matches
-            .OrderBy(delegate (Match m) { return Utils.StringUtils.SmartFileNameKeySelector(m.SortTitle); }, Utils.StringUtils.SmartFileNameComparer)
+            .OrderBy(delegate (Match m) { return StringUtils.SmartFileNameKeySelector(m.SortTitle); }, StringUtils.SmartFileNameComparer)
             .OrderByDescending(x => x.Similarity)
             .ToList();
     }
@@ -486,7 +484,7 @@ internal sealed partial class SearchPage : SearchPageBase
     {
         double image_width = (double)Application.Current.Resources["ComicItemHorizontalImageWidth"];
         double image_height = (double)Application.Current.Resources["ComicItemHorizontalImageHeight"];
-        var image_loader_tokens = new List<ImageLoader.Token>();
+        var tokens = new List<SimpleImageLoader.Token>();
 
         if (item.Image.ImageSet)
         {
@@ -494,23 +492,20 @@ internal sealed partial class SearchPage : SearchPageBase
         }
 
         item.Image.ImageSet = true;
-        image_loader_tokens.Add(new ImageLoader.Token
+        tokens.Add(new SimpleImageLoader.Token
         {
-            SessionToken = _loadImageSession.CurrentToken,
-            Comic = item.Comic,
-            Index = -1,
-            Callback = new LoadImageCallback(viewHolder, item)
+            Width = image_width,
+            Height = image_height,
+            Multiplication = 1.4,
+            StretchMode = StretchModeEnum.UniformToFill,
+            Source = new ComicCoverImageSource(item.Comic),
+            ImageResultHandler = new LoadImageCallback(viewHolder, item)
         });
 
-        new ImageLoader.Transaction(image_loader_tokens)
-            .SetWidthConstraint(image_width)
-            .SetHeightConstraint(image_height)
-            .SetDecodePixelMultiplication(1.4)
-            .SetStretchMode(ImageLoader.StretchModeEnum.UniformToFill)
-            .Commit();
+        new SimpleImageLoader.Transaction(_loadImageSession.Token, tokens).Commit();
     }
 
-    private class LoadImageCallback : ImageLoader.ICallback
+    private class LoadImageCallback : IImageResultHandler
     {
         private readonly ComicItemHorizontal _viewHolder;
         private readonly ComicItemViewModel _viewModel;
@@ -540,7 +535,7 @@ internal sealed partial class SearchPage : SearchPageBase
             return;
         }
 
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             var item = (ComicItemViewModel)((FrameworkElement)sender).DataContext;
             ComicData comic = await ComicData.FromId(item.Comic.Id, "SearchOpenLoadComic");
@@ -568,7 +563,7 @@ internal sealed partial class SearchPage : SearchPageBase
 
     private void OnScrollViewerViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             var scrollViewer = (ScrollViewer)sender;
             if (scrollViewer.ScrollableHeight - scrollViewer.VerticalOffset < scrollViewer.ActualHeight * 0.5)
@@ -588,7 +583,7 @@ internal sealed partial class SearchPage : SearchPageBase
 
     private void OnAddToFavoritesClicked(object sender, RoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             var result = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
             result.IsFavorite = true;
@@ -598,7 +593,7 @@ internal sealed partial class SearchPage : SearchPageBase
 
     private void OnRemoveFromFavoritesClicked(object sender, RoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             var result = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
             result.IsFavorite = false;
@@ -608,7 +603,7 @@ internal sealed partial class SearchPage : SearchPageBase
 
     private void OnUnhideComicClicked(object sender, RoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             var ctx = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
             await ctx.Comic.SaveHiddenAsync(false);
@@ -618,7 +613,7 @@ internal sealed partial class SearchPage : SearchPageBase
 
     private void OnHideComicClicked(object sender, RoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             var ctx = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
             await ctx.Comic.SaveHiddenAsync(true);
@@ -628,7 +623,7 @@ internal sealed partial class SearchPage : SearchPageBase
 
     private void MarkAsReadOrUnread(ComicItemViewModel item, bool read)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             if (read)
             {
@@ -744,7 +739,7 @@ internal sealed partial class SearchPage : SearchPageBase
 
     private void CommandBarFavoriteClicked(object sender, RoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             var selected_items = new List<object>(SearchResultGridView.SelectedItems);
             for (int i = 0; i < selected_items.Count; ++i)
@@ -764,7 +759,7 @@ internal sealed partial class SearchPage : SearchPageBase
 
     private void CommandBarUnFavoriteClicked(object sender, RoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             var selected_items = new List<object>(SearchResultGridView.SelectedItems);
             for (int i = 0; i < selected_items.Count; ++i)
@@ -784,7 +779,7 @@ internal sealed partial class SearchPage : SearchPageBase
 
     private void CommandBarHideClicked(object sender, RoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             var selected_items = new List<object>(SearchResultGridView.SelectedItems);
 
@@ -806,7 +801,7 @@ internal sealed partial class SearchPage : SearchPageBase
 
     private void CommandBarUnhideClicked(object sender, RoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             var selected_items = new List<object>(SearchResultGridView.SelectedItems);
 

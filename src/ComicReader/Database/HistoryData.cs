@@ -7,9 +7,9 @@ using System.Globalization;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-using ComicReader.Common.Constants;
-using ComicReader.Utils;
-using ComicReader.Utils.Lifecycle;
+using ComicReader.Common;
+using ComicReader.Common.Lifecycle;
+using ComicReader.Common.Threading;
 
 namespace ComicReader.Database;
 

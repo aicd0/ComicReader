@@ -1,6 +1,9 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
 using System;
 using System.Windows.Input;
 
@@ -34,10 +37,10 @@ public partial class AdaptiveGridView
         DependencyProperty.Register(nameof(ItemHeight), typeof(double), typeof(AdaptiveGridView), new PropertyMetadata(double.NaN));
 
     /// <summary>
-    /// Identifies the <see cref="OneRowModeEnabled"/> dependency property.
+    /// Identifies the <see cref="MaxRows"/> dependency property.
     /// </summary>
-    public static readonly DependencyProperty OneRowModeEnabledProperty =
-        DependencyProperty.Register(nameof(OneRowModeEnabled), typeof(bool), typeof(AdaptiveGridView), new PropertyMetadata(false, (o, e) => { OnOneRowModeEnabledChanged(o, e.NewValue); }));
+    public static readonly DependencyProperty MaxRowsProperty =
+        DependencyProperty.Register(nameof(MaxRows), typeof(int), typeof(AdaptiveGridView), new PropertyMetadata(0, (o, e) => { OnMaxRowsChanged(o, e.NewValue); }));
 
     /// <summary>
     /// Identifies the <see cref="ItemWidth"/> dependency property.
@@ -57,10 +60,10 @@ public partial class AdaptiveGridView
     public static readonly DependencyProperty StretchContentForSingleRowProperty =
     DependencyProperty.Register(nameof(StretchContentForSingleRow), typeof(bool), typeof(AdaptiveGridView), new PropertyMetadata(true, OnStretchContentForSingleRowPropertyChanged));
 
-    private static void OnOneRowModeEnabledChanged(DependencyObject d, object newValue)
+    private static void OnMaxRowsChanged(DependencyObject d, object newValue)
     {
         var self = d as AdaptiveGridView;
-        self.DetermineOneRowMode();
+        self.DetermineMaxRows();
     }
 
     private static void DesiredWidthChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -120,13 +123,13 @@ public partial class AdaptiveGridView
     }
 
     /// <summary>
-    /// Gets or sets a value indicating whether only one row should be displayed.
+    /// Gets or sets a value indicating the maximum rows to be displayed.
     /// </summary>
-    /// <value><c>true</c> if only one row is displayed; otherwise, <c>false</c>.</value>
-    public bool OneRowModeEnabled
+    /// <value> The maximum rows to be displayed; <c>0</c> represents no limits.</value>
+    public int MaxRows
     {
-        get { return (bool)GetValue(OneRowModeEnabledProperty); }
-        set { SetValue(OneRowModeEnabledProperty, value); }
+        get { return (int)GetValue(MaxRowsProperty); }
+        set { SetValue(MaxRowsProperty, value); }
     }
 
     /// <summary>

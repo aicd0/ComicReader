@@ -1,7 +1,8 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -28,7 +29,6 @@ public partial class AdaptiveGridView : GridView
     private ScrollMode _savedHorizontalScrollMode;
     private ScrollBarVisibility _savedVerticalScrollBarVisibility;
     private ScrollBarVisibility _savedHorizontalScrollBarVisibility;
-    private Orientation _savedOrientation;
     private bool _needToRestoreScrollStates;
     private bool _needContainerMarginForLayout;
 
@@ -119,7 +119,7 @@ public partial class AdaptiveGridView : GridView
             _needContainerMarginForLayout = true;
         }
 
-        return (containerWidth / columns) - itemMargin.Left - itemMargin.Right;
+        return ((containerWidth - 2.0) / columns) - itemMargin.Left - itemMargin.Right;
     }
 
     /// <summary>
@@ -131,7 +131,7 @@ public partial class AdaptiveGridView : GridView
     {
         base.OnApplyTemplate();
 
-        OnOneRowModeEnabledChanged(this, OneRowModeEnabled);
+        OnMaxRowsChanged(this, MaxRows);
     }
 
     private void ItemsOnVectorChanged(IObservableVector<object> sender, IVectorChangedEventArgs @event)
@@ -181,7 +181,7 @@ public partial class AdaptiveGridView : GridView
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
         _isLoaded = true;
-        DetermineOneRowMode();
+        DetermineMaxRows();
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
@@ -189,27 +189,21 @@ public partial class AdaptiveGridView : GridView
         _isLoaded = false;
     }
 
-    private void DetermineOneRowMode()
+    private void DetermineMaxRows()
     {
         if (_isLoaded)
         {
             var itemsWrapGridPanel = ItemsPanelRoot as ItemsWrapGrid;
 
-            if (OneRowModeEnabled)
+            if (MaxRows > 0)
             {
                 var b = new Binding()
                 {
                     Source = this,
                     Path = new PropertyPath("ItemHeight"),
-                    Converter = new AdaptiveHeightValueConverter(),
+                    Converter = new AdaptiveHeightValueConverter(MaxRows),
                     ConverterParameter = this
                 };
-
-                if (itemsWrapGridPanel != null)
-                {
-                    _savedOrientation = itemsWrapGridPanel.Orientation;
-                    itemsWrapGridPanel.Orientation = Orientation.Vertical;
-                }
 
                 SetBinding(MaxHeightProperty, b);
 
@@ -235,11 +229,6 @@ public partial class AdaptiveGridView : GridView
 
                 _needToRestoreScrollStates = false;
 
-                if (itemsWrapGridPanel != null)
-                {
-                    itemsWrapGridPanel.Orientation = _savedOrientation;
-                }
-
                 ScrollViewer.SetVerticalScrollMode(this, _savedVerticalScrollMode);
                 ScrollViewer.SetVerticalScrollBarVisibility(this, _savedVerticalScrollBarVisibility);
                 ScrollViewer.SetHorizontalScrollBarVisibility(this, _savedHorizontalScrollBarVisibility);
@@ -262,7 +251,7 @@ public partial class AdaptiveGridView : GridView
         if (containerWidth > 0)
         {
             double newWidth = CalculateItemWidth(containerWidth);
-            ItemWidth = Math.Floor(newWidth);
+            ItemWidth = newWidth;
         }
     }
 }

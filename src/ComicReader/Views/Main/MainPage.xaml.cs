@@ -7,11 +7,10 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
-using ComicReader.Common.Constants;
+using ComicReader.Common.Lifecycle;
+using ComicReader.Common.Threading;
 using ComicReader.Database;
 using ComicReader.Router;
-using ComicReader.Utils;
-using ComicReader.Utils.Lifecycle;
 using ComicReader.Views.Base;
 using ComicReader.Views.Navigation;
 
@@ -280,7 +279,7 @@ internal sealed partial class MainPage : StatefulPage
 
     private void LoadTab(int tabId, Route route)
     {
-        _ = Threading.RunInMainThread(delegate
+        _ = MainThreadUtils.RunInMainThread(delegate
         {
             LoadTabInternal(tabId, route);
         });

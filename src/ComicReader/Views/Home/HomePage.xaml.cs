@@ -6,11 +6,12 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
+using ComicReader.Common;
+using ComicReader.Common.SimpleImageView;
+using ComicReader.Common.Threading;
 using ComicReader.Database;
 using ComicReader.DesignData;
 using ComicReader.Router;
-using ComicReader.Utils;
-using ComicReader.Utils.Image;
 using ComicReader.Views.Base;
 using ComicReader.Views.Main;
 
@@ -22,9 +23,7 @@ using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace ComicReader.Views.Home;
 
-internal class HomePageBase : BasePage<HomePageViewModel>;
-
-internal sealed partial class HomePage : HomePageBase
+internal sealed partial class HomePage : BasePage
 {
     private readonly ComicItemViewModel.IItemHandler _comicItemHandler;
     private ObservableCollectionPlus<ComicItemViewModel> ComicItemSource { get; set; }
@@ -49,7 +48,7 @@ internal sealed partial class HomePage : HomePageBase
         GetMainPageAbility().SetTitle("NewTab");
         GetMainPageAbility().SetIcon(new SymbolIconSource() { Symbol = Symbol.Document });
 
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             await Update();
         });
@@ -86,7 +85,7 @@ internal sealed partial class HomePage : HomePageBase
 
     private void OnComicDataUpdated()
     {
-        Threading.RunInMainThreadAsync(UpdateLibrary).Wait();
+        MainThreadUtils.RunInMainThreadAsync(UpdateLibrary).Wait();
     }
 
     public async Task UpdateLibrary()
@@ -99,7 +98,7 @@ internal sealed partial class HomePage : HomePageBase
             }
 
             // Get recent visited comics.
-            var records = new Utils.FixedHeap<Tuple<long, DateTimeOffset>>(16,
+            var records = new FixedHeap<Tuple<long, DateTimeOffset>>(100,
                 (Tuple<long, DateTimeOffset> x, Tuple<long, DateTimeOffset> y) => { return x.Item2.CompareTo(y.Item2); });
 
             await ComicData.CommandBlock2(async delegate (SqliteCommand command)
@@ -153,7 +152,7 @@ internal sealed partial class HomePage : HomePageBase
             }
 
             // Save results.
-            Utils.C1<ComicItemViewModel>.UpdateCollection(ComicItemSource, comic_items,
+            C1<ComicItemViewModel>.UpdateCollection(ComicItemSource, comic_items,
                 (ComicItemViewModel x, ComicItemViewModel y) =>
                 x.Comic.Title == y.Comic.Title &&
                 x.Rating == y.Rating &&
@@ -169,7 +168,7 @@ internal sealed partial class HomePage : HomePageBase
     {
         double image_width = (double)Application.Current.Resources["ComicItemVerticalDesiredWidth"] - 40.0;
         double image_height = (double)Application.Current.Resources["ComicItemVerticalImageHeight"];
-        var image_loader_tokens = new List<ImageLoader.Token>();
+        var tokens = new List<SimpleImageLoader.Token>();
 
         if (item.Image.ImageSet)
         {
@@ -177,22 +176,19 @@ internal sealed partial class HomePage : HomePageBase
         }
 
         item.Image.ImageSet = true;
-        image_loader_tokens.Add(new ImageLoader.Token
+        tokens.Add(new SimpleImageLoader.Token
         {
-            SessionToken = _updateLibrarySession.CurrentToken,
-            Comic = item.Comic,
-            Index = -1,
-            Callback = new LoadImageCallback(viewHolder, item)
+            Width = image_width,
+            Height = image_height,
+            Multiplication = 1.4,
+            Source = new ComicCoverImageSource(item.Comic),
+            ImageResultHandler = new LoadImageCallback(viewHolder, item)
         });
 
-        new ImageLoader.Transaction(image_loader_tokens)
-            .SetWidthConstraint(image_width)
-            .SetHeightConstraint(image_height)
-            .SetDecodePixelMultiplication(1.4)
-            .Commit();
+        new SimpleImageLoader.Transaction(_updateLibrarySession.Token, tokens).Commit();
     }
 
-    private class LoadImageCallback : ImageLoader.ICallback
+    private class LoadImageCallback : IImageResultHandler
     {
         private readonly ComicItemVertical _viewHolder;
         private readonly ComicItemViewModel _viewModel;
@@ -231,7 +227,7 @@ internal sealed partial class HomePage : HomePageBase
                 {
                     OnItemTapped = OnFolderItemTapped,
                     OnRemoveClicked = FolderItemRemoveClick,
-                    Folder = Utils.StringUtils.ItemNameFromPath(path),
+                    Folder = StringUtils.ItemNameFromPath(path),
                     Path = path,
                     IsAddNew = false
                 };
@@ -240,7 +236,7 @@ internal sealed partial class HomePage : HomePageBase
             }
 
             XmlDatabaseManager.ReleaseLock();
-            Utils.C1<FolderItemViewModel>.UpdateCollection(FolderItemDataSource, new_folder_source, FolderItemViewModel.ContentEquals);
+            C1<FolderItemViewModel>.UpdateCollection(FolderItemDataSource, new_folder_source, FolderItemViewModel.ContentEquals);
         });
     }
 
@@ -311,7 +307,7 @@ internal sealed partial class HomePage : HomePageBase
 
     private void OnAddToFavoritesClicked(object sender, RoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
             item.IsFavorite = true;
@@ -321,7 +317,7 @@ internal sealed partial class HomePage : HomePageBase
 
     private void OnRemoveFromFavoritesClicked(object sender, RoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
             item.IsFavorite = false;
@@ -331,7 +327,7 @@ internal sealed partial class HomePage : HomePageBase
 
     private void OnHideComicClicked(object sender, RoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
             await item.Comic.SaveHiddenAsync(true);
@@ -342,7 +338,7 @@ internal sealed partial class HomePage : HomePageBase
 
     private void AddNewFolder()
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             if (!await SettingDataManager.AddComicFolderUsingPicker())
             {
@@ -376,7 +372,7 @@ internal sealed partial class HomePage : HomePageBase
 
     private void FolderItemRemoveClick(object sender, RoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             var item = (FolderItemViewModel)((MenuFlyoutItem)sender).DataContext;
             await SettingDataManager.RemoveComicFolder(item.Path, final: true);

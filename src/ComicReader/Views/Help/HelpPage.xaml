@@ -1,10 +1,10 @@
-<help:HelpPageBase
+<base:BasePage
     x:Class="ComicReader.Views.Help.HelpPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:base="using:ComicReader.Views.Base"
     xmlns:cwc="using:CommunityToolkit.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:help="using:ComicReader.Views.Help"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Background="{ThemeResource TabViewItemHeaderBackgroundSelected}"
     mc:Ignorable="d">
@@ -22,4 +22,4 @@
         </ScrollViewer>
     </Grid>
 
-</help:HelpPageBase>
+</base:BasePage>

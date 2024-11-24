@@ -5,12 +5,15 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
+using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
+using ComicReader.Common;
+using ComicReader.Common.DebugTools;
+using ComicReader.Common.Threading;
 using ComicReader.Database;
 using ComicReader.Router;
-using ComicReader.Utils;
 using ComicReader.Views.Base;
 using ComicReader.Views.Main;
 
@@ -217,13 +220,36 @@ public class SettingsPageShared : INotifyPropertyChanged
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsRescanning"));
         }
     }
+
+    private bool _isClearingCache = false;
+    public bool IsClearingCache
+    {
+        get => _isClearingCache;
+        set
+        {
+            _isClearingCache = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsClearingCache"));
+        }
+    }
+
+    private string _cacheSize = StringResourceProvider.GetResourceString("Calculating");
+    public string CacheSize
+    {
+        get => StringResourceProvider.GetResourceString("ClearCacheDetail").Replace("$size", _cacheSize);
+        set
+        {
+            _cacheSize = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("CacheSize"));
+        }
+    }
 }
 
-internal class SettingPageBase : BasePage<EmptyViewModel>;
-
-internal sealed partial class SettingsPage : SettingPageBase
+internal sealed partial class SettingsPage : BasePage
 {
     public const string AppearanceKey = "Appearance";
+
+    private const string TAG = "SettingsPage";
+
     public SettingsPageShared Shared { get; set; }
 
     // Initialize m_updating to TRUE to avoid copying values from
@@ -252,7 +278,7 @@ internal sealed partial class SettingsPage : SettingPageBase
         base.OnResume();
         ComicData.OnUpdated += OnComicDataUpdated;
 
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             await Update();
         });
@@ -275,29 +301,29 @@ internal sealed partial class SettingsPage : SettingPageBase
         m_updating = true;
 
         // Appearance.
-        object appearance_setting = ApplicationData.Current.LocalSettings.Values[AppearanceKey];
-
-        if (appearance_setting == null)
         {
-            Shared.CurrentAppearance = AppearanceSetting.UseSystemSetting;
+            object appearance_setting = ApplicationData.Current.LocalSettings.Values[AppearanceKey];
+            if (appearance_setting == null)
+            {
+                Shared.CurrentAppearance = AppearanceSetting.UseSystemSetting;
+            }
+            else if ((ApplicationTheme)(int)appearance_setting == ApplicationTheme.Light)
+            {
+                Shared.CurrentAppearance = AppearanceSetting.Light;
+            }
+            else if ((ApplicationTheme)(int)appearance_setting == ApplicationTheme.Dark)
+            {
+                Shared.CurrentAppearance = AppearanceSetting.Dark;
+            }
+            Shared.Appearance = Shared.CurrentAppearance;
         }
-        else if ((ApplicationTheme)(int)appearance_setting == ApplicationTheme.Light)
-        {
-            Shared.CurrentAppearance = AppearanceSetting.Light;
-        }
-        else if ((ApplicationTheme)(int)appearance_setting == ApplicationTheme.Dark)
-        {
-            Shared.CurrentAppearance = AppearanceSetting.Dark;
-        }
-
-        Shared.Appearance = Shared.CurrentAppearance;
 
         // Supported code pages.
         if (Shared.Encodings.Count == 0)
         {
             var encodings = new List<Tuple<string, int>>
             {
-                new(Utils.StringResourceProvider.GetResourceString("Default"), -1)
+                new(StringResourceProvider.GetResourceString("Default"), -1)
             };
 
             foreach (Encoding info in Common.AppInfoProvider.SupportedEncodings.Values)
@@ -305,10 +331,8 @@ internal sealed partial class SettingsPage : SettingPageBase
                 string title = info.EncodingName + " [" + info.CodePage.ToString() + "]";
                 encodings.Add(new Tuple<string, int>(title, info.CodePage));
             }
-
             Shared.Encodings = encodings;
         }
-
         if (!Common.AppInfoProvider.SupportedEncodings.ContainsKey(XmlDatabase.Settings.DefaultArchiveCodePage))
         {
             XmlDatabase.Settings.DefaultArchiveCodePage = -1;
@@ -316,15 +340,16 @@ internal sealed partial class SettingsPage : SettingPageBase
 
         // From Xml.
         await XmlDatabaseManager.WaitLock();
-
         Shared.DefaultArchiveCodePage = XmlDatabase.Settings.DefaultArchiveCodePage;
         Shared.TransitionAnimation = XmlDatabase.Settings.TransitionAnimation;
         Shared.IsClearHistoryEnabled = XmlDatabase.History.Items.Count > 0;
         Shared.HistorySaveBrowsingHistory = XmlDatabase.Settings.SaveHistory;
         Shared.AdvancedDebugMode = XmlDatabase.Settings.DebugMode;
-
         XmlDatabaseManager.ReleaseLock();
         m_updating = false;
+
+        // Cache size
+        UpdateCacheSize();
 
         // Rescan status.
         UpdateRescanStatus();
@@ -333,25 +358,34 @@ internal sealed partial class SettingsPage : SettingPageBase
         await UpdateStatistis();
 
         // Feedback.
-        string app_name = Utils.StringResourceProvider.GetResourceString("AppDisplayName");
-        string contribution_before_link = Utils.StringResourceProvider.GetResourceString("ContributionRunBeforeLink");
-        contribution_before_link = contribution_before_link.Replace("$appname", app_name);
-        ContributionRunBeforeLink.Text = contribution_before_link;
-        ContributionRunAfterLink.Text = Utils.StringResourceProvider.GetResourceString("ContributionRunAfterLink");
+        {
+            string appName = StringResourceProvider.GetResourceString("AppDisplayName");
+            string contribution_before_link = StringResourceProvider.GetResourceString("ContributionRunBeforeLink");
+            contribution_before_link = contribution_before_link.Replace("$appname", appName);
+            ContributionRunBeforeLink.Text = contribution_before_link;
+            ContributionRunAfterLink.Text = StringResourceProvider.GetResourceString("ContributionRunAfterLink");
+        }
 
         // About.
-        PackageVersion version = Package.Current.Id.Version;
-        AboutBuildVersionControl.Text = app_name + " " + version.Major + "." + version.Minor + "." + version.Build + "." + version.Revision;
+        {
+#if DEBUG
+            string appName = StringResourceProvider.GetResourceString("DevAppDisplayName");
+#else
+            string appName = Utils.StringResourceProvider.GetResourceString("AppDisplayName");
+#endif
+            PackageVersion version = Package.Current.Id.Version;
+            AboutBuildVersionControl.Text = appName + " " + version.Major + "." + version.Minor + "." + version.Build + "." + version.Revision;
 
-        string author = "aicd0";
-        string about_copyright = Utils.StringResourceProvider.GetResourceString("AboutCopyright");
-        about_copyright = about_copyright.Replace("$author", author);
-        AboutCopyrightControl.Text = about_copyright;
+            string author = "aicd0";
+            string about_copyright = StringResourceProvider.GetResourceString("AboutCopyright");
+            about_copyright = about_copyright.Replace("$author", author);
+            AboutCopyrightControl.Text = about_copyright;
+        }
     }
 
     private void OnComicDataUpdated()
     {
-        Threading.RunInMainThreadAsync(async delegate
+        MainThreadUtils.RunInMainThreadAsync(async delegate
         {
             UpdateRescanStatus();
             await UpdateStatistis();
@@ -366,7 +400,7 @@ internal sealed partial class SettingsPage : SettingPageBase
             command.CommandText = "SELECT COUNT(*) FROM " + SqliteDatabaseManager.ComicTable;
             comicCount = (long)await command.ExecuteScalarAsync();
         }, "SettingUpdateStatistics");
-        string total_comic_string = Utils.StringResourceProvider.GetResourceString("TotalComics");
+        string total_comic_string = StringResourceProvider.GetResourceString("TotalComics");
         StatisticsTextBlock.Text = total_comic_string +
             comicCount.ToString("#,#0", CultureInfo.InvariantCulture);
     }
@@ -411,7 +445,7 @@ internal sealed partial class SettingsPage : SettingPageBase
             return;
         }
 
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             await Save();
         });
@@ -420,7 +454,7 @@ internal sealed partial class SettingsPage : SettingPageBase
     // events
     private void ChooseLocationsClick(object sender, RoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             var dialog = new ChooseLocationsDialog();
             await C0.ShowDialogAsync(dialog, XamlRoot);
@@ -429,7 +463,7 @@ internal sealed partial class SettingsPage : SettingPageBase
 
     private void OnHistoryClearAllClicked(object sender, RoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             await HistoryDataManager.Clear(true);
             Shared.IsClearHistoryEnabled = false;
@@ -438,15 +472,10 @@ internal sealed partial class SettingsPage : SettingPageBase
 
     private void OnSendFeedbackButtonClicked(object sender, RoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             var uri = new Uri(@"https://github.com/aicd0/ComicReader/issues/new/choose");
-            bool success = await Windows.System.Launcher.LaunchUriAsync(uri);
-
-            if (!success)
-            {
-                // ...
-            }
+            await Windows.System.Launcher.LaunchUriAsync(uri);
         });
     }
 
@@ -454,5 +483,100 @@ internal sealed partial class SettingsPage : SettingPageBase
     {
         Shared.IsRescanning = true;
         ComicData.UpdateAllComics("OnRescanFilesClicked", lazy: false);
+    }
+
+    private void OnClearCacheClick(object sender, RoutedEventArgs e)
+    {
+        Shared.IsClearingCache = true;
+        TaskQueue.DefaultQueue.Enqueue("ClearCache", delegate
+        {
+            ClearCache();
+            string size = GetCacheSize();
+            _ = MainThreadUtils.RunInMainThread(() =>
+            {
+                Shared.IsClearingCache = false;
+                Shared.CacheSize = size;
+            });
+            return TaskException.Success;
+        });
+    }
+
+    //
+    // cache
+    //
+
+    private void UpdateCacheSize()
+    {
+        TaskQueue.DefaultQueue.Enqueue("CalculateCacheSize", delegate
+        {
+            string size = GetCacheSize();
+            _ = MainThreadUtils.RunInMainThread(() =>
+            {
+                Shared.CacheSize = size;
+            });
+            return TaskException.Success;
+        });
+    }
+
+    private static void ClearCache()
+    {
+        var di = new DirectoryInfo(ApplicationData.Current.LocalCacheFolder.Path);
+        foreach (FileInfo file in di.GetFiles())
+        {
+            try
+            {
+                file.Delete();
+            }
+            catch (IOException e)
+            {
+                Logger.E(TAG, "ClearCache", e);
+            }
+        }
+        foreach (DirectoryInfo dir in di.GetDirectories())
+        {
+            try
+            {
+                dir.Delete(true);
+            }
+            catch (IOException e)
+            {
+                Logger.E(TAG, "ClearCache", e);
+            }
+        }
+    }
+
+    private static string GetCacheSize()
+    {
+        var d = new DirectoryInfo(ApplicationData.Current.LocalCacheFolder.Path);
+        long size = CalculateDirSize(d);
+        string[] sizes = { "B", "KB", "MB", "GB", "TB" };
+        int order = 0;
+        while (size >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            size /= 1024;
+        }
+
+        // Adjust the format string to your preferences. For example "{0:0.#}{1}" would
+        // show a single decimal place, and no space.
+        return string.Format("{0:0.##} {1}", size, sizes[order]);
+    }
+
+    private static long CalculateDirSize(DirectoryInfo d)
+    {
+        long size = 0;
+        // Add file sizes.
+        FileInfo[] fis = d.GetFiles();
+        foreach (FileInfo fi in fis)
+        {
+            size += fi.Length;
+        }
+        // Add subdirectory sizes.
+        DirectoryInfo[] dis = d.GetDirectories();
+        foreach (DirectoryInfo di in dis)
+        {
+            size += CalculateDirSize(di);
+        }
+        return size;
     }
 }

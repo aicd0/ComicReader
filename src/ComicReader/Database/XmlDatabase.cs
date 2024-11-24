@@ -7,7 +7,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-using ComicReader.Utils;
+using ComicReader.Common;
+using ComicReader.Common.DebugTools;
 
 using Windows.Storage;
 using Windows.Storage.Streams;
@@ -49,7 +50,7 @@ internal class XmlDatabaseManager
 
     public static async Task WaitLock()
     {
-        await Utils.C0.WaitFor(() => m_database_ready);
+        await C0.WaitFor(() => m_database_ready);
         await m_database_lock.WaitAsync();
     }
 
@@ -70,7 +71,7 @@ internal class XmlDatabaseManager
 
     private static async Task<TaskException> Load(XmlData obj)
     {
-        object file = await Utils.Storage.TryGetFile(DatabaseFolder, obj.FileName);
+        object file = await Storage.TryGetFile(DatabaseFolder, obj.FileName);
         if (file == null)
         {
             return TaskException.FileNotFound;

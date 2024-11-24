@@ -614,4 +614,13 @@
   <data name="DevAppDisplayName" xml:space="preserve">
     <value>漫画阅读器 [Dev]</value>
   </data>
+  <data name="ClearCacheButton.Content" xml:space="preserve">
+    <value>清空缓存</value>
+  </data>
+  <data name="ClearCacheDetail" xml:space="preserve">
+    <value>缓存大小：$size</value>
+  </data>
+  <data name="Calculating" xml:space="preserve">
+    <value>计算中...</value>
+  </data>
 </root>

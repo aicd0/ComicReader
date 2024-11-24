@@ -1,7 +1,7 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-using ComicReader.DesignData;
+using System;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -10,75 +10,103 @@ namespace ComicReader.Views.Reader;
 
 internal sealed partial class ReaderFrame : UserControl
 {
-    public ReaderFrameViewModel Ctx => DataContext as ReaderFrameViewModel;
-    public ReaderFrameViewModel Item { get; private set; }
+    private static readonly ReaderFrameViewModel sEmptyViewModel = new();
+
+    private bool? _isReady = null;
+
+    public delegate void ReadyStateChangeListener(FrameworkElement container, bool isReady);
+    private event ReadyStateChangeListener ReadyStateChanged;
+
+    private ReaderFrameViewModel ViewModel { get; set; }
+    private ReaderFrameViewModel ViewModelNotNull => ViewModel ?? sEmptyViewModel;
+    private FrameworkElement Container => MainFrame;
 
     public ReaderFrame()
     {
         InitializeComponent();
     }
 
-    private void Notify()
+    public void Bind(ReaderFrameViewModel model)
     {
-        if (Ctx == null)
+        if (model == null)
         {
-            return;
+            if (ViewModel != null)
+            {
+                ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+            }
+            ViewModel = null;
+        }
+        else
+        {
+            ViewModel = model;
+            ViewModel.PropertyChanged += OnViewModelPropertyChanged;
         }
 
-        if (Container == null)
-        {
-            return;
-        }
-
-        Ctx.Notify();
+        RebindViewModel();
     }
 
-    private void OnFrameDataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
+    public void SetReadyStateChangeHandler(ReadyStateChangeListener handler)
     {
-        // Notify binding changes.
-        Bindings.Update();
-
-        Notify();
+        ReadyStateChanged = handler;
     }
 
     private void OnFrameLoaded(object sender, RoutedEventArgs e)
     {
-        Notify();
+        DispatchReadyStateChangeEvent();
     }
 
     private void OnFrameSizeChanged(object sender, SizeChangedEventArgs e)
     {
-        Notify();
+        DispatchReadyStateChangeEvent();
     }
 
-    public Grid Container => MainFrame;
-
-    public void Bind(ReaderFrameViewModel item)
+    private void OnViewModelPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (Item != null)
+        if (e.PropertyName == nameof(ReaderFrameViewModel))
         {
-            Item.ItemContainer = null;
+            RebindViewModel();
         }
-
-        Item = item;
-        Item.ItemContainer = this;
-        CompareAndBind(item);
     }
 
-    public void CompareAndBind(ReaderFrameViewModel item)
+    private void RebindViewModel()
     {
-        if (item != Item)
+        Bindings.Update();
+        _isReady = null;
+        DispatchReadyStateChangeEvent();
+    }
+
+    private void DispatchReadyStateChangeEvent()
+    {
+        bool isReady = IsReady();
+        if (isReady != _isReady)
         {
-            return;
+            _isReady = isReady;
+            ReadyStateChanged?.Invoke(Container, isReady);
+        }
+    }
+
+    private bool IsReady()
+    {
+        FrameworkElement container = Container;
+        ReaderFrameViewModel model = ViewModel;
+        if (container == null || model == null)
+        {
+            return false;
         }
 
-        if (Item == null)
+        double desired_width = model.FrameWidth + model.FrameMargin.Left + model.FrameMargin.Right;
+        double desired_height = model.FrameHeight + model.FrameMargin.Top + model.FrameMargin.Bottom;
+
+        if (Math.Abs(container.ActualWidth - desired_width) > 5.0)
         {
-            ImageLeft.Source = null;
-            ImageRight.Source = null;
+            return false;
         }
 
-        ImageLeft.Source = Item.ImageL.Image;
-        ImageRight.Source = Item.ImageR.Image;
+        if (Math.Abs(container.ActualHeight - desired_height) > 5.0)
+        {
+            return false;
+        }
+
+        return true;
     }
 }

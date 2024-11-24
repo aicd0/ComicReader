@@ -116,4 +116,9 @@
       <Folder Include="Views\Search\" />
       <Folder Include="Views\Settings\" />
     </ItemGroup>
+    <ItemGroup>
+      <Page Update="Views\Reader\ReaderView\ReaderView.xaml">
+        <SubType>Designer</SubType>
+      </Page>
+    </ItemGroup>
 </Project>

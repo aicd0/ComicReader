@@ -3,6 +3,8 @@
 
 using System.ComponentModel;
 
+using ComicReader.Common;
+using ComicReader.Common.Threading;
 using ComicReader.Database;
 
 using Microsoft.UI.Xaml;
@@ -43,7 +45,7 @@ internal sealed partial class EditComicInfoDialog : ContentDialog
     private void ContentDialogPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
     {
         // Done
-        Utils.C0.Run(delegate
+        C0.Run(delegate
         {
             string text = "";
             text += "Title1: " + Title1TextBox.Text + "\n";
@@ -53,7 +55,7 @@ internal sealed partial class EditComicInfoDialog : ContentDialog
             m_comic.ParseInfo(text);
             m_comic.SaveBasic();
 
-            Utils.TaskQueue.DefaultQueue.Enqueue("ContentDialogPrimaryButtonClick", m_comic.SaveToInfoFileSealed());
+            TaskQueue.DefaultQueue.Enqueue("ContentDialogPrimaryButtonClick", m_comic.SaveToInfoFileSealed());
         });
     }
 

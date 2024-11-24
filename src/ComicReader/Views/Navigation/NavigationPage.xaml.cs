@@ -3,11 +3,11 @@
 
 using System;
 
-using ComicReader.Common.Constants;
+using ComicReader.Common;
+using ComicReader.Common.Lifecycle;
+using ComicReader.Common.Threading;
 using ComicReader.Database;
 using ComicReader.Router;
-using ComicReader.Utils;
-using ComicReader.Utils.Lifecycle;
 using ComicReader.Views.Base;
 using ComicReader.Views.Main;
 
@@ -19,12 +19,11 @@ using Microsoft.UI.Xaml.Navigation;
 
 namespace ComicReader.Views.Navigation;
 
-internal class NavigationPageBase : BasePage<NavigationPageViewModel>;
-
-internal sealed partial class NavigationPage : NavigationPageBase
+internal sealed partial class NavigationPage : BasePage
 {
     private const string TAG = "NavigationPage";
 
+    private bool _isFavorite = false;
     private double _rootTabHeight = 0;
     private double _navigationBarHeight = 0;
     private NavigationBundle _currentBundle;
@@ -55,21 +54,6 @@ internal sealed partial class NavigationPage : NavigationPageBase
             TopTile.Opacity = opacity;
             TopTile.IsHitTestVisible = opacity > 0.5;
         });
-
-        ViewModel.GridViewModeEnabledLiveData.ObserveSticky(this, new ChangedObserver<bool>(delegate (bool toggled)
-        {
-            AbtbPreviewButton.IsChecked = toggled;
-        }));
-
-        ViewModel.IsFavoriteLiveData.ObserveSticky(this, new ChangedObserver<bool>(delegate (bool isFavorite)
-        {
-            FiFavoriteFilled.Visibility = isFavorite ? Visibility.Visible : Visibility.Collapsed;
-            FiFavoriteUnfilled.Visibility = isFavorite ? Visibility.Collapsed : Visibility.Visible;
-            string toolTip = isFavorite ? StringResourceProvider.GetResourceString("RemoveFromFavorites") :
-                StringResourceProvider.GetResourceString("AddToFavorites");
-            ToolTipService.SetToolTip(AbbAddToFavorite, toolTip);
-            _ability.SendFavoriteChangedEvent(isFavorite);
-        }));
     }
 
     public void Navigate(NavigationBundle bundle)
@@ -223,13 +207,23 @@ internal sealed partial class NavigationPage : NavigationPageBase
 
     private void OnAddToFavoritesClick(object sender, RoutedEventArgs e)
     {
-        bool isFavorite = !ViewModel.IsFavoriteLiveData.GetValue();
-        ViewModel.SetIsFavorite(isFavorite);
+        _isFavorite = !_isFavorite;
+        SetIsFavorite(_isFavorite);
     }
 
     private void OnComicInfoClick(object sender, RoutedEventArgs e)
     {
         _ability.SendExpandInfoPaneEvent();
+    }
+
+    private void SetIsFavorite(bool isFavorite)
+    {
+        FiFavoriteFilled.Visibility = isFavorite ? Visibility.Visible : Visibility.Collapsed;
+        FiFavoriteUnfilled.Visibility = isFavorite ? Visibility.Collapsed : Visibility.Visible;
+        string toolTip = isFavorite ? StringResourceProvider.GetResourceString("RemoveFromFavorites") :
+            StringResourceProvider.GetResourceString("AddToFavorites");
+        ToolTipService.SetToolTip(AbbAddToFavorite, toolTip);
+        _ability.SendFavoriteChangedEvent(isFavorite);
     }
 
     // Pointer events
@@ -272,7 +266,7 @@ internal sealed partial class NavigationPage : NavigationPageBase
     private void RspReaderSetting_DataChanged(ReaderSettingDataModel data)
     {
         _ability.SendReaderSettingsChangedEvent(data);
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             await XmlDatabaseManager.WaitLock();
 
@@ -292,6 +286,11 @@ internal sealed partial class NavigationPage : NavigationPageBase
     {
         TransferAbilities(bundle);
         bundle.Abilities[typeof(INavigationPageAbility)] = _ability;
+    }
+
+    private void SetGridViewModeEnabled(bool enabled)
+    {
+        AbtbPreviewButton.IsChecked = enabled;
     }
 
     private class NavigationPageAbility : INavigationPageAbility
@@ -342,7 +341,7 @@ internal sealed partial class NavigationPage : NavigationPageBase
                 return;
             }
 
-            parent.ViewModel.SetIsFavorite(isFavorite);
+            parent.SetIsFavorite(isFavorite);
         }
 
         public void SetGridViewMode(bool enabled)
@@ -352,7 +351,7 @@ internal sealed partial class NavigationPage : NavigationPageBase
                 return;
             }
 
-            parent.ViewModel.SetGridViewMode(enabled);
+            parent.SetGridViewModeEnabled(enabled);
         }
 
         public void SetIsSidePaneOpen(bool isOpen)

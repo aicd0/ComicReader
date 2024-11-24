@@ -4,11 +4,11 @@
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
-using ComicReader.Common.Constants;
+using ComicReader.Common;
+using ComicReader.Common.Lifecycle;
 using ComicReader.Database;
 using ComicReader.DesignData;
 using ComicReader.Router;
-using ComicReader.Utils.Lifecycle;
 using ComicReader.Views.Base;
 using ComicReader.Views.Main;
 using ComicReader.Views.Navigation;
@@ -18,9 +18,7 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace ComicReader.Views.History;
 
-internal class HistoryPageBase : BasePage<EmptyViewModel>;
-
-internal sealed partial class HistoryPage : HistoryPageBase
+internal sealed partial class HistoryPage : BasePage
 {
     public HistoryPage()
     {
@@ -32,7 +30,7 @@ internal sealed partial class HistoryPage : HistoryPageBase
         base.OnResume();
         ObserveData();
 
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             await Update();
         });
@@ -42,7 +40,7 @@ internal sealed partial class HistoryPage : HistoryPageBase
     {
         EventBus.Default.With(EventId.SidePaneUpdate).Observe(this, delegate
         {
-            Utils.C0.Run(async delegate
+            C0.Run(async delegate
             {
                 await Update();
             });
@@ -158,7 +156,7 @@ internal sealed partial class HistoryPage : HistoryPageBase
     // events
     private void OnOpenInNewTabClicked(object sender, RoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             var item = (HistoryItemViewModel)((MenuFlyoutItem)sender).DataContext;
             await OpenItem(item, true);
@@ -167,7 +165,7 @@ internal sealed partial class HistoryPage : HistoryPageBase
 
     private void OnDeleteItemClicked(object sender, RoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             var item = (HistoryItemViewModel)((MenuFlyoutItem)sender).DataContext;
             await DeleteItem(item);
@@ -176,7 +174,7 @@ internal sealed partial class HistoryPage : HistoryPageBase
 
     private void MainListViewItemClick(object sender, ItemClickEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             var item = (HistoryItemViewModel)e.ClickedItem;
             await OpenItem(item, false);

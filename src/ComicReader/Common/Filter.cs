@@ -8,7 +8,7 @@ using ComicReader.Database;
 
 using Microsoft.Data.Sqlite;
 
-namespace ComicReader.Common.Search;
+namespace ComicReader.Common;
 
 public class Filter
 {
@@ -25,16 +25,16 @@ public class Filter
 
         if (unique_string == "<~hidden>")
         {
-            return Utils.StringResourceProvider.GetResourceString("AllComics");
+            return StringResourceProvider.GetResourceString("AllComics");
         }
         else if (unique_string == "<hidden>")
         {
-            return Utils.StringResourceProvider.GetResourceString("AllHidden");
+            return StringResourceProvider.GetResourceString("AllHidden");
         }
         else if (m_subfilters.Count == 2 && m_subfilters[0] is SubFilterDirectory && m_subfilters[1].UniqueString == "~hidden")
         {
             string dir = (m_subfilters[0] as SubFilterDirectory).Directory;
-            string format_string = Utils.StringResourceProvider.GetResourceString("AllComicsIn");
+            string format_string = StringResourceProvider.GetResourceString("AllComicsIn");
             format_string = format_string.Replace("$path", dir);
             return format_string;
         }
@@ -57,7 +57,7 @@ public class Filter
             return "";
         }
 
-        string format_string = Utils.StringResourceProvider.GetResourceString("FilteredBy");
+        string format_string = StringResourceProvider.GetResourceString("FilteredBy");
         format_string = format_string.Replace("$count", cpy.Count.ToString());
         string res = format_string + ": ";
 
@@ -579,9 +579,9 @@ public class SubFilterCategoryTag : SubFilter
         }
 
         // Intersect two.
-        IEnumerable<MatchedItem> matched = Utils.C3<MatchedItem, long, long>.Intersect(tag_category_matched, tag_matched,
+        IEnumerable<MatchedItem> matched = C3<MatchedItem, long, long>.Intersect(tag_category_matched, tag_matched,
             (MatchedItem x) => x.TagCategoryId, (long x) => x,
-            new Utils.C1<long>.DefaultEqualityComparer());
+            new C1<long>.DefaultEqualityComparer());
 
         var results = new List<long>(matched.Count());
 

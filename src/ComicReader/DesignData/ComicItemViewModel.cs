@@ -4,8 +4,8 @@
 using System;
 using System.ComponentModel;
 
+using ComicReader.Common;
 using ComicReader.Database;
-using ComicReader.Utils;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;

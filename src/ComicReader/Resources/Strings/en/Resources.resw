@@ -614,4 +614,13 @@ Category2: tag4/tag5
   <data name="DevAppDisplayName" xml:space="preserve">
     <value>Comic Reader [Dev]</value>
   </data>
+  <data name="ClearCacheButton.Content" xml:space="preserve">
+    <value>Clear cache</value>
+  </data>
+  <data name="ClearCacheDetail" xml:space="preserve">
+    <value>Cache size: $size</value>
+  </data>
+  <data name="Calculating" xml:space="preserve">
+    <value>Calculating...</value>
+  </data>
 </root>

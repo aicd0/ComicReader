@@ -4,16 +4,15 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
-using ComicReader.Utils;
+using ComicReader.Common;
+using ComicReader.Common.DebugTools;
+using ComicReader.Common.Threading;
 
 using Microsoft.Data.Sqlite;
 
-using Windows.Graphics.Imaging;
 using Windows.Storage;
 using Windows.Storage.Streams;
 
@@ -34,8 +33,7 @@ internal abstract class ComicData
     public int Progress { get; protected set; } = -1;
     public DateTimeOffset LastVisit { get; protected set; } = DateTimeOffset.MinValue;
     public double LastPosition { get; protected set; } = 0.0;
-    public List<double> ImageAspectRatios { get; private set; } = new List<double>();
-    protected string CoverFileCache { get; private set; } = "";
+    public string CoverFileCache { get; private set; } = "";
 
     // Foriegn fields.
     public List<TagData> Tags { get; private set; } = new List<TagData>();
@@ -83,7 +81,6 @@ internal abstract class ComicData
     private int ValueProgress => Progress;
     private DateTimeOffset ValueLastVisit => LastVisit;
     private double ValueLastPosition => LastPosition;
-    private string ValueImageAspectRatios => JsonSerializer.Serialize(ImageAspectRatios);
     private string ValueCoverFileCache => CoverFileCache;
 
     // Subscriptions.
@@ -98,13 +95,13 @@ internal abstract class ComicData
     {
         get
         {
-            _defaultTagsString ??= Utils.StringResourceProvider.GetResourceString("DefaultTags");
+            _defaultTagsString ??= StringResourceProvider.GetResourceString("DefaultTags");
             return _defaultTagsString;
         }
     }
 
     // Locks.
-    private static readonly Utils.TaskQueue _tableQueue = new("ComicData");
+    private static readonly TaskQueue _tableQueue = new("ComicData");
     private static int _pendingUpdateTaskCount = 0;
 
     private bool _imageUpdated = false;
@@ -125,7 +122,6 @@ internal abstract class ComicData
                     Field.Progress + "=@progress," +
                     Field.LastVisit + "=@last_visit," +
                     Field.LastPosition + "=@last_pos," +
-                    Field.ImageAspectRatios + "=@ratios," +
                     Field.CoverFileCache + "=@cover" +
                     " WHERE " + Field.Id + "=@id";
                 command.Parameters.AddWithValue("@id", Id);
@@ -138,7 +134,6 @@ internal abstract class ComicData
                 command.Parameters.AddWithValue("@progress", ValueProgress);
                 command.Parameters.AddWithValue("@last_visit", ValueLastVisit);
                 command.Parameters.AddWithValue("@last_pos", ValueLastPosition);
-                command.Parameters.AddWithValue("@ratios", ValueImageAspectRatios);
                 command.Parameters.AddWithValue("@cover", ValueCoverFileCache);
                 command.ExecuteNonQuery();
             }
@@ -286,27 +281,10 @@ internal abstract class ComicData
         }, "SetAsRead");
     }
 
-    public void SaveImageAspectRatios()
+    public void SetCoverFileCacheKey(string key)
     {
-        _ = Enqueue(delegate
-        {
-            return SaveNoLock(delegate
-            {
-                using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
-                {
-                    command.CommandText = "UPDATE " + SqliteDatabaseManager.ComicTable + " SET " +
-                        Field.ImageAspectRatios + "=@ratios" +
-                        " WHERE " + Field.Id + "=@id";
-                    command.Parameters.AddWithValue("@id", Id);
-                    command.Parameters.AddWithValue("@ratios", ValueImageAspectRatios);
-                    command.ExecuteNonQuery();
-                }
-            });
-        }, "SaveImageAspectRatios");
-    }
+        CoverFileCache = key;
 
-    public void SaveCoverFileCache()
-    {
         _ = Enqueue(delegate
         {
             return SaveNoLock(delegate
@@ -330,7 +308,7 @@ internal abstract class ComicData
         Title2 = "";
         Tags.Clear();
 
-        var sub_paths = Location.Split(Utils.ArchiveAccess.FileSeperator).ToList();
+        var sub_paths = Location.Split(ArchiveAccess.FileSeperator).ToList();
         var tags = new List<string>();
 
         foreach (string path in sub_paths)
@@ -344,7 +322,7 @@ internal abstract class ComicData
 
             if (Type != ComicType.Folder)
             {
-                sub_tags[sub_tags.Count - 1] = Utils.StringUtils.DisplayNameFromFilename(sub_tags[sub_tags.Count - 1]);
+                sub_tags[sub_tags.Count - 1] = StringUtils.DisplayNameFromFilename(sub_tags[sub_tags.Count - 1]);
             }
 
             tags.AddRange(sub_tags);
@@ -375,7 +353,7 @@ internal abstract class ComicData
 
         foreach (TagData tag in Tags)
         {
-            text += tag.Name + ": " + Utils.StringUtils.Join("/", tag.Tags) + "\n";
+            text += tag.Name + ": " + StringUtils.Join("/", tag.Tags) + "\n";
         }
 
         return text;
@@ -414,12 +392,12 @@ internal abstract class ComicData
             if (!title1_set && (name == "title1" || name == "title" || name == "t1" || name == "to"))
             {
                 title1_set = true;
-                Title1 = Utils.StringUtils.Join("/", tag_data.Tags);
+                Title1 = StringUtils.Join("/", tag_data.Tags);
             }
             else if (!title2_set && (name == "title2" || name == "t2"))
             {
                 title2_set = true;
-                Title2 = Utils.StringUtils.Join("/", tag_data.Tags);
+                Title2 = StringUtils.Join("/", tag_data.Tags);
             }
             else
             {
@@ -444,19 +422,11 @@ internal abstract class ComicData
         }
     }
 
-    public async Task<TaskException> UpdateImages(bool cover_only, bool reload)
+    public async Task<TaskException> UpdateImages(bool reload)
     {
         if (reload)
         {
             _imageUpdated = false;
-        }
-
-        if (cover_only)
-        {
-            if (await GetCoverCache() != null)
-            {
-                return TaskException.Success;
-            }
         }
 
         if (!_imageUpdated)
@@ -474,11 +444,6 @@ internal abstract class ComicData
         if (ImageCount == 0)
         {
             return TaskException.EmptySet;
-        }
-
-        if (cover_only && !IsExternal)
-        {
-            await CreateCoverCache();
         }
 
         return TaskException.Success;
@@ -543,59 +508,6 @@ internal abstract class ComicData
         IsExternal = is_external;
     }
 
-    protected virtual async Task<TaskException> CreateCoverCache()
-    {
-        double req_width = 300.0;
-        double req_height = 300.0;
-
-        using (IRandomAccessStream stream = await InternalGetImageStream(0))
-        {
-            if (stream == null)
-            {
-                return TaskException.Failure;
-            }
-
-            BitmapDecoder decoder = await BitmapDecoder.CreateAsync(stream);
-            double width_ratio = req_width / decoder.PixelWidth;
-            double height_ratio = req_height / decoder.PixelHeight;
-            double scale_ratio = Math.Min(width_ratio, height_ratio);
-            scale_ratio = Math.Min(1.0, scale_ratio);
-            uint aspect_height = (uint)Math.Floor(decoder.PixelHeight * scale_ratio);
-            uint aspect_width = (uint)Math.Floor(decoder.PixelWidth * scale_ratio);
-
-            try
-            {
-                using (SoftwareBitmap softwareBitmap = await decoder.GetSoftwareBitmapAsync())
-                {
-                    var resized_stream = new InMemoryRandomAccessStream();
-                    BitmapEncoder encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.JpegEncoderId, resized_stream);
-                    encoder.SetSoftwareBitmap(softwareBitmap);
-                    encoder.BitmapTransform.InterpolationMode = BitmapInterpolationMode.Fant;
-                    encoder.BitmapTransform.ScaledHeight = aspect_height;
-                    encoder.BitmapTransform.ScaledWidth = aspect_width;
-
-                    await encoder.FlushAsync();
-                    resized_stream.Seek(0);
-                    byte[] out_buffer = new byte[resized_stream.Size];
-                    await resized_stream.ReadAsync(out_buffer.AsBuffer(), (uint)resized_stream.Size, InputStreamOptions.None);
-
-                    string filename = StringUtils.RandomFileName(16) + ".jpg";
-                    StorageFile sample_file = await CacheFolder.CreateFileAsync(filename, CreationCollisionOption.ReplaceExisting);
-                    await FileIO.WriteBytesAsync(sample_file, out_buffer);
-                    CoverFileCache = filename;
-                }
-            }
-            catch (Exception e)
-            {
-                Logger.F(TAG, "GenCoverCache", e);
-                return TaskException.Unknown;
-            }
-        }
-
-        SaveCoverFileCache();
-        return TaskException.Success;
-    }
-
     protected virtual async Task<StorageFile> GetCoverCache()
     {
         if (IsExternal)
@@ -623,6 +535,8 @@ internal abstract class ComicData
     protected abstract Task<TaskException> SaveToInfoFile();
 
     protected abstract Task<IRandomAccessStream> InternalGetImageStream(int index);
+
+    public abstract string GetImageCacheKey(int index);
 
     private static async Task UpdateComicNoLock(string location, ComicType type, bool is_exist)
     {
@@ -660,7 +574,7 @@ internal abstract class ComicData
 
     private void From(long id, string title1, string title2, bool hidden,
         int rating, int progress, DateTimeOffset last_visit, double last_position,
-        List<double> image_aspect_ratios, string cover_file_cache, List<TagData> tags)
+        string cover_file_cache, List<TagData> tags)
     {
         Id = id;
         Title1 = title1;
@@ -670,7 +584,6 @@ internal abstract class ComicData
         Progress = progress;
         LastVisit = last_visit;
         LastPosition = last_position;
-        ImageAspectRatios = image_aspect_ratios;
         CoverFileCache = cover_file_cache;
         Tags = tags;
     }
@@ -742,8 +655,7 @@ internal abstract class ComicData
                 Field.Progress + "," +
                 Field.LastVisit + "," +
                 Field.LastPosition + "," +
-                Field.ImageAspectRatios + "," +
-                Field.CoverFileCache + ") VALUES (@type,@location,@title1,@title2,@hidden,@rating,@progress,@last_visit,@last_pos,@ratios,@cover);" +
+                Field.CoverFileCache + ") VALUES (@type,@location,@title1,@title2,@hidden,@rating,@progress,@last_visit,@last_pos,@cover);" +
                 "SELECT LAST_INSERT_ROWID();";
             command.Parameters.AddWithValue("@type", ValueType);
             command.Parameters.AddWithValue("@location", ValueLocation);
@@ -754,7 +666,6 @@ internal abstract class ComicData
             command.Parameters.AddWithValue("@progress", ValueProgress);
             command.Parameters.AddWithValue("@last_visit", ValueLastVisit);
             command.Parameters.AddWithValue("@last_pos", ValueLastPosition);
-            command.Parameters.AddWithValue("@ratios", ValueImageAspectRatios);
             command.Parameters.AddWithValue("@cover", ValueCoverFileCache);
             rowid = (long)command.ExecuteScalar();
         }
@@ -876,8 +787,7 @@ internal abstract class ComicData
         int progress = query.GetInt32(7);
         DateTimeOffset last_visit = query.GetDateTimeOffset(8);
         double last_position = query.GetDouble(9);
-        string image_aspect_ratios_serialized = query.GetString(10);
-        string extended_string_1 = query.GetString(11);
+        string coverFileCache = query.GetString(10);
 
         // Tags
         var tags = new List<TagData>();
@@ -919,19 +829,6 @@ internal abstract class ComicData
             }
         }
 
-        // ImageAspectRatios
-        bool reset_image_aspect_ratios = false;
-        var image_aspect_ratios = new List<double>();
-
-        try
-        {
-            image_aspect_ratios = JsonSerializer.Deserialize<List<double>>(image_aspect_ratios_serialized);
-        }
-        catch (JsonException)
-        {
-            reset_image_aspect_ratios = true;
-        }
-
         // Create an instance of ComicData.
         ComicData comic = FromDatabase(type, location);
         if (comic == null)
@@ -940,14 +837,7 @@ internal abstract class ComicData
         }
 
         comic.From(id, title1, title2, hidden, rating, progress,
-            last_visit, last_position, image_aspect_ratios,
-            extended_string_1, tags);
-
-        // Post-procedures.
-        if (reset_image_aspect_ratios)
-        {
-            comic.SaveImageAspectRatios();
-        }
+            last_visit, last_position, coverFileCache, tags);
 
         return comic;
     }
@@ -1044,13 +934,13 @@ internal abstract class ComicData
         // Get all subfolders in root folders.
         var loc_in_lib = new List<string>();
         var loc_ignore = new List<string>();
-        var watch = new Utils.Stopwatch();
+        var watch = new Stopwatch();
         watch.Start();
 
         foreach (string folder_path in root_folders)
         {
             Log("Scanning folder '" + folder_path + "'");
-            StorageFolder root_folder = await Utils.Storage.TryGetFolder(folder_path);
+            StorageFolder root_folder = await Storage.TryGetFolder(folder_path);
 
             // Remove unreachable folders from database.
             if (root_folder == null)
@@ -1062,7 +952,7 @@ internal abstract class ComicData
                 continue;
             }
 
-            var ctx = new Utils.StorageItemSearchEngine.SearchContext(folder_path, Utils.StorageItemSearchEngine.PathType.Folder);
+            var ctx = new SearchContext(folder_path, PathType.Folder);
 
             while (await ctx.Search(1024))
             {
@@ -1077,12 +967,12 @@ internal abstract class ComicData
 
                 foreach (string file_path in ctx.Files)
                 {
-                    string filename = Utils.StringUtils.ItemNameFromPath(file_path);
-                    string extension = Utils.StringUtils.ExtensionFromFilename(filename).ToLower();
+                    string filename = StringUtils.ItemNameFromPath(file_path);
+                    string extension = StringUtils.ExtensionFromFilename(filename).ToLower();
 
                     if (Common.AppInfoProvider.IsSupportedImageExtension(extension))
                     {
-                        string loc = Utils.StringUtils.ParentLocationFromLocation(file_path);
+                        string loc = StringUtils.ParentLocationFromLocation(file_path);
 
                         if (!loc_scanned_dict.ContainsKey(loc))
                         {
@@ -1122,10 +1012,10 @@ internal abstract class ComicData
                 var queue = new List<UpdateItemInfo>();
 
                 // Get folders added.
-                var loc_added = Utils.C3<string, string, string>.Except(
+                var loc_added = C3<string, string, string>.Except(
                     loc_scanned, loc_exist,
-                    Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
-                    new Utils.C1<string>.DefaultEqualityComparer()).ToList();
+                    StringUtils.UniquePath, StringUtils.UniquePath,
+                    new C1<string>.DefaultEqualityComparer()).ToList();
 
                 foreach (string loc in loc_added)
                 {
@@ -1139,10 +1029,10 @@ internal abstract class ComicData
 
                 if (!lazy)
                 {
-                    var loc_kept = Utils.C3<string, string, string>.Intersect(
+                    var loc_kept = C3<string, string, string>.Intersect(
                         loc_scanned, loc_exist,
-                        Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
-                        new Utils.C1<string>.DefaultEqualityComparer()).ToList();
+                        StringUtils.UniquePath, StringUtils.UniquePath,
+                        new C1<string>.DefaultEqualityComparer()).ToList();
 
                     foreach (string loc in loc_kept)
                     {
@@ -1172,9 +1062,9 @@ internal abstract class ComicData
         }
 
         // Get removed folders.
-        var loc_removed = Utils.C3<string, string, string>.Except(loc_exist, loc_in_lib,
-            Utils.StringUtils.UniquePath, Utils.StringUtils.UniquePath,
-            new Utils.C1<string>.DefaultEqualityComparer()).ToList();
+        var loc_removed = C3<string, string, string>.Except(loc_exist, loc_in_lib,
+            StringUtils.UniquePath, StringUtils.UniquePath,
+            new C1<string>.DefaultEqualityComparer()).ToList();
 
         await TransactionBlock(delegate
         {
@@ -1186,7 +1076,7 @@ internal abstract class ComicData
 
                 foreach (string base_loc in loc_ignore)
                 {
-                    if (Utils.StringUtils.FolderContain(base_loc, loc))
+                    if (StringUtils.FolderContain(base_loc, loc))
                     {
                         ignore = true;
                         break;
@@ -1237,7 +1127,6 @@ internal abstract class ComicData
         public const string Progress = "progress";
         public const string LastVisit = "last_visit";
         public const string LastPosition = "last_pos";
-        public const string ImageAspectRatios = "image_aspect_ratios";
         public const string CoverFileCache = "cover_file_name";
 
         // Field tag category.

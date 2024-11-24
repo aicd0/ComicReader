@@ -1,7 +1,8 @@
-<home:HomePageBase
+<base:BasePage
     x:Class="ComicReader.Views.Home.HomePage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:base="using:ComicReader.Views.Base"
     xmlns:cca="using:ComicReader.Common.AdaptiveGridView"
     xmlns:converters="using:ComicReader.Converters"
     xmlns:cw="using:CommunityToolkit.WinUI"
@@ -183,7 +184,7 @@
                     ItemContainerStyle="{StaticResource ComicItemContainerStyle}"
                     ItemHeight="310"
                     ItemsSource="{x:Bind ComicItemSource}"
-                    OneRowModeEnabled="True"
+                    MaxRows="2"
                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                     ScrollViewer.HorizontalScrollMode="Disabled"
                     StretchContentForSingleRow="False"
@@ -236,4 +237,4 @@
             </StackPanel>
         </ScrollViewer>
     </Grid>
-</home:HomePageBase>
+</base:BasePage>

@@ -6,7 +6,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-using ComicReader.Utils;
+using ComicReader.Common;
+using ComicReader.Common.DebugTools;
 
 using Windows.Storage;
 using Windows.Storage.Search;
@@ -16,6 +17,8 @@ namespace ComicReader.Database;
 
 internal class ComicFolderData : ComicData
 {
+    private const string TAG = "ComicFolderData";
+
     private StorageFolder Folder { get; set; }
     private StorageFile InfoFile { get; set; }
     private List<StorageFile> ImageFiles { get; set; } = new List<StorageFile>();
@@ -43,7 +46,7 @@ internal class ComicFolderData : ComicData
         }
 
         image_files = image_files
-            .OrderBy(x => Utils.StringUtils.SmartFileNameKeySelector(x.DisplayName), Utils.StringUtils.SmartFileNameComparer)
+            .OrderBy(x => StringUtils.SmartFileNameKeySelector(x.DisplayName), StringUtils.SmartFileNameComparer)
             .ToList();
 
         var comic = new ComicFolderData(true)
@@ -73,7 +76,7 @@ internal class ComicFolderData : ComicData
             return TaskException.InvalidParameters;
         }
 
-        StorageFolder folder = await Utils.Storage.TryGetFolder(Location);
+        StorageFolder folder = await Storage.TryGetFolder(Location);
 
         if (folder == null)
         {
@@ -160,7 +163,7 @@ internal class ComicFolderData : ComicData
         }
 
         string text = InfoString();
-        IBuffer buffer = Utils.C0.GetBufferFromString(text);
+        IBuffer buffer = C0.GetBufferFromString(text);
 
         try
         {
@@ -206,7 +209,7 @@ internal class ComicFolderData : ComicData
 
         // Sort by display name.
         ImageFiles = img_files
-            .OrderBy(x => Utils.StringUtils.SmartFileNameKeySelector(x.DisplayName), Utils.StringUtils.SmartFileNameComparer)
+            .OrderBy(x => StringUtils.SmartFileNameKeySelector(x.DisplayName), StringUtils.SmartFileNameComparer)
             .ToList();
         Log(img_files.Count.ToString() + " images added.");
         return TaskException.Success;
@@ -216,7 +219,7 @@ internal class ComicFolderData : ComicData
     {
         if (index >= ImageFiles.Count)
         {
-            Log("Image index " + index.ToString() + " out of boundary " + ImageFiles.Count.ToString());
+            Logger.F(TAG, "InternalGetImageStream");
             return null;
         }
 
@@ -229,5 +232,16 @@ internal class ComicFolderData : ComicData
             Log("Failed to access '" + ImageFiles[index].Path + "'. " + e.ToString());
             return null;
         }
+    }
+
+    public override string GetImageCacheKey(int index)
+    {
+        if (index < 0 || index >= ImageFiles.Count)
+        {
+            Logger.F(TAG, "GetImageCacheKey");
+            return null;
+        }
+
+        return ImageFiles[index].Path;
     }
 }
