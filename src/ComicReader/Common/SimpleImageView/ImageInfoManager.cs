@@ -2,11 +2,10 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Drawing;
-using System.IO;
 
 using ComicReader.Common.DebugTools;
 
+using Windows.Graphics.Imaging;
 using Windows.Storage.Streams;
 
 namespace ComicReader.Common.SimpleImageView;
@@ -19,7 +18,7 @@ internal static class ImageInfoManager
     {
         string key = source.GetUniqueKey();
         ImageCacheDatabase.CacheRecord record = ImageCacheDatabase.GetCacheRecord(key);
-        if (record != null)
+        if (record != null && record.Width > 0 && record.Height > 0)
         {
             return new ImageInfo(record.Width, record.Height);
         }
@@ -33,29 +32,33 @@ internal static class ImageInfoManager
         {
             Logger.E(TAG, "GetImageInfo", e);
         }
+        if (stream == null)
+        {
+            return null;
+        }
 
         int width = 0;
         int height = 0;
-        if (stream != null)
+        using (stream)
         {
-            using (stream)
+            try
             {
                 stream.Seek(0);
-                try
-                {
-                    using var image = Image.FromStream(stream.AsStream());
-                    if (image == null)
-                    {
-                        return null;
-                    }
-                    width = image.Width;
-                    height = image.Height;
-                }
-                catch (Exception e)
-                {
-                    Logger.E(TAG, "GetImageInfo", e);
-                }
+                BitmapDecoder decoder = BitmapDecoder.CreateAsync(stream).AsTask().Result;
+                width = (int)decoder.PixelWidth;
+                height = (int)decoder.PixelHeight;
             }
+            catch (Exception e)
+            {
+                Logger.E(TAG, "GetImageInfo", e);
+                return null;
+            }
+        }
+
+        if (width <= 0 || height <= 0)
+        {
+            DebugUtils.Assert(false);
+            return null;
         }
 
         record = new ImageCacheDatabase.CacheRecord(key, width, height);

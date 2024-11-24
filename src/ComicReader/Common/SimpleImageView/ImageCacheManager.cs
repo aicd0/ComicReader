@@ -179,7 +179,7 @@ internal class ImageCacheManager
         }
 
         string entry = null;
-        try
+        using (stream)
         {
             stream.Seek(0);
             BitmapDecoder decoder = await BitmapDecoder.CreateAsync(stream);
@@ -223,10 +223,6 @@ internal class ImageCacheManager
                 Logger.F(TAG, "GenCoverCache", e);
                 return null;
             }
-        }
-        finally
-        {
-            stream.Dispose();
         }
         return entry;
     }

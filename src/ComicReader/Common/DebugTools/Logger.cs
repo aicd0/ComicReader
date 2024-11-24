@@ -110,12 +110,12 @@ internal static class Logger
 
     public static void F(string tag, string message)
     {
-        Log(LEVEL_FATAL, LogTag.N(tag), message, null);
+        Log(LEVEL_FATAL, LogTag.N(tag), message, new Exception());
     }
 
     public static void F(LogTag tag, string message)
     {
-        Log(LEVEL_FATAL, tag, message, null);
+        Log(LEVEL_FATAL, tag, message, new Exception());
     }
 
     public static void F(string tag, string message, Exception exception)

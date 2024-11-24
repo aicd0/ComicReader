@@ -3,9 +3,7 @@
 
 #define DEBUG_LOG_LOAD
 #if DEBUG
-//#define DEBUG_LOG_JUMP
 //#define DEBUG_LOG_MANIPULATION
-//#define DEBUG_LOG_VIEW_CHANGE
 //#define DEBUG_LOG_UPDATE_PAGE
 //#define DEBUG_LOG_UPDATE_IMAGE
 #endif
@@ -298,10 +296,11 @@ internal partial class ReaderView : UserControl
                 IImageSource image = images[i];
                 ImageInfoManager.ImageInfo imageInfo = ImageInfoManager.GetImageInfo(image);
                 double aspectRatio = 0.0;
-                if (imageInfo != null)
+                if (imageInfo != null && imageInfo.Width > 0 && imageInfo.Height > 0)
                 {
                     aspectRatio = (double)imageInfo.Width / imageInfo.Height;
                 }
+
                 pendingList.Add(new Tuple<int, double, IImageSource>(i, aspectRatio, image));
 
                 if (stopwatch.LapSpan().TotalMilliseconds > 500)
@@ -447,6 +446,10 @@ internal partial class ReaderView : UserControl
 
     private void SetImageData(int index, double aspectRatio, IImageSource source)
     {
+        DebugUtils.Assert(index >= 0);
+        DebugUtils.Assert(double.IsFinite(aspectRatio));
+        DebugUtils.Assert(source != null);
+
         var model = new ImageDataModel
         {
             AspectRatio = aspectRatio,
@@ -455,11 +458,9 @@ internal partial class ReaderView : UserControl
         _dataModel[index] = model;
 
         int frameIndex = PageToFrame(index + 1, out bool leftSide, out int neighbor);
-        if (frameIndex < 0)
-        {
-            Logger.F(TAG, "");
-            return;
-        }
+
+        DebugUtils.Assert(frameIndex >= 0);
+        DebugUtils.Assert(neighbor >= -1);
 
         int page = index + 1;
         bool dual = neighbor != -1;
@@ -515,6 +516,11 @@ internal partial class ReaderView : UserControl
             FrameDataSource.Add(new ReaderFrameViewModel());
         }
         ReaderFrameViewModel item = FrameDataSource[frameIndex];
+
+        DebugUtils.Assert(double.IsFinite(frameWidth));
+        DebugUtils.Assert(double.IsFinite(frameHeight));
+        DebugUtils.Assert(double.IsFinite(horizontalPadding));
+        DebugUtils.Assert(double.IsFinite(verticalPadding));
 
         item.FrameWidth = frameWidth;
         item.FrameHeight = frameHeight;
@@ -1293,7 +1299,11 @@ internal partial class ReaderView : UserControl
         }
 
         parallel_offset = parallel_offset * ZoomFactorFinal - ViewportParallelLength * 0.5;
-        return new Tuple<double, double>(parallel_offset, perpendicular_offset);
+        var result = new Tuple<double, double>(parallel_offset, perpendicular_offset);
+
+        DebugUtils.Assert(double.IsFinite(result.Item1));
+        DebugUtils.Assert(double.IsFinite(result.Item2));
+        return result;
     }
 
     private FrameOffsetData FrameOffsets(int frame)
@@ -1323,7 +1333,7 @@ internal partial class ReaderView : UserControl
             parallel_offset -= item.FrameMargin.Left + item.FrameWidth + item.FrameMargin.Right;
         }
 
-        return new FrameOffsetData
+        var result = new FrameOffsetData
         {
             ParallelBegin = parallel_offset,
             ParallelCenter = parallel_offset + (IsVertical ?
@@ -1336,6 +1346,12 @@ internal partial class ReaderView : UserControl
                 item.FrameMargin.Left + item.FrameWidth * 0.5 :
                 item.FrameMargin.Top + item.FrameHeight * 0.5),
         };
+
+        DebugUtils.Assert(double.IsFinite(result.ParallelEnd));
+        DebugUtils.Assert(double.IsFinite(result.ParallelCenter));
+        DebugUtils.Assert(double.IsFinite(result.ParallelBegin));
+        DebugUtils.Assert(double.IsFinite(result.PerpendicularCenter));
+        return result;
     }
 
     // Modifier - Configurations
@@ -1708,25 +1724,30 @@ internal partial class ReaderView : UserControl
             return false;
         }
 
-#if DEBUG_LOG_JUMP
+        DebugUtils.Assert(float.IsFinite(ctx.zoom ?? 0));
+        DebugUtils.Assert(double.IsFinite(ctx.horizontalOffset ?? 0));
+        DebugUtils.Assert(double.IsFinite(ctx.verticalOffset ?? 0));
+
         Log("Jump", "ParamIn:"
             + $" Reason={reason}"
             + $",Z={ctx.zoom}"
             + $",H={ctx.horizontalOffset}"
             + $",V={ctx.verticalOffset}"
             + $",D={ctx.disableAnimation}");
-#endif
 
         SetScrollViewerZoom(ctx, out float? zoom_out);
 
-#if DEBUG_LOG_JUMP
+        DebugUtils.Assert(float.IsFinite(zoom_out ?? 0));
+        DebugUtils.Assert(float.IsFinite(ctx.zoom ?? 0));
+        DebugUtils.Assert(double.IsFinite(ctx.horizontalOffset ?? 0));
+        DebugUtils.Assert(double.IsFinite(ctx.verticalOffset ?? 0));
+
         Log("Jump", "ParamOut:"
             + $" Z={zoom_out}"
             + $",H={ctx.horizontalOffset}"
             + $",V={ctx.verticalOffset}"
             + $",D={ctx.disableAnimation}"
             + $",ZN={ctx.zoom}");
-#endif
 
         if (!ChangeView(zoom_out, ctx.horizontalOffset, ctx.verticalOffset, ctx.disableAnimation))
         {
@@ -1855,13 +1876,11 @@ internal partial class ReaderView : UserControl
             DisableAnimationFinal = true;
         }
 
-#if DEBUG_LOG_JUMP
         Log("Jump", "Commit:"
             + " Z=" + ZoomFactorFinal.ToString()
             + ",H=" + HorizontalOffsetFinal.ToString()
             + ",V=" + VerticalOffsetFinal.ToString()
             + ",D=" + DisableAnimationFinal.ToString());
-#endif
 
         ThisScrollViewer.ChangeView(HorizontalOffsetFinal, VerticalOffsetFinal, ZoomFactorFinal, DisableAnimationFinal);
         return true;
@@ -2131,12 +2150,10 @@ internal partial class ReaderView : UserControl
                 MoveFrameInternal(0, false, "StickToCenter");
             }
 
-#if DEBUG_LOG_VIEW_CHANGE
             Log("ViewChanged", $"Z={ZoomFactorFinal}"
                 + $",H={HorizontalOffsetFinal}"
                 + $",V={VerticalOffsetFinal}"
                 + $",P={CurrentPage}");
-#endif
         }
 
         UpdateImages(final);

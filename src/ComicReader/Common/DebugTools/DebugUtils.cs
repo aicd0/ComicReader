@@ -12,4 +12,12 @@ internal static class DebugUtils
 #endif
 
     public static bool IsDebugEnabled => Database.XmlDatabase.Settings.DebugMode;
+
+    public static void Assert(bool condition)
+    {
+        if (!condition && IS_DEBUG_BUILD)
+        {
+            Logger.F("DebugUtils", "Assertion failed.");
+        }
+    }
 }
