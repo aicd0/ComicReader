@@ -177,13 +177,10 @@ internal sealed partial class HomePage : BasePage
         item.Image.ImageSet = true;
         tokens.Add(new SimpleImageLoader.Token
         {
-            Model = new SimpleImageView.Model
-            {
-                Width = image_width,
-                Height = image_height,
-                Multiplication = 1.4,
-                Source = new ComicCoverImageSource(item.Comic)
-            },
+            Width = image_width,
+            Height = image_height,
+            Multiplication = 1.4,
+            Source = new ComicCoverImageSource(item.Comic),
             ImageResultHandler = new LoadImageCallback(viewHolder, item)
         });
 

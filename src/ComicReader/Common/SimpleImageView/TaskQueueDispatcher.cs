@@ -5,7 +5,7 @@ using System;
 
 namespace ComicReader.Common.SimpleImageView;
 
-internal sealed class TaskQueueDispatcher : SimpleImageView.IDispatcher
+internal sealed class TaskQueueDispatcher : IDispatcher
 {
     private readonly TaskQueue _taskQueue;
     private readonly string _debugDescription;

@@ -84,6 +84,8 @@ internal partial class ReaderView : UserControl
     private readonly CancellationSession _dataModelSession;
     private readonly CancellationSession _loadImageSession;
 
+    private long _metricsStartLoadTime = 0;
+
     private ObservableCollection<ReaderFrameViewModel> FrameDataSource { get; } = [];
 
     //
@@ -226,6 +228,8 @@ internal partial class ReaderView : UserControl
 
     private void Reload(List<IImageSource> images)
     {
+        _metricsStartLoadTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+
         // Refresh token
         _dataModelSession.Next();
         CancellationSession.IToken token = _dataModelSession.Token;
@@ -273,6 +277,8 @@ internal partial class ReaderView : UserControl
                     {
                         return;
                     }
+                    long loadTime = DateTimeOffset.Now.ToUnixTimeMilliseconds() - _metricsStartLoadTime;
+                    LogLoadTime("GetInfo", $"time={loadTime},index={index}");
                     double aspectRatio = 0.0;
                     if (imageInfo != null)
                     {
@@ -685,7 +691,7 @@ internal partial class ReaderView : UserControl
             viewHolder.SetReadyStateChangeHandler(delegate (FrameworkElement container, bool isReady)
             {
                 _frameManager.PutFrame(index, container, isReady);
-                Log($"FrameReadyChanged(i={index},hash={container.GetHashCode()},ready={isReady})");
+                Log("FrameReadyChanged", $"i={index},hash={container.GetHashCode()},ready={isReady}");
             });
             viewHolder.Bind(item);
         }
@@ -999,10 +1005,21 @@ internal partial class ReaderView : UserControl
         return IsVertical ? parallelVal : perpendicularVal;
     }
 
-    private void Log(string message)
+    private void LogLoadTime(string tag, string message)
+    {
+        Log("LoadTime", tag, message);
+    }
+
+    private void Log(string tag, string message)
     {
         string name = _isVertical ? "Vertical" : "Horizontal";
-        Logger.I($"Reader{name}", message);
+        Logger.I(LogTag.N($"Reader{name}", tag), message);
+    }
+
+    private void Log(string tag1, string tag2, string message)
+    {
+        string name = _isVertical ? "Vertical" : "Horizontal";
+        Logger.I(LogTag.N($"Reader{name}", tag1, tag2), message);
     }
 
     //
@@ -1370,12 +1387,9 @@ internal partial class ReaderView : UserControl
                     m.ImageLeftSet = true;
                     img_loader_tokens.Add(new SimpleImageLoader.Token
                     {
-                        Model = new SimpleImageView.Model
-                        {
-                            Source = m.ImageSourceLeft,
-                            Dispatcher = new TaskQueueDispatcher(_updateImageQueue, "ReaderLoadImage"),
-                        },
-                        ImageResultHandler = new LoadImageResultHandler(m, true)
+                        Source = m.ImageSourceLeft,
+                        Dispatcher = new TaskQueueDispatcher(_updateImageQueue, "ReaderLoadImage"),
+                        ImageResultHandler = new LoadImageResultHandler(m, true, this, i)
                     });
                 }
 
@@ -1384,12 +1398,9 @@ internal partial class ReaderView : UserControl
                     m.ImageRightSet = true;
                     img_loader_tokens.Add(new SimpleImageLoader.Token
                     {
-                        Model = new SimpleImageView.Model
-                        {
-                            Source = m.ImageSourceRight,
-                            Dispatcher = new TaskQueueDispatcher(_updateImageQueue, "ReaderLoadImage"),
-                        },
-                        ImageResultHandler = new LoadImageResultHandler(m, false)
+                        Source = m.ImageSourceRight,
+                        Dispatcher = new TaskQueueDispatcher(_updateImageQueue, "ReaderLoadImage"),
+                        ImageResultHandler = new LoadImageResultHandler(m, false, this, i)
                     });
                 }
             }
@@ -1409,17 +1420,22 @@ internal partial class ReaderView : UserControl
                 }
             }
 
-            new SimpleImageLoader.Transaction(_loadImageSession.Token, img_loader_tokens).SetQueue(_updateImageQueue).Commit();
+            new SimpleImageLoader.Transaction(_loadImageSession.Token, img_loader_tokens)
+                .SetDispatcher(new TaskQueueDispatcher(_updateImageQueue, "ReaderViewLoadImageDispatcher"))
+                .Commit();
         }
     }
 
-    private class LoadImageResultHandler(ReaderFrameViewModel model, bool isLeft) : IImageResultHandler
+    private class LoadImageResultHandler(ReaderFrameViewModel model, bool isLeft, ReaderView view, int index) : IImageResultHandler
     {
+        private readonly long _startTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
         private readonly ReaderFrameViewModel _model = model;
         private readonly bool _isLeft = isLeft;
 
         public void OnSuccess(BitmapImage image)
         {
+            long loadTime = DateTimeOffset.Now.ToUnixTimeMilliseconds() - _startTime;
+            view.LogLoadTime("LoadImage", $"time={loadTime},index={index}");
             if (_isLeft)
             {
                 _model.ImageLeft = image;

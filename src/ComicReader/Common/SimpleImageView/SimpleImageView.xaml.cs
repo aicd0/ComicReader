@@ -15,7 +15,6 @@ internal partial class SimpleImageView : UserControl
     private Model _model;
     private int _currentImageHash = 0;
     private readonly CancellationSession _cancellationSession = new();
-    private readonly WeakImageResultHandler _handler;
 
     public SimpleImageView()
     {
@@ -23,8 +22,6 @@ internal partial class SimpleImageView : UserControl
 
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
-
-        _handler = new(this);
     }
 
     public void SetModel(Model model)
@@ -70,7 +67,7 @@ internal partial class SimpleImageView : UserControl
         _currentImageHash = newHash;
 
         CancellationSession.IToken token = _cancellationSession.Token;
-        IImageResultHandler handler = _handler;
+        IImageResultHandler handler = new WeakImageResultHandler(this, model.Callback);
         Action loadAction = delegate
         {
             LoadImage(token, model, handler);
@@ -91,17 +88,21 @@ internal partial class SimpleImageView : UserControl
 
     private static void LoadImage(CancellationSession.IToken token, Model model, IImageResultHandler handler)
     {
-        ImageCacheManager.LoadImage(token, model.Source, model.FrameWidth,
-            model.FrameHeight, model.StretchMode, handler);
+        double width = model.Width * model.Multiplication;
+        double height = model.Height * model.Multiplication;
+        ImageCacheManager.LoadImage(token, model.Source, width,
+            height, model.StretchMode, handler);
     }
 
     private class WeakImageResultHandler : IImageResultHandler
     {
         private readonly WeakReference<SimpleImageView> _imageView;
+        private readonly IImageCallback _callback;
 
-        public WeakImageResultHandler(SimpleImageView view)
+        public WeakImageResultHandler(SimpleImageView view, IImageCallback callback)
         {
             _imageView = new WeakReference<SimpleImageView>(view);
+            _callback = callback;
         }
 
         public void OnSuccess(BitmapImage image)
@@ -109,26 +110,26 @@ internal partial class SimpleImageView : UserControl
             if (_imageView.TryGetTarget(out SimpleImageView view))
             {
                 view.ImageHolder.Source = image;
+                _callback?.OnSuccess(image);
             }
         }
     }
 
-    public interface IDispatcher
+    public interface IImageCallback
     {
-        void Queue(Action action, string debugDescription);
+        void OnSuccess(BitmapImage image);
     }
 
     public class Model
     {
         public IImageSource Source { get; set; }
-        public double Width { private get; set; } = double.PositiveInfinity;
-        public double Height { private get; set; } = double.PositiveInfinity;
+        public double Width { get; set; } = double.PositiveInfinity;
+        public double Height { get; set; } = double.PositiveInfinity;
         public StretchModeEnum StretchMode { get; set; } = StretchModeEnum.Uniform;
         public double Multiplication { get; set; } = 1.0;
         public IDispatcher Dispatcher { get; set; }
+        public IImageCallback Callback { get; set; }
         public string DebugDescription { get; set; }
-        public double FrameWidth => Width * Multiplication;
-        public double FrameHeight => Height * Multiplication;
 
         public int GetImageHashCode()
         {

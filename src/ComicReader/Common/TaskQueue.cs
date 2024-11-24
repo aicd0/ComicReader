@@ -54,18 +54,19 @@ public class TaskQueue
     public void Enqueue(string name, Func<TaskException> ope)
     {
         StartWatchDog();
+        var tag = LogTag.N(TAG, _name, name);
         lock (_queue)
         {
             int pendingCount = Interlocked.Increment(ref _pendingTaskCount);
             string taskName = $"{_name}_{name}_{Random.Shared.NextInt64()}";
-            Logger.I(TAG + "_" + _name, $"enqueue: {taskName} (pending={pendingCount})");
+            Logger.I(tag, $"enqueue: pending={pendingCount}");
             _queue = _queue.ContinueWith(delegate (Task<TaskException> t)
             {
                 long startTime = GetCurrentMilliseconds();
                 sStartedTasks[taskName] = startTime;
 
                 int pendingCount = Interlocked.Decrement(ref _pendingTaskCount);
-                Logger.I(TAG + "_" + _name, $"start: {taskName} (pending={pendingCount})");
+                Logger.I(tag, $"start: pending={pendingCount}");
                 TaskException result;
                 try
                 {
@@ -73,12 +74,12 @@ public class TaskQueue
                 }
                 catch (Exception e)
                 {
-                    Logger.F(TAG, $"exception occured in task {taskName}", e);
+                    Logger.F(tag, $"exception occured in task {taskName}", e);
                     result = TaskException.Unknown;
                 }
 
                 long timeUsed = GetCurrentMilliseconds() - startTime;
-                Logger.I(TAG + "_" + _name, $"end: {taskName} (result={result}, timeUsed={timeUsed})");
+                Logger.I(tag, $"end: result={result}, timeUsed={timeUsed}");
                 sStartedTasks.TryRemove(taskName, out long _);
                 return result;
             });

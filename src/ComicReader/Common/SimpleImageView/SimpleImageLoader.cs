@@ -12,7 +12,7 @@ internal static class SimpleImageLoader
     {
         private readonly CancellationSession.IToken _sessionToken;
         private readonly List<Token> _tokens;
-        private TaskQueue _queue = TaskQueue.DefaultQueue;
+        private IDispatcher _dispatcher = new TaskQueueDispatcher(TaskQueue.DefaultQueue, "SimpleImageLoaderDefaultDispatcher");
 
         public Transaction(CancellationSession.IToken token, List<Token> tokens)
         {
@@ -20,32 +20,38 @@ internal static class SimpleImageLoader
             _tokens = tokens;
         }
 
-        public Transaction SetQueue(TaskQueue queue)
+        public Transaction SetDispatcher(IDispatcher dispatcher)
         {
-            ArgumentNullException.ThrowIfNull(queue);
+            ArgumentNullException.ThrowIfNull(dispatcher);
 
-            _queue = queue;
+            _dispatcher = dispatcher;
             return this;
         }
 
         protected override TaskException CommitImpl()
         {
-            _queue.Enqueue("SimpleImageLoader", delegate
+            _dispatcher.Queue(delegate
             {
                 foreach (Token token in _tokens)
                 {
-                    SimpleImageView.Model model = token.Model;
-                    ImageCacheManager.LoadImage(_sessionToken, model.Source, model.FrameWidth, model.FrameHeight, model.StretchMode, token.ImageResultHandler);
+                    double width = token.Width * token.Multiplication;
+                    double height = token.Height * token.Multiplication;
+
+                    ImageCacheManager.LoadImage(_sessionToken, token.Source, width, height, token.StretchMode, token.ImageResultHandler);
                 }
-                return TaskException.Success;
-            });
+            }, "SimpleImageLoader");
             return TaskException.Success;
         }
     }
 
     public class Token
     {
-        public SimpleImageView.Model Model { get; set; } = new();
+        public IImageSource Source { get; set; }
+        public double Width { get; set; } = double.PositiveInfinity;
+        public double Height { get; set; } = double.PositiveInfinity;
+        public StretchModeEnum StretchMode { get; set; } = StretchModeEnum.Uniform;
+        public double Multiplication { get; set; } = 1.0;
+        public IDispatcher Dispatcher { get; set; }
         public IImageResultHandler ImageResultHandler { get; set; }
     }
 }

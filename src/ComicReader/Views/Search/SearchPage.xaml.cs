@@ -494,14 +494,11 @@ internal sealed partial class SearchPage : BasePage
         item.Image.ImageSet = true;
         tokens.Add(new SimpleImageLoader.Token
         {
-            Model = new SimpleImageView.Model
-            {
-                Width = image_width,
-                Height = image_height,
-                Multiplication = 1.4,
-                StretchMode = StretchModeEnum.UniformToFill,
-                Source = new ComicCoverImageSource(item.Comic)
-            },
+            Width = image_width,
+            Height = image_height,
+            Multiplication = 1.4,
+            StretchMode = StretchModeEnum.UniformToFill,
+            Source = new ComicCoverImageSource(item.Comic),
             ImageResultHandler = new LoadImageCallback(viewHolder, item)
         });
 
