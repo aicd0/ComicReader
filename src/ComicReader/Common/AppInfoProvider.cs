@@ -2,7 +2,11 @@
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Text;
+using System.Threading.Tasks;
+
+using ComicReader.Common.Threading;
 
 namespace ComicReader.Common;
 
@@ -80,23 +84,28 @@ public class AppInfoProvider
     }
 
     // Encodings.
-    private static Dictionary<int, Encoding> m_SupportedEncodings = null;
-    public static Dictionary<int, Encoding> SupportedEncodings
+    private static ReadOnlyDictionary<int, Encoding> _supportedEncodings = null;
+
+    public static async Task<ReadOnlyDictionary<int, Encoding>> GetSupportedEncodings()
     {
-        get
+        if (_supportedEncodings != null)
         {
-            if (m_SupportedEncodings == null)
-            {
-                // Encoding.GetEncodings() doesn't return the full list of encodings.
-                // At least it doesn't work for current version of UWP.
-                // ref: https://github.com/dotnet/runtime/issues/25819
-                // So we hard-coded the whole list instead.
+            return _supportedEncodings;
+        }
 
-                Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+        var completionSource = new TaskCompletionSource<ReadOnlyDictionary<int, Encoding>>();
+        TaskQueue.DefaultQueue.Enqueue("GetSupportedEncodings", delegate
+        {
+            // Encoding.GetEncodings() doesn't return the full list of encodings.
+            // At least it doesn't work for current version of UWP.
+            // ref: https://github.com/dotnet/runtime/issues/25819
+            // So we hard-coded the whole list instead.
 
-                // ref: https://docs.microsoft.com/en-us/windows/win32/intl/code-page-identifiers
-                int[] codepages = new int[] {
-                    37, 437, 500, 708, 709, 710, 720, 737, 775, 850, 852, 855, 857, 858,
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+
+            // ref: https://docs.microsoft.com/en-us/windows/win32/intl/code-page-identifiers
+            int[] codepages = [
+                37, 437, 500, 708, 709, 710, 720, 737, 775, 850, 852, 855, 857, 858,
                     860, 861, 862, 863, 864, 865, 866, 869, 870, 874, 875, 932, 936, 949,
                     950, 1026, 1047, 1140, 1141, 1142, 1143, 1144, 1145, 1146, 1147, 1148,
                     1149, 1200, 1201, 1250, 1251, 1252, 1253, 1254, 1255, 1256, 1257, 1258,
@@ -110,22 +119,23 @@ public class AppInfoProvider
                     50221, 50222, 50225, 50227, 50229, 50930, 50931, 50933, 50935, 50936,
                     50937, 50939, 51932, 51936, 51949, 51950, 52936, 54936, 57002, 57003,
                     57004, 57005, 57006, 57007, 57008, 57009, 57010, 57011, 65000, 65001,
-                };
+                ];
 
-                m_SupportedEncodings = new Dictionary<int, Encoding>();
-
-                foreach (int codepage in codepages)
+            var supportedEncodings = new Dictionary<int, Encoding>();
+            foreach (int codepage in codepages)
+            {
+                try
                 {
-                    try
-                    {
-                        var info = Encoding.GetEncoding(codepage);
-                        m_SupportedEncodings.Add(codepage, info);
-                    }
-                    catch { }
+                    var info = Encoding.GetEncoding(codepage);
+                    supportedEncodings.Add(codepage, info);
                 }
+                catch { }
             }
 
-            return m_SupportedEncodings;
-        }
+            _supportedEncodings = new ReadOnlyDictionary<int, Encoding>(supportedEncodings);
+            completionSource.SetResult(_supportedEncodings);
+            return TaskException.Success;
+        });
+        return await completionSource.Task;
     }
 }

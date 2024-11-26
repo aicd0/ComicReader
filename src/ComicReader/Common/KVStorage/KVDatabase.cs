@@ -1,22 +1,19 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
+
 namespace ComicReader.Common.KVStorage;
 
-internal class KVDatabase
+internal static class KVDatabase
 {
-    private KVDatabase() { }
-
-    public KVDatabaseMethod GetDefaultMethod()
+    private static readonly Lazy<KVDatabaseMethod> sDefaultMethod = new(delegate
     {
-        return KVDatabaseMethodLiteDB.GetInstance();
-    }
+        return new KVDatabaseMethodCache(KVDatabaseMethodLiteDB.GetInstance());
+    });
 
-    static KVDatabase mInstance;
-
-    public static KVDatabase GetInstance()
+    public static KVDatabaseMethod GetDefaultMethod()
     {
-        mInstance ??= new KVDatabase();
-        return mInstance;
+        return sDefaultMethod.Value;
     }
 }

@@ -134,11 +134,6 @@ internal static class Logger
 
     private static void Log(int level, LogTag tag, string message, Exception exception)
     {
-        if (!DebugUtils.IsDebugEnabled)
-        {
-            return;
-        }
-
         string levelTag;
         switch (level)
         {
@@ -171,7 +166,7 @@ internal static class Logger
             realMessage += "\n" + exception.ToString();
         }
 
-        if (DebugUtils.IS_DEBUG_BUILD)
+        if (DebugUtils.DebugMode)
         {
             if (LogSwitches.CanLog(level, tag))
             {

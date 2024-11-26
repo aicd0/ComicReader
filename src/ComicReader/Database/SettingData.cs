@@ -18,7 +18,6 @@ public class SettingData : XmlData
 {
     public int DatabaseVersion = -1;
     public List<string> ComicFolders = new();
-    public int DefaultArchiveCodePage = -1;
     public bool VerticalReading = true;
     public bool LeftToRight = false;
     public bool VerticalContinuous = true;
@@ -27,13 +26,6 @@ public class SettingData : XmlData
     public PageArrangementType VerticalPageArrangement = PageArrangementType.Single;
     public PageArrangementType HorizontalPageArrangement = PageArrangementType.DualCoverMirror;
     public bool SaveHistory = true;
-
-    public bool DebugMode =
-#if DEBUG
-    true;
-#else
-    false;
-#endif
 
     // serialization
     public override string FileName => "Settings";

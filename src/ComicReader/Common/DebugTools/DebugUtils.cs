@@ -1,23 +1,26 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
+
 namespace ComicReader.Common.DebugTools;
 
 internal static class DebugUtils
 {
 #if DEBUG
-    public const bool IS_DEBUG_BUILD = true;
+    private const bool IS_DEBUG_BUILD = true;
 #else
-    public const bool IS_DEBUG_BUILD = false;
+    private const bool IS_DEBUG_BUILD = false;
 #endif
 
-    public static bool IsDebugEnabled => Database.XmlDatabase.Settings.DebugMode;
+    private static readonly Lazy<bool> sDebugMode = new(() => IS_DEBUG_BUILD && AppStatusPreserver.DebugMode);
+    public static bool DebugMode => sDebugMode.Value;
 
     public static void Assert(bool condition)
     {
-        if (!condition && IS_DEBUG_BUILD)
+        if (!condition)
         {
-            Logger.F("DebugUtils", "Assertion failed.");
+            Logger.F("DebugUtils", "Assertion failed");
         }
     }
 }

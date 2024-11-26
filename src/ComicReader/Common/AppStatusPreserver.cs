@@ -9,24 +9,50 @@ namespace ComicReader.Common;
 static class AppStatusPreserver
 {
     private const string TAG = "AppStatusPreserver";
+    private const string KEY_DEBUG_MODE = "debug_mode";
+    private const string KEY_DEFAULT_ARCHIVE_CODE_PAGE = "default_archive_code_page";
     private const string KEY_READING_COMIC_ID = "reading_comic_id";
+
+    public static bool DebugMode
+    {
+        get
+        {
+            return KVDatabase.GetDefaultMethod().GetBoolean(KVLib.APP, KEY_DEBUG_MODE, false);
+        }
+        set
+        {
+            KVDatabase.GetDefaultMethod().SetBoolean(KVLib.APP, KEY_DEBUG_MODE, value);
+        }
+    }
+
+    public static int DefaultArchiveCodePage
+    {
+        get
+        {
+            return (int)KVDatabase.GetDefaultMethod().GetLong(KVLib.APP, KEY_DEFAULT_ARCHIVE_CODE_PAGE, -1);
+        }
+        set
+        {
+            KVDatabase.GetDefaultMethod().SetLong(KVLib.APP, KEY_DEFAULT_ARCHIVE_CODE_PAGE, value);
+        }
+    }
 
     public static void SetReadingComic(long id)
     {
         Logger.I(TAG, $"SetReadingComic(id={id})");
         System.Diagnostics.Debug.Assert(id >= 0);
-        KVDatabase.GetInstance().GetDefaultMethod().SetLong(KVLib.APP, KEY_READING_COMIC_ID, id);
+        KVDatabase.GetDefaultMethod().SetLong(KVLib.APP, KEY_READING_COMIC_ID, id);
     }
 
     public static void UnsetReadingComic()
     {
         Logger.I(TAG, "UnsetReadingComic");
-        KVDatabase.GetInstance().GetDefaultMethod().Remove(KVLib.APP, KEY_READING_COMIC_ID);
+        KVDatabase.GetDefaultMethod().Remove(KVLib.APP, KEY_READING_COMIC_ID);
     }
 
     public static long GetReadingComic()
     {
-        long id = KVDatabase.GetInstance().GetDefaultMethod().GetLong(KVLib.APP, KEY_READING_COMIC_ID, -1);
+        long id = KVDatabase.GetDefaultMethod().GetLong(KVLib.APP, KEY_READING_COMIC_ID, -1);
         Logger.I(TAG, $"GetReadingComic(id={id})");
         return id;
     }

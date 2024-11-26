@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
 using System.IO;
@@ -40,27 +41,27 @@ public class SettingsPageShared : INotifyPropertyChanged
 
     public Action OnSettingsChanged;
 
-    private List<Tuple<string, int>> m_Encodings = new();
+    private List<Tuple<string, int>> _encodings = [];
     public List<Tuple<string, int>> Encodings
     {
-        get => m_Encodings;
+        get => _encodings;
         set
         {
-            m_Encodings = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Encodings"));
+            _encodings = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Encodings)));
         }
     }
 
-    private int m_DefaultArchiveCodePage = -2;
+    private int _defaultArchiveCodePage = -2;
     public int DefaultArchiveCodePage
     {
-        get => m_DefaultArchiveCodePage;
+        get => _defaultArchiveCodePage;
         set
         {
-            if (m_DefaultArchiveCodePage != value)
+            if (_defaultArchiveCodePage != value)
             {
-                m_DefaultArchiveCodePage = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("DefaultArchiveCodePage"));
+                _defaultArchiveCodePage = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DefaultArchiveCodePage)));
                 OnSettingsChanged?.Invoke();
             }
         }
@@ -252,9 +253,9 @@ internal sealed partial class SettingsPage : BasePage
 
     public SettingsPageShared Shared { get; set; }
 
-    // Initialize m_updating to TRUE to avoid copying values from
+    // Initialize _updating to TRUE to avoid copying values from
     // controls (See Save()) while this page is still launching.
-    private bool m_updating = true;
+    private bool _updating = true;
 
     public SettingsPage()
     {
@@ -298,89 +299,25 @@ internal sealed partial class SettingsPage : BasePage
     // utilities
     private async Task Update()
     {
-        m_updating = true;
+        _updating = true;
 
-        // Appearance.
-        {
-            object appearance_setting = ApplicationData.Current.LocalSettings.Values[AppearanceKey];
-            if (appearance_setting == null)
-            {
-                Shared.CurrentAppearance = AppearanceSetting.UseSystemSetting;
-            }
-            else if ((ApplicationTheme)(int)appearance_setting == ApplicationTheme.Light)
-            {
-                Shared.CurrentAppearance = AppearanceSetting.Light;
-            }
-            else if ((ApplicationTheme)(int)appearance_setting == ApplicationTheme.Dark)
-            {
-                Shared.CurrentAppearance = AppearanceSetting.Dark;
-            }
-            Shared.Appearance = Shared.CurrentAppearance;
-        }
-
-        // Supported code pages.
-        if (Shared.Encodings.Count == 0)
-        {
-            var encodings = new List<Tuple<string, int>>
-            {
-                new(StringResourceProvider.GetResourceString("Default"), -1)
-            };
-
-            foreach (Encoding info in Common.AppInfoProvider.SupportedEncodings.Values)
-            {
-                string title = info.EncodingName + " [" + info.CodePage.ToString() + "]";
-                encodings.Add(new Tuple<string, int>(title, info.CodePage));
-            }
-            Shared.Encodings = encodings;
-        }
-        if (!Common.AppInfoProvider.SupportedEncodings.ContainsKey(XmlDatabase.Settings.DefaultArchiveCodePage))
-        {
-            XmlDatabase.Settings.DefaultArchiveCodePage = -1;
-        }
-
-        // From Xml.
         await XmlDatabaseManager.WaitLock();
-        Shared.DefaultArchiveCodePage = XmlDatabase.Settings.DefaultArchiveCodePage;
         Shared.TransitionAnimation = XmlDatabase.Settings.TransitionAnimation;
         Shared.IsClearHistoryEnabled = XmlDatabase.History.Items.Count > 0;
         Shared.HistorySaveBrowsingHistory = XmlDatabase.Settings.SaveHistory;
-        Shared.AdvancedDebugMode = XmlDatabase.Settings.DebugMode;
         XmlDatabaseManager.ReleaseLock();
-        m_updating = false;
 
-        // Cache size
+        Shared.AdvancedDebugMode = AppStatusPreserver.DebugMode;
+
+        UpdateAppearance();
+        _ = UpdateCodePages();
         UpdateCacheSize();
-
-        // Rescan status.
         UpdateRescanStatus();
-
-        // Statistics.
         await UpdateStatistis();
+        UpdateFeedback();
+        UpdateAbout();
 
-        // Feedback.
-        {
-            string appName = StringResourceProvider.GetResourceString("AppDisplayName");
-            string contribution_before_link = StringResourceProvider.GetResourceString("ContributionRunBeforeLink");
-            contribution_before_link = contribution_before_link.Replace("$appname", appName);
-            ContributionRunBeforeLink.Text = contribution_before_link;
-            ContributionRunAfterLink.Text = StringResourceProvider.GetResourceString("ContributionRunAfterLink");
-        }
-
-        // About.
-        {
-#if DEBUG
-            string appName = StringResourceProvider.GetResourceString("DevAppDisplayName");
-#else
-            string appName = Utils.StringResourceProvider.GetResourceString("AppDisplayName");
-#endif
-            PackageVersion version = Package.Current.Id.Version;
-            AboutBuildVersionControl.Text = appName + " " + version.Major + "." + version.Minor + "." + version.Build + "." + version.Revision;
-
-            string author = "aicd0";
-            string about_copyright = StringResourceProvider.GetResourceString("AboutCopyright");
-            about_copyright = about_copyright.Replace("$author", author);
-            AboutCopyrightControl.Text = about_copyright;
-        }
+        _updating = false;
     }
 
     private void OnComicDataUpdated()
@@ -390,6 +327,50 @@ internal sealed partial class SettingsPage : BasePage
             UpdateRescanStatus();
             await UpdateStatistis();
         }).Wait();
+    }
+
+    //
+    // Data Update
+    //
+
+    private void UpdateAppearance()
+    {
+        object appearance_setting = ApplicationData.Current.LocalSettings.Values[AppearanceKey];
+        if (appearance_setting == null)
+        {
+            Shared.CurrentAppearance = AppearanceSetting.UseSystemSetting;
+        }
+        else if ((ApplicationTheme)(int)appearance_setting == ApplicationTheme.Light)
+        {
+            Shared.CurrentAppearance = AppearanceSetting.Light;
+        }
+        else if ((ApplicationTheme)(int)appearance_setting == ApplicationTheme.Dark)
+        {
+            Shared.CurrentAppearance = AppearanceSetting.Dark;
+        }
+        Shared.Appearance = Shared.CurrentAppearance;
+    }
+
+    private async Task UpdateCodePages()
+    {
+        ReadOnlyDictionary<int, Encoding> supportedEncodings = await AppInfoProvider.GetSupportedEncodings();
+        var encodings = new List<Tuple<string, int>>
+        {
+            new(StringResourceProvider.GetResourceString("Default"), -1)
+        };
+        foreach (Encoding info in supportedEncodings.Values)
+        {
+            string title = info.EncodingName + " [" + info.CodePage.ToString() + "]";
+            encodings.Add(new Tuple<string, int>(title, info.CodePage));
+        }
+        Shared.Encodings = encodings;
+
+        if (!supportedEncodings.ContainsKey(AppStatusPreserver.DefaultArchiveCodePage))
+        {
+            AppStatusPreserver.DefaultArchiveCodePage = -1;
+        }
+
+        Shared.DefaultArchiveCodePage = AppStatusPreserver.DefaultArchiveCodePage;
     }
 
     private async Task UpdateStatistis()
@@ -410,6 +391,31 @@ internal sealed partial class SettingsPage : BasePage
         Shared.IsRescanning = ComicData.IsRescanning;
     }
 
+    private void UpdateFeedback()
+    {
+        string appName = StringResourceProvider.GetResourceString("AppDisplayName");
+        string contribution_before_link = StringResourceProvider.GetResourceString("ContributionRunBeforeLink");
+        contribution_before_link = contribution_before_link.Replace("$appname", appName);
+        ContributionRunBeforeLink.Text = contribution_before_link;
+        ContributionRunAfterLink.Text = StringResourceProvider.GetResourceString("ContributionRunAfterLink");
+    }
+
+    private void UpdateAbout()
+    {
+#if DEBUG
+        string appName = StringResourceProvider.GetResourceString("DevAppDisplayName");
+#else
+        string appName = Utils.StringResourceProvider.GetResourceString("AppDisplayName");
+#endif
+        PackageVersion version = Package.Current.Id.Version;
+        AboutBuildVersionControl.Text = appName + " " + version.Major + "." + version.Minor + "." + version.Build + "." + version.Revision;
+
+        string author = "aicd0";
+        string about_copyright = StringResourceProvider.GetResourceString("AboutCopyright");
+        about_copyright = about_copyright.Replace("$author", author);
+        AboutCopyrightControl.Text = about_copyright;
+    }
+
     private async Task Save()
     {
         // To local settings.
@@ -428,19 +434,18 @@ internal sealed partial class SettingsPage : BasePage
 
         // To database.
         await XmlDatabaseManager.WaitLock();
-
-        XmlDatabase.Settings.DefaultArchiveCodePage = Shared.DefaultArchiveCodePage;
         XmlDatabase.Settings.TransitionAnimation = Shared.TransitionAnimation;
         XmlDatabase.Settings.SaveHistory = Shared.HistorySaveBrowsingHistory;
-        XmlDatabase.Settings.DebugMode = Shared.AdvancedDebugMode;
-
         XmlDatabaseManager.ReleaseLock();
         TaskQueue.DefaultQueue.Enqueue("SettingsPage#Save", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
+
+        AppStatusPreserver.DefaultArchiveCodePage = Shared.DefaultArchiveCodePage;
+        AppStatusPreserver.DebugMode = Shared.AdvancedDebugMode;
     }
 
     private void OnSettingsChanged()
     {
-        if (m_updating)
+        if (_updating)
         {
             return;
         }
