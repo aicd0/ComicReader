@@ -18,6 +18,8 @@ public class TaskQueue
     private const long WATCH_DOG_ALERT_THRESHOLD = 10000;
 
     public static readonly TaskQueue DefaultQueue = new("Default");
+    public static readonly TaskQueue LongRunningQueue = new("LongRunning");
+
     private static int sWatchDogStarted = 0;
     private static readonly ConcurrentDictionary<string, long> sStartedTasks = new();
 

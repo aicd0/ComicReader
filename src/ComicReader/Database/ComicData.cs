@@ -884,7 +884,7 @@ internal abstract class ComicData
     {
         int pendingCount = Interlocked.Increment(ref _pendingUpdateTaskCount);
         Log($"UpdateAllComics#Enqueue(pending={pendingCount},reason={reason},lazy={lazy})");
-        TaskQueue.DefaultQueue.Enqueue($"{TAG}#UpdateAllComics", delegate
+        TaskQueue.LongRunningQueue.Enqueue($"{TAG}#UpdateAllComics", delegate
         {
             int pendingCount = Interlocked.Decrement(ref _pendingUpdateTaskCount);
             if (pendingCount > 0)

@@ -7,7 +7,7 @@ namespace ComicReader.Common.DebugTools;
 
 internal static class LogSwitches
 {
-    private static readonly bool ENABLE_LOG_FILTER = true;
+    private static readonly bool ENABLE_LOG_FILTER = false;
     private static readonly bool ENABLE_LEVEL_BLACKLIST = false;
     private static readonly bool ENABLE_TAG_BLACKLIST = true;
     private static readonly bool ENABLE_TAG_WHITELIST = true;
