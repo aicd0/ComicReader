@@ -63,7 +63,7 @@ internal class ComicPdfData : ComicData
             return TaskException.InvalidParameters;
         }
 
-        string base_path = ArchiveAccess.GetBasePath(Location);
+        string base_path = ArchiveAccess.GetBasePath(Location, false);
         StorageFile file = await Storage.TryGetFile(base_path);
 
         if (file == null)

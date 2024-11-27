@@ -64,41 +64,37 @@ public class ArchiveAccess
 
     public static bool IsArchivePath(string path)
     {
-        return path.Contains(FileSeperator) && !path.StartsWith(FileSeperator);
+        return GetFileSeperatorIndex(path, false) > -1;
     }
 
-    public static string GetBasePath(string location, bool reverse = false)
+    public static string GetBasePath(string location, bool reverse)
     {
-        int i = reverse ?
-            location.LastIndexOf(FileSeperator) :
-            location.IndexOf(FileSeperator);
+        int i = GetFileSeperatorIndex(location, reverse);
 
-        if (i == -1)
+        if (i <= -1)
         {
             return location;
         }
 
-        return location.Substring(0, i);
+        return location[..i];
     }
 
-    public static string GetSubPath(string location, bool reverse = false)
+    public static string GetSubPath(string location, bool reverse)
     {
-        int i = reverse ?
-            location.LastIndexOf(FileSeperator) :
-            location.IndexOf(FileSeperator);
+        int i = GetFileSeperatorIndex(location, reverse);
 
-        if (i == -1)
+        if (i <= -1)
         {
             return "";
         }
 
-        return location.Substring(i + FileSeperator.Length);
+        return location[(i + FileSeperator.Length)..];
     }
 
     public static async Task<Stream> TryGetFileStream(string location)
     {
-        string base_path = GetBasePath(location);
-        string sub_path = GetSubPath(location);
+        string base_path = GetBasePath(location, false);
+        string sub_path = GetSubPath(location, false);
         StorageFile base_file = await Storage.TryGetFile(base_path);
 
         if (base_file == null)
@@ -180,6 +176,32 @@ public class ArchiveAccess
                     return TryGetFileEntries(stream, ctx.Extension, ctx.Entry, output);
                 });
             });
+    }
+
+    private static int GetFileSeperatorIndex(string path, bool reverse)
+    {
+        int i;
+        if (path.StartsWith("\\\\"))
+        {
+            // Network location
+            if (reverse)
+            {
+                i = path.LastIndexOf(FileSeperator);
+                if (i <= 1)
+                {
+                    i = -1;
+                }
+            }
+            else
+            {
+                i = path.IndexOf(FileSeperator, 2);
+            }
+        }
+        else
+        {
+            i = reverse ? path.LastIndexOf(FileSeperator) : path.IndexOf(FileSeperator);
+        }
+        return i;
     }
 
     private class ArchiveAccessContext
@@ -348,8 +370,8 @@ public class ArchiveAccess
             return await callback(stream);
         }
 
-        string main_entry_name = GetBasePath(sub_path).Replace('/', '\\');
-        string sub_entry_name = GetSubPath(sub_path);
+        string main_entry_name = GetBasePath(sub_path, false).Replace('/', '\\');
+        string sub_entry_name = GetSubPath(sub_path, false);
         string filename = StringUtils.ItemNameFromPath(main_entry_name);
         string sub_extension = StringUtils.ExtensionFromFilename(filename);
         TaskException result = TaskException.Unknown;

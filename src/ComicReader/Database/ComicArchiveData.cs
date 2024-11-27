@@ -64,7 +64,7 @@ internal class ComicArchiveData : ComicData
             return TaskException.InvalidParameters;
         }
 
-        string base_path = ArchiveAccess.GetBasePath(Location);
+        string base_path = ArchiveAccess.GetBasePath(Location, false);
         StorageFile file = await Storage.TryGetFile(base_path);
 
         if (file == null)
@@ -79,7 +79,7 @@ internal class ComicArchiveData : ComicData
     private string GetSubPathFromFilename(string filename)
     {
         System.Diagnostics.Debug.Assert(!IsExternal);
-        string sub_path = ArchiveAccess.GetSubPath(Location);
+        string sub_path = ArchiveAccess.GetSubPath(Location, false);
 
         if (sub_path.Length == 0)
         {
@@ -105,7 +105,7 @@ internal class ComicArchiveData : ComicData
         if (IsExternal)
         {
             var ctx = new SearchContext(Location, PathType.File);
-            string base_path = ArchiveAccess.GetBasePath(Location) + ArchiveAccess.FileSeperator;
+            string base_path = ArchiveAccess.GetBasePath(Location, false) + ArchiveAccess.FileSeperator;
 
             while (await ctx.Search(512))
             {
@@ -179,7 +179,7 @@ internal class ComicArchiveData : ComicData
         if (IsExternal)
         {
             var ctx = new SearchContext(Location, PathType.File);
-            string base_path = ArchiveAccess.GetBasePath(Location) + ArchiveAccess.FileSeperator;
+            string base_path = ArchiveAccess.GetBasePath(Location, false) + ArchiveAccess.FileSeperator;
 
             while (await ctx.Search(512))
             {
@@ -203,7 +203,7 @@ internal class ComicArchiveData : ComicData
         }
         else
         {
-            string sub_path = ArchiveAccess.GetSubPath(Location);
+            string sub_path = ArchiveAccess.GetSubPath(Location, false);
             var subfiles = new List<string>();
 
             result = await ArchiveAccess.TryGetSubFiles(Archive, sub_path, subfiles);
