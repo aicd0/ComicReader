@@ -117,6 +117,9 @@
       <Folder Include="Views\Settings\" />
     </ItemGroup>
     <ItemGroup>
+      <Page Update="Common\ReadonlyRatingView\ReadonlyRatingView.xaml">
+        <SubType>Designer</SubType>
+      </Page>
       <Page Update="Views\Reader\ReaderView\ReaderView.xaml">
         <SubType>Designer</SubType>
       </Page>
