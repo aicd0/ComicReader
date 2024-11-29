@@ -26,6 +26,8 @@ public partial class App : Application
 
     public App()
     {
+        UnhandledException += CrashHandler.OnUnhandledException;
+
         // get and apply the appearance setting.
         object appearance_setting = ApplicationData.Current.LocalSettings.Values[SettingsPage.AppearanceKey];
         if (appearance_setting != null)
@@ -38,6 +40,10 @@ public partial class App : Application
         if (Properties.AppSecret.Length > 0)
         {
             AppCenter.Start(Properties.AppSecret, typeof(Analytics), typeof(Crashes));
+        }
+        else
+        {
+            AppCenter.Start(typeof(Analytics), typeof(Crashes));
         }
     }
 

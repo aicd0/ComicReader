@@ -40,7 +40,7 @@ internal static class ImageCacheDatabase
             if (_cacheFolder == null)
             {
                 StorageFolder cacheFolder = ApplicationData.Current.LocalCacheFolder;
-                _cacheFolder = cacheFolder.CreateFolderAsync("ImageCache", CreationCollisionOption.OpenIfExists).Get();
+                _cacheFolder = cacheFolder.CreateFolderAsync("images", CreationCollisionOption.OpenIfExists).Get();
             }
             return _cacheFolder;
         }
