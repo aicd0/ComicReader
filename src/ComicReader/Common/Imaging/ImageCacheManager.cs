@@ -20,7 +20,7 @@ using Windows.Storage.Streams;
 
 using WinRT.Interop;
 
-namespace ComicReader.Common.SimpleImageView;
+namespace ComicReader.Common.Imaging;
 
 internal class ImageCacheManager
 {
@@ -313,7 +313,7 @@ internal class ImageCacheManager
         double frameRatio = frameWidth / frameHeight;
         double desiredWidthRaw;
         double desiredHeightRaw;
-        if ((imageRatio > frameRatio) == (stretchMode == StretchModeEnum.Uniform))
+        if (imageRatio > frameRatio == (stretchMode == StretchModeEnum.Uniform))
         {
             if (double.IsInfinity(frameWidth))
             {
@@ -349,10 +349,10 @@ internal class ImageCacheManager
 
     private static double GetScaleAdjustment()
     {
-        IntPtr hWnd = WindowNative.GetWindowHandle(App.Window);
+        nint hWnd = WindowNative.GetWindowHandle(App.Window);
         WindowId wndId = Win32Interop.GetWindowIdFromWindow(hWnd);
         var displayArea = DisplayArea.GetFromWindowId(wndId, DisplayAreaFallback.Primary);
-        IntPtr hMonitor = Win32Interop.GetMonitorFromDisplayId(displayArea.DisplayId);
+        nint hMonitor = Win32Interop.GetMonitorFromDisplayId(displayArea.DisplayId);
 
         // Get DPI.
         int result = NativeMethods.GetDpiForMonitor(hMonitor, NativeModels.MonitorDPIType.MDT_Default, out uint dpiX, out uint _);

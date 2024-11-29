@@ -109,19 +109,4 @@
         <PackageReference Include="Microsoft.Graphics.Win2D" Version="1.3.0" />
         <PackageReference Include="Microsoft.Windows.Compatibility" Version="8.0.10" />
     </ItemGroup>
-    <ItemGroup>
-      <Folder Include="Views\Favorite\" />
-      <Folder Include="Views\History\" />
-      <Folder Include="Views\Help\" />
-      <Folder Include="Views\Search\" />
-      <Folder Include="Views\Settings\" />
-    </ItemGroup>
-    <ItemGroup>
-      <Page Update="Common\ReadonlyRatingView\ReadonlyRatingView.xaml">
-        <SubType>Designer</SubType>
-      </Page>
-      <Page Update="Views\Reader\ReaderView\ReaderView.xaml">
-        <SubType>Designer</SubType>
-      </Page>
-    </ItemGroup>
 </Project>

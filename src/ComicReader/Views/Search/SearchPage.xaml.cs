@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 using ComicReader.Common;
 using ComicReader.Common.BasePage;
 using ComicReader.Common.DebugTools;
-using ComicReader.Common.SimpleImageView;
+using ComicReader.Common.Imaging;
 using ComicReader.Data;
 using ComicReader.Helpers.Navigation;
 using ComicReader.ViewModels;

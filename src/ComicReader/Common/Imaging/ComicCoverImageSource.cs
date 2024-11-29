@@ -7,18 +7,11 @@ using ComicReader.Data;
 
 using Windows.Storage.Streams;
 
-namespace ComicReader.Common.SimpleImageView;
+namespace ComicReader.Common.Imaging;
 
-internal class ComicImageSource : IImageSource
+internal class ComicCoverImageSource(ComicData comic) : IImageSource
 {
-    private readonly ComicData _comic;
-    private readonly int _index;
-
-    public ComicImageSource(ComicData comic, int index)
-    {
-        _comic = comic;
-        _index = index;
-    }
+    private readonly ComicData _comic = comic;
 
     public async Task<IRandomAccessStream> GetImageStream()
     {
@@ -27,15 +20,23 @@ internal class ComicImageSource : IImageSource
         {
             return null;
         }
-        return await _comic.GetImageStream(_index);
+        return await _comic.GetImageStream(0);
     }
 
     public string GetUniqueKey()
     {
+        string coverKey = _comic.CoverFileCache;
+        if (coverKey != null && coverKey.Length > 0)
+        {
+            return coverKey;
+        }
+
         if (!_comic.UpdateImages(reload: false).Result.Successful())
         {
             return null;
         }
-        return _comic.GetImageCacheKey(_index);
+        coverKey = _comic.GetImageCacheKey(0);
+        _comic.SetCoverFileCacheKey(coverKey);
+        return coverKey;
     }
 }

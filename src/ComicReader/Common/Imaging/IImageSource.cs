@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 using Windows.Storage.Streams;
 
-namespace ComicReader.Common.SimpleImageView;
+namespace ComicReader.Common.Imaging;
 
 internal interface IImageSource
 {

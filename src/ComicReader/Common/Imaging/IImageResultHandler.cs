@@ -3,7 +3,7 @@
 
 using Microsoft.UI.Xaml.Media.Imaging;
 
-namespace ComicReader.Common.SimpleImageView;
+namespace ComicReader.Common.Imaging;
 
 internal interface IImageResultHandler
 {

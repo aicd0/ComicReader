@@ -11,7 +11,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
 
-namespace ComicReader.Common.AdaptiveGridView;
+namespace ComicReader.UserControls.AdaptiveGridView;
 
 internal class AdaptiveHeightValueConverter(int maxRows) : IValueConverter
 {

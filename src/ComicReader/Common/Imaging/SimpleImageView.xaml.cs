@@ -9,7 +9,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
 
-namespace ComicReader.Common.SimpleImageView;
+namespace ComicReader.Common.Imaging;
 
 internal partial class SimpleImageView : UserControl
 {

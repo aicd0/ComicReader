@@ -3,7 +3,7 @@
 
 using System.ComponentModel;
 
-using ComicReader.Common.SimpleImageView;
+using ComicReader.Common.Imaging;
 
 namespace ComicReader.ViewModels;
 

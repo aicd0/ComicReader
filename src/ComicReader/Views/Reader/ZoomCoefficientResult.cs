@@ -3,7 +3,7 @@
 
 using System;
 
-namespace ComicReader.Common;
+namespace ComicReader.Views.Reader;
 
 internal class ZoomCoefficientResult
 {

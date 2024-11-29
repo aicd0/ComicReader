@@ -8,7 +8,7 @@ using ComicReader.Common.DebugTools;
 using Windows.Graphics.Imaging;
 using Windows.Storage.Streams;
 
-namespace ComicReader.Common.SimpleImageView;
+namespace ComicReader.Common.Imaging;
 
 internal static class ImageInfoManager
 {

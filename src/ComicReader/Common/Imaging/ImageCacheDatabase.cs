@@ -10,13 +10,14 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
+using ComicReader.Common;
 using ComicReader.Common.DebugTools;
 
 using Microsoft.Data.Sqlite;
 
 using Windows.Storage;
 
-namespace ComicReader.Common.SimpleImageView;
+namespace ComicReader.Common.Imaging;
 
 internal static class ImageCacheDatabase
 {

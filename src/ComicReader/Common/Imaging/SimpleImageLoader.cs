@@ -6,7 +6,7 @@ using System.Collections.Generic;
 
 using ComicReader.Common.Threading;
 
-namespace ComicReader.Common.SimpleImageView;
+namespace ComicReader.Common.Imaging;
 
 internal static class SimpleImageLoader
 {

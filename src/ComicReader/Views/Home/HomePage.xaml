@@ -3,7 +3,6 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:base="using:ComicReader.Common.BasePage"
-    xmlns:cca="using:ComicReader.Common.AdaptiveGridView"
     xmlns:converters="using:ComicReader.Converters"
     xmlns:cw="using:CommunityToolkit.WinUI"
     xmlns:cwc="using:CommunityToolkit.WinUI.Controls"
@@ -11,6 +10,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:home="using:ComicReader.Views.Home"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ucadaptivegrid="using:ComicReader.UserControls.AdaptiveGridView"
     xmlns:vm="using:ComicReader.ViewModels"
     Background="Transparent"
     mc:Ignorable="d">
@@ -177,7 +177,7 @@
                     DO NOT attach Visibility property to mtuuc:AdaptiveGridView as this
                     will result in a layout error (probably a bug from API).
                 -->
-                <cca:AdaptiveGridView
+                <ucadaptivegrid:AdaptiveGridView
                     Margin="0,0,-1,0"
                     ContainerContentChanging="OnAdaptiveGridViewContainerContentChanging"
                     DesiredWidth="{StaticResource ComicItemVerticalDesiredWidth}"
@@ -189,12 +189,12 @@
                     ScrollViewer.HorizontalScrollMode="Disabled"
                     StretchContentForSingleRow="False"
                     Style="{StaticResource HomePageAdaptiveGridViewStyle}">
-                    <cca:AdaptiveGridView.ItemTemplate>
+                    <ucadaptivegrid:AdaptiveGridView.ItemTemplate>
                         <DataTemplate x:DataType="vm:ComicItemViewModel">
                             <home:ComicItemVertical DataContext="{x:Bind}" />
                         </DataTemplate>
-                    </cca:AdaptiveGridView.ItemTemplate>
-                </cca:AdaptiveGridView>
+                    </ucadaptivegrid:AdaptiveGridView.ItemTemplate>
+                </ucadaptivegrid:AdaptiveGridView>
                 <StackPanel
                     x:Name="SpLibraryEmpty"
                     Margin="10,0,0,0"
@@ -227,7 +227,7 @@
                     FontSize="22"
                     FontWeight="SemiBold" />
                 <Grid Height="10" />
-                <cca:AdaptiveGridView
+                <ucadaptivegrid:AdaptiveGridView
                     DesiredWidth="295"
                     ItemContainerStyle="{StaticResource FolderItemContainerStyle}"
                     ItemTemplateSelector="{StaticResource FolderItemTemplateSelector}"
