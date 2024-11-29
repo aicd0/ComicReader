@@ -49,43 +49,15 @@ internal class ReaderFrameViewModel : INotifyPropertyChanged
 
     public IImageSource ImageSourceLeft { get; set; }
 
-    private bool _imageLeftSet;
-    public bool ImageLeftSet
-    {
-        get => _imageLeftSet;
-        set
-        {
-            _imageLeftSet = value;
-            if (!value)
-            {
-                ImageLeft = null;
-            }
-        }
-    }
-
     private BitmapImage _imageLeft;
     public BitmapImage ImageLeft
     {
         get => _imageLeft;
         set
         {
-            BitmapImage newValue;
-            if (ImageLeftSet)
+            if (_imageLeft != value)
             {
-                newValue = value;
-            }
-            else
-            {
-                newValue = null;
-            }
-
-            if (_imageLeft != newValue)
-            {
-                _imageLeft = newValue;
-                if (newValue == null)
-                {
-                    ImageLeftSet = false;
-                }
+                _imageLeft = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ImageLeft)));
             }
         }
@@ -93,43 +65,15 @@ internal class ReaderFrameViewModel : INotifyPropertyChanged
 
     public IImageSource ImageSourceRight { get; set; }
 
-    private bool _imageRightSet;
-    public bool ImageRightSet
-    {
-        get => _imageRightSet;
-        set
-        {
-            _imageRightSet = value;
-            if (!value)
-            {
-                ImageRight = null;
-            }
-        }
-    }
-
     private BitmapImage _imageRight;
     public BitmapImage ImageRight
     {
         get => _imageRight;
         set
         {
-            BitmapImage newValue;
-            if (ImageRightSet)
+            if (_imageRight != value)
             {
-                newValue = value;
-            }
-            else
-            {
-                newValue = null;
-            }
-
-            if (_imageRight != newValue)
-            {
-                _imageRight = newValue;
-                if (newValue == null)
-                {
-                    ImageRightSet = false;
-                }
+                _imageRight = value;
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ImageRight)));
             }
         }

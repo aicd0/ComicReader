@@ -348,7 +348,7 @@ internal partial class ReaderView : UserControl
             _isInitialFrameLoaded = SetScrollViewer2(null, _initialPage, true, "JumpToInitialPage");
             if (_isInitialFrameLoaded)
             {
-                UpdateImages();
+                UpdateImages(true);
                 DispatchReaderStateChangeEvent(ReaderState.Ready);
             }
         }
@@ -439,8 +439,8 @@ internal partial class ReaderView : UserControl
             ReaderFrameViewModel item = FrameDataSource[i];
             item.PageL = -1;
             item.PageR = -1;
-            item.ImageLeftSet = false;
-            item.ImageRightSet = false;
+            item.ImageLeft = null;
+            item.ImageRight = null;
         }
     }
 
@@ -658,6 +658,113 @@ internal partial class ReaderView : UserControl
 #endif
 
         return true;
+    }
+
+    private void UpdateImages(bool performCleaning)
+    {
+        if (!_isVisible)
+        {
+            _loadImageSession.Next();
+            for (int i = 0; i < FrameDataSource.Count; ++i)
+            {
+                ReaderFrameViewModel model = FrameDataSource[i];
+                model.ImageLeft = null;
+                model.ImageRight = null;
+            }
+            return;
+        }
+
+        if (!UpdatePage(true))
+        {
+            return;
+        }
+
+        _loadImageSession.Next();
+        int frame = PageToFrame(CurrentPageInt, out _, out _);
+        int preloadWindowBegin = Math.Max(frame - MAX_PRELOAD_FRAMES_BEFORE, 0);
+        int preloadWindowEnd = Math.Min(frame + MAX_PRELOAD_FRAMES_AFTER, FrameDataSource.Count - 1);
+
+        if (performCleaning)
+        {
+            for (int i = 0; i < FrameDataSource.Count; ++i)
+            {
+                if (i < preloadWindowBegin || i > preloadWindowEnd)
+                {
+                    ReaderFrameViewModel model = FrameDataSource[i];
+                    model.ImageLeft = null;
+                    model.ImageRight = null;
+                }
+            }
+        }
+
+        bool needPreload = false;
+        int checkWindowBegin = Math.Max(frame - MIN_PRELOAD_FRAMES_BEFORE, 0);
+        int checkWindowEnd = Math.Min(frame + MIN_PRELOAD_FRAMES_AFTER, FrameDataSource.Count - 1);
+        for (int i = checkWindowBegin; i <= checkWindowEnd; ++i)
+        {
+            ReaderFrameViewModel model = FrameDataSource[i];
+            if ((model.PageL > 0 && model.ImageLeft == null) || (model.PageR > 0 && model.ImageRight == null))
+            {
+                needPreload = true;
+                break;
+            }
+        }
+
+        if (!needPreload)
+        {
+            return;
+        }
+
+#if DEBUG_LOG_UPDATE_IMAGE
+        Log("Loading images (page=" + Page.ToString() + ")");
+#endif
+        var tokens = new List<SimpleImageLoader.Token>();
+        addToLoaderQueue(frame);
+        int spread = Math.Max(preloadWindowEnd - frame, frame - preloadWindowBegin);
+        for (int i = 1; i <= spread; ++i)
+        {
+            if (frame + i <= preloadWindowEnd)
+            {
+                addToLoaderQueue(frame + i);
+            }
+
+            if (frame - i >= preloadWindowBegin)
+            {
+                addToLoaderQueue(frame - i);
+            }
+        }
+
+        new SimpleImageLoader.Transaction(_loadImageSession.Token, tokens)
+            .SetDispatcher(_loadImageDispatcher)
+            .Commit();
+
+        void addToLoaderQueue(int i)
+        {
+            if (i < 0 || i >= FrameDataSource.Count)
+            {
+                return;
+            }
+
+            ReaderFrameViewModel m = FrameDataSource[i]; // Stores locally.
+
+            if (m.ImageLeft == null && m.PageL > 0)
+            {
+                tokens.Add(new SimpleImageLoader.Token
+                {
+                    Source = m.ImageSourceLeft,
+                    ImageResultHandler = new LoadImageResultHandler(m, true, this, i)
+                });
+            }
+
+            if (m.ImageRight == null && m.PageR > 0)
+            {
+                tokens.Add(new SimpleImageLoader.Token
+                {
+                    Source = m.ImageSourceRight,
+                    ImageResultHandler = new LoadImageResultHandler(m, false, this, i)
+                });
+            }
+        }
     }
 
     //
@@ -1083,6 +1190,27 @@ internal partial class ReaderView : UserControl
         public IImageSource ImageSource { get; set; }
     }
 
+    private class LoadImageResultHandler(ReaderFrameViewModel model, bool isLeft, ReaderView view, int index) : IImageResultHandler
+    {
+        private readonly long _startTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+        private readonly ReaderFrameViewModel _model = model;
+        private readonly bool _isLeft = isLeft;
+
+        public void OnSuccess(BitmapImage image)
+        {
+            long loadTime = DateTimeOffset.Now.ToUnixTimeMilliseconds() - _startTime;
+            view.LogLoadTime("LoadImage", $"time={loadTime},index={index}");
+            if (_isLeft)
+            {
+                _model.ImageLeft = image;
+            }
+            else
+            {
+                _model.ImageRight = image;
+            }
+        }
+    }
+
     private class GestureHandler(ReaderView view) : ReaderGestureRecognizer.IHandler
     {
         private readonly ReaderView _view = view;
@@ -1378,137 +1506,6 @@ internal partial class ReaderView : UserControl
     // Modifier - Configurations
     private ScrollViewer ThisScrollViewer => SvReader;
     private ListView ThisListView => LvReader;
-
-    // Modifier - Image Loader
-    //private readonly CancellationSession _updateImageSession = new();
-
-    private void UpdateImages(bool remove_out_of_view = true)
-    {
-        if (!_isVisible)
-        {
-            _loadImageSession.Next();
-            for (int i = 0; i < FrameDataSource.Count; ++i)
-            {
-                ReaderFrameViewModel model = FrameDataSource[i];
-                model.ImageLeftSet = false;
-                model.ImageRightSet = false;
-            }
-            return;
-        }
-
-        if (!UpdatePage(true))
-        {
-            return;
-        }
-
-        int frame = PageToFrame(CurrentPageInt, out _, out _);
-        int preload_window_begin = Math.Max(frame - MAX_PRELOAD_FRAMES_BEFORE, 0);
-        int preload_window_end = Math.Min(frame + MAX_PRELOAD_FRAMES_AFTER, FrameDataSource.Count - 1);
-
-        if (remove_out_of_view)
-        {
-            for (int i = 0; i < FrameDataSource.Count; ++i)
-            {
-                if (i < preload_window_begin || i > preload_window_end)
-                {
-                    ReaderFrameViewModel model = FrameDataSource[i];
-                    model.ImageLeftSet = false;
-                    model.ImageRightSet = false;
-                }
-            }
-        }
-
-        bool needPreload = false;
-        int check_window_begin = Math.Max(frame - MIN_PRELOAD_FRAMES_BEFORE, 0);
-        int check_window_end = Math.Min(frame + MIN_PRELOAD_FRAMES_AFTER, FrameDataSource.Count - 1);
-        for (int i = check_window_begin; i <= check_window_end; ++i)
-        {
-            ReaderFrameViewModel m = FrameDataSource[i];
-            if ((m.PageL > 0 && !m.ImageLeftSet) || (m.PageR > 0 && !m.ImageRightSet))
-            {
-                needPreload = true;
-                break;
-            }
-        }
-
-        if (needPreload)
-        {
-#if DEBUG_LOG_UPDATE_IMAGE
-                    Log("Loading images (page=" + Page.ToString() + ")");
-#endif
-            var img_loader_tokens = new List<SimpleImageLoader.Token>();
-
-            void addToLoaderQueue(int i)
-            {
-                if (i < 0 || i >= FrameDataSource.Count)
-                {
-                    return;
-                }
-
-                ReaderFrameViewModel m = FrameDataSource[i]; // Stores locally.
-
-                if (!m.ImageLeftSet && m.PageL > 0)
-                {
-                    m.ImageLeftSet = true;
-                    img_loader_tokens.Add(new SimpleImageLoader.Token
-                    {
-                        Source = m.ImageSourceLeft,
-                        ImageResultHandler = new LoadImageResultHandler(m, true, this, i)
-                    });
-                }
-
-                if (!m.ImageRightSet && m.PageR > 0)
-                {
-                    m.ImageRightSet = true;
-                    img_loader_tokens.Add(new SimpleImageLoader.Token
-                    {
-                        Source = m.ImageSourceRight,
-                        ImageResultHandler = new LoadImageResultHandler(m, false, this, i)
-                    });
-                }
-            }
-
-            addToLoaderQueue(frame);
-            int spread = Math.Max(preload_window_end - frame, frame - preload_window_begin);
-            for (int i = 1; i <= spread; ++i)
-            {
-                if (frame + i <= preload_window_end)
-                {
-                    addToLoaderQueue(frame + i);
-                }
-
-                if (frame - i >= preload_window_begin)
-                {
-                    addToLoaderQueue(frame - i);
-                }
-            }
-
-            new SimpleImageLoader.Transaction(_loadImageSession.Token, img_loader_tokens)
-                .SetDispatcher(_loadImageDispatcher)
-                .Commit();
-        }
-    }
-
-    private class LoadImageResultHandler(ReaderFrameViewModel model, bool isLeft, ReaderView view, int index) : IImageResultHandler
-    {
-        private readonly long _startTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-        private readonly ReaderFrameViewModel _model = model;
-        private readonly bool _isLeft = isLeft;
-
-        public void OnSuccess(BitmapImage image)
-        {
-            long loadTime = DateTimeOffset.Now.ToUnixTimeMilliseconds() - _startTime;
-            view.LogLoadTime("LoadImage", $"time={loadTime},index={index}");
-            if (_isLeft)
-            {
-                _model.ImageLeft = image;
-            }
-            else
-            {
-                _model.ImageRight = image;
-            }
-        }
-    }
 
     // Modifier - Scrolling
     public bool MoveFrame(int increment, string reason)

@@ -268,12 +268,12 @@ class StringUtils
     public static string RandomFileName(int length)
     {
         const string symbols = "0123456789abcdefghijklmnopqrstuvwxyz";
-        string res = "";
+        StringBuilder sb = new();
         for (int i = 0; i < length; ++i)
         {
-            res += symbols[Random.Shared.Next(symbols.Length)];
+            sb.Append(symbols[Random.Shared.Next(symbols.Length)]);
         }
-        return res;
+        return sb.ToString();
     }
 
     public static string DictionaryToString<K, V>(IDictionary<K, V> dictionary)
