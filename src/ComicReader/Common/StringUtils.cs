@@ -268,14 +268,11 @@ class StringUtils
     public static string RandomFileName(int length)
     {
         const string symbols = "0123456789abcdefghijklmnopqrstuvwxyz";
-        var random = new Random();
         string res = "";
-
         for (int i = 0; i < length; ++i)
         {
-            res += symbols[random.Next(symbols.Length)];
+            res += symbols[Random.Shared.Next(symbols.Length)];
         }
-
         return res;
     }
 
