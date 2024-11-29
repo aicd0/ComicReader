@@ -4,7 +4,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-using ComicReader.Database;
+using ComicReader.Data;
 
 using Microsoft.Data.Sqlite;
 

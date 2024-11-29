@@ -12,15 +12,15 @@ using System.ComponentModel;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
+using ComicReader.Common.BasePage;
 using ComicReader.Common.DebugTools;
 using ComicReader.Common.KVStorage;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Common.SimpleImageView;
 using ComicReader.Common.Threading;
-using ComicReader.Database;
-using ComicReader.DesignData;
-using ComicReader.Router;
-using ComicReader.Views.Base;
+using ComicReader.Data;
+using ComicReader.Helpers.Navigation;
+using ComicReader.ViewModels;
 using ComicReader.Views.Main;
 using ComicReader.Views.Navigation;
 

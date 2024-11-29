@@ -3,7 +3,7 @@
 
 using System.Threading.Tasks;
 
-using ComicReader.Database;
+using ComicReader.Data;
 
 using Windows.Storage.Streams;
 

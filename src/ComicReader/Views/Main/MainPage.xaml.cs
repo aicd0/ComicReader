@@ -7,12 +7,12 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
+using ComicReader.Common.BasePage;
 using ComicReader.Common.DebugTools;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Common.Threading;
-using ComicReader.Database;
-using ComicReader.Router;
-using ComicReader.Views.Base;
+using ComicReader.Data;
+using ComicReader.Helpers.Navigation;
 using ComicReader.Views.Navigation;
 
 using Microsoft.UI;

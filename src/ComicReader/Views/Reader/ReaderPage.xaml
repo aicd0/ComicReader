@@ -2,24 +2,24 @@
     x:Class="ComicReader.Views.Reader.ReaderPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:base="using:ComicReader.Views.Base"
+    xmlns:base="using:ComicReader.Common.BasePage"
     xmlns:converters="using:ComicReader.Converters"
     xmlns:cw="using:CommunityToolkit.WinUI"
     xmlns:cwc="using:CommunityToolkit.WinUI.Controls"
     xmlns:cwm="using:CommunityToolkit.WinUI.Media"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:data="using:ComicReader.DesignData"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
     xmlns:reader="using:ComicReader.Views.Reader"
+    xmlns:vm="using:ComicReader.ViewModels"
     mc:Ignorable="d">
 
     <Page.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/Resources/Styles/Button.xaml" />
-                <ResourceDictionary Source="/Resources/Styles/RatingControl.xaml" />
-                <ResourceDictionary Source="/Resources/Styles/ToggleButton.xaml" />
+                <ResourceDictionary Source="/Styles/Button.xaml" />
+                <ResourceDictionary Source="/Styles/RatingControl.xaml" />
+                <ResourceDictionary Source="/Styles/ToggleButton.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <!--  Converters  -->
@@ -134,7 +134,7 @@
                     </Style>
                 </GridView.ItemContainerStyle>
                 <GridView.ItemTemplate>
-                    <DataTemplate x:DataType="data:ReaderImagePreviewViewModel">
+                    <DataTemplate x:DataType="vm:ReaderImagePreviewViewModel">
                         <reader:ReaderPreviewImage DataContext="{x:Bind}" />
                     </DataTemplate>
                 </GridView.ItemTemplate>
@@ -249,7 +249,7 @@
                                         </Style>
                                     </ListView.ItemContainerStyle>
                                     <ListView.ItemTemplate>
-                                        <DataTemplate x:DataType="data:TagCollectionViewModel">
+                                        <DataTemplate x:DataType="vm:TagCollectionViewModel">
                                             <StackPanel Margin="0,0,0,10" Orientation="Vertical">
                                                 <StackPanel Margin="5,0,0,5" Orientation="Horizontal">
                                                     <FontIcon
@@ -265,7 +265,7 @@
                                                 </StackPanel>
                                                 <muxc:ItemsRepeater ItemsSource="{x:Bind Tags}">
                                                     <muxc:ItemsRepeater.ItemTemplate>
-                                                        <DataTemplate x:DataType="data:TagViewModel">
+                                                        <DataTemplate x:DataType="vm:TagViewModel">
                                                             <reader:TagButton DataContext="{x:Bind}" />
                                                         </DataTemplate>
                                                     </muxc:ItemsRepeater.ItemTemplate>

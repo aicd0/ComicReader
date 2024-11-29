@@ -4,11 +4,11 @@
 using System;
 
 using ComicReader.Common;
+using ComicReader.Common.BasePage;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Common.Threading;
-using ComicReader.Database;
-using ComicReader.Router;
-using ComicReader.Views.Base;
+using ComicReader.Data;
+using ComicReader.Helpers.Navigation;
 using ComicReader.Views.Main;
 
 using Microsoft.UI.Input;
@@ -270,12 +270,12 @@ internal sealed partial class NavigationPage : BasePage
         {
             await XmlDatabaseManager.WaitLock();
 
-            Database.XmlDatabase.Settings.VerticalReading = data.IsVertical;
-            Database.XmlDatabase.Settings.LeftToRight = data.IsLeftToRight;
-            Database.XmlDatabase.Settings.VerticalContinuous = data.IsVerticalContinuous;
-            Database.XmlDatabase.Settings.HorizontalContinuous = data.IsHorizontalContinuous;
-            Database.XmlDatabase.Settings.VerticalPageArrangement = data.VerticalPageArrangement;
-            Database.XmlDatabase.Settings.HorizontalPageArrangement = data.HorizontalPageArrangement;
+            XmlDatabase.Settings.VerticalReading = data.IsVertical;
+            XmlDatabase.Settings.LeftToRight = data.IsLeftToRight;
+            XmlDatabase.Settings.VerticalContinuous = data.IsVerticalContinuous;
+            XmlDatabase.Settings.HorizontalContinuous = data.IsHorizontalContinuous;
+            XmlDatabase.Settings.VerticalPageArrangement = data.VerticalPageArrangement;
+            XmlDatabase.Settings.HorizontalPageArrangement = data.HorizontalPageArrangement;
 
             XmlDatabaseManager.ReleaseLock();
             TaskQueue.DefaultQueue.Enqueue($"{TAG}#RspReaderSetting_DataChanged", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));

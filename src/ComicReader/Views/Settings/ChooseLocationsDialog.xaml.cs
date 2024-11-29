@@ -5,8 +5,8 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
-using ComicReader.Database;
-using ComicReader.DesignData;
+using ComicReader.Data;
+using ComicReader.ViewModels;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;

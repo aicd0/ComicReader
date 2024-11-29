@@ -2,8 +2,8 @@
 // Licensed under the MIT License.
 
 using ComicReader.Common;
-using ComicReader.Router;
-using ComicReader.Views.Base;
+using ComicReader.Common.BasePage;
+using ComicReader.Helpers.Navigation;
 using ComicReader.Views.Main;
 
 using Microsoft.UI.Xaml.Controls;

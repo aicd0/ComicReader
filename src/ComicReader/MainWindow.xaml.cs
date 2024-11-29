@@ -5,7 +5,7 @@ using System;
 using System.Text.Json;
 
 using ComicReader.Common;
-using ComicReader.Native;
+using ComicReader.Common.Native;
 using ComicReader.Views.Main;
 
 using Microsoft.UI.Composition.SystemBackdrops;

@@ -7,9 +7,9 @@
     xmlns:cw="using:CommunityToolkit.WinUI"
     xmlns:cwm="using:CommunityToolkit.WinUI.Media"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:data="using:ComicReader.DesignData"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    d:DataContext="{d:DesignInstance Type=data:ComicItemViewModel}"
+    xmlns:vm="using:ComicReader.ViewModels"
+    d:DataContext="{d:DesignInstance Type=vm:ComicItemViewModel}"
     d:DesignHeight="310"
     d:DesignWidth="160"
     mc:Ignorable="d">

@@ -3,7 +3,7 @@
 
 using System;
 
-using ComicReader.Router;
+using ComicReader.Helpers.Navigation;
 
 using Microsoft.UI.Xaml.Controls;
 
