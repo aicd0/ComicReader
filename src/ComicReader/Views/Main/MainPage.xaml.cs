@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
+using ComicReader.Common.DebugTools;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Common.Threading;
 using ComicReader.Database;
@@ -425,7 +426,8 @@ internal sealed partial class MainPage : StatefulPage
                 newSelectedTab = tabInfo;
             }
         }
-        System.Diagnostics.Debug.Assert(newSelectedTab != null);
+
+        DebugUtils.Assert(newSelectedTab != null);
         _currentTab = newSelectedTab;
 
         if (lastSelectedTab != null)

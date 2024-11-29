@@ -435,7 +435,7 @@ internal sealed partial class ReaderPage : BasePage
         ReaderView reader = GetReader();
 
         ReaderView last_reader = reader.IsVertical ? HorizontalReader : VerticalReader;
-        System.Diagnostics.Debug.Assert(last_reader != null);
+        DebugUtils.Assert(last_reader != null);
 
         if (last_reader == null)
         {

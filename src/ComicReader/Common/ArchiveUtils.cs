@@ -355,7 +355,7 @@ public class ArchiveAccess
     {
         if (stream == null)
         {
-            System.Diagnostics.Debug.Assert(false);
+            DebugUtils.Assert(false);
             return TaskException.InvalidParameters;
         }
 

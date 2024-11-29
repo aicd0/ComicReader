@@ -85,7 +85,7 @@ internal static class ImageCacheDatabase
                     records.Add(record);
                 }
             }
-            System.Diagnostics.Debug.Assert(records.Count <= 1);
+            DebugUtils.Assert(records.Count <= 1);
 
             if (records.Count == 0)
             {

@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
+using ComicReader.Common.DebugTools;
 using ComicReader.Common.Threading;
 
 namespace ComicReader.Common;
@@ -28,7 +29,7 @@ internal class KeyFrameAnimation
 
     public void InsertKeyFrame(double time, double value, CurveType curve = CurveType.Linear)
     {
-        System.Diagnostics.Debug.Assert(time >= 0 && time <= 1);
+        DebugUtils.Assert(time >= 0 && time <= 1);
         time = Math.Max(0, Math.Min(1, time));
         _keyFrames.Add(new KeyFrame
         {

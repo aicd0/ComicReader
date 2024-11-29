@@ -1014,7 +1014,7 @@ internal partial class ReaderView : UserControl
                 neighbor = (PageCount % 2 == 0 || page < PageCount) ? (left_side ? page - 1 : page + 1) : -1;
                 return (page - 1) / 2;
             default:
-                System.Diagnostics.Debug.Assert(false);
+                DebugUtils.Assert(false);
                 goto case PageArrangementType.Single;
         }
     }
@@ -1130,7 +1130,7 @@ internal partial class ReaderView : UserControl
 
         if (frame_idx < 0 || frame_idx >= FrameDataSource.Count)
         {
-            System.Diagnostics.Debug.Assert(false);
+            DebugUtils.Assert(false);
             return null;
         }
 

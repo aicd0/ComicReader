@@ -40,7 +40,7 @@ static class AppStatusPreserver
     public static void SetReadingComic(long id)
     {
         Logger.I(TAG, $"SetReadingComic(id={id})");
-        System.Diagnostics.Debug.Assert(id >= 0);
+        DebugUtils.Assert(id >= 0);
         KVDatabase.GetDefaultMethod().SetLong(KVLib.APP, KEY_READING_COMIC_ID, id);
     }
 

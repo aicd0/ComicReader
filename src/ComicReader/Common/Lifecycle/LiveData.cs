@@ -4,6 +4,8 @@
 using System;
 using System.Collections.Generic;
 
+using ComicReader.Common.DebugTools;
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
@@ -82,7 +84,7 @@ internal class LiveData<T> : ILiveData<T>, ILiveDataNoType
 
         if (owner == null || observer == null)
         {
-            System.Diagnostics.Debug.Assert(false);
+            DebugUtils.Assert(false);
             return;
         }
 
@@ -95,7 +97,7 @@ internal class LiveData<T> : ILiveData<T>, ILiveDataNoType
         {
             if (wrapper.IsSameOwner(owner))
             {
-                System.Diagnostics.Debug.Assert(false);
+                DebugUtils.Assert(false);
             }
             return;
         }

@@ -47,7 +47,7 @@ public class DatabaseManager
                 await XmlDatabaseManager.SaveUnsealed(XmlDatabaseItem.Settings);
                 return TaskException.Success;
             default:
-                System.Diagnostics.Debug.Assert(false);
+                DebugUtils.Assert(false);
                 return TaskException.UnknownEnum;
         }
     }

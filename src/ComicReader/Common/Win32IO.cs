@@ -93,7 +93,7 @@ public class Win32IO
 
             if (m_initial_search)
             {
-                System.Diagnostics.Debug.Assert(m_stack.Count == 1);
+                DebugUtils.Assert(m_stack.Count == 1);
                 m_initial_search = false;
 
                 foreach (string path in m_stack[0].Paths)

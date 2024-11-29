@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
+using ComicReader.Common.DebugTools;
 using ComicReader.Common.SimpleImageView;
 using ComicReader.Database;
 using ComicReader.DesignData;
@@ -466,7 +467,7 @@ internal sealed partial class SearchPage : BasePage
 
                 if (comic == null)
                 {
-                    System.Diagnostics.Debug.Assert(false);
+                    DebugUtils.Assert(false);
                     continue;
                 }
 

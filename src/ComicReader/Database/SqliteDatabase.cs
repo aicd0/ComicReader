@@ -5,6 +5,8 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 
+using ComicReader.Common.DebugTools;
+
 using Microsoft.Data.Sqlite;
 
 using Windows.Storage;
@@ -81,13 +83,13 @@ public class SqliteDatabaseManager
 
     public static SqliteCommand NewCommand()
     {
-        System.Diagnostics.Debug.Assert(m_connection != null);
+        DebugUtils.Assert(m_connection != null);
         return m_connection.CreateCommand();
     }
 
     public static SqliteTransaction NewTransaction()
     {
-        System.Diagnostics.Debug.Assert(m_connection != null);
+        DebugUtils.Assert(m_connection != null);
         return m_connection.BeginTransaction();
     }
 

@@ -33,7 +33,7 @@ internal static class Storage
 
     public static async Task<StorageFolder> TryGetFolder(string path)
     {
-        System.Diagnostics.Debug.Assert(path.Length != 0);
+        DebugUtils.Assert(path.Length != 0);
         string token = StringUtils.TokenFromPath(path);
 
         if (s_FolderResources.ContainsKey(token))

@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
+using ComicReader.Common.DebugTools;
+
 namespace ComicReader.Common;
 
 public enum PathType
@@ -74,7 +76,7 @@ public class SearchContext
 
             if (m_initial_search)
             {
-                System.Diagnostics.Debug.Assert(m_stack.Count == 1);
+                DebugUtils.Assert(m_stack.Count == 1);
                 m_initial_search = false;
 
                 foreach (PathInfo path_info in m_stack[0].Paths)

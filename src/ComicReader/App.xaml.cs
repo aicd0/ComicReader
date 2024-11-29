@@ -71,7 +71,7 @@ public partial class App : Application
 
         // Initialize database here
         TaskException result = await DatabaseManager.Init();
-        System.Diagnostics.Debug.Assert(result.Successful());
+        DebugUtils.Assert(result.Successful());
 
         // Initialize MainWindow here
         Window = new MainWindow();

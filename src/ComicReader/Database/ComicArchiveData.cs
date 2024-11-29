@@ -78,7 +78,7 @@ internal class ComicArchiveData : ComicData
 
     private string GetSubPathFromFilename(string filename)
     {
-        System.Diagnostics.Debug.Assert(!IsExternal);
+        DebugUtils.Assert(!IsExternal);
         string sub_path = ArchiveAccess.GetSubPath(Location, false);
 
         if (sub_path.Length == 0)
@@ -113,7 +113,7 @@ internal class ComicArchiveData : ComicData
                 {
                     if (filepath.Length <= base_path.Length)
                     {
-                        System.Diagnostics.Debug.Assert(false);
+                        DebugUtils.Assert(false);
                         continue;
                     }
 
@@ -187,7 +187,7 @@ internal class ComicArchiveData : ComicData
                 {
                     if (filepath.Length <= base_path.Length)
                     {
-                        System.Diagnostics.Debug.Assert(false);
+                        DebugUtils.Assert(false);
                         continue;
                     }
 
