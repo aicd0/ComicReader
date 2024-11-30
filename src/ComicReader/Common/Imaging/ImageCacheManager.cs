@@ -5,7 +5,7 @@ using System;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 
-using ComicReader.Common;
+using ComicReader.Common.Caching;
 using ComicReader.Common.DebugTools;
 using ComicReader.Common.Native;
 using ComicReader.Common.Threading;
@@ -22,12 +22,24 @@ using WinRT.Interop;
 
 namespace ComicReader.Common.Imaging;
 
-internal class ImageCacheManager
+internal static class ImageCacheManager
 {
     private const string TAG = "ImageCacheManager";
     private const string CACHE_ENTRY_KEY_SMALL = "100k";
     private const int CACHE_ENTRY_RESOLUTION_SMALL = 100000;
-    private static double s_rawPixelPerPixel = -1;
+
+    private static double sRawPixelPerPixel = -1;
+
+    private static readonly Lazy<StorageFolder> sCacheFolder = new(delegate
+    {
+        StorageFolder cacheFolder = ApplicationData.Current.LocalCacheFolder;
+        return cacheFolder.CreateFolderAsync("images", CreationCollisionOption.OpenIfExists).AsTask().Result;
+    });
+
+    private static readonly Lazy<LRUCache> sImageCache = new(delegate
+    {
+        return new(sCacheFolder.Value);
+    });
 
     public static void LoadImage(CancellationSession.IToken token, IImageSource source,
         double frameWidth, double frameHeight, StretchModeEnum stretchMode, IImageResultHandler handler)
@@ -38,7 +50,7 @@ internal class ImageCacheManager
             return;
         }
 
-        StorageFile cacheFile = null;
+        IRandomAccessStream cacheFileStream = null;
         ImageCacheDatabase.CacheRecord cacheRecord = null;
         string uniqueKey = source.GetUniqueKey();
         if (uniqueKey != null)
@@ -53,21 +65,17 @@ internal class ImageCacheManager
                     string entry = cacheRecord.GetEntry(targetCacheEntryKey);
                     if (entry.Length > 0)
                     {
-                        IStorageItem item = ImageCacheDatabase.CacheFolder.TryGetItemAsync(entry).Get();
-                        if (item is StorageFile)
-                        {
-                            cacheFile = item as StorageFile;
-                        }
+                        cacheFileStream = sImageCache.Value.GetAsync(entry).Result;
                     }
                 }
             }
         }
 
+        BitmapImage image = null;
         int desiredResolution = 0;
         int sourceWidth = 0;
         int sourceHeight = 0;
 
-        BitmapImage image = null;
         MainThreadUtils.RunInMainThreadAsync(async delegate
         {
             if (token.IsCancellationRequested)
@@ -76,9 +84,9 @@ internal class ImageCacheManager
                 return;
             }
 
-            if (cacheFile != null)
+            if (cacheFileStream != null)
             {
-                image = await TryLoadImageFromFile(cacheFile);
+                image = await TryLoadImageFromStream(cacheFileStream);
             }
 
             bool isFromSource = false;
@@ -111,6 +119,8 @@ internal class ImageCacheManager
                 sourceWidth = image.PixelWidth;
             }
         }).Wait();
+
+        cacheFileStream?.Dispose();
 
         if (image == null)
         {
@@ -198,29 +208,26 @@ internal class ImageCacheManager
 
             try
             {
-                using (SoftwareBitmap softwareBitmap = await decoder.GetSoftwareBitmapAsync())
-                {
-                    var resized_stream = new InMemoryRandomAccessStream();
-                    BitmapEncoder encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, resized_stream);
-                    encoder.SetSoftwareBitmap(softwareBitmap);
-                    encoder.BitmapTransform.InterpolationMode = BitmapInterpolationMode.Fant;
-                    encoder.BitmapTransform.ScaledHeight = aspectHeight;
-                    encoder.BitmapTransform.ScaledWidth = aspectWidth;
+                using SoftwareBitmap softwareBitmap = await decoder.GetSoftwareBitmapAsync();
+                var resizedStream = new InMemoryRandomAccessStream();
+                BitmapEncoder encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, resizedStream);
+                encoder.SetSoftwareBitmap(softwareBitmap);
+                encoder.BitmapTransform.InterpolationMode = BitmapInterpolationMode.Fant;
+                encoder.BitmapTransform.ScaledHeight = aspectHeight;
+                encoder.BitmapTransform.ScaledWidth = aspectWidth;
+                await encoder.FlushAsync();
 
-                    await encoder.FlushAsync();
-                    resized_stream.Seek(0);
-                    byte[] out_buffer = new byte[resized_stream.Size];
-                    await resized_stream.ReadAsync(out_buffer.AsBuffer(), (uint)resized_stream.Size, InputStreamOptions.None);
+                resizedStream.Seek(0);
+                byte[] outByteArray = new byte[resizedStream.Size];
+                await resizedStream.ReadAsync(outByteArray.AsBuffer(), (uint)resizedStream.Size, InputStreamOptions.None);
 
-                    entry = StringUtils.RandomFileName(16) + ".png";
-                    string filename = entry;
-                    StorageFile sample_file = await ImageCacheDatabase.CacheFolder.CreateFileAsync(filename, CreationCollisionOption.ReplaceExisting);
-                    await FileIO.WriteBytesAsync(sample_file, out_buffer);
-                }
+                entry = StringUtils.RandomFileName(16) + ".png";
+                using ILRUInputStream cacheStream = await sImageCache.Value.PutAsync(entry);
+                await cacheStream.WriteAsync(outByteArray.AsBuffer());
             }
             catch (Exception e)
             {
-                Logger.F(TAG, "GenCoverCache", e);
+                Logger.F(TAG, "CreateImageCache", e);
                 return null;
             }
         }
@@ -237,35 +244,18 @@ internal class ImageCacheManager
         return targetCacheEntryKey;
     }
 
-    private static async Task<BitmapImage> TryLoadImageFromFile(StorageFile file)
+    private static async Task<BitmapImage> TryLoadImageFromStream(IRandomAccessStream stream)
     {
-        IRandomAccessStream stream = null;
+        BitmapImage image = new();
+        stream.Seek(0);
         try
         {
-            stream = await file.OpenAsync(FileAccessMode.Read);
+            await image.SetSourceAsync(stream);
         }
         catch (Exception e)
         {
-            Logger.E(TAG, "TryLoadImageFromFile", e);
-        }
-
-        BitmapImage image = null;
-        if (stream != null)
-        {
-            using (stream)
-            {
-                stream.Seek(0);
-                image = new BitmapImage();
-                try
-                {
-                    await image.SetSourceAsync(stream);
-                }
-                catch (Exception e)
-                {
-                    image = null;
-                    Logger.E(TAG, "TryLoadImageFromFile", e);
-                }
-            }
+            Logger.F(TAG, "TryLoadImageFromStream", e);
+            image = null;
         }
         return image;
     }
@@ -279,7 +269,7 @@ internal class ImageCacheManager
         }
         catch (Exception e)
         {
-            Logger.E(TAG, "TryLoadImageFromSource", e);
+            Logger.F(TAG, "TryLoadImageFromSource", e);
         }
 
         BitmapImage image = null;
@@ -296,7 +286,7 @@ internal class ImageCacheManager
                 catch (Exception e)
                 {
                     image = null;
-                    Logger.E(TAG, "TryLoadImageFromSource", e);
+                    Logger.F(TAG, "TryLoadImageFromSource", e);
                 }
             }
         }
@@ -339,12 +329,12 @@ internal class ImageCacheManager
 
     private static double GetRawPixelPerPixel()
     {
-        if (s_rawPixelPerPixel < 0)
+        if (sRawPixelPerPixel < 0)
         {
-            s_rawPixelPerPixel = GetScaleAdjustment();
+            sRawPixelPerPixel = GetScaleAdjustment();
         }
 
-        return s_rawPixelPerPixel;
+        return sRawPixelPerPixel;
     }
 
     private static double GetScaleAdjustment()

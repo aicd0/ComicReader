@@ -2,12 +2,12 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
@@ -28,22 +28,25 @@ internal static class ImageCacheDatabase
     public const string CACHE_TABLE_FIELD_HEIGHT = "height";
     public const string CACHE_TABLE_FIELD_ENTRIES = "entries";
 
-    private static readonly object _lock = new();
+    private const string DATABASE_FILE_NAME = "image_cache.db";
+
+    private static readonly object _connectionLock = new();
     private static SqliteConnection _connection;
 
-    private static readonly Dictionary<string, CacheRecord> _cacheRecordCache = new();
+    private static readonly ReaderWriterLock _recordCacheLock = new();
+    private static readonly Dictionary<string, CacheRecord> _recordCache = new();
 
-    private static StorageFolder _cacheFolder;
-    public static StorageFolder CacheFolder
+    private static StorageFolder _databaseFolder;
+    private static StorageFolder DatabaseFolder
     {
         get
         {
-            if (_cacheFolder == null)
+            if (_databaseFolder == null)
             {
-                StorageFolder cacheFolder = ApplicationData.Current.LocalCacheFolder;
-                _cacheFolder = cacheFolder.CreateFolderAsync("images", CreationCollisionOption.OpenIfExists).Get();
+                StorageFolder databaseFolder = ApplicationData.Current.LocalCacheFolder;
+                _databaseFolder = databaseFolder.CreateFolderAsync("database", CreationCollisionOption.OpenIfExists).Get();
             }
-            return _cacheFolder;
+            return _databaseFolder;
         }
     }
 
@@ -51,26 +54,42 @@ internal static class ImageCacheDatabase
     {
         string cacheKey = ToHashedKey(key);
 
-        lock (_cacheRecordCache)
+        _recordCacheLock.AcquireReaderLock(-1);
+        try
         {
-            if (_cacheRecordCache.TryGetValue(cacheKey, out CacheRecord record))
+            if (_recordCache.TryGetValue(cacheKey, out CacheRecord record))
             {
                 return record;
             }
         }
-
-        lock (_lock)
+        finally
         {
-            lock (_cacheRecordCache)
+            _recordCacheLock.ReleaseReaderLock();
+        }
+
+        lock (_connectionLock)
+        {
+            _recordCacheLock.AcquireReaderLock(-1);
+            try
             {
-                if (_cacheRecordCache.TryGetValue(cacheKey, out CacheRecord record))
+                if (_recordCache.TryGetValue(cacheKey, out CacheRecord record))
                 {
                     return record;
                 }
             }
+            finally
+            {
+                _recordCacheLock.ReleaseReaderLock();
+            }
+
+            SqliteConnection connection = GetConnection();
+            if (connection == null)
+            {
+                return null;
+            }
 
             List<CacheRecord> records = new();
-            using (SqliteCommand command = NewCommand())
+            using (SqliteCommand command = connection.CreateCommand())
             {
                 command.CommandText = $"SELECT {CACHE_TABLE_FIELD_WIDTH},{CACHE_TABLE_FIELD_HEIGHT}" +
                     $",{CACHE_TABLE_FIELD_ENTRIES} FROM {CACHE_TABLE} WHERE {CACHE_TABLE_FIELD_KEY}=@key";
@@ -94,13 +113,18 @@ internal static class ImageCacheDatabase
             }
             CacheRecord firstRecord = records[0];
 
-            lock (_cacheRecordCache)
+            _recordCacheLock.AcquireWriterLock(-1);
+            try
             {
-                if (_cacheRecordCache.TryGetValue(cacheKey, out CacheRecord record))
+                if (_recordCache.TryGetValue(cacheKey, out CacheRecord record))
                 {
                     return record;
                 }
-                _cacheRecordCache[cacheKey] = firstRecord;
+                _recordCache[cacheKey] = firstRecord;
+            }
+            finally
+            {
+                _recordCacheLock.ReleaseWriterLock();
             }
 
             return firstRecord;
@@ -114,28 +138,43 @@ internal static class ImageCacheDatabase
             .Take(16));
     }
 
-    private static SqliteCommand NewCommand()
-    {
-        return GetConnection().CreateCommand();
-    }
-
     private static SqliteConnection GetConnection()
     {
         if (_connection != null)
         {
             return _connection;
         }
-        lock (_lock)
+
+        lock (_connectionLock)
         {
-            _connection = CreateConnection().Result;
+            try
+            {
+                _connection = CreateConnection(false).Result;
+            }
+            catch (Exception ex)
+            {
+                Logger.F(TAG, "GetConnection", ex);
+            }
+
+            if (_connection == null)
+            {
+                try
+                {
+                    _connection = CreateConnection(true).Result;
+                }
+                catch (Exception ex)
+                {
+                    Logger.F(TAG, "GetConnection", ex);
+                }
+            }
         }
         return _connection;
     }
 
-    private static async Task<SqliteConnection> CreateConnection()
+    private static async Task<SqliteConnection> CreateConnection(bool clear)
     {
-        string databaseFilename = "main.db";
-        StorageFile databaseFile = await CacheFolder.CreateFileAsync(databaseFilename, CreationCollisionOption.OpenIfExists);
+        StorageFile databaseFile = await DatabaseFolder.CreateFileAsync(DATABASE_FILE_NAME,
+            clear ? CreationCollisionOption.ReplaceExisting : CreationCollisionOption.OpenIfExists);
         var connection = new SqliteConnection($"Filename={databaseFile.Path}");
         connection.Open();
 
@@ -154,10 +193,11 @@ internal static class ImageCacheDatabase
 
     public class CacheRecord
     {
+        private readonly ReaderWriterLock _lock = new();
         private readonly string _key;
         private readonly int _width;
         private readonly int _height;
-        private readonly ConcurrentDictionary<string, string> _entries;
+        private readonly Dictionary<string, string> _entries;
         private bool _updated;
 
         public int Width => _width;
@@ -168,7 +208,7 @@ internal static class ImageCacheDatabase
             _key = key;
             _width = width;
             _height = height;
-            _entries = new();
+            _entries = [];
             _updated = true;
         }
 
@@ -177,79 +217,174 @@ internal static class ImageCacheDatabase
             _key = key;
             _width = width;
             _height = height;
+
             try
             {
-                _entries = JsonSerializer.Deserialize<ConcurrentDictionary<string, string>>(cacheEntriesJson);
+                _entries = JsonSerializer.Deserialize<Dictionary<string, string>>(cacheEntriesJson);
             }
             catch (Exception e)
             {
                 Logger.E(TAG, "CacheRecord", e);
-                _entries = new();
+                _entries = [];
             }
+
             _updated = false;
         }
 
         public void Save()
         {
-            if (!_updated)
+            _lock.AcquireReaderLock(-1);
+            try
             {
-                return;
+                if (!_updated)
+                {
+                    return;
+                }
+            }
+            finally
+            {
+                _lock.ReleaseReaderLock();
             }
 
             string cacheKey = ToHashedKey(_key);
 
-            lock (_lock)
+            lock (_connectionLock)
             {
-                lock (_cacheRecordCache)
+                string entries;
+                int width, height;
+
+                _lock.AcquireWriterLock(-1);
+                try
                 {
-                    if (_cacheRecordCache.TryGetValue(cacheKey, out CacheRecord record))
+                    if (!_updated)
                     {
-                        foreach (KeyValuePair<string, string> entry in record._entries)
-                        {
-                            _entries.TryAdd(entry.Key, entry.Value);
-                        }
+                        return;
                     }
-                    _cacheRecordCache[cacheKey] = this;
+
+                    _recordCacheLock.AcquireWriterLock(-1);
+                    try
+                    {
+                        if (_recordCache.TryGetValue(cacheKey, out CacheRecord record))
+                        {
+                            foreach (KeyValuePair<string, string> entry in record._entries)
+                            {
+                                _entries.TryAdd(entry.Key, entry.Value);
+                            }
+                        }
+                        _recordCache[cacheKey] = this;
+                    }
+                    finally
+                    {
+                        _recordCacheLock.ReleaseWriterLock();
+                    }
+
+                    entries = JsonSerializer.Serialize(_entries);
+                    width = _width;
+                    height = _height;
+                    _updated = false;
+                }
+                finally
+                {
+                    _lock.ReleaseWriterLock();
                 }
 
-                string entries = JsonSerializer.Serialize(_entries);
-
-                using (SqliteCommand command = NewCommand())
+                bool success = false;
+                try
                 {
-                    command.CommandText = $"INSERT OR REPLACE INTO {CACHE_TABLE}({CACHE_TABLE_FIELD_KEY}," +
-                        $"{CACHE_TABLE_FIELD_WIDTH},{CACHE_TABLE_FIELD_HEIGHT},{CACHE_TABLE_FIELD_ENTRIES})" +
-                        $" VALUES(@key,@width,@height,@entries)";
-                    command.Parameters.AddWithValue("@key", cacheKey);
-                    command.Parameters.AddWithValue("@width", _width);
-                    command.Parameters.AddWithValue("@height", _height);
-                    command.Parameters.AddWithValue("@entries", entries);
-                    command.ExecuteNonQuery();
+                    SqliteConnection connection = GetConnection();
+                    if (connection == null)
+                    {
+                        Logger.F(TAG, $"Failed to save cache {_key}, unable to create database connection.");
+                        return;
+                    }
+
+                    using (SqliteCommand command = connection.CreateCommand())
+                    {
+                        command.CommandText = $"INSERT OR REPLACE INTO {CACHE_TABLE}({CACHE_TABLE_FIELD_KEY}," +
+                            $"{CACHE_TABLE_FIELD_WIDTH},{CACHE_TABLE_FIELD_HEIGHT},{CACHE_TABLE_FIELD_ENTRIES})" +
+                            $" VALUES(@key,@width,@height,@entries)";
+                        command.Parameters.AddWithValue("@key", cacheKey);
+                        command.Parameters.AddWithValue("@width", width);
+                        command.Parameters.AddWithValue("@height", height);
+                        command.Parameters.AddWithValue("@entries", entries);
+                        command.ExecuteNonQuery();
+                    }
+
+                    success = true;
+                }
+                finally
+                {
+                    if (!success)
+                    {
+                        _lock.AcquireWriterLock(-1);
+                        try
+                        {
+                            _updated = true;
+                        }
+                        finally
+                        {
+                            _lock.ReleaseWriterLock();
+                        }
+                    }
                 }
             }
         }
 
         public string GetEntry(string key)
         {
-            if (_entries.TryGetValue(key, out string entry))
+            _lock.AcquireReaderLock(-1);
+            try
             {
-                return entry;
+                if (_entries.TryGetValue(key, out string entry))
+                {
+                    return entry;
+                }
             }
+            finally
+            {
+                _lock.ReleaseReaderLock();
+            }
+
             return "";
         }
 
         public void PutEntry(string key, string entry)
         {
-            _entries[key] = entry;
-            _updated = true;
+            _lock.AcquireWriterLock(-1);
+            try
+            {
+                _entries[key] = entry;
+                _updated = true;
+            }
+            finally
+            {
+                _lock.ReleaseWriterLock();
+            }
         }
 
         public void UpdateDimension(int width, int height)
         {
-            if (width != _width || height != _height)
+            _lock.AcquireReaderLock(-1);
+            try
             {
-                width = _width;
-                height = _height;
-                _updated = true;
+                if (width != _width || height != _height)
+                {
+                    LockCookie cookie = _lock.UpgradeToWriterLock(-1);
+                    try
+                    {
+                        width = _width;
+                        height = _height;
+                        _updated = true;
+                    }
+                    finally
+                    {
+                        _lock.DowngradeFromWriterLock(ref cookie);
+                    }
+                }
+            }
+            finally
+            {
+                _lock.ReleaseReaderLock();
             }
         }
     }
