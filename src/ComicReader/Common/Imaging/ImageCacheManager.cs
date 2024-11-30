@@ -25,16 +25,18 @@ namespace ComicReader.Common.Imaging;
 internal static class ImageCacheManager
 {
     private const string TAG = "ImageCacheManager";
+    private const string CACHE_FOLDER = "images";
+    private const long MAX_CACHE_SIZE = 1024 * 1024 * 1024;
+
     private const string CACHE_ENTRY_KEY_SMALL = "100k";
     private const int CACHE_ENTRY_RESOLUTION_SMALL = 100000;
-    private const long MAX_CACHE_SIZE = 1024 * 1024 * 1024;
 
     private static double sRawPixelPerPixel = -1;
 
     private static readonly Lazy<LRUCache> sImageCache = new(delegate
     {
         StorageFolder cacheFolder = ApplicationData.Current.LocalCacheFolder;
-        StorageFolder imageFolder = cacheFolder.CreateFolderAsync("images", CreationCollisionOption.OpenIfExists).AsTask().Result;
+        StorageFolder imageFolder = cacheFolder.CreateFolderAsync(CACHE_FOLDER, CreationCollisionOption.OpenIfExists).AsTask().Result;
         LRUCache cache = new(imageFolder, MAX_CACHE_SIZE);
         TaskQueue.LongRunningQueue.Enqueue("CleanImageCache", delegate
         {
@@ -44,19 +46,20 @@ internal static class ImageCacheManager
         return cache;
     });
 
-    public static void LoadImage(CancellationSession.IToken token, IImageSource source,
-        double frameWidth, double frameHeight, StretchModeEnum stretchMode, IImageResultHandler handler)
+    public static void LoadImage(CancellationSession.IToken token,
+        IImageSource source, double frameWidth, double frameHeight, StretchModeEnum stretchMode,
+        IImageResultHandler handler)
     {
         if (token.IsCancellationRequested)
         {
-            // cancelled
             return;
         }
 
-        int sourceSignature = source.GetContentSignature();
-        IRandomAccessStream cacheFileStream = null;
-        ImageCacheDatabase.CacheRecord cacheRecord = null;
         string cacheKey = source.GetCacheKey();
+        int sourceSignature = source.GetContentSignature();
+
+        IRandomAccessStream cacheStream = null;
+        ImageCacheDatabase.CacheRecord cacheRecord = null;
         if (cacheKey != null)
         {
             cacheRecord = ImageCacheDatabase.GetCacheRecord(cacheKey);
@@ -65,32 +68,31 @@ internal static class ImageCacheManager
                 double aspectRatio = (double)cacheRecord.Width / cacheRecord.Height;
                 if (CalculateDesiredDimension(frameWidth, frameHeight, stretchMode, aspectRatio, out int desiredWidth, out int desiredHeight))
                 {
-                    string targetCacheEntryKey = CalculateTargetCacheEntry(desiredWidth * desiredHeight);
-                    string entry = cacheRecord.GetEntry(targetCacheEntryKey);
+                    string cacheEntryKey = CalculateCacheEntryKey(desiredWidth * desiredHeight);
+                    string entry = cacheRecord.GetEntry(cacheEntryKey);
                     if (entry.Length > 0)
                     {
-                        cacheFileStream = sImageCache.Value.Get(entry);
+                        cacheStream = sImageCache.Value.Get(entry);
                     }
                 }
             }
         }
 
         BitmapImage image = null;
-        int desiredResolution = 0;
-        int sourceWidth = 0;
-        int sourceHeight = 0;
+        int cacheDesiredResolution = 0;
+        int cacheSourceWidth = 0;
+        int cacheSourceHeight = 0;
 
         MainThreadUtils.RunInMainThreadAsync(async delegate
         {
             if (token.IsCancellationRequested)
             {
-                // cancelled
                 return;
             }
 
-            if (cacheFileStream != null)
+            if (cacheStream != null)
             {
-                image = await TryLoadImageFromStream(cacheFileStream);
+                image = await TryLoadImageFromStream(cacheStream);
             }
 
             bool isFromSource = false;
@@ -105,52 +107,53 @@ internal static class ImageCacheManager
 
             if (image == null)
             {
-                // failure
                 return;
             }
 
             double aspectRatio = (double)image.PixelWidth / image.PixelHeight;
             if (CalculateDesiredDimension(frameWidth, frameHeight, stretchMode, aspectRatio, out int desiredWidth, out int desiredHeight))
             {
-                desiredResolution = desiredWidth * desiredHeight;
+                cacheDesiredResolution = desiredWidth * desiredHeight;
                 image.DecodePixelWidth = desiredWidth;
                 image.DecodePixelHeight = desiredHeight;
             }
 
             if (isFromSource)
             {
-                sourceHeight = image.PixelHeight;
-                sourceWidth = image.PixelWidth;
+                cacheSourceHeight = image.PixelHeight;
+                cacheSourceWidth = image.PixelWidth;
             }
         }).Wait();
 
-        cacheFileStream?.Dispose();
+        cacheStream?.Dispose();
 
         if (image == null)
         {
-            // failure
+            Logger.F(TAG, "Failed to load image");
             return;
         }
 
-        if (sourceHeight > 0 && sourceWidth > 0 && cacheKey != null)
+        if (cacheKey != null && cacheSourceHeight > 0 && cacheSourceWidth > 0)
         {
             if (cacheRecord != null)
             {
-                cacheRecord.UpdateMeta(sourceSignature, sourceWidth, sourceHeight);
+                cacheRecord.UpdateMeta(sourceSignature, cacheSourceWidth, cacheSourceHeight);
             }
             else
             {
-                cacheRecord = new ImageCacheDatabase.CacheRecord(cacheKey, sourceSignature, sourceWidth, sourceHeight);
+                cacheRecord = new ImageCacheDatabase.CacheRecord(cacheKey, sourceSignature, cacheSourceWidth, cacheSourceHeight);
             }
-            if (desiredResolution > 0)
+
+            if (cacheDesiredResolution > 0)
             {
-                string targetCacheEntryKey = CalculateTargetCacheEntry(desiredResolution);
-                string entry = CreateImageCache(source, targetCacheEntryKey).Result;
+                string cacheEntryKey = CalculateCacheEntryKey(cacheDesiredResolution);
+                string entry = CreateImageCache(source, cacheEntryKey).Result;
                 if (entry != null)
                 {
-                    cacheRecord.PutEntry(targetCacheEntryKey, entry);
+                    cacheRecord.PutEntry(cacheEntryKey, entry);
                 }
             }
+
             cacheRecord.Save();
         }
 
@@ -158,7 +161,6 @@ internal static class ImageCacheManager
         {
             if (token.IsCancellationRequested)
             {
-                // cancelled
                 return;
             }
 
@@ -166,10 +168,10 @@ internal static class ImageCacheManager
         });
     }
 
-    private static async Task<string> CreateImageCache(IImageSource source, string cacheEntry)
+    private static async Task<string> CreateImageCache(IImageSource source, string cacheEntryKey)
     {
         int cacheResolution;
-        switch (cacheEntry)
+        switch (cacheEntryKey)
         {
             case CACHE_ENTRY_KEY_SMALL:
                 cacheResolution = CACHE_ENTRY_RESOLUTION_SMALL;
@@ -243,14 +245,16 @@ internal static class ImageCacheManager
         return entry;
     }
 
-    private static string CalculateTargetCacheEntry(int resolution)
+    private static string CalculateCacheEntryKey(int resolution)
     {
-        string targetCacheEntryKey = "";
+        string cacheEntryKey = "";
+
         if (resolution <= CACHE_ENTRY_RESOLUTION_SMALL)
         {
-            targetCacheEntryKey = CACHE_ENTRY_KEY_SMALL;
+            cacheEntryKey = CACHE_ENTRY_KEY_SMALL;
         }
-        return targetCacheEntryKey;
+
+        return cacheEntryKey;
     }
 
     private static async Task<BitmapImage> TryLoadImageFromStream(IRandomAccessStream stream)

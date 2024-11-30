@@ -20,9 +20,77 @@ namespace ComicReader.Data;
 
 internal abstract class ComicData
 {
-    private const string TAG = "ComicData";
+    //
+    // Constants
+    //
 
-    // Local fields.
+    private const string TAG = "ComicData";
+    public const string COMIC_INFO_FILE_NAME = "info.txt";
+
+    public class Field
+    {
+        public const string Id = "id";
+        public const string Type = "type";
+        public const string Location = "location";
+        public const string Title1 = "title1";
+        public const string Title2 = "title2";
+        public const string Hidden = "hidden";
+        public const string Rating = "rating";
+        public const string Progress = "progress";
+        public const string LastVisit = "last_visit";
+        public const string LastPosition = "last_pos";
+        public const string ImageAspectRatios = "image_aspect_ratios";
+        public const string CoverFileCache = "cover_file_name";
+
+        public class TagCategory
+        {
+            public const string Id = "id";
+            public const string Name = "name";
+            public const string ComicId = "comic_id";
+        }
+
+        public class Tag
+        {
+            public const string Content = "content";
+            public const string ComicId = "comic_id";
+            public const string TagCategoryId = "cate_id";
+        }
+    }
+
+    //
+    // Variables
+    //
+
+    private static string _defaultTagsString = null;
+    private static string DefaultTagsString
+    {
+        get
+        {
+            _defaultTagsString ??= StringResourceProvider.GetResourceString("DefaultTags");
+            return _defaultTagsString;
+        }
+    }
+
+    private static readonly TaskQueue _tableQueue = new("ComicData");
+    private static int _pendingUpdateTaskCount = 0;
+
+    private bool _imageUpdated = false;
+
+    //
+    // Constructor
+    //
+
+    protected ComicData(ComicType type, bool is_external)
+    {
+        Id = -1;
+        Type = type;
+        IsExternal = is_external;
+    }
+
+    //
+    // Public Interfaces
+    //
+
     public long Id { get; private set; }
     private ComicType Type { get; set; }
     public string Location { get; protected set; } = "";
@@ -35,10 +103,8 @@ internal abstract class ComicData
     public double LastPosition { get; protected set; } = 0.0;
     public string CoverFileCache { get; private set; } = "";
 
-    // Foriegn fields.
     public List<TagData> Tags { get; private set; } = new List<TagData>();
 
-    // Not in database.
     public string Title
     {
         get
@@ -83,28 +149,9 @@ internal abstract class ComicData
     private double ValueLastPosition => LastPosition;
     private string ValueCoverFileCache => CoverFileCache;
 
-    // Subscriptions.
     public static Action OnUpdated { get; set; }
 
-    // Observers.
     public static bool IsRescanning { get; private set; } = false;
-
-    // Resources.
-    private static string _defaultTagsString = null;
-    private static string DefaultTagsString
-    {
-        get
-        {
-            _defaultTagsString ??= StringResourceProvider.GetResourceString("DefaultTags");
-            return _defaultTagsString;
-        }
-    }
-
-    // Locks.
-    private static readonly TaskQueue _tableQueue = new("ComicData");
-    private static int _pendingUpdateTaskCount = 0;
-
-    private bool _imageUpdated = false;
 
     private void SaveAllNoLock()
     {
@@ -453,24 +500,6 @@ internal abstract class ComicData
 
     public async Task<IRandomAccessStream> GetImageStream(int index)
     {
-        if (index < 0)
-        {
-            StorageFile cover_file = await GetCoverCache();
-
-            if (cover_file != null)
-            {
-                try
-                {
-                    return await cover_file.OpenAsync(FileAccessMode.Read);
-                }
-                catch (Exception e)
-                {
-                    Log("Failed to access cover cache '" + cover_file.Path +
-                        "', load from file instead. " + e.ToString());
-                }
-            }
-        }
-
         return await InternalGetImageStream(Math.Max(0, index));
     }
 
@@ -481,6 +510,90 @@ internal abstract class ComicData
             return FromIdNoLock(id);
         }, taskName);
     }
+
+    public string GetCoverImageCacheKey()
+    {
+        string coverCacheKey = CoverFileCache;
+        if (coverCacheKey != null && coverCacheKey.Length > 0)
+        {
+            return coverCacheKey;
+        }
+
+        if (!UpdateImages(reload: false).Result.Successful())
+        {
+            return null;
+        }
+        coverCacheKey = GetImageCacheKey(0);
+        SetCoverCacheKey(coverCacheKey);
+        return coverCacheKey;
+    }
+
+    public static async Task CommandBlock2(Func<SqliteCommand, Task> op, string taskName)
+    {
+        await Enqueue(delegate
+        {
+            CommandBlock2NoLock(op);
+            return true;
+        }, taskName);
+    }
+
+    public static async Task<ComicData> FromLocation(string location, string taskName)
+    {
+        return await Enqueue(delegate
+        {
+            return FromLocationNoLock(location);
+        }, taskName);
+    }
+
+    public static void UpdateAllComics(string reason, bool lazy)
+    {
+        int pendingCount = Interlocked.Increment(ref _pendingUpdateTaskCount);
+        Log($"UpdateAllComics#Enqueue(pending={pendingCount},reason={reason},lazy={lazy})");
+        TaskQueue.LongRunningQueue.Enqueue($"{TAG}#UpdateAllComics", delegate
+        {
+            int pendingCount = Interlocked.Decrement(ref _pendingUpdateTaskCount);
+            if (pendingCount > 0)
+            {
+                Log($"UpdateAllComics#Skip(pending={pendingCount})");
+                return TaskException.Cancellation;
+            }
+            long session = Random.Shared.NextInt64();
+            Log($"UpdateAllComics#Start(session={session},lazy={lazy})");
+            IsRescanning = true;
+            TaskException result = UpdateAllComicsInternal(lazy).Result;
+            IsRescanning = false;
+            OnUpdated?.Invoke();
+            Log($"UpdateAllComics#End(session={session})");
+            return result;
+        });
+    }
+
+    //
+    // Abstract Methods
+    //
+
+    public abstract string GetImageCacheKey(int index);
+
+    public abstract Task<int> GetImageSignature(int index);
+
+    protected abstract Task<TaskException> ReloadImages();
+
+    protected abstract Task<TaskException> SaveToInfoFile();
+
+    protected abstract Task<IRandomAccessStream> InternalGetImageStream(int index);
+
+    //
+    // Protected Methods
+    //
+
+    protected static void Log(string message)
+    {
+        Logger.I("ComicData", message);
+    }
+
+    //
+    // Private Methods
+    //
 
     private static ComicData FromIdNoLock(long id)
     {
@@ -500,62 +613,6 @@ internal abstract class ComicData
             return FromNoLock(query);
         }
     }
-
-    protected ComicData(ComicType type, bool is_external)
-    {
-        Id = -1;
-        Type = type;
-        IsExternal = is_external;
-    }
-
-    protected virtual async Task<StorageFile> GetCoverCache()
-    {
-        if (IsExternal)
-        {
-            return null;
-        }
-
-        if (CoverFileCache.Length == 0)
-        {
-            return null;
-        }
-
-        IStorageItem item = await CacheFolder.TryGetItemAsync(CoverFileCache);
-
-        if (!(item is StorageFile))
-        {
-            return null;
-        }
-
-        return (StorageFile)item;
-    }
-
-    protected abstract Task<TaskException> ReloadImages();
-
-    protected abstract Task<TaskException> SaveToInfoFile();
-
-    protected abstract Task<IRandomAccessStream> InternalGetImageStream(int index);
-
-    public abstract Task<int> GetImageSignature(int index);
-
-    public string GetCoverImageCacheKey()
-    {
-        string coverCacheKey = CoverFileCache;
-        if (coverCacheKey != null && coverCacheKey.Length > 0)
-        {
-            return coverCacheKey;
-        }
-
-        if (!UpdateImages(reload: false).Result.Successful())
-        {
-            return null;
-        }
-        coverCacheKey = GetImageCacheKey(0);
-        SetCoverCacheKey(coverCacheKey);
-        return coverCacheKey;
-    }
-
-    public abstract string GetImageCacheKey(int index);
 
     private static async Task UpdateComicNoLock(string location, ComicType type, bool is_exist)
     {
@@ -746,31 +803,6 @@ internal abstract class ComicData
         return await taskResult.Task;
     }
 
-    public static async Task<T> CommandBlock1<T>(Func<SqliteCommand, Task<T>> op, string taskName)
-    {
-        return await Enqueue(delegate
-        {
-            return CommandBlock1NoLock(op);
-        }, taskName);
-    }
-
-    private static T CommandBlock1NoLock<T>(Func<SqliteCommand, Task<T>> op)
-    {
-        using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
-        {
-            return op(command).Result;
-        }
-    }
-
-    public static async Task CommandBlock2(Func<SqliteCommand, Task> op, string taskName)
-    {
-        await Enqueue(delegate
-        {
-            CommandBlock2NoLock(op);
-            return true;
-        }, taskName);
-    }
-
     private static void CommandBlock2NoLock(Func<SqliteCommand, Task> op)
     {
         using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
@@ -861,14 +893,6 @@ internal abstract class ComicData
         return comic;
     }
 
-    public static async Task<ComicData> FromLocation(string location, string taskName)
-    {
-        return await Enqueue(delegate
-        {
-            return FromLocationNoLock(location);
-        }, taskName);
-    }
-
     private static ComicData FromLocationNoLock(string location)
     {
         using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
@@ -896,29 +920,6 @@ internal abstract class ComicData
                 " WHERE " + Field.Location + " LIKE @pattern";
             command.Parameters.AddWithValue("@pattern", location + "%");
             await command.ExecuteNonQueryAsync();
-        });
-    }
-
-    public static void UpdateAllComics(string reason, bool lazy)
-    {
-        int pendingCount = Interlocked.Increment(ref _pendingUpdateTaskCount);
-        Log($"UpdateAllComics#Enqueue(pending={pendingCount},reason={reason},lazy={lazy})");
-        TaskQueue.LongRunningQueue.Enqueue($"{TAG}#UpdateAllComics", delegate
-        {
-            int pendingCount = Interlocked.Decrement(ref _pendingUpdateTaskCount);
-            if (pendingCount > 0)
-            {
-                Log($"UpdateAllComics#Skip(pending={pendingCount})");
-                return TaskException.Cancellation;
-            }
-            long session = Random.Shared.NextInt64();
-            Log($"UpdateAllComics#Start(session={session},lazy={lazy})");
-            IsRescanning = true;
-            TaskException result = UpdateAllComicsInternal(lazy).Result;
-            IsRescanning = false;
-            OnUpdated?.Invoke();
-            Log($"UpdateAllComics#End(session={session})");
-            return result;
         });
     }
 
@@ -1118,10 +1119,9 @@ internal abstract class ComicData
         return TaskException.Success;
     }
 
-    protected static void Log(string message)
-    {
-        Logger.I("ComicData", message);
-    }
+    //
+    // Classes
+    //
 
     private struct UpdateItemInfo
     {
@@ -1130,81 +1130,45 @@ internal abstract class ComicData
         public bool IsExist;
     };
 
-    public const string ComicInfoFileName = "info.txt";
-
-    // Fields.
-    public class Field
+    internal class TagData
     {
-        // Field comic.
-        public const string Id = "id";
-        public const string Type = "type";
-        public const string Location = "location";
-        public const string Title1 = "title1";
-        public const string Title2 = "title2";
-        public const string Hidden = "hidden";
-        public const string Rating = "rating";
-        public const string Progress = "progress";
-        public const string LastVisit = "last_visit";
-        public const string LastPosition = "last_pos";
-        public const string ImageAspectRatios = "image_aspect_ratios";
-        public const string CoverFileCache = "cover_file_name";
+        public string Name;
+        public HashSet<string> Tags = new();
 
-        // Field tag category.
-        public class TagCategory
+        public static TagData Parse(string src)
         {
-            public const string Id = "id";
-            public const string Name = "name";
-            public const string ComicId = "comic_id";
-        }
+            string[] pieces = src.Split(":", 2, StringSplitOptions.RemoveEmptyEntries);
 
-        // Field tag.
-        public class Tag
-        {
-            public const string Content = "content";
-            public const string ComicId = "comic_id";
-            public const string TagCategoryId = "cate_id";
-        }
-    }
-};
-
-internal class TagData
-{
-    public string Name;
-    public HashSet<string> Tags = new();
-
-    public static TagData Parse(string src)
-    {
-        string[] pieces = src.Split(":", 2, StringSplitOptions.RemoveEmptyEntries);
-
-        if (pieces.Length != 2)
-        {
-            return null;
-        }
-
-        var tag_data = new TagData
-        {
-            Name = pieces[0]
-        };
-
-        var tags = new List<string>(pieces[1].Split("/", StringSplitOptions.RemoveEmptyEntries));
-
-        foreach (string tag in tags)
-        {
-            string tag_trimed = tag.Trim();
-
-            if (tag_trimed.Length != 0)
+            if (pieces.Length != 2)
             {
-                tag_data.Tags.Add(tag_trimed);
+                return null;
             }
-        }
 
-        return tag_data.Tags.Count == 0 ? null : tag_data;
+            var tag_data = new TagData
+            {
+                Name = pieces[0]
+            };
+
+            var tags = new List<string>(pieces[1].Split("/", StringSplitOptions.RemoveEmptyEntries));
+
+            foreach (string tag in tags)
+            {
+                string tag_trimed = tag.Trim();
+
+                if (tag_trimed.Length != 0)
+                {
+                    tag_data.Tags.Add(tag_trimed);
+                }
+            }
+
+            return tag_data.Tags.Count == 0 ? null : tag_data;
+        }
+    };
+
+    internal enum ComicType : int
+    {
+        Folder = 1,
+        Archive = 2,
+        PDF = 3,
     }
 };
-
-internal enum ComicType : int
-{
-    Folder = 1,
-    Archive = 2,
-    PDF = 3,
-}

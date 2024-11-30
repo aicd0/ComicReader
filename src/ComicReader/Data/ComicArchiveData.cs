@@ -119,7 +119,7 @@ internal class ComicArchiveData : ComicData
 
                     string filename = StringUtils.ItemNameFromPath(filepath);
 
-                    if (filename.Equals(ComicInfoFileName))
+                    if (filename.Equals(COMIC_INFO_FILE_NAME))
                     {
                         sub_path = filepath.Substring(base_path.Length);
                         break;
@@ -139,7 +139,7 @@ internal class ComicArchiveData : ComicData
         }
         else
         {
-            sub_path = GetSubPathFromFilename(ComicInfoFileName);
+            sub_path = GetSubPathFromFilename(COMIC_INFO_FILE_NAME);
         }
 
         using (Stream stream = await ArchiveAccess.TryGetFileStream(Archive, sub_path))

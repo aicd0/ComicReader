@@ -877,7 +877,7 @@ internal sealed partial class ReaderPage : BasePage
 
         for (int i = 0; i < _comic.Tags.Count; ++i)
         {
-            TagData tags = _comic.Tags[i];
+            ComicData.TagData tags = _comic.Tags[i];
             var tags_model = new TagCollectionViewModel(tags.Name);
 
             foreach (string tag in tags.Tags)

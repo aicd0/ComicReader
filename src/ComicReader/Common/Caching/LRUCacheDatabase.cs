@@ -146,8 +146,8 @@ internal class LRUCacheDatabase
         using (SqliteCommand command = connection.CreateCommand())
         {
             command.CommandText = "CREATE TABLE IF NOT EXISTS " + CACHE_TABLE + " (" +
-                CACHE_TABLE_FIELD_KEY + " TEXT PRIMARY KEY," + // 0
-                CACHE_TABLE_FIELD_LAST_USED + " INTEGER NOT NULL)"; // 1
+                CACHE_TABLE_FIELD_KEY + " TEXT PRIMARY KEY," +
+                CACHE_TABLE_FIELD_LAST_USED + " INTEGER NOT NULL)";
             await command.ExecuteNonQueryAsync();
         }
 

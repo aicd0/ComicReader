@@ -106,7 +106,7 @@ internal class ComicFolderData : ComicData
             return r;
         }
 
-        IStorageItem item = await Folder.TryGetItemAsync(ComicInfoFileName);
+        IStorageItem item = await Folder.TryGetItemAsync(COMIC_INFO_FILE_NAME);
 
         if (item == null)
         {
@@ -115,7 +115,7 @@ internal class ComicFolderData : ComicData
                 return TaskException.FileNotFound;
             }
 
-            InfoFile = await Folder.CreateFileAsync(ComicInfoFileName, CreationCollisionOption.OpenIfExists);
+            InfoFile = await Folder.CreateFileAsync(COMIC_INFO_FILE_NAME, CreationCollisionOption.OpenIfExists);
             return TaskException.Success;
         }
 

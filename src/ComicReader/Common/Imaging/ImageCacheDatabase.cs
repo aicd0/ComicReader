@@ -92,7 +92,12 @@ internal static class ImageCacheDatabase
             List<CacheRecord> records = new();
             using (SqliteCommand command = connection.CreateCommand())
             {
-                command.CommandText = $"SELECT {CACHE_TABLE_FIELD_SIGNATURE},{CACHE_TABLE_FIELD_WIDTH},{CACHE_TABLE_FIELD_HEIGHT},{CACHE_TABLE_FIELD_ENTRIES} FROM {CACHE_TABLE} WHERE {CACHE_TABLE_FIELD_KEY}=@key";
+                command.CommandText = $"SELECT " +
+                    $"{CACHE_TABLE_FIELD_SIGNATURE}" +
+                    $",{CACHE_TABLE_FIELD_WIDTH}" +
+                    $",{CACHE_TABLE_FIELD_HEIGHT}" +
+                    $",{CACHE_TABLE_FIELD_ENTRIES}" +
+                    $" FROM {CACHE_TABLE} WHERE {CACHE_TABLE_FIELD_KEY}=@key";
                 command.Parameters.AddWithValue("@key", cacheKey);
 
                 using SqliteDataReader query = command.ExecuteReader();
@@ -182,11 +187,11 @@ internal static class ImageCacheDatabase
         using (SqliteCommand command = connection.CreateCommand())
         {
             command.CommandText = "CREATE TABLE IF NOT EXISTS " + CACHE_TABLE + " (" +
-                CACHE_TABLE_FIELD_KEY + " TEXT PRIMARY KEY," + // 0
-                CACHE_TABLE_FIELD_SIGNATURE + " INTEGER NOT NULL," + // 1
-                CACHE_TABLE_FIELD_WIDTH + " INTEGER NOT NULL," + // 2
-                CACHE_TABLE_FIELD_HEIGHT + " INTEGER NOT NULL," + // 3
-                CACHE_TABLE_FIELD_ENTRIES + " TEXT)"; // 4
+                CACHE_TABLE_FIELD_KEY + " TEXT PRIMARY KEY," +
+                CACHE_TABLE_FIELD_SIGNATURE + " INTEGER NOT NULL," +
+                CACHE_TABLE_FIELD_WIDTH + " INTEGER NOT NULL," +
+                CACHE_TABLE_FIELD_HEIGHT + " INTEGER NOT NULL," +
+                CACHE_TABLE_FIELD_ENTRIES + " TEXT)";
             await command.ExecuteNonQueryAsync();
         }
 
@@ -307,9 +312,12 @@ internal static class ImageCacheDatabase
 
                     using (SqliteCommand command = connection.CreateCommand())
                     {
-                        command.CommandText = $"INSERT OR REPLACE INTO {CACHE_TABLE}({CACHE_TABLE_FIELD_KEY}," +
-                            $"{CACHE_TABLE_FIELD_SIGNATURE},{CACHE_TABLE_FIELD_WIDTH},{CACHE_TABLE_FIELD_HEIGHT},{CACHE_TABLE_FIELD_ENTRIES})" +
-                            $" VALUES(@key,@signature,@width,@height,@entries)";
+                        command.CommandText = $"INSERT OR REPLACE INTO {CACHE_TABLE}({CACHE_TABLE_FIELD_KEY}" +
+                            $",{CACHE_TABLE_FIELD_SIGNATURE}" +
+                            $",{CACHE_TABLE_FIELD_WIDTH}" +
+                            $",{CACHE_TABLE_FIELD_HEIGHT}" +
+                            $",{CACHE_TABLE_FIELD_ENTRIES}" +
+                            $") VALUES(@key,@signature,@width,@height,@entries)";
                         command.Parameters.AddWithValue("@key", cacheKey);
                         command.Parameters.AddWithValue("@signature", signature);
                         command.Parameters.AddWithValue("@width", width);

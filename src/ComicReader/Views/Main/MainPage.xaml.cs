@@ -244,7 +244,7 @@ internal sealed partial class MainPage : StatefulPage
 
                 foreach (StorageFile file in all_files)
                 {
-                    if (file.Name.ToLower().Equals(ComicData.ComicInfoFileName))
+                    if (file.Name.ToLower().Equals(ComicData.COMIC_INFO_FILE_NAME))
                     {
                         info_file = file;
                     }
