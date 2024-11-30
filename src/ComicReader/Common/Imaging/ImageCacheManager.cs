@@ -65,7 +65,7 @@ internal static class ImageCacheManager
                     string entry = cacheRecord.GetEntry(targetCacheEntryKey);
                     if (entry.Length > 0)
                     {
-                        cacheFileStream = sImageCache.Value.GetAsync(entry).Result;
+                        cacheFileStream = sImageCache.Value.Get(entry);
                     }
                 }
             }
@@ -222,7 +222,12 @@ internal static class ImageCacheManager
                 await resizedStream.ReadAsync(outByteArray.AsBuffer(), (uint)resizedStream.Size, InputStreamOptions.None);
 
                 entry = StringUtils.RandomFileName(16) + ".png";
-                using ILRUInputStream cacheStream = await sImageCache.Value.PutAsync(entry);
+                using ILRUInputStream cacheStream = sImageCache.Value.Put(entry);
+                if (cacheStream == null)
+                {
+                    Logger.F(TAG, "CreateImageCache cacheStream is null");
+                    return null;
+                }
                 await cacheStream.WriteAsync(outByteArray.AsBuffer());
             }
             catch (Exception e)
