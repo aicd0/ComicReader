@@ -25,18 +25,11 @@ internal class ComicCoverImageSource(ComicData comic) : IImageSource
 
     public string GetUniqueKey()
     {
-        string coverKey = _comic.CoverFileCache;
-        if (coverKey != null && coverKey.Length > 0)
-        {
-            return coverKey;
-        }
+        return _comic.GetCoverImageCacheKey();
+    }
 
-        if (!_comic.UpdateImages(reload: false).Result.Successful())
-        {
-            return null;
-        }
-        coverKey = _comic.GetImageCacheKey(0);
-        _comic.SetCoverFileCacheKey(coverKey);
-        return coverKey;
+    public int GetContentSignature()
+    {
+        return 0;
     }
 }

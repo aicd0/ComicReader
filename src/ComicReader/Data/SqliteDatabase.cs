@@ -62,7 +62,8 @@ public class SqliteDatabaseManager
                 ComicData.Field.Progress + " INTEGER NOT NULL," + // 7
                 ComicData.Field.LastVisit + " TIMESTAMP NOT NULL," + // 8
                 ComicData.Field.LastPosition + " REAL NOT NULL," + // 9
-                ComicData.Field.CoverFileCache + " TEXT)"; // 10
+                ComicData.Field.ImageAspectRatios + " TEXT," + // 10
+                ComicData.Field.CoverFileCache + " TEXT)"; // 11
             await command.ExecuteNonQueryAsync();
 
             // Create tag category table.

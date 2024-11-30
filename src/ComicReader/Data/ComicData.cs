@@ -281,7 +281,7 @@ internal abstract class ComicData
         }, "SetAsRead");
     }
 
-    public void SetCoverFileCacheKey(string key)
+    public void SetCoverCacheKey(string key)
     {
         CoverFileCache = key;
 
@@ -299,7 +299,7 @@ internal abstract class ComicData
                     command.ExecuteNonQuery();
                 }
             });
-        }, "SaveCoverFileCache");
+        }, "SetCoverCacheKey");
     }
 
     public void SetAsDefaultInfo()
@@ -535,6 +535,25 @@ internal abstract class ComicData
     protected abstract Task<TaskException> SaveToInfoFile();
 
     protected abstract Task<IRandomAccessStream> InternalGetImageStream(int index);
+
+    public abstract Task<int> GetImageSignature(int index);
+
+    public string GetCoverImageCacheKey()
+    {
+        string coverCacheKey = CoverFileCache;
+        if (coverCacheKey != null && coverCacheKey.Length > 0)
+        {
+            return coverCacheKey;
+        }
+
+        if (!UpdateImages(reload: false).Result.Successful())
+        {
+            return null;
+        }
+        coverCacheKey = GetImageCacheKey(0);
+        SetCoverCacheKey(coverCacheKey);
+        return coverCacheKey;
+    }
 
     public abstract string GetImageCacheKey(int index);
 
@@ -787,7 +806,7 @@ internal abstract class ComicData
         int progress = query.GetInt32(7);
         DateTimeOffset last_visit = query.GetDateTimeOffset(8);
         double last_position = query.GetDouble(9);
-        string coverFileCache = query.GetString(10);
+        string coverFileCache = query.GetString(11);
 
         // Tags
         var tags = new List<TagData>();
@@ -1127,6 +1146,7 @@ internal abstract class ComicData
         public const string Progress = "progress";
         public const string LastVisit = "last_visit";
         public const string LastPosition = "last_pos";
+        public const string ImageAspectRatios = "image_aspect_ratios";
         public const string CoverFileCache = "cover_file_name";
 
         // Field tag category.

@@ -38,4 +38,13 @@ internal class ComicImageSource : IImageSource
         }
         return _comic.GetImageCacheKey(_index);
     }
+
+    int IImageSource.GetContentSignature()
+    {
+        if (!_comic.UpdateImages(reload: false).Result.Successful())
+        {
+            return 0;
+        }
+        return _comic.GetImageSignature(_index).Result;
+    }
 }

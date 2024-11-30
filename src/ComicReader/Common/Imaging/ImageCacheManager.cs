@@ -53,13 +53,14 @@ internal static class ImageCacheManager
             return;
         }
 
+        int sourceSignature = source.GetContentSignature();
         IRandomAccessStream cacheFileStream = null;
         ImageCacheDatabase.CacheRecord cacheRecord = null;
         string uniqueKey = source.GetUniqueKey();
         if (uniqueKey != null)
         {
             cacheRecord = ImageCacheDatabase.GetCacheRecord(uniqueKey);
-            if (cacheRecord != null)
+            if (cacheRecord != null && (sourceSignature == 0 || cacheRecord.Signature == sourceSignature))
             {
                 double aspectRatio = (double)cacheRecord.Width / cacheRecord.Height;
                 if (CalculateDesiredDimension(frameWidth, frameHeight, stretchMode, aspectRatio, out int desiredWidth, out int desiredHeight))
@@ -135,11 +136,11 @@ internal static class ImageCacheManager
         {
             if (cacheRecord != null)
             {
-                cacheRecord.UpdateDimension(sourceWidth, sourceHeight);
+                cacheRecord.UpdateMeta(sourceSignature, sourceWidth, sourceHeight);
             }
             else
             {
-                cacheRecord = new ImageCacheDatabase.CacheRecord(uniqueKey, sourceWidth, sourceHeight);
+                cacheRecord = new ImageCacheDatabase.CacheRecord(uniqueKey, sourceSignature, sourceWidth, sourceHeight);
             }
             if (desiredResolution > 0)
             {

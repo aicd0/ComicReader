@@ -263,4 +263,9 @@ internal class ComicArchiveData : ComicData
         string subPath = IsExternal ? Entries[index] : GetSubPathFromFilename(Entries[index]);
         return Archive.Path + ArchiveAccess.FileSeperator + subPath;
     }
+
+    public override Task<int> GetImageSignature(int index)
+    {
+        return FileUtils.GetFileHashCode(Archive);
+    }
 }

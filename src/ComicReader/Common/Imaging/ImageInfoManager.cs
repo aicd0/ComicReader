@@ -61,7 +61,8 @@ internal static class ImageInfoManager
             return null;
         }
 
-        record = new ImageCacheDatabase.CacheRecord(key, width, height);
+        int signature = source.GetContentSignature();
+        record = new ImageCacheDatabase.CacheRecord(key, signature, width, height);
         record.Save();
 
         return new ImageInfo(width, height);

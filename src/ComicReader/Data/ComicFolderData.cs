@@ -244,4 +244,15 @@ internal class ComicFolderData : ComicData
 
         return ImageFiles[index].Path;
     }
+
+    public override async Task<int> GetImageSignature(int index)
+    {
+        if (index < 0 || index >= ImageFiles.Count)
+        {
+            Logger.F(TAG, "GetImageSignature");
+            return 0;
+        }
+
+        return await FileUtils.GetFileHashCode(ImageFiles[index]);
+    }
 }

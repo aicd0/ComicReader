@@ -24,6 +24,7 @@ internal static class ImageCacheDatabase
     public const string TAG = "ImageCacheDatabase";
     public const string CACHE_TABLE = "cache";
     public const string CACHE_TABLE_FIELD_KEY = "key";
+    public const string CACHE_TABLE_FIELD_SIGNATURE = "signature";
     public const string CACHE_TABLE_FIELD_WIDTH = "width";
     public const string CACHE_TABLE_FIELD_HEIGHT = "height";
     public const string CACHE_TABLE_FIELD_ENTRIES = "entries";
@@ -91,17 +92,17 @@ internal static class ImageCacheDatabase
             List<CacheRecord> records = new();
             using (SqliteCommand command = connection.CreateCommand())
             {
-                command.CommandText = $"SELECT {CACHE_TABLE_FIELD_WIDTH},{CACHE_TABLE_FIELD_HEIGHT}" +
-                    $",{CACHE_TABLE_FIELD_ENTRIES} FROM {CACHE_TABLE} WHERE {CACHE_TABLE_FIELD_KEY}=@key";
+                command.CommandText = $"SELECT {CACHE_TABLE_FIELD_SIGNATURE},{CACHE_TABLE_FIELD_WIDTH},{CACHE_TABLE_FIELD_HEIGHT},{CACHE_TABLE_FIELD_ENTRIES} FROM {CACHE_TABLE} WHERE {CACHE_TABLE_FIELD_KEY}=@key";
                 command.Parameters.AddWithValue("@key", cacheKey);
 
                 using SqliteDataReader query = command.ExecuteReader();
                 while (query.Read())
                 {
-                    int width = query.GetInt32(0);
-                    int height = query.GetInt32(1);
-                    string entries = query.GetString(2);
-                    CacheRecord record = new(key, width, height, entries);
+                    int signature = query.GetInt32(0);
+                    int width = query.GetInt32(1);
+                    int height = query.GetInt32(2);
+                    string entries = query.GetString(3);
+                    CacheRecord record = new(key, signature, width, height, entries);
                     records.Add(record);
                 }
             }
@@ -182,9 +183,10 @@ internal static class ImageCacheDatabase
         {
             command.CommandText = "CREATE TABLE IF NOT EXISTS " + CACHE_TABLE + " (" +
                 CACHE_TABLE_FIELD_KEY + " TEXT PRIMARY KEY," + // 0
-                CACHE_TABLE_FIELD_WIDTH + " INTEGER NOT NULL," + // 1
-                CACHE_TABLE_FIELD_HEIGHT + " INTEGER NOT NULL," + // 2
-                CACHE_TABLE_FIELD_ENTRIES + " TEXT)"; // 3
+                CACHE_TABLE_FIELD_SIGNATURE + " INTEGER NOT NULL," + // 1
+                CACHE_TABLE_FIELD_WIDTH + " INTEGER NOT NULL," + // 2
+                CACHE_TABLE_FIELD_HEIGHT + " INTEGER NOT NULL," + // 3
+                CACHE_TABLE_FIELD_ENTRIES + " TEXT)"; // 4
             await command.ExecuteNonQueryAsync();
         }
 
@@ -195,26 +197,30 @@ internal static class ImageCacheDatabase
     {
         private readonly ReaderWriterLock _lock = new();
         private readonly string _key;
-        private readonly int _width;
-        private readonly int _height;
+        private int _signature;
+        private int _width;
+        private int _height;
         private readonly Dictionary<string, string> _entries;
         private bool _updated;
 
+        public int Signature => _signature;
         public int Width => _width;
         public int Height => _height;
 
-        public CacheRecord(string key, int width, int height)
+        public CacheRecord(string key, int signature, int width, int height)
         {
             _key = key;
+            _signature = signature;
             _width = width;
             _height = height;
             _entries = [];
             _updated = true;
         }
 
-        public CacheRecord(string key, int width, int height, string cacheEntriesJson)
+        public CacheRecord(string key, int signature, int width, int height, string cacheEntriesJson)
         {
             _key = key;
+            _signature = signature;
             _width = width;
             _height = height;
 
@@ -251,7 +257,7 @@ internal static class ImageCacheDatabase
             lock (_connectionLock)
             {
                 string entries;
-                int width, height;
+                int signature, width, height;
 
                 _lock.AcquireWriterLock(-1);
                 try
@@ -279,6 +285,7 @@ internal static class ImageCacheDatabase
                     }
 
                     entries = JsonSerializer.Serialize(_entries);
+                    signature = _signature;
                     width = _width;
                     height = _height;
                     _updated = false;
@@ -301,9 +308,10 @@ internal static class ImageCacheDatabase
                     using (SqliteCommand command = connection.CreateCommand())
                     {
                         command.CommandText = $"INSERT OR REPLACE INTO {CACHE_TABLE}({CACHE_TABLE_FIELD_KEY}," +
-                            $"{CACHE_TABLE_FIELD_WIDTH},{CACHE_TABLE_FIELD_HEIGHT},{CACHE_TABLE_FIELD_ENTRIES})" +
-                            $" VALUES(@key,@width,@height,@entries)";
+                            $"{CACHE_TABLE_FIELD_SIGNATURE},{CACHE_TABLE_FIELD_WIDTH},{CACHE_TABLE_FIELD_HEIGHT},{CACHE_TABLE_FIELD_ENTRIES})" +
+                            $" VALUES(@key,@signature,@width,@height,@entries)";
                         command.Parameters.AddWithValue("@key", cacheKey);
+                        command.Parameters.AddWithValue("@signature", signature);
                         command.Parameters.AddWithValue("@width", width);
                         command.Parameters.AddWithValue("@height", height);
                         command.Parameters.AddWithValue("@entries", entries);
@@ -362,18 +370,22 @@ internal static class ImageCacheDatabase
             }
         }
 
-        public void UpdateDimension(int width, int height)
+        public void UpdateMeta(int signature, int width, int height)
         {
             _lock.AcquireReaderLock(-1);
             try
             {
-                if (width != _width || height != _height)
+                if ((signature != 0 && signature != _signature) || width != _width || height != _height)
                 {
                     LockCookie cookie = _lock.UpgradeToWriterLock(-1);
                     try
                     {
-                        width = _width;
-                        height = _height;
+                        if (signature != 0)
+                        {
+                            _signature = signature;
+                        }
+                        _width = width;
+                        _height = height;
                         _updated = true;
                     }
                     finally

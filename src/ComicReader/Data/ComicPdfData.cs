@@ -158,4 +158,9 @@ internal class ComicPdfData : ComicData
     {
         return ThisFile.Path + ":" + index.ToString();
     }
+
+    public override Task<int> GetImageSignature(int index)
+    {
+        return FileUtils.GetFileHashCode(ThisFile);
+    }
 }
