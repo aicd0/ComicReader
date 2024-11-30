@@ -553,7 +553,7 @@ internal sealed partial class SettingsPage : BasePage
     private static string GetCacheSize()
     {
         var d = new DirectoryInfo(ApplicationData.Current.LocalCacheFolder.Path);
-        long size = CalculateDirSize(d);
+        long size = FileUtils.GetDirectorySize(d);
         string[] sizes = { "B", "KB", "MB", "GB", "TB" };
         int order = 0;
         while (size >= 1024 && order < sizes.Length - 1)
@@ -565,23 +565,5 @@ internal sealed partial class SettingsPage : BasePage
         // Adjust the format string to your preferences. For example "{0:0.#}{1}" would
         // show a single decimal place, and no space.
         return string.Format("{0:0.##} {1}", size, sizes[order]);
-    }
-
-    private static long CalculateDirSize(DirectoryInfo d)
-    {
-        long size = 0;
-        // Add file sizes.
-        FileInfo[] fis = d.GetFiles();
-        foreach (FileInfo fi in fis)
-        {
-            size += fi.Length;
-        }
-        // Add subdirectory sizes.
-        DirectoryInfo[] dis = d.GetDirectories();
-        foreach (DirectoryInfo di in dis)
-        {
-            size += CalculateDirSize(di);
-        }
-        return size;
     }
 }

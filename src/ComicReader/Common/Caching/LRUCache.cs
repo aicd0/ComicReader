@@ -3,6 +3,8 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -17,27 +19,145 @@ namespace ComicReader.Common.Caching;
 internal class LRUCache
 {
     private const string TAG = nameof(LRUCache);
+    private const string DATABASE_FILE_NAME = "info.db";
+    private const int BATCH_SIZE = 1000;
 
     private readonly StorageFolder _folder;
     private readonly ConcurrentDictionary<string, CacheEntry> _entries = [];
 
-    public LRUCache(StorageFolder folder)
+    private readonly long _maxSize;
+    private readonly LRUCacheDatabase _database;
+    private readonly ReaderWriterLock _flushLock = new();
+    private volatile ConcurrentDictionary<string, long> _pendingFlushKeys = [];
+    private int _postFlushTask = 0;
+
+    public LRUCache(StorageFolder folder, long maxSize)
     {
         _folder = folder;
+        _maxSize = maxSize;
+        _database = new(folder.Path + "\\" + DATABASE_FILE_NAME);
     }
 
     public ILRUInputStream Put(string key)
     {
         string hashedKey = ToHashedKey(key);
         CacheEntry entry = _entries.GetOrAdd(hashedKey, (string key) => new CacheEntry(this, key));
-        return entry.StartWrite();
+        ILRUInputStream stream = entry.StartWrite();
+        if (stream != null)
+        {
+            AddPendingFlushKey(key);
+        }
+        return stream;
     }
 
     public ILRUOutputStream Get(string key)
     {
         string hashedKey = ToHashedKey(key);
         CacheEntry entry = _entries.GetOrAdd(hashedKey, (string key) => new CacheEntry(this, key));
-        return entry.StartRead();
+        ILRUOutputStream stream = entry.StartRead();
+        if (stream != null)
+        {
+            AddPendingFlushKey(key);
+        }
+        return stream;
+    }
+
+    public void Clean()
+    {
+        var directory = new DirectoryInfo(_folder.Path);
+        long sizeToRemove = FileUtils.GetDirectorySize(directory) - _maxSize;
+        if (sizeToRemove <= 0)
+        {
+            return;
+        }
+
+        IReadOnlyList<StorageFile> files;
+        try
+        {
+            files = _folder.GetFilesAsync().AsTask().Result;
+        }
+        catch (Exception ex)
+        {
+            Logger.F(TAG, "Clean", ex);
+            return;
+        }
+
+        List<Tuple<StorageFile, long>> lastUsedTimes = new();
+
+        for (int i = 0; i < files.Count;)
+        {
+            Dictionary<string, StorageFile> batch = [];
+
+            for (; i < files.Count && batch.Count < BATCH_SIZE; i++)
+            {
+                StorageFile file = files[i];
+                string fileName = file.Name;
+
+                if (fileName == DATABASE_FILE_NAME)
+                {
+                    continue;
+                }
+
+                string key = "";
+                if (fileName.StartsWith("1."))
+                {
+                    key = fileName[2..];
+                }
+                if (key.Length == 0)
+                {
+                    try
+                    {
+                        ulong fileSize = file.GetBasicPropertiesAsync().AsTask().Result.Size;
+                        file.DeleteAsync().Wait();
+                        sizeToRemove -= (long)fileSize;
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.F(TAG, "Clean", ex);
+                    }
+                    continue;
+                }
+
+                batch[key] = file;
+            }
+
+            Dictionary<string, long> result = _database.BatchQuery(batch.Keys);
+
+            foreach (KeyValuePair<string, long> pair in result)
+            {
+                if (pair.Value < 0)
+                {
+                    AddPendingFlushKey(pair.Key);
+                }
+                else
+                {
+                    lastUsedTimes.Add(new Tuple<StorageFile, long>(batch[pair.Key], pair.Value));
+                }
+            }
+        }
+
+        lastUsedTimes.Sort(new Comparison<Tuple<StorageFile, long>>(
+            delegate (Tuple<StorageFile, long> x, Tuple<StorageFile, long> y) { return x.Item2.CompareTo(y.Item2); }));
+
+        foreach (Tuple<StorageFile, long> item in lastUsedTimes)
+        {
+            if (sizeToRemove <= 0)
+            {
+                break;
+            }
+
+            StorageFile file = item.Item1;
+            try
+            {
+                ulong fileSize = file.GetBasicPropertiesAsync().AsTask().Result.Size;
+                file.DeleteAsync().Wait();
+                sizeToRemove -= (long)fileSize;
+            }
+            catch (Exception ex)
+            {
+                Logger.F(TAG, "Clean", ex);
+            }
+        }
     }
 
     private string ToHashedKey(string key)
@@ -53,6 +173,42 @@ internal class LRUCache
     private static string GetCleanFileName(string key)
     {
         return "1." + key;
+    }
+
+    private void AddPendingFlushKey(string key)
+    {
+        _flushLock.AcquireReaderLock(-1);
+        try
+        {
+            _pendingFlushKeys[key] = DateTimeOffset.Now.ToUnixTimeSeconds();
+            if (Interlocked.CompareExchange(ref _postFlushTask, 1, 0) == 1)
+            {
+                return;
+            }
+        }
+        finally
+        {
+            _flushLock.ReleaseReaderLock();
+        }
+
+        Task.Delay(1000).ContinueWith(delegate
+        {
+            IDictionary<string, long> pendingFlushKeys;
+
+            _flushLock.AcquireWriterLock(-1);
+            try
+            {
+                pendingFlushKeys = _pendingFlushKeys;
+                _pendingFlushKeys = new();
+                Interlocked.Exchange(ref _postFlushTask, 0);
+            }
+            finally
+            {
+                _flushLock.ReleaseWriterLock();
+            }
+
+            _database.BatchUpdate(pendingFlushKeys);
+        });
     }
 
     private class CacheEntry : IDisposable
@@ -183,7 +339,7 @@ internal class LRUCache
                     }
                     catch (Exception e)
                     {
-                        Logger.F(TAG, "StartRead", e);
+                        Logger.E(TAG, "StartRead", e);
                     }
                     if (file == null)
                     {

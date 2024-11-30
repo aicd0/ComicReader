@@ -27,18 +27,21 @@ internal static class ImageCacheManager
     private const string TAG = "ImageCacheManager";
     private const string CACHE_ENTRY_KEY_SMALL = "100k";
     private const int CACHE_ENTRY_RESOLUTION_SMALL = 100000;
+    private const long MAX_CACHE_SIZE = 1024 * 1024 * 1024;
 
     private static double sRawPixelPerPixel = -1;
 
-    private static readonly Lazy<StorageFolder> sCacheFolder = new(delegate
-    {
-        StorageFolder cacheFolder = ApplicationData.Current.LocalCacheFolder;
-        return cacheFolder.CreateFolderAsync("images", CreationCollisionOption.OpenIfExists).AsTask().Result;
-    });
-
     private static readonly Lazy<LRUCache> sImageCache = new(delegate
     {
-        return new(sCacheFolder.Value);
+        StorageFolder cacheFolder = ApplicationData.Current.LocalCacheFolder;
+        StorageFolder imageFolder = cacheFolder.CreateFolderAsync("images", CreationCollisionOption.OpenIfExists).AsTask().Result;
+        LRUCache cache = new(imageFolder, MAX_CACHE_SIZE);
+        TaskQueue.LongRunningQueue.Enqueue("CleanImageCache", delegate
+        {
+            cache.Clean();
+            return TaskException.Success;
+        });
+        return cache;
     });
 
     public static void LoadImage(CancellationSession.IToken token, IImageSource source,
