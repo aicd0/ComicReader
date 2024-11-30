@@ -11,7 +11,7 @@ internal interface IImageSource
 {
     Task<IRandomAccessStream> GetImageStream();
 
-    string GetUniqueKey();
+    string GetCacheKey();
 
     int GetContentSignature();
 }

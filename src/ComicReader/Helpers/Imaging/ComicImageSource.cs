@@ -3,11 +3,13 @@
 
 using System.Threading.Tasks;
 
+using ComicReader.Common;
+using ComicReader.Common.Imaging;
 using ComicReader.Data;
 
 using Windows.Storage.Streams;
 
-namespace ComicReader.Common.Imaging;
+namespace ComicReader.Helpers.Imaging;
 
 internal class ComicImageSource : IImageSource
 {
@@ -30,7 +32,7 @@ internal class ComicImageSource : IImageSource
         return await _comic.GetImageStream(_index);
     }
 
-    public string GetUniqueKey()
+    public string GetCacheKey()
     {
         if (!_comic.UpdateImages(reload: false).Result.Successful())
         {
