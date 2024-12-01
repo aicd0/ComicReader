@@ -31,7 +31,7 @@ public sealed partial class MainWindow : Window
         TrySetAcrylicBackdrop();
     }
 
-    private void Window_SizeChanged(object sender, WindowSizeChangedEventArgs args)
+    private void OnWindowSizeChanged(object sender, WindowSizeChangedEventArgs args)
     {
         var placement = new NativeModels.WindowPlacement();
         NativeMethods.GetWindowPlacement(WindowHandle, out placement);
@@ -39,7 +39,7 @@ public sealed partial class MainWindow : Window
         ApplicationData.Current.LocalSettings.Values[LocalSettings.WindowStates] = serialized;
     }
 
-    private void PageFrame_Loaded(object sender, RoutedEventArgs e)
+    private void OnPageFrameLoaded(object sender, RoutedEventArgs e)
     {
         TryRecoverWindowStates();
         PageFrame.Navigate(typeof(MainPage));
