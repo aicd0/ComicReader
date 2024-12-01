@@ -38,6 +38,7 @@ internal class ComicImageSource : IImageSource
         {
             return null;
         }
+
         return _comic.GetImageCacheKey(_index);
     }
 
@@ -47,6 +48,7 @@ internal class ComicImageSource : IImageSource
         {
             return 0;
         }
-        return _comic.GetImageSignature(_index).Result;
+
+        return _comic.GetImageSignature(_index);
     }
 }

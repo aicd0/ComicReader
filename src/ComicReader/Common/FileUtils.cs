@@ -3,12 +3,10 @@
 
 using System;
 using System.IO;
-using System.Threading.Tasks;
 
 using ComicReader.Common.DebugTools;
 
 using Windows.Storage;
-using Windows.Storage.FileProperties;
 
 namespace ComicReader.Common;
 
@@ -32,16 +30,16 @@ internal static class FileUtils
         return size;
     }
 
-    public static async Task<int> GetFileHashCode(StorageFile file)
+    public static int GetFileHashCode(StorageFile file)
     {
         try
         {
-            BasicProperties properties = await file.GetBasicPropertiesAsync();
+            var fileInfo = new FileInfo(file.Path);
             unchecked
             {
                 int hash = 17;
-                hash = hash * 23 + properties.DateModified.GetHashCode();
-                hash = hash * 23 + properties.Size.GetHashCode();
+                hash = hash * 23 + fileInfo.LastWriteTime.GetHashCode();
+                hash = hash * 23 + fileInfo.Length.GetHashCode();
                 return hash;
             }
         }

@@ -580,7 +580,7 @@ internal abstract class ComicData
 
     public abstract string GetImageCacheKey(int index);
 
-    public abstract Task<int> GetImageSignature(int index);
+    public abstract int GetImageSignature(int index);
 
     protected abstract Task<TaskException> ReloadImages();
 

@@ -245,7 +245,7 @@ internal class ComicFolderData : ComicData
         return ImageFiles[index].Path;
     }
 
-    public override async Task<int> GetImageSignature(int index)
+    public override int GetImageSignature(int index)
     {
         if (index < 0 || index >= ImageFiles.Count)
         {
@@ -253,6 +253,6 @@ internal class ComicFolderData : ComicData
             return 0;
         }
 
-        return await FileUtils.GetFileHashCode(ImageFiles[index]);
+        return FileUtils.GetFileHashCode(ImageFiles[index]);
     }
 }

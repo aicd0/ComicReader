@@ -264,7 +264,7 @@ internal class ComicArchiveData : ComicData
         return Archive.Path + ArchiveAccess.FileSeperator + subPath;
     }
 
-    public override Task<int> GetImageSignature(int index)
+    public override int GetImageSignature(int index)
     {
         return FileUtils.GetFileHashCode(Archive);
     }
