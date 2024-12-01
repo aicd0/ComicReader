@@ -99,6 +99,7 @@ internal static class ImageCacheManager
             if (image == null)
             {
                 image = await TryLoadImageFromSource(source);
+
                 if (image != null)
                 {
                     isFromSource = true;
@@ -107,6 +108,7 @@ internal static class ImageCacheManager
 
             if (image == null)
             {
+                Logger.F(TAG, "image is null");
                 return;
             }
 
@@ -129,7 +131,6 @@ internal static class ImageCacheManager
 
         if (image == null)
         {
-            Logger.F(TAG, "Failed to load image");
             return;
         }
 

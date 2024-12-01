@@ -49,14 +49,22 @@ public class TaskQueue
                 int pendingCount = Interlocked.Decrement(ref _pendingTaskCount);
                 Logger.I(tag, $"start: pending={pendingCount}");
                 TaskException result;
-                try
+
+                if (DebugUtils.DebugMode)
                 {
                     result = ope();
                 }
-                catch (Exception e)
+                else
                 {
-                    Logger.F(tag, $"exception occured in task {taskName}", e);
-                    result = TaskException.Unknown;
+                    try
+                    {
+                        result = ope();
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.F(tag, $"exception occured in task {taskName}", e);
+                        result = TaskException.Unknown;
+                    }
                 }
 
                 long timeUsed = GetCurrentMilliseconds() - startTime;

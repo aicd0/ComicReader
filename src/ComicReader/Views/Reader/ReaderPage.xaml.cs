@@ -260,10 +260,13 @@ internal sealed partial class ReaderPage : BasePage
             ReaderSettingDataModel readerSetting = _readerSettingModel;
             VerticalReader.SetVisibility(readerSetting.IsVertical);
             HorizontalReader.SetVisibility(!readerSetting.IsVertical);
+            VerticalReader.SetActive(false);
+            HorizontalReader.SetActive(false);
             ReaderView reader = GetReader();
             reader.SetIsContinuous(readerSetting.IsContinuous);
             reader.SetPageArrangement(readerSetting.PageArrangement);
             reader.SetFlowDirection(readerSetting.IsLeftToRight);
+            reader.SetActive(true);
             await LoadComic(comic);
 
             // Update previews.
@@ -703,7 +706,8 @@ internal sealed partial class ReaderPage : BasePage
         bool isWorking = ReaderStatusLiveData.GetValue() == ReaderStatusEnum.Working;
         bool previewVisible = isWorking && _gridViewModeEnabled;
         bool readerVisible = isWorking && !previewVisible;
-        bool verticalReaderVisible = readerVisible && _readerSettingModel.IsVertical;
+        bool isVertical = _readerSettingModel.IsVertical;
+        bool verticalReaderVisible = readerVisible && isVertical;
         bool horizontalReaderVisible = readerVisible && !verticalReaderVisible;
 
         GGridView.IsHitTestVisible = previewVisible;
@@ -712,6 +716,8 @@ internal sealed partial class ReaderPage : BasePage
 
         VerticalReader.SetVisibility(verticalReaderVisible);
         HorizontalReader.SetVisibility(horizontalReaderVisible);
+        VerticalReader.SetActive(isVertical);
+        HorizontalReader.SetActive(!isVertical);
     }
 
     public async Task LoadComic(ComicData comic)

@@ -500,7 +500,13 @@ internal abstract class ComicData
 
     public async Task<IRandomAccessStream> GetImageStream(int index)
     {
-        return await InternalGetImageStream(Math.Max(0, index));
+        if (index < 0)
+        {
+            DebugUtils.Assert(false);
+            return null;
+        }
+
+        return await InternalGetImageStream(index);
     }
 
     public static async Task<ComicData> FromId(long id, string taskName)

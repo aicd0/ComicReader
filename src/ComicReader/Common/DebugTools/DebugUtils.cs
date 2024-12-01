@@ -13,8 +13,7 @@ internal static class DebugUtils
     private const bool IS_DEBUG_BUILD = false;
 #endif
 
-    private static readonly Lazy<bool> sDebugMode = new(() => IS_DEBUG_BUILD && AppStatusPreserver.DebugMode);
-    public static bool DebugMode => sDebugMode.Value;
+    public static bool DebugMode => IS_DEBUG_BUILD && AppStatusPreserver.DebugMode;
 
     public static void Assert(bool condition)
     {

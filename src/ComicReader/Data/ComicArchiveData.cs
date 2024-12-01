@@ -233,7 +233,7 @@ internal class ComicArchiveData : ComicData
 
     protected override async Task<IRandomAccessStream> InternalGetImageStream(int index)
     {
-        if (index >= Entries.Count)
+        if (index < 0 || index >= Entries.Count)
         {
             Logger.F(TAG, "InternalGetImageStream");
             return null;

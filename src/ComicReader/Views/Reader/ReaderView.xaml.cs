@@ -56,9 +56,11 @@ internal partial class ReaderView : UserControl
     private bool _isVertical = true;
     private bool _isContinuous = true;
     private bool _isVisible = true;
+    private bool _isActive = true;
     private bool _isLeftToRight = true;
     private PageArrangementType _pageArrangement = PageArrangementType.Single;
     private bool _uiStateUpdatedVisibility = true;
+    private bool _uiStateUpdatedActive = true;
     private bool _uiStateUpdatedOrientation = true;
     private bool _uiStateUpdatedContinuous = true;
     private bool _uiStateUpdatedFlowDirection = true;
@@ -189,6 +191,18 @@ internal partial class ReaderView : UserControl
         UpdateUI();
     }
 
+    public void SetActive(bool active)
+    {
+        if (active == _isActive)
+        {
+            return;
+        }
+
+        _isActive = active;
+        _uiStateUpdatedActive = true;
+        UpdateUI();
+    }
+
     public void SetPageArrangement(PageArrangementType type)
     {
         if (_pageArrangement == type)
@@ -210,14 +224,14 @@ internal partial class ReaderView : UserControl
     public void StartLoadingImages(List<IImageSource> images)
     {
         _originalDataModel = new List<IImageSource>(images);
-        Reload(_originalDataModel);
+        Reload(_originalDataModel, true);
     }
 
     //
     // Loader
     //
 
-    private void Reload(List<IImageSource> images)
+    private void Reload(List<IImageSource> images, bool clear)
     {
         _metricsStartLoadTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
 
@@ -228,7 +242,7 @@ internal partial class ReaderView : UserControl
         // Update internal states
         _dataModel.Clear();
         PageCount = images.Count;
-        ResetFrames();
+        ResetFrames(clear);
         SCClearFinalVal();
 
         // Reset loader
@@ -372,8 +386,11 @@ internal partial class ReaderView : UserControl
             SvReader.IsEnabled = isVisible;
             SvReader.IsHitTestVisible = isVisible;
             SvReader.Opacity = isVisible ? 1 : 0;
+        }
 
-            if (isVisible)
+        if (_uiStateUpdatedActive)
+        {
+            if (_isActive)
             {
                 UpdateImages(true);
             }
@@ -420,12 +437,12 @@ internal partial class ReaderView : UserControl
             if (_originalDataModel != null)
             {
                 _initialPage = CurrentPage;
-                Reload(_originalDataModel);
+                Reload(_originalDataModel, false);
             }
         }
     }
 
-    private void ResetFrames()
+    private void ResetFrames(bool clear)
     {
         int lastFrameIndex = PageToFrame(PageCount, out bool _, out int _);
 
@@ -434,13 +451,16 @@ internal partial class ReaderView : UserControl
             FrameDataSource.RemoveAt(i);
         }
 
-        for (int i = 0; i < FrameDataSource.Count; ++i)
+        if (clear)
         {
-            ReaderFrameViewModel item = FrameDataSource[i];
-            item.PageL = -1;
-            item.PageR = -1;
-            item.ImageLeft = null;
-            item.ImageRight = null;
+            for (int i = 0; i < FrameDataSource.Count; ++i)
+            {
+                ReaderFrameViewModel item = FrameDataSource[i];
+                item.PageL = -1;
+                item.PageR = -1;
+                item.ImageLeft = null;
+                item.ImageRight = null;
+            }
         }
     }
 
@@ -537,8 +557,25 @@ internal partial class ReaderView : UserControl
             item.PageL = neighbor;
         }
 
-        item.ImageSourceLeft = _dataModel.GetValueOrDefault(item.PageL - 1)?.ImageSource;
-        item.ImageSourceRight = _dataModel.GetValueOrDefault(item.PageR - 1)?.ImageSource;
+        if (item.PageL != -1)
+        {
+            item.ImageSourceLeft = _dataModel.GetValueOrDefault(item.PageL - 1, null)?.ImageSource;
+            DebugUtils.Assert(item.ImageSourceLeft != null);
+        }
+        else
+        {
+            item.ImageSourceLeft = null;
+        }
+
+        if (item.PageR != -1)
+        {
+            item.ImageSourceRight = _dataModel.GetValueOrDefault(item.PageR - 1, null)?.ImageSource;
+            DebugUtils.Assert(item.ImageSourceRight != null);
+        }
+        else
+        {
+            item.ImageSourceRight = null;
+        }
 
         item.RebindEntireViewModel();
     }
@@ -662,7 +699,7 @@ internal partial class ReaderView : UserControl
 
     private void UpdateImages(bool performCleaning)
     {
-        if (!_isVisible)
+        if (!_isActive)
         {
             _loadImageSession.Next();
             for (int i = 0; i < FrameDataSource.Count; ++i)

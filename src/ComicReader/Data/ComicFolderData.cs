@@ -217,7 +217,7 @@ internal class ComicFolderData : ComicData
 
     protected override async Task<IRandomAccessStream> InternalGetImageStream(int index)
     {
-        if (index >= ImageFiles.Count)
+        if (index < 0 || index >= ImageFiles.Count)
         {
             Logger.F(TAG, "InternalGetImageStream");
             return null;
@@ -229,7 +229,7 @@ internal class ComicFolderData : ComicData
         }
         catch (Exception e)
         {
-            Log("Failed to access '" + ImageFiles[index].Path + "'. " + e.ToString());
+            Logger.F(TAG, "Failed to access '" + ImageFiles[index].Path + "'. ", e);
             return null;
         }
     }

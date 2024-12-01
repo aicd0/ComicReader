@@ -140,7 +140,7 @@ internal class ComicPdfData : ComicData
             return null;
         }
 
-        if (index >= ImageCount)
+        if (index < 0 || index >= ImageCount)
         {
             Logger.F(TAG, "InternalGetImageStream");
             return null;

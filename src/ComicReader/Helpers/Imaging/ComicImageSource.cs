@@ -24,11 +24,11 @@ internal class ComicImageSource : IImageSource
 
     public async Task<IRandomAccessStream> GetImageStream()
     {
-        TaskException result = await _comic.UpdateImages(reload: false);
-        if (!result.Successful())
+        if (!(await _comic.UpdateImages(reload: false)).Successful())
         {
             return null;
         }
+
         return await _comic.GetImageStream(_index);
     }
 
