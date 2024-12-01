@@ -1,13 +1,6 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-#define DEBUG_LOG_LOAD
-#if DEBUG
-//#define DEBUG_LOG_MANIPULATION
-//#define DEBUG_LOG_UPDATE_PAGE
-//#define DEBUG_LOG_UPDATE_IMAGE
-#endif
-
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -56,21 +49,22 @@ internal partial class ReaderView : UserControl
     private bool _isVertical = true;
     private bool _isContinuous = true;
     private bool _isVisible = true;
-    private bool _isActive = true;
     private bool _isLeftToRight = true;
     private PageArrangementType _pageArrangement = PageArrangementType.Single;
     private bool _uiStateUpdatedVisibility = true;
-    private bool _uiStateUpdatedActive = true;
     private bool _uiStateUpdatedOrientation = true;
     private bool _uiStateUpdatedContinuous = true;
     private bool _uiStateUpdatedFlowDirection = true;
     private bool _uiStateUpdatedPageArrangement = true;
 
+    private bool _isActive = true;
     private bool _isFirstFrameLoaded = false;
     private bool _isFirstFrameActionPerformed = false;
+    private bool _isInitialFrameLoaded = false;
+    private bool _isInitialFrameActionPerformed = false;
     private bool _isLastFrameLoaded = false;
     private bool _isLastFrameActionPerformed = false;
-    private bool _isInitialFrameLoaded = false;
+    private bool _loaderStateUpdatedActive = true;
 
     private bool _tapPending = false;
     private bool _tapCancelled = false;
@@ -86,8 +80,6 @@ internal partial class ReaderView : UserControl
     private readonly Dictionary<int, ImageDataModel> _dataModel = [];
     private readonly CancellationSession _dataModelSession;
     private readonly CancellationSession _loadImageSession;
-
-    private long _metricsStartLoadTime = 0;
 
     private ObservableCollection<ReaderFrameViewModel> FrameDataSource { get; } = [];
 
@@ -199,8 +191,8 @@ internal partial class ReaderView : UserControl
         }
 
         _isActive = active;
-        _uiStateUpdatedActive = true;
-        UpdateUI();
+        _loaderStateUpdatedActive = true;
+        UpdateLoader("SetActive");
     }
 
     public void SetPageArrangement(PageArrangementType type)
@@ -233,8 +225,6 @@ internal partial class ReaderView : UserControl
 
     private void Reload(List<IImageSource> images, bool clear)
     {
-        _metricsStartLoadTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-
         // Refresh token
         _dataModelSession.Next();
         CancellationSession.IToken token = _dataModelSession.Token;
@@ -243,10 +233,12 @@ internal partial class ReaderView : UserControl
         _dataModel.Clear();
         PageCount = images.Count;
         ResetFrames(clear);
-        SCClearFinalVal();
+        SCClearFinalVal("Reload");
 
         // Reset loader
-        int lastFrameIndex = PageToFrame(PageCount + 1, out bool _, out int _);
+        int initialFrameIndex = PageToFrame(ToDiscretePage(_initialPage), out bool _, out int _);
+        int lastFrameIndex = PageToFrame(PageCount, out bool _, out int _);
+        Log("Reload", $"IP={_initialPage},IF={initialFrameIndex},LP={PageCount},LF={lastFrameIndex}");
         ResetLoader();
         _frameManager.ResetReadyIndex();
         _frameManager.SetFrameReadyHandler(delegate (int index)
@@ -259,11 +251,15 @@ internal partial class ReaderView : UserControl
             {
                 _isFirstFrameLoaded = true;
             }
+            if (index == initialFrameIndex)
+            {
+                _isInitialFrameLoaded = true;
+            }
             if (index == lastFrameIndex)
             {
-                _isLastFrameLoaded = false;
+                _isLastFrameLoaded = true;
             }
-            UpdateLoader();
+            UpdateLoader($"FrameReady,i={index}");
         });
 
         // Dispatch event
@@ -289,8 +285,6 @@ internal partial class ReaderView : UserControl
                     foreach (Tuple<int, double, IImageSource> item in pendingListCopy)
                     {
                         int index = item.Item1;
-                        long loadTime = DateTimeOffset.Now.ToUnixTimeMilliseconds() - _metricsStartLoadTime;
-                        LogLoadTime("GetInfo", $"time={loadTime},index={index}");
                         SetImageData(index, item.Item2, item.Item3);
                     }
                 });
@@ -330,41 +324,75 @@ internal partial class ReaderView : UserControl
 
     private void ResetLoader()
     {
+        Log("Load", "Reset");
         _isFirstFrameLoaded = false;
         _isFirstFrameActionPerformed = false;
+        _isInitialFrameLoaded = false;
+        _isInitialFrameActionPerformed = false;
         _isLastFrameLoaded = false;
         _isLastFrameActionPerformed = false;
-        _isInitialFrameLoaded = false;
     }
 
-    private void UpdateLoader()
+    private void UpdateLoader(string reason)
     {
         if (!_isLoaded)
         {
             return;
         }
 
+        Log("Load", reason);
+
+        bool needAdjustPadding = false;
+
         if (_isFirstFrameLoaded && !_isFirstFrameActionPerformed)
         {
+            Log("Load", "FirstFrame");
             _isFirstFrameActionPerformed = true;
-            SetScrollViewer1(Zoom, null, true, "AdjustZooming");
-            AdjustPadding();
+            needAdjustPadding = true;
         }
 
         if (_isLastFrameLoaded && !_isLastFrameActionPerformed)
         {
+            Log("Load", "LastFrame");
             _isLastFrameActionPerformed = true;
+            needAdjustPadding = true;
+        }
+
+        if (needAdjustPadding)
+        {
             AdjustPadding();
         }
 
-        if (_isFirstFrameLoaded && !_isInitialFrameLoaded)
+        bool needDispatchReadyState = false;
+
+        if (_isInitialFrameLoaded && !_isInitialFrameActionPerformed)
         {
-            _isInitialFrameLoaded = SetScrollViewer2(null, _initialPage, true, "JumpToInitialPage");
-            if (_isInitialFrameLoaded)
+            Log("Load", "InitialFrame");
+            _isInitialFrameActionPerformed = true;
+            ScrollResult scrollResult = SetScrollViewer2(Zoom, _initialPage, true, "JumpToInitialPage");
+            if (scrollResult == ScrollResult.TooClose)
             {
                 UpdateImages(true);
-                DispatchReaderStateChangeEvent(ReaderState.Ready);
             }
+            needDispatchReadyState = true;
+        }
+
+        if (_loaderStateUpdatedActive && _isInitialFrameLoaded)
+        {
+            _loaderStateUpdatedActive = false;
+            if (_isActive)
+            {
+                UpdateImages(true);
+            }
+            else
+            {
+                _loadImageSession.Next();
+            }
+        }
+
+        if (needDispatchReadyState)
+        {
+            DispatchReaderStateChangeEvent(ReaderState.Ready);
         }
     }
 
@@ -386,18 +414,6 @@ internal partial class ReaderView : UserControl
             SvReader.IsEnabled = isVisible;
             SvReader.IsHitTestVisible = isVisible;
             SvReader.Opacity = isVisible ? 1 : 0;
-        }
-
-        if (_uiStateUpdatedActive)
-        {
-            if (_isActive)
-            {
-                UpdateImages(true);
-            }
-            else
-            {
-                _loadImageSession.Next();
-            }
         }
 
         if (_uiStateUpdatedOrientation)
@@ -580,26 +596,28 @@ internal partial class ReaderView : UserControl
         item.RebindEntireViewModel();
     }
 
-    private bool UpdatePage(bool useFinal)
+    private bool UpdatePage()
     {
-        if (!_isLoaded)
+        if (!_isInitialFrameLoaded)
         {
+            DebugUtils.Assert(false);
             return false;
         }
 
         double offset;
         {
-            double parallelOffset = useFinal ? ParallelOffsetFinal : ParallelOffset;
-            double zoomFactor = useFinal ? ZoomFactorFinal : ZoomFactor;
+            double parallelOffset = ParallelOffset;
+            double zoomFactor = ZoomFactor;
             offset = (parallelOffset + ViewportParallelLength * 0.5) / zoomFactor;
         }
 
-        // Locate current frame using binary search.
         if (FrameDataSource.Count == 0)
         {
+            DebugUtils.Assert(false);
             return false;
         }
 
+        // Locate current frame using binary search
         int begin = 0;
         int end = FrameDataSource.Count - 1;
         FrameOffsetData frameOffsets = null;
@@ -611,12 +629,12 @@ internal partial class ReaderView : UserControl
 
             if (offsets == null)
             {
-                end = i - 1;
                 if (begin >= end)
                 {
                     frameOffsets = null;
                     break;
                 }
+                end = i - 1;
                 continue;
             }
 
@@ -631,17 +649,18 @@ internal partial class ReaderView : UserControl
             }
             else
             {
-                end = i - 1;
                 if (begin >= end)
                 {
                     frameOffsets ??= FrameOffsets(begin);
                     break;
                 }
+                end = i - 1;
             }
         }
 
         if (frameOffsets == null)
         {
+            DebugUtils.Assert(false);
             return false;
         }
 
@@ -652,7 +671,7 @@ internal partial class ReaderView : UserControl
 
         if (frame.PageL == -1 && frame.PageR == -1)
         {
-            // This could happen when we are rearranging pages.
+            DebugUtils.Assert(false);
             return false;
         }
 
@@ -685,23 +704,21 @@ internal partial class ReaderView : UserControl
 
         CurrentPage = page;
 
-#if DEBUG_LOG_UPDATE_PAGE
-            Log("Page updated (" +
-                "Page=" + PageSource.ToString() + "," +
-                "UseF=" + use_final.ToString() + "," +
-                "PO=" + ParallelOffset.ToString() + "," +
-                "POF=" + ParallelOffsetFinal.ToString() + "," +
-                "ZF=" + ZoomFactor.ToString() + ")");
-#endif
+        Log("PageUpdated",
+            $"P={CurrentPage}," +
+            $"PO={ParallelOffset}," +
+            $"POF={ParallelOffsetFinal}," +
+            $"Z={ZoomFactor}");
 
         return true;
     }
 
     private void UpdateImages(bool performCleaning)
     {
+        _loadImageSession.Next();
+
         if (!_isActive)
         {
-            _loadImageSession.Next();
             for (int i = 0; i < FrameDataSource.Count; ++i)
             {
                 ReaderFrameViewModel model = FrameDataSource[i];
@@ -711,12 +728,6 @@ internal partial class ReaderView : UserControl
             return;
         }
 
-        if (!UpdatePage(true))
-        {
-            return;
-        }
-
-        _loadImageSession.Next();
         int frame = PageToFrame(CurrentPageInt, out _, out _);
         int preloadWindowBegin = Math.Max(frame - MAX_PRELOAD_FRAMES_BEFORE, 0);
         int preloadWindowEnd = Math.Min(frame + MAX_PRELOAD_FRAMES_AFTER, FrameDataSource.Count - 1);
@@ -740,7 +751,8 @@ internal partial class ReaderView : UserControl
         for (int i = checkWindowBegin; i <= checkWindowEnd; ++i)
         {
             ReaderFrameViewModel model = FrameDataSource[i];
-            if ((model.PageL > 0 && model.ImageLeft == null) || (model.PageR > 0 && model.ImageRight == null))
+            if ((model.PageL > 0 && model.ImageLeftCurrentSource != model.ImageSourceLeft) ||
+                (model.PageR > 0 && model.ImageRightCurrentSource != model.ImageSourceRight))
             {
                 needPreload = true;
                 break;
@@ -752,10 +764,36 @@ internal partial class ReaderView : UserControl
             return;
         }
 
-#if DEBUG_LOG_UPDATE_IMAGE
-        Log("Loading images (page=" + Page.ToString() + ")");
-#endif
         var tokens = new List<SimpleImageLoader.Token>();
+
+        void addToLoaderQueue(int i)
+        {
+            if (i < 0 || i >= FrameDataSource.Count)
+            {
+                return;
+            }
+
+            ReaderFrameViewModel model = FrameDataSource[i]; // Stores locally
+
+            if (model.ImageLeftCurrentSource != model.ImageSourceLeft && model.PageL > 0)
+            {
+                tokens.Add(new SimpleImageLoader.Token
+                {
+                    Source = model.ImageSourceLeft,
+                    ImageResultHandler = new LoadImageResultHandler(model, model.ImageSourceLeft, true)
+                });
+            }
+
+            if (model.ImageRightCurrentSource != model.ImageSourceRight && model.PageR > 0)
+            {
+                tokens.Add(new SimpleImageLoader.Token
+                {
+                    Source = model.ImageSourceRight,
+                    ImageResultHandler = new LoadImageResultHandler(model, model.ImageSourceRight, false)
+                });
+            }
+        }
+
         addToLoaderQueue(frame);
         int spread = Math.Max(preloadWindowEnd - frame, frame - preloadWindowBegin);
         for (int i = 1; i <= spread; ++i)
@@ -774,34 +812,6 @@ internal partial class ReaderView : UserControl
         new SimpleImageLoader.Transaction(_loadImageSession.Token, tokens)
             .SetDispatcher(_loadImageDispatcher)
             .Commit();
-
-        void addToLoaderQueue(int i)
-        {
-            if (i < 0 || i >= FrameDataSource.Count)
-            {
-                return;
-            }
-
-            ReaderFrameViewModel m = FrameDataSource[i]; // Stores locally.
-
-            if (m.ImageLeft == null && m.PageL > 0)
-            {
-                tokens.Add(new SimpleImageLoader.Token
-                {
-                    Source = m.ImageSourceLeft,
-                    ImageResultHandler = new LoadImageResultHandler(m, true, this, i)
-                });
-            }
-
-            if (m.ImageRight == null && m.PageR > 0)
-            {
-                tokens.Add(new SimpleImageLoader.Token
-                {
-                    Source = m.ImageSourceRight,
-                    ImageResultHandler = new LoadImageResultHandler(m, false, this, i)
-                });
-            }
-        }
     }
 
     //
@@ -839,7 +849,7 @@ internal partial class ReaderView : UserControl
         if (isLoaded)
         {
             UpdateUI();
-            UpdateLoader();
+            UpdateLoader("Loaded");
         }
         else
         {
@@ -889,8 +899,8 @@ internal partial class ReaderView : UserControl
             int index = args.ItemIndex;
             viewHolder.SetReadyStateChangeHandler(delegate (FrameworkElement container, bool isReady)
             {
+                Log("FrameReadyChanged", $"i={index},ready={isReady}");
                 _frameManager.PutFrame(index, container, isReady);
-                Log("FrameReadyChanged", $"i={index},hash={container.GetHashCode()},ready={isReady}");
             });
             viewHolder.Bind(item);
         }
@@ -1206,11 +1216,6 @@ internal partial class ReaderView : UserControl
         return IsVertical ? parallelVal : perpendicularVal;
     }
 
-    private void LogLoadTime(string tag, string message)
-    {
-        Logger.I(LogTag.N("LoadTime", tag), message);
-    }
-
     private void Log(string tag, string message)
     {
         string name = _isVertical ? "Vertical" : "Horizontal";
@@ -1227,23 +1232,22 @@ internal partial class ReaderView : UserControl
         public IImageSource ImageSource { get; set; }
     }
 
-    private class LoadImageResultHandler(ReaderFrameViewModel model, bool isLeft, ReaderView view, int index) : IImageResultHandler
+    private class LoadImageResultHandler(ReaderFrameViewModel model, IImageSource source, bool isLeft) : IImageResultHandler
     {
-        private readonly long _startTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
         private readonly ReaderFrameViewModel _model = model;
         private readonly bool _isLeft = isLeft;
 
         public void OnSuccess(BitmapImage image)
         {
-            long loadTime = DateTimeOffset.Now.ToUnixTimeMilliseconds() - _startTime;
-            view.LogLoadTime("LoadImage", $"time={loadTime},index={index}");
             if (_isLeft)
             {
                 _model.ImageLeft = image;
+                _model.ImageLeftCurrentSource = source;
             }
             else
             {
                 _model.ImageRight = image;
+                _model.ImageRightCurrentSource = source;
             }
         }
     }
@@ -1279,6 +1283,13 @@ internal partial class ReaderView : UserControl
         Ready,
         Loading,
         Error,
+    }
+
+    public enum ScrollResult
+    {
+        Success = 0,
+        Failed = 1,
+        TooClose = 2,
     }
 
     //
@@ -1547,11 +1558,6 @@ internal partial class ReaderView : UserControl
     // Modifier - Scrolling
     public bool MoveFrame(int increment, string reason)
     {
-        if (!UpdatePage(true))
-        {
-            return false;
-        }
-
         MoveFrameInternal(increment, !XmlDatabase.Settings.TransitionAnimation, reason);
         return true;
     }
@@ -1561,11 +1567,11 @@ internal partial class ReaderView : UserControl
     /// </summary>
     /// <param name="increment"></param>
     /// <param name="disable_animation"></param>
-    private bool MoveFrameInternal(int increment, bool disable_animation, string reason)
+    private void MoveFrameInternal(int increment, bool disable_animation, string reason)
     {
         if (FrameDataSource.Count == 0)
         {
-            return false;
+            return;
         }
 
         int frame = PageToFrame(SCCurrentPageFinal, out _, out _);
@@ -1576,10 +1582,10 @@ internal partial class ReaderView : UserControl
         double page = FrameDataSource[frame].Page;
         float? zoom = Zoom > 101f ? 100f : (float?)null;
 
-        return SetScrollViewer2(zoom, page, disable_animation, reason);
+        SetScrollViewer2(zoom, page, disable_animation, reason);
     }
 
-    internal sealed class ScrollManager : BaseTransaction<bool>
+    internal sealed class ScrollManager : BaseTransaction<ScrollResult>
     {
         private readonly WeakReference<ReaderView> mReader;
         private float? mZoom = null;
@@ -1602,19 +1608,19 @@ internal partial class ReaderView : UserControl
             return new ScrollManager(reader, reason);
         }
 
-        protected override bool CommitImpl()
+        protected override ScrollResult CommitImpl()
         {
             if (!mReader.TryGetTarget(out ReaderView reader))
             {
-                return false;
+                return ScrollResult.Failed;
             }
 
             if (!reader._isLoaded)
             {
-                return false;
+                return ScrollResult.Failed;
             }
 
-            bool result;
+            ScrollResult result;
             if (mParallelOffset.HasValue)
             {
                 result = reader.SetScrollViewer1(mZoom, mParallelOffset, mDisableAnimation, mReason);
@@ -1705,7 +1711,7 @@ internal partial class ReaderView : UserControl
         }
     }
 
-    private bool SetScrollViewer1(float? zoom, double? parallel_offset, bool disable_animation, string reason)
+    private ScrollResult SetScrollViewer1(float? zoom, double? parallel_offset, bool disable_animation, string reason)
     {
         double? horizontal_offset = _isVertical ? null : parallel_offset;
         double? vertical_offset = _isVertical ? parallel_offset : null;
@@ -1719,7 +1725,7 @@ internal partial class ReaderView : UserControl
         }, reason);
     }
 
-    private bool SetScrollViewer2(float? zoom, double? page, bool disableAnimation, string reason)
+    private ScrollResult SetScrollViewer2(float? zoom, double? page, bool disableAnimation, string reason)
     {
         double? horizontalOffset = null;
         double? verticalOffset = null;
@@ -1730,14 +1736,14 @@ internal partial class ReaderView : UserControl
 
             if (offsets == null)
             {
-                return false;
+                return ScrollResult.Failed;
             }
 
             if (Math.Abs(offsets.Item1 - ParallelOffsetFinal) < 1.0)
             {
                 // IMPORTANT: Ignore the request if target offset is really close to the current offset,
                 // or else it could stuck in a dead loop. (See reference in OnScrollViewerViewChanged())
-                return true;
+                return ScrollResult.TooClose;
             }
 
             ConvertOffset(ref horizontalOffset, ref verticalOffset, offsets.Item1, offsets.Item2);
@@ -1753,7 +1759,7 @@ internal partial class ReaderView : UserControl
         }, reason);
     }
 
-    private bool SetScrollViewer3(
+    private ScrollResult SetScrollViewer3(
         float? zoom,
         ZoomType zoomType,
         double? horizontal_offset,
@@ -1772,11 +1778,11 @@ internal partial class ReaderView : UserControl
         }, reason);
     }
 
-    private bool SetScrollViewerInternal(ScrollRequest request, string reason)
+    private ScrollResult SetScrollViewerInternal(ScrollRequest request, string reason)
     {
         if (!_isLoaded)
         {
-            return false;
+            return ScrollResult.Failed;
         }
 
         DebugUtils.Assert(float.IsFinite(request.zoom ?? 0));
@@ -1841,9 +1847,9 @@ internal partial class ReaderView : UserControl
             + $",V={context.VerticalOffset}"
             + $",D={context.DisableAnimation}");
 
-        if (!ChangeView(context.ZoomFactor, context.HorizontalOffset, context.VerticalOffset, context.DisableAnimation))
+        if (context.HorizontalOffset != null || context.VerticalOffset != null || context.ZoomFactor != null)
         {
-            return false;
+            ChangeView(context.ZoomFactor, context.HorizontalOffset, context.VerticalOffset, context.DisableAnimation);
         }
 
         if (request.pageToApplyZoom.HasValue)
@@ -1852,7 +1858,7 @@ internal partial class ReaderView : UserControl
         }
 
         Zoom = context.ZoomPercentage.Value;
-        return true;
+        return ScrollResult.Success;
     }
 
     private void SetScrollViewerZoom(ScrollRequest request, ScrollContext context)
@@ -1941,13 +1947,8 @@ internal partial class ReaderView : UserControl
         context.VerticalOffset = Math.Max(0.0, context.VerticalOffset.Value);
     }
 
-    private bool ChangeView(float? zoom_factor, double? horizontal_offset, double? vertical_offset, bool disable_animation)
+    private void ChangeView(float? zoom_factor, double? horizontal_offset, double? vertical_offset, bool disable_animation)
     {
-        if (horizontal_offset == null && vertical_offset == null && zoom_factor == null)
-        {
-            return true;
-        }
-
         if (horizontal_offset != null)
         {
             HorizontalOffsetFinal = horizontal_offset.Value;
@@ -1975,7 +1976,6 @@ internal partial class ReaderView : UserControl
             + ",D=" + DisableAnimationFinal.ToString());
 
         ThisScrollViewer.ChangeView(HorizontalOffsetFinal, VerticalOffsetFinal, ZoomFactorFinal, DisableAnimationFinal);
-        return true;
     }
 
     private void AdjustParallelOffset(ScrollContext context)
@@ -2226,19 +2226,19 @@ internal partial class ReaderView : UserControl
     // Events - Common
     private bool OnViewChanged(bool final)
     {
-        if (!_isLoaded)
+        if (!_isInitialFrameLoaded)
         {
             return false;
         }
 
-        if (!UpdatePage(true))
+        if (!UpdatePage())
         {
             return false;
         }
 
         if (final)
         {
-            SCClearFinalVal();
+            SCClearFinalVal("ViewChanged");
 
             // Notify the scroll viewer to update its inner states.
             SetScrollViewer1(null, null, false, "AdjustInnerStateAfterViewChanged");
@@ -2290,8 +2290,9 @@ internal partial class ReaderView : UserControl
         m_DisableAnimationFinal = false;
     }
 
-    private void SCClearFinalVal()
+    private void SCClearFinalVal(string reason)
     {
+        Log("ClearFinalValue", reason);
         m_final_value_set = false;
     }
 

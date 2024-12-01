@@ -1,7 +1,7 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-namespace ComicReader.Common;
+namespace ComicReader.Views.Reader;
 
 internal class FrameOffsetData
 {
@@ -12,10 +12,10 @@ internal class FrameOffsetData
 
     public override string ToString()
     {
-        return "{" +
-            "PB=" + ParallelBegin.ToString() + "," +
-            "PB=" + ParallelCenter.ToString() + "," +
-            "PE=" + ParallelEnd.ToString() + "," +
-            "PnC=" + PerpendicularCenter.ToString() + "}";
+        return
+            "XB=" + ParallelBegin.ToString() +
+            ",XC=" + ParallelCenter.ToString() +
+            ",XE=" + ParallelEnd.ToString() +
+            ",YC=" + PerpendicularCenter.ToString();
     }
 }

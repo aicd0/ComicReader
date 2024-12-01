@@ -73,6 +73,7 @@ internal class ReaderFrameManager
     public void ResetReadyIndex()
     {
         _readyFrameIndex = -1;
+        _frameInfoDictionary.Clear();
     }
 
     public void SetFrameReadyHandler(FrameReadyHandler handler)
