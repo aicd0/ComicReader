@@ -98,25 +98,6 @@ internal sealed partial class MainPage : StatefulPage
         LoadTab(-1, route);
     }
 
-    private bool TrySwitchToTab(NavigationBundle bundle)
-    {
-        if (bundle.PageTrait.SupportMultiInstance())
-        {
-            return false;
-        }
-
-        foreach (TabInfo tab in _tabs)
-        {
-            if (tab.CurrentBundle.Url == bundle.Url)
-            {
-                RootTabView.SelectedItem = tab.Item;
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     public void ShowOrHideTitleBar(bool show)
     {
         if (_currentTab == null || !_currentTab.CurrentBundle.PageTrait.ImmersiveMode())
@@ -274,7 +255,6 @@ internal sealed partial class MainPage : StatefulPage
         tabInfo.CurrentBundle = bundle;
         _tabs.Add(tabInfo);
         RootTabView.TabItems.Add(item);
-        RootTabView.SelectedItem = item;
         return tabId;
     }
 
@@ -294,19 +274,44 @@ internal sealed partial class MainPage : StatefulPage
         }
 
         NavigationBundle bundle = route.Process();
-        if (TrySwitchToTab(bundle))
+
+        if (!bundle.PageTrait.SupportMultiInstance())
         {
-            return;
+            foreach (TabInfo tab in _tabs)
+            {
+                if (tab.CurrentBundle.Url == bundle.Url)
+                {
+                    RootTabView.SelectedItem = tab.Item;
+                    return;
+                }
+            }
         }
 
-        if (tabId == -1)
+        bool newTab = tabId == -1;
+
+        if (newTab)
         {
             tabId = AddTab(bundle);
         }
 
         TabInfo tabInfo = GetTabInfo(tabId);
+
+        if (tabInfo == null)
+        {
+            DebugUtils.Assert(false);
+            return;
+        }
+
+        RootTabView.SelectedItem = tabInfo.Item;
+
+        if (!newTab && tabInfo.CurrentBundle.Url == bundle.Url)
+        {
+            return;
+        }
+
         var frame = (Frame)tabInfo.Item.Content;
         bundle.Abilities[typeof(IMainPageAbility)] = new MainPageAbility(this, tabId);
+
         if (bundle.PageTrait.HasNavigationBar())
         {
             if (frame.Content == null || frame.Content.GetType() != typeof(NavigationPage))
