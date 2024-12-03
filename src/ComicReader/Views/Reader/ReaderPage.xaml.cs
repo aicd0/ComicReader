@@ -179,53 +179,35 @@ internal sealed partial class ReaderPage : BasePage
 
         PreviewDataSource = new ObservableCollection<ReaderImagePreviewViewModel>();
 
-        VerticalReader.SetIsVertical(true);
-        HorizontalReader.SetIsVertical(false);
-
-        ReaderView[] readers = [VerticalReader, HorizontalReader];
-        foreach (ReaderView reader in readers)
+        ReaderView reader = MainReaderView;
+        reader.ReaderEventTapped += delegate (ReaderView sender)
         {
-            reader.ReaderEventTapped += delegate (ReaderView sender)
+            BottomTileSetHold(!_buttomTileShowed);
+        };
+        reader.ReaderEventPageChanged += delegate (ReaderView sender, bool isIntermediate)
+        {
+            UpdatePage();
+            UpdateProgress(sender, save: !isIntermediate);
+            BottomTileSetHold(false);
+        };
+        reader.ReaderEventReaderStateChanged += delegate (ReaderView sender, ReaderView.ReaderState state)
+        {
+            switch (state)
             {
-                if (sender != GetReader())
-                {
-                    return;
-                }
-                BottomTileSetHold(!_buttomTileShowed);
-            };
-            reader.ReaderEventPageChanged += delegate (ReaderView sender, bool isIntermediate)
-            {
-                if (sender != GetReader())
-                {
-                    return;
-                }
-                UpdatePage();
-                UpdateProgress(sender, save: !isIntermediate);
-                BottomTileSetHold(false);
-            };
-            reader.ReaderEventReaderStateChanged += delegate (ReaderView sender, ReaderView.ReaderState state)
-            {
-                if (sender != GetReader())
-                {
-                    return;
-                }
-                switch (state)
-                {
-                    case ReaderView.ReaderState.Ready:
-                        ReaderStatusLiveData.Emit(ReaderStatusEnum.Working);
-                        UpdatePage();
-                        BottomTileShow();
-                        BottomTileHide(5000);
-                        break;
-                    case ReaderView.ReaderState.Loading:
-                        ReaderStatusLiveData.Emit(ReaderStatusEnum.Loading);
-                        break;
-                    case ReaderView.ReaderState.Error:
-                        ReaderStatusLiveData.Emit(ReaderStatusEnum.Error);
-                        break;
-                }
-            };
-        }
+                case ReaderView.ReaderState.Ready:
+                    ReaderStatusLiveData.Emit(ReaderStatusEnum.Working);
+                    UpdatePage();
+                    BottomTileShow();
+                    BottomTileHide(5000);
+                    break;
+                case ReaderView.ReaderState.Loading:
+                    ReaderStatusLiveData.Emit(ReaderStatusEnum.Loading);
+                    break;
+                case ReaderView.ReaderState.Error:
+                    ReaderStatusLiveData.Emit(ReaderStatusEnum.Error);
+                    break;
+            }
+        };
     }
 
     //
@@ -258,15 +240,11 @@ internal sealed partial class ReaderPage : BasePage
             GetMainPageAbility().SetIcon(new SymbolIconSource { Symbol = Symbol.Pictures });
 
             ReaderSettingDataModel readerSetting = _readerSettingModel;
-            VerticalReader.SetVisibility(readerSetting.IsVertical);
-            HorizontalReader.SetVisibility(!readerSetting.IsVertical);
-            VerticalReader.SetActive(false);
-            HorizontalReader.SetActive(false);
-            ReaderView reader = GetReader();
+            ReaderView reader = MainReaderView;
+            reader.SetIsVertical(readerSetting.IsVertical);
             reader.SetIsContinuous(readerSetting.IsContinuous);
             reader.SetPageArrangement(readerSetting.PageArrangement);
             reader.SetFlowDirection(readerSetting.IsLeftToRight);
-            reader.SetActive(true);
             await LoadComic(comic);
 
             // Update previews.
@@ -349,18 +327,13 @@ internal sealed partial class ReaderPage : BasePage
         GetNavigationPageAbility().RegisterReaderSettingsChangedEventHandler(this, delegate (ReaderSettingDataModel setting)
         {
             ReaderSettingDataModel lastSetting = _readerSettingModel;
+            ReaderView reader = MainReaderView;
             _readerSettingModel = setting;
-            HorizontalReader.SetFlowDirection(setting.IsLeftToRight);
-            UpdateReaderUI();
-
-            if (lastSetting.IsVertical != setting.IsVertical)
-            {
-                OnReaderSwitched();
-            }
-
-            ReaderView reader = GetReader();
+            reader.SetIsVertical(setting.IsVertical);
+            reader.SetFlowDirection(setting.IsLeftToRight);
             reader.SetIsContinuous(setting.IsContinuous);
             reader.SetPageArrangement(setting.PageArrangement);
+            UpdateReaderUI();
         });
 
         IsExternalComicLiveData.ObserveSticky(this, delegate (bool isExternal)
@@ -409,18 +382,6 @@ internal sealed partial class ReaderPage : BasePage
     // Obsolete
     //
 
-    public ReaderView GetReader()
-    {
-        if (_readerSettingModel.IsVertical)
-        {
-            return VerticalReader;
-        }
-        else
-        {
-            return HorizontalReader;
-        }
-    }
-
     public void UpdatePage()
     {
         if (PageIndicator == null)
@@ -428,28 +389,9 @@ internal sealed partial class ReaderPage : BasePage
             return;
         }
 
-        ReaderView reader = GetReader();
+        ReaderView reader = MainReaderView;
         int currentPage = reader.CurrentPageDisplay;
         PageIndicator.Text = currentPage.ToString() + " / " + reader.PageCount.ToString();
-    }
-
-    // Reader
-    public void OnReaderSwitched()
-    {
-        ReaderView reader = GetReader();
-
-        ReaderView last_reader = reader.IsVertical ? HorizontalReader : VerticalReader;
-        DebugUtils.Assert(last_reader != null);
-
-        if (last_reader == null)
-        {
-            return;
-        }
-
-        ReaderView.ScrollManager.BeginTransaction(reader, "RestoreStateAfterReaderSwitched")
-            .CopyFrom(last_reader)
-            .Commit();
-        UpdateReaderUI();
     }
 
     // Preview
@@ -458,8 +400,7 @@ internal sealed partial class ReaderPage : BasePage
         var ctx = (ReaderImagePreviewViewModel)e.ClickedItem;
         GridViewModeEnabled = false;
 
-        ReaderView reader = GetReader();
-        ReaderView.ScrollManager.BeginTransaction(reader, "JumpToGridItem")
+        ReaderView.ScrollManager.BeginTransaction(MainReaderView, "JumpToGridItem")
             .Page(ctx.Page)
             .Commit();
     }
@@ -706,18 +647,11 @@ internal sealed partial class ReaderPage : BasePage
         bool isWorking = ReaderStatusLiveData.GetValue() == ReaderStatusEnum.Working;
         bool previewVisible = isWorking && _gridViewModeEnabled;
         bool readerVisible = isWorking && !previewVisible;
-        bool isVertical = _readerSettingModel.IsVertical;
-        bool verticalReaderVisible = readerVisible && isVertical;
-        bool horizontalReaderVisible = readerVisible && !verticalReaderVisible;
 
         GGridView.IsHitTestVisible = previewVisible;
         GGridView.Opacity = previewVisible ? 1 : 0;
         GMainSection.Visibility = previewVisible ? Visibility.Collapsed : Visibility.Visible;
-
-        VerticalReader.SetVisibility(verticalReaderVisible);
-        HorizontalReader.SetVisibility(horizontalReaderVisible);
-        VerticalReader.SetActive(isVertical);
-        HorizontalReader.SetActive(!isVertical);
+        MainReaderView.SetVisibility(readerVisible);
     }
 
     public async Task LoadComic(ComicData comic)
@@ -752,8 +686,7 @@ internal sealed partial class ReaderPage : BasePage
                 return;
             }
 
-            VerticalReader.SetInitialPage(_comic.LastPosition);
-            HorizontalReader.SetInitialPage(_comic.LastPosition);
+            MainReaderView.SetInitialPage(_comic.LastPosition);
         }
 
         var images = new List<IImageSource>();
@@ -761,8 +694,7 @@ internal sealed partial class ReaderPage : BasePage
         {
             images.Add(new ComicImageSource(comic, i));
         }
-        VerticalReader.StartLoadingImages(images);
-        HorizontalReader.StartLoadingImages(images);
+        MainReaderView.StartLoadingImages(images);
     }
 
     public void UpdateProgress(ReaderView reader, bool save)

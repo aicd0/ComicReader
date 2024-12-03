@@ -56,6 +56,7 @@ internal partial class ReaderView : UserControl
     private bool _uiStateUpdatedContinuous = true;
     private bool _uiStateUpdatedFlowDirection = true;
     private bool _uiStateUpdatedPageArrangement = true;
+    private bool _postReload = false;
 
     private bool _isActive = true;
     private bool _isFirstFrameLoaded = false;
@@ -142,7 +143,6 @@ internal partial class ReaderView : UserControl
 
         _isVertical = isVertical;
         _uiStateUpdatedOrientation = true;
-        _uiStateUpdatedFlowDirection = true;
         UpdateUI();
     }
 
@@ -155,7 +155,6 @@ internal partial class ReaderView : UserControl
 
         _isContinuous = isContinuous;
         _uiStateUpdatedContinuous = true;
-        _uiStateUpdatedPageArrangement = true; // we want to do a reload
         UpdateUI();
     }
 
@@ -369,11 +368,16 @@ internal partial class ReaderView : UserControl
         {
             Log("Load", "InitialFrame");
             _isInitialFrameActionPerformed = true;
-            ScrollResult scrollResult = SetScrollViewer2(Zoom, _initialPage, true, "JumpToInitialPage");
-            if (scrollResult == ScrollResult.TooClose)
+
+            PostToCurrentThread(delegate
             {
-                UpdateImages(true);
-            }
+                ScrollResult scrollResult = SetScrollViewer2(Zoom, _initialPage, true, "JumpToInitialPage");
+                if (scrollResult == ScrollResult.TooClose)
+                {
+                    UpdateImages(true);
+                }
+            });
+
             needDispatchReadyState = true;
         }
 
@@ -407,6 +411,8 @@ internal partial class ReaderView : UserControl
             return;
         }
 
+        bool needReload = false;
+
         if (_uiStateUpdatedVisibility)
         {
             _uiStateUpdatedVisibility = false;
@@ -430,6 +436,7 @@ internal partial class ReaderView : UserControl
             LvReader.ItemContainerStyle = (Style)Resources[isVertical ? "VerticalReaderListViewItemStyle" : "HorizontalReaderListViewItemStyle"];
             LvReader.ItemTemplate = (DataTemplate)Resources[isVertical ? "VerticalReaderListViewItemTemplate" : "HorizontalReaderListViewItemTemplate"];
             LvReader.ItemsPanel = (ItemsPanelTemplate)Resources[isVertical ? "VerticalReaderListViewItemPanelTemplate" : "HorizontalReaderListViewItemPanelTemplate"];
+            needReload = true;
         }
 
         if (_uiStateUpdatedFlowDirection)
@@ -445,16 +452,30 @@ internal partial class ReaderView : UserControl
         {
             _uiStateUpdatedContinuous = false;
             _gestureRecognizer.AutoProcessInertia = _isContinuous;
+            if (!_isVertical)
+            {
+                needReload = true;
+            }
         }
 
         if (_uiStateUpdatedPageArrangement)
         {
             _uiStateUpdatedPageArrangement = false;
-            if (_originalDataModel != null)
+            needReload = true;
+        }
+
+        if (needReload && !_postReload)
+        {
+            _postReload = true;
+            PostToCurrentThread(delegate
             {
-                _initialPage = CurrentPage;
-                Reload(_originalDataModel, false);
-            }
+                _postReload = false;
+                if (_originalDataModel != null)
+                {
+                    _initialPage = CurrentPage;
+                    Reload(_originalDataModel, false);
+                }
+            });
         }
     }
 
@@ -1218,8 +1239,13 @@ internal partial class ReaderView : UserControl
 
     private void Log(string tag, string message)
     {
-        string name = _isVertical ? "Vertical" : "Horizontal";
-        Logger.I(LogTag.N($"Reader{name}", tag), message);
+        Logger.I(LogTag.N($"ReaderView", tag), message);
+    }
+
+    private static void PostToCurrentThread(Action<Task> action)
+    {
+        var context = TaskScheduler.FromCurrentSynchronizationContext();
+        _ = Task.Delay(1).ContinueWith(action, context);
     }
 
     //
@@ -1741,8 +1767,8 @@ internal partial class ReaderView : UserControl
 
             if (Math.Abs(offsets.Item1 - ParallelOffsetFinal) < 1.0)
             {
-                // IMPORTANT: Ignore the request if target offset is really close to the current offset,
-                // or else it could stuck in a dead loop. (See reference in OnScrollViewerViewChanged())
+                // Ignore the request if target offset is really close to the current offset,
+                // otherwise we might trigger a dead loop
                 return ScrollResult.TooClose;
             }
 

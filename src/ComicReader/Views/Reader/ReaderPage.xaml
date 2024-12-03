@@ -48,11 +48,8 @@
             <Grid PointerEntered="OnReaderPointerEntered">
                 <Grid x:Name="ManipulationReference" />
 
-                <!--  Vertical  -->
-                <reader:ReaderView x:Name="VerticalReader" />
+                <reader:ReaderView x:Name="MainReaderView" />
 
-                <!--  Horizontal  -->
-                <reader:ReaderView x:Name="HorizontalReader" />
             </Grid>
 
             <!--  Tips  -->
