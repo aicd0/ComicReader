@@ -143,6 +143,7 @@ internal partial class ReaderView : UserControl
 
         _isVertical = isVertical;
         _uiStateUpdatedOrientation = true;
+        _uiStateUpdatedFlowDirection = true;
         UpdateUI();
     }
 
