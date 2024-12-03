@@ -67,15 +67,14 @@
                         <settings:SettingExpander.InnerContent>
                             <StackPanel Orientation="Vertical">
                                 <Button x:Uid="ChooseLocationButton" Click="ChooseLocationsClick" />
-                                <Grid Height="20" />
+                                <Grid Height="12" />
                                 <TextBlock x:Uid="ArchiveEncoding" Style="{StaticResource SettingsPageBodyTextBlock}" />
                                 <Grid Height="8" />
                                 <ComboBox
                                     MinWidth="200"
                                     DisplayMemberPath="Item1"
                                     ItemsSource="{x:Bind Shared.Encodings, Mode=OneWay}"
-                                    SelectedValue="{x:Bind Shared.DefaultArchiveCodePage, Mode=TwoWay}"
-                                    SelectedValuePath="Item2" />
+                                    SelectedIndex="{x:Bind Shared.DefaultArchiveCodePageIndex, Mode=TwoWay}" />
                             </StackPanel>
                         </settings:SettingExpander.InnerContent>
                     </settings:SettingExpander>
@@ -104,7 +103,7 @@
                                     x:Uid="ClearAllHistoryButton"
                                     Click="OnHistoryClearAllClicked"
                                     IsEnabled="{x:Bind Shared.IsClearHistoryEnabled, Mode=OneWay}" />
-                                <Grid Height="15" />
+                                <Grid Height="12" />
                                 <TextBlock x:Uid="SaveHistory" Style="{StaticResource SettingsPageBodyTextBlock}" />
                                 <ToggleSwitch IsOn="{x:Bind Shared.HistorySaveBrowsingHistory, Mode=TwoWay}" />
                             </StackPanel>
@@ -120,9 +119,10 @@
                             <StackPanel Orientation="Vertical">
                                 <TextBlock
                                     x:Uid="ApplyOnNextLaunch"
+                                    Margin="0,0,0,6"
                                     Style="{StaticResource SettingsPageBodyTextBlock}"
                                     Visibility="{x:Bind Shared.AppearanceChanged, Mode=OneWay}" />
-                                <muxc:RadioButtons>
+                                <muxc:RadioButtons Margin="0,-6,0,0">
                                     <RadioButton x:Uid="ThemeLight" IsChecked="{x:Bind Shared.AppearanceLightChecked, Mode=TwoWay}" />
                                     <RadioButton x:Uid="ThemeDark" IsChecked="{x:Bind Shared.AppearanceDarkChecked, Mode=TwoWay}" />
                                     <RadioButton x:Uid="ThemeUseSystemSetting" IsChecked="{x:Bind Shared.AppearanceUseSystemSettingChecked, Mode=TwoWay}" />
@@ -142,7 +142,10 @@
                                     <ColumnDefinition Width="1000*" MaxWidth="300" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <StackPanel Grid.Column="0" Orientation="Vertical">
+                                <StackPanel
+                                    Grid.Column="0"
+                                    Margin="0,0,0,2"
+                                    Orientation="Vertical">
                                     <settings:HotkeyInfo Key="Space/Page Down" x:Uid="HotkeyNextPage" />
                                     <settings:HotkeyInfo Key="Page Up" x:Uid="HotkeyPreviousPage" />
                                     <settings:HotkeyInfo Key="Home" x:Uid="HotkeyFirstPage" />
@@ -159,7 +162,7 @@
                         IsExpanded="True">
                         <settings:SettingExpander.InnerContent>
                             <StackPanel Orientation="Vertical">
-                                <StackPanel Orientation="Horizontal">
+                                <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
                                     <Button
                                         x:Uid="ClearCacheButton"
                                         Click="OnClearCacheClick"
@@ -174,7 +177,7 @@
                                     Foreground="{ThemeResource ForegroundGrey2}"
                                     Style="{StaticResource SettingsPageBodyTextBlock}"
                                     Text="{x:Bind Shared.CacheSize, Mode=OneWay}" />
-                                <Grid Height="12" />
+                                <Grid Height="16" />
                                 <StackPanel Orientation="Horizontal">
                                     <Button
                                         x:Uid="RescanFilesButton"
@@ -190,7 +193,7 @@
                                     x:Uid="RescanFilesDetail"
                                     Foreground="{ThemeResource ForegroundGrey2}"
                                     Style="{StaticResource SettingsPageBodyTextBlock}" />
-                                <Grid Height="10" />
+                                <Grid Height="12" />
                                 <TextBlock x:Uid="DebugMode" Style="{StaticResource SettingsPageBodyTextBlock}" />
                                 <ToggleSwitch IsOn="{x:Bind Shared.AdvancedDebugMode, Mode=TwoWay}" />
                             </StackPanel>

@@ -238,16 +238,18 @@
     <value>帮助</value>
   </data>
   <data name="HelpPageMarkdown.Text" xml:space="preserve">
-    <value># 如何使用过滤条件进行搜索
-您可以通过在搜索中使用过滤条件使您的搜索结果更加精确。
+    <value># 如何使用过滤器进行搜索
+您可以通过使用过滤器来让搜索引擎只展示您感兴趣的搜索结果。
 
 ### 基本用法
-`关键词1 关键词2... &lt;过滤条件1&gt; &lt;过滤条件2&gt;...` (过滤条件间的空格非必需)
+搜索关键词的基本格式： (过滤器间的空格非必需)
 
-以下为您列出几种常用的过滤条件：
+`关键词1 关键词2 ... &lt;过滤器1&gt; &lt;过滤器2&gt; ...`
 
-### 目录
-只显示在指定目录下的项目。
+以下为您列出几种常用的过滤器：
+
+### 搜索指定目录
+只搜索在指定目录下的漫画。
 
 * 格式：`&lt;dir: 目录1[, 目录2, 目录3...]&gt;`
 
@@ -255,15 +257,15 @@
 
 * 等价写法：directory, folder, location, path.
 
-### 隐藏项
-只显示被隐藏的项目
+### 搜索指定隐藏漫画
+只显示被隐藏的漫画
 
 * 格式：`&lt;hidden&gt;`
 
 * 等价写法：hide.
 
-### 标签
-只显示包含特定标签的项目。
+### 搜索指定标签
+只显示包含特定标签的漫画。
 
 * 格式：`&lt;tag: 标签1[, 标签2, 标签3...]&gt;`
 
@@ -271,14 +273,14 @@
 
 * 等价写法：tags.
 
-### 带分类的标签
+### 搜索带指定分类的标签
 在搜索标签的同时指定标签的分类。
 
 * 格式：`&lt;标签分类: 标签1[, 标签2, 标签3...]&gt;`
 
-* 例如：`漫画标题 &lt;语言: 中文, 日文&gt;`
+* 例如：`漫画标题 &lt;语言: 中文, 英文&gt;`
 
-### ID
+### 搜索漫画ID
 通过直接指定漫画ID的方式进行搜索。
 
 * 格式：`&lt;id: 漫画ID&gt;`
@@ -287,7 +289,7 @@
 
 * 等价写法：no, num, number.
 
-### 评分
+### 搜索评分
 依据漫画评分进行过滤。
 
 * 格式：`&lt;rating: 评分1[, 评分2, 评分3...]&gt;`
@@ -296,26 +298,29 @@
 
 * 等价写法：ratings, rate, star, stars.
 
-### 与/或
-使用逻辑 与/或 组合不同过滤条件。
+### 使用逻辑 与/或 组合过滤器
+使用逻辑 与/或 组合多个过滤器。
 
-* 或格式: `&lt;or: &lt;过滤条件1&gt;&lt;过滤条件2&gt;&lt;过滤条件3&gt;...&gt;`
+* 或格式: `&lt;or: &lt;过滤器1&gt; &lt;过滤器2&gt; &lt;过滤器3&gt; ...&gt;`
 
-* 与格式: `&lt;and: &lt;过滤条件1&gt;&lt;过滤条件2&gt;&lt;过滤条件3&gt;...&gt;`
+* 与格式: `&lt;and: &lt;过滤器1&gt; &lt;过滤器2&gt; &lt;过滤器3&gt; ...&gt;`
 
 * 例如: `漫画标题 &lt;or: &lt;star: 5&gt; &lt;语言: 中文&gt;&gt;`
 
-### 非 (~)
-只显示不能通过过滤条件的项目。
+### 对过滤器取反
+只搜索不能通过过滤器的漫画。
 
-* 格式：`&lt;~&lt;过滤条件&gt;&gt;`
+* 格式：`&lt;~&lt;过滤器&gt;&gt;`
 
 * 例如：`&lt;~&lt;rating: 1&gt;&gt;` (不显示评分为1星的漫画)
 
-### 全部 (All)
-不进行过滤。只在需要查看仓库中所有项目时使用。
+### 全部
+不进行过滤。只在需要查看仓库中所有漫画（除被隐藏的漫画）时使用。
 
-* 格式：`&lt;all&gt;`</value>
+* 格式：`&lt;all&gt;`
+
+* 例如：`&lt;all&gt;`
+</value>
   </data>
   <data name="HideAppBarButton.Label" xml:space="preserve">
     <value>隐藏</value>
@@ -423,13 +428,13 @@
     <value>重新扫描文件</value>
   </data>
   <data name="RescanFilesDetail.Text" xml:space="preserve">
-    <value>提示：当出现部分漫画缺失或信息不一致时，重新扫描文件可能解决问题。在某些情况下，该操作可能导致较高的CPU占用率，进而缩短您的电池使用时间。</value>
+    <value>当出现部分漫画缺失或信息不一致时，重新扫描文件可能解决问题。这一操作可能引发较高的CPU占用率，进而缩短您的电池使用时间。</value>
   </data>
   <data name="SaveHistory.Text" xml:space="preserve">
     <value>记录您的浏览历史</value>
   </data>
   <data name="SearchBox.PlaceholderText" xml:space="preserve">
-    <value>在"帮助"中了解如何过滤搜索结果</value>
+    <value>在帮助中了解如何过滤搜索结果</value>
   </data>
   <data name="SearchResults" xml:space="preserve">
     <value>搜索结果</value>

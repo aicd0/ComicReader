@@ -52,16 +52,16 @@ public class SettingsPageShared : INotifyPropertyChanged
         }
     }
 
-    private int _defaultArchiveCodePage = -2;
-    public int DefaultArchiveCodePage
+    private int _defaultArchiveCodePageIndex = 0;
+    public int DefaultArchiveCodePageIndex
     {
-        get => _defaultArchiveCodePage;
+        get => _defaultArchiveCodePageIndex;
         set
         {
-            if (_defaultArchiveCodePage != value)
+            if (_defaultArchiveCodePageIndex != value)
             {
-                _defaultArchiveCodePage = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DefaultArchiveCodePage)));
+                _defaultArchiveCodePageIndex = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DefaultArchiveCodePageIndex)));
                 OnSettingsChanged?.Invoke();
             }
         }
@@ -358,19 +358,27 @@ internal sealed partial class SettingsPage : BasePage
         {
             new(StringResourceProvider.GetResourceString("Default"), -1)
         };
+
+        int defaultCodePage = AppStatusPreserver.DefaultArchiveCodePage;
+        int selectedIndex = 0;
         foreach (Encoding info in supportedEncodings.Values)
         {
             string title = info.EncodingName + " [" + info.CodePage.ToString() + "]";
             encodings.Add(new Tuple<string, int>(title, info.CodePage));
+            if (defaultCodePage == info.CodePage)
+            {
+                selectedIndex = encodings.Count - 1;
+            }
         }
         Shared.Encodings = encodings;
 
-        if (!supportedEncodings.ContainsKey(AppStatusPreserver.DefaultArchiveCodePage))
+        if (!supportedEncodings.ContainsKey(defaultCodePage))
         {
             AppStatusPreserver.DefaultArchiveCodePage = -1;
+            selectedIndex = 0;
         }
 
-        Shared.DefaultArchiveCodePage = AppStatusPreserver.DefaultArchiveCodePage;
+        Shared.DefaultArchiveCodePageIndex = selectedIndex;
     }
 
     private async Task UpdateStatistis()
@@ -439,7 +447,14 @@ internal sealed partial class SettingsPage : BasePage
         XmlDatabaseManager.ReleaseLock();
         TaskQueue.DefaultQueue.Enqueue("SettingsPage#Save", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
 
-        AppStatusPreserver.DefaultArchiveCodePage = Shared.DefaultArchiveCodePage;
+        {
+            int selectedIndex = Shared.DefaultArchiveCodePageIndex;
+            if (selectedIndex >= 0 && selectedIndex < Shared.Encodings.Count)
+            {
+                AppStatusPreserver.DefaultArchiveCodePage = Shared.Encodings[selectedIndex].Item2;
+            }
+        }
+
         AppStatusPreserver.DebugMode = Shared.AdvancedDebugMode;
     }
 

@@ -238,84 +238,89 @@
     <value>Help</value>
   </data>
   <data name="HelpPageMarkdown.Text" xml:space="preserve">
-    <value># How to use filters to search comics
-You can use filters in searching to limit the results.
+    <value># How to use search filters
+You can use search filters to let the search engine only presents the results that you are interested.
 
 ### Basic usage
-`keyword1 keyword2... &lt;filter1&gt; &lt;filter2&gt;...` (spaces between filters is optional)
+A normal query will be like: (spaces between filters is not required)
 
-We listed a few filters commonly used as below:
+`keyword1 keyword2 ... &lt;filter1&gt; &lt;filter2&gt; ...` 
 
-### Directory
-Shows items in specific directories.
+We listed a few search filters we commonly use as follow:
+
+### Search directories
+Search comics in specific directories:
 
 * Format: `&lt;dir: Directory1[, Directory2, Directory3...]&gt;`
 
-* Example: `MyComicTitle &lt;dir: D:\MyComicFolder&gt;`
+* Example: `SomeComicTitle &lt;dir: D:\MyComicFolder&gt;`
 
-* Alternatives: directory, folder, location, path.
+* Alternative names: directory, folder, location, path.
 
-### Hidden
-Only shows hidden items.
+### Search hidden comics
+Search hidden comics.
 
 * Format: `&lt;hidden&gt;`
 
-* Alternatives: hide.
+* Alternative names: hide.
 
-### Tags
-Shows items with specific tags.
+### Search tags
+Search comics with specific tags.
 
 * Format: `&lt;tag: Tag1[, Tag2, Tag3...]&gt;`
 
-* Example: `MyComicTitle &lt;tag: MyComicTag&gt;`
+* Example: `SomeComicTitle &lt;tag: MyComicTag&gt;`
 
-* Alternatives: tags.
+* Alternative names: tags.
 
-### Tag &amp; Category
-Specify the category while searching tags.
+### Search tags with category
+Search comics with specific tags which belong to specific tag categories.
 
 * Format: `&lt;TagCategory: Tag1[, Tag2, Tag3...]&gt;`
 
-* Example: `MyComicTitle &lt;Language: Chinese, Japanese&gt;`
+* Example: `SomeComicTitle &lt;Language: Chinese, English&gt;`
 
-### ID
-Search with comic ID directly.
+### Search comic ID
+Search comic ID directly.
 
 * Format: `&lt;id: MyComicId&gt;`
 
 * Example: `&lt;id: 1234&gt;`
 
-* Alternatives: no, num, number.
+* Alternative names: no, num, number.
 
-### Rating
-Search comics with their ratings.
+### Search rating
+Search comics with a range of ratings.
 
 * Format: `&lt;rating: Rating1[, Rating2, Rating3...]&gt;`
 
 * Example: `&lt;rating: -1, 4, 5&gt;` (`-1` represents no rating)
 
-* Alternatives: ratings, rate, star, stars.
+* Alternative names: ratings, rate, star, stars.
 
-### Or/And
-Use logic or/and to combine different filters.
+### Combine with or/and
+Use logic or/and to combine multiple filters.
 
-* Format 1: `&lt;or: &lt;Filter1&gt;&lt;Filter2&gt;&lt;Filter3&gt;...&gt;`
+* Or Format: `&lt;or: &lt;Filter1&gt; &lt;Filter2&gt; &lt;Filter3&gt; ...&gt;`
 
-* Format 2: `&lt;and: &lt;Filter1&gt;&lt;Filter2&gt;&lt;Filter3&gt;...&gt;`
+* And Format: `&lt;and: &lt;Filter1&gt; &lt;Filter2&gt; &lt;Filter3&gt; ...&gt;`
 
-* Example: `MyComicTitle &lt;or: &lt;star: 5&gt; &lt;Language: Chinese&gt;&gt;`
+* Example: `SomeComicTitle &lt;or: &lt;star: 5&gt; &lt;Language: English&gt;&gt;`
 
-### Not (~)
-Shows items that DON'T pass the filter.
+### Inverse a filter
+Search comics that DON'T pass the filter.
 
 * Format: `&lt;~&lt;Filter&gt;&gt;`
 
 * Example: `&lt;~&lt;rating: 1&gt;&gt;` (not showing comics with 1 star)
 
-### All
-Filtering nothing. Only used when we need to see all items in the library.
+### Show all comics
+Search everything. This filter does nothing, it is only used when we need to see all comics (except hidden) in the library.
 
-* Format: `&lt;all&gt;`</value>
+* Format: `&lt;all&gt;`
+
+* Example: `&lt;all&gt;`
+</value>
   </data>
   <data name="HideAppBarButton.Label" xml:space="preserve">
     <value>Hide</value>
@@ -426,13 +431,13 @@ Filtering nothing. Only used when we need to see all items in the library.
     <value>Rescan files</value>
   </data>
   <data name="RescanFilesDetail.Text" xml:space="preserve">
-    <value>NOTICE: If there are missing comics or inconsist comic information, rescanning files may resolve the problems. Notice that in some cases this could lead to high CPU occupation which may drain your battery quickly.</value>
+    <value>If there are missing comics or inconsist comic information, rescanning files may resolve the issue. Notice that this operation could lead to high CPU occupation which may drain your battery quickly.</value>
   </data>
   <data name="SaveHistory.Text" xml:space="preserve">
     <value>Save browsing history</value>
   </data>
   <data name="SearchBox.PlaceholderText" xml:space="preserve">
-    <value>Learn how to use filters in "Help"</value>
+    <value>Learn how to use filters in Help</value>
   </data>
   <data name="SearchResults" xml:space="preserve">
     <value>Search results</value>
@@ -462,7 +467,7 @@ Filtering nothing. Only used when we need to see all items in the library.
     <value>Statistics</value>
   </data>
   <data name="TagIntroduction.Message" xml:space="preserve">
-    <value>You can add tags to your comic to make your library easier to manage. For example:
+    <value>Using tags properly can make your library easier to get organized. Basic usage:
 Category1: tag1/tag2/tag3
 Category2: tag4/tag5
 ...</value>
