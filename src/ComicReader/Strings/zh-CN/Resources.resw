@@ -628,4 +628,7 @@
   <data name="Calculating" xml:space="preserve">
     <value>计算中...</value>
   </data>
+  <data name="AntiAliasingFilter.Text" xml:space="preserve">
+    <value>抗混叠滤波器（实验性）</value>
+  </data>
 </root>

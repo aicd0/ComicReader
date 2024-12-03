@@ -734,7 +734,7 @@ internal partial class ReaderView : UserControl
         return true;
     }
 
-    private void UpdateImages(bool performCleaning)
+    private void UpdateImages(bool final)
     {
         _loadImageSession.Next();
 
@@ -753,15 +753,19 @@ internal partial class ReaderView : UserControl
         int preloadWindowBegin = Math.Max(frame - MAX_PRELOAD_FRAMES_BEFORE, 0);
         int preloadWindowEnd = Math.Min(frame + MAX_PRELOAD_FRAMES_AFTER, FrameDataSource.Count - 1);
 
-        if (performCleaning)
+        if (final)
         {
             for (int i = 0; i < FrameDataSource.Count; ++i)
             {
+                ReaderFrameViewModel model = FrameDataSource[i];
                 if (i < preloadWindowBegin || i > preloadWindowEnd)
                 {
-                    ReaderFrameViewModel model = FrameDataSource[i];
                     model.ImageLeft = null;
                     model.ImageRight = null;
+                }
+                else
+                {
+                    UpdateImageDecodeSize(model);
                 }
             }
         }
@@ -801,7 +805,7 @@ internal partial class ReaderView : UserControl
                 tokens.Add(new SimpleImageLoader.Token
                 {
                     Source = model.ImageSourceLeft,
-                    ImageResultHandler = new LoadImageResultHandler(model, model.ImageSourceLeft, true)
+                    ImageResultHandler = new LoadImageResultHandler(this, model, model.ImageSourceLeft, true)
                 });
             }
 
@@ -810,7 +814,7 @@ internal partial class ReaderView : UserControl
                 tokens.Add(new SimpleImageLoader.Token
                 {
                     Source = model.ImageSourceRight,
-                    ImageResultHandler = new LoadImageResultHandler(model, model.ImageSourceRight, false)
+                    ImageResultHandler = new LoadImageResultHandler(this, model, model.ImageSourceRight, false)
                 });
             }
         }
@@ -833,6 +837,47 @@ internal partial class ReaderView : UserControl
         new SimpleImageLoader.Transaction(_loadImageSession.Token, tokens)
             .SetDispatcher(_loadImageDispatcher)
             .Commit();
+    }
+
+    private void UpdateImageDecodeSize(ReaderFrameViewModel model)
+    {
+        if (!AppStatusPreserver.AntiAliasingEnabled)
+        {
+            return;
+        }
+
+        double frameHeight = model.FrameHeight * ZoomFactorFinal;
+
+        void applyDecodeSize(BitmapImage image)
+        {
+            if (image == null || image.PixelHeight <= 0 || image.PixelWidth <= 0)
+            {
+                return;
+            }
+
+            double frameWidth = frameHeight * image.PixelWidth / image.PixelHeight;
+            double multiplication = 1.2 * DisplayUtils.GetRawPixelPerPixel();
+            int decodeHeight = (int)Math.Round(frameHeight * multiplication);
+            int decodeWidth = (int)Math.Round(frameWidth * multiplication);
+
+            if (decodeHeight * decodeWidth >= image.PixelHeight * image.PixelWidth)
+            {
+                decodeHeight = image.PixelHeight;
+                decodeWidth = image.PixelWidth;
+            }
+
+            if (image.DecodePixelHeight == decodeHeight && image.DecodePixelWidth == decodeWidth)
+            {
+                return;
+            }
+
+            image.DecodePixelWidth = decodeWidth;
+            image.DecodePixelHeight = decodeHeight;
+            Log("UpdateDecodeSize", $"h={decodeHeight},w={decodeWidth}");
+        }
+
+        applyDecodeSize(model.ImageLeft);
+        applyDecodeSize(model.ImageRight);
     }
 
     //
@@ -1258,23 +1303,22 @@ internal partial class ReaderView : UserControl
         public IImageSource ImageSource { get; set; }
     }
 
-    private class LoadImageResultHandler(ReaderFrameViewModel model, IImageSource source, bool isLeft) : IImageResultHandler
+    private class LoadImageResultHandler(ReaderView view, ReaderFrameViewModel model, IImageSource source, bool isLeft) : IImageResultHandler
     {
-        private readonly ReaderFrameViewModel _model = model;
-        private readonly bool _isLeft = isLeft;
-
         public void OnSuccess(BitmapImage image)
         {
-            if (_isLeft)
+            if (isLeft)
             {
-                _model.ImageLeft = image;
-                _model.ImageLeftCurrentSource = source;
+                model.ImageLeft = image;
+                model.ImageLeftCurrentSource = source;
             }
             else
             {
-                _model.ImageRight = image;
-                _model.ImageRightCurrentSource = source;
+                model.ImageRight = image;
+                model.ImageRightCurrentSource = source;
             }
+
+            view.UpdateImageDecodeSize(model);
         }
     }
 

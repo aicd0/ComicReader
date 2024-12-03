@@ -88,6 +88,9 @@
                             <StackPanel Orientation="Vertical">
                                 <TextBlock x:Uid="TransitionAnimation" Style="{StaticResource SettingsPageBodyTextBlock}" />
                                 <ToggleSwitch IsOn="{x:Bind Shared.TransitionAnimation, Mode=TwoWay}" />
+                                <Grid Height="8" />
+                                <TextBlock x:Uid="AntiAliasingFilter" Style="{StaticResource SettingsPageBodyTextBlock}" />
+                                <ToggleSwitch IsOn="{x:Bind Shared.AntiAliasingEnabled, Mode=TwoWay}" />
                             </StackPanel>
                         </settings:SettingExpander.InnerContent>
                     </settings:SettingExpander>

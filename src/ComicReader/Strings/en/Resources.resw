@@ -628,4 +628,7 @@ Category2: tag4/tag5
   <data name="Calculating" xml:space="preserve">
     <value>Calculating...</value>
   </data>
+  <data name="AntiAliasingFilter.Text" xml:space="preserve">
+    <value>Anti-aliasing filter (experimental)</value>
+  </data>
 </root>

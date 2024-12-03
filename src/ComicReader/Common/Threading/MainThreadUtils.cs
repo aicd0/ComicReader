@@ -66,7 +66,7 @@ internal class MainThreadUtils
         return await completionSrc.Task;
     }
 
-    private static bool IsOnMainThread()
+    public static bool IsOnMainThread()
     {
         return App.Window.DispatcherQueue.HasThreadAccess;
     }

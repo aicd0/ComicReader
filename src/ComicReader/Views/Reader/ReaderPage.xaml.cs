@@ -29,7 +29,6 @@ using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media.Imaging;
 
 using Windows.Storage;
 using Windows.System;
@@ -261,7 +260,6 @@ internal sealed partial class ReaderPage : BasePage
                         Width = preview_width,
                         Height = preview_height,
                         Dispatcher = _loadPreviewDispatcher,
-                        Callback = new LoadPreviewCallback(i),
                         DebugDescription = i.ToString()
                     },
                     Page = i + 1,
@@ -839,16 +837,5 @@ internal sealed partial class ReaderPage : BasePage
         Loading,
         Error,
         Working,
-    }
-
-    private class LoadPreviewCallback(int index) : SimpleImageView.IImageCallback
-    {
-        private readonly long _startTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-
-        public void OnSuccess(BitmapImage image)
-        {
-            long loadTime = DateTimeOffset.Now.ToUnixTimeMilliseconds() - _startTime;
-            Logger.I(LogTag.N("ReaderLoadTime", "LoadPreview"), $"time={loadTime},index={index}");
-        }
     }
 }

@@ -1,0 +1,57 @@
+﻿// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
+using System;
+
+using ComicReader.Common.DebugTools;
+using ComicReader.Common.Native;
+
+using Microsoft.UI;
+using Microsoft.UI.Windowing;
+
+using WinRT.Interop;
+
+namespace ComicReader.Common;
+
+internal static class DisplayUtils
+{
+    private const string TAG = "DisplayUtils";
+
+    private static double sRawPixelPerPixel = -1;
+
+    public static double GetRawPixelPerPixel()
+    {
+        if (sRawPixelPerPixel < 0)
+        {
+            try
+            {
+                sRawPixelPerPixel = GetScaleAdjustment();
+            }
+            catch (Exception ex)
+            {
+                Logger.F(TAG, "GetRawPixelPerPixel", ex);
+                return 1.0;
+            }
+        }
+
+        return sRawPixelPerPixel;
+    }
+
+    private static double GetScaleAdjustment()
+    {
+        nint hWnd = WindowNative.GetWindowHandle(App.Window);
+        WindowId wndId = Win32Interop.GetWindowIdFromWindow(hWnd);
+        var displayArea = DisplayArea.GetFromWindowId(wndId, DisplayAreaFallback.Primary);
+        nint hMonitor = Win32Interop.GetMonitorFromDisplayId(displayArea.DisplayId);
+
+        // Get DPI.
+        int result = NativeMethods.GetDpiForMonitor(hMonitor, NativeModels.MonitorDPIType.MDT_Default, out uint dpiX, out uint _);
+        if (result != 0)
+        {
+            throw new Exception("Could not get DPI for monitor.");
+        }
+
+        uint scaleFactorPercent = (uint)(((long)dpiX * 100 + (96 >> 1)) / 96);
+        return scaleFactorPercent / 100.0;
+    }
+}

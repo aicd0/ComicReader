@@ -11,6 +11,7 @@ static class AppStatusPreserver
     private const string TAG = "AppStatusPreserver";
     private const string KEY_DEBUG_MODE = "debug_mode";
     private const string KEY_DEFAULT_ARCHIVE_CODE_PAGE = "default_archive_code_page";
+    private const string KEY_ANTI_ALIASING_ENABLED = "anti_aliasing_enabled";
     private const string KEY_READING_COMIC_ID = "reading_comic_id";
 
     public static bool DebugMode
@@ -34,6 +35,18 @@ static class AppStatusPreserver
         set
         {
             KVDatabase.GetDefaultMethod().SetLong(KVLib.APP, KEY_DEFAULT_ARCHIVE_CODE_PAGE, value);
+        }
+    }
+
+    public static bool AntiAliasingEnabled
+    {
+        get
+        {
+            return KVDatabase.GetDefaultMethod().GetBoolean(KVLib.APP, KEY_ANTI_ALIASING_ENABLED, false);
+        }
+        set
+        {
+            KVDatabase.GetDefaultMethod().SetBoolean(KVLib.APP, KEY_ANTI_ALIASING_ENABLED, value);
         }
     }
 

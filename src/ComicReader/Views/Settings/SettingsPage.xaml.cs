@@ -82,6 +82,21 @@ public class SettingsPageShared : INotifyPropertyChanged
         }
     }
 
+    private bool _antiAliasingEnabled = true;
+    public bool AntiAliasingEnabled
+    {
+        get => _antiAliasingEnabled;
+        set
+        {
+            if (_antiAliasingEnabled != value)
+            {
+                _antiAliasingEnabled = value;
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(AntiAliasingEnabled)));
+                OnSettingsChanged?.Invoke();
+            }
+        }
+    }
+
     private bool m_IsClearHistoryEnabled = false;
     public bool IsClearHistoryEnabled
     {
@@ -307,6 +322,7 @@ internal sealed partial class SettingsPage : BasePage
         Shared.HistorySaveBrowsingHistory = XmlDatabase.Settings.SaveHistory;
         XmlDatabaseManager.ReleaseLock();
 
+        Shared.AntiAliasingEnabled = AppStatusPreserver.AntiAliasingEnabled;
         Shared.AdvancedDebugMode = AppStatusPreserver.DebugMode;
 
         UpdateAppearance();
@@ -455,6 +471,7 @@ internal sealed partial class SettingsPage : BasePage
             }
         }
 
+        AppStatusPreserver.AntiAliasingEnabled = Shared.AntiAliasingEnabled;
         AppStatusPreserver.DebugMode = Shared.AdvancedDebugMode;
     }
 

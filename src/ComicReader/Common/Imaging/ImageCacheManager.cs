@@ -7,18 +7,13 @@ using System.Threading.Tasks;
 
 using ComicReader.Common.Caching;
 using ComicReader.Common.DebugTools;
-using ComicReader.Common.Native;
 using ComicReader.Common.Threading;
 
-using Microsoft.UI;
-using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml.Media.Imaging;
 
 using Windows.Graphics.Imaging;
 using Windows.Storage;
 using Windows.Storage.Streams;
-
-using WinRT.Interop;
 
 namespace ComicReader.Common.Imaging;
 
@@ -30,8 +25,6 @@ internal static class ImageCacheManager
 
     private const string CACHE_ENTRY_KEY_SMALL = "100k";
     private const int CACHE_ENTRY_RESOLUTION_SMALL = 100000;
-
-    private static double sRawPixelPerPixel = -1;
 
     private static readonly Lazy<LRUCache> sImageCache = new(delegate
     {
@@ -83,6 +76,7 @@ internal static class ImageCacheManager
         int cacheSourceWidth = 0;
         int cacheSourceHeight = 0;
 
+        DebugUtils.Assert(!MainThreadUtils.IsOnMainThread());
         MainThreadUtils.RunInMainThreadAsync(async delegate
         {
             if (token.IsCancellationRequested)
@@ -313,7 +307,7 @@ internal static class ImageCacheManager
         desiredWidth = 0;
         desiredHeight = 0;
 
-        double rawPixelsPerViewPixel = GetRawPixelPerPixel();
+        double rawPixelsPerViewPixel = DisplayUtils.GetRawPixelPerPixel();
         double frameRatio = frameWidth / frameHeight;
         double desiredWidthRaw;
         double desiredHeightRaw;
@@ -339,33 +333,5 @@ internal static class ImageCacheManager
         desiredWidth = (int)desiredWidthRaw;
         desiredHeight = (int)desiredHeightRaw;
         return true;
-    }
-
-    private static double GetRawPixelPerPixel()
-    {
-        if (sRawPixelPerPixel < 0)
-        {
-            sRawPixelPerPixel = GetScaleAdjustment();
-        }
-
-        return sRawPixelPerPixel;
-    }
-
-    private static double GetScaleAdjustment()
-    {
-        nint hWnd = WindowNative.GetWindowHandle(App.Window);
-        WindowId wndId = Win32Interop.GetWindowIdFromWindow(hWnd);
-        var displayArea = DisplayArea.GetFromWindowId(wndId, DisplayAreaFallback.Primary);
-        nint hMonitor = Win32Interop.GetMonitorFromDisplayId(displayArea.DisplayId);
-
-        // Get DPI.
-        int result = NativeMethods.GetDpiForMonitor(hMonitor, NativeModels.MonitorDPIType.MDT_Default, out uint dpiX, out uint _);
-        if (result != 0)
-        {
-            throw new Exception("Could not get DPI for monitor.");
-        }
-
-        uint scaleFactorPercent = (uint)(((long)dpiX * 100 + (96 >> 1)) / 96);
-        return scaleFactorPercent / 100.0;
     }
 }

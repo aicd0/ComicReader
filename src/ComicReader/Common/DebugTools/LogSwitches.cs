@@ -31,8 +31,7 @@ internal static class LogSwitches
     private static readonly Dictionary<LogTag, bool> TAG_WHITELIST = new()
     {
         { LogTag.N("Logger"), false },
-        { LogTag.N("ReaderVertical", "Jump"), true },
-        { LogTag.N("ReaderVertical", "ViewChanged"), true },
+        { LogTag.N("ReaderView", "UpdateDecodeSize"), true },
     };
 
     public static bool CanLog(int level, LogTag tag)
