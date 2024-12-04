@@ -159,7 +159,7 @@ internal class FavoriteDataManager
 
     private static void OnUpdated(bool sendEvent)
     {
-        TaskQueue.DefaultQueue.Enqueue($"{TAG}#OnUpdated", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Favorites));
+        TaskDispatcher.DefaultQueue.Submit($"{TAG}#OnUpdated", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Favorites));
 
         if (sendEvent)
         {

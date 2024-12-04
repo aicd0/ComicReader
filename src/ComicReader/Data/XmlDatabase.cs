@@ -98,8 +98,8 @@ internal class XmlDatabaseManager
         return TaskException.Success;
     }
 
-    public static Func<TaskException> SaveSealed(XmlDatabaseItem item) =>
-        () => SaveUnsealed(item).Result;
+    public static Action SaveSealed(XmlDatabaseItem item) =>
+        () => SaveUnsealed(item).Wait();
 
     public static async Task<TaskException> SaveUnsealed(XmlDatabaseItem item)
     {

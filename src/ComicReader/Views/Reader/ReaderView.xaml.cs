@@ -75,8 +75,8 @@ internal partial class ReaderView : UserControl
 
     private double _initialPage = 0.0;
     private List<IImageSource> _originalDataModel;
-    private readonly TaskQueueDispatcher _loadInfoDispatcher = new(new TaskQueue("ReaderViewLoadInfoQueue"), "");
-    private readonly TaskQueueDispatcher _loadImageDispatcher = new(new TaskQueue("ReaderViewLoadImageQueue"), "");
+    private readonly ITaskDispatcher _loadInfoDispatcher = TaskDispatcher.Factory.NewQueue("ReaderViewLoadInfoQueue");
+    private readonly ITaskDispatcher _loadImageDispatcher = TaskDispatcher.Factory.NewQueue("ReaderViewLoadImageQueue");
     private readonly ReaderFrameManager _frameManager = new();
     private readonly Dictionary<int, ImageDataModel> _dataModel = [];
     private readonly CancellationSession _dataModelSession;
@@ -265,7 +265,7 @@ internal partial class ReaderView : UserControl
         // Dispatch event
         DispatchReaderStateChangeEvent(ReaderState.Loading);
 
-        _loadInfoDispatcher.Submit(delegate
+        _loadInfoDispatcher.Submit("ReaderLoadImageInfo", delegate
         {
             void dispatchToMainThread(List<Tuple<int, double, IImageSource>> pendingList)
             {
@@ -319,7 +319,7 @@ internal partial class ReaderView : UserControl
             }
 
             dispatchToMainThread(pendingList);
-        }, "ReaderLoadImageInfo");
+        });
     }
 
     private void ResetLoader()

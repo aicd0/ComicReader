@@ -65,7 +65,7 @@ class SettingDataManager
 
         if (final)
         {
-            TaskQueue.DefaultQueue.Enqueue($"{TAG}#AddComicFolder", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
+            TaskDispatcher.DefaultQueue.Submit($"{TAG}#AddComicFolder", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
         }
 
         return TaskException.Success;
@@ -115,7 +115,7 @@ class SettingDataManager
 
         if (final)
         {
-            TaskQueue.DefaultQueue.Enqueue($"{TAG}#RemoveComicFolder", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
+            TaskDispatcher.DefaultQueue.Submit($"{TAG}#RemoveComicFolder", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
         }
     }
 

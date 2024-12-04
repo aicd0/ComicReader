@@ -14,7 +14,7 @@ internal static class SimpleImageLoader
     {
         private readonly CancellationSession.IToken _sessionToken;
         private readonly List<Token> _tokens;
-        private IDispatcher _dispatcher = new TaskQueueDispatcher(TaskQueue.DefaultQueue, "SimpleImageLoaderDefaultDispatcher");
+        private ITaskDispatcher _dispatcher = TaskDispatcher.DefaultQueue;
 
         public Transaction(CancellationSession.IToken token, List<Token> tokens)
         {
@@ -22,7 +22,7 @@ internal static class SimpleImageLoader
             _tokens = tokens;
         }
 
-        public Transaction SetDispatcher(IDispatcher dispatcher)
+        public Transaction SetDispatcher(ITaskDispatcher dispatcher)
         {
             ArgumentNullException.ThrowIfNull(dispatcher);
 
@@ -32,7 +32,7 @@ internal static class SimpleImageLoader
 
         protected override TaskException CommitImpl()
         {
-            _dispatcher.Submit(delegate
+            _dispatcher.Submit("SimpleImageLoader", delegate
             {
                 foreach (Token token in _tokens)
                 {
@@ -41,7 +41,7 @@ internal static class SimpleImageLoader
 
                     ImageCacheManager.LoadImage(_sessionToken, token.Source, width, height, token.StretchMode, token.ImageResultHandler);
                 }
-            }, "SimpleImageLoader");
+            });
             return TaskException.Success;
         }
     }

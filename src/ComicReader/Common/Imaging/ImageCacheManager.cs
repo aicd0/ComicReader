@@ -31,10 +31,9 @@ internal static class ImageCacheManager
         StorageFolder cacheFolder = ApplicationData.Current.LocalCacheFolder;
         StorageFolder imageFolder = cacheFolder.CreateFolderAsync(CACHE_FOLDER, CreationCollisionOption.OpenIfExists).AsTask().Result;
         LRUCache cache = new(imageFolder, MAX_CACHE_SIZE);
-        TaskQueue.LongRunningQueue.Enqueue("CleanImageCache", delegate
+        TaskDispatcher.LongRunningThreadPool.Submit("CleanImageCache", delegate
         {
             cache.Clean();
-            return TaskException.Success;
         });
         return cache;
     });
@@ -43,6 +42,8 @@ internal static class ImageCacheManager
         IImageSource source, double frameWidth, double frameHeight, StretchModeEnum stretchMode,
         IImageResultHandler handler)
     {
+        DebugUtils.Assert(!MainThreadUtils.IsMainThread());
+
         if (token.IsCancellationRequested)
         {
             return;
@@ -76,7 +77,6 @@ internal static class ImageCacheManager
         int cacheSourceWidth = 0;
         int cacheSourceHeight = 0;
 
-        DebugUtils.Assert(!MainThreadUtils.IsOnMainThread());
         MainThreadUtils.RunInMainThreadAsync(async delegate
         {
             if (token.IsCancellationRequested)

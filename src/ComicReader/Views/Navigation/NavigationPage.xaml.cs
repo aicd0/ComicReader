@@ -278,7 +278,7 @@ internal sealed partial class NavigationPage : BasePage
             XmlDatabase.Settings.HorizontalPageArrangement = data.HorizontalPageArrangement;
 
             XmlDatabaseManager.ReleaseLock();
-            TaskQueue.DefaultQueue.Enqueue($"{TAG}#RspReaderSetting_DataChanged", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
+            TaskDispatcher.DefaultQueue.Submit($"{TAG}#RspReaderSetting_DataChanged", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
         });
     }
 

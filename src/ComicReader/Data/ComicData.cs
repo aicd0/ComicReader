@@ -71,7 +71,7 @@ internal abstract class ComicData
         }
     }
 
-    private static readonly TaskQueue _tableQueue = new("ComicData");
+    private static readonly ITaskDispatcher _tableQueue = TaskDispatcher.Factory.NewQueue("ComicDataQueue");
     private static int _pendingUpdateTaskCount = 0;
 
     private bool _imageUpdated = false;
@@ -391,8 +391,8 @@ internal abstract class ComicData
         Tags.Add(default_tag);
     }
 
-    public Func<TaskException> SaveToInfoFileSealed() =>
-        () => SaveToInfoFile().Result;
+    public Action SaveToInfoFileSealed() =>
+        () => SaveToInfoFile().Wait();
 
     public string TagString()
     {
@@ -555,22 +555,24 @@ internal abstract class ComicData
     {
         int pendingCount = Interlocked.Increment(ref _pendingUpdateTaskCount);
         Log($"UpdateAllComics#Enqueue(pending={pendingCount},reason={reason},lazy={lazy})");
-        TaskQueue.LongRunningQueue.Enqueue($"{TAG}#UpdateAllComics", delegate
+
+        TaskDispatcher.LongRunningThreadPool.Submit($"{TAG}#UpdateAllComics", delegate
         {
             int pendingCount = Interlocked.Decrement(ref _pendingUpdateTaskCount);
             if (pendingCount > 0)
             {
                 Log($"UpdateAllComics#Skip(pending={pendingCount})");
-                return TaskException.Cancellation;
+                return;
             }
+
             long session = Random.Shared.NextInt64();
             Log($"UpdateAllComics#Start(session={session},lazy={lazy})");
             IsRescanning = true;
             TaskException result = UpdateAllComicsInternal(lazy).Result;
             IsRescanning = false;
+            Log($"UpdateAllComics#End(result={result},session={session})");
+
             OnUpdated?.Invoke();
-            Log($"UpdateAllComics#End(session={session})");
-            return result;
         });
     }
 
@@ -801,10 +803,9 @@ internal abstract class ComicData
     private static async Task<T> Enqueue<T>(Func<T> op, string taskName)
     {
         var taskResult = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
-        _tableQueue.Enqueue($"{TAG}#Enqueue#{taskName}", delegate
+        _tableQueue.Submit($"{TAG}#Enqueue#{taskName}", delegate
         {
             taskResult.SetResult(op());
-            return TaskException.Success;
         });
         return await taskResult.Task;
     }

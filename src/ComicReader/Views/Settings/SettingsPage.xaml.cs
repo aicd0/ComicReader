@@ -461,7 +461,7 @@ internal sealed partial class SettingsPage : BasePage
         XmlDatabase.Settings.TransitionAnimation = Shared.TransitionAnimation;
         XmlDatabase.Settings.SaveHistory = Shared.HistorySaveBrowsingHistory;
         XmlDatabaseManager.ReleaseLock();
-        TaskQueue.DefaultQueue.Enqueue("SettingsPage#Save", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
+        TaskDispatcher.DefaultQueue.Submit("SettingsPage#Save", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
 
         {
             int selectedIndex = Shared.DefaultArchiveCodePageIndex;
@@ -525,7 +525,7 @@ internal sealed partial class SettingsPage : BasePage
     private void OnClearCacheClick(object sender, RoutedEventArgs e)
     {
         Shared.IsClearingCache = true;
-        TaskQueue.DefaultQueue.Enqueue("ClearCache", delegate
+        TaskDispatcher.DefaultQueue.Submit("ClearCache", delegate
         {
             ClearCache();
             string size = GetCacheSize();
@@ -534,7 +534,6 @@ internal sealed partial class SettingsPage : BasePage
                 Shared.IsClearingCache = false;
                 Shared.CacheSize = size;
             });
-            return TaskException.Success;
         });
     }
 
@@ -544,14 +543,13 @@ internal sealed partial class SettingsPage : BasePage
 
     private void UpdateCacheSize()
     {
-        TaskQueue.DefaultQueue.Enqueue("CalculateCacheSize", delegate
+        TaskDispatcher.DefaultQueue.Submit("CalculateCacheSize", delegate
         {
             string size = GetCacheSize();
             _ = MainThreadUtils.RunInMainThread(() =>
             {
                 Shared.CacheSize = size;
             });
-            return TaskException.Success;
         });
     }
 

@@ -14,7 +14,7 @@ internal class MainThreadUtils
 {
     public static async Task RunInMainThread(Action callback)
     {
-        if (IsOnMainThread())
+        if (IsMainThread())
         {
             callback();
         }
@@ -26,7 +26,7 @@ internal class MainThreadUtils
 
     public static async Task<T> RunInMainThread<T>(Func<T> callback)
     {
-        if (IsOnMainThread())
+        if (IsMainThread())
         {
             return callback();
         }
@@ -36,7 +36,7 @@ internal class MainThreadUtils
 
     public static async Task RunInMainThreadAsync(Func<Task> callback)
     {
-        if (IsOnMainThread())
+        if (IsMainThread())
         {
             await callback();
             return;
@@ -53,7 +53,7 @@ internal class MainThreadUtils
 
     public static async Task<T> RunInMainThreadAsync<T>(Func<Task<T>> callback)
     {
-        if (IsOnMainThread())
+        if (IsMainThread())
         {
             return await callback();
         }
@@ -66,7 +66,7 @@ internal class MainThreadUtils
         return await completionSrc.Task;
     }
 
-    public static bool IsOnMainThread()
+    public static bool IsMainThread()
     {
         return App.Window.DispatcherQueue.HasThreadAccess;
     }

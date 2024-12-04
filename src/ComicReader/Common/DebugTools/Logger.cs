@@ -166,20 +166,17 @@ internal static class Logger
             realMessage += "\n" + exception.ToString();
         }
 
-        if (DebugUtils.DebugMode)
+        if (DebugUtils.DebugModeStrict && LogSwitches.CanLog(level, tag))
         {
-            if (LogSwitches.CanLog(level, tag))
-            {
-                LogToConsole(realMessage);
-            }
-
-            DebugUtils.Assert(level < LEVEL_FATAL);
+            LogToConsole(realMessage);
         }
 
-        if (level >= LEVEL_INFO)
+        if (DebugUtils.DebugMode && level >= LEVEL_INFO)
         {
             LogToFile(realMessage);
         }
+
+        DebugUtils.Assert(level < LEVEL_FATAL);
     }
 
     private static void LogToFile(string message)

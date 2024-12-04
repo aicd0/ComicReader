@@ -70,11 +70,10 @@ internal partial class SimpleImageView : UserControl
 
         CancellationSession.IToken token = _cancellationSession.Token;
         IImageResultHandler handler = new WeakImageResultHandler(this, model.Callback);
-        Action loadAction = delegate
+        model.Dispatcher.Submit(model.DebugDescription, delegate
         {
             LoadImage(token, model, handler);
-        };
-        model.Dispatcher.Submit(loadAction, model.DebugDescription);
+        });
     }
 
     private void UnloadImage()
@@ -129,7 +128,7 @@ internal partial class SimpleImageView : UserControl
         public double Height { get; set; } = double.PositiveInfinity;
         public StretchModeEnum StretchMode { get; set; } = StretchModeEnum.Uniform;
         public double Multiplication { get; set; } = 1.0;
-        public IDispatcher Dispatcher { get; set; }
+        public ITaskDispatcher Dispatcher { get; set; }
         public IImageCallback Callback { get; set; }
         public string DebugDescription { get; set; }
 

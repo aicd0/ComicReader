@@ -116,7 +116,7 @@ internal class HistoryDataManager
 
     private static void OnUpdated(bool sendEvent)
     {
-        TaskQueue.DefaultQueue.Enqueue($"{TAG}#OnUpdated", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.History));
+        TaskDispatcher.DefaultQueue.Submit($"{TAG}#OnUpdated", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.History));
 
         if (sendEvent)
         {

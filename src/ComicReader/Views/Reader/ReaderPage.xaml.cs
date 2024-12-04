@@ -154,7 +154,7 @@ internal sealed partial class ReaderPage : BasePage
     private bool _buttomTilePointerIn = false;
     private DateTimeOffset _buttomTileHideRequestTime = DateTimeOffset.Now;
 
-    private readonly TaskQueueDispatcher _loadPreviewDispatcher = new(new TaskQueue("ReaderLoadPreview"), "");
+    private readonly ITaskDispatcher _loadPreviewDispatcher = TaskDispatcher.Factory.NewQueue("ReaderLoadPreview");
     private readonly TagItemHandler _tagItemHandler;
 
     private ReaderPageViewModel ViewModel { get; set; } = new();

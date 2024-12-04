@@ -13,7 +13,9 @@ internal static class DebugUtils
     private const bool IS_DEBUG_BUILD = false;
 #endif
 
-    public static bool DebugMode => IS_DEBUG_BUILD && AppStatusPreserver.DebugMode;
+    public static bool DebugMode => AppStatusPreserver.DebugMode;
+
+    public static bool DebugModeStrict => IS_DEBUG_BUILD && AppStatusPreserver.DebugMode;
 
     public static void Assert(bool condition)
     {

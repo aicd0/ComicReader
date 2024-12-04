@@ -94,7 +94,7 @@ public class AppInfoProvider
         }
 
         var completionSource = new TaskCompletionSource<ReadOnlyDictionary<int, Encoding>>();
-        TaskQueue.DefaultQueue.Enqueue("GetSupportedEncodings", delegate
+        TaskDispatcher.DefaultQueue.Submit("GetSupportedEncodings", delegate
         {
             // Encoding.GetEncodings() doesn't return the full list of encodings.
             // At least it doesn't work for current version of UWP.
@@ -134,7 +134,6 @@ public class AppInfoProvider
 
             _supportedEncodings = new ReadOnlyDictionary<int, Encoding>(supportedEncodings);
             completionSource.SetResult(_supportedEncodings);
-            return TaskException.Success;
         });
         return await completionSource.Task;
     }

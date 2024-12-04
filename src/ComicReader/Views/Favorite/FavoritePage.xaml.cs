@@ -128,7 +128,7 @@ internal sealed partial class FavoritePage : BasePage
         XmlDatabase.Favorites.RootNodes.Clear();
         helper(XmlDatabase.Favorites.RootNodes, DataSource);
         XmlDatabaseManager.ReleaseLock();
-        TaskQueue.DefaultQueue.Enqueue($"{TAG}#Save", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Favorites));
+        TaskDispatcher.DefaultQueue.Submit($"{TAG}#Save", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Favorites));
     }
 
     private async Task DeleteItem(FavoriteItemViewModel item)
