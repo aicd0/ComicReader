@@ -32,12 +32,15 @@ internal abstract class TaskDispatcher : ITaskDispatcher
 
         var tag = LogTag.N(TAG, _name, taskName);
         long submitTime = GetCurrentMilliseconds();
+        int pendingCount = Interlocked.Increment(ref _pendingTaskCount);
+        int runningCount = _runningTaskCount;
+        Logger.I(tag, $"submitted (running={runningCount},pending={pendingCount})");
         SubmitInternal(delegate
         {
             long startTime = GetCurrentMilliseconds();
             long timeUsed = GetCurrentMilliseconds() - submitTime;
-            int pendingCount = Interlocked.Decrement(ref _pendingTaskCount);
-            int runningCount = Interlocked.Increment(ref _runningTaskCount);
+            pendingCount = Interlocked.Decrement(ref _pendingTaskCount);
+            runningCount = Interlocked.Increment(ref _runningTaskCount);
             Logger.I(tag, $"started (time={timeUsed},running={runningCount},pending={pendingCount})");
             try
             {

@@ -18,7 +18,12 @@ static class AppStatusPreserver
     {
         get
         {
-            return KVDatabase.GetDefaultMethod().GetBoolean(KVLib.APP, KEY_DEBUG_MODE, false);
+#if DEBUG
+            bool defaultState = true;
+#else
+            bool defaultState = false;
+#endif
+            return KVDatabase.GetDefaultMethod().GetBoolean(KVLib.APP, KEY_DEBUG_MODE, defaultState);
         }
         set
         {

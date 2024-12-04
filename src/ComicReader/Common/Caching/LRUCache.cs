@@ -40,6 +40,8 @@ internal class LRUCache
 
     public ILRUInputStream Put(string key)
     {
+        ArgumentNullException.ThrowIfNull(key, nameof(key));
+
         string hashedKey = ToHashedKey(key);
         CacheEntry entry = _entries.GetOrAdd(hashedKey, (string key) => new CacheEntry(this, key));
         ILRUInputStream stream = entry.StartWrite();
@@ -52,6 +54,8 @@ internal class LRUCache
 
     public ILRUOutputStream Get(string key)
     {
+        ArgumentNullException.ThrowIfNull(key, nameof(key));
+
         string hashedKey = ToHashedKey(key);
         CacheEntry entry = _entries.GetOrAdd(hashedKey, (string key) => new CacheEntry(this, key));
         ILRUOutputStream stream = entry.StartRead();

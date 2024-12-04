@@ -244,26 +244,34 @@ internal sealed partial class ReaderPage : BasePage
             reader.SetIsContinuous(readerSetting.IsContinuous);
             reader.SetPageArrangement(readerSetting.PageArrangement);
             reader.SetFlowDirection(readerSetting.IsLeftToRight);
-            await LoadComic(comic);
 
-            // Update previews.
-            double preview_width = (double)Application.Current.Resources["ReaderPreviewImageWidth"];
-            double preview_height = (double)Application.Current.Resources["ReaderPreviewImageHeight"];
-            PreviewDataSource.Clear();
-            for (int i = 0; i < comic.ImageCount; ++i)
+            if (comic == null)
             {
-                PreviewDataSource.Add(new ReaderImagePreviewViewModel
+                ReaderStatusLiveData.Emit(ReaderStatusEnum.Error);
+            }
+            else
+            {
+                await LoadComic(comic);
+
+                // Update previews.
+                double preview_width = (double)Application.Current.Resources["ReaderPreviewImageWidth"];
+                double preview_height = (double)Application.Current.Resources["ReaderPreviewImageHeight"];
+                PreviewDataSource.Clear();
+                for (int i = 0; i < comic.ImageCount; ++i)
                 {
-                    Image = new SimpleImageView.Model
+                    PreviewDataSource.Add(new ReaderImagePreviewViewModel
                     {
-                        Source = new ComicImageSource(comic, i),
-                        Width = preview_width,
-                        Height = preview_height,
-                        Dispatcher = _loadPreviewDispatcher,
-                        DebugDescription = i.ToString()
-                    },
-                    Page = i + 1,
-                });
+                        Image = new SimpleImageView.Model
+                        {
+                            Source = new ComicImageSource(comic, i),
+                            Width = preview_width,
+                            Height = preview_height,
+                            Dispatcher = _loadPreviewDispatcher,
+                            DebugDescription = i.ToString()
+                        },
+                        Page = i + 1,
+                    });
+                }
             }
         });
     }

@@ -682,7 +682,6 @@ internal partial class ReaderView : UserControl
 
         if (frameOffsets == null)
         {
-            DebugUtils.Assert(false);
             return false;
         }
 
