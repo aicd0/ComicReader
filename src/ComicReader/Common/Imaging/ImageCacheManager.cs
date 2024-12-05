@@ -49,15 +49,16 @@ internal static class ImageCacheManager
             return;
         }
 
-        string cacheKey = source.GetCacheKey();
+        string uri = source.GetUri();
         int sourceSignature = source.GetContentSignature();
 
         IRandomAccessStream cacheStream = null;
         ImageCacheDatabase.CacheRecord cacheRecord = null;
+        bool requireCache = true;
 
-        if (cacheKey != null)
+        if (uri != null)
         {
-            cacheRecord = ImageCacheDatabase.GetCacheRecord(cacheKey);
+            cacheRecord = ImageCacheDatabase.GetCacheRecord(uri);
 
             if (cacheRecord != null && (sourceSignature == 0 || cacheRecord.Signature == sourceSignature))
             {
@@ -71,14 +72,18 @@ internal static class ImageCacheManager
                         cacheStream = sImageCache.Value.Get(entry);
                     }
                 }
+                else
+                {
+                    requireCache = false;
+                }
             }
         }
 
         IRandomAccessStream sourceStream = null;
 
-        if (cacheStream == null)
+        if (cacheStream == null && requireCache)
         {
-            sourceStream = TryOpenImageStream(source);
+            sourceStream = TryOpenImageStreamAsync(source).Result;
 
             if (sourceStream == null)
             {
@@ -88,7 +93,7 @@ internal static class ImageCacheManager
 
             try
             {
-                cacheStream = TryCreateImageCache(cacheRecord, sourceStream, frameWidth, frameHeight, stretchMode, cacheKey, sourceSignature);
+                cacheStream = TryCreateImageCache(cacheRecord, sourceStream, frameWidth, frameHeight, stretchMode, uri, sourceSignature);
             }
             catch (Exception)
             {
@@ -109,16 +114,16 @@ internal static class ImageCacheManager
 
                 if (cacheStream != null)
                 {
-                    image = await TryLoadImageFromStream(cacheStream);
+                    image = await TryLoadImageFromStreamAsync(cacheStream);
                 }
 
                 if (image == null)
                 {
-                    sourceStream ??= TryOpenImageStream(source);
+                    sourceStream ??= await TryOpenImageStreamAsync(source);
 
                     if (sourceStream != null)
                     {
-                        image = await TryLoadImageFromStream(sourceStream);
+                        image = await TryLoadImageFromStreamAsync(sourceStream);
                     }
                 }
 
@@ -285,25 +290,27 @@ internal static class ImageCacheManager
         return cacheEntryKey;
     }
 
-    private static IRandomAccessStream TryOpenImageStream(IImageSource source)
+    private static async Task<IRandomAccessStream> TryOpenImageStreamAsync(IImageSource source)
     {
         try
         {
-            return source.GetImageStream().Result;
+            return await source.GetImageStream();
         }
         catch (Exception e)
         {
             Logger.E(TAG, "TryLoadImageFromFile", e);
         }
+
         return null;
     }
 
-    private static async Task<BitmapImage> TryLoadImageFromStream(IRandomAccessStream stream)
+    private static async Task<BitmapImage> TryLoadImageFromStreamAsync(IRandomAccessStream stream)
     {
         BitmapImage image = new();
-        stream.Seek(0);
+
         try
         {
+            stream.Seek(0);
             await image.SetSourceAsync(stream);
         }
         catch (Exception e)
@@ -311,6 +318,7 @@ internal static class ImageCacheManager
             Logger.F(TAG, "TryLoadImageFromStream", e);
             image = null;
         }
+
         return image;
     }
 

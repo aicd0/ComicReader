@@ -3,6 +3,8 @@
 
 using System;
 
+using ComicReader.Common.KVStorage;
+
 namespace ComicReader.Common.DebugTools;
 
 internal static class DebugUtils
@@ -12,10 +14,28 @@ internal static class DebugUtils
 #else
     private const bool IS_DEBUG_BUILD = false;
 #endif
+    private const string KEY_DEBUG_MODE = "debug_mode";
 
-    public static bool DebugMode => AppStatusPreserver.DebugMode;
+    private static bool? _debugMode = null;
 
-    public static bool DebugModeStrict => IS_DEBUG_BUILD && AppStatusPreserver.DebugMode;
+    public static bool DebugMode
+    {
+        get
+        {
+            if (!_debugMode.HasValue)
+            {
+                _debugMode = KVDatabase.GetDefaultMethod().GetBoolean(KVLib.APP, KEY_DEBUG_MODE, IS_DEBUG_BUILD);
+            }
+            return _debugMode.Value;
+        }
+        set
+        {
+            _debugMode = value;
+            KVDatabase.GetDefaultMethod().SetBoolean(KVLib.APP, KEY_DEBUG_MODE, value);
+        }
+    }
+
+    public static bool DebugModeStrict => IS_DEBUG_BUILD && DebugMode;
 
     public static void Assert(bool condition)
     {

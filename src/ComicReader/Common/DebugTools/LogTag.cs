@@ -185,7 +185,17 @@ internal class LogTag
                             sb.Append('/');
                         }
                         tagDivider = true;
-                        sb.Append(tag);
+
+                        string tagEscaped = tag.Trim();
+                        if (tagEscaped.Contains('/'))
+                        {
+                            tagEscaped = tagEscaped.Replace('/', '_');
+                        }
+                        if (tagEscaped.Contains(','))
+                        {
+                            tagEscaped = tagEscaped.Replace(',', '_');
+                        }
+                        sb.Append(tagEscaped);
                     }
                 }
                 else

@@ -25,7 +25,7 @@ internal class ComicCoverImageSource(ComicData comic) : IImageSource
         return await _comic.GetImageStream(0);
     }
 
-    public string GetCacheKey()
+    public string GetUri()
     {
         return _comic.GetCoverImageCacheKey();
     }

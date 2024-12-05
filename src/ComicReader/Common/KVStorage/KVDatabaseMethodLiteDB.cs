@@ -71,14 +71,17 @@ internal class KVDatabaseMethodLiteDB : KVDatabaseMethod, IDisposable
     public override long? GetLong(string lib, string key)
     {
         string s = GetValue(lib, key);
+
         if (s == null)
         {
             return null;
         }
+
         if (long.TryParse(s, out long result))
         {
             return result;
         }
+
         return null;
     }
 
@@ -91,6 +94,11 @@ internal class KVDatabaseMethodLiteDB : KVDatabaseMethod, IDisposable
 
         lock (sLock)
         {
+            if (_db != null)
+            {
+                return _db;
+            }
+
             _db = new LiteDatabase(DatabasePath);
             return _db;
         }

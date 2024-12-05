@@ -323,7 +323,7 @@ internal sealed partial class SettingsPage : BasePage
         XmlDatabaseManager.ReleaseLock();
 
         Shared.AntiAliasingEnabled = AppStatusPreserver.AntiAliasingEnabled;
-        Shared.AdvancedDebugMode = AppStatusPreserver.DebugMode;
+        Shared.AdvancedDebugMode = DebugUtils.DebugMode;
 
         UpdateAppearance();
         _ = UpdateCodePages();
@@ -472,7 +472,7 @@ internal sealed partial class SettingsPage : BasePage
         }
 
         AppStatusPreserver.AntiAliasingEnabled = Shared.AntiAliasingEnabled;
-        AppStatusPreserver.DebugMode = Shared.AdvancedDebugMode;
+        DebugUtils.DebugMode = Shared.AdvancedDebugMode;
     }
 
     private void OnSettingsChanged()

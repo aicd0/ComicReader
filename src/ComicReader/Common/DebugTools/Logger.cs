@@ -3,9 +3,10 @@
 
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 using Windows.Storage;
 
@@ -23,7 +24,8 @@ internal static class Logger
     private const int LOG_INTERVAL = 5000;
 
     private static int sInitialized = 0;
-    private static readonly ConcurrentQueue<string> sBuffer = new();
+    private static string sLogFolderPath = "";
+    private static readonly ConcurrentQueue<LogItem> sBuffer = new();
 
     public static void Initialize()
     {
@@ -33,19 +35,12 @@ internal static class Logger
             return;
         }
 
-        C0.Run(async delegate
-        {
-            Console("Logger initialized");
-            while (true)
-            {
-                if (sBuffer.Count > 0)
-                {
-                    await FlushToFile();
-                }
+        sLogFolderPath = ApplicationData.Current.LocalCacheFolder.Path + "\\logs\\";
 
-                await Task.Delay(LOG_INTERVAL);
-            }
-        });
+        Thread logThread = new(LogThreadMain);
+        logThread.IsBackground = true;
+        logThread.Priority = ThreadPriority.Lowest;
+        logThread.Start();
     }
 
     public static void D(string tag, string message)
@@ -132,6 +127,21 @@ internal static class Logger
         Log(LEVEL_CONSOLE, LogTag.N(TAG), message, null);
     }
 
+    private static void LogThreadMain()
+    {
+        Console("Logger initialized");
+
+        while (true)
+        {
+            if (sBuffer.Count > 0)
+            {
+                FlushToFile();
+            }
+
+            Thread.Sleep(LOG_INTERVAL);
+        }
+    }
+
     private static void Log(int level, LogTag tag, string message, Exception exception)
     {
         string levelTag;
@@ -166,62 +176,126 @@ internal static class Logger
             realMessage += "\n" + exception.ToString();
         }
 
-        if (DebugUtils.DebugModeStrict && LogSwitches.CanLog(level, tag))
+        if (DebugUtils.DebugModeStrict)
         {
             LogToConsole(realMessage);
         }
 
         if (DebugUtils.DebugMode && level >= LEVEL_INFO)
         {
-            LogToFile(realMessage);
+            var item = new LogItem
+            {
+                Tag = tag,
+                Message = realMessage,
+            };
+            LogToFile(item);
         }
 
         DebugUtils.Assert(level < LEVEL_FATAL);
     }
 
-    private static void LogToFile(string message)
+    private static void LogToFile(LogItem message)
     {
         sBuffer.Enqueue(message);
     }
 
-    private static async Task FlushToFile()
+    private static void FlushToFile()
     {
-        StringBuilder sb = new();
-        int logCount = 0;
+        List<LogItem> logs = [];
         while (true)
         {
-            if (sBuffer.TryDequeue(out string msg))
+            if (sBuffer.TryDequeue(out LogItem item))
             {
-                sb.Append(msg);
-                sb.Append('\n');
-                logCount++;
+                logs.Add(item);
             }
             else
             {
                 break;
             }
         }
+
+        FlushToLogFile(logs);
+
+        if (DebugUtils.DebugModeStrict)
+        {
+            FlushToLogTree(logs);
+        }
+    }
+
+    private static void FlushToLogFile(List<LogItem> logs)
+    {
+        StringBuilder sb = new();
+        foreach (LogItem item in logs)
+        {
+            sb.Append(item.Message);
+            sb.Append('\n');
+        }
         string content = sb.ToString();
 
-        DateTime dateTime = DateTime.Now;
-        string fileName = "log_" + dateTime.ToString("yyyyMMdd") + ".txt";
-        StorageFile logFile;
+        string fileName = "log_" + DateTime.Now.ToString("yyyyMMdd") + ".txt";
+        string filePath = sLogFolderPath + fileName;
         try
         {
-            StorageFolder logDir = await ApplicationData.Current.LocalCacheFolder.CreateFolderAsync("logs", CreationCollisionOption.OpenIfExists);
-            logFile = await logDir.CreateFileAsync(fileName, CreationCollisionOption.OpenIfExists);
-            await FileIO.AppendTextAsync(logFile, content);
+            Directory.CreateDirectory(sLogFolderPath);
+            using StreamWriter writer = new(filePath, true, Encoding.UTF8);
+            writer.Write(content);
+            Console($"flushed {logs.Count} logs to {filePath}");
         }
         catch (Exception e)
         {
             F(TAG, e.ToString());
             return;
         }
-        Console($"flushed {logCount} logs to {logFile.Path}");
+    }
+
+    private static void FlushToLogTree(List<LogItem> logs)
+    {
+        Dictionary<string, List<LogItem>> fileLogs = [];
+        foreach (LogItem item in logs)
+        {
+            string path = item.Tag.ToString();
+            if (!fileLogs.TryGetValue(path, out List<LogItem> logItems))
+            {
+                logItems = [];
+                fileLogs[path] = logItems;
+            }
+            logItems.Add(item);
+        }
+
+        string cacheFolder = sLogFolderPath + "tree\\";
+        string fileName = "log_" + DateTime.Now.ToString("yyyyMMdd") + ".txt";
+
+        foreach (KeyValuePair<string, List<LogItem>> pair in fileLogs)
+        {
+            StringBuilder sb = new();
+            foreach (LogItem item in pair.Value)
+            {
+                sb.Append(item.Message);
+                sb.Append('\n');
+            }
+            string content = sb.ToString();
+
+            string folderPath = cacheFolder + pair.Key;
+            string filePath = $"{folderPath}\\{fileName}";
+            Directory.CreateDirectory(folderPath);
+            using StreamWriter writer = new(filePath, true, Encoding.UTF8);
+            writer.Write(content);
+        }
     }
 
     private static void LogToConsole(string message)
     {
         System.Diagnostics.Debug.Print(message);
+    }
+
+    private class LogItem
+    {
+        public LogTag Tag;
+        public string Message;
+
+        public override string ToString()
+        {
+            return base.ToString();
+        }
     }
 }

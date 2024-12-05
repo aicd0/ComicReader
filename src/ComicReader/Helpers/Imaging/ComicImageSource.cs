@@ -32,7 +32,7 @@ internal class ComicImageSource : IImageSource
         return await _comic.GetImageStream(_index);
     }
 
-    public string GetCacheKey()
+    public string GetUri()
     {
         if (!_comic.UpdateImages(reload: false).Result.Successful())
         {
