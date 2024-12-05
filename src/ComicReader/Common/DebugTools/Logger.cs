@@ -43,6 +43,11 @@ internal static class Logger
         logThread.Start();
     }
 
+    public static void Flush()
+    {
+        FlushToFile();
+    }
+
     public static void D(string tag, string message)
     {
         Log(LEVEL_DEBUG, LogTag.N(tag), message, null);
@@ -133,11 +138,7 @@ internal static class Logger
 
         while (true)
         {
-            if (sBuffer.Count > 0)
-            {
-                FlushToFile();
-            }
-
+            FlushToFile();
             Thread.Sleep(LOG_INTERVAL);
         }
     }
@@ -201,7 +202,13 @@ internal static class Logger
 
     private static void FlushToFile()
     {
+        if (sBuffer.IsEmpty)
+        {
+            return;
+        }
+
         List<LogItem> logs = [];
+
         while (true)
         {
             if (sBuffer.TryDequeue(out LogItem item))

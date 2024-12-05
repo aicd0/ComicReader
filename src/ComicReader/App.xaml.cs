@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Common.DebugTools;
@@ -27,24 +28,10 @@ public partial class App : Application
     public App()
     {
         UnhandledException += CrashHandler.OnUnhandledException;
-
-        // get and apply the appearance setting.
-        object appearance_setting = ApplicationData.Current.LocalSettings.Values[SettingsPage.AppearanceKey];
-        if (appearance_setting != null)
-        {
-            Current.RequestedTheme = (ApplicationTheme)(int)appearance_setting;
-        }
-
+        AppEnvironment.Instance.Initialize();
+        ApplyAppTheme();
         InitializeComponent();
-
-        if (Properties.AppSecret.Length > 0)
-        {
-            AppCenter.Start(Properties.AppSecret, typeof(Analytics), typeof(Crashes));
-        }
-        else
-        {
-            AppCenter.Start(typeof(Analytics), typeof(Crashes));
-        }
+        StartAppCenter();
     }
 
     protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs e)
@@ -66,12 +53,7 @@ public partial class App : Application
             return;
         }
 
-        // Initialize logger
-        Logger.Initialize();
-
-        // Initialize database here
-        TaskException result = await DatabaseManager.Init();
-        DebugUtils.Assert(result.Successful());
+        await PerformInitialization();
 
         // Initialize MainWindow here
         Window = new MainWindow();
@@ -87,5 +69,30 @@ public partial class App : Application
         {
             MainPage.OnFileActivated((FileActivatedEventArgs)e.Data);
         }
+    }
+
+    private void ApplyAppTheme()
+    {
+        object appearanceSetting = ApplicationData.Current.LocalSettings.Values[SettingsPage.AppearanceKey];
+        if (appearanceSetting != null)
+        {
+            Current.RequestedTheme = (ApplicationTheme)(int)appearanceSetting;
+        }
+    }
+
+    private void StartAppCenter()
+    {
+        if (Properties.AppSecret.Length > 0)
+        {
+            AppCenter.Start(Properties.AppSecret, typeof(Analytics), typeof(Crashes));
+        }
+    }
+
+    private async Task PerformInitialization()
+    {
+        Logger.Initialize();
+
+        TaskException result = await DatabaseManager.Init();
+        DebugUtils.Assert(result.Successful());
     }
 }

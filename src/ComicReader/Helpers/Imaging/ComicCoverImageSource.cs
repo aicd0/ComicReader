@@ -18,10 +18,12 @@ internal class ComicCoverImageSource(ComicData comic) : IImageSource
     public async Task<IRandomAccessStream> GetImageStream()
     {
         TaskException result = await _comic.UpdateImages(reload: false);
+
         if (!result.Successful())
         {
             return null;
         }
+
         return await _comic.GetImageStream(0);
     }
 

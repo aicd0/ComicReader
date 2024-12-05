@@ -22,7 +22,6 @@ using Microsoft.Data.Sqlite;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
-using Windows.ApplicationModel;
 using Windows.Storage;
 
 namespace ComicReader.Views.Settings;
@@ -431,8 +430,7 @@ internal sealed partial class SettingsPage : BasePage
 #else
         string appName = Utils.StringResourceProvider.GetResourceString("AppDisplayName");
 #endif
-        PackageVersion version = Package.Current.Id.Version;
-        AboutBuildVersionControl.Text = appName + " " + version.Major + "." + version.Minor + "." + version.Build + "." + version.Revision;
+        AboutBuildVersionControl.Text = appName + " " + AppEnvironment.Instance.GetVersionName();
 
         string author = "aicd0";
         string about_copyright = StringResourceProvider.GetResourceString("AboutCopyright");

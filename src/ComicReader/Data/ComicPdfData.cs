@@ -134,8 +134,7 @@ internal class ComicPdfData : ComicData
 
     protected override async Task<IRandomAccessStream> InternalGetImageStream(int index)
     {
-        TaskException r = await SetDocument();
-        if (!r.Successful())
+        if (!(await SetDocument()).Successful())
         {
             return null;
         }
@@ -146,12 +145,10 @@ internal class ComicPdfData : ComicData
             return null;
         }
 
-        using (PdfPage page = ThisDocument.GetPage((uint)index))
-        {
-            var stream = new InMemoryRandomAccessStream();
-            await page.RenderToStreamAsync(stream);
-            return stream;
-        }
+        using PdfPage page = ThisDocument.GetPage((uint)index);
+        var stream = new InMemoryRandomAccessStream();
+        await page.RenderToStreamAsync(stream);
+        return stream;
     }
 
     public override string GetImageCacheKey(int index)

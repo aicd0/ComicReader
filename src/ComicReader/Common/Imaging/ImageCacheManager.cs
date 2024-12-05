@@ -322,39 +322,6 @@ internal static class ImageCacheManager
         return image;
     }
 
-    private static async Task<BitmapImage> TryLoadImageFromSource(IImageSource source)
-    {
-        IRandomAccessStream stream = null;
-        try
-        {
-            stream = await source.GetImageStream();
-        }
-        catch (Exception e)
-        {
-            Logger.F(TAG, "TryLoadImageFromSource", e);
-        }
-
-        BitmapImage image = null;
-        if (stream != null)
-        {
-            using (stream)
-            {
-                stream.Seek(0);
-                image = new BitmapImage();
-                try
-                {
-                    await image.SetSourceAsync(stream);
-                }
-                catch (Exception e)
-                {
-                    image = null;
-                    Logger.F(TAG, "TryLoadImageFromSource", e);
-                }
-            }
-        }
-        return image;
-    }
-
     private static bool CalculateDesiredDimension(double frameWidth, double frameHeight,
         StretchModeEnum stretchMode, double imageRatio, out int desiredWidth, out int desiredHeight)
     {
