@@ -218,7 +218,7 @@ internal sealed partial class ReaderPage : BasePage
         base.OnStart(bundle);
         C0.Run(async delegate
         {
-            bool tipShown = KVDatabase.GetDefaultMethod().GetBoolean(KVLib.TIPS, KEY_TIP_SHOWN, false);
+            bool tipShown = KVDatabase.GetDefaultMethod().GetBoolean(GlobalConstants.KV_DB_TIPS, KEY_TIP_SHOWN, false);
             if (!tipShown)
             {
                 ReaderTip.IsOpen = !tipShown;
@@ -584,7 +584,7 @@ internal sealed partial class ReaderPage : BasePage
     // Tips
     private void OnReaderTipCloseButtonClick(InfoBar sender, object args)
     {
-        KVDatabase.GetDefaultMethod().SetBoolean(KVLib.TIPS, KEY_TIP_SHOWN, true);
+        KVDatabase.GetDefaultMethod().SetBoolean(GlobalConstants.KV_DB_TIPS, KEY_TIP_SHOWN, true);
     }
 
     // Fullscreen

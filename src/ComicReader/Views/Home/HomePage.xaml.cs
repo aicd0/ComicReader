@@ -46,7 +46,7 @@ internal sealed partial class HomePage : BasePage
     {
         base.OnResume();
         ComicData.OnUpdated += OnComicDataUpdated;
-        GetMainPageAbility().SetTitle("NewTab");
+        GetMainPageAbility().SetTitle(StringResourceProvider.GetResourceString("NewTab"));
         GetMainPageAbility().SetIcon(new SymbolIconSource() { Symbol = Symbol.Document });
 
         C0.Run(async delegate

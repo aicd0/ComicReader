@@ -17,11 +17,11 @@ static class AppStatusPreserver
     {
         get
         {
-            return (int)KVDatabase.GetDefaultMethod().GetLong(KVLib.APP, KEY_DEFAULT_ARCHIVE_CODE_PAGE, -1);
+            return (int)KVDatabase.GetDefaultMethod().GetLong(GlobalConstants.KV_DB_APP, KEY_DEFAULT_ARCHIVE_CODE_PAGE, -1);
         }
         set
         {
-            KVDatabase.GetDefaultMethod().SetLong(KVLib.APP, KEY_DEFAULT_ARCHIVE_CODE_PAGE, value);
+            KVDatabase.GetDefaultMethod().SetLong(GlobalConstants.KV_DB_APP, KEY_DEFAULT_ARCHIVE_CODE_PAGE, value);
         }
     }
 
@@ -29,11 +29,11 @@ static class AppStatusPreserver
     {
         get
         {
-            return KVDatabase.GetDefaultMethod().GetBoolean(KVLib.APP, KEY_ANTI_ALIASING_ENABLED, false);
+            return KVDatabase.GetDefaultMethod().GetBoolean(GlobalConstants.KV_DB_APP, KEY_ANTI_ALIASING_ENABLED, false);
         }
         set
         {
-            KVDatabase.GetDefaultMethod().SetBoolean(KVLib.APP, KEY_ANTI_ALIASING_ENABLED, value);
+            KVDatabase.GetDefaultMethod().SetBoolean(GlobalConstants.KV_DB_APP, KEY_ANTI_ALIASING_ENABLED, value);
         }
     }
 
@@ -41,18 +41,18 @@ static class AppStatusPreserver
     {
         Logger.I(TAG, $"SetReadingComic(id={id})");
         DebugUtils.Assert(id >= 0);
-        KVDatabase.GetDefaultMethod().SetLong(KVLib.APP, KEY_READING_COMIC_ID, id);
+        KVDatabase.GetDefaultMethod().SetLong(GlobalConstants.KV_DB_APP, KEY_READING_COMIC_ID, id);
     }
 
     public static void UnsetReadingComic()
     {
         Logger.I(TAG, "UnsetReadingComic");
-        KVDatabase.GetDefaultMethod().Remove(KVLib.APP, KEY_READING_COMIC_ID);
+        KVDatabase.GetDefaultMethod().Remove(GlobalConstants.KV_DB_APP, KEY_READING_COMIC_ID);
     }
 
     public static long GetReadingComic()
     {
-        long id = KVDatabase.GetDefaultMethod().GetLong(KVLib.APP, KEY_READING_COMIC_ID, -1);
+        long id = KVDatabase.GetDefaultMethod().GetLong(GlobalConstants.KV_DB_APP, KEY_READING_COMIC_ID, -1);
         Logger.I(TAG, $"GetReadingComic(id={id})");
         return id;
     }

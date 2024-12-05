@@ -198,7 +198,10 @@
                                     Style="{StaticResource SettingsPageBodyTextBlock}" />
                                 <Grid Height="12" />
                                 <TextBlock x:Uid="DebugMode" Style="{StaticResource SettingsPageBodyTextBlock}" />
-                                <ToggleSwitch IsOn="{x:Bind Shared.AdvancedDebugMode, Mode=TwoWay}" />
+                                <ToggleSwitch
+                                    x:Name="DebugModeToggleSwitch"
+                                    IsOn="{x:Bind Shared.AdvancedDebugMode, Mode=TwoWay}"
+                                    Toggled="OnDebugModeToggled" />
                             </StackPanel>
                         </settings:SettingExpander.InnerContent>
                     </settings:SettingExpander>

@@ -8,7 +8,6 @@ using ComicReader.Common;
 using ComicReader.Common.DebugTools;
 using ComicReader.Data;
 using ComicReader.Views.Main;
-using ComicReader.Views.Settings;
 
 using Microsoft.AppCenter;
 using Microsoft.AppCenter.Analytics;
@@ -73,7 +72,7 @@ public partial class App : Application
 
     private void ApplyAppTheme()
     {
-        object appearanceSetting = ApplicationData.Current.LocalSettings.Values[SettingsPage.AppearanceKey];
+        object appearanceSetting = ApplicationData.Current.LocalSettings.Values[GlobalConstants.LOCAL_SETTINGS_KEY_APPEARANCE];
         if (appearanceSetting != null)
         {
             Current.RequestedTheme = (ApplicationTheme)(int)appearanceSetting;

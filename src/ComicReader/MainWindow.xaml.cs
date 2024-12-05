@@ -36,7 +36,7 @@ public sealed partial class MainWindow : Window
         var placement = new NativeModels.WindowPlacement();
         NativeMethods.GetWindowPlacement(WindowHandle, out placement);
         string serialized = JsonSerializer.Serialize(placement);
-        ApplicationData.Current.LocalSettings.Values[LocalSettings.WindowStates] = serialized;
+        ApplicationData.Current.LocalSettings.Values[GlobalConstants.LOCAL_SETTINGS_KEY_WINDOW_STATES] = serialized;
     }
 
     private void OnPageFrameLoaded(object sender, RoutedEventArgs e)
@@ -56,7 +56,7 @@ public sealed partial class MainWindow : Window
 
     private void TryRecoverWindowStates()
     {
-        object windowStates = ApplicationData.Current.LocalSettings.Values[LocalSettings.WindowStates];
+        object windowStates = ApplicationData.Current.LocalSettings.Values[GlobalConstants.LOCAL_SETTINGS_KEY_WINDOW_STATES];
         if (windowStates is string)
         {
             NativeModels.WindowPlacement windowPlacement;

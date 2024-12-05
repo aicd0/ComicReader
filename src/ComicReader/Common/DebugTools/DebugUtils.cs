@@ -24,14 +24,14 @@ internal static class DebugUtils
         {
             if (!_debugMode.HasValue)
             {
-                _debugMode = KVDatabase.GetDefaultMethod().GetBoolean(KVLib.APP, KEY_DEBUG_MODE, IS_DEBUG_BUILD);
+                _debugMode = KVDatabase.GetDefaultMethod().GetBoolean(GlobalConstants.KV_DB_APP, KEY_DEBUG_MODE, IS_DEBUG_BUILD);
             }
             return _debugMode.Value;
         }
         set
         {
             _debugMode = value;
-            KVDatabase.GetDefaultMethod().SetBoolean(KVLib.APP, KEY_DEBUG_MODE, value);
+            KVDatabase.GetDefaultMethod().SetBoolean(GlobalConstants.KV_DB_APP, KEY_DEBUG_MODE, value);
         }
     }
 

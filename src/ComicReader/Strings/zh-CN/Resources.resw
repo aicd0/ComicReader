@@ -631,4 +631,16 @@
   <data name="AntiAliasingFilter.Text" xml:space="preserve">
     <value>抗混叠滤波器（实验性）</value>
   </data>
+  <data name="Warning" xml:space="preserve">
+    <value>警告</value>
+  </data>
+  <data name="DebugModeWarning" xml:space="preserve">
+    <value>开启调试模式可能会使应用不稳定，确认继续吗？</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="Proceed" xml:space="preserve">
+    <value>继续</value>
+  </data>
 </root>

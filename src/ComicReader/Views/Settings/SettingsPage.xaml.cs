@@ -213,15 +213,14 @@ public class SettingsPageShared : INotifyPropertyChanged
         }
     }
 
-    private bool m_AdvancedDebugMode;
+    private bool _advancedDebugMode;
     public bool AdvancedDebugMode
     {
-        get => m_AdvancedDebugMode;
+        get => _advancedDebugMode;
         set
         {
-            m_AdvancedDebugMode = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("AdvancedDebugMode"));
-            OnSettingsChanged?.Invoke();
+            _advancedDebugMode = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(AdvancedDebugMode)));
         }
     }
 
@@ -261,14 +260,10 @@ public class SettingsPageShared : INotifyPropertyChanged
 
 internal sealed partial class SettingsPage : BasePage
 {
-    public const string AppearanceKey = "Appearance";
-
     private const string TAG = "SettingsPage";
 
     public SettingsPageShared Shared { get; set; }
 
-    // Initialize _updating to TRUE to avoid copying values from
-    // controls (See Save()) while this page is still launching.
     private bool _updating = true;
 
     public SettingsPage()
@@ -308,6 +303,38 @@ internal sealed partial class SettingsPage : BasePage
     private IMainPageAbility GetMainPageAbility()
     {
         return GetAbility<IMainPageAbility>();
+    }
+
+    private void OnDebugModeToggled(object sender, RoutedEventArgs e)
+    {
+        if (_updating)
+        {
+            return;
+        }
+
+        C0.Run(async delegate
+        {
+            if (DebugModeToggleSwitch.IsOn)
+            {
+                var dialog = new ContentDialog
+                {
+                    Title = StringResourceProvider.GetResourceString("Warning"),
+                    Content = StringResourceProvider.GetResourceString("DebugModeWarning"),
+                    PrimaryButtonText = StringResourceProvider.GetResourceString("Proceed"),
+                    CloseButtonText = StringResourceProvider.GetResourceString("Cancel")
+                };
+                dialog.XamlRoot = XamlRoot;
+                ContentDialogResult result = await dialog.ShowAsync();
+
+                if (result == ContentDialogResult.None)
+                {
+                    Shared.AdvancedDebugMode = false;
+                    return;
+                }
+            }
+
+            await Save();
+        });
     }
 
     // utilities
@@ -350,7 +377,7 @@ internal sealed partial class SettingsPage : BasePage
 
     private void UpdateAppearance()
     {
-        object appearance_setting = ApplicationData.Current.LocalSettings.Values[AppearanceKey];
+        object appearance_setting = ApplicationData.Current.LocalSettings.Values[GlobalConstants.LOCAL_SETTINGS_KEY_APPEARANCE];
         if (appearance_setting == null)
         {
             Shared.CurrentAppearance = AppearanceSetting.UseSystemSetting;
@@ -441,17 +468,18 @@ internal sealed partial class SettingsPage : BasePage
     private async Task Save()
     {
         // To local settings.
+        string appearanceKey = GlobalConstants.LOCAL_SETTINGS_KEY_APPEARANCE;
         if (Shared.Appearance == AppearanceSetting.Light)
         {
-            ApplicationData.Current.LocalSettings.Values[AppearanceKey] = (int)ApplicationTheme.Light;
+            ApplicationData.Current.LocalSettings.Values[appearanceKey] = (int)ApplicationTheme.Light;
         }
         else if (Shared.Appearance == AppearanceSetting.Dark)
         {
-            ApplicationData.Current.LocalSettings.Values[AppearanceKey] = (int)ApplicationTheme.Dark;
+            ApplicationData.Current.LocalSettings.Values[appearanceKey] = (int)ApplicationTheme.Dark;
         }
         else if (Shared.Appearance == AppearanceSetting.UseSystemSetting)
         {
-            ApplicationData.Current.LocalSettings.Values.Remove(AppearanceKey);
+            ApplicationData.Current.LocalSettings.Values.Remove(appearanceKey);
         }
 
         // To database.

@@ -631,4 +631,16 @@ Category2: tag4/tag5
   <data name="AntiAliasingFilter.Text" xml:space="preserve">
     <value>Anti-aliasing filter (experimental)</value>
   </data>
+  <data name="Warning" xml:space="preserve">
+    <value>Warning</value>
+  </data>
+  <data name="DebugModeWarning" xml:space="preserve">
+    <value>Turning on debug mode can render the app unstable, proceed?</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Proceed" xml:space="preserve">
+    <value>Proceed</value>
+  </data>
 </root>
