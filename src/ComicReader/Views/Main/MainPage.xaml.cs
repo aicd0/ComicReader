@@ -680,7 +680,7 @@ internal sealed partial class MainPage : StatefulPage
 
         public void RegisterFullscreenChangedHandler(Page owner, IMainPageAbility.FullscreenChangedEventHandler handler)
         {
-            _eventBus.With<bool>(EVENT_FULLSCREEN_CHANGED).Observe(owner, delegate (bool isFullscreen)
+            _eventBus.With<bool>(EVENT_FULLSCREEN_CHANGED).ObserveSticky(owner, delegate (bool isFullscreen)
             {
                 handler(isFullscreen);
             });
