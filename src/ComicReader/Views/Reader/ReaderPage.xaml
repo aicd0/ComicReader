@@ -122,7 +122,7 @@
                 ContainerContentChanging="OnGridViewContainerContentChanging"
                 IsItemClickEnabled="True"
                 ItemClick="OnGridViewItemClicked"
-                ItemsSource="{x:Bind PreviewDataSource}"
+                ItemsSource="{x:Bind ViewModel.PreviewDataSource}"
                 SelectionMode="Single">
                 <GridView.ItemContainerStyle>
                     <Style TargetType="GridViewItem">

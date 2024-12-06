@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using ComicReader.Common.DebugTools;
+using ComicReader.Data;
 
 using Windows.Storage;
 
@@ -243,7 +244,7 @@ public class ArchiveAccess
 
         // Reader options.
         var opts = new SharpCompress.Readers.ReaderOptions();
-        int default_code_page = AppStatusPreserver.DefaultArchiveCodePage;
+        int default_code_page = AppData.DefaultArchiveCodePage;
 
         if (default_code_page > 0)
         {

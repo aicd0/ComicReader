@@ -72,7 +72,7 @@ internal sealed partial class MainPage : StatefulPage
 
         if (!page_started)
         {
-            long id = AppStatusPreserver.GetReadingComic();
+            long id = AppData.GetReadingComic();
             if (id >= 0)
             {
                 ComicData comic = await ComicData.FromId(id, "FetchLastComic");
@@ -542,7 +542,7 @@ internal sealed partial class MainPage : StatefulPage
             return false;
         }
 
-        string token = AppDataRepository.PutComicData(comic);
+        string token = AppData.PutComicData(comic);
         Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
             .WithParam(RouterConstants.ARG_COMIC_TOKEN, token);
         Current.OpenInNewTab(route);

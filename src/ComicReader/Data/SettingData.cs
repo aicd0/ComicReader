@@ -22,10 +22,8 @@ public class SettingData : XmlData
     public bool LeftToRight = false;
     public bool VerticalContinuous = true;
     public bool HorizontalContinuous = false;
-    public bool TransitionAnimation = true;
     public PageArrangementType VerticalPageArrangement = PageArrangementType.Single;
     public PageArrangementType HorizontalPageArrangement = PageArrangementType.DualCoverMirror;
-    public bool SaveHistory = true;
 
     // serialization
     public override string FileName => "Settings";

@@ -34,11 +34,11 @@ public enum AppearanceSetting
     None
 }
 
-public class SettingsPageShared : INotifyPropertyChanged
+public class SettingsPageViewModel : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler PropertyChanged;
 
-    public Action OnSettingsChanged;
+    public bool Updating { get; set; } = false;
 
     private List<Tuple<string, int>> _encodings = [];
     public List<Tuple<string, int>> Encodings
@@ -57,26 +57,32 @@ public class SettingsPageShared : INotifyPropertyChanged
         get => _defaultArchiveCodePageIndex;
         set
         {
-            if (_defaultArchiveCodePageIndex != value)
+            _defaultArchiveCodePageIndex = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DefaultArchiveCodePageIndex)));
+
+            if (!Updating)
             {
-                _defaultArchiveCodePageIndex = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DefaultArchiveCodePageIndex)));
-                OnSettingsChanged?.Invoke();
+                int selectedIndex = value;
+                if (selectedIndex >= 0 && selectedIndex < Encodings.Count)
+                {
+                    AppData.DefaultArchiveCodePage = Encodings[selectedIndex].Item2;
+                }
             }
         }
     }
 
-    private bool m_TransitionAnimation = true;
+    private bool _transitionAnimation = true;
     public bool TransitionAnimation
     {
-        get => m_TransitionAnimation;
+        get => _transitionAnimation;
         set
         {
-            if (m_TransitionAnimation != value)
+            _transitionAnimation = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(TransitionAnimation)));
+
+            if (!Updating)
             {
-                m_TransitionAnimation = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("TransitionAnimation"));
-                OnSettingsChanged?.Invoke();
+                AppData.TransitionAnimation = value;
             }
         }
     }
@@ -87,129 +93,109 @@ public class SettingsPageShared : INotifyPropertyChanged
         get => _antiAliasingEnabled;
         set
         {
-            if (_antiAliasingEnabled != value)
+            _antiAliasingEnabled = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(AntiAliasingEnabled)));
+
+            if (!Updating)
             {
-                _antiAliasingEnabled = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(AntiAliasingEnabled)));
-                OnSettingsChanged?.Invoke();
+                AppData.AntiAliasingEnabled = value;
             }
         }
     }
 
-    private bool m_IsClearHistoryEnabled = false;
+    private bool _isClearHistoryEnabled = false;
     public bool IsClearHistoryEnabled
     {
-        get => m_IsClearHistoryEnabled;
+        get => _isClearHistoryEnabled;
         set
         {
-            m_IsClearHistoryEnabled = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsClearHistoryEnabled"));
+            _isClearHistoryEnabled = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsClearHistoryEnabled)));
         }
     }
 
-    private bool m_HistorySaveBrowsingHistory = false;
+    private bool _historySaveBrowsingHistory = false;
     public bool HistorySaveBrowsingHistory
     {
-        get => m_HistorySaveBrowsingHistory;
+        get => _historySaveBrowsingHistory;
         set
         {
-            if (m_HistorySaveBrowsingHistory != value)
+            _historySaveBrowsingHistory = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HistorySaveBrowsingHistory)));
+
+            if (!Updating)
             {
-                m_HistorySaveBrowsingHistory = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("HistorySaveBrowsingHistory"));
-                OnSettingsChanged?.Invoke();
+                AppData.SaveBrowsingHistory = value;
             }
         }
     }
 
-    public AppearanceSetting CurrentAppearance { get; set; }
-
-    private AppearanceSetting m_Appearance = AppearanceSetting.None;
-    public AppearanceSetting Appearance
-    {
-        get => m_Appearance;
-        set
-        {
-            if (m_Appearance != value)
-            {
-                m_Appearance = value;
-                AppearanceLightChecked = m_Appearance == AppearanceSetting.Light;
-                AppearanceDarkChecked = m_Appearance == AppearanceSetting.Dark;
-                AppearanceUseSystemSettingChecked = m_Appearance == AppearanceSetting.UseSystemSetting;
-                AppearanceChanged = m_Appearance != CurrentAppearance;
-                OnSettingsChanged?.Invoke();
-            }
-        }
-    }
-
-    private bool m_AppearanceLightChecked = false;
+    private bool _appearanceLightChecked = false;
     public bool AppearanceLightChecked
     {
-        get => m_AppearanceLightChecked;
+        get => _appearanceLightChecked;
         set
         {
-            if (value != m_AppearanceLightChecked)
+            _appearanceLightChecked = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(AppearanceLightChecked)));
+
+            if (!Updating && value)
             {
-                m_AppearanceLightChecked = value;
-
-                if (value)
-                {
-                    Appearance = AppearanceSetting.Light;
-                }
-
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("AppearanceLightChecked"));
+                SaveAppearance(AppearanceSetting.Light);
             }
         }
     }
 
-    private bool m_AppearanceDarkChecked = false;
+    private bool _appearanceDarkChecked = false;
     public bool AppearanceDarkChecked
     {
-        get => m_AppearanceDarkChecked;
+        get => _appearanceDarkChecked;
         set
         {
-            if (value != m_AppearanceDarkChecked)
+            _appearanceDarkChecked = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(AppearanceDarkChecked)));
+
+            if (!Updating && value)
             {
-                m_AppearanceDarkChecked = value;
-
-                if (value)
-                {
-                    Appearance = AppearanceSetting.Dark;
-                }
-
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("AppearanceDarkChecked"));
+                SaveAppearance(AppearanceSetting.Dark);
             }
         }
     }
 
-    private bool m_AppearanceUseSystemSettingChecked = false;
+    private bool _appearanceUseSystemSettingChecked = false;
     public bool AppearanceUseSystemSettingChecked
     {
-        get => m_AppearanceUseSystemSettingChecked;
+        get => _appearanceUseSystemSettingChecked;
         set
         {
-            if (value != m_AppearanceUseSystemSettingChecked)
+            _appearanceUseSystemSettingChecked = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(AppearanceUseSystemSettingChecked)));
+
+            if (!Updating && value)
             {
-                m_AppearanceUseSystemSettingChecked = value;
-
-                if (value)
-                {
-                    Appearance = AppearanceSetting.UseSystemSetting;
-                }
-
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("AppearanceUseSystemSettingChecked"));
+                SaveAppearance(AppearanceSetting.UseSystemSetting);
             }
         }
     }
 
-    private bool m_AppearanceChanged;
-    public bool AppearanceChanged
+    public AppearanceSetting Appearance
     {
-        get => m_AppearanceChanged;
         set
         {
-            m_AppearanceChanged = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("AppearanceChanged"));
+            AppearanceLightChecked = value == AppearanceSetting.Light;
+            AppearanceDarkChecked = value == AppearanceSetting.Dark;
+            AppearanceUseSystemSettingChecked = value == AppearanceSetting.UseSystemSetting;
+        }
+    }
+
+    private bool _appearanceChanged;
+    public bool AppearanceChanged
+    {
+        get => _appearanceChanged;
+        set
+        {
+            _appearanceChanged = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(AppearanceChanged)));
         }
     }
 
@@ -221,17 +207,22 @@ public class SettingsPageShared : INotifyPropertyChanged
         {
             _advancedDebugMode = value;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(AdvancedDebugMode)));
+
+            if (!Updating)
+            {
+                DebugUtils.DebugMode = value;
+            }
         }
     }
 
-    private bool m_IsRescanning = true;
+    private bool _isRescanning = true;
     public bool IsRescanning
     {
-        get => m_IsRescanning;
+        get => _isRescanning;
         set
         {
-            m_IsRescanning = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsRescanning"));
+            _isRescanning = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsRescanning)));
         }
     }
 
@@ -242,7 +233,7 @@ public class SettingsPageShared : INotifyPropertyChanged
         set
         {
             _isClearingCache = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsClearingCache"));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsClearingCache)));
         }
     }
 
@@ -253,7 +244,22 @@ public class SettingsPageShared : INotifyPropertyChanged
         set
         {
             _cacheSize = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("CacheSize"));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CacheSize)));
+        }
+    }
+
+    private void SaveAppearance(AppearanceSetting appearance)
+    {
+        string appearanceKey = GlobalConstants.LOCAL_SETTINGS_KEY_APPEARANCE;
+        switch (appearance)
+        {
+            case AppearanceSetting.Light:
+            case AppearanceSetting.Dark:
+                ApplicationData.Current.LocalSettings.Values[GlobalConstants.LOCAL_SETTINGS_KEY_APPEARANCE] = (int)appearance;
+                break;
+            case AppearanceSetting.UseSystemSetting:
+                ApplicationData.Current.LocalSettings.Values.Remove(appearanceKey);
+                break;
         }
     }
 }
@@ -262,17 +268,10 @@ internal sealed partial class SettingsPage : BasePage
 {
     private const string TAG = "SettingsPage";
 
-    public SettingsPageShared Shared { get; set; }
-
-    private bool _updating = true;
+    private SettingsPageViewModel ViewModel { get; } = new SettingsPageViewModel();
 
     public SettingsPage()
     {
-        Shared = new SettingsPageShared
-        {
-            OnSettingsChanged = OnSettingsChanged
-        };
-
         InitializeComponent();
     }
 
@@ -300,221 +299,42 @@ internal sealed partial class SettingsPage : BasePage
         ComicData.OnUpdated -= OnComicDataUpdated;
     }
 
-    private IMainPageAbility GetMainPageAbility()
-    {
-        return GetAbility<IMainPageAbility>();
-    }
+    //
+    // Events
+    //
 
     private void OnDebugModeToggled(object sender, RoutedEventArgs e)
     {
-        if (_updating)
+        if (ViewModel.Updating)
         {
             return;
         }
 
         C0.Run(async delegate
         {
-            if (DebugModeToggleSwitch.IsOn)
+            if (TsDebugMode.IsOn)
             {
                 var dialog = new ContentDialog
                 {
                     Title = StringResourceProvider.GetResourceString("Warning"),
                     Content = StringResourceProvider.GetResourceString("DebugModeWarning"),
                     PrimaryButtonText = StringResourceProvider.GetResourceString("Proceed"),
-                    CloseButtonText = StringResourceProvider.GetResourceString("Cancel")
+                    CloseButtonText = StringResourceProvider.GetResourceString("Cancel"),
+                    XamlRoot = XamlRoot
                 };
-                dialog.XamlRoot = XamlRoot;
                 ContentDialogResult result = await dialog.ShowAsync();
 
                 if (result == ContentDialogResult.None)
                 {
-                    Shared.AdvancedDebugMode = false;
+                    ViewModel.AdvancedDebugMode = false;
                     return;
                 }
             }
 
-            await Save();
+            ViewModel.AdvancedDebugMode = TsDebugMode.IsOn;
         });
     }
 
-    // utilities
-    private async Task Update()
-    {
-        _updating = true;
-
-        await XmlDatabaseManager.WaitLock();
-        Shared.TransitionAnimation = XmlDatabase.Settings.TransitionAnimation;
-        Shared.IsClearHistoryEnabled = XmlDatabase.History.Items.Count > 0;
-        Shared.HistorySaveBrowsingHistory = XmlDatabase.Settings.SaveHistory;
-        XmlDatabaseManager.ReleaseLock();
-
-        Shared.AntiAliasingEnabled = AppStatusPreserver.AntiAliasingEnabled;
-        Shared.AdvancedDebugMode = DebugUtils.DebugMode;
-
-        UpdateAppearance();
-        _ = UpdateCodePages();
-        UpdateCacheSize();
-        UpdateRescanStatus();
-        await UpdateStatistis();
-        UpdateFeedback();
-        UpdateAbout();
-
-        _updating = false;
-    }
-
-    private void OnComicDataUpdated()
-    {
-        MainThreadUtils.RunInMainThreadAsync(async delegate
-        {
-            UpdateRescanStatus();
-            await UpdateStatistis();
-        }).Wait();
-    }
-
-    //
-    // Data Update
-    //
-
-    private void UpdateAppearance()
-    {
-        object appearance_setting = ApplicationData.Current.LocalSettings.Values[GlobalConstants.LOCAL_SETTINGS_KEY_APPEARANCE];
-        if (appearance_setting == null)
-        {
-            Shared.CurrentAppearance = AppearanceSetting.UseSystemSetting;
-        }
-        else if ((ApplicationTheme)(int)appearance_setting == ApplicationTheme.Light)
-        {
-            Shared.CurrentAppearance = AppearanceSetting.Light;
-        }
-        else if ((ApplicationTheme)(int)appearance_setting == ApplicationTheme.Dark)
-        {
-            Shared.CurrentAppearance = AppearanceSetting.Dark;
-        }
-        Shared.Appearance = Shared.CurrentAppearance;
-    }
-
-    private async Task UpdateCodePages()
-    {
-        ReadOnlyDictionary<int, Encoding> supportedEncodings = await AppInfoProvider.GetSupportedEncodings();
-        var encodings = new List<Tuple<string, int>>
-        {
-            new(StringResourceProvider.GetResourceString("Default"), -1)
-        };
-
-        int defaultCodePage = AppStatusPreserver.DefaultArchiveCodePage;
-        int selectedIndex = 0;
-        foreach (Encoding info in supportedEncodings.Values)
-        {
-            string title = info.EncodingName + " [" + info.CodePage.ToString() + "]";
-            encodings.Add(new Tuple<string, int>(title, info.CodePage));
-            if (defaultCodePage == info.CodePage)
-            {
-                selectedIndex = encodings.Count - 1;
-            }
-        }
-        Shared.Encodings = encodings;
-
-        if (!supportedEncodings.ContainsKey(defaultCodePage))
-        {
-            AppStatusPreserver.DefaultArchiveCodePage = -1;
-            selectedIndex = 0;
-        }
-
-        Shared.DefaultArchiveCodePageIndex = selectedIndex;
-    }
-
-    private async Task UpdateStatistis()
-    {
-        long comicCount = 0;
-        await ComicData.CommandBlock2(async delegate (SqliteCommand command)
-        {
-            command.CommandText = "SELECT COUNT(*) FROM " + SqliteDatabaseManager.ComicTable;
-            comicCount = (long)await command.ExecuteScalarAsync();
-        }, "SettingUpdateStatistics");
-        string total_comic_string = StringResourceProvider.GetResourceString("TotalComics");
-        StatisticsTextBlock.Text = total_comic_string +
-            comicCount.ToString("#,#0", CultureInfo.InvariantCulture);
-    }
-
-    private void UpdateRescanStatus()
-    {
-        Shared.IsRescanning = ComicData.IsRescanning;
-    }
-
-    private void UpdateFeedback()
-    {
-        string appName = StringResourceProvider.GetResourceString("AppDisplayName");
-        string contribution_before_link = StringResourceProvider.GetResourceString("ContributionRunBeforeLink");
-        contribution_before_link = contribution_before_link.Replace("$appname", appName);
-        ContributionRunBeforeLink.Text = contribution_before_link;
-        ContributionRunAfterLink.Text = StringResourceProvider.GetResourceString("ContributionRunAfterLink");
-    }
-
-    private void UpdateAbout()
-    {
-#if DEBUG
-        string appName = StringResourceProvider.GetResourceString("DevAppDisplayName");
-#else
-        string appName = Utils.StringResourceProvider.GetResourceString("AppDisplayName");
-#endif
-        AboutBuildVersionControl.Text = appName + " " + AppEnvironment.Instance.GetVersionName();
-
-        string author = "aicd0";
-        string about_copyright = StringResourceProvider.GetResourceString("AboutCopyright");
-        about_copyright = about_copyright.Replace("$author", author);
-        AboutCopyrightControl.Text = about_copyright;
-    }
-
-    private async Task Save()
-    {
-        // To local settings.
-        string appearanceKey = GlobalConstants.LOCAL_SETTINGS_KEY_APPEARANCE;
-        if (Shared.Appearance == AppearanceSetting.Light)
-        {
-            ApplicationData.Current.LocalSettings.Values[appearanceKey] = (int)ApplicationTheme.Light;
-        }
-        else if (Shared.Appearance == AppearanceSetting.Dark)
-        {
-            ApplicationData.Current.LocalSettings.Values[appearanceKey] = (int)ApplicationTheme.Dark;
-        }
-        else if (Shared.Appearance == AppearanceSetting.UseSystemSetting)
-        {
-            ApplicationData.Current.LocalSettings.Values.Remove(appearanceKey);
-        }
-
-        // To database.
-        await XmlDatabaseManager.WaitLock();
-        XmlDatabase.Settings.TransitionAnimation = Shared.TransitionAnimation;
-        XmlDatabase.Settings.SaveHistory = Shared.HistorySaveBrowsingHistory;
-        XmlDatabaseManager.ReleaseLock();
-        TaskDispatcher.DefaultQueue.Submit("SettingsPage#Save", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
-
-        {
-            int selectedIndex = Shared.DefaultArchiveCodePageIndex;
-            if (selectedIndex >= 0 && selectedIndex < Shared.Encodings.Count)
-            {
-                AppStatusPreserver.DefaultArchiveCodePage = Shared.Encodings[selectedIndex].Item2;
-            }
-        }
-
-        AppStatusPreserver.AntiAliasingEnabled = Shared.AntiAliasingEnabled;
-        DebugUtils.DebugMode = Shared.AdvancedDebugMode;
-    }
-
-    private void OnSettingsChanged()
-    {
-        if (_updating)
-        {
-            return;
-        }
-
-        C0.Run(async delegate
-        {
-            await Save();
-        });
-    }
-
-    // events
     private void ChooseLocationsClick(object sender, RoutedEventArgs e)
     {
         C0.Run(async delegate
@@ -529,7 +349,7 @@ internal sealed partial class SettingsPage : BasePage
         C0.Run(async delegate
         {
             await HistoryDataManager.Clear(true);
-            Shared.IsClearHistoryEnabled = false;
+            ViewModel.IsClearHistoryEnabled = false;
         });
     }
 
@@ -544,28 +364,156 @@ internal sealed partial class SettingsPage : BasePage
 
     private void OnRescanFilesClicked(object sender, RoutedEventArgs e)
     {
-        Shared.IsRescanning = true;
+        ViewModel.IsRescanning = true;
         ComicData.UpdateAllComics("OnRescanFilesClicked", lazy: false);
     }
 
     private void OnClearCacheClick(object sender, RoutedEventArgs e)
     {
-        Shared.IsClearingCache = true;
+        ViewModel.IsClearingCache = true;
         TaskDispatcher.DefaultQueue.Submit("ClearCache", delegate
         {
             ClearCache();
             string size = GetCacheSize();
             _ = MainThreadUtils.RunInMainThread(() =>
             {
-                Shared.IsClearingCache = false;
-                Shared.CacheSize = size;
+                ViewModel.IsClearingCache = false;
+                ViewModel.CacheSize = size;
             });
         });
     }
 
     //
-    // cache
+    // Data Update
     //
+
+    private async Task Update()
+    {
+        ViewModel.Updating = true;
+
+        await XmlDatabaseManager.WaitLock();
+        ViewModel.IsClearHistoryEnabled = XmlDatabase.History.Items.Count > 0;
+        XmlDatabaseManager.ReleaseLock();
+
+        ViewModel.TransitionAnimation = AppData.TransitionAnimation;
+        ViewModel.HistorySaveBrowsingHistory = AppData.SaveBrowsingHistory;
+        ViewModel.AntiAliasingEnabled = AppData.AntiAliasingEnabled;
+        ViewModel.AdvancedDebugMode = DebugUtils.DebugMode;
+
+        UpdateAppearance();
+        UpdateCodePages();
+        UpdateCacheSize();
+        UpdateRescanStatus();
+        UpdateStatistis();
+        UpdateFeedback();
+        UpdateAbout();
+
+        ViewModel.Updating = false;
+    }
+
+    private void OnComicDataUpdated()
+    {
+        _ = MainThreadUtils.RunInMainThread(delegate
+        {
+            UpdateRescanStatus();
+            UpdateStatistis();
+        });
+    }
+
+    private void UpdateAppearance()
+    {
+        object appearance_setting = ApplicationData.Current.LocalSettings.Values[GlobalConstants.LOCAL_SETTINGS_KEY_APPEARANCE];
+        if (appearance_setting == null)
+        {
+            ViewModel.Appearance = AppearanceSetting.UseSystemSetting;
+        }
+        else if ((ApplicationTheme)(int)appearance_setting == ApplicationTheme.Light)
+        {
+            ViewModel.Appearance = AppearanceSetting.Light;
+        }
+        else if ((ApplicationTheme)(int)appearance_setting == ApplicationTheme.Dark)
+        {
+            ViewModel.Appearance = AppearanceSetting.Dark;
+        }
+    }
+
+    private void UpdateCodePages()
+    {
+        C0.Run(async delegate
+        {
+            ReadOnlyDictionary<int, Encoding> supportedEncodings = await AppInfoProvider.GetSupportedEncodings();
+            var encodings = new List<Tuple<string, int>>
+            {
+                new(StringResourceProvider.GetResourceString("Default"), -1)
+            };
+
+            int defaultCodePage = AppData.DefaultArchiveCodePage;
+            int selectedIndex = 0;
+            foreach (Encoding info in supportedEncodings.Values)
+            {
+                string title = info.EncodingName + " [" + info.CodePage.ToString() + "]";
+                encodings.Add(new Tuple<string, int>(title, info.CodePage));
+                if (defaultCodePage == info.CodePage)
+                {
+                    selectedIndex = encodings.Count - 1;
+                }
+            }
+            ViewModel.Encodings = encodings;
+
+            if (!supportedEncodings.ContainsKey(defaultCodePage))
+            {
+                AppData.DefaultArchiveCodePage = -1;
+                selectedIndex = 0;
+            }
+
+            ViewModel.DefaultArchiveCodePageIndex = selectedIndex;
+        });
+    }
+
+    private void UpdateStatistis()
+    {
+        C0.Run(async delegate
+        {
+            long comicCount = 0;
+            await ComicData.CommandBlock2(async delegate (SqliteCommand command)
+            {
+                command.CommandText = "SELECT COUNT(*) FROM " + SqliteDatabaseManager.ComicTable;
+                comicCount = (long)await command.ExecuteScalarAsync();
+            }, "SettingUpdateStatistics");
+            string total_comic_string = StringResourceProvider.GetResourceString("TotalComics");
+            StatisticsTextBlock.Text = total_comic_string +
+                comicCount.ToString("#,#0", CultureInfo.InvariantCulture);
+        });
+    }
+
+    private void UpdateRescanStatus()
+    {
+        ViewModel.IsRescanning = ComicData.IsRescanning;
+    }
+
+    private void UpdateFeedback()
+    {
+        string appName = StringResourceProvider.GetResourceString("AppDisplayName");
+        string contributionBeforeLink = StringResourceProvider.GetResourceString("ContributionRunBeforeLink");
+        contributionBeforeLink = contributionBeforeLink.Replace("$appname", appName);
+        ContributionRunBeforeLink.Text = contributionBeforeLink;
+        ContributionRunAfterLink.Text = StringResourceProvider.GetResourceString("ContributionRunAfterLink");
+    }
+
+    private void UpdateAbout()
+    {
+#if DEBUG
+        string appName = StringResourceProvider.GetResourceString("DevAppDisplayName");
+#else
+        string appName = Utils.StringResourceProvider.GetResourceString("AppDisplayName");
+#endif
+        AboutBuildVersionControl.Text = appName + " " + AppEnvironment.Instance.GetVersionName();
+
+        string author = "aicd0";
+        string aboutCopyright = StringResourceProvider.GetResourceString("AboutCopyright");
+        aboutCopyright = aboutCopyright.Replace("$author", author);
+        AboutCopyrightControl.Text = aboutCopyright;
+    }
 
     private void UpdateCacheSize()
     {
@@ -574,9 +522,18 @@ internal sealed partial class SettingsPage : BasePage
             string size = GetCacheSize();
             _ = MainThreadUtils.RunInMainThread(() =>
             {
-                Shared.CacheSize = size;
+                ViewModel.CacheSize = size;
             });
         });
+    }
+
+    //
+    // Utilities
+    //
+
+    private IMainPageAbility GetMainPageAbility()
+    {
+        return GetAbility<IMainPageAbility>();
     }
 
     private static void ClearCache()
@@ -610,16 +567,15 @@ internal sealed partial class SettingsPage : BasePage
     {
         var d = new DirectoryInfo(ApplicationData.Current.LocalCacheFolder.Path);
         long size = FileUtils.GetDirectorySize(d);
-        string[] sizes = { "B", "KB", "MB", "GB", "TB" };
+        string[] sizes = ["B", "KB", "MB", "GB", "TB"];
         int order = 0;
+
         while (size >= 1024 && order < sizes.Length - 1)
         {
             order++;
             size /= 1024;
         }
 
-        // Adjust the format string to your preferences. For example "{0:0.#}{1}" would
-        // show a single decimal place, and no space.
         return string.Format("{0:0.##} {1}", size, sizes[order]);
     }
 }

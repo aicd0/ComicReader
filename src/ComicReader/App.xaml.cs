@@ -90,8 +90,31 @@ public partial class App : Application
     private async Task PerformInitialization()
     {
         Logger.Initialize();
+        await SqliteDatabaseManager.Init();
+        await XmlDatabaseManager.Load();
+        await UpdateDatabase();
+        ComicData.UpdateAllComics("DatabaseManager#init", lazy: true);
+    }
 
-        TaskException result = await DatabaseManager.Init();
-        DebugUtils.Assert(result.Successful());
+    private async Task<TaskException> UpdateDatabase()
+    {
+        int old_version = XmlDatabase.Settings.DatabaseVersion;
+
+        switch (old_version)
+        {
+            case -1:
+                goto case 2;
+            case 0:
+                goto case 2;
+            case 1:
+                goto case 2;
+            case 2:
+                XmlDatabase.Settings.DatabaseVersion = 2;
+                await XmlDatabaseManager.SaveUnsealed(XmlDatabaseItem.Settings);
+                return TaskException.Success;
+            default:
+                DebugUtils.Assert(false);
+                return TaskException.UnknownEnum;
+        }
     }
 }

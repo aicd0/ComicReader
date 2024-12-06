@@ -841,7 +841,7 @@ internal partial class ReaderView : UserControl
 
     private void UpdateImageDecodeSize(ReaderFrameViewModel model)
     {
-        if (!AppStatusPreserver.AntiAliasingEnabled)
+        if (!AppData.AntiAliasingEnabled)
         {
             return;
         }
@@ -1628,7 +1628,7 @@ internal partial class ReaderView : UserControl
     // Modifier - Scrolling
     public bool MoveFrame(int increment, string reason)
     {
-        MoveFrameInternal(increment, !XmlDatabase.Settings.TransitionAnimation, reason);
+        MoveFrameInternal(increment, !AppData.TransitionAnimation, reason);
         return true;
     }
 

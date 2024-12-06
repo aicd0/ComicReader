@@ -75,7 +75,7 @@ internal class HistoryDataManager
         await XmlDatabaseManager.WaitLock();
         try
         {
-            if (!XmlDatabase.Settings.SaveHistory)
+            if (!AppData.SaveBrowsingHistory)
             {
                 return;
             }

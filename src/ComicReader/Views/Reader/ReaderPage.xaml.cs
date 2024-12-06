@@ -132,6 +132,8 @@ internal class ReaderPageViewModel : INotifyPropertyChanged
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsFullscreen)));
         }
     }
+
+    public ObservableCollection<ReaderImagePreviewViewModel> PreviewDataSource { get; set; }
 }
 
 internal sealed partial class ReaderPage : BasePage
@@ -147,7 +149,7 @@ internal sealed partial class ReaderPage : BasePage
     //
 
     private bool? _isFavorite = null;
-    private ReaderSettingDataModel _readerSettingModel = AppDataRepository.GetReaderSetting();
+    private ReaderSettingDataModel _readerSettingModel = null;
 
     private bool _buttomTileShowed = false;
     private bool _buttomTileHold = false;
@@ -158,7 +160,6 @@ internal sealed partial class ReaderPage : BasePage
     private readonly TagItemHandler _tagItemHandler;
 
     private ReaderPageViewModel ViewModel { get; set; } = new();
-    private ObservableCollection<ReaderImagePreviewViewModel> PreviewDataSource { get; set; }
 
     //
     // Constructor
@@ -175,20 +176,22 @@ internal sealed partial class ReaderPage : BasePage
         ViewModel.ComicDir = "";
         ViewModel.ComicTags = new ObservableCollection<TagCollectionViewModel>();
         ViewModel.IsEditable = false;
-
-        PreviewDataSource = new ObservableCollection<ReaderImagePreviewViewModel>();
+        ViewModel.PreviewDataSource = new ObservableCollection<ReaderImagePreviewViewModel>();
 
         ReaderView reader = MainReaderView;
+
         reader.ReaderEventTapped += delegate (ReaderView sender)
         {
             BottomTileSetHold(!_buttomTileShowed);
         };
+
         reader.ReaderEventPageChanged += delegate (ReaderView sender, bool isIntermediate)
         {
             UpdatePage();
             UpdateProgress(sender, save: !isIntermediate);
             BottomTileSetHold(false);
         };
+
         reader.ReaderEventReaderStateChanged += delegate (ReaderView sender, ReaderView.ReaderState state)
         {
             switch (state)
@@ -216,6 +219,7 @@ internal sealed partial class ReaderPage : BasePage
     protected override void OnStart(PageBundle bundle)
     {
         base.OnStart(bundle);
+
         C0.Run(async delegate
         {
             bool tipShown = KVDatabase.GetDefaultMethod().GetBoolean(GlobalConstants.KV_DB_TIPS, KEY_TIP_SHOWN, false);
@@ -229,7 +233,7 @@ internal sealed partial class ReaderPage : BasePage
             if (comic == null)
             {
                 string token = bundle.GetString(RouterConstants.ARG_COMIC_TOKEN, "");
-                comic = AppDataRepository.GetComicData(token);
+                comic = AppData.GetComicData(token);
             }
 
             if (comic != null)
@@ -238,12 +242,20 @@ internal sealed partial class ReaderPage : BasePage
             }
             GetMainPageAbility().SetIcon(new SymbolIconSource { Symbol = Symbol.Pictures });
 
-            ReaderSettingDataModel readerSetting = _readerSettingModel;
+            _readerSettingModel = new ReaderSettingDataModel
+            {
+                IsVertical = XmlDatabase.Settings.VerticalReading,
+                IsLeftToRight = XmlDatabase.Settings.LeftToRight,
+                IsVerticalContinuous = XmlDatabase.Settings.VerticalContinuous,
+                IsHorizontalContinuous = XmlDatabase.Settings.HorizontalContinuous,
+                VerticalPageArrangement = XmlDatabase.Settings.VerticalPageArrangement,
+                HorizontalPageArrangement = XmlDatabase.Settings.HorizontalPageArrangement,
+            };
             ReaderView reader = MainReaderView;
-            reader.SetIsVertical(readerSetting.IsVertical);
-            reader.SetIsContinuous(readerSetting.IsContinuous);
-            reader.SetPageArrangement(readerSetting.PageArrangement);
-            reader.SetFlowDirection(readerSetting.IsLeftToRight);
+            reader.SetIsVertical(_readerSettingModel.IsVertical);
+            reader.SetIsContinuous(_readerSettingModel.IsContinuous);
+            reader.SetPageArrangement(_readerSettingModel.PageArrangement);
+            reader.SetFlowDirection(_readerSettingModel.IsLeftToRight);
 
             if (comic == null)
             {
@@ -253,13 +265,13 @@ internal sealed partial class ReaderPage : BasePage
             {
                 await LoadComic(comic);
 
-                // Update previews.
+                // Update previews
                 double preview_width = (double)Application.Current.Resources["ReaderPreviewImageWidth"];
                 double preview_height = (double)Application.Current.Resources["ReaderPreviewImageHeight"];
-                PreviewDataSource.Clear();
+                ViewModel.PreviewDataSource.Clear();
                 for (int i = 0; i < comic.ImageCount; ++i)
                 {
-                    PreviewDataSource.Add(new ReaderImagePreviewViewModel
+                    ViewModel.PreviewDataSource.Add(new ReaderImagePreviewViewModel
                     {
                         Image = new SimpleImageView.Model
                         {
@@ -287,7 +299,7 @@ internal sealed partial class ReaderPage : BasePage
         ComicData comic = GetComic();
         if (comic != null && !comic.IsExternal)
         {
-            AppStatusPreserver.SetReadingComic(comic.Id);
+            AppData.SetReadingComic(comic.Id);
         }
 
         C0.Run(async delegate
@@ -298,8 +310,8 @@ internal sealed partial class ReaderPage : BasePage
 
     private void ObserveData()
     {
-        GetMainPageAbility().RegisterTabUnselectedHandler(this, AppStatusPreserver.UnsetReadingComic);
-        GetNavigationPageAbility().RegisterLeavingHandler(this, AppStatusPreserver.UnsetReadingComic);
+        GetMainPageAbility().RegisterTabUnselectedHandler(this, AppData.UnsetReadingComic);
+        GetNavigationPageAbility().RegisterLeavingHandler(this, AppData.UnsetReadingComic);
 
         GetNavigationPageAbility().RegisterGridViewModeChangedHandler(this, delegate (bool enabled)
         {
@@ -332,9 +344,8 @@ internal sealed partial class ReaderPage : BasePage
 
         GetNavigationPageAbility().RegisterReaderSettingsChangedEventHandler(this, delegate (ReaderSettingDataModel setting)
         {
-            ReaderSettingDataModel lastSetting = _readerSettingModel;
-            ReaderView reader = MainReaderView;
             _readerSettingModel = setting;
+            ReaderView reader = MainReaderView;
             reader.SetIsVertical(setting.IsVertical);
             reader.SetFlowDirection(setting.IsLeftToRight);
             reader.SetIsContinuous(setting.IsContinuous);
