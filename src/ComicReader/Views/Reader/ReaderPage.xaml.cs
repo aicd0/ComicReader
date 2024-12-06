@@ -1,10 +1,6 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-#if DEBUG
-//#define DEBUG_LOG_POINTER
-#endif
-
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -150,6 +146,8 @@ internal sealed partial class ReaderPage : BasePage
 
     private bool? _isFavorite = null;
     private ReaderSettingDataModel _readerSettingModel = null;
+    private ComicData _comic;
+    private volatile bool _updatingProgress = false;
 
     private bool _buttomTileShowed = false;
     private bool _buttomTileHold = false;
@@ -158,6 +156,23 @@ internal sealed partial class ReaderPage : BasePage
 
     private readonly ITaskDispatcher _loadPreviewDispatcher = TaskDispatcher.Factory.NewQueue("ReaderLoadPreview");
     private readonly TagItemHandler _tagItemHandler;
+
+    private MutableLiveData<ReaderStatusEnum> ReaderStatusLiveData { get; } = new(ReaderStatusEnum.Loading);
+
+    private readonly MutableLiveData<bool> _isExternalComicLiveData = new(true);
+    public LiveData<bool> IsExternalComicLiveData => _isExternalComicLiveData;
+
+    private bool _gridViewModeEnabled = false;
+    private bool GridViewModeEnabled
+    {
+        get => _gridViewModeEnabled;
+        set
+        {
+            _gridViewModeEnabled = value;
+            UpdateReaderUI();
+            GetNavigationPageAbility().SetGridViewMode(value);
+        }
+    }
 
     private ReaderPageViewModel ViewModel { get; set; } = new();
 
@@ -296,7 +311,7 @@ internal sealed partial class ReaderPage : BasePage
         GetNavigationPageAbility().SetReaderSettings(_readerSettingModel);
         UpdateReaderUI();
 
-        ComicData comic = GetComic();
+        ComicData comic = _comic;
         if (comic != null && !comic.IsExternal)
         {
             AppData.SetReadingComic(comic.Id);
@@ -382,24 +397,133 @@ internal sealed partial class ReaderPage : BasePage
     }
 
     //
-    // Utilities
+    // Loader
     //
 
-    private IMainPageAbility GetMainPageAbility()
+    public async Task LoadComic(ComicData comic)
     {
-        return GetAbility<IMainPageAbility>();
+        if (comic == _comic)
+        {
+            return;
+        }
+
+        if (comic == null)
+        {
+            ReaderStatusLiveData.Emit(ReaderStatusEnum.Error);
+            return;
+        }
+
+        ReaderStatusLiveData.Emit(ReaderStatusEnum.Loading);
+
+        _comic = comic;
+
+        await LoadComicInfo();
+
+        if (!_comic.IsExternal)
+        {
+            _comic.SetAsStarted();
+            await HistoryDataManager.Add(_comic.Id, _comic.Title1, true);
+
+            TaskException result = await _comic.UpdateImages(reload: true);
+            if (!result.Successful())
+            {
+                Log("Failed to load images of '" + _comic.Location + "'. " + result.ToString());
+                ReaderStatusLiveData.Emit(ReaderStatusEnum.Error);
+                return;
+            }
+
+            MainReaderView.SetInitialPage(_comic.LastPosition);
+        }
+
+        var images = new List<IImageSource>();
+        for (int i = 0; i < _comic.ImageCount; ++i)
+        {
+            images.Add(new ComicImageSource(comic, i));
+        }
+        MainReaderView.StartLoadingImages(images);
     }
 
-    private INavigationPageAbility GetNavigationPageAbility()
+    public async Task LoadComicInfo()
     {
-        return GetAbility<INavigationPageAbility>();
+        if (_comic == null)
+        {
+            return;
+        }
+
+        _isExternalComicLiveData.Emit(_comic.IsExternal);
+
+        if (_comic.Title1.Length == 0)
+        {
+            ViewModel.ComicTitle1 = _comic.Title;
+        }
+        else
+        {
+            ViewModel.ComicTitle1 = _comic.Title1;
+            ViewModel.ComicTitle2 = _comic.Title2;
+        }
+
+        ViewModel.ComicDir = _comic.Location;
+        ViewModel.CanDirOpenInFileExplorer = _comic is ComicFolderData;
+        ViewModel.IsEditable = _comic.IsEditable;
+
+        LoadComicTag();
+
+        bool isFavorite = !_comic.IsExternal && await FavoriteDataManager.FromId(_comic.Id) != null;
+        SetIsFavorite(isFavorite);
+
+        if (!_comic.IsExternal)
+        {
+            ViewModel.Rating = _comic.Rating;
+        }
+    }
+
+    private void LoadComicTag()
+    {
+        if (_comic == null)
+        {
+            return;
+        }
+
+        var new_collection = new ObservableCollection<TagCollectionViewModel>();
+
+        for (int i = 0; i < _comic.Tags.Count; ++i)
+        {
+            ComicData.TagData tags = _comic.Tags[i];
+            var tags_model = new TagCollectionViewModel(tags.Name);
+
+            foreach (string tag in tags.Tags)
+            {
+                var tag_model = new TagViewModel
+                {
+                    Tag = tag,
+                    ItemHandler = _tagItemHandler
+                };
+                tags_model.Tags.Add(tag_model);
+            }
+
+            new_collection.Add(tags_model);
+        }
+
+        ViewModel.ComicTags = new_collection;
     }
 
     //
-    // Obsolete
+    // UI
     //
 
-    public void UpdatePage()
+    public void UpdateReaderUI()
+    {
+        bool isWorking = ReaderStatusLiveData.GetValue() == ReaderStatusEnum.Working;
+        bool previewVisible = isWorking && _gridViewModeEnabled;
+        bool readerVisible = isWorking && !previewVisible;
+
+        GGridView.IsHitTestVisible = previewVisible;
+        GGridView.Opacity = previewVisible ? 1 : 0;
+        GMainSection.Visibility = previewVisible ? Visibility.Collapsed : Visibility.Visible;
+        MainReaderView.SetVisibility(readerVisible);
+    }
+
+    private void UpdatePage()
     {
         if (PageIndicator == null)
         {
@@ -411,7 +535,52 @@ internal sealed partial class ReaderPage : BasePage
         PageIndicator.Text = currentPage.ToString() + " / " + reader.PageCount.ToString();
     }
 
-    // Preview
+    public void UpdateProgress(ReaderView reader, bool save)
+    {
+        double page = reader.CurrentPage;
+
+        if (page <= 0.0)
+        {
+            return;
+        }
+
+        int progress;
+
+        if (reader.PageCount <= 0)
+        {
+            progress = 0;
+        }
+        else if (reader.IsLastPage)
+        {
+            progress = 100;
+        }
+        else
+        {
+            progress = (int)((float)page / reader.PageCount * 100);
+        }
+
+        progress = Math.Min(progress, 100);
+
+        if (save)
+        {
+            if (_updatingProgress)
+            {
+                return;
+            }
+
+            _updatingProgress = true;
+            Task.Run(delegate
+            {
+                _comic.SaveProgressAsync(progress, page).Wait();
+                _updatingProgress = false;
+            });
+        }
+    }
+
+    //
+    // Events
+    //
+
     private void OnGridViewItemClicked(object sender, ItemClickEventArgs e)
     {
         var ctx = (ReaderImagePreviewViewModel)e.ClickedItem;
@@ -422,7 +591,6 @@ internal sealed partial class ReaderPage : BasePage
             .Commit();
     }
 
-    // Pointer events
     private void OnFavoritesChecked(object sender, RoutedEventArgs e)
     {
         SetIsFavorite(true);
@@ -435,14 +603,14 @@ internal sealed partial class ReaderPage : BasePage
 
     private void OnRatingControlValueChanged(RatingControl sender, object args)
     {
-        GetComic().SaveRating((int)sender.Value);
+        _comic.SaveRating((int)sender.Value);
     }
 
     private void OnDirectoryTapped(object sender, TappedRoutedEventArgs e)
     {
         C0.Run(async delegate
         {
-            ComicData comic = GetComic();
+            ComicData comic = _comic;
 
             StorageFolder folder = await Storage.TryGetFolder(comic.Location);
 
@@ -465,7 +633,7 @@ internal sealed partial class ReaderPage : BasePage
     {
         C0.Run(async delegate
         {
-            ComicData comic = GetComic();
+            ComicData comic = _comic;
             if (comic == null)
             {
                 return;
@@ -480,7 +648,72 @@ internal sealed partial class ReaderPage : BasePage
         });
     }
 
+    private void OnBottomGridPointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+        OnReaderPointerExited();
+    }
+
+    private void OnInfoPanePointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+        OnReaderPointerExited();
+    }
+
+    private void OnTitleBarAreaPointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+        OnReaderPointerExited();
+    }
+
+    private void OnReaderPointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+        _buttomTilePointerIn = false;
+
+        if (e.Pointer.PointerDeviceType != PointerDeviceType.Mouse)
+        {
+            return;
+        }
+
+        if (!_buttomTileShowed || _buttomTileHold)
+        {
+            return;
+        }
+
+        BottomTileHide(3000);
+    }
+
+    private void OnReaderTipCloseButtonClick(InfoBar sender, object args)
+    {
+        KVDatabase.GetDefaultMethod().SetBoolean(GlobalConstants.KV_DB_TIPS, KEY_TIP_SHOWN, true);
+    }
+
+    private void OnFullscreenBtClicked(object sender, RoutedEventArgs e)
+    {
+        MainPage.Current.EnterFullscreen();
+        ViewModel.IsFullscreen = true;
+    }
+
+    private void OnBackToWindowBtClicked(object sender, RoutedEventArgs e)
+    {
+        MainPage.Current.ExitFullscreen();
+        ViewModel.IsFullscreen = false;
+    }
+
+    private void OnGridViewContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
+    {
+        var item = args.Item as ReaderImagePreviewViewModel;
+        var viewHolder = args.ItemContainer.ContentTemplateRoot as ReaderPreviewImage;
+        viewHolder.SetModel(item, args.InRecycleQueue);
+    }
+
+    //
     // Bottom Tile
+    //
+
+    private void OnReaderPointerExited()
+    {
+        _buttomTilePointerIn = true;
+        BottomTileShow();
+    }
+
     public void BottomTileShow()
     {
         if (_buttomTileShowed)
@@ -554,206 +787,18 @@ internal sealed partial class ReaderPage : BasePage
         }
     }
 
-    private void OnBottomGridPointerEntered(object sender, PointerRoutedEventArgs e)
+    //
+    // Utilities
+    //
+
+    private IMainPageAbility GetMainPageAbility()
     {
-        OnReaderPointerExited();
+        return GetAbility<IMainPageAbility>();
     }
 
-    private void OnInfoPanePointerEntered(object sender, PointerRoutedEventArgs e)
+    private INavigationPageAbility GetNavigationPageAbility()
     {
-        OnReaderPointerExited();
-    }
-
-    private void OnTitleBarAreaPointerEntered(object sender, PointerRoutedEventArgs e)
-    {
-        OnReaderPointerExited();
-    }
-
-    private void OnReaderPointerExited()
-    {
-        _buttomTilePointerIn = true;
-        BottomTileShow();
-    }
-
-    private void OnReaderPointerEntered(object sender, PointerRoutedEventArgs e)
-    {
-        _buttomTilePointerIn = false;
-
-        if (e.Pointer.PointerDeviceType != PointerDeviceType.Mouse)
-        {
-            return;
-        }
-
-        if (!_buttomTileShowed || _buttomTileHold)
-        {
-            return;
-        }
-
-        BottomTileHide(3000);
-    }
-
-    // Tips
-    private void OnReaderTipCloseButtonClick(InfoBar sender, object args)
-    {
-        KVDatabase.GetDefaultMethod().SetBoolean(GlobalConstants.KV_DB_TIPS, KEY_TIP_SHOWN, true);
-    }
-
-    // Fullscreen
-    private void OnFullscreenBtClicked(object sender, RoutedEventArgs e)
-    {
-        MainPage.Current.EnterFullscreen();
-        ViewModel.IsFullscreen = true;
-    }
-
-    private void OnBackToWindowBtClicked(object sender, RoutedEventArgs e)
-    {
-        MainPage.Current.ExitFullscreen();
-        ViewModel.IsFullscreen = false;
-    }
-
-    // Debug
-    public void Log(string message)
-    {
-        Logger.I("ReaderPage", message);
-    }
-
-    public class TagItemHandler : TagViewModel.IItemHandler
-    {
-        private readonly ReaderPage _page;
-
-        public TagItemHandler(ReaderPage page)
-        {
-            _page = page;
-        }
-
-        public void OnClicked(object sender, RoutedEventArgs e)
-        {
-            _page.OnInfoPaneTagClicked(sender, e);
-        }
-    }
-
-    private void OnGridViewContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
-    {
-        var item = args.Item as ReaderImagePreviewViewModel;
-        var viewHolder = args.ItemContainer.ContentTemplateRoot as ReaderPreviewImage;
-        viewHolder.SetModel(item, args.InRecycleQueue);
-    }
-
-    private ComicData _comic;
-    private volatile bool _updatingProgress = false;
-
-    public MutableLiveData<ReaderStatusEnum> ReaderStatusLiveData { get; } = new(ReaderStatusEnum.Loading);
-
-    private readonly MutableLiveData<bool> _isExternalComicLiveData = new(true);
-    public LiveData<bool> IsExternalComicLiveData => _isExternalComicLiveData;
-
-    private bool _gridViewModeEnabled = false;
-    public bool GridViewModeEnabled
-    {
-        get => _gridViewModeEnabled;
-        set
-        {
-            _gridViewModeEnabled = value;
-            UpdateReaderUI();
-            GetNavigationPageAbility().SetGridViewMode(value);
-        }
-    }
-
-    public void UpdateReaderUI()
-    {
-        bool isWorking = ReaderStatusLiveData.GetValue() == ReaderStatusEnum.Working;
-        bool previewVisible = isWorking && _gridViewModeEnabled;
-        bool readerVisible = isWorking && !previewVisible;
-
-        GGridView.IsHitTestVisible = previewVisible;
-        GGridView.Opacity = previewVisible ? 1 : 0;
-        GMainSection.Visibility = previewVisible ? Visibility.Collapsed : Visibility.Visible;
-        MainReaderView.SetVisibility(readerVisible);
-    }
-
-    public async Task LoadComic(ComicData comic)
-    {
-        if (comic == _comic)
-        {
-            return;
-        }
-
-        if (comic == null)
-        {
-            ReaderStatusLiveData.Emit(ReaderStatusEnum.Error);
-            return;
-        }
-
-        ReaderStatusLiveData.Emit(ReaderStatusEnum.Loading);
-
-        _comic = comic;
-
-        await LoadComicInfo();
-
-        if (!_comic.IsExternal)
-        {
-            _comic.SetAsStarted();
-            await HistoryDataManager.Add(_comic.Id, _comic.Title1, true);
-
-            TaskException result = await _comic.UpdateImages(reload: true);
-            if (!result.Successful())
-            {
-                Log("Failed to load images of '" + _comic.Location + "'. " + result.ToString());
-                ReaderStatusLiveData.Emit(ReaderStatusEnum.Error);
-                return;
-            }
-
-            MainReaderView.SetInitialPage(_comic.LastPosition);
-        }
-
-        var images = new List<IImageSource>();
-        for (int i = 0; i < _comic.ImageCount; ++i)
-        {
-            images.Add(new ComicImageSource(comic, i));
-        }
-        MainReaderView.StartLoadingImages(images);
-    }
-
-    public void UpdateProgress(ReaderView reader, bool save)
-    {
-        double page = reader.CurrentPage;
-
-        if (page <= 0.0)
-        {
-            return;
-        }
-
-        int progress;
-
-        if (reader.PageCount <= 0)
-        {
-            progress = 0;
-        }
-        else if (reader.IsLastPage)
-        {
-            progress = 100;
-        }
-        else
-        {
-            progress = (int)((float)page / reader.PageCount * 100);
-        }
-
-        progress = Math.Min(progress, 100);
-
-        if (save)
-        {
-            if (_updatingProgress)
-            {
-                return;
-            }
-
-            _updatingProgress = true;
-            Task.Run(delegate
-            {
-                _comic.SaveProgressAsync(progress, page).Wait();
-                _updatingProgress = false;
-            });
-        }
+        return GetAbility<INavigationPageAbility>();
     }
 
     public void SetIsFavorite(bool isFavorite)
@@ -782,73 +827,28 @@ internal sealed partial class ReaderPage : BasePage
         }
     }
 
-    public ComicData GetComic()
+    public void Log(string message)
     {
-        return _comic;
+        Logger.I("ReaderPage", message);
     }
 
-    public async Task LoadComicInfo()
+    //
+    // Classes
+    //
+
+    public class TagItemHandler : TagViewModel.IItemHandler
     {
-        if (_comic == null)
+        private readonly ReaderPage _page;
+
+        public TagItemHandler(ReaderPage page)
         {
-            return;
+            _page = page;
         }
 
-        _isExternalComicLiveData.Emit(_comic.IsExternal);
-
-        if (_comic.Title1.Length == 0)
+        public void OnClicked(object sender, RoutedEventArgs e)
         {
-            ViewModel.ComicTitle1 = _comic.Title;
+            _page.OnInfoPaneTagClicked(sender, e);
         }
-        else
-        {
-            ViewModel.ComicTitle1 = _comic.Title1;
-            ViewModel.ComicTitle2 = _comic.Title2;
-        }
-
-        ViewModel.ComicDir = _comic.Location;
-        ViewModel.CanDirOpenInFileExplorer = _comic is ComicFolderData;
-        ViewModel.IsEditable = _comic.IsEditable;
-
-        LoadComicTag();
-
-        bool isFavorite = !_comic.IsExternal && await FavoriteDataManager.FromId(_comic.Id) != null;
-        SetIsFavorite(isFavorite);
-
-        if (!_comic.IsExternal)
-        {
-            ViewModel.Rating = _comic.Rating;
-        }
-    }
-
-    private void LoadComicTag()
-    {
-        if (_comic == null)
-        {
-            return;
-        }
-
-        var new_collection = new ObservableCollection<TagCollectionViewModel>();
-
-        for (int i = 0; i < _comic.Tags.Count; ++i)
-        {
-            ComicData.TagData tags = _comic.Tags[i];
-            var tags_model = new TagCollectionViewModel(tags.Name);
-
-            foreach (string tag in tags.Tags)
-            {
-                var tag_model = new TagViewModel
-                {
-                    Tag = tag,
-                    ItemHandler = _tagItemHandler
-                };
-                tags_model.Tags.Add(tag_model);
-            }
-
-            new_collection.Add(tags_model);
-        }
-
-        ViewModel.ComicTags = new_collection;
     }
 
     public enum ReaderStatusEnum

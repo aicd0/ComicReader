@@ -69,6 +69,7 @@ internal partial class ReaderView : UserControl
 
     private bool _tapPending = false;
     private bool _tapCancelled = false;
+    private bool _manipulationDisabled = false;
     private readonly UIElement _gestureReference;
     private readonly GestureHandler _gestureHandler;
     private readonly ReaderGestureRecognizer _gestureRecognizer = new();
@@ -372,7 +373,7 @@ internal partial class ReaderView : UserControl
 
             PostToCurrentThread(delegate
             {
-                ScrollResult scrollResult = SetScrollViewer2(Zoom, _initialPage, true, "JumpToInitialPage");
+                ScrollResult scrollResult = SetScrollViewer2(_zoom, _initialPage, true, "JumpToInitialPage");
                 if (scrollResult == ScrollResult.TooClose)
                 {
                     UpdateImages(true);
@@ -647,7 +648,7 @@ internal partial class ReaderView : UserControl
         while (true)
         {
             int i = (begin + end + 1) / 2;
-            FrameOffsetData offsets = FrameOffsets(i);
+            FrameOffsetData offsets = FrameOffset(i);
 
             if (offsets == null)
             {
@@ -673,7 +674,7 @@ internal partial class ReaderView : UserControl
             {
                 if (begin >= end)
                 {
-                    frameOffsets ??= FrameOffsets(begin);
+                    frameOffsets ??= FrameOffset(begin);
                     break;
                 }
                 end = i - 1;
@@ -728,7 +729,7 @@ internal partial class ReaderView : UserControl
         Log("PageUpdated",
             $"P={CurrentPage}," +
             $"PO={ParallelOffset}," +
-            $"POF={ParallelOffsetFinal}," +
+            $"POF={SCParallelOffsetFinal}," +
             $"Z={ZoomFactor}");
 
         return true;
@@ -846,7 +847,7 @@ internal partial class ReaderView : UserControl
             return;
         }
 
-        double frameHeight = model.FrameHeight * ZoomFactorFinal;
+        double frameHeight = model.FrameHeight * SCZoomFactorFinal;
 
         void applyDecodeSize(BitmapImage image)
         {
@@ -929,7 +930,7 @@ internal partial class ReaderView : UserControl
 
     private void OnReaderScrollViewerSizeChanged(object sender, SizeChangedEventArgs e)
     {
-        OnSizeChanged();
+        AdjustPadding();
     }
 
     private void OnReaderScrollViewerViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
@@ -938,6 +939,41 @@ internal partial class ReaderView : UserControl
         {
             ReaderEventPageChanged?.Invoke(this, e.IsIntermediate);
         }
+    }
+
+    private bool OnViewChanged(bool final)
+    {
+        if (!_isInitialFrameLoaded)
+        {
+            return false;
+        }
+
+        if (!UpdatePage())
+        {
+            return false;
+        }
+
+        if (final)
+        {
+            SCClearFinalVal("ViewChanged");
+
+            // Notify the scroll viewer to update its inner states.
+            SetScrollViewer1(null, null, false, "AdjustInnerStateAfterViewChanged");
+
+            if (!_isContinuous && _zoom < FORCE_CONTINUOUS_ZOOM_THRESHOLD)
+            {
+                // Stick our view to the center of two pages.
+                MoveFrameInternal(0, false, "StickToCenter");
+            }
+
+            Log("ViewChanged", $"Z={SCZoomFactorFinal}"
+                + $",H={SCHorizontalOffsetFinal}"
+                + $",V={SCVerticalOffsetFinal}"
+                + $",P={CurrentPage}");
+        }
+
+        UpdateImages(final);
+        return true;
     }
 
     //
@@ -1130,6 +1166,97 @@ internal partial class ReaderView : UserControl
         OnReaderManipulationCompleted(e);
     }
 
+    private void OnReaderManipulationStarted(ManipulationStartedEventArgs e)
+    {
+        _manipulationDisabled = false;
+
+#if DEBUG_LOG_MANIPULATION
+        Log("Manipulation started");
+#endif
+    }
+
+    private void OnReaderManipulationUpdated(ManipulationUpdatedEventArgs e)
+    {
+        if (_manipulationDisabled)
+        {
+            return;
+        }
+
+        double dx = e.Delta.Translation.X;
+        double dy = e.Delta.Translation.Y;
+        float scale = e.Delta.Scale;
+
+        if (!_isVertical && !_isLeftToRight)
+        {
+            dx = -dx;
+        }
+
+        float? zoom = null;
+
+        if (Math.Abs(scale - 1.0f) > 0.01f)
+        {
+            zoom = _zoom * scale;
+        }
+
+        ScrollManager.BeginTransaction(this, "ContinuousScrollingUsingManipulation")
+            .Zoom(zoom)
+            .HorizontalOffset(SCHorizontalOffsetFinal - dx)
+            .VerticalOffset(SCVerticalOffsetFinal - dy)
+            .EnableAnimation()
+            .Commit();
+    }
+
+    private void OnReaderManipulationCompleted(ManipulationCompletedEventArgs e)
+    {
+        if (_isContinuous || _zoom >= FORCE_CONTINUOUS_ZOOM_THRESHOLD)
+        {
+            return;
+        }
+
+        double velocity = IsVertical ? e.Velocities.Linear.Y : e.Velocities.Linear.X;
+
+        if (!_isVertical && !_isLeftToRight)
+        {
+            velocity = -velocity;
+        }
+
+        if (velocity > 1.0)
+        {
+            MoveFrame(-1, "MoveToLastPageUsingManipulation");
+        }
+        else if (velocity < -1.0)
+        {
+            MoveFrame(1, "MoveToNextPageUsingManipulation");
+        }
+
+#if DEBUG_LOG_MANIPULATION
+        Log("Manipulation completed, V=" + velocity.ToString());
+#endif
+    }
+
+    private void OnReaderScrollViewerPointerWheelChanged(PointerRoutedEventArgs e)
+    {
+        PointerPoint pt = e.GetCurrentPoint(null);
+        int delta = -pt.Properties.MouseWheelDelta / 120;
+
+        if (_isContinuous || _zoom > 105)
+        {
+            // Continuous scrolling.
+            ScrollManager.BeginTransaction(this, "ContinuousScrollingUsingPointerWheel")
+                .ParallelOffset(SCParallelOffsetFinal + delta * 140.0)
+                .EnableAnimation()
+                .Commit();
+        }
+        else
+        {
+            // Page turning.
+            MoveFrame(delta, "PageTurningUsingPointerWheel");
+        }
+
+        _manipulationDisabled = true;
+        e.Handled = true;
+    }
+
     private void OnReaderTapped(object sender, TappedEventArgs e)
     {
         if (e.TapCount == 1)
@@ -1156,7 +1283,7 @@ internal partial class ReaderView : UserControl
         else if (e.TapCount == 2)
         {
             _tapCancelled = true;
-            if (Math.Abs(Zoom - 100) <= 1)
+            if (Math.Abs(_zoom - 100) <= 1)
             {
                 ScrollManager.BeginTransaction(this, "FitScreenUsingCenterCrop")
                     .Zoom(100, ZoomType.CenterCrop)
@@ -1177,19 +1304,740 @@ internal partial class ReaderView : UserControl
     // Scroll Controller
     //
 
+    private float _zoom = 100f;
+    private bool _finalValueSynced = false;
+
+    private ScrollViewer ThisScrollViewer => SvReader;
+    private ListView ThisListView => LvReader;
+    private float ZoomFactor => ThisScrollViewer.ZoomFactor;
+    private double HorizontalOffset => ThisScrollViewer.HorizontalOffset;
+    private double VerticalOffset => ThisScrollViewer.VerticalOffset;
+    private double ParallelOffset => IsVertical ? VerticalOffset : HorizontalOffset;
+    private double ViewportParallelLength => IsVertical ? ThisScrollViewer.ViewportHeight : ThisScrollViewer.ViewportWidth;
+    private double ViewportPerpendicularLength => IsVertical ? ThisScrollViewer.ViewportWidth : ThisScrollViewer.ViewportHeight;
+    private double ExtentParallelLength => IsVertical ? ThisScrollViewer.ExtentHeight : ThisScrollViewer.ExtentWidth;
+
     private int _SCCurrentPageFinal;
     private int SCCurrentPageFinal
     {
         get
         {
-            FillFinalVal();
+            SCSyncFinalVal();
             return _SCCurrentPageFinal;
         }
         set
         {
-            FillFinalVal();
+            SCSyncFinalVal();
             _SCCurrentPageFinal = value;
         }
+    }
+
+    private float _SCZoomFactorFinal;
+    private float SCZoomFactorFinal
+    {
+        get
+        {
+            SCSyncFinalVal();
+            return _SCZoomFactorFinal;
+        }
+        set
+        {
+            SCSyncFinalVal();
+            _SCZoomFactorFinal = value;
+        }
+    }
+
+    private double _SCHorizontalOffsetFinal;
+    private double SCHorizontalOffsetFinal
+    {
+        get
+        {
+            SCSyncFinalVal();
+            return _SCHorizontalOffsetFinal;
+        }
+        set
+        {
+            SCSyncFinalVal();
+            _SCHorizontalOffsetFinal = value;
+        }
+    }
+
+    private double _SCVerticalOffsetFinal;
+    private double SCVerticalOffsetFinal
+    {
+        get
+        {
+            SCSyncFinalVal();
+            return _SCVerticalOffsetFinal;
+        }
+        set
+        {
+            SCSyncFinalVal();
+            _SCVerticalOffsetFinal = value;
+        }
+    }
+
+    private bool _SCDisableAnimationFinal;
+    private bool SCDisableAnimationFinal
+    {
+        get
+        {
+            SCSyncFinalVal();
+            return _SCDisableAnimationFinal;
+        }
+        set
+        {
+            SCSyncFinalVal();
+            _SCDisableAnimationFinal = value;
+        }
+    }
+
+    private double _SCPaddingStartFinal;
+    private double SCPaddingStartFinal
+    {
+        get
+        {
+            SCSyncFinalVal();
+            return _SCPaddingStartFinal;
+        }
+        set
+        {
+            SCSyncFinalVal();
+            _SCPaddingStartFinal = value;
+        }
+    }
+
+    private double _SCPaddingEndFinal;
+    private double SCPaddingEndFinal
+    {
+        get
+        {
+            SCSyncFinalVal();
+            return _SCPaddingEndFinal;
+        }
+        set
+        {
+            SCSyncFinalVal();
+            _SCPaddingEndFinal = value;
+        }
+    }
+
+    private double SCParallelOffsetFinal => IsVertical ? SCVerticalOffsetFinal : SCHorizontalOffsetFinal;
+
+    private void SCSyncFinalVal()
+    {
+        if (!_isLoaded)
+        {
+            return;
+        }
+
+        if (_finalValueSynced)
+        {
+            return;
+        }
+
+        _finalValueSynced = true;
+
+        _SCCurrentPageFinal = CurrentPageInt;
+        _SCPaddingStartFinal = IsVertical ? ThisListView.Padding.Top : ThisListView.Padding.Left;
+        _SCPaddingEndFinal = IsVertical ? ThisListView.Padding.Bottom : ThisListView.Padding.Right;
+        _SCHorizontalOffsetFinal = HorizontalOffset;
+        _SCVerticalOffsetFinal = VerticalOffset;
+        _SCZoomFactorFinal = ZoomFactor;
+        _SCDisableAnimationFinal = false;
+    }
+
+    private void SCClearFinalVal(string reason)
+    {
+        Log("ClearFinalValue", reason);
+        _finalValueSynced = false;
+    }
+
+    public bool MoveFrame(int increment, string reason)
+    {
+        MoveFrameInternal(increment, !AppData.TransitionAnimation, reason);
+        return true;
+    }
+
+    private void MoveFrameInternal(int increment, bool disable_animation, string reason)
+    {
+        if (FrameDataSource.Count == 0)
+        {
+            return;
+        }
+
+        int frame = PageToFrame(SCCurrentPageFinal, out _, out _);
+        frame += increment;
+        frame = Math.Min(FrameDataSource.Count - 1, frame);
+        frame = Math.Max(0, frame);
+
+        double page = FrameDataSource[frame].Page;
+        float? zoom = _zoom > 101f ? 100f : (float?)null;
+
+        SetScrollViewer2(zoom, page, disable_animation, reason);
+    }
+
+    private ScrollResult SetScrollViewer1(float? zoom, double? parallel_offset, bool disable_animation, string reason)
+    {
+        double? horizontal_offset = _isVertical ? null : parallel_offset;
+        double? vertical_offset = _isVertical ? parallel_offset : null;
+
+        return SetScrollViewerInternal(new ScrollRequest
+        {
+            zoom = zoom,
+            horizontalOffset = horizontal_offset,
+            verticalOffset = vertical_offset,
+            disableAnimation = disable_animation,
+        }, reason);
+    }
+
+    private ScrollResult SetScrollViewer2(float? zoom, double? page, bool disableAnimation, string reason)
+    {
+        double? horizontalOffset = null;
+        double? verticalOffset = null;
+
+        if (page.HasValue)
+        {
+            Tuple<double, double> offsets = PageOffset(page.Value);
+
+            if (offsets == null)
+            {
+                return ScrollResult.Failed;
+            }
+
+            if (Math.Abs(offsets.Item1 - SCParallelOffsetFinal) < 1.0)
+            {
+                // Ignore the request if target offset is really close to the current offset,
+                // otherwise we might trigger a dead loop
+                return ScrollResult.TooClose;
+            }
+
+            ConvertOffset(ref horizontalOffset, ref verticalOffset, offsets.Item1, offsets.Item2);
+        }
+
+        return SetScrollViewerInternal(new ScrollRequest
+        {
+            zoom = zoom,
+            pageToApplyZoom = page,
+            horizontalOffset = horizontalOffset,
+            verticalOffset = verticalOffset,
+            disableAnimation = disableAnimation,
+        }, reason);
+    }
+
+    private ScrollResult SetScrollViewer3(
+        float? zoom,
+        ZoomType zoomType,
+        double? horizontal_offset,
+        double? vertical_offset,
+        bool disable_animation,
+        string reason
+    )
+    {
+        return SetScrollViewerInternal(new ScrollRequest
+        {
+            zoom = zoom,
+            zoomType = zoomType,
+            horizontalOffset = horizontal_offset,
+            verticalOffset = vertical_offset,
+            disableAnimation = disable_animation,
+        }, reason);
+    }
+
+    private ScrollResult SetScrollViewerInternal(ScrollRequest request, string reason)
+    {
+        if (!_isLoaded)
+        {
+            return ScrollResult.Failed;
+        }
+
+        DebugUtils.Assert(float.IsFinite(request.zoom ?? 0));
+        DebugUtils.Assert(!float.IsNegative(request.zoom ?? 0));
+        DebugUtils.Assert(double.IsFinite(request.horizontalOffset ?? 0));
+        DebugUtils.Assert(double.IsFinite(request.verticalOffset ?? 0));
+
+        Log("Jump", "Request:"
+            + $" Reason={reason}"
+            + $",P={request.pageToApplyZoom}"
+            + $",Z={request.zoom}"
+            + $",H={request.horizontalOffset}"
+            + $",V={request.verticalOffset}"
+            + $",D={request.disableAnimation}");
+
+        var context = new ScrollContext
+        {
+            ZoomPercentage = request.zoom,
+            DisableAnimation = request.disableAnimation,
+            HorizontalOffset = request.horizontalOffset,
+            VerticalOffset = request.verticalOffset,
+        };
+
+        SetScrollViewerZoom(request, context);
+
+        DebugUtils.Assert(float.IsFinite(context.ZoomPercentage ?? 0));
+        DebugUtils.Assert(!float.IsNegative(context.ZoomPercentage ?? 0));
+        DebugUtils.Assert(float.IsFinite(context.ZoomFactor ?? 0));
+        DebugUtils.Assert(!float.IsNegative(context.ZoomFactor ?? 0));
+        DebugUtils.Assert(double.IsFinite(context.HorizontalOffset ?? 0));
+        DebugUtils.Assert(double.IsFinite(context.VerticalOffset ?? 0));
+
+        if (context.HorizontalOffset.HasValue)
+        {
+            context.HorizontalOffset = Math.Max(0, context.HorizontalOffset.Value);
+        }
+        if (context.VerticalOffset.HasValue)
+        {
+            context.VerticalOffset = Math.Max(0, context.VerticalOffset.Value);
+        }
+
+        Log("Jump", "ParamAfterZoom:"
+            + $" Z={context.ZoomPercentage}"
+            + $",ZF={context.ZoomFactor}"
+            + $",H={context.HorizontalOffset}"
+            + $",V={context.VerticalOffset}"
+            + $",D={context.DisableAnimation}");
+
+        AdjustParallelOffset(context);
+
+        DebugUtils.Assert(float.IsFinite(context.ZoomPercentage ?? 0));
+        DebugUtils.Assert(!float.IsNegative(context.ZoomPercentage ?? 0));
+        DebugUtils.Assert(float.IsFinite(context.ZoomFactor ?? 0));
+        DebugUtils.Assert(!float.IsNegative(context.ZoomFactor ?? 0));
+        DebugUtils.Assert(double.IsFinite(context.HorizontalOffset ?? 0));
+        DebugUtils.Assert(double.IsFinite(context.VerticalOffset ?? 0));
+
+        Log("Jump", "ParamAfterFix:"
+            + $" Z={context.ZoomPercentage}"
+            + $",ZF={context.ZoomFactor}"
+            + $",H={context.HorizontalOffset}"
+            + $",V={context.VerticalOffset}"
+            + $",D={context.DisableAnimation}");
+
+        if (context.HorizontalOffset != null || context.VerticalOffset != null || context.ZoomFactor != null)
+        {
+            ChangeView(context.ZoomFactor, context.HorizontalOffset, context.VerticalOffset, context.DisableAnimation);
+        }
+
+        if (request.pageToApplyZoom.HasValue)
+        {
+            SCCurrentPageFinal = ToDiscretePage(request.pageToApplyZoom.Value);
+        }
+
+        _zoom = context.ZoomPercentage.Value;
+        return ScrollResult.Success;
+    }
+
+    private void SetScrollViewerZoom(ScrollRequest request, ScrollContext context)
+    {
+        // Calculate zoom coefficient prediction.
+        ZoomCoefficientResult zoomCoefficientNew;
+        int frameNew;
+        {
+            int pageNew = request.pageToApplyZoom.HasValue ? (int)request.pageToApplyZoom.Value : CurrentPageInt;
+            frameNew = PageToFrame(pageNew, out _, out _);
+            if (frameNew < 0 || frameNew >= FrameDataSource.Count)
+            {
+                frameNew = 0;
+            }
+
+            zoomCoefficientNew = ZoomCoefficient(frameNew);
+
+            Log("Jump", "Zoom#1:"
+                + $" PN={pageNew}"
+                + $",FN={frameNew}"
+                + $",ZCN={zoomCoefficientNew}");
+
+            if (zoomCoefficientNew == null)
+            {
+                context.ZoomPercentage = _zoom;
+                context.ZoomFactor = null;
+                return;
+            }
+        }
+
+        // Calculate zoom in percentage.
+        double zoom;
+        if (request.zoom.HasValue)
+        {
+            zoom = request.zoom.Value;
+        }
+        else
+        {
+            int frame = PageToFrame(SCCurrentPageFinal, out _, out _);
+            if (frame < 0 || frame >= FrameDataSource.Count)
+            {
+                frame = 0;
+            }
+
+            ZoomCoefficientResult zoomCoefficient = zoomCoefficientNew;
+            if (frame != frameNew)
+            {
+                ZoomCoefficientResult zoomCoefficientTest = ZoomCoefficient(frame);
+                if (zoomCoefficientTest != null)
+                {
+                    zoomCoefficient = zoomCoefficientTest;
+                }
+            }
+
+            zoom = (float)(SCZoomFactorFinal / zoomCoefficient.Min());
+        }
+
+        if (request.zoomType == ZoomType.CenterCrop)
+        {
+            zoom *= zoomCoefficientNew.Max() / zoomCoefficientNew.Min();
+        }
+
+        double maxZoom = Math.Max(MAX_ZOOM, 100 * zoomCoefficientNew.Max() / zoomCoefficientNew.Min());
+        zoom = Math.Min(zoom, maxZoom);
+        zoom = Math.Max(zoom, MIN_ZOOM);
+        context.ZoomPercentage = (float)zoom;
+
+        // A zoom factor vary less than 1% will be ignored.
+        float zoom_factor_new = (float)(zoom * zoomCoefficientNew.Min());
+
+        if (Math.Abs(zoom_factor_new / SCZoomFactorFinal - 1.0f) <= 0.01f)
+        {
+            context.ZoomFactor = null;
+            return;
+        }
+
+        context.ZoomFactor = zoom_factor_new;
+
+        // Apply zooming.
+        context.HorizontalOffset ??= SCHorizontalOffsetFinal;
+        context.VerticalOffset ??= SCVerticalOffsetFinal;
+
+        context.HorizontalOffset += ThisScrollViewer.ViewportWidth * 0.5;
+        context.HorizontalOffset *= (float)context.ZoomFactor / SCZoomFactorFinal;
+        context.HorizontalOffset -= ThisScrollViewer.ViewportWidth * 0.5;
+
+        context.VerticalOffset += ThisScrollViewer.ViewportHeight * 0.5;
+        context.VerticalOffset *= (float)context.ZoomFactor / SCZoomFactorFinal;
+        context.VerticalOffset -= ThisScrollViewer.ViewportHeight * 0.5;
+
+        context.HorizontalOffset = Math.Max(0.0, context.HorizontalOffset.Value);
+        context.VerticalOffset = Math.Max(0.0, context.VerticalOffset.Value);
+    }
+
+    private void ChangeView(float? zoom_factor, double? horizontal_offset, double? vertical_offset, bool disable_animation)
+    {
+        if (horizontal_offset != null)
+        {
+            SCHorizontalOffsetFinal = horizontal_offset.Value;
+        }
+
+        if (vertical_offset != null)
+        {
+            SCVerticalOffsetFinal = vertical_offset.Value;
+        }
+
+        if (zoom_factor != null)
+        {
+            SCZoomFactorFinal = zoom_factor.Value;
+        }
+
+        if (disable_animation)
+        {
+            SCDisableAnimationFinal = true;
+        }
+
+        Log("Jump", "Commit:"
+            + " Z=" + SCZoomFactorFinal.ToString()
+            + ",H=" + SCHorizontalOffsetFinal.ToString()
+            + ",V=" + SCVerticalOffsetFinal.ToString()
+            + ",D=" + SCDisableAnimationFinal.ToString());
+
+        ThisScrollViewer.ChangeView(SCHorizontalOffsetFinal, SCVerticalOffsetFinal, SCZoomFactorFinal, SCDisableAnimationFinal);
+    }
+
+    private void AdjustParallelOffset(ScrollContext context)
+    {
+        if (FrameDataSource.Count == 0)
+        {
+            return;
+        }
+
+        double zoom = context.ZoomFactor ?? SCZoomFactorFinal;
+        double parallelOffset;
+        if (_isVertical)
+        {
+            if (!context.VerticalOffset.HasValue)
+            {
+                return;
+            }
+            parallelOffset = context.VerticalOffset.Value;
+        }
+        else
+        {
+            if (!context.HorizontalOffset.HasValue)
+            {
+                return;
+            }
+            parallelOffset = context.HorizontalOffset.Value;
+        }
+
+        double screenCenterOffset = ViewportParallelLength * 0.5 + parallelOffset;
+
+        double? movementForward = null;
+        FrameworkElement firstContainer = _frameManager.GetContainer(0);
+        if (firstContainer != null)
+        {
+            double frameParallelLength = _isVertical ? firstContainer.ActualHeight : firstContainer.ActualWidth;
+            double space = SCPaddingStartFinal * zoom - parallelOffset;
+            double imageCenterOffset = (SCPaddingStartFinal + frameParallelLength * 0.5) * zoom;
+            double imageCenterToScreenCenter = imageCenterOffset - screenCenterOffset;
+            movementForward = Math.Min(space, imageCenterToScreenCenter);
+        }
+
+        double? movementBackward = null;
+        FrameworkElement lastContainer = _frameManager.GetContainer(FrameDataSource.Count - 1);
+        if (lastContainer != null)
+        {
+            double frameParallelLength = _isVertical ? lastContainer.ActualHeight : lastContainer.ActualWidth;
+            double extentParallelLength = ExtentParallelLength * zoom / ZoomFactor;
+            double space = SCPaddingEndFinal * zoom - (extentParallelLength - parallelOffset - ViewportParallelLength);
+            double imageCenterOffset = extentParallelLength - (SCPaddingEndFinal + frameParallelLength * 0.5) * zoom;
+            double imageCenterToScreenCenter = screenCenterOffset - imageCenterOffset;
+            movementBackward = Math.Min(space, imageCenterToScreenCenter);
+        }
+
+        double movement = 0.0;
+        bool canMove = false;
+        if (movementForward.HasValue && movementForward.Value > 0)
+        {
+            canMove = true;
+            movement += movementForward.Value;
+        }
+        if (movementBackward.HasValue && movementBackward.Value > 0)
+        {
+            canMove = true;
+            movement -= movementBackward.Value;
+        }
+
+        if (!canMove)
+        {
+            return;
+        }
+
+        if (_isVertical)
+        {
+            context.VerticalOffset += movement;
+        }
+        else
+        {
+            context.HorizontalOffset += movement;
+        }
+
+        _manipulationDisabled = true;
+    }
+
+    private void AdjustPadding()
+    {
+        if (!_isLoaded)
+        {
+            return;
+        }
+
+        if (FrameDataSource.Count == 0)
+        {
+            return;
+        }
+
+        double padding_start = SCPaddingStartFinal;
+        do
+        {
+            int frame_idx = 0;
+
+            if (_frameManager.GetContainer(frame_idx) == null)
+            {
+                break;
+            }
+
+            ZoomCoefficientResult zoom_coefficient = ZoomCoefficient(frame_idx);
+            if (zoom_coefficient == null)
+            {
+                break;
+            }
+
+            double zoom_factor = MIN_ZOOM * zoom_coefficient.Min();
+            double inner_length = ViewportParallelLength / zoom_factor;
+            padding_start = (inner_length - FrameParallelLength(frame_idx)) / 2;
+            padding_start = Math.Max(0.0, padding_start);
+        } while (false);
+
+        double padding_end = SCPaddingEndFinal;
+        do
+        {
+            int frame_idx = FrameDataSource.Count - 1;
+
+            if (_frameManager.GetContainer(frame_idx) == null)
+            {
+                break;
+            }
+
+            ZoomCoefficientResult zoom_coefficient = ZoomCoefficient(frame_idx);
+            if (zoom_coefficient == null)
+            {
+                break;
+            }
+
+            double zoom_factor = MIN_ZOOM * zoom_coefficient.Min();
+            double inner_length = ViewportParallelLength / zoom_factor;
+            padding_end = (inner_length - FrameParallelLength(frame_idx)) / 2;
+            padding_end = Math.Max(0.0, padding_end);
+        } while (false);
+
+        SCPaddingStartFinal = padding_start;
+        SCPaddingEndFinal = padding_end;
+
+        if (IsVertical)
+        {
+            ThisListView.Padding = new Thickness(0.0, padding_start, 0.0, padding_end);
+        }
+        else
+        {
+            ThisListView.Padding = new Thickness(padding_start, 0.0, padding_end, 0.0);
+        }
+    }
+
+    private Tuple<double, double> PageOffset(double page)
+    {
+        DebugUtils.Assert(double.IsFinite(page));
+
+        int pageInt = (int)page;
+        page = Math.Min(page, PageCount);
+        pageInt = Math.Min(pageInt, PageCount);
+        page = Math.Max(page, 1);
+        pageInt = Math.Max(pageInt, 1);
+
+        int frame = PageToFrame(pageInt, out _, out int neighbor);
+        FrameOffsetData offsets = FrameOffset(frame);
+
+        if (offsets == null)
+        {
+            return null;
+        }
+
+        double perpendicularOffset = offsets.PerpendicularCenter * SCZoomFactorFinal - ViewportPerpendicularLength * 0.5;
+
+        int pageMin;
+        int pageMax;
+
+        if (neighbor == -1)
+        {
+            pageMin = pageMax = pageInt;
+        }
+        else
+        {
+            pageMin = Math.Min(pageInt, neighbor);
+            pageMax = Math.Max(pageInt, neighbor);
+        }
+
+        double parallelOffset;
+
+        if (pageMin <= page && page <= pageMax)
+        {
+            parallelOffset = offsets.ParallelCenter;
+        }
+        else if (page < pageMin)
+        {
+            double page_frac = (0.5 - pageMin + page) * 2.0;
+            parallelOffset = offsets.ParallelBegin + page_frac * (offsets.ParallelCenter - offsets.ParallelBegin);
+        }
+        else
+        {
+            double page_frac = (page - pageMax) * 2.0;
+            parallelOffset = offsets.ParallelCenter + page_frac * (offsets.ParallelEnd - offsets.ParallelCenter);
+        }
+
+        parallelOffset = parallelOffset * SCZoomFactorFinal - ViewportParallelLength * 0.5;
+        var result = new Tuple<double, double>(parallelOffset, perpendicularOffset);
+
+        DebugUtils.Assert(double.IsFinite(result.Item1));
+        DebugUtils.Assert(double.IsFinite(result.Item2));
+
+        return result;
+    }
+
+    private FrameOffsetData FrameOffset(int frame)
+    {
+        FrameworkElement container = _frameManager.GetContainer(frame);
+        if (container == null)
+        {
+            return null;
+        }
+
+        if (frame < 0 || frame >= FrameDataSource.Count)
+        {
+            return null;
+        }
+        ReaderFrameViewModel item = FrameDataSource[frame];
+
+        GeneralTransform frame_transform = container.TransformToVisual(ThisListView);
+        Point frame_position = frame_transform.TransformPoint(new Point(0.0, 0.0));
+
+        double parallel_offset = IsVertical ? frame_position.Y : frame_position.X;
+        double perpendicular_offset = IsVertical ? frame_position.X : frame_position.Y;
+
+        bool left_to_right = _isLeftToRight;
+
+        if (!_isVertical && !left_to_right)
+        {
+            parallel_offset -= item.FrameMargin.Left + item.FrameWidth + item.FrameMargin.Right;
+        }
+
+        var result = new FrameOffsetData
+        {
+            ParallelBegin = parallel_offset,
+            ParallelCenter = parallel_offset + (IsVertical ?
+                item.FrameMargin.Top + item.FrameHeight * 0.5 :
+                item.FrameMargin.Left + item.FrameWidth * 0.5),
+            ParallelEnd = parallel_offset + (IsVertical ?
+                item.FrameMargin.Top + item.FrameHeight + item.FrameMargin.Bottom :
+                item.FrameMargin.Left + item.FrameWidth + item.FrameMargin.Right),
+            PerpendicularCenter = perpendicular_offset + (IsVertical ?
+                item.FrameMargin.Left + item.FrameWidth * 0.5 :
+                item.FrameMargin.Top + item.FrameHeight * 0.5),
+        };
+
+        DebugUtils.Assert(double.IsFinite(result.ParallelEnd));
+        DebugUtils.Assert(double.IsFinite(result.ParallelCenter));
+        DebugUtils.Assert(double.IsFinite(result.ParallelBegin));
+        DebugUtils.Assert(double.IsFinite(result.PerpendicularCenter));
+        return result;
+    }
+
+    private ZoomCoefficientResult ZoomCoefficient(int frameIndex)
+    {
+        if (FrameDataSource.Count == 0)
+        {
+            return null;
+        }
+
+        if (frameIndex < 0 || frameIndex >= FrameDataSource.Count)
+        {
+            DebugUtils.Assert(false);
+            return null;
+        }
+
+        double viewport_width = ThisScrollViewer.ViewportWidth;
+        double viewport_height = ThisScrollViewer.ViewportHeight;
+        double frame_width = FrameDataSource[frameIndex].FrameWidth;
+        double frame_height = FrameDataSource[frameIndex].FrameHeight;
+
+        double minValue = Math.Min(viewport_width, viewport_height);
+        minValue = Math.Min(minValue, frame_width);
+        minValue = Math.Min(minValue, frame_height);
+        if (minValue < 0.1)
+        {
+            return null;
+        }
+
+        return new ZoomCoefficientResult
+        {
+            FitWidth = 0.01 * viewport_width / frame_width,
+            FitHeight = 0.01 * viewport_height / frame_height
+        };
     }
 
     //
@@ -1205,6 +2053,18 @@ internal partial class ReaderView : UserControl
         _state = state;
 
         ReaderEventReaderStateChanged?.Invoke(this, state);
+    }
+
+    private double FrameParallelLength(int i)
+    {
+        FrameworkElement container = _frameManager.GetContainer(i);
+
+        if (container != null)
+        {
+            return IsVertical ? container.ActualHeight : container.ActualWidth;
+        }
+
+        return 0;
     }
 
     private int PageToFrame(int page, out bool left_side, out int neighbor)
@@ -1296,364 +2156,6 @@ internal partial class ReaderView : UserControl
     //
     // Classes
     //
-
-    private class ImageDataModel
-    {
-        public double AspectRatio { get; set; }
-        public IImageSource ImageSource { get; set; }
-    }
-
-    private class LoadImageResultHandler(ReaderView view, ReaderFrameViewModel model, IImageSource source, bool isLeft) : IImageResultHandler
-    {
-        public void OnSuccess(BitmapImage image)
-        {
-            if (isLeft)
-            {
-                model.ImageLeft = image;
-                model.ImageLeftCurrentSource = source;
-            }
-            else
-            {
-                model.ImageRight = image;
-                model.ImageRightCurrentSource = source;
-            }
-
-            view.UpdateImageDecodeSize(model);
-        }
-    }
-
-    private class GestureHandler(ReaderView view) : ReaderGestureRecognizer.IHandler
-    {
-        private readonly ReaderView _view = view;
-
-        public void ManipulationCompleted(object sender, ManipulationCompletedEventArgs e)
-        {
-            _view.OnReaderManipulationCompleted(sender, e);
-        }
-
-        public void ManipulationStarted(object sender, ManipulationStartedEventArgs e)
-        {
-            _view.OnReaderManipulationStarted(sender, e);
-        }
-
-        public void ManipulationUpdated(object sender, ManipulationUpdatedEventArgs e)
-        {
-            _view.OnReaderManipulationUpdated(sender, e);
-        }
-
-        public void Tapped(object sender, TappedEventArgs e)
-        {
-            _view.OnReaderTapped(sender, e);
-        }
-    }
-
-    public enum ReaderState
-    {
-        Idle,
-        Ready,
-        Loading,
-        Error,
-    }
-
-    public enum ScrollResult
-    {
-        Success = 0,
-        Failed = 1,
-        TooClose = 2,
-    }
-
-    //
-    // Obsolete
-    //
-
-    // Observer - Scroll Viewer
-    private ZoomCoefficientResult ZoomCoefficient(int frame_idx)
-    {
-        if (FrameDataSource.Count == 0)
-        {
-            return null;
-        }
-
-        if (frame_idx < 0 || frame_idx >= FrameDataSource.Count)
-        {
-            DebugUtils.Assert(false);
-            return null;
-        }
-
-        double viewport_width = ThisScrollViewer.ViewportWidth;
-        double viewport_height = ThisScrollViewer.ViewportHeight;
-        double frame_width = FrameDataSource[frame_idx].FrameWidth;
-        double frame_height = FrameDataSource[frame_idx].FrameHeight;
-
-        double minValue = Math.Min(viewport_width, viewport_height);
-        minValue = Math.Min(minValue, frame_width);
-        minValue = Math.Min(minValue, frame_height);
-        if (minValue < 0.1)
-        {
-            return null;
-        }
-
-        return new ZoomCoefficientResult
-        {
-            FitWidth = 0.01 * viewport_width / frame_width,
-            FitHeight = 0.01 * viewport_height / frame_height
-        };
-    }
-
-    private float Zoom { get; set; } = 100f;
-    private float ZoomFactor => ThisScrollViewer.ZoomFactor;
-
-    private float m_ZoomFactorFinal;
-    private float ZoomFactorFinal
-    {
-        get
-        {
-            FillFinalVal();
-            return m_ZoomFactorFinal;
-        }
-        set
-        {
-            FillFinalVal();
-            m_ZoomFactorFinal = value;
-        }
-    }
-
-    private double HorizontalOffset => ThisScrollViewer.HorizontalOffset;
-
-    private double m_HorizontalOffsetFinal;
-    private double HorizontalOffsetFinal
-    {
-        get
-        {
-            FillFinalVal();
-            return m_HorizontalOffsetFinal;
-        }
-        set
-        {
-            FillFinalVal();
-            m_HorizontalOffsetFinal = value;
-        }
-    }
-
-    private double VerticalOffset => ThisScrollViewer.VerticalOffset;
-
-    private double m_VerticalOffsetFinal;
-    private double VerticalOffsetFinal
-    {
-        get
-        {
-            FillFinalVal();
-            return m_VerticalOffsetFinal;
-        }
-        set
-        {
-            FillFinalVal();
-            m_VerticalOffsetFinal = value;
-        }
-    }
-
-    private bool m_DisableAnimationFinal;
-    private bool DisableAnimationFinal
-    {
-        get
-        {
-            FillFinalVal();
-            return m_DisableAnimationFinal;
-        }
-        set
-        {
-            FillFinalVal();
-            m_DisableAnimationFinal = value;
-        }
-    }
-
-    private double ParallelOffset => IsVertical ? VerticalOffset : HorizontalOffset;
-    private double ParallelOffsetFinal => IsVertical ? VerticalOffsetFinal : HorizontalOffsetFinal;
-    private double ViewportParallelLength => IsVertical ? ThisScrollViewer.ViewportHeight : ThisScrollViewer.ViewportWidth;
-    private double ViewportPerpendicularLength => IsVertical ? ThisScrollViewer.ViewportWidth : ThisScrollViewer.ViewportHeight;
-    private double ExtentParallelLength => IsVertical ? ThisScrollViewer.ExtentHeight : ThisScrollViewer.ExtentWidth;
-    private double ExtentParallelLengthFinal => FinalVal(ExtentParallelLength);
-    private double FrameParallelLength(int i)
-    {
-        FrameworkElement container = _frameManager.GetContainer(i);
-        if (container != null)
-        {
-            return IsVertical ? container.ActualHeight : container.ActualWidth;
-        }
-        return 0;
-    }
-
-    // Observer - List View
-    private double m_PaddingStartFinal;
-    private double PaddingStartFinal
-    {
-        get
-        {
-            FillFinalVal();
-            return m_PaddingStartFinal;
-        }
-        set
-        {
-            FillFinalVal();
-            m_PaddingStartFinal = value;
-        }
-    }
-
-    private double m_PaddingEndFinal;
-    private double PaddingEndFinal
-    {
-        get
-        {
-            FillFinalVal();
-            return m_PaddingEndFinal;
-        }
-        set
-        {
-            FillFinalVal();
-            m_PaddingEndFinal = value;
-        }
-    }
-
-    private Tuple<double, double> PageOffset(double page)
-    {
-        DebugUtils.Assert(double.IsFinite(page));
-
-        int pageInt = (int)page;
-        page = Math.Min(page, PageCount);
-        pageInt = Math.Min(pageInt, PageCount);
-        page = Math.Max(page, 1);
-        pageInt = Math.Max(pageInt, 1);
-
-        int frame = PageToFrame(pageInt, out _, out int neighbor);
-        FrameOffsetData offsets = FrameOffsets(frame);
-
-        if (offsets == null)
-        {
-            return null;
-        }
-
-        double perpendicularOffset = offsets.PerpendicularCenter * ZoomFactorFinal - ViewportPerpendicularLength * 0.5;
-
-        int pageMin;
-        int pageMax;
-
-        if (neighbor == -1)
-        {
-            pageMin = pageMax = pageInt;
-        }
-        else
-        {
-            pageMin = Math.Min(pageInt, neighbor);
-            pageMax = Math.Max(pageInt, neighbor);
-        }
-
-        double parallelOffset;
-
-        if (pageMin <= page && page <= pageMax)
-        {
-            parallelOffset = offsets.ParallelCenter;
-        }
-        else if (page < pageMin)
-        {
-            double page_frac = (0.5 - pageMin + page) * 2.0;
-            parallelOffset = offsets.ParallelBegin + page_frac * (offsets.ParallelCenter - offsets.ParallelBegin);
-        }
-        else
-        {
-            double page_frac = (page - pageMax) * 2.0;
-            parallelOffset = offsets.ParallelCenter + page_frac * (offsets.ParallelEnd - offsets.ParallelCenter);
-        }
-
-        parallelOffset = parallelOffset * ZoomFactorFinal - ViewportParallelLength * 0.5;
-        var result = new Tuple<double, double>(parallelOffset, perpendicularOffset);
-
-        DebugUtils.Assert(double.IsFinite(result.Item1));
-        DebugUtils.Assert(double.IsFinite(result.Item2));
-
-        return result;
-    }
-
-    private FrameOffsetData FrameOffsets(int frame)
-    {
-        FrameworkElement container = _frameManager.GetContainer(frame);
-        if (container == null)
-        {
-            return null;
-        }
-
-        if (frame < 0 || frame >= FrameDataSource.Count)
-        {
-            return null;
-        }
-        ReaderFrameViewModel item = FrameDataSource[frame];
-
-        GeneralTransform frame_transform = container.TransformToVisual(ThisListView);
-        Point frame_position = frame_transform.TransformPoint(new Point(0.0, 0.0));
-
-        double parallel_offset = IsVertical ? frame_position.Y : frame_position.X;
-        double perpendicular_offset = IsVertical ? frame_position.X : frame_position.Y;
-
-        bool left_to_right = _isLeftToRight;
-
-        if (!_isVertical && !left_to_right)
-        {
-            parallel_offset -= item.FrameMargin.Left + item.FrameWidth + item.FrameMargin.Right;
-        }
-
-        var result = new FrameOffsetData
-        {
-            ParallelBegin = parallel_offset,
-            ParallelCenter = parallel_offset + (IsVertical ?
-                item.FrameMargin.Top + item.FrameHeight * 0.5 :
-                item.FrameMargin.Left + item.FrameWidth * 0.5),
-            ParallelEnd = parallel_offset + (IsVertical ?
-                item.FrameMargin.Top + item.FrameHeight + item.FrameMargin.Bottom :
-                item.FrameMargin.Left + item.FrameWidth + item.FrameMargin.Right),
-            PerpendicularCenter = perpendicular_offset + (IsVertical ?
-                item.FrameMargin.Left + item.FrameWidth * 0.5 :
-                item.FrameMargin.Top + item.FrameHeight * 0.5),
-        };
-
-        DebugUtils.Assert(double.IsFinite(result.ParallelEnd));
-        DebugUtils.Assert(double.IsFinite(result.ParallelCenter));
-        DebugUtils.Assert(double.IsFinite(result.ParallelBegin));
-        DebugUtils.Assert(double.IsFinite(result.PerpendicularCenter));
-        return result;
-    }
-
-    // Modifier - Configurations
-    private ScrollViewer ThisScrollViewer => SvReader;
-    private ListView ThisListView => LvReader;
-
-    // Modifier - Scrolling
-    public bool MoveFrame(int increment, string reason)
-    {
-        MoveFrameInternal(increment, !AppData.TransitionAnimation, reason);
-        return true;
-    }
-
-    /// <summary>
-    /// We assume that Page is already up-to-date at this moment.
-    /// </summary>
-    /// <param name="increment"></param>
-    /// <param name="disable_animation"></param>
-    private void MoveFrameInternal(int increment, bool disable_animation, string reason)
-    {
-        if (FrameDataSource.Count == 0)
-        {
-            return;
-        }
-
-        int frame = PageToFrame(SCCurrentPageFinal, out _, out _);
-        frame += increment;
-        frame = Math.Min(FrameDataSource.Count - 1, frame);
-        frame = Math.Max(0, frame);
-
-        double page = FrameDataSource[frame].Page;
-        float? zoom = Zoom > 101f ? 100f : (float?)null;
-
-        SetScrollViewer2(zoom, page, disable_animation, reason);
-    }
 
     internal sealed class ScrollManager : BaseTransaction<ScrollResult>
     {
@@ -1781,596 +2283,69 @@ internal partial class ReaderView : UserControl
         }
     }
 
-    private ScrollResult SetScrollViewer1(float? zoom, double? parallel_offset, bool disable_animation, string reason)
+    private class ImageDataModel
     {
-        double? horizontal_offset = _isVertical ? null : parallel_offset;
-        double? vertical_offset = _isVertical ? parallel_offset : null;
-
-        return SetScrollViewerInternal(new ScrollRequest
-        {
-            zoom = zoom,
-            horizontalOffset = horizontal_offset,
-            verticalOffset = vertical_offset,
-            disableAnimation = disable_animation,
-        }, reason);
+        public double AspectRatio { get; set; }
+        public IImageSource ImageSource { get; set; }
     }
 
-    private ScrollResult SetScrollViewer2(float? zoom, double? page, bool disableAnimation, string reason)
+    private class LoadImageResultHandler(ReaderView view, ReaderFrameViewModel model, IImageSource source, bool isLeft) : IImageResultHandler
     {
-        double? horizontalOffset = null;
-        double? verticalOffset = null;
-
-        if (page.HasValue)
+        public void OnSuccess(BitmapImage image)
         {
-            Tuple<double, double> offsets = PageOffset(page.Value);
-
-            if (offsets == null)
+            if (isLeft)
             {
-                return ScrollResult.Failed;
+                model.ImageLeft = image;
+                model.ImageLeftCurrentSource = source;
+            }
+            else
+            {
+                model.ImageRight = image;
+                model.ImageRightCurrentSource = source;
             }
 
-            if (Math.Abs(offsets.Item1 - ParallelOffsetFinal) < 1.0)
-            {
-                // Ignore the request if target offset is really close to the current offset,
-                // otherwise we might trigger a dead loop
-                return ScrollResult.TooClose;
-            }
-
-            ConvertOffset(ref horizontalOffset, ref verticalOffset, offsets.Item1, offsets.Item2);
-        }
-
-        return SetScrollViewerInternal(new ScrollRequest
-        {
-            zoom = zoom,
-            pageToApplyZoom = page,
-            horizontalOffset = horizontalOffset,
-            verticalOffset = verticalOffset,
-            disableAnimation = disableAnimation,
-        }, reason);
-    }
-
-    private ScrollResult SetScrollViewer3(
-        float? zoom,
-        ZoomType zoomType,
-        double? horizontal_offset,
-        double? vertical_offset,
-        bool disable_animation,
-        string reason
-    )
-    {
-        return SetScrollViewerInternal(new ScrollRequest
-        {
-            zoom = zoom,
-            zoomType = zoomType,
-            horizontalOffset = horizontal_offset,
-            verticalOffset = vertical_offset,
-            disableAnimation = disable_animation,
-        }, reason);
-    }
-
-    private ScrollResult SetScrollViewerInternal(ScrollRequest request, string reason)
-    {
-        if (!_isLoaded)
-        {
-            return ScrollResult.Failed;
-        }
-
-        DebugUtils.Assert(float.IsFinite(request.zoom ?? 0));
-        DebugUtils.Assert(!float.IsNegative(request.zoom ?? 0));
-        DebugUtils.Assert(double.IsFinite(request.horizontalOffset ?? 0));
-        DebugUtils.Assert(double.IsFinite(request.verticalOffset ?? 0));
-
-        Log("Jump", "Request:"
-            + $" Reason={reason}"
-            + $",P={request.pageToApplyZoom}"
-            + $",Z={request.zoom}"
-            + $",H={request.horizontalOffset}"
-            + $",V={request.verticalOffset}"
-            + $",D={request.disableAnimation}");
-
-        var context = new ScrollContext
-        {
-            ZoomPercentage = request.zoom,
-            DisableAnimation = request.disableAnimation,
-            HorizontalOffset = request.horizontalOffset,
-            VerticalOffset = request.verticalOffset,
-        };
-
-        SetScrollViewerZoom(request, context);
-
-        DebugUtils.Assert(float.IsFinite(context.ZoomPercentage ?? 0));
-        DebugUtils.Assert(!float.IsNegative(context.ZoomPercentage ?? 0));
-        DebugUtils.Assert(float.IsFinite(context.ZoomFactor ?? 0));
-        DebugUtils.Assert(!float.IsNegative(context.ZoomFactor ?? 0));
-        DebugUtils.Assert(double.IsFinite(context.HorizontalOffset ?? 0));
-        DebugUtils.Assert(double.IsFinite(context.VerticalOffset ?? 0));
-
-        if (context.HorizontalOffset.HasValue)
-        {
-            context.HorizontalOffset = Math.Max(0, context.HorizontalOffset.Value);
-        }
-        if (context.VerticalOffset.HasValue)
-        {
-            context.VerticalOffset = Math.Max(0, context.VerticalOffset.Value);
-        }
-
-        Log("Jump", "ParamAfterZoom:"
-            + $" Z={context.ZoomPercentage}"
-            + $",ZF={context.ZoomFactor}"
-            + $",H={context.HorizontalOffset}"
-            + $",V={context.VerticalOffset}"
-            + $",D={context.DisableAnimation}");
-
-        AdjustParallelOffset(context);
-
-        DebugUtils.Assert(float.IsFinite(context.ZoomPercentage ?? 0));
-        DebugUtils.Assert(!float.IsNegative(context.ZoomPercentage ?? 0));
-        DebugUtils.Assert(float.IsFinite(context.ZoomFactor ?? 0));
-        DebugUtils.Assert(!float.IsNegative(context.ZoomFactor ?? 0));
-        DebugUtils.Assert(double.IsFinite(context.HorizontalOffset ?? 0));
-        DebugUtils.Assert(double.IsFinite(context.VerticalOffset ?? 0));
-
-        Log("Jump", "ParamAfterFix:"
-            + $" Z={context.ZoomPercentage}"
-            + $",ZF={context.ZoomFactor}"
-            + $",H={context.HorizontalOffset}"
-            + $",V={context.VerticalOffset}"
-            + $",D={context.DisableAnimation}");
-
-        if (context.HorizontalOffset != null || context.VerticalOffset != null || context.ZoomFactor != null)
-        {
-            ChangeView(context.ZoomFactor, context.HorizontalOffset, context.VerticalOffset, context.DisableAnimation);
-        }
-
-        if (request.pageToApplyZoom.HasValue)
-        {
-            SCCurrentPageFinal = ToDiscretePage(request.pageToApplyZoom.Value);
-        }
-
-        Zoom = context.ZoomPercentage.Value;
-        return ScrollResult.Success;
-    }
-
-    private void SetScrollViewerZoom(ScrollRequest request, ScrollContext context)
-    {
-        // Calculate zoom coefficient prediction.
-        ZoomCoefficientResult zoom_coefficient_new;
-        int frame_new;
-        {
-            int page_new = request.pageToApplyZoom.HasValue ? (int)request.pageToApplyZoom.Value : CurrentPageInt;
-            frame_new = PageToFrame(page_new, out _, out _);
-            if (frame_new < 0 || frame_new >= FrameDataSource.Count)
-            {
-                frame_new = 0;
-            }
-
-            zoom_coefficient_new = ZoomCoefficient(frame_new);
-            if (zoom_coefficient_new == null)
-            {
-                context.ZoomPercentage = Zoom;
-                context.ZoomFactor = null;
-                return;
-            }
-        }
-
-        // Calculate zoom in percentage.
-        double zoom;
-        if (request.zoom.HasValue)
-        {
-            zoom = request.zoom.Value;
-        }
-        else
-        {
-            int frame = PageToFrame(CurrentPageInt, out _, out _);
-            if (frame < 0 || frame >= FrameDataSource.Count)
-            {
-                frame = 0;
-            }
-
-            ZoomCoefficientResult zoom_coefficient = zoom_coefficient_new;
-            if (frame != frame_new)
-            {
-                ZoomCoefficientResult zoom_coefficient_test = ZoomCoefficient(frame);
-                if (zoom_coefficient_test != null)
-                {
-                    zoom_coefficient = zoom_coefficient_test;
-                }
-            }
-
-            zoom = (float)(ZoomFactorFinal / zoom_coefficient.Min());
-        }
-
-        if (request.zoomType == ZoomType.CenterCrop)
-        {
-            zoom *= zoom_coefficient_new.Max() / zoom_coefficient_new.Min();
-        }
-
-        double maxZoom = Math.Max(MAX_ZOOM, 100 * zoom_coefficient_new.Max() / zoom_coefficient_new.Min());
-        zoom = Math.Min(zoom, maxZoom);
-        zoom = Math.Max(zoom, MIN_ZOOM);
-        context.ZoomPercentage = (float)zoom;
-
-        // A zoom factor vary less than 1% will be ignored.
-        float zoom_factor_new = (float)(zoom * zoom_coefficient_new.Min());
-
-        if (Math.Abs(zoom_factor_new / ZoomFactorFinal - 1.0f) <= 0.01f)
-        {
-            context.ZoomFactor = null;
-            return;
-        }
-
-        context.ZoomFactor = zoom_factor_new;
-
-        // Apply zooming.
-        context.HorizontalOffset ??= HorizontalOffsetFinal;
-        context.VerticalOffset ??= VerticalOffsetFinal;
-
-        context.HorizontalOffset += ThisScrollViewer.ViewportWidth * 0.5;
-        context.HorizontalOffset *= (float)context.ZoomFactor / ZoomFactorFinal;
-        context.HorizontalOffset -= ThisScrollViewer.ViewportWidth * 0.5;
-
-        context.VerticalOffset += ThisScrollViewer.ViewportHeight * 0.5;
-        context.VerticalOffset *= (float)context.ZoomFactor / ZoomFactorFinal;
-        context.VerticalOffset -= ThisScrollViewer.ViewportHeight * 0.5;
-
-        context.HorizontalOffset = Math.Max(0.0, context.HorizontalOffset.Value);
-        context.VerticalOffset = Math.Max(0.0, context.VerticalOffset.Value);
-    }
-
-    private void ChangeView(float? zoom_factor, double? horizontal_offset, double? vertical_offset, bool disable_animation)
-    {
-        if (horizontal_offset != null)
-        {
-            HorizontalOffsetFinal = horizontal_offset.Value;
-        }
-
-        if (vertical_offset != null)
-        {
-            VerticalOffsetFinal = vertical_offset.Value;
-        }
-
-        if (zoom_factor != null)
-        {
-            ZoomFactorFinal = zoom_factor.Value;
-        }
-
-        if (disable_animation)
-        {
-            DisableAnimationFinal = true;
-        }
-
-        Log("Jump", "Commit:"
-            + " Z=" + ZoomFactorFinal.ToString()
-            + ",H=" + HorizontalOffsetFinal.ToString()
-            + ",V=" + VerticalOffsetFinal.ToString()
-            + ",D=" + DisableAnimationFinal.ToString());
-
-        ThisScrollViewer.ChangeView(HorizontalOffsetFinal, VerticalOffsetFinal, ZoomFactorFinal, DisableAnimationFinal);
-    }
-
-    private void AdjustParallelOffset(ScrollContext context)
-    {
-        if (FrameDataSource.Count == 0)
-        {
-            return;
-        }
-
-        double zoom = context.ZoomFactor ?? ZoomFactorFinal;
-        double parallelOffset;
-        if (_isVertical)
-        {
-            if (!context.VerticalOffset.HasValue)
-            {
-                return;
-            }
-            parallelOffset = context.VerticalOffset.Value;
-        }
-        else
-        {
-            if (!context.HorizontalOffset.HasValue)
-            {
-                return;
-            }
-            parallelOffset = context.HorizontalOffset.Value;
-        }
-
-        double screenCenterOffset = ViewportParallelLength * 0.5 + parallelOffset;
-
-        double? movementForward = null;
-        FrameworkElement firstContainer = _frameManager.GetContainer(0);
-        if (firstContainer != null)
-        {
-            double frameParallelLength = _isVertical ? firstContainer.ActualHeight : firstContainer.ActualWidth;
-            double space = PaddingStartFinal * zoom - parallelOffset;
-            double imageCenterOffset = (PaddingStartFinal + frameParallelLength * 0.5) * zoom;
-            double imageCenterToScreenCenter = imageCenterOffset - screenCenterOffset;
-            movementForward = Math.Min(space, imageCenterToScreenCenter);
-        }
-
-        double? movementBackward = null;
-        FrameworkElement lastContainer = _frameManager.GetContainer(FrameDataSource.Count - 1);
-        if (lastContainer != null)
-        {
-            double frameParallelLength = _isVertical ? lastContainer.ActualHeight : lastContainer.ActualWidth;
-            double extentParallelLength = ExtentParallelLength * zoom / ZoomFactor;
-            double space = PaddingEndFinal * zoom - (extentParallelLength - parallelOffset - ViewportParallelLength);
-            double imageCenterOffset = extentParallelLength - (PaddingEndFinal + frameParallelLength * 0.5) * zoom;
-            double imageCenterToScreenCenter = screenCenterOffset - imageCenterOffset;
-            movementBackward = Math.Min(space, imageCenterToScreenCenter);
-        }
-
-        double movement = 0.0;
-        bool canMove = false;
-        if (movementForward.HasValue && movementForward.Value > 0)
-        {
-            canMove = true;
-            movement += movementForward.Value;
-        }
-        if (movementBackward.HasValue && movementBackward.Value > 0)
-        {
-            canMove = true;
-            movement -= movementBackward.Value;
-        }
-
-        if (!canMove)
-        {
-            return;
-        }
-
-        if (_isVertical)
-        {
-            context.VerticalOffset += movement;
-        }
-        else
-        {
-            context.HorizontalOffset += movement;
-        }
-
-        m_manipulation_disabled = true;
-    }
-
-    private void AdjustPadding()
-    {
-        if (!_isLoaded)
-        {
-            return;
-        }
-
-        if (FrameDataSource.Count == 0)
-        {
-            return;
-        }
-
-        double padding_start = PaddingStartFinal;
-        do
-        {
-            int frame_idx = 0;
-
-            if (_frameManager.GetContainer(frame_idx) == null)
-            {
-                break;
-            }
-
-            ZoomCoefficientResult zoom_coefficient = ZoomCoefficient(frame_idx);
-            if (zoom_coefficient == null)
-            {
-                break;
-            }
-
-            double zoom_factor = MIN_ZOOM * zoom_coefficient.Min();
-            double inner_length = ViewportParallelLength / zoom_factor;
-            padding_start = (inner_length - FrameParallelLength(frame_idx)) / 2;
-            padding_start = Math.Max(0.0, padding_start);
-        } while (false);
-
-        double padding_end = PaddingEndFinal;
-        do
-        {
-            int frame_idx = FrameDataSource.Count - 1;
-
-            if (_frameManager.GetContainer(frame_idx) == null)
-            {
-                break;
-            }
-
-            ZoomCoefficientResult zoom_coefficient = ZoomCoefficient(frame_idx);
-            if (zoom_coefficient == null)
-            {
-                break;
-            }
-
-            double zoom_factor = MIN_ZOOM * zoom_coefficient.Min();
-            double inner_length = ViewportParallelLength / zoom_factor;
-            padding_end = (inner_length - FrameParallelLength(frame_idx)) / 2;
-            padding_end = Math.Max(0.0, padding_end);
-        } while (false);
-
-        PaddingStartFinal = padding_start;
-        PaddingEndFinal = padding_end;
-
-        if (IsVertical)
-        {
-            ThisListView.Padding = new Thickness(0.0, padding_start, 0.0, padding_end);
-        }
-        else
-        {
-            ThisListView.Padding = new Thickness(padding_start, 0.0, padding_end, 0.0);
+            view.UpdateImageDecodeSize(model);
         }
     }
 
-    // Events - Pointer
-    private void OnReaderScrollViewerPointerWheelChanged(PointerRoutedEventArgs e)
+    private class GestureHandler(ReaderView view) : ReaderGestureRecognizer.IHandler
     {
-        PointerPoint pt = e.GetCurrentPoint(null);
-        int delta = -pt.Properties.MouseWheelDelta / 120;
+        private readonly ReaderView _view = view;
 
-        if (_isContinuous || Zoom > 105)
+        public void ManipulationCompleted(object sender, ManipulationCompletedEventArgs e)
         {
-            // Continuous scrolling.
-            ScrollManager.BeginTransaction(this, "ContinuousScrollingUsingPointerWheel")
-                .ParallelOffset(ParallelOffsetFinal + delta * 140.0)
-                .EnableAnimation()
-                .Commit();
-        }
-        else
-        {
-            // Page turning.
-            MoveFrame(delta, "PageTurningUsingPointerWheel");
+            _view.OnReaderManipulationCompleted(sender, e);
         }
 
-        m_manipulation_disabled = true;
-        e.Handled = true;
+        public void ManipulationStarted(object sender, ManipulationStartedEventArgs e)
+        {
+            _view.OnReaderManipulationStarted(sender, e);
+        }
+
+        public void ManipulationUpdated(object sender, ManipulationUpdatedEventArgs e)
+        {
+            _view.OnReaderManipulationUpdated(sender, e);
+        }
+
+        public void Tapped(object sender, TappedEventArgs e)
+        {
+            _view.OnReaderTapped(sender, e);
+        }
     }
 
-    // Events - Manipulation
-    private bool m_manipulation_disabled = false;
-
-    private void OnReaderManipulationStarted(ManipulationStartedEventArgs e)
+    public enum ReaderState
     {
-        m_manipulation_disabled = false;
-
-#if DEBUG_LOG_MANIPULATION
-        Log("Manipulation started");
-#endif
+        Idle,
+        Ready,
+        Loading,
+        Error,
     }
 
-    private void OnReaderManipulationUpdated(ManipulationUpdatedEventArgs e)
+    public enum ScrollResult
     {
-        if (m_manipulation_disabled)
-        {
-            return;
-        }
-
-        double dx = e.Delta.Translation.X;
-        double dy = e.Delta.Translation.Y;
-        float scale = e.Delta.Scale;
-
-        if (!_isVertical && !_isLeftToRight)
-        {
-            dx = -dx;
-        }
-
-        float? zoom = null;
-
-        if (Math.Abs(scale - 1.0f) > 0.01f)
-        {
-            zoom = Zoom * scale;
-        }
-
-        ScrollManager.BeginTransaction(this, "ContinuousScrollingUsingManipulation")
-            .Zoom(zoom)
-            .HorizontalOffset(HorizontalOffsetFinal - dx)
-            .VerticalOffset(VerticalOffsetFinal - dy)
-            .EnableAnimation()
-            .Commit();
-    }
-
-    private void OnReaderManipulationCompleted(ManipulationCompletedEventArgs e)
-    {
-        if (_isContinuous || Zoom >= FORCE_CONTINUOUS_ZOOM_THRESHOLD)
-        {
-            return;
-        }
-
-        double velocity = IsVertical ? e.Velocities.Linear.Y : e.Velocities.Linear.X;
-
-        if (!_isVertical && !_isLeftToRight)
-        {
-            velocity = -velocity;
-        }
-
-        if (velocity > 1.0)
-        {
-            MoveFrame(-1, "MoveToLastPageUsingManipulation");
-        }
-        else if (velocity < -1.0)
-        {
-            MoveFrame(1, "MoveToNextPageUsingManipulation");
-        }
-
-#if DEBUG_LOG_MANIPULATION
-        Log("Manipulation completed, V=" + velocity.ToString());
-#endif
-    }
-
-    // Events - Common
-    private bool OnViewChanged(bool final)
-    {
-        if (!_isInitialFrameLoaded)
-        {
-            return false;
-        }
-
-        if (!UpdatePage())
-        {
-            return false;
-        }
-
-        if (final)
-        {
-            SCClearFinalVal("ViewChanged");
-
-            // Notify the scroll viewer to update its inner states.
-            SetScrollViewer1(null, null, false, "AdjustInnerStateAfterViewChanged");
-
-            if (!_isContinuous && Zoom < FORCE_CONTINUOUS_ZOOM_THRESHOLD)
-            {
-                // Stick our view to the center of two pages.
-                MoveFrameInternal(0, false, "StickToCenter");
-            }
-
-            Log("ViewChanged", $"Z={ZoomFactorFinal}"
-                + $",H={HorizontalOffsetFinal}"
-                + $",V={VerticalOffsetFinal}"
-                + $",P={CurrentPage}");
-        }
-
-        UpdateImages(final);
-        return true;
-    }
-
-    private void OnSizeChanged()
-    {
-        AdjustPadding();
-    }
-
-    // Internal - Final Values
-    private bool m_final_value_set = false;
-
-    private void FillFinalVal()
-    {
-        if (!_isLoaded)
-        {
-            return;
-        }
-
-        if (m_final_value_set)
-        {
-            return;
-        }
-
-        m_final_value_set = true;
-
-        _SCCurrentPageFinal = CurrentPageInt;
-        m_PaddingStartFinal = IsVertical ? ThisListView.Padding.Top : ThisListView.Padding.Left;
-        m_PaddingEndFinal = IsVertical ? ThisListView.Padding.Bottom : ThisListView.Padding.Right;
-        m_HorizontalOffsetFinal = HorizontalOffset;
-        m_VerticalOffsetFinal = VerticalOffset;
-        m_ZoomFactorFinal = ZoomFactor;
-        m_DisableAnimationFinal = false;
-    }
-
-    private void SCClearFinalVal(string reason)
-    {
-        Log("ClearFinalValue", reason);
-        m_final_value_set = false;
-    }
-
-    // Internal - Conversions
-
-    private double FinalVal(double val)
-    {
-        return val / ZoomFactor * ZoomFactorFinal;
+        Success = 0,
+        Failed = 1,
+        TooClose = 2,
     }
 
     public enum ZoomType
@@ -2379,7 +2354,7 @@ internal partial class ReaderView : UserControl
         CenterCrop,
     }
 
-    public class ScrollRequest
+    private class ScrollRequest
     {
         // Zoom
         public float? zoom = null;

@@ -260,13 +260,29 @@ internal static class Logger
         Dictionary<string, List<LogItem>> fileLogs = [];
         foreach (LogItem item in logs)
         {
-            string path = item.Tag.ToString();
-            if (!fileLogs.TryGetValue(path, out List<LogItem> logItems))
+            string[] tags = item.Tag.ToString().Split(',');
+            foreach (string tag in tags)
             {
-                logItems = [];
-                fileLogs[path] = logItems;
+                string[] categories = tag.Split('/');
+                bool divider = false;
+                StringBuilder sb = new();
+                foreach (string category in categories)
+                {
+                    if (divider)
+                    {
+                        sb.Append('\\');
+                    }
+                    divider = true;
+                    sb.Append(category);
+                    string path = sb.ToString();
+                    if (!fileLogs.TryGetValue(path, out List<LogItem> logItems))
+                    {
+                        logItems = [];
+                        fileLogs[path] = logItems;
+                    }
+                    logItems.Add(item);
+                }
             }
-            logItems.Add(item);
         }
 
         string cacheFolder = sLogFolderPath + "tree\\";
