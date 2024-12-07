@@ -3,7 +3,6 @@
 
 using System.ComponentModel;
 
-using ComicReader.Common;
 using ComicReader.Common.Threading;
 using ComicReader.Data;
 
@@ -12,72 +11,66 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace ComicReader.Views.Reader;
 
-internal class EditComicInfoDialogShared : INotifyPropertyChanged
+internal class EditComicInfoDialogViewModel : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler PropertyChanged;
 
-    private bool m_IsTagInfoBarOpen = false;
+    private bool _isTagInfoBarOpen = false;
     public bool IsTagInfoBarOpen
     {
-        get => m_IsTagInfoBarOpen;
+        get => _isTagInfoBarOpen;
         set
         {
-            m_IsTagInfoBarOpen = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsTagInfoBarOpen"));
+            _isTagInfoBarOpen = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsTagInfoBarOpen)));
         }
     }
 }
 
 internal sealed partial class EditComicInfoDialog : ContentDialog
 {
-    public EditComicInfoDialogShared Shared = new();
+    public EditComicInfoDialogViewModel ViewModel = new();
 
-    private readonly ComicData m_comic;
+    private readonly ComicData _comic;
 
     public EditComicInfoDialog(ComicData comic)
     {
-        m_comic = comic;
-
+        _comic = comic;
         InitializeComponent();
     }
 
-    // events
+    //
+    // Events
+    //
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        Title1TextBox.Text = _comic.Title1;
+        Title2TextBox.Text = _comic.Title2;
+        DescriptionTextBox.Text = _comic.Description;
+        TagTextBox.Text = _comic.TagString();
+    }
+
     private void ContentDialogPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
     {
-        // Done
-        C0.Run(delegate
-        {
-            string text = "";
-            text += "Title1: " + Title1TextBox.Text + "\n";
-            text += "Title2: " + Title2TextBox.Text + "\n";
-            text += TagTextBox.Text;
+        string infoText = ComicData.InfoString(Title1TextBox.Text, Title2TextBox.Text, DescriptionTextBox.Text, TagTextBox.Text);
+        _comic.ParseInfo(infoText);
+        _comic.SaveBasic();
 
-            m_comic.ParseInfo(text);
-            m_comic.SaveBasic();
-
-            TaskDispatcher.DefaultQueue.Submit("ContentDialogPrimaryButtonClick", m_comic.SaveToInfoFileSealed());
-        });
+        TaskDispatcher.DefaultQueue.Submit("ContentDialogPrimaryButtonClick", _comic.SaveToInfoFileSealed());
     }
 
     private void ContentDialogSecondaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
     {
-        // Cancel
-    }
-
-    private void MainEditBoxLoaded(object sender, RoutedEventArgs e)
-    {
-        Title1TextBox.Text = m_comic.Title1;
-        Title2TextBox.Text = m_comic.Title2;
-        TagTextBox.Text = m_comic.TagString();
     }
 
     private void OnShowTagInfoButtonClicked(object sender, RoutedEventArgs e)
     {
-        Shared.IsTagInfoBarOpen = !Shared.IsTagInfoBarOpen;
+        ViewModel.IsTagInfoBarOpen = !ViewModel.IsTagInfoBarOpen;
     }
 
     private void OnTagInfoBarCloseButtonClicked(Microsoft.UI.Xaml.Controls.InfoBar sender, object args)
     {
-        Shared.IsTagInfoBarOpen = false;
+        ViewModel.IsTagInfoBarOpen = false;
     }
 }

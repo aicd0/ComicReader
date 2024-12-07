@@ -194,6 +194,15 @@
                                     TextWrapping="Wrap"
                                     Visibility="{x:Bind ViewModel.IsComicTitle2Visible, Mode=OneWay}" />
 
+                                <!--  Description  -->
+                                <TextBlock
+                                    x:Name="TbComicDescription"
+                                    Margin="0,10,0,0"
+                                    FontSize="13"
+                                    FontWeight="SemiLight"
+                                    IsTextSelectionEnabled="True"
+                                    TextWrapping="Wrap" />
+
                                 <!--  Rating  -->
                                 <muxc:RatingControl
                                     x:Name="RcRating"

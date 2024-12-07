@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
@@ -24,6 +25,7 @@ using ComicReader.Views.Navigation;
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Input;
 
 using Windows.Storage;
@@ -139,6 +141,7 @@ internal sealed partial class ReaderPage : BasePage
     //
 
     private const string KEY_TIP_SHOWN = "ReaderTipShown";
+    private const string REGEX_URL = "(https?:\\/\\/)?(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&//=]*)";
 
     //
     // Variables
@@ -433,7 +436,7 @@ internal sealed partial class ReaderPage : BasePage
         MainReaderView.StartLoadingImages(images);
     }
 
-    public async Task LoadComicInfo()
+    private async Task LoadComicInfo()
     {
         if (_comic == null)
         {
@@ -452,6 +455,7 @@ internal sealed partial class ReaderPage : BasePage
             ViewModel.ComicTitle2 = _comic.Title2;
         }
 
+        LoadDescription(_comic.Description);
         ViewModel.ComicDir = _comic.Location;
         ViewModel.CanDirOpenInFileExplorer = _comic is ComicFolderData;
         ViewModel.IsEditable = _comic.IsEditable;
@@ -464,6 +468,79 @@ internal sealed partial class ReaderPage : BasePage
         if (!_comic.IsExternal)
         {
             ViewModel.Rating = _comic.Rating;
+        }
+    }
+
+    private void LoadDescription(string description)
+    {
+        InlineCollection inlines = TbComicDescription.Inlines;
+        inlines.Clear();
+
+        Regex urlRegex = new(REGEX_URL, RegexOptions.None);
+        MatchCollection matches = urlRegex.Matches(description);
+        int currentIndex = 0;
+
+        foreach (Match match in matches)
+        {
+            Uri uri;
+            try
+            {
+                uri = new Uri(match.Value);
+            }
+            catch (Exception)
+            {
+                continue;
+            }
+
+            int startIndex = match.Index;
+            int endIndex = match.Index + match.Length;
+
+            if (endIndex <= currentIndex)
+            {
+                continue;
+            }
+
+            if (startIndex > currentIndex)
+            {
+                var run = new Run
+                {
+                    Text = description[currentIndex..startIndex]
+                };
+                inlines.Add(run);
+            }
+
+            {
+                var run = new Run
+                {
+                    Text = match.Value
+                };
+                var hyperlink = new Hyperlink
+                {
+                    NavigateUri = uri
+                };
+                hyperlink.Inlines.Add(run);
+                inlines.Add(hyperlink);
+            }
+
+            currentIndex = endIndex;
+        }
+
+        if (currentIndex < description.Length)
+        {
+            var run = new Run
+            {
+                Text = description[currentIndex..]
+            };
+            inlines.Add(run);
+        }
+
+        if (inlines.Count == 0)
+        {
+            TbComicDescription.Visibility = Visibility.Collapsed;
+        }
+        else
+        {
+            TbComicDescription.Visibility = Visibility.Visible;
         }
     }
 

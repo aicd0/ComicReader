@@ -8,6 +8,7 @@
     x:Uid="EditComicInfoDialog"
     Title="Collection information"
     DefaultButton="Primary"
+    Loaded="OnLoaded"
     PrimaryButtonClick="ContentDialogPrimaryButtonClick"
     PrimaryButtonText="Done"
     SecondaryButtonClick="ContentDialogSecondaryButtonClick"
@@ -26,6 +27,14 @@
                 x:Name="Title2TextBox"
                 Margin="0,6,0,0"
                 TextWrapping="Wrap" />
+            <TextBlock x:Uid="Description" Margin="0,8,0,0" />
+            <TextBox
+                x:Name="DescriptionTextBox"
+                Width="500"
+                MinHeight="120"
+                Margin="0,6,0,0"
+                AcceptsReturn="True"
+                TextWrapping="Wrap" />
             <StackPanel Margin="0,8,0,0">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock x:Uid="Tags" />
@@ -41,11 +50,11 @@
                         </Button.Content>
                     </Button>
                 </StackPanel>
-                <Grid Height="8" Visibility="{x:Bind Shared.IsTagInfoBarOpen, Mode=OneWay}" />
+                <Grid Height="8" Visibility="{x:Bind ViewModel.IsTagInfoBarOpen, Mode=OneWay}" />
                 <muxc:InfoBar
                     x:Uid="TagIntroduction"
                     CloseButtonClick="OnTagInfoBarCloseButtonClicked"
-                    IsOpen="{x:Bind Shared.IsTagInfoBarOpen, Mode=OneWay}"
+                    IsOpen="{x:Bind ViewModel.IsTagInfoBarOpen, Mode=OneWay}"
                     Severity="Informational" />
             </StackPanel>
             <TextBox
@@ -54,7 +63,6 @@
                 MinHeight="120"
                 Margin="0,6,0,0"
                 AcceptsReturn="True"
-                Loaded="MainEditBoxLoaded"
                 TextWrapping="Wrap" />
         </StackPanel>
     </Grid>

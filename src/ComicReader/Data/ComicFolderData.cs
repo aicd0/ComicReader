@@ -162,7 +162,7 @@ internal class ComicFolderData : ComicData
             return r;
         }
 
-        string text = InfoString();
+        string text = InfoString(Title1, Title2, Description, TagString());
         IBuffer buffer = C0.GetBufferFromString(text);
 
         try

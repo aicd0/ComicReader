@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -329,45 +330,70 @@ internal abstract class ComicData
         return text;
     }
 
-    public string InfoString()
+    public static string InfoString(string title1, string title2, string description, string tags)
     {
-        string text = "";
-        text += "Title1: " + Title1 + "\n";
-        text += "Title2: " + Title2 + "\n";
-        text += TagString();
-        return text;
+        string[] descriptions = description.Replace('\r', '\n').Split('\n', StringSplitOptions.RemoveEmptyEntries);
+
+        StringBuilder sb = new();
+        sb.Append("Title1: ");
+        sb.Append(title1);
+        sb.Append('\n');
+        sb.Append("Title2: ");
+        sb.Append(title2);
+        sb.Append('\n');
+        foreach (string desc in descriptions)
+        {
+            sb.Append("Description: ");
+            sb.Append(desc);
+            sb.Append('\n');
+        }
+        sb.Append(tags);
+        return sb.ToString();
     }
 
     public void ParseInfo(string text)
     {
-        bool title1_set = false;
-        bool title2_set = false;
         Title1 = "";
         Title2 = "";
+        Description = "";
         Tags.Clear();
+
         text = text.Replace('\r', '\n');
         string[] properties = text.Split("\n", StringSplitOptions.RemoveEmptyEntries);
+        bool title1Set = false;
+        bool title2Set = false;
 
         foreach (string property in properties)
         {
-            var tag_data = TagData.Parse(property);
+            ParsePropertyResult parseResult = ParseProperty(property);
 
-            if (tag_data == null)
+            if (parseResult == null)
             {
                 continue;
             }
 
-            string name = tag_data.Name.ToLower();
+            string name = parseResult.Name.ToLower();
 
-            if (!title1_set && (name == "title1" || name == "title" || name == "t1" || name == "to"))
+            if (!title1Set && (name == "title1" || name == "title" || name == "t1" || name == "to"))
             {
-                title1_set = true;
-                Title1 = StringUtils.Join("/", tag_data.Tags);
+                title1Set = true;
+                Title1 = parseResult.Content;
             }
-            else if (!title2_set && (name == "title2" || name == "t2"))
+            else if (!title2Set && (name == "title2" || name == "t2"))
             {
-                title2_set = true;
-                Title2 = StringUtils.Join("/", tag_data.Tags);
+                title2Set = true;
+                Title2 = parseResult.Content;
+            }
+            else if (name == "description")
+            {
+                if (parseResult.Content.Length > 0)
+                {
+                    if (Description.Length > 0)
+                    {
+                        Description += '\n';
+                    }
+                    Description += parseResult.Content;
+                }
             }
             else
             {
@@ -379,14 +405,18 @@ internal abstract class ComicData
                     if (t.Name.ToLower().Equals(name))
                     {
                         duplicated = true;
-                        t.Tags.UnionWith(tag_data.Tags);
+                        t.Tags.UnionWith(parseResult.Tags);
                         break;
                     }
                 }
 
                 if (!duplicated)
                 {
-                    Tags.Add(tag_data);
+                    Tags.Add(new TagData
+                    {
+                        Name = parseResult.Name,
+                        Tags = parseResult.Tags,
+                    });
                 }
             }
         }
@@ -1020,6 +1050,36 @@ internal abstract class ComicData
         return TaskException.Success;
     }
 
+    private static ParsePropertyResult ParseProperty(string src)
+    {
+        string[] pieces = src.Split(":", 2, StringSplitOptions.RemoveEmptyEntries);
+
+        if (pieces.Length != 2)
+        {
+            return null;
+        }
+
+        var result = new ParsePropertyResult
+        {
+            Name = pieces[0].Trim(),
+            Content = pieces[1].Trim(),
+        };
+
+        var tags = new List<string>(pieces[1].Split("/", StringSplitOptions.RemoveEmptyEntries));
+
+        foreach (string tag in tags)
+        {
+            string tagTrimed = tag.Trim();
+
+            if (tagTrimed.Length != 0)
+            {
+                result.Tags.Add(tagTrimed);
+            }
+        }
+
+        return result;
+    }
+
     //
     // Classes
     //
@@ -1035,35 +1095,13 @@ internal abstract class ComicData
     {
         public string Name;
         public HashSet<string> Tags = new();
+    };
 
-        public static TagData Parse(string src)
-        {
-            string[] pieces = src.Split(":", 2, StringSplitOptions.RemoveEmptyEntries);
-
-            if (pieces.Length != 2)
-            {
-                return null;
-            }
-
-            var tag_data = new TagData
-            {
-                Name = pieces[0]
-            };
-
-            var tags = new List<string>(pieces[1].Split("/", StringSplitOptions.RemoveEmptyEntries));
-
-            foreach (string tag in tags)
-            {
-                string tag_trimed = tag.Trim();
-
-                if (tag_trimed.Length != 0)
-                {
-                    tag_data.Tags.Add(tag_trimed);
-                }
-            }
-
-            return tag_data.Tags.Count == 0 ? null : tag_data;
-        }
+    internal class ParsePropertyResult
+    {
+        public string Name;
+        public string Content;
+        public HashSet<string> Tags = new();
     };
 
     internal enum ComicType : int

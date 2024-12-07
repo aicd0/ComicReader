@@ -643,4 +643,7 @@
   <data name="Proceed" xml:space="preserve">
     <value>继续</value>
   </data>
+  <data name="Description.Text" xml:space="preserve">
+    <value>描述：</value>
+  </data>
 </root>
