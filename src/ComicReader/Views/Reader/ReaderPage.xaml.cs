@@ -145,7 +145,6 @@ internal sealed partial class ReaderPage : BasePage
     //
 
     private bool? _isFavorite = null;
-    private ReaderSettingDataModel _readerSettingModel = null;
     private ComicData _comic;
     private volatile bool _updatingProgress = false;
 
@@ -257,20 +256,12 @@ internal sealed partial class ReaderPage : BasePage
             }
             GetMainPageAbility().SetIcon(new SymbolIconSource { Symbol = Symbol.Pictures });
 
-            _readerSettingModel = new ReaderSettingDataModel
-            {
-                IsVertical = XmlDatabase.Settings.VerticalReading,
-                IsLeftToRight = XmlDatabase.Settings.LeftToRight,
-                IsVerticalContinuous = XmlDatabase.Settings.VerticalContinuous,
-                IsHorizontalContinuous = XmlDatabase.Settings.HorizontalContinuous,
-                VerticalPageArrangement = XmlDatabase.Settings.VerticalPageArrangement,
-                HorizontalPageArrangement = XmlDatabase.Settings.HorizontalPageArrangement,
-            };
+            ReaderSettingDataModel readerSettingModel = GetReaderSettingModel();
             ReaderView reader = MainReaderView;
-            reader.SetIsVertical(_readerSettingModel.IsVertical);
-            reader.SetIsContinuous(_readerSettingModel.IsContinuous);
-            reader.SetPageArrangement(_readerSettingModel.PageArrangement);
-            reader.SetFlowDirection(_readerSettingModel.IsLeftToRight);
+            reader.SetIsVertical(readerSettingModel.IsVertical);
+            reader.SetIsContinuous(readerSettingModel.IsContinuous);
+            reader.SetPageArrangement(readerSettingModel.PageArrangement);
+            reader.SetFlowDirection(readerSettingModel.IsLeftToRight);
 
             if (comic == null)
             {
@@ -308,7 +299,7 @@ internal sealed partial class ReaderPage : BasePage
         base.OnResume();
         ObserveData();
         GetNavigationPageAbility().SetGridViewMode(false);
-        GetNavigationPageAbility().SetReaderSettings(_readerSettingModel);
+        GetNavigationPageAbility().SetReaderSettings(GetReaderSettingModel());
         UpdateReaderUI();
 
         ComicData comic = _comic;
@@ -359,7 +350,6 @@ internal sealed partial class ReaderPage : BasePage
 
         GetNavigationPageAbility().RegisterReaderSettingsChangedEventHandler(this, delegate (ReaderSettingDataModel setting)
         {
-            _readerSettingModel = setting;
             ReaderView reader = MainReaderView;
             reader.SetIsVertical(setting.IsVertical);
             reader.SetFlowDirection(setting.IsLeftToRight);
@@ -505,6 +495,19 @@ internal sealed partial class ReaderPage : BasePage
         }
 
         ViewModel.ComicTags = new_collection;
+    }
+
+    private ReaderSettingDataModel GetReaderSettingModel()
+    {
+        return new ReaderSettingDataModel
+        {
+            IsVertical = XmlDatabase.Settings.VerticalReading,
+            IsLeftToRight = XmlDatabase.Settings.LeftToRight,
+            IsVerticalContinuous = XmlDatabase.Settings.VerticalContinuous,
+            IsHorizontalContinuous = XmlDatabase.Settings.HorizontalContinuous,
+            VerticalPageArrangement = XmlDatabase.Settings.VerticalPageArrangement,
+            HorizontalPageArrangement = XmlDatabase.Settings.HorizontalPageArrangement,
+        };
     }
 
     //

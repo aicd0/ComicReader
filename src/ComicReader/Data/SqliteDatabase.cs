@@ -5,6 +5,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 
+using ComicReader.Common;
 using ComicReader.Common.DebugTools;
 
 using Microsoft.Data.Sqlite;
@@ -27,17 +28,13 @@ public class SqlKey
 
 public class SqliteDatabaseManager
 {
-    public const string ComicTable = "comics";
-    public const string TagCategoryTable = "tag_categories";
-    public const string TagTable = "tags";
-
     private static StorageFolder DatabaseFolder => ApplicationData.Current.LocalFolder;
     private static string DatabaseFileName => "database.db";
     private static string DatabasePath => Path.Combine(DatabaseFolder.Path, DatabaseFileName);
 
     private static SqliteConnection m_connection = null;
 
-    public static async Task Init()
+    public static async Task Initialize(int databaseVersion)
     {
         // Create database.
         await DatabaseFolder.CreateFileAsync(DatabaseFileName, CreationCollisionOption.OpenIfExists);
@@ -50,36 +47,44 @@ public class SqliteDatabaseManager
         // Create tables.
         using (SqliteCommand command = NewCommand())
         {
-            // Create comic table.
-            command.CommandText = "CREATE TABLE IF NOT EXISTS " + ComicTable + " (" +
-                ComicData.Field.Id + " INTEGER PRIMARY KEY AUTOINCREMENT," + // 0
-                ComicData.Field.Type + " INTEGER NOT NULL," + // 1
-                ComicData.Field.Location + " TEXT NOT NULL," + // 2
-                ComicData.Field.Title1 + " TEXT," + // 3
-                ComicData.Field.Title2 + " TEXT," + // 4
-                ComicData.Field.Hidden + " BOOLEAN NOT NULL," + // 5
-                ComicData.Field.Rating + " INTEGER NOT NULL," + // 6
-                ComicData.Field.Progress + " INTEGER NOT NULL," + // 7
-                ComicData.Field.LastVisit + " TIMESTAMP NOT NULL," + // 8
-                ComicData.Field.LastPosition + " REAL NOT NULL," + // 9
-                ComicData.Field.ImageAspectRatios + " TEXT," + // 10
-                ComicData.Field.CoverFileCache + " TEXT)"; // 11
+            string comicTable = ComicTable.Instance.GetTableName();
+            string tagCategoryTable = TagCategoryTable.Instance.GetTableName();
+            string tagTable = TagTable.Instance.GetTableName();
+
+#pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
+            command.CommandText = "CREATE TABLE IF NOT EXISTS " + comicTable + " (" +
+                ComicTable.ColumnId.Name + " INTEGER PRIMARY KEY AUTOINCREMENT" +
+                "," + ComicTable.ColumnType.Name + " INTEGER NOT NULL" +
+                "," + ComicTable.ColumnLocation.Name + " TEXT NOT NULL" +
+                "," + ComicTable.ColumnTitle1.Name + " TEXT" +
+                "," + ComicTable.ColumnTitle2.Name + " TEXT" +
+                "," + ComicTable.ColumnHidden.Name + " BOOLEAN NOT NULL" +
+                "," + ComicTable.ColumnRating.Name + " INTEGER NOT NULL" +
+                "," + ComicTable.ColumnProgress.Name + " INTEGER NOT NULL" +
+                "," + ComicTable.ColumnLastVisit.Name + " TIMESTAMP NOT NULL" +
+                "," + ComicTable.ColumnLastPosition.Name + " REAL NOT NULL" +
+                "," + ComicTable.ColumnCoverCacheKey.Name + " TEXT" +
+                "," + ComicTable.ColumnDescription.Name + " TEXT" +
+                ")";
             await command.ExecuteNonQueryAsync();
 
-            // Create tag category table.
-            command.CommandText = "CREATE TABLE IF NOT EXISTS " + TagCategoryTable + " (" +
-                ComicData.Field.TagCategory.Id + " INTEGER PRIMARY KEY AUTOINCREMENT," + // 0
-                ComicData.Field.TagCategory.Name + " TEXT," + // 1
-                ComicData.Field.TagCategory.ComicId + " INTEGER REFERENCES " + ComicTable + "(" + ComicData.Field.Id + ") ON DELETE CASCADE)"; // 2
+            command.CommandText = "CREATE TABLE IF NOT EXISTS " + tagCategoryTable + " (" +
+                TagCategoryTable.ColumnId.Name + " INTEGER PRIMARY KEY AUTOINCREMENT" +
+                "," + TagCategoryTable.ColumnName.Name + " TEXT" +
+                "," + TagCategoryTable.ColumnComicId.Name + " INTEGER REFERENCES " + comicTable + "(" + ComicTable.ColumnId.Name + ") ON DELETE CASCADE" +
+                ")";
             await command.ExecuteNonQueryAsync();
 
-            // Create tag table.
-            command.CommandText = "CREATE TABLE IF NOT EXISTS " + TagTable + " (" +
-                ComicData.Field.Tag.Content + " TEXT," + // 0
-                ComicData.Field.Tag.ComicId + " INTEGER NOT NULL," + // 1
-                ComicData.Field.Tag.TagCategoryId + " INTEGER REFERENCES " + TagCategoryTable + "(" + ComicData.Field.TagCategory.Id + ") ON DELETE CASCADE)"; // 2
+            command.CommandText = "CREATE TABLE IF NOT EXISTS " + tagTable + " (" +
+                TagTable.ColumnContent.Name + " TEXT" +
+                "," + TagTable.ColumnComicId.Name + " INTEGER NOT NULL" +
+                "," + TagTable.ColumnTagCategoryId.Name + " INTEGER REFERENCES " + tagCategoryTable + "(" + TagCategoryTable.ColumnId.Name + ") ON DELETE CASCADE" +
+                ")";
             await command.ExecuteNonQueryAsync();
+#pragma warning restore CA2100 // Review SQL queries for security vulnerabilities
         }
+
+        await UpdateDatabase(databaseVersion);
     }
 
     public static SqliteCommand NewCommand()
@@ -101,5 +106,39 @@ public class SqliteDatabaseManager
         command.Parameters.AddWithValue("$table", table);
         long count = (long)await command.ExecuteScalarAsync();
         return count > 0;
+    }
+
+    private static async Task<TaskException> UpdateDatabase(int databaseVersion)
+    {
+        switch (databaseVersion)
+        {
+            case -1:
+            case 0:
+            case 1:
+                goto case 3;
+            case 2:
+                using (SqliteCommand command = NewCommand())
+                {
+                    string comicTable = ComicTable.Instance.GetTableName();
+#pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
+                    command.CommandText = $"ALTER TABLE {comicTable} DROP COLUMN image_aspect_ratios";
+                    command.ExecuteNonQuery();
+                    command.CommandText = $"ALTER TABLE {comicTable} DROP COLUMN cover_file_name";
+                    command.ExecuteNonQuery();
+                    command.CommandText = $"ALTER TABLE {comicTable} ADD COLUMN {ComicTable.ColumnCoverCacheKey.Name} TEXT DEFAULT ''";
+                    command.ExecuteNonQuery();
+                    command.CommandText = $"ALTER TABLE {comicTable} ADD COLUMN {ComicTable.ColumnDescription.Name} TEXT DEFAULT ''";
+                    command.ExecuteNonQuery();
+#pragma warning restore CA2100 // Review SQL queries for security vulnerabilities
+                }
+                goto case 3;
+            case 3:
+                XmlDatabase.Settings.DatabaseVersion = 3;
+                await XmlDatabaseManager.SaveUnsealed(XmlDatabaseItem.Settings);
+                return TaskException.Success;
+            default:
+                DebugUtils.Assert(false);
+                return TaskException.UnknownEnum;
+        }
     }
 }

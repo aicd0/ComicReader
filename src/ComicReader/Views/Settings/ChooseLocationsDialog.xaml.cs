@@ -30,13 +30,10 @@ public sealed partial class ChooseLocationsDialog : ContentDialog
     {
         FolderItemDataSource.Clear();
 
-        if (Storage.AllowAddToFutureAccessList())
+        FolderItemDataSource.Add(new FolderItemViewModel
         {
-            FolderItemDataSource.Add(new FolderItemViewModel
-            {
-                IsAddNew = true
-            });
-        }
+            IsAddNew = true
+        });
 
         await XmlDatabaseManager.WaitLock();
 

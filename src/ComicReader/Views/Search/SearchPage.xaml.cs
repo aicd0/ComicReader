@@ -13,13 +13,15 @@ using ComicReader.Common.BasePage;
 using ComicReader.Common.DebugTools;
 using ComicReader.Common.Imaging;
 using ComicReader.Data;
+using ComicReader.Data.SqlHelpers;
 using ComicReader.Helpers.Imaging;
 using ComicReader.Helpers.Navigation;
 using ComicReader.ViewModels;
 using ComicReader.Views.Main;
 using ComicReader.Views.Navigation;
 
-using Microsoft.Data.Sqlite;
+using LiteDB;
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
@@ -377,40 +379,39 @@ internal sealed partial class SearchPage : BasePage
         var keyword_matched = new List<Match>();
         List<long> filter_matched = null;
 
-        await ComicData.CommandBlock2(async delegate (SqliteCommand command)
+        await ComicData.EnqueueCommand(delegate
         {
-            command.CommandText = "SELECT " + ComicData.Field.Id + "," +
-                ComicData.Field.Title1 + "," + ComicData.Field.Title2 + " FROM " +
-                SqliteDatabaseManager.ComicTable;
+            var command = new SelectCommand<ComicTable>(ComicTable.Instance);
+            SelectCommand<ComicTable>.IToken<long> idToken = command.PutQueryInt64(ComicTable.ColumnId);
+            SelectCommand<ComicTable>.IToken<string> title1Token = command.PutQueryString(ComicTable.ColumnTitle1);
+            SelectCommand<ComicTable>.IToken<string> title2Token = command.PutQueryString(ComicTable.ColumnTitle2);
+            using SelectCommand<ComicTable>.IReader reader = command.Execute();
 
-            using (SqliteDataReader query = await command.ExecuteReaderAsync())
+            while (reader.Read())
             {
-                while (query.Read())
+                // Calculate similarity.
+                int similarity = 0;
+                string title1 = title1Token.GetValue();
+                string title2 = title2Token.GetValue();
+
+                if (keywords.Count != 0)
                 {
-                    // Calculate similarity.
-                    int similarity = 0;
-                    string title1 = query.GetString(1);
-                    string title2 = query.GetString(2);
+                    string match_text = title1 + " " + title2;
+                    similarity = StringUtils.QuickMatch(keywords, match_text);
 
-                    if (keywords.Count != 0)
+                    if (similarity < 1)
                     {
-                        string match_text = title1 + " " + title2;
-                        similarity = StringUtils.QuickMatch(keywords, match_text);
-
-                        if (similarity < 1)
-                        {
-                            continue;
-                        }
+                        continue;
                     }
-
-                    // Save results.
-                    keyword_matched.Add(new Match
-                    {
-                        Id = query.GetInt64(0),
-                        Similarity = similarity,
-                        SortTitle = title1 + " " + title2
-                    });
                 }
+
+                // Save results.
+                keyword_matched.Add(new Match
+                {
+                    Id = idToken.GetValue(),
+                    Similarity = similarity,
+                    SortTitle = title1 + " " + title2
+                });
             }
 
             var all = new List<long>(keyword_matched.Count);

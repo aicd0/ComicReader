@@ -56,7 +56,7 @@ internal static class ImageCacheManager
         ImageCacheDatabase.CacheRecord cacheRecord = null;
         bool requireCache = true;
 
-        if (uri != null)
+        if (uri != null && uri.Length > 0)
         {
             cacheRecord = ImageCacheDatabase.GetCacheRecord(uri);
 

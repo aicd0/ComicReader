@@ -11,12 +11,12 @@ using ComicReader.Common.BasePage;
 using ComicReader.Common.Imaging;
 using ComicReader.Common.Threading;
 using ComicReader.Data;
+using ComicReader.Data.SqlHelpers;
 using ComicReader.Helpers.Imaging;
 using ComicReader.Helpers.Navigation;
 using ComicReader.ViewModels;
 using ComicReader.Views.Main;
 
-using Microsoft.Data.Sqlite;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -102,7 +102,7 @@ internal sealed partial class HomePage : BasePage
             var records = new FixedHeap<Tuple<long, DateTimeOffset>>(100,
                 (Tuple<long, DateTimeOffset> x, Tuple<long, DateTimeOffset> y) => { return x.Item2.CompareTo(y.Item2); });
 
-            await ComicData.CommandBlock2(async delegate (SqliteCommand command)
+            await ComicData.EnqueueCommand(delegate
             {
                 // Use ORDER BY here will cause a crash (especially for a large result set)
                 // due to https://github.com/dotnet/efcore/issues/20044.
@@ -113,24 +113,24 @@ internal sealed partial class HomePage : BasePage
 
                 // command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.ComicTable +
                 //     " ORDER BY " + ComicData.Field.LastVisit + " DESC";
-                command.CommandText = "SELECT " + ComicData.Field.Id + "," +
-                    ComicData.Field.Hidden + "," + ComicData.Field.LastVisit +
-                    " FROM " + SqliteDatabaseManager.ComicTable;
 
-                using (SqliteDataReader query = await command.ExecuteReaderAsync())
+                var command = new SelectCommand<ComicTable>(ComicTable.Instance);
+                SelectCommand<ComicTable>.IToken<long> idToken = command.PutQueryInt64(ComicTable.ColumnId);
+                SelectCommand<ComicTable>.IToken<bool> hiddenToken = command.PutQueryBoolean(ComicTable.ColumnHidden);
+                SelectCommand<ComicTable>.IToken<DateTimeOffset> lastVisitToken = command.PutQueryDateTimeOffset(ComicTable.ColumnLastVisit);
+                using SelectCommand<ComicTable>.IReader reader = command.Execute();
+
+                while (reader.Read())
                 {
-                    while (query.Read())
-                    {
-                        bool hidden = query.GetBoolean(1);
+                    bool hidden = hiddenToken.GetValue();
 
-                        if (!hidden)
-                        {
-                            records.Add(new Tuple<long, DateTimeOffset>
-                            (
-                                query.GetInt64(0),
-                                query.GetDateTime(2)
-                            ));
-                        }
+                    if (!hidden)
+                    {
+                        records.Add(new Tuple<long, DateTimeOffset>
+                        (
+                            idToken.GetValue(),
+                            lastVisitToken.GetValue()
+                        ));
                     }
                 }
             }, "HomeLoadLibrary");

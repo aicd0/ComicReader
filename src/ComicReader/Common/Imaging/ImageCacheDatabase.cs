@@ -53,6 +53,11 @@ internal static class ImageCacheDatabase
 
     public static CacheRecord GetCacheRecord(string key)
     {
+        if (key == null || key.Length == 0)
+        {
+            return null;
+        }
+
         string cacheKey = ToHashedKey(key);
 
         _recordCacheLock.AcquireReaderLock(-1);

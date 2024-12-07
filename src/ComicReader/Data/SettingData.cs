@@ -71,13 +71,6 @@ class SettingDataManager
 
     private static TaskException AddComicFolderNoLock(StorageFolder folder)
     {
-        if (!Storage.AllowAddToFutureAccessList())
-        {
-            return TaskException.MaximumExceeded;
-        }
-
-        Storage.AddToFutureAccessList(folder);
-
         string path = folder.Path;
         bool folder_added = false;
         foreach (string old_path in XmlDatabase.Settings.ComicFolders)
@@ -106,9 +99,6 @@ class SettingDataManager
     {
         await XmlDatabaseManager.WaitLock();
         _ = XmlDatabase.Settings.ComicFolders.Remove(path);
-
-        string token = StringUtils.TokenFromPath(path);
-        Storage.RemoveFromFutureAccessList(token);
         XmlDatabaseManager.ReleaseLock();
 
         if (final)

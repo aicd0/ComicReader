@@ -59,7 +59,7 @@ internal class XmlDatabaseManager
         m_database_lock.Release();
     }
 
-    public static async Task<TaskException> Load()
+    public static async Task<TaskException> Initialize()
     {
         await Load(XmlDatabase.Settings);
         await Load(XmlDatabase.Favorites);

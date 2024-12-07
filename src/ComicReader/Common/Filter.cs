@@ -5,6 +5,9 @@ using System.Collections.Generic;
 using System.Linq;
 
 using ComicReader.Data;
+using ComicReader.Data.SqlHelpers;
+
+using LiteDB;
 
 using Microsoft.Data.Sqlite;
 
@@ -544,37 +547,34 @@ public class SubFilterCategoryTag : SubFilter
         var tag_category_matched = new List<MatchedItem>();
         var tag_matched = new List<long>();
 
-        using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
         {
-            // Query matched tag categories.
-            command.CommandText = "SELECT " + ComicData.Field.TagCategory.Id + "," + ComicData.Field.TagCategory.ComicId +
-                " FROM " + SqliteDatabaseManager.TagCategoryTable + " WHERE " + ComicData.Field.TagCategory.Name +
-                "=@category COLLATE NOCASE";
-            command.Parameters.AddWithValue("@category", m_category);
+            SelectCommand<TagCategoryTable> command = new SelectCommand<TagCategoryTable>(TagCategoryTable.Instance)
+                .AppendCondition(TagCategoryTable.ColumnName, m_category)
+                .CollateNocase();
+            SelectCommand<TagCategoryTable>.IToken<long> tagCateogryIdToken = command.PutQueryInt64(TagCategoryTable.ColumnId);
+            SelectCommand<TagCategoryTable>.IToken<long> comicIdToken = command.PutQueryInt64(TagCategoryTable.ColumnComicId);
+            using SelectCommand<TagCategoryTable>.IReader reader = command.Execute();
 
-            using (SqliteDataReader query = command.ExecuteReader())
+            while (reader.Read())
             {
-                while (query.Read())
+                tag_category_matched.Add(new MatchedItem
                 {
-                    tag_category_matched.Add(new MatchedItem
-                    {
-                        TagCategoryId = query.GetInt64(0),
-                        ComicId = query.GetInt64(1)
-                    });
-                }
+                    TagCategoryId = tagCateogryIdToken.GetValue(),
+                    ComicId = comicIdToken.GetValue(),
+                });
             }
+        }
 
-            // Query matched tags.
-            command.CommandText = "SELECT " + ComicData.Field.Tag.TagCategoryId + " FROM " + SqliteDatabaseManager.TagTable +
-                " WHERE " + ComicData.Field.Tag.Content + "=@tag COLLATE NOCASE";
-            command.Parameters.AddWithValue("@tag", m_tag);
+        {
+            SelectCommand<TagTable> command = new SelectCommand<TagTable>(TagTable.Instance)
+                .AppendCondition(TagTable.ColumnContent, m_tag)
+                .CollateNocase();
+            SelectCommand<TagTable>.IToken<long> categoryIdToken = command.PutQueryInt64(TagTable.ColumnTagCategoryId);
+            using SelectCommand<TagTable>.IReader reader = command.Execute();
 
-            using (SqliteDataReader query = command.ExecuteReader())
+            while (reader.Read())
             {
-                while (query.Read())
-                {
-                    tag_matched.Add(query.GetInt64(0));
-                }
+                tag_matched.Add(categoryIdToken.GetValue());
             }
         }
 
@@ -622,19 +622,14 @@ public class SubFilterDirectory : SubFilter
     {
         var results = new List<long>();
 
-        using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
-        {
-            command.CommandText = "SELECT " + ComicData.Field.Id + " FROM " + SqliteDatabaseManager.ComicTable + " WHERE "
-                + ComicData.Field.Location + " LIKE @dir";
-            command.Parameters.AddWithValue("@dir", m_directory + "%");
+        SelectCommand<ComicTable> command = new SelectCommand<ComicTable>(ComicTable.Instance)
+            .AppendCondition(new LikeCondition(ComicTable.ColumnLocation, m_directory + "%"));
+        SelectCommand<ComicTable>.IToken<long> comicIdToken = command.PutQueryInt64(ComicTable.ColumnId);
+        using SelectCommand<ComicTable>.IReader reader = command.Execute();
 
-            using (SqliteDataReader query = command.ExecuteReader())
-            {
-                while (query.Read())
-                {
-                    results.Add(query.GetInt64(0));
-                }
-            }
+        while (reader.Read())
+        {
+            results.Add(comicIdToken.GetValue());
         }
 
         return results;
@@ -650,18 +645,14 @@ public class SubFilterHidden : SubFilter
     {
         var results = new List<long>();
 
-        using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
-        {
-            command.CommandText = "SELECT " + ComicData.Field.Id + " FROM " + SqliteDatabaseManager.ComicTable + " WHERE "
-                + ComicData.Field.Hidden + "=1";
+        SelectCommand<ComicTable> command = new SelectCommand<ComicTable>(ComicTable.Instance)
+            .AppendCondition(ComicTable.ColumnHidden, true);
+        SelectCommand<ComicTable>.IToken<long> comicIdToken = command.PutQueryInt64(ComicTable.ColumnId);
+        using SelectCommand<ComicTable>.IReader reader = command.Execute();
 
-            using (SqliteDataReader query = command.ExecuteReader())
-            {
-                while (query.Read())
-                {
-                    results.Add(query.GetInt64(0));
-                }
-            }
+        while (reader.Read())
+        {
+            results.Add(comicIdToken.GetValue());
         }
 
         return results;
@@ -690,19 +681,15 @@ public class SubFilterId : SubFilter
     {
         var results = new List<long>();
 
-        using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
-        {
-            command.CommandText = "SELECT " + ComicData.Field.Id + " FROM " + SqliteDatabaseManager.ComicTable + " WHERE "
-                + ComicData.Field.Id + "=@id LIMIT 1";
-            command.Parameters.AddWithValue("@id", m_id);
+        SelectCommand<ComicTable> command = new SelectCommand<ComicTable>(ComicTable.Instance)
+            .AppendCondition(ComicTable.ColumnId, m_id)
+            .Limit(1);
+        SelectCommand<ComicTable>.IToken<long> comicIdToken = command.PutQueryInt64(ComicTable.ColumnId);
+        using SelectCommand<ComicTable>.IReader reader = command.Execute();
 
-            using (SqliteDataReader query = command.ExecuteReader())
-            {
-                while (query.Read())
-                {
-                    results.Add(query.GetInt64(0));
-                }
-            }
+        while (reader.Read())
+        {
+            results.Add(comicIdToken.GetValue());
         }
 
         return results;
@@ -731,19 +718,14 @@ public class SubFilterRating : SubFilter
     {
         var results = new List<long>();
 
-        using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
-        {
-            command.CommandText = "SELECT " + ComicData.Field.Id + " FROM " + SqliteDatabaseManager.ComicTable + " WHERE "
-                + ComicData.Field.Rating + "=@rating";
-            command.Parameters.AddWithValue("@rating", m_rating);
+        SelectCommand<ComicTable> command = new SelectCommand<ComicTable>(ComicTable.Instance)
+            .AppendCondition(ComicTable.ColumnRating, m_rating);
+        SelectCommand<ComicTable>.IToken<long> comicIdToken = command.PutQueryInt64(ComicTable.ColumnId);
+        using SelectCommand<ComicTable>.IReader reader = command.Execute();
 
-            using (SqliteDataReader query = command.ExecuteReader())
-            {
-                while (query.Read())
-                {
-                    results.Add(query.GetInt64(0));
-                }
-            }
+        while (reader.Read())
+        {
+            results.Add(comicIdToken.GetValue());
         }
 
         return results;
@@ -766,20 +748,16 @@ public class SubFilterTag : SubFilter
     {
         var results = new List<long>();
 
-        using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
-        {
-            command.CommandText = "SELECT DISTINCT " + ComicData.Field.Tag.ComicId + " FROM " +
-                SqliteDatabaseManager.TagTable + " WHERE " + ComicData.Field.Tag.Content + "=" +
-                "@tag COLLATE NOCASE";
-            command.Parameters.AddWithValue("@tag", m_tag);
+        SelectCommand<TagTable> command = new SelectCommand<TagTable>(TagTable.Instance)
+            .AppendCondition(TagTable.ColumnContent, m_tag)
+            .Distinct()
+            .CollateNocase();
+        SelectCommand<TagTable>.IToken<long> comicIdToken = command.PutQueryInt64(TagTable.ColumnComicId);
+        using SelectCommand<TagTable>.IReader reader = command.Execute();
 
-            using (SqliteDataReader query = command.ExecuteReader())
-            {
-                while (query.Read())
-                {
-                    results.Add(query.GetInt64(0));
-                }
-            }
+        while (reader.Read())
+        {
+            results.Add(comicIdToken.GetValue());
         }
 
         return results;

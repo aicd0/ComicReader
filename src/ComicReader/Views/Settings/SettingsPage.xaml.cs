@@ -477,7 +477,9 @@ internal sealed partial class SettingsPage : BasePage
             long comicCount = 0;
             await ComicData.CommandBlock2(async delegate (SqliteCommand command)
             {
-                command.CommandText = "SELECT COUNT(*) FROM " + SqliteDatabaseManager.ComicTable;
+#pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
+                command.CommandText = "SELECT COUNT(*) FROM " + ComicTable.Instance.GetTableName();
+#pragma warning restore CA2100 // Review SQL queries for security vulnerabilities
                 comicCount = (long)await command.ExecuteScalarAsync();
             }, "SettingUpdateStatistics");
             string total_comic_string = StringResourceProvider.GetResourceString("TotalComics");

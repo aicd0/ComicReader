@@ -226,7 +226,7 @@ public class ArchiveSearchContext : StorageItemSearchContext
 
     public override bool Search(List<string> folders, List<string> files, List<string> no_access_items, int min_items)
     {
-        Stream stream = ArchiveAccess.TryGetFileStream(m_path).Result;
+        using Stream stream = ArchiveAccess.TryGetFileStream(m_path).Result;
         var sub_folders = new HashSet<string>();
 
         ArchiveAccess.TryReadEntries(stream, m_extension, (entry) =>
@@ -234,7 +234,7 @@ public class ArchiveSearchContext : StorageItemSearchContext
             string path = entry.FullName.Replace('/', '\\');
             if (entry.IsDirectory)
             {
-                sub_folders.Add(path.Substring(0, path.Length - 1));
+                sub_folders.Add(path[..^1]);
             }
             else
             {
