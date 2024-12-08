@@ -41,29 +41,27 @@ internal sealed partial class ReaderFrame : UserControl
         }
         _isLoaded = IsLoaded;
 
-        if (!IsLoaded)
+        if (ViewModel != null)
         {
-            if (ViewModel != null)
+            ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+            if (_isLoaded)
             {
-                ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+                ViewModel.PropertyChanged += OnViewModelPropertyChanged;
             }
         }
     }
 
     public void Bind(ReaderFrameViewModel model)
     {
-        if (model == null)
+        if (ViewModel != null)
         {
-            if (ViewModel != null)
-            {
-                ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
-            }
-            ViewModel = null;
-        }
-        else
-        {
-            ViewModel = model;
             ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        }
+
+        ViewModel = model;
+
+        if (ViewModel != null)
+        {
             ViewModel.PropertyChanged += OnViewModelPropertyChanged;
         }
 
