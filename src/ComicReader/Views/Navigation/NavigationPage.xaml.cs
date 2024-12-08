@@ -207,8 +207,7 @@ internal sealed partial class NavigationPage : BasePage
 
     private void OnAddToFavoritesClick(object sender, RoutedEventArgs e)
     {
-        _isFavorite = !_isFavorite;
-        SetIsFavorite(_isFavorite);
+        SetIsFavorite(!_isFavorite);
     }
 
     private void OnComicInfoClick(object sender, RoutedEventArgs e)
@@ -218,6 +217,7 @@ internal sealed partial class NavigationPage : BasePage
 
     private void SetIsFavorite(bool isFavorite)
     {
+        _isFavorite = isFavorite;
         FiFavoriteFilled.Visibility = isFavorite ? Visibility.Visible : Visibility.Collapsed;
         FiFavoriteUnfilled.Visibility = isFavorite ? Visibility.Collapsed : Visibility.Visible;
         string toolTip = isFavorite ? StringResourceProvider.GetResourceString("RemoveFromFavorites") :

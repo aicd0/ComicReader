@@ -30,8 +30,6 @@
             <TextBlock x:Uid="Description" Margin="0,8,0,0" />
             <TextBox
                 x:Name="DescriptionTextBox"
-                Width="500"
-                MinHeight="120"
                 Margin="0,6,0,0"
                 AcceptsReturn="True"
                 TextWrapping="Wrap" />

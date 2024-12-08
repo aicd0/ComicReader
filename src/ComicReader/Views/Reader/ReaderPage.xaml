@@ -305,9 +305,12 @@
                                 Width="68"
                                 Margin="2,0,0,0"
                                 Checked="OnFavoritesChecked"
-                                Icon="Favorite"
                                 IsCompact="False"
-                                Unchecked="OnFavoritesUnchecked" />
+                                Unchecked="OnFavoritesUnchecked">
+                                <AppBarToggleButton.Content>
+                                    <FontIcon Glyph="&#xE735;" />
+                                </AppBarToggleButton.Content>
+                            </AppBarToggleButton>
                         </StackPanel>
                     </Grid>
                 </SplitView.Pane>
