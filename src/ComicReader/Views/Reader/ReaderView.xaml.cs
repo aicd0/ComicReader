@@ -56,7 +56,7 @@ internal partial class ReaderView : UserControl
     private bool _uiStateUpdatedContinuous = true;
     private bool _uiStateUpdatedFlowDirection = true;
     private bool _uiStateUpdatedPageArrangement = true;
-    private bool _postReload = false;
+    private bool _postUiStateUpdated = false;
 
     private bool _isActive = true;
     private bool _isActiveUpdated = true;
@@ -427,6 +427,19 @@ internal partial class ReaderView : UserControl
 
     private void UpdateUI()
     {
+        if (!_postUiStateUpdated)
+        {
+            _postUiStateUpdated = true;
+            PostToCurrentThread(delegate
+            {
+                _postUiStateUpdated = false;
+                UpdateUIInternal();
+            });
+        }
+    }
+
+    private void UpdateUIInternal()
+    {
         if (!_isLoaded)
         {
             return;
@@ -457,6 +470,7 @@ internal partial class ReaderView : UserControl
             LvReader.ItemContainerStyle = (Style)Resources[isVertical ? "VerticalReaderListViewItemStyle" : "HorizontalReaderListViewItemStyle"];
             LvReader.ItemTemplate = (DataTemplate)Resources[isVertical ? "VerticalReaderListViewItemTemplate" : "HorizontalReaderListViewItemTemplate"];
             LvReader.ItemsPanel = (ItemsPanelTemplate)Resources[isVertical ? "VerticalReaderListViewItemPanelTemplate" : "HorizontalReaderListViewItemPanelTemplate"];
+            FrameDataSource.Clear(); // force IsModelInstanceUpdateToDate set to false
             needReload = true;
         }
 
@@ -485,18 +499,10 @@ internal partial class ReaderView : UserControl
             needReload = true;
         }
 
-        if (needReload && !_postReload)
+        if (needReload && _originalDataModel != null)
         {
-            _postReload = true;
-            PostToCurrentThread(delegate
-            {
-                _postReload = false;
-                if (_originalDataModel != null)
-                {
-                    _initialPage = CurrentPage;
-                    Reload(_originalDataModel, false);
-                }
-            });
+            _initialPage = CurrentPage;
+            Reload(_originalDataModel, false);
         }
     }
 
@@ -569,6 +575,7 @@ internal partial class ReaderView : UserControl
 
         while (frameIndex >= FrameDataSource.Count)
         {
+            _frameManager.MarkModelInstanceOutOfDate(frameIndex, "DataAppended");
             FrameDataSource.Add(new ReaderFrameViewModel());
         }
         ReaderFrameViewModel item = FrameDataSource[frameIndex];
@@ -614,6 +621,7 @@ internal partial class ReaderView : UserControl
         }
 
         item.RebindEntireViewModel();
+        _frameManager.MarkModelContentUpdateToDate(frameIndex, "ViewBindByProperty");
     }
 
     private bool UpdatePage()
@@ -1011,19 +1019,28 @@ internal partial class ReaderView : UserControl
 
         if (args.InRecycleQueue)
         {
-            _frameManager.RemoveFrame(args.ItemIndex);
+            _frameManager.MarkViewNotReady(args.ItemIndex, "ViewRecycled");
             viewHolder.SetReadyStateChangeHandler(null);
             viewHolder.Bind(null);
         }
         else
         {
             int index = args.ItemIndex;
+
             viewHolder.SetReadyStateChangeHandler(delegate (FrameworkElement container, bool isReady, string reason)
             {
-                Log("FrameReadyChanged", $"i={index},ready={isReady},reason={reason}");
-                _frameManager.PutFrame(index, container, isReady);
+                if (isReady)
+                {
+                    _frameManager.MarkViewReady(index, container, "ViewReady");
+                }
+                else
+                {
+                    _frameManager.MarkViewNotReady(index, "ViewNotReady");
+                }
             });
+
             viewHolder.Bind(item);
+            _frameManager.MarkModelInstanceUpdateToDate(index, "ViewBindByContainer");
         }
     }
 

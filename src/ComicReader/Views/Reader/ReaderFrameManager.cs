@@ -11,6 +11,12 @@ namespace ComicReader.Views.Reader;
 internal class ReaderFrameManager
 {
     //
+    // Constants
+    //
+
+    private const string TAG = "ReaderFrameManager";
+
+    //
     // Variables
     //
 
@@ -24,40 +30,6 @@ internal class ReaderFrameManager
     // Methods
     //
 
-    public void PutFrame(int index, FrameworkElement container, bool isReady)
-    {
-        ArgumentOutOfRangeException.ThrowIfNegative(index);
-
-        {
-            if (!_frameInfoDictionary.TryGetValue(index, out FrameInfo frameInfo))
-            {
-                frameInfo = new FrameInfo();
-                _frameInfoDictionary.Add(index, frameInfo);
-            }
-            frameInfo.IsReady = isReady;
-            frameInfo.Container = container;
-        }
-
-        if (isReady)
-        {
-            IncreaseReadyIndex();
-        }
-        else
-        {
-            DecreaseReadyIndex(index);
-        }
-    }
-
-    public void RemoveFrame(int index)
-    {
-        ArgumentOutOfRangeException.ThrowIfNegative(index);
-
-        if (_frameInfoDictionary.Remove(index))
-        {
-            DecreaseReadyIndex(index);
-        }
-    }
-
     public FrameworkElement GetContainer(int index)
     {
         if (_frameInfoDictionary.TryGetValue(index, out FrameInfo frameInfo))
@@ -67,6 +39,7 @@ internal class ReaderFrameManager
                 return frameInfo.Container;
             }
         }
+
         return null;
     }
 
@@ -79,6 +52,76 @@ internal class ReaderFrameManager
     public void SetFrameReadyHandler(FrameReadyHandler handler)
     {
         _frameReadyHandler = handler;
+    }
+
+    public void MarkModelInstanceOutOfDate(int index, string reason)
+    {
+        FrameInfo frameInfo = GetFrame(index);
+        frameInfo.IsModelInstanceUpdateToDate = false;
+        OnFrameUpdated(index, frameInfo, reason);
+    }
+
+    public void MarkModelInstanceUpdateToDate(int index, string reason)
+    {
+        FrameInfo frameInfo = GetFrame(index);
+        frameInfo.IsModelInstanceUpdateToDate = true;
+        OnFrameUpdated(index, frameInfo, reason);
+    }
+
+    public void MarkModelContentUpdateToDate(int index, string reason)
+    {
+        FrameInfo frameInfo = GetFrame(index);
+        frameInfo.IsModelContentUpdateToDate = true;
+        OnFrameUpdated(index, frameInfo, reason);
+    }
+
+    public void MarkViewReady(int index, FrameworkElement container, string reason)
+    {
+        FrameInfo frameInfo = GetFrame(index);
+        frameInfo.IsViewReady = true;
+        frameInfo.Container = container;
+        OnFrameUpdated(index, frameInfo, reason);
+    }
+
+    public void MarkViewNotReady(int index, string reason)
+    {
+        FrameInfo frameInfo = GetFrame(index);
+        frameInfo.IsViewReady = false;
+        OnFrameUpdated(index, frameInfo, reason);
+    }
+
+    private FrameInfo GetFrame(int index)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(index);
+
+        if (!_frameInfoDictionary.TryGetValue(index, out FrameInfo frameInfo))
+        {
+            frameInfo = new FrameInfo();
+            _frameInfoDictionary.Add(index, frameInfo);
+        }
+
+        return frameInfo;
+    }
+
+    private void OnFrameUpdated(int index, FrameInfo frameInfo, string reason)
+    {
+        bool oldReady = frameInfo.IsReady;
+        bool newReady = frameInfo.IsViewReady && frameInfo.IsModelInstanceUpdateToDate && frameInfo.IsModelContentUpdateToDate;
+
+        if (oldReady == newReady)
+        {
+            return;
+        }
+        frameInfo.IsReady = newReady;
+
+        if (newReady)
+        {
+            IncreaseReadyIndex();
+        }
+        else
+        {
+            DecreaseReadyIndex(index);
+        }
     }
 
     private void IncreaseReadyIndex()
@@ -127,9 +170,13 @@ internal class ReaderFrameManager
     // Structs
     //
 
-    class FrameInfo
+    private class FrameInfo
     {
-        public bool IsReady { get; set; } = false;
+        public bool IsViewReady { get; set; } = false;
+        public bool IsModelInstanceUpdateToDate { get; set; } = true;
+        public bool IsModelContentUpdateToDate { get; set; } = false;
         public FrameworkElement Container { get; set; }
+
+        public bool IsReady { get; set; } = false;
     }
 }

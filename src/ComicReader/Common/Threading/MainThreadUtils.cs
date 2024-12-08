@@ -124,7 +124,6 @@ internal class MainThreadUtils
         if (timeUsed > 300)
         {
             Logger.I("MainThreadUtils", $"timeUsed={timeUsed}\n{stackTrace}");
-            DebugUtils.Assert(false);
         }
     }
 
