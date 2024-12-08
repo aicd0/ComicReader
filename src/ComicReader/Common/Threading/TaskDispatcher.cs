@@ -17,12 +17,18 @@ internal abstract class TaskDispatcher : ITaskDispatcher
     public static readonly ITaskDispatcher LongRunningThreadPool = new ThreadPoolDispatcher("LongRunningThreadPool", TaskCreationOptions.LongRunning);
 
     private readonly string _name;
+    private readonly LogTag _submitTag;
+    private readonly LogTag _startTag;
+    private readonly LogTag _endTag;
     private int _pendingTaskCount = 0;
     private int _runningTaskCount = 0;
 
     protected TaskDispatcher(string name)
     {
         _name = name;
+        _submitTag = LogTag.N(TAG, "submit", _name);
+        _startTag = LogTag.N(TAG, "start", _name);
+        _endTag = LogTag.N(TAG, "end", _name);
     }
 
     public void Submit(string taskName, Action action)
@@ -30,18 +36,23 @@ internal abstract class TaskDispatcher : ITaskDispatcher
         ArgumentNullException.ThrowIfNull(taskName, nameof(taskName));
         ArgumentNullException.ThrowIfNull(action, nameof(action));
 
-        var tag = LogTag.N(TAG, _name, taskName);
         long submitTime = GetCurrentMilliseconds();
-        int pendingCount = Interlocked.Increment(ref _pendingTaskCount);
-        int runningCount = _runningTaskCount;
-        Logger.I(tag, $"submitted (running={runningCount},pending={pendingCount})");
+        {
+            int pendingCount = Interlocked.Increment(ref _pendingTaskCount);
+            int runningCount = _runningTaskCount;
+            Logger.I(_submitTag, $"task={taskName},running={runningCount},pending={pendingCount}");
+        }
+
         SubmitInternal(delegate
         {
             long startTime = GetCurrentMilliseconds();
-            long timeUsed = GetCurrentMilliseconds() - submitTime;
-            pendingCount = Interlocked.Decrement(ref _pendingTaskCount);
-            runningCount = Interlocked.Increment(ref _runningTaskCount);
-            Logger.I(tag, $"started (time={timeUsed},running={runningCount},pending={pendingCount})");
+            {
+                long since0 = GetCurrentMilliseconds() - submitTime;
+                int pendingCount = Interlocked.Decrement(ref _pendingTaskCount);
+                int runningCount = Interlocked.Increment(ref _runningTaskCount);
+                Logger.I(_startTag, $"task={taskName},since0={since0},running={runningCount},pending={pendingCount}");
+            }
+
             try
             {
                 if (DebugUtils.DebugModeStrict)
@@ -56,16 +67,18 @@ internal abstract class TaskDispatcher : ITaskDispatcher
                     }
                     catch (Exception e)
                     {
-                        Logger.F(tag, $"exception occured in task {taskName}", e);
+                        Logger.F(_endTag, $"exception occured in task {taskName}", e);
                     }
                 }
             }
             finally
             {
-                pendingCount = _pendingTaskCount;
-                runningCount = Interlocked.Decrement(ref _runningTaskCount);
-                timeUsed = GetCurrentMilliseconds() - startTime;
-                Logger.I(tag, $"stopped (time={timeUsed},running={runningCount},pending={pendingCount})");
+                int pendingCount = _pendingTaskCount;
+                int runningCount = Interlocked.Decrement(ref _runningTaskCount);
+                long time = GetCurrentMilliseconds();
+                long since0 = time - submitTime;
+                long since1 = time - startTime;
+                Logger.I(_endTag, $"task={taskName},since0={since0},since1={since1},running={runningCount},pending={pendingCount}");
             }
         });
     }

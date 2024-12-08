@@ -49,6 +49,7 @@ internal static class ImageCacheManager
             return;
         }
 
+        long startTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
         string uri = source.GetUri();
         int sourceSignature = source.GetContentSignature();
 
@@ -144,6 +145,12 @@ internal static class ImageCacheManager
             {
                 cacheStream?.Dispose();
                 sourceStream?.Dispose();
+            }
+
+            if (token.IsCancellationRequested)
+            {
+                Logger.I(TAG, $"task cancelled (time={DateTimeOffset.Now.ToUnixTimeMilliseconds() - startTime},uri={uri})");
+                return;
             }
 
             handler.OnSuccess(image);

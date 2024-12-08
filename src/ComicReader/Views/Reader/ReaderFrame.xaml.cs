@@ -14,7 +14,7 @@ internal sealed partial class ReaderFrame : UserControl
 
     private bool? _isReady = null;
 
-    public delegate void ReadyStateChangeListener(FrameworkElement container, bool isReady);
+    public delegate void ReadyStateChangeListener(FrameworkElement container, bool isReady, string reason);
     private event ReadyStateChangeListener ReadyStateChanged;
 
     private ReaderFrameViewModel ViewModel { get; set; }
@@ -42,7 +42,7 @@ internal sealed partial class ReaderFrame : UserControl
             ViewModel.PropertyChanged += OnViewModelPropertyChanged;
         }
 
-        RebindViewModel();
+        RebindViewModel("Rebind by container");
     }
 
     public void SetReadyStateChangeHandler(ReadyStateChangeListener handler)
@@ -52,36 +52,36 @@ internal sealed partial class ReaderFrame : UserControl
 
     private void OnFrameLoaded(object sender, RoutedEventArgs e)
     {
-        DispatchReadyStateChangeEvent();
+        DispatchReadyStateChangeEvent("FrameLoaded");
     }
 
     private void OnFrameSizeChanged(object sender, SizeChangedEventArgs e)
     {
-        DispatchReadyStateChangeEvent();
+        DispatchReadyStateChangeEvent($"SizeChanged (W={e.NewSize.Width},H={e.NewSize.Height})");
     }
 
     private void OnViewModelPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(ReaderFrameViewModel))
         {
-            RebindViewModel();
+            RebindViewModel("Rebind by property");
         }
     }
 
-    private void RebindViewModel()
+    private void RebindViewModel(string reason)
     {
         Bindings.Update();
         _isReady = null;
-        DispatchReadyStateChangeEvent();
+        DispatchReadyStateChangeEvent(reason);
     }
 
-    private void DispatchReadyStateChangeEvent()
+    private void DispatchReadyStateChangeEvent(string reason)
     {
         bool isReady = IsReady();
         if (isReady != _isReady)
         {
             _isReady = isReady;
-            ReadyStateChanged?.Invoke(Container, isReady);
+            ReadyStateChanged?.Invoke(Container, isReady, reason);
         }
     }
 

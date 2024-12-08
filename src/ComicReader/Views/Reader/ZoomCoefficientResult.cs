@@ -19,4 +19,9 @@ internal class ZoomCoefficientResult
     {
         return Math.Max(FitWidth, FitHeight);
     }
+
+    public override string ToString()
+    {
+        return $"{{FW={FitWidth},FH={FitHeight}}}";
+    }
 }
