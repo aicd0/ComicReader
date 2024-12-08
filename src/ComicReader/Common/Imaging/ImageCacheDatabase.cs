@@ -51,7 +51,26 @@ internal static class ImageCacheDatabase
         }
     }
 
-    public static CacheRecord GetCacheRecord(string key)
+    public static CacheRecord GetCacheRecord(IImageSource source)
+    {
+        CacheRecord record = GetCacheRecord(source.GetUri());
+
+        if (record == null)
+        {
+            return null;
+        }
+
+        int sourceSignature = source.GetContentSignature();
+
+        if (sourceSignature != 0 && record.Signature != sourceSignature)
+        {
+            return null;
+        }
+
+        return record;
+    }
+
+    private static CacheRecord GetCacheRecord(string key)
     {
         if (key == null || key.Length == 0)
         {

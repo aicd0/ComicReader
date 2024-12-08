@@ -1,0 +1,268 @@
+﻿// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
+using System;
+using System.Collections.Generic;
+using System.Collections.Specialized;
+
+using ComicReader.Common;
+using ComicReader.Common.DebugTools;
+using ComicReader.Common.Imaging;
+using ComicReader.Common.Threading;
+
+using Microsoft.UI.Xaml.Media.Imaging;
+
+namespace ComicReader.Views.Reader;
+
+internal class ReaderImagePool
+{
+    private readonly CancellationSession _session;
+    private readonly ITaskDispatcher _dispatcher;
+    private readonly OrderedDictionary _entries = [];
+
+    private bool _flushing = false;
+    private bool _flushingInvalidated = false;
+
+    public delegate void IRequestCallback(BitmapImage image);
+
+    public ReaderImagePool(CancellationSession session, ITaskDispatcher dispatcher)
+    {
+        _session = session;
+        _dispatcher = dispatcher;
+    }
+
+    public void RequestImage(IImageSource source, IRequestCallback callback)
+    {
+        ArgumentNullException.ThrowIfNull(source, nameof(source));
+        ArgumentNullException.ThrowIfNull(callback, nameof(callback));
+
+        string uri = source.GetUri();
+        if (uri == null || uri.Length == 0)
+        {
+            DebugUtils.Assert(false);
+            return;
+        }
+
+        Log($"event/request {uri}");
+        ImageEntry entry;
+        if (_entries.Contains(uri))
+        {
+            entry = (ImageEntry)_entries[uri];
+        }
+        else
+        {
+            entry = new ImageEntry
+            {
+                State = ImageEntryState.Pending,
+                Source = source,
+            };
+            _entries.Add(uri, entry);
+        }
+
+        entry.Callbacks.Add(callback);
+    }
+
+    public void CancelRequest(IRequestCallback callback)
+    {
+        ArgumentNullException.ThrowIfNull(callback, nameof(callback));
+
+        foreach (ImageEntry entry in _entries.Values)
+        {
+            entry.Callbacks.Remove(callback);
+        }
+    }
+
+    public void RecycleImage(IImageSource source, BitmapImage image)
+    {
+        ArgumentNullException.ThrowIfNull(source, nameof(source));
+        ArgumentNullException.ThrowIfNull(image, nameof(image));
+
+        string uri = source.GetUri();
+        if (uri == null || uri.Length == 0)
+        {
+            DebugUtils.Assert(false);
+            return;
+        }
+
+        Log($"event/recycle {uri}");
+        ImageEntry entry;
+        if (_entries.Contains(uri))
+        {
+            entry = (ImageEntry)_entries[uri];
+        }
+        else
+        {
+            entry = new ImageEntry();
+            _entries.Add(uri, entry);
+        }
+
+        entry.State = ImageEntryState.Recycled;
+        entry.Source = source;
+        entry.Image = image;
+    }
+
+    public void FlushRequests()
+    {
+        if (_flushing)
+        {
+            _flushingInvalidated = true;
+            return;
+        }
+
+        Log($"event/flush start");
+        _flushing = true;
+        try
+        {
+            do
+            {
+                _flushingInvalidated = false;
+                FlushInternal();
+            } while (_flushingInvalidated);
+        }
+        finally
+        {
+            _flushing = false;
+            Log($"event/flush end");
+        }
+    }
+
+    private void FlushInternal()
+    {
+        List<string> keys = [];
+        foreach (string key in _entries.Keys)
+        {
+            keys.Add(key);
+        }
+
+        foreach (string uri in keys)
+        {
+            if (!_entries.Contains(uri))
+            {
+                continue;
+            }
+            var entry = (ImageEntry)_entries[uri];
+            switch (entry.State)
+            {
+                case ImageEntryState.Requesting:
+                    if (entry.Callbacks.Count == 0)
+                    {
+                        entry.Session.Next();
+                        _entries.Remove(uri);
+                        Log($"cancelled {uri}");
+                    }
+                    break;
+                case ImageEntryState.Pending:
+                    if (entry.Callbacks.Count == 0)
+                    {
+                        _entries.Remove(uri);
+                    }
+                    else
+                    {
+                        var tokens = new List<SimpleImageLoader.Token>
+                        {
+                            new() {
+                                Source = entry.Source,
+                                ImageResultHandler = new LoadImageResultHandler(this, uri)
+                            }
+                        };
+                        var session = new CancellationSession(_session);
+                        entry.Session = session;
+                        entry.State = ImageEntryState.Requesting;
+                        new SimpleImageLoader.Transaction(session.Token, tokens)
+                            .SetDispatcher(_dispatcher)
+                            .Commit();
+                        Log($"submitted {uri}");
+                    }
+                    break;
+                case ImageEntryState.Recycled:
+                    if (entry.Callbacks.Count > 0)
+                    {
+                        Log($"reused {uri}");
+                    }
+                    else
+                    {
+                        Log($"removed {uri}");
+                    }
+                    while (entry.Callbacks.Count > 0)
+                    {
+                        List<IRequestCallback> callbacks = new(entry.Callbacks);
+                        entry.Callbacks.Clear();
+
+                        foreach (IRequestCallback callback in callbacks)
+                        {
+                            callback(entry.Image);
+                        }
+                    }
+                    _entries.Remove(uri);
+                    break;
+                default:
+                    DebugUtils.Assert(false);
+                    break;
+            }
+        }
+    }
+
+    private static void Log(string message)
+    {
+        Logger.I("ReaderImagePool", message);
+    }
+
+    private class LoadImageResultHandler(ReaderImagePool pool, string uri) : IImageResultHandler
+    {
+        public void OnSuccess(BitmapImage image)
+        {
+            Log($"event/loaded {uri}");
+            ImageEntry entry;
+            if (pool._entries.Contains(uri))
+            {
+                entry = (ImageEntry)pool._entries[uri];
+            }
+            else
+            {
+                Log($"abandoned {uri}");
+                return;
+            }
+
+            entry.Image = image;
+            entry.State = ImageEntryState.Recycled;
+
+            if (entry.Callbacks.Count > 0)
+            {
+                Log($"loaded {uri}");
+            }
+            else
+            {
+                Log($"abandoned {uri}");
+            }
+
+            while (entry.Callbacks.Count > 0)
+            {
+                List<IRequestCallback> callbacks = new(entry.Callbacks);
+                entry.Callbacks.Clear();
+
+                foreach (IRequestCallback callback in callbacks)
+                {
+                    callback(image);
+                }
+            }
+
+            pool._entries.Remove(uri);
+        }
+    }
+
+    private enum ImageEntryState
+    {
+        Requesting,
+        Pending,
+        Recycled,
+    }
+
+    private class ImageEntry
+    {
+        public ImageEntryState State;
+        public IImageSource Source;
+        public CancellationSession Session;
+        public BitmapImage Image;
+        public HashSet<IRequestCallback> Callbacks = [];
+    }
+}

@@ -47,8 +47,8 @@ internal class ReaderFrameViewModel : INotifyPropertyChanged
         }
     }
 
-    public IImageSource ImageSourceLeft { get; set; }
-    public IImageSource ImageLeftCurrentSource { get; set; }
+    public IImageSource LeftImageSource { get; set; }
+    public ImageHolder LeftImageHolder { get; }
 
     private BitmapImage _imageLeft;
     public BitmapImage ImageLeft
@@ -56,20 +56,13 @@ internal class ReaderFrameViewModel : INotifyPropertyChanged
         get => _imageLeft;
         set
         {
-            if (_imageLeft != value)
-            {
-                if (value == null)
-                {
-                    ImageLeftCurrentSource = null;
-                }
-                _imageLeft = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ImageLeft)));
-            }
+            _imageLeft = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ImageLeft)));
         }
     }
 
-    public IImageSource ImageSourceRight { get; set; }
-    public IImageSource ImageRightCurrentSource { get; set; }
+    public IImageSource RightImageSource { get; set; }
+    public ImageHolder RightImageHolder { get; }
 
     private BitmapImage _imageRight;
     public BitmapImage ImageRight
@@ -77,21 +70,26 @@ internal class ReaderFrameViewModel : INotifyPropertyChanged
         get => _imageRight;
         set
         {
-            if (_imageRight != value)
-            {
-                if (value == null)
-                {
-                    ImageRightCurrentSource = null;
-                }
-                _imageRight = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ImageRight)));
-            }
+            _imageRight = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ImageRight)));
         }
     }
 
     public int PageL { get; set; } = -1;
     public int PageR { get; set; } = -1;
     public double Page => PageL != -1 && PageR != -1 ? (PageL + PageR) * 0.5 : PageL == -1 ? PageR : PageL;
+
+    public ReaderFrameViewModel(ReaderImagePool pool)
+    {
+        LeftImageHolder = new(pool, delegate (BitmapImage image)
+        {
+            ImageLeft = image;
+        });
+        RightImageHolder = new(pool, delegate (BitmapImage image)
+        {
+            ImageRight = image;
+        });
+    }
 
     public void RebindEntireViewModel()
     {

@@ -17,7 +17,7 @@ internal static class ImageInfoManager
     public static ImageInfo GetImageInfo(IImageSource source)
     {
         string key = source.GetUri();
-        ImageCacheDatabase.CacheRecord record = ImageCacheDatabase.GetCacheRecord(key);
+        ImageCacheDatabase.CacheRecord record = ImageCacheDatabase.GetCacheRecord(source);
         if (record != null && record.Width > 0 && record.Height > 0)
         {
             return new ImageInfo(record.Width, record.Height);

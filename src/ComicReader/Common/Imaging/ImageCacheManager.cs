@@ -53,30 +53,31 @@ internal static class ImageCacheManager
         string uri = source.GetUri();
         int sourceSignature = source.GetContentSignature();
 
+        if (uri == null || uri.Length == 0)
+        {
+            DebugUtils.Assert(false);
+            return;
+        }
+
         IRandomAccessStream cacheStream = null;
-        ImageCacheDatabase.CacheRecord cacheRecord = null;
+        ImageCacheDatabase.CacheRecord cacheRecord = ImageCacheDatabase.GetCacheRecord(source);
         bool requireCache = true;
 
-        if (uri != null && uri.Length > 0)
+        if (cacheRecord != null)
         {
-            cacheRecord = ImageCacheDatabase.GetCacheRecord(uri);
-
-            if (cacheRecord != null && (sourceSignature == 0 || cacheRecord.Signature == sourceSignature))
+            double aspectRatio = (double)cacheRecord.Width / cacheRecord.Height;
+            if (CalculateDesiredDimension(frameWidth, frameHeight, stretchMode, aspectRatio, out int desiredWidth, out int desiredHeight))
             {
-                double aspectRatio = (double)cacheRecord.Width / cacheRecord.Height;
-                if (CalculateDesiredDimension(frameWidth, frameHeight, stretchMode, aspectRatio, out int desiredWidth, out int desiredHeight))
+                string cacheEntryKey = CalculateCacheEntryKey(desiredWidth * desiredHeight);
+                string entry = cacheRecord.GetEntry(cacheEntryKey);
+                if (entry.Length > 0)
                 {
-                    string cacheEntryKey = CalculateCacheEntryKey(desiredWidth * desiredHeight);
-                    string entry = cacheRecord.GetEntry(cacheEntryKey);
-                    if (entry.Length > 0)
-                    {
-                        cacheStream = sImageCache.Value.Get(entry);
-                    }
+                    cacheStream = sImageCache.Value.Get(entry);
                 }
-                else
-                {
-                    requireCache = false;
-                }
+            }
+            else
+            {
+                requireCache = false;
             }
         }
 
