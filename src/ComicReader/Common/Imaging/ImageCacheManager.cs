@@ -104,7 +104,7 @@ internal static class ImageCacheManager
             }
         }
 
-        _ = MainThreadUtils.RunInMainThreadAsync(async delegate
+        MainThreadUtils.RunInMainThreadAsync(async delegate
         {
             BitmapImage image = null;
             try
@@ -155,7 +155,7 @@ internal static class ImageCacheManager
             }
 
             handler.OnSuccess(image);
-        });
+        }).Wait();
     }
 
     private static IRandomAccessStream TryCreateImageCache(ImageCacheDatabase.CacheRecord cacheRecord, IRandomAccessStream sourceStream,
