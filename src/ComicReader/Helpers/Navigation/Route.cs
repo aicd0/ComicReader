@@ -10,7 +10,7 @@ namespace ComicReader.Helpers.Navigation;
 internal class Route
 {
     private static readonly Regex sSchemeRegex = new("^[a-z0-9]+$", RegexOptions.IgnoreCase);
-    private static readonly Regex sHostRegex = new("^[a-z0-9\\.]+$", RegexOptions.IgnoreCase);
+    private static readonly Regex sHostRegex = new("^[_a-z0-9\\.]+$", RegexOptions.IgnoreCase);
     private static readonly Regex sPortRegex = new("^[0-9]*$", RegexOptions.None);
     private static readonly Regex sPathRegex = new("^[a-z0-9_/]*$", RegexOptions.IgnoreCase);
     private static readonly Regex sQueryKeyRegex = new("^[a-z0-9_]+$", RegexOptions.IgnoreCase);

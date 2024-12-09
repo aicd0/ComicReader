@@ -1038,18 +1038,11 @@ internal partial class ReaderView : UserControl
         {
             _gestureRecognizer.CompleteGesture();
         }
-
-#if DEBUG_LOG_POINTER
-        Log("Pointer canceled");
-#endif
     }
 
     private void OnReaderPointerMoved(object sender, PointerRoutedEventArgs e)
     {
         _gestureRecognizer.ProcessMoveEvents(e.GetIntermediatePoints(_gestureReference));
-#if DEBUG_LOG_POINTER
-        //Log("Pointer moved");
-#endif
     }
 
     private void OnReaderPointerPressed(object sender, PointerRoutedEventArgs e)
@@ -1057,9 +1050,6 @@ internal partial class ReaderView : UserControl
         (sender as UIElement).CapturePointer(e.Pointer);
         PointerPoint pointer_point = e.GetCurrentPoint(_gestureReference);
         _gestureRecognizer.ProcessDownEvent(pointer_point);
-#if DEBUG_LOG_POINTER
-        Log("Pointer pressed");
-#endif
     }
 
     private void OnReaderPointerReleased(object sender, PointerRoutedEventArgs e)
@@ -1072,10 +1062,6 @@ internal partial class ReaderView : UserControl
         {
             _gestureRecognizer.CompleteGesture();
         }
-
-#if DEBUG_LOG_POINTER
-        Log("Pointer released");
-#endif
     }
 
     private void OnReaderScrollViewerPointerWheelChanged(object sender, PointerRoutedEventArgs e)
@@ -1109,10 +1095,6 @@ internal partial class ReaderView : UserControl
     private void OnReaderManipulationStarted(ManipulationStartedEventArgs e)
     {
         _manipulationDisabled = false;
-
-#if DEBUG_LOG_MANIPULATION
-        Log("Manipulation started");
-#endif
     }
 
     private void OnReaderManipulationUpdated(ManipulationUpdatedEventArgs e)
@@ -1168,10 +1150,6 @@ internal partial class ReaderView : UserControl
         {
             MoveFrame(1, "MoveToNextPageUsingManipulation");
         }
-
-#if DEBUG_LOG_MANIPULATION
-        Log("Manipulation completed, V=" + velocity.ToString());
-#endif
     }
 
     private void OnReaderScrollViewerPointerWheelChanged(PointerRoutedEventArgs e)

@@ -18,6 +18,8 @@ internal static class DebugUtils
 
     private static bool? _debugMode = null;
 
+    public static bool DebugBuild => IS_DEBUG_BUILD;
+
     public static bool DebugMode
     {
         get

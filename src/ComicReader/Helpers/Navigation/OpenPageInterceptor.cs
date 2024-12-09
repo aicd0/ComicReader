@@ -3,6 +3,7 @@
 
 using System;
 
+using ComicReader.Views.DevTools;
 using ComicReader.Views.Favorite;
 using ComicReader.Views.History;
 using ComicReader.Views.Navigation;
@@ -23,6 +24,7 @@ internal class OpenPageInterceptor : IRouterInterceptor
             RouterConstants.HOST_FAVORITE => new DefaultPageTrait(typeof(FavoritePage)),
             RouterConstants.HOST_HISTORY => new DefaultPageTrait(typeof(HistoryPage)),
             RouterConstants.HOST_NAVIGATION => new DefaultPageTrait(typeof(NavigationPage)),
+            RouterConstants.HOST_DEV_TOOLS => new DefaultPageTrait(typeof(DevToolsPage)),
             _ => throw new ArgumentException("Unknown host " + routeInfo.Host),
         };
         return new NavigationBundle(pageTrait, routeInfo.Queries, routeInfo.Url);

@@ -1,0 +1,40 @@
+<base:BasePage
+    x:Class="ComicReader.Views.DevTools.DevToolsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:base="using:ComicReader.Common.BasePage"
+    xmlns:cwc="using:CommunityToolkit.WinUI.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Background="{ThemeResource TabViewItemHeaderBackgroundSelected}"
+    mc:Ignorable="d">
+
+    <Grid>
+        <ScrollViewer>
+            <StackPanel Padding="16" Orientation="Vertical">
+                <TextBlock
+                    x:Name="TbOperationResult"
+                    Foreground="Yellow"
+                    Text="Operation result shows here" />
+
+                <Grid Height="16" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Click="OnOpenAppFolderClick" Content="Open app folder" />
+                </StackPanel>
+
+                <Grid Height="16" />
+                <TextBox
+                    x:Name="TbCommonConfigs"
+                    AcceptsReturn="True"
+                    TextChanged="OnCommonConfigsTextChanged"
+                    TextWrapping="NoWrap" />
+                <Grid Height="8" />
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Click="OnCommonConfigsApplyClick" Content="Apply" />
+                    <Button Click="OnCommonConfigsRestoreClick" Content="Restore" />
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+
+</base:BasePage>

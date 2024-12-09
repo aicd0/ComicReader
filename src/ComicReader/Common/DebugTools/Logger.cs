@@ -177,7 +177,7 @@ internal static class Logger
             realMessage += "\n" + exception.ToString();
         }
 
-        if (DebugUtils.DebugModeStrict)
+        if (DebugSwitches.Instance.ConsoleEnabled)
         {
             LogToConsole(realMessage);
         }
@@ -223,7 +223,7 @@ internal static class Logger
 
         FlushToLogFile(logs);
 
-        if (DebugUtils.DebugModeStrict)
+        if (DebugSwitches.Instance.LogTreeEnabled)
         {
             FlushToLogTree(logs);
         }

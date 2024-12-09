@@ -134,6 +134,11 @@
                                                 x:Uid="MenuFlyoutHelp"
                                                 Click="OnMoreHelpClick"
                                                 Icon="Help" />
+                                            <MenuFlyoutItem
+                                                Click="OnDevToolsClick"
+                                                Icon="Repair"
+                                                Text="Dev tools"
+                                                Visibility="{x:Bind ViewModel.DevToolsVisible, Mode=OneWay}" />
                                         </MenuFlyout>
                                     </AppBarButton.Flyout>
                                 </AppBarButton>

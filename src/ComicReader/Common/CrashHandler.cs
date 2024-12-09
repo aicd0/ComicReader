@@ -57,12 +57,10 @@ internal static class CrashHandler
             Console(ex.ToString());
         }
 
-#if DEBUG
-        if (System.Diagnostics.Debugger.IsAttached)
+        if (DebugUtils.DebugBuild && System.Diagnostics.Debugger.IsAttached)
         {
             System.Diagnostics.Debugger.Break();
         }
-#endif
     }
 
     private static void Console(string message)

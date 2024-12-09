@@ -504,11 +504,7 @@ internal sealed partial class SettingsPage : BasePage
 
     private void UpdateAbout()
     {
-#if DEBUG
-        string appName = StringResourceProvider.GetResourceString("DevAppDisplayName");
-#else
-        string appName = Utils.StringResourceProvider.GetResourceString("AppDisplayName");
-#endif
+        string appName = StringResourceProvider.GetResourceString(DebugUtils.DebugBuild ? "DevAppDisplayName" : "AppDisplayName");
         AboutBuildVersionControl.Text = appName + " " + AppEnvironment.Instance.GetVersionName();
 
         string author = "aicd0";

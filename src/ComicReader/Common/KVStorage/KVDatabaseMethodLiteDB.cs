@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Concurrent;
 using System.IO;
 
 using LiteDB;
@@ -12,26 +13,26 @@ namespace ComicReader.Common.KVStorage;
 
 internal class KVDatabaseMethodLiteDB : KVDatabaseMethod, IDisposable
 {
-    private const string DATABASE_FILE_NAME = "kv_database_litedb.db";
+    private const string DEFAULT_COLLECTION = "default";
 
-    private static readonly object sLock = new();
+    private static readonly KVDatabaseMethodLiteDB sInstance = new();
 
-    private static KVDatabaseMethodLiteDB sInstance;
-    private static StorageFolder DatabaseFolder => ApplicationData.Current.LocalFolder;
-    private static string DatabasePath => Path.Combine(DatabaseFolder.Path, DATABASE_FILE_NAME);
-
-    private LiteDatabase _db;
+    private readonly object _lock = new();
+    private readonly ConcurrentDictionary<string, LiteDatabase> _db = [];
 
     private KVDatabaseMethodLiteDB() { }
 
     public void Dispose()
     {
-        _db?.Dispose();
+        foreach (LiteDatabase db in _db.Values)
+        {
+            db.Dispose();
+        }
     }
 
     public override void Remove(string lib, string key)
     {
-        ILiteCollection<KVPair> col = GetDatabase().GetCollection<KVPair>(lib);
+        ILiteCollection<KVPair> col = GetDatabase(lib).GetCollection<KVPair>(DEFAULT_COLLECTION);
         col.Delete(key);
     }
 
@@ -85,28 +86,34 @@ internal class KVDatabaseMethodLiteDB : KVDatabaseMethod, IDisposable
         return null;
     }
 
-    private LiteDatabase GetDatabase()
+    private LiteDatabase GetDatabase(string lib)
     {
-        if (_db != null)
         {
-            return _db;
+            if (_db.TryGetValue(lib, out LiteDatabase db))
+            {
+                return db;
+            }
         }
 
-        lock (sLock)
+        lock (_lock)
         {
-            if (_db != null)
+            if (_db.TryGetValue(lib, out LiteDatabase db))
             {
-                return _db;
+                return db;
             }
 
-            _db = new LiteDatabase(DatabasePath);
-            return _db;
+            string databaseFolder = Path.Combine(ApplicationData.Current.LocalFolder.Path, "database_kv");
+            string databasePath = Path.Combine(databaseFolder, $"lib_{lib}.db");
+            Directory.CreateDirectory(databaseFolder);
+            db = new LiteDatabase(databasePath);
+            _db[lib] = db;
+            return db;
         }
     }
 
     private string GetValue(string lib, string key)
     {
-        ILiteCollection<KVPair> col = GetDatabase().GetCollection<KVPair>(lib);
+        ILiteCollection<KVPair> col = GetDatabase(lib).GetCollection<KVPair>(DEFAULT_COLLECTION);
         KVPair pair = col.FindById(key);
         if (pair == null)
         {
@@ -118,7 +125,7 @@ internal class KVDatabaseMethodLiteDB : KVDatabaseMethod, IDisposable
 
     private void SetValue(string lib, string key, string value)
     {
-        ILiteCollection<KVPair> col = GetDatabase().GetCollection<KVPair>(lib);
+        ILiteCollection<KVPair> col = GetDatabase(lib).GetCollection<KVPair>(DEFAULT_COLLECTION);
         KVPair pair = col.FindById(key);
         if (pair == null)
         {
@@ -143,16 +150,7 @@ internal class KVDatabaseMethodLiteDB : KVDatabaseMethod, IDisposable
 
     public static KVDatabaseMethodLiteDB GetInstance()
     {
-        if (sInstance != null)
-        {
-            return sInstance;
-        }
-
-        lock (sLock)
-        {
-            sInstance ??= new KVDatabaseMethodLiteDB();
-            return sInstance;
-        }
+        return sInstance;
     }
 
     private class KVPair

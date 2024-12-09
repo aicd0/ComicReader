@@ -2,9 +2,11 @@
 // Licensed under the MIT License.
 
 using System;
+using System.ComponentModel;
 
 using ComicReader.Common;
 using ComicReader.Common.BasePage;
+using ComicReader.Common.DebugTools;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Common.Threading;
 using ComicReader.Data;
@@ -19,6 +21,22 @@ using Microsoft.UI.Xaml.Navigation;
 
 namespace ComicReader.Views.Navigation;
 
+public class NavigationPageViewModel : INotifyPropertyChanged
+{
+    public event PropertyChangedEventHandler PropertyChanged;
+
+    private bool _devToolsVisible;
+    public bool DevToolsVisible
+    {
+        get => _devToolsVisible;
+        set
+        {
+            _devToolsVisible = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DevToolsVisible)));
+        }
+    }
+}
+
 internal sealed partial class NavigationPage : BasePage
 {
     private const string TAG = "NavigationPage";
@@ -29,6 +47,8 @@ internal sealed partial class NavigationPage : BasePage
     private NavigationBundle _currentBundle;
     private readonly NavigationPageAbility _ability;
 
+    private NavigationPageViewModel ViewModel { get; } = new();
+
     public NavigationPage()
     {
         InitializeComponent();
@@ -38,7 +58,9 @@ internal sealed partial class NavigationPage : BasePage
     protected override void OnResume()
     {
         base.OnResume();
+
         ObserveData();
+        ViewModel.DevToolsVisible = DebugUtils.DebugBuild;
     }
 
     private void ObserveData()
@@ -139,6 +161,15 @@ internal sealed partial class NavigationPage : BasePage
             // MainPage has done that job for us.
             TopTile.Margin = new Thickness(0, 0, 0, 0);
             ContentGrid.Margin = new Thickness(0, _navigationBarHeight, 0, 0);
+        }
+    }
+
+    private void OnDevToolsClick(object sender, RoutedEventArgs e)
+    {
+        if (DebugUtils.DebugBuild)
+        {
+            var route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_DEV_TOOLS);
+            MainPage.Current.OpenInNewTab(route);
         }
     }
 
