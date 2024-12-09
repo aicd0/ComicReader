@@ -78,7 +78,6 @@ internal partial class ReaderView : UserControl
     private readonly ReaderImagePool _imagePool;
     private readonly Dictionary<int, ImageDataModel> _dataModel = [];
     private readonly CancellationSession _dataModelSession;
-    private readonly CancellationSession _loadImageSession;
 
     private ObservableCollection<ReaderFrameViewModel> FrameDataSource { get; } = [];
 
@@ -98,8 +97,7 @@ internal partial class ReaderView : UserControl
         _gestureRecognizer.SetHandler(_gestureHandler);
 
         _dataModelSession = new();
-        _loadImageSession = new();
-        _imagePool = new(_loadImageSession, _loadImageDispatcher);
+        _imagePool = new(_loadImageDispatcher);
     }
 
     //
@@ -227,17 +225,12 @@ internal partial class ReaderView : UserControl
             FrameDataSource.RemoveAt(i);
         }
 
-        if (clear)
+        _imagePool.Cancel();
+        for (int i = 0; i < FrameDataSource.Count; ++i)
         {
-            _loadImageSession.Next();
-            for (int i = 0; i < FrameDataSource.Count; ++i)
-            {
-                ReaderFrameViewModel item = FrameDataSource[i];
-                item.PageL = -1;
-                item.PageR = -1;
-                item.LeftImageHolder.SetImage(null);
-                item.RightImageHolder.SetImage(null);
-            }
+            ReaderFrameViewModel item = FrameDataSource[i];
+            item.PageL = -1;
+            item.PageR = -1;
         }
 
         SCClearFinalVal("Reload");
@@ -382,7 +375,7 @@ internal partial class ReaderView : UserControl
                 Log("Load", $"InitialFrameScroll (result={scrollResult})");
                 if (scrollResult == ScrollResult.TooClose)
                 {
-                    UpdateImages("InitialFrameLoaded", true);
+                    UpdateImages("InitialFrameLoaded");
                 }
             });
 
@@ -444,7 +437,12 @@ internal partial class ReaderView : UserControl
             LvReader.ItemContainerStyle = (Style)Resources[isVertical ? "VerticalReaderListViewItemStyle" : "HorizontalReaderListViewItemStyle"];
             LvReader.ItemTemplate = (DataTemplate)Resources[isVertical ? "VerticalReaderListViewItemTemplate" : "HorizontalReaderListViewItemTemplate"];
             LvReader.ItemsPanel = (ItemsPanelTemplate)Resources[isVertical ? "VerticalReaderListViewItemPanelTemplate" : "HorizontalReaderListViewItemPanelTemplate"];
-            FrameDataSource.Clear(); // force IsModelInstanceUpdateToDate set to false
+
+            for (int i = 0; i < FrameDataSource.Count; ++i)
+            {
+                _frameManager.MarkModelInstanceOutOfDate(i, "OrientationChanged");
+            }
+
             needReload = true;
         }
 
@@ -714,28 +712,24 @@ internal partial class ReaderView : UserControl
         return true;
     }
 
-    private void UpdateImages(string reason, bool final)
+    private void UpdateImages(string reason)
     {
-        Log("LoadImage", $"reason={reason},final={final}");
-
         int frame = PageToFrame(CurrentPageInt, out _, out _);
         int preloadWindowBegin = Math.Max(frame - PRELOAD_FRAMES_BEFORE, 0);
         int preloadWindowEnd = Math.Min(frame + PRELOAD_FRAMES_AFTER, FrameDataSource.Count - 1);
+        Log("LoadImage", $"reason={reason},P={CurrentPageInt}");
 
-        if (final)
+        for (int i = 0; i < FrameDataSource.Count; ++i)
         {
-            for (int i = 0; i < FrameDataSource.Count; ++i)
+            ReaderFrameViewModel model = FrameDataSource[i];
+            if (i < preloadWindowBegin || i > preloadWindowEnd)
             {
-                ReaderFrameViewModel model = FrameDataSource[i];
-                if (i < preloadWindowBegin || i > preloadWindowEnd)
-                {
-                    model.LeftImageHolder.SetImage(null);
-                    model.RightImageHolder.SetImage(null);
-                }
-                else
-                {
-                    UpdateImageDecodeSize(model);
-                }
+                model.LeftImageHolder.SetImage(null);
+                model.RightImageHolder.SetImage(null);
+            }
+            else
+            {
+                UpdateImageDecodeSize(model);
             }
         }
 
@@ -849,7 +843,7 @@ internal partial class ReaderView : UserControl
         else
         {
             _dataModelSession.Next();
-            _loadImageSession.Next();
+            _imagePool.Cancel();
         }
     }
 
@@ -901,7 +895,11 @@ internal partial class ReaderView : UserControl
             }
         }
 
-        UpdateImages("ViewChanged", final);
+        if (final)
+        {
+            UpdateImages("ViewChanged");
+        }
+
         return true;
     }
 

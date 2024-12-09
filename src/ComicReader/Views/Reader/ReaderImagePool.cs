@@ -16,7 +16,7 @@ namespace ComicReader.Views.Reader;
 
 internal class ReaderImagePool
 {
-    private readonly CancellationSession _session;
+    private readonly CancellationSession _session = new();
     private readonly ITaskDispatcher _dispatcher;
     private readonly OrderedDictionary _entries = [];
 
@@ -25,10 +25,48 @@ internal class ReaderImagePool
 
     public delegate void IRequestCallback(BitmapImage image);
 
-    public ReaderImagePool(CancellationSession session, ITaskDispatcher dispatcher)
+    public ReaderImagePool(ITaskDispatcher dispatcher)
     {
-        _session = session;
         _dispatcher = dispatcher;
+    }
+
+    public void Cancel()
+    {
+        _session.Next();
+
+        List<string> keys = [];
+        foreach (string uri in _entries.Keys)
+        {
+            keys.Add(uri);
+        }
+
+        HashSet<IRequestCallback> callbacks = [];
+        foreach (string uri in keys)
+        {
+            var entry = (ImageEntry)_entries[uri];
+            switch (entry.State)
+            {
+                case ImageEntryState.Requesting:
+                case ImageEntryState.Pending:
+                    foreach (IRequestCallback callback in entry.Callbacks)
+                    {
+                        callbacks.Add(callback);
+                    }
+                    entry.Callbacks.Clear();
+                    _entries.Remove(uri);
+                    Log($"cancelled {uri}");
+                    break;
+                case ImageEntryState.Recycled:
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        foreach (IRequestCallback callback in callbacks)
+        {
+            callback(null);
+        }
     }
 
     public void RequestImage(IImageSource source, IRequestCallback callback)

@@ -68,6 +68,12 @@ internal class ImageHolder
 
     private void OnImageCallback(BitmapImage image)
     {
+        if (image == null)
+        {
+            _currentImageSource = null;
+            _currentUri = string.Empty;
+        }
+
         _currentImage = image;
         _setter(image);
     }
