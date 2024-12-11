@@ -1231,6 +1231,7 @@ internal partial class ReaderView : UserControl
     private double ParallelOffset => IsVertical ? VerticalOffset : HorizontalOffset;
     private double ViewportParallelLength => IsVertical ? ThisScrollViewer.ViewportHeight : ThisScrollViewer.ViewportWidth;
     private double ViewportPerpendicularLength => IsVertical ? ThisScrollViewer.ViewportWidth : ThisScrollViewer.ViewportHeight;
+    private double ContentPerpendicularLength => IsVertical ? ThisListView.ActualWidth : ThisListView.ActualHeight;
     private double ExtentParallelLength => IsVertical ? ThisScrollViewer.ExtentHeight : ThisScrollViewer.ExtentWidth;
 
     private int _SCCurrentPageFinal;
@@ -1548,8 +1549,8 @@ internal partial class ReaderView : UserControl
 
     private void SetScrollViewerZoom(ScrollRequest request, ScrollContext context)
     {
-        // Calculate zoom coefficient prediction.
-        ZoomCoefficientResult zoomCoefficientNew;
+        // Calculate zoom coefficient prediction
+        ZoomCoefficient zoomCoefficientNew;
         int frameNew;
         {
             int pageNew = request.pageToApplyZoom.HasValue ? (int)request.pageToApplyZoom.Value : SCCurrentPageFinal;
@@ -1560,7 +1561,7 @@ internal partial class ReaderView : UserControl
                 frameNew = 0;
             }
 
-            zoomCoefficientNew = ZoomCoefficient(frameNew);
+            zoomCoefficientNew = CalculateZoomCoefficient(frameNew);
 
             Log("Jump", "Zoom#1:"
                 + $" PN={pageNew}"
@@ -1575,7 +1576,7 @@ internal partial class ReaderView : UserControl
             }
         }
 
-        // Calculate zoom in percentage.
+        // Calculate zooming in percentage
         double zoom;
         if (request.zoom.HasValue)
         {
@@ -1589,10 +1590,10 @@ internal partial class ReaderView : UserControl
                 frame = 0;
             }
 
-            ZoomCoefficientResult zoomCoefficient = zoomCoefficientNew;
+            ZoomCoefficient zoomCoefficient = zoomCoefficientNew;
             if (frame != frameNew)
             {
-                ZoomCoefficientResult zoomCoefficientTest = ZoomCoefficient(frame);
+                ZoomCoefficient zoomCoefficientTest = CalculateZoomCoefficient(frame);
                 if (zoomCoefficientTest != null)
                 {
                     zoomCoefficient = zoomCoefficientTest;
@@ -1612,28 +1613,48 @@ internal partial class ReaderView : UserControl
         zoom = Math.Max(zoom, MIN_ZOOM);
         context.ZoomPercentage = (float)zoom;
 
-        // A zoom factor vary less than 1% will be ignored.
-        float zoom_factor_new = (float)(zoom * zoomCoefficientNew.Min());
+        // Ignore any zoom factor vary less than 1%
+        float zoomFactorNew = (float)(zoom * zoomCoefficientNew.Min());
 
-        if (Math.Abs(zoom_factor_new / SCZoomFactorFinal - 1.0f) <= 0.01f)
+        if (Math.Abs(zoomFactorNew / SCZoomFactorFinal - 1.0f) <= 0.01f)
         {
             context.ZoomFactor = null;
             return;
         }
 
-        context.ZoomFactor = zoom_factor_new;
+        context.ZoomFactor = zoomFactorNew;
 
-        // Apply zooming.
+        // Apply zooming
+        float zoomFactorBefore = SCZoomFactorFinal;
+        float zoomFactorAfter = (float)context.ZoomFactor;
+        float zoomChangeRatio = zoomFactorAfter / zoomFactorBefore;
+        double extraPaddingBefore = CalculateExtraPerpendicularPadding(zoomFactorBefore);
+        double extraPaddingAfter = CalculateExtraPerpendicularPadding(zoomFactorAfter);
+        double extraPaddingDiff = extraPaddingAfter - extraPaddingBefore;
+        double halfViewportWidth = ThisScrollViewer.ViewportWidth * 0.5;
+        double halfViewportHeight = ThisScrollViewer.ViewportHeight * 0.5;
+
         context.HorizontalOffset ??= SCHorizontalOffsetFinal;
         context.VerticalOffset ??= SCVerticalOffsetFinal;
 
-        context.HorizontalOffset += ThisScrollViewer.ViewportWidth * 0.5;
-        context.HorizontalOffset *= (float)context.ZoomFactor / SCZoomFactorFinal;
-        context.HorizontalOffset -= ThisScrollViewer.ViewportWidth * 0.5;
-
-        context.VerticalOffset += ThisScrollViewer.ViewportHeight * 0.5;
-        context.VerticalOffset *= (float)context.ZoomFactor / SCZoomFactorFinal;
-        context.VerticalOffset -= ThisScrollViewer.ViewportHeight * 0.5;
+        if (IsVertical)
+        {
+            context.HorizontalOffset += halfViewportWidth + extraPaddingDiff;
+            context.HorizontalOffset *= zoomChangeRatio;
+            context.HorizontalOffset -= halfViewportWidth;
+            context.VerticalOffset += halfViewportHeight;
+            context.VerticalOffset *= zoomChangeRatio;
+            context.VerticalOffset -= halfViewportHeight;
+        }
+        else
+        {
+            context.HorizontalOffset += halfViewportWidth;
+            context.HorizontalOffset *= zoomChangeRatio;
+            context.HorizontalOffset -= halfViewportWidth;
+            context.VerticalOffset += halfViewportHeight + extraPaddingDiff;
+            context.VerticalOffset *= zoomChangeRatio;
+            context.VerticalOffset -= halfViewportHeight;
+        }
 
         context.HorizontalOffset = Math.Max(0.0, context.HorizontalOffset.Value);
         context.VerticalOffset = Math.Max(0.0, context.VerticalOffset.Value);
@@ -1773,7 +1794,7 @@ internal partial class ReaderView : UserControl
                 break;
             }
 
-            ZoomCoefficientResult zoom_coefficient = ZoomCoefficient(frame_idx);
+            ZoomCoefficient zoom_coefficient = CalculateZoomCoefficient(frame_idx);
             if (zoom_coefficient == null)
             {
                 break;
@@ -1795,7 +1816,7 @@ internal partial class ReaderView : UserControl
                 break;
             }
 
-            ZoomCoefficientResult zoom_coefficient = ZoomCoefficient(frame_idx);
+            ZoomCoefficient zoom_coefficient = CalculateZoomCoefficient(frame_idx);
             if (zoom_coefficient == null)
             {
                 break;
@@ -1927,7 +1948,7 @@ internal partial class ReaderView : UserControl
         return result;
     }
 
-    private ZoomCoefficientResult ZoomCoefficient(int frameIndex)
+    private ZoomCoefficient CalculateZoomCoefficient(int frameIndex)
     {
         if (FrameDataSource.Count == 0)
         {
@@ -1953,11 +1974,17 @@ internal partial class ReaderView : UserControl
             return null;
         }
 
-        return new ZoomCoefficientResult
+        return new ZoomCoefficient
         {
             FitWidth = 0.01 * viewport_width / frame_width,
             FitHeight = 0.01 * viewport_height / frame_height
         };
+    }
+
+    private double CalculateExtraPerpendicularPadding(double zoom)
+    {
+        double padding = (ViewportPerpendicularLength - ContentPerpendicularLength * zoom) * 0.5;
+        return Math.Max(padding, 0);
     }
 
     //

@@ -5,7 +5,7 @@ using System;
 
 namespace ComicReader.Views.Reader;
 
-internal class ZoomCoefficientResult
+internal class ZoomCoefficient
 {
     public double FitWidth;
     public double FitHeight;
