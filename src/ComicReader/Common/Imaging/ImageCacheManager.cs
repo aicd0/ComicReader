@@ -2,6 +2,10 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
+using System.IO;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 
@@ -11,7 +15,6 @@ using ComicReader.Common.Threading;
 
 using Microsoft.UI.Xaml.Media.Imaging;
 
-using Windows.Graphics.Imaging;
 using Windows.Storage;
 using Windows.Storage.Streams;
 
@@ -162,22 +165,22 @@ internal static class ImageCacheManager
         double frameWidth, double frameHeight, StretchModeEnum stretchMode, string cacheKey, int sourceSignature)
     {
         sourceStream.Seek(0);
-        BitmapDecoder decoder = null;
+        Image image = null;
         try
         {
-            decoder = BitmapDecoder.CreateAsync(sourceStream).AsTask().Result;
+            image = Image.FromStream(sourceStream.AsStream());
         }
         catch (Exception ex)
         {
             Logger.F(TAG, "TryCreateImageCache", ex);
         }
-        if (decoder == null)
+        if (image == null)
         {
             return null;
         }
 
-        int sourceWidth = (int)decoder.PixelWidth;
-        int sourceHeight = (int)decoder.PixelHeight;
+        int sourceWidth = image.Width;
+        int sourceHeight = image.Height;
         double aspectRatio = (double)sourceWidth / sourceHeight;
 
         if (!CalculateDesiredDimension(frameWidth, frameHeight, stretchMode, aspectRatio, out int desiredWidth, out int desiredHeight))
@@ -187,7 +190,7 @@ internal static class ImageCacheManager
 
         int desiredResolution = desiredHeight * desiredWidth;
         string cacheEntryKey = CalculateCacheEntryKey(desiredResolution);
-        IRandomAccessStream cacheStream = CreateImageCacheStream(cacheEntryKey, sourceWidth, sourceHeight, decoder).Result;
+        MemoryStream cacheStream = CreateImageCacheStream(cacheEntryKey, sourceWidth, sourceHeight, image);
 
         try
         {
@@ -196,9 +199,9 @@ internal static class ImageCacheManager
             {
                 try
                 {
-                    cacheStream.Seek(0);
-                    byte[] outByteArray = new byte[cacheStream.Size];
-                    cacheStream.ReadAsync(outByteArray.AsBuffer(), (uint)cacheStream.Size, InputStreamOptions.None).Wait();
+                    cacheStream.Seek(0, SeekOrigin.Begin);
+                    byte[] outByteArray = new byte[cacheStream.Length];
+                    cacheStream.Read(outByteArray, 0, outByteArray.Length);
                     string tempEntry = StringUtils.RandomFileName(16) + ".png";
                     using ILRUInputStream cacheFileStream = sImageCache.Value.Put(tempEntry);
                     if (cacheFileStream == null)
@@ -239,10 +242,10 @@ internal static class ImageCacheManager
             throw;
         }
 
-        return cacheStream;
+        return cacheStream?.AsRandomAccessStream();
     }
 
-    private static async Task<IRandomAccessStream> CreateImageCacheStream(string cacheEntryKey, int sourceWidth, int sourceHeight, BitmapDecoder decoder)
+    private static MemoryStream CreateImageCacheStream(string cacheEntryKey, int sourceWidth, int sourceHeight, Image image)
     {
         int cacheResolution;
         switch (cacheEntryKey)
@@ -262,28 +265,28 @@ internal static class ImageCacheManager
 
         double scaleRatio = (double)cacheResolution / sourceResolution;
         double dimensionRatio = Math.Sqrt(scaleRatio);
-        uint aspectHeight = (uint)Math.Floor(sourceHeight * dimensionRatio);
-        uint aspectWidth = (uint)Math.Floor(sourceWidth * dimensionRatio);
+        int aspectHeight = (int)Math.Floor(sourceHeight * dimensionRatio);
+        int aspectWidth = (int)Math.Floor(sourceWidth * dimensionRatio);
 
-        InMemoryRandomAccessStream cacheStream = null;
+        MemoryStream memoryStream = new();
         try
         {
-            using SoftwareBitmap softwareBitmap = await decoder.GetSoftwareBitmapAsync();
-            cacheStream = new InMemoryRandomAccessStream();
-            BitmapEncoder encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, cacheStream);
-            encoder.SetSoftwareBitmap(softwareBitmap);
-            encoder.BitmapTransform.InterpolationMode = BitmapInterpolationMode.Fant;
-            encoder.BitmapTransform.ScaledHeight = aspectHeight;
-            encoder.BitmapTransform.ScaledWidth = aspectWidth;
-            await encoder.FlushAsync();
+            using Bitmap resizedBitmap = new(aspectWidth, aspectHeight);
+            using var graphics = Graphics.FromImage(resizedBitmap);
+            graphics.CompositingQuality = CompositingQuality.HighSpeed;
+            graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            graphics.CompositingMode = CompositingMode.SourceCopy;
+            graphics.DrawImage(image, 0, 0, aspectWidth, aspectHeight);
+            resizedBitmap.Save(memoryStream, ImageFormat.Png);
         }
         catch (Exception e)
         {
             Logger.F(TAG, "CreateImageCacheStream", e);
-            cacheStream?.Dispose();
-            cacheStream = null;
+            memoryStream.Dispose();
+            memoryStream = null;
         }
-        return cacheStream;
+
+        return memoryStream;
     }
 
     private static string CalculateCacheEntryKey(int resolution)

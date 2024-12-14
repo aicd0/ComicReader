@@ -368,7 +368,7 @@ internal sealed partial class MainPage : StatefulPage
         {
             if (allowExit)
             {
-                Application.Current.Exit();
+                AppUtils.Exit();
             }
             else
             {
