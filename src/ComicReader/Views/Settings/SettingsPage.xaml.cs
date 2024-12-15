@@ -431,6 +431,7 @@ internal sealed partial class SettingsPage : BasePage
         UpdateStatistis();
         UpdateFeedback();
         UpdateAbout();
+        UpdateDebugInformation();
 
         ViewModel.Updating = false;
     }
@@ -511,13 +512,20 @@ internal sealed partial class SettingsPage : BasePage
 
     private void UpdateAbout()
     {
-        string appName = StringResourceProvider.GetResourceString(DebugUtils.DebugBuild ? "DevAppDisplayName" : "AppDisplayName");
+        string appName = StringResourceProvider.GetResourceString("AppDisplayName");
         AboutBuildVersionControl.Text = appName + " " + AppEnvironment.Instance.GetVersionName();
 
         string author = "aicd0";
         string aboutCopyright = StringResourceProvider.GetResourceString("AboutCopyright");
         aboutCopyright = aboutCopyright.Replace("$author", author);
         AboutCopyrightControl.Text = aboutCopyright;
+    }
+
+    private void UpdateDebugInformation()
+    {
+        StringBuilder sb = new();
+        AppEnvironment.Instance.AppendDebugText(sb);
+        TbDebugInformation.Text = sb.ToString();
     }
 
     private void UpdateCacheSize()

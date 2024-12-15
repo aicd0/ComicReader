@@ -646,4 +646,7 @@
   <data name="Description.Text" xml:space="preserve">
     <value>描述：</value>
   </data>
+  <data name="DebugInformation.Text" xml:space="preserve">
+    <value>调试信息</value>
+  </data>
 </root>

@@ -81,9 +81,10 @@ public partial class App : Application
 
     private void StartAppCenter()
     {
-        if (Properties.AppSecret.Length > 0)
+        string appSecret = Properties.AppCenterSecret;
+        if (appSecret.Length > 0)
         {
-            AppCenter.Start(Properties.AppSecret, typeof(Analytics), typeof(Crashes));
+            AppCenter.Start(appSecret, typeof(Analytics), typeof(Crashes));
         }
     }
 

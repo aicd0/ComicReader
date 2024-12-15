@@ -646,4 +646,7 @@ Category2: tag4/tag5
   <data name="Description.Text" xml:space="preserve">
     <value>Description:</value>
   </data>
+  <data name="DebugInformation.Text" xml:space="preserve">
+    <value>Debug information</value>
+  </data>
 </root>
