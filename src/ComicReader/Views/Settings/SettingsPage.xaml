@@ -67,7 +67,7 @@
                         <settings:SettingExpander.InnerContent>
                             <StackPanel Orientation="Vertical">
                                 <Button x:Uid="ChooseLocationButton" Click="ChooseLocationsClick" />
-                                <Grid Height="12" />
+                                <Grid Height="20" />
                                 <TextBlock x:Uid="ArchiveEncoding" Style="{StaticResource SettingsPageBodyTextBlock}" />
                                 <Grid Height="8" />
                                 <ComboBox
@@ -88,7 +88,7 @@
                             <StackPanel Orientation="Vertical">
                                 <TextBlock x:Uid="TransitionAnimation" Style="{StaticResource SettingsPageBodyTextBlock}" />
                                 <ToggleSwitch IsOn="{x:Bind ViewModel.TransitionAnimation, Mode=TwoWay}" />
-                                <Grid Height="8" />
+                                <Grid Height="12" />
                                 <TextBlock x:Uid="AntiAliasingFilter" Style="{StaticResource SettingsPageBodyTextBlock}" />
                                 <ToggleSwitch IsOn="{x:Bind ViewModel.AntiAliasingEnabled, Mode=TwoWay}" />
                             </StackPanel>
@@ -106,7 +106,7 @@
                                     x:Uid="ClearAllHistoryButton"
                                     Click="OnHistoryClearAllClicked"
                                     IsEnabled="{x:Bind ViewModel.IsClearHistoryEnabled, Mode=OneWay}" />
-                                <Grid Height="12" />
+                                <Grid Height="20" />
                                 <TextBlock x:Uid="SaveHistory" Style="{StaticResource SettingsPageBodyTextBlock}" />
                                 <ToggleSwitch IsOn="{x:Bind ViewModel.HistorySaveBrowsingHistory, Mode=TwoWay}" />
                             </StackPanel>
@@ -122,10 +122,10 @@
                             <StackPanel Orientation="Vertical">
                                 <TextBlock
                                     x:Uid="ApplyOnNextLaunch"
-                                    Margin="0,0,0,6"
+                                    Margin="0,0,0,7"
                                     Style="{StaticResource SettingsPageBodyTextBlock}"
                                     Visibility="{x:Bind ViewModel.AppearanceChanged, Mode=OneWay}" />
-                                <muxc:RadioButtons Margin="0,-6,0,0">
+                                <muxc:RadioButtons Margin="0,-7,0,0">
                                     <RadioButton x:Uid="ThemeLight" IsChecked="{x:Bind ViewModel.AppearanceLightChecked, Mode=TwoWay}" />
                                     <RadioButton x:Uid="ThemeDark" IsChecked="{x:Bind ViewModel.AppearanceDarkChecked, Mode=TwoWay}" />
                                     <RadioButton x:Uid="ThemeUseSystemSetting" IsChecked="{x:Bind ViewModel.AppearanceUseSystemSettingChecked, Mode=TwoWay}" />
@@ -180,7 +180,7 @@
                                     Foreground="{ThemeResource ForegroundGrey2}"
                                     Style="{StaticResource SettingsPageBodyTextBlock}"
                                     Text="{x:Bind ViewModel.CacheSize, Mode=OneWay}" />
-                                <Grid Height="16" />
+                                <Grid Height="20" />
                                 <StackPanel Orientation="Horizontal">
                                     <Button
                                         x:Uid="RescanFilesButton"
@@ -196,7 +196,7 @@
                                     x:Uid="RescanFilesDetail"
                                     Foreground="{ThemeResource ForegroundGrey2}"
                                     Style="{StaticResource SettingsPageBodyTextBlock}" />
-                                <Grid Height="12" />
+                                <Grid Height="20" />
                                 <TextBlock x:Uid="DebugMode" Style="{StaticResource SettingsPageBodyTextBlock}" />
                                 <ToggleSwitch
                                     x:Name="TsDebugMode"

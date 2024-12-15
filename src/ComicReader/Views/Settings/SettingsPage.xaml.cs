@@ -38,7 +38,14 @@ public class SettingsPageViewModel : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler PropertyChanged;
 
+    private AppearanceSetting _initialAppearance = AppearanceSetting.None;
+
     public bool Updating { get; set; } = false;
+
+    public void Initialize()
+    {
+        InitializeAppearance();
+    }
 
     private List<Tuple<string, int>> _encodings = [];
     public List<Tuple<string, int>> Encodings
@@ -178,16 +185,6 @@ public class SettingsPageViewModel : INotifyPropertyChanged
         }
     }
 
-    public AppearanceSetting Appearance
-    {
-        set
-        {
-            AppearanceLightChecked = value == AppearanceSetting.Light;
-            AppearanceDarkChecked = value == AppearanceSetting.Dark;
-            AppearanceUseSystemSettingChecked = value == AppearanceSetting.UseSystemSetting;
-        }
-    }
-
     private bool _appearanceChanged;
     public bool AppearanceChanged
     {
@@ -248,8 +245,35 @@ public class SettingsPageViewModel : INotifyPropertyChanged
         }
     }
 
+    private void InitializeAppearance()
+    {
+        object appearanceSetting = ApplicationData.Current.LocalSettings.Values[GlobalConstants.LOCAL_SETTINGS_KEY_APPEARANCE];
+        AppearanceSetting appearance;
+        if (appearanceSetting == null)
+        {
+            appearance = AppearanceSetting.UseSystemSetting;
+        }
+        else
+        {
+            var appTheme = (ApplicationTheme)(int)appearanceSetting;
+            appearance = appTheme switch
+            {
+                ApplicationTheme.Light => AppearanceSetting.Light,
+                ApplicationTheme.Dark => AppearanceSetting.Dark,
+                _ => AppearanceSetting.UseSystemSetting,
+            };
+        }
+
+        _initialAppearance = appearance;
+        AppearanceLightChecked = appearance == AppearanceSetting.Light;
+        AppearanceDarkChecked = appearance == AppearanceSetting.Dark;
+        AppearanceUseSystemSettingChecked = appearance == AppearanceSetting.UseSystemSetting;
+    }
+
     private void SaveAppearance(AppearanceSetting appearance)
     {
+        AppearanceChanged = appearance != _initialAppearance;
+
         string appearanceKey = GlobalConstants.LOCAL_SETTINGS_KEY_APPEARANCE;
         switch (appearance)
         {
@@ -400,7 +424,7 @@ internal sealed partial class SettingsPage : BasePage
         ViewModel.AntiAliasingEnabled = AppData.AntiAliasingEnabled;
         ViewModel.AdvancedDebugMode = DebugUtils.DebugMode;
 
-        UpdateAppearance();
+        ViewModel.Initialize();
         UpdateCodePages();
         UpdateCacheSize();
         UpdateRescanStatus();
@@ -418,23 +442,6 @@ internal sealed partial class SettingsPage : BasePage
             UpdateRescanStatus();
             UpdateStatistis();
         });
-    }
-
-    private void UpdateAppearance()
-    {
-        object appearance_setting = ApplicationData.Current.LocalSettings.Values[GlobalConstants.LOCAL_SETTINGS_KEY_APPEARANCE];
-        if (appearance_setting == null)
-        {
-            ViewModel.Appearance = AppearanceSetting.UseSystemSetting;
-        }
-        else if ((ApplicationTheme)(int)appearance_setting == ApplicationTheme.Light)
-        {
-            ViewModel.Appearance = AppearanceSetting.Light;
-        }
-        else if ((ApplicationTheme)(int)appearance_setting == ApplicationTheme.Dark)
-        {
-            ViewModel.Appearance = AppearanceSetting.Dark;
-        }
     }
 
     private void UpdateCodePages()
