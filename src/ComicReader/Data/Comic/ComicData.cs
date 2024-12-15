@@ -19,7 +19,6 @@ using LiteDB;
 using Microsoft.Data.Sqlite;
 
 using Windows.Storage;
-using Windows.Storage.Streams;
 
 namespace ComicReader.Data.Comic;
 
@@ -111,7 +110,6 @@ internal abstract class ComicData
     public bool IsRead => Progress >= 100;
     public bool IsUnread => Progress < 0;
     public abstract bool IsEditable { get; }
-    public abstract int ImageCount { get; }
     protected StorageFolder CacheFolder => ApplicationData.Current.LocalCacheFolder;
 
     private ComicType ValueType => Type;
@@ -422,26 +420,24 @@ internal abstract class ComicData
         }
     }
 
-    public async Task<TaskException> UpdateImages(bool reload)
+    public async Task<TaskException> LoadImageFiles()
     {
-        if (reload)
+        if (_imageUpdated)
         {
-            _imageUpdated = false;
+            return TaskException.Success;
         }
 
-        if (!_imageUpdated)
+        TaskException result = await ReloadImages();
+
+        if (!result.Successful())
         {
-            TaskException result = await ReloadImages();
-
-            if (!result.Successful())
-            {
-                return result;
-            }
-
-            _imageUpdated = true;
+            return result;
         }
 
-        if (ImageCount == 0)
+        _imageUpdated = true;
+
+        using IComicConnection connection = await OpenComicAsync();
+        if (connection.GetImageCount() == 0)
         {
             return TaskException.EmptySet;
         }
@@ -449,18 +445,13 @@ internal abstract class ComicData
         return TaskException.Success;
     }
 
-    public abstract Task<TaskException> LoadFromInfoFile();
-
-    public async Task<IRandomAccessStream> GetImageStream(int index)
+    public async Task<TaskException> ReloadImageFiles()
     {
-        if (index < 0)
-        {
-            DebugUtils.Assert(false);
-            return null;
-        }
-
-        return await InternalGetImageStream(index);
+        _imageUpdated = false;
+        return await LoadImageFiles();
     }
+
+    public abstract Task<TaskException> LoadFromInfoFile();
 
     public static async Task<ComicData> FromId(long id, string taskName)
     {
@@ -478,7 +469,7 @@ internal abstract class ComicData
             return coverCacheKey;
         }
 
-        if (!UpdateImages(reload: false).Result.Successful())
+        if (!LoadImageFiles().Result.Successful())
         {
             return null;
         }
@@ -546,11 +537,11 @@ internal abstract class ComicData
 
     public abstract int GetImageSignature(int index);
 
+    public abstract Task<IComicConnection> OpenComicAsync();
+
     protected abstract Task<TaskException> ReloadImages();
 
     protected abstract Task<TaskException> SaveToInfoFile();
-
-    protected abstract Task<IRandomAccessStream> InternalGetImageStream(int index);
 
     //
     // Protected Methods

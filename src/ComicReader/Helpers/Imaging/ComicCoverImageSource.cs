@@ -3,7 +3,6 @@
 
 using System.Threading.Tasks;
 
-using ComicReader.Common;
 using ComicReader.Common.Imaging;
 using ComicReader.Data.Comic;
 
@@ -17,14 +16,8 @@ internal class ComicCoverImageSource(ComicData comic) : IImageSource
 
     public async Task<IRandomAccessStream> GetImageStream()
     {
-        TaskException result = await _comic.UpdateImages(reload: false);
-
-        if (!result.Successful())
-        {
-            return null;
-        }
-
-        return await _comic.GetImageStream(0);
+        using IComicConnection connection = await _comic.OpenComicAsync();
+        return await connection.GetImageStream(0);
     }
 
     public string GetUri()

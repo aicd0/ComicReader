@@ -2,12 +2,16 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Common.DebugTools;
 
-using Windows.Data.Pdf;
+using PdfiumViewer;
+
 using Windows.Storage;
 using Windows.Storage.Streams;
 
@@ -16,13 +20,9 @@ namespace ComicReader.Data.Comic;
 internal class ComicPdfData : ComicData
 {
     private const string TAG = "ComicPdfData";
-    private const int WrongPassword = unchecked((int)0x8007052b); // HRESULT_FROM_WIN32(ERROR_WRONG_PASSWORD)
-    private const int GenericFail = unchecked((int)0x80004005);   // E_FAIL
 
     private StorageFile ThisFile = null;
-    private PdfDocument ThisDocument = null;
 
-    public override int ImageCount => ThisDocument == null ? 0 : (int)ThisDocument.PageCount;
     public override bool IsEditable => !IsExternal;
 
     private ComicPdfData(bool is_external) :
@@ -47,7 +47,7 @@ internal class ComicPdfData : ComicData
             Location = file.Path,
         };
 
-        await comic.UpdateImages(reload: true);
+        await comic.ReloadImageFiles();
         return comic;
     }
 
@@ -75,42 +75,6 @@ internal class ComicPdfData : ComicData
         return TaskException.Success;
     }
 
-    private async Task<TaskException> SetDocument()
-    {
-        if (ThisDocument != null)
-        {
-            return TaskException.Success;
-        }
-
-        TaskException r = await SetFile();
-        if (!r.Successful())
-        {
-            return r;
-        }
-
-        try
-        {
-            ThisDocument = await PdfDocument.LoadFromFileAsync(ThisFile);
-            // ThisDocument = await PdfDocument.LoadFromFileAsync(ThisFile, PasswordBox.Password);
-        }
-        catch (Exception ex)
-        {
-            return ex.HResult switch
-            {
-                WrongPassword => TaskException.IncorrectPassword,
-                GenericFail => TaskException.FileCorrupted,
-                _ => TaskException.Failure,
-            };
-        }
-
-        if (ThisDocument == null)
-        {
-            return TaskException.Failure;
-        }
-
-        return TaskException.Success;
-    }
-
     public override Task<TaskException> LoadFromInfoFile()
     {
         return Task.FromResult(TaskException.NotSupported);
@@ -123,32 +87,13 @@ internal class ComicPdfData : ComicData
 
     protected override async Task<TaskException> ReloadImages()
     {
-        TaskException r = await SetDocument();
+        TaskException r = await SetFile();
         if (!r.Successful())
         {
             return r;
         }
 
         return TaskException.Success;
-    }
-
-    protected override async Task<IRandomAccessStream> InternalGetImageStream(int index)
-    {
-        if (!(await SetDocument()).Successful())
-        {
-            return null;
-        }
-
-        if (index < 0 || index >= ImageCount)
-        {
-            Logger.F(TAG, "InternalGetImageStream");
-            return null;
-        }
-
-        using PdfPage page = ThisDocument.GetPage((uint)index);
-        var stream = new InMemoryRandomAccessStream();
-        await page.RenderToStreamAsync(stream);
-        return stream;
     }
 
     public override string GetImageCacheKey(int index)
@@ -159,5 +104,93 @@ internal class ComicPdfData : ComicData
     public override int GetImageSignature(int index)
     {
         return FileUtils.GetFileHashCode(ThisFile);
+    }
+
+    public override async Task<IComicConnection> OpenComicAsync()
+    {
+        await LoadImageFiles();
+        return new PdfComicConnection(ThisFile);
+    }
+
+    private class PdfComicConnection : IComicConnection
+    {
+        private readonly object _lock = new();
+        private readonly StorageFile _pdfFile;
+        private bool _opened = false;
+        private PdfDocument _pdfDocument;
+
+        public PdfComicConnection(StorageFile pdfFile)
+        {
+            _pdfFile = pdfFile;
+        }
+
+        public void Dispose()
+        {
+            _pdfDocument?.Dispose();
+            _pdfDocument = null;
+        }
+
+        public int GetImageCount()
+        {
+            PdfDocument pdfDocument = OpenDocument();
+            if (pdfDocument == null)
+            {
+                return 0;
+            }
+            return pdfDocument.PageCount;
+        }
+
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+        public async Task<IRandomAccessStream> GetImageStream(int index)
+#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
+        {
+            PdfDocument pdfDocument = OpenDocument();
+            if (pdfDocument == null)
+            {
+                return null;
+            }
+
+            MemoryStream memoryStream = new();
+            try
+            {
+                Image image = pdfDocument.Render(index, 1, 1, false);
+                image.Save(memoryStream, ImageFormat.Png);
+            }
+            catch (Exception e)
+            {
+                Logger.F(TAG, "GetImageStream", e);
+                memoryStream.Dispose();
+                memoryStream = null;
+            }
+            return memoryStream?.AsRandomAccessStream();
+        }
+
+        private PdfDocument OpenDocument()
+        {
+            if (_opened)
+            {
+                return _pdfDocument;
+            }
+
+            lock (_lock)
+            {
+                if (_opened)
+                {
+                    return _pdfDocument;
+                }
+
+                _opened = true;
+                try
+                {
+                    _pdfDocument = PdfDocument.Load(_pdfFile.Path);
+                }
+                catch (Exception ex)
+                {
+                    Logger.F(TAG, "OpenDocument", ex);
+                    return null;
+                }
+                return _pdfDocument;
+            }
+        }
     }
 }

@@ -23,7 +23,6 @@ internal class ComicFolderData : ComicData
     private StorageFile InfoFile { get; set; }
     private List<StorageFile> ImageFiles { get; set; } = new List<StorageFile>();
 
-    public override int ImageCount => ImageFiles.Count;
     public override bool IsEditable => !(IsExternal && InfoFile == null);
 
     private ComicFolderData(bool is_external) :
@@ -215,25 +214,6 @@ internal class ComicFolderData : ComicData
         return TaskException.Success;
     }
 
-    protected override async Task<IRandomAccessStream> InternalGetImageStream(int index)
-    {
-        if (index < 0 || index >= ImageFiles.Count)
-        {
-            Logger.F(TAG, "InternalGetImageStream");
-            return null;
-        }
-
-        try
-        {
-            return await ImageFiles[index].OpenAsync(FileAccessMode.Read);
-        }
-        catch (Exception e)
-        {
-            Logger.F(TAG, "Failed to access '" + ImageFiles[index].Path + "'. ", e);
-            return null;
-        }
-    }
-
     public override string GetImageCacheKey(int index)
     {
         if (index < 0 || index >= ImageFiles.Count)
@@ -254,5 +234,49 @@ internal class ComicFolderData : ComicData
         }
 
         return FileUtils.GetFileHashCode(ImageFiles[index]);
+    }
+
+    public override async Task<IComicConnection> OpenComicAsync()
+    {
+        await LoadImageFiles();
+        return new FolderComicConnection(ImageFiles);
+    }
+
+    private class FolderComicConnection : IComicConnection
+    {
+        private readonly List<StorageFile> _imageFiles;
+
+        public FolderComicConnection(List<StorageFile> imageFiles)
+        {
+            _imageFiles = imageFiles;
+        }
+
+        public void Dispose()
+        {
+        }
+
+        public int GetImageCount()
+        {
+            return _imageFiles.Count;
+        }
+
+        public async Task<IRandomAccessStream> GetImageStream(int index)
+        {
+            if (index < 0 || index >= _imageFiles.Count)
+            {
+                Logger.F(TAG, "InternalGetImageStream");
+                return null;
+            }
+
+            try
+            {
+                return await _imageFiles[index].OpenAsync(FileAccessMode.Read);
+            }
+            catch (Exception e)
+            {
+                Logger.F(TAG, "Failed to access '" + _imageFiles[index].Path + "'. ", e);
+                return null;
+            }
+        }
     }
 }

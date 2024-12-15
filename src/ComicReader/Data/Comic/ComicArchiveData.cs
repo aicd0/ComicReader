@@ -21,7 +21,6 @@ internal class ComicArchiveData : ComicData
     private StorageFile Archive;
     private List<string> Entries = new();
 
-    public override int ImageCount => Entries.Count;
     public override bool IsEditable => !IsExternal;
 
     private ComicArchiveData(bool is_external) :
@@ -48,7 +47,7 @@ internal class ComicArchiveData : ComicData
         };
 
         _ = await comic.LoadFromInfoFile();
-        _ = await comic.UpdateImages(reload: true);
+        _ = await comic.ReloadImageFiles();
         return comic;
     }
 
@@ -231,27 +230,6 @@ internal class ComicArchiveData : ComicData
         return TaskException.Success;
     }
 
-    protected override async Task<IRandomAccessStream> InternalGetImageStream(int index)
-    {
-        if (index < 0 || index >= Entries.Count)
-        {
-            Logger.F(TAG, "InternalGetImageStream");
-            return null;
-        }
-
-        string sub_path = IsExternal ? Entries[index] : GetSubPathFromFilename(Entries[index]);
-        Stream stream = await ArchiveAccess.TryGetFileStream(Archive, sub_path);
-
-        if (stream == null)
-        {
-            Log("Failed to access entry '" + Entries[index] + "'");
-            return null;
-        }
-
-        IRandomAccessStream win_stream = stream.AsRandomAccessStream();
-        return win_stream;
-    }
-
     public override string GetImageCacheKey(int index)
     {
         if (index >= Entries.Count)
@@ -267,5 +245,54 @@ internal class ComicArchiveData : ComicData
     public override int GetImageSignature(int index)
     {
         return FileUtils.GetFileHashCode(Archive);
+    }
+
+    public override async Task<IComicConnection> OpenComicAsync()
+    {
+        await LoadImageFiles();
+        List<string> entries = IsExternal ? Entries : Entries.Select(GetSubPathFromFilename).ToList();
+        return new ArchiveComicConnection(Archive, entries);
+    }
+
+    private class ArchiveComicConnection : IComicConnection
+    {
+        private readonly StorageFile _archiveFile;
+        private readonly List<string> _entries;
+
+        public ArchiveComicConnection(StorageFile archiveFile, List<string> entries)
+        {
+            _archiveFile = archiveFile;
+            _entries = entries;
+        }
+
+        public void Dispose()
+        {
+        }
+
+        public int GetImageCount()
+        {
+            return _entries.Count;
+        }
+
+        public async Task<IRandomAccessStream> GetImageStream(int index)
+        {
+            if (index < 0 || index >= _entries.Count)
+            {
+                Logger.F(TAG, "InternalGetImageStream");
+                return null;
+            }
+
+            string sub_path = _entries[index];
+            Stream stream = await ArchiveAccess.TryGetFileStream(_archiveFile, sub_path);
+
+            if (stream == null)
+            {
+                Log("Failed to access entry '" + _entries[index] + "'");
+                return null;
+            }
+
+            IRandomAccessStream win_stream = stream.AsRandomAccessStream();
+            return win_stream;
+        }
     }
 }
