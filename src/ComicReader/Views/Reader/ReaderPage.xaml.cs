@@ -150,6 +150,7 @@ internal sealed partial class ReaderPage : BasePage
 
     private bool? _isFavorite = null;
     private ComicData _comic;
+    private IComicConnection _comicConnection;
     private volatile bool _updatingProgress = false;
 
     private bool _buttomTileShowed = false;
@@ -291,6 +292,12 @@ internal sealed partial class ReaderPage : BasePage
         });
     }
 
+    protected override void OnStop()
+    {
+        base.OnStop();
+        ReleaseComicConnection();
+    }
+
     private void ObserveData()
     {
         GetMainPageAbility().RegisterTabUnselectedHandler(this, AppData.UnsetReadingComic);
@@ -374,13 +381,17 @@ internal sealed partial class ReaderPage : BasePage
             return;
         }
 
+        ReleaseComicConnection();
+        _comic = comic;
+
         if (comic == null)
         {
             ReaderStatusLiveData.Emit(ReaderStatusEnum.Error);
             return;
         }
 
-        IComicConnection connection = await comic.OpenComicAsync(); // leak
+        IComicConnection connection = await comic.OpenComicAsync();
+        _comicConnection = connection;
 
         if (connection == null)
         {
@@ -389,8 +400,6 @@ internal sealed partial class ReaderPage : BasePage
         }
 
         ReaderStatusLiveData.Emit(ReaderStatusEnum.Loading);
-
-        _comic = comic;
 
         await LoadComicInfo();
 
@@ -436,6 +445,12 @@ internal sealed partial class ReaderPage : BasePage
                 Page = i + 1,
             });
         }
+    }
+
+    private void ReleaseComicConnection()
+    {
+        _comicConnection?.Dispose();
+        _comicConnection = null;
     }
 
     private async Task LoadComicInfo()

@@ -46,6 +46,7 @@ internal abstract class StatefulPage : Page
             case NavigationMode.Back:
             case NavigationMode.Forward:
                 TryPause();
+                TryStop();
                 break;
             case NavigationMode.Refresh:
                 break;
@@ -61,6 +62,10 @@ internal abstract class StatefulPage : Page
     }
 
     protected virtual void OnPause()
+    {
+    }
+
+    protected virtual void OnStop()
     {
     }
 
@@ -115,6 +120,20 @@ internal abstract class StatefulPage : Page
         {
             _isResumed = false;
             OnPause();
+        }
+    }
+
+    private void TryStop()
+    {
+        if (_isResumed)
+        {
+            return;
+        }
+
+        if (_isStarted)
+        {
+            _isStarted = false;
+            OnStop();
         }
     }
 }
