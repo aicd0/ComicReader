@@ -5,6 +5,7 @@ using System;
 using System.IO;
 using System.Text;
 
+using ComicReader.Common.AppEnvironment;
 using ComicReader.Common.DebugTools;
 
 using Windows.Storage;
@@ -31,7 +32,7 @@ internal static class CrashHandler
             sb.Append(DateTimeOffset.Now);
             sb.Append('\n');
 
-            AppEnvironment.Instance.AppendDebugText(sb);
+            EnvironmentProvider.Instance.AppendDebugText(sb);
 
             string fileName = $"crash_report_{DateTimeOffset.Now:yyyyMMddHHmmss}.txt";
             string filePath = ApplicationData.Current.LocalCacheFolder.Path + "\\" + fileName;

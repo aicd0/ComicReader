@@ -11,6 +11,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
+using ComicReader.Common.AppEnvironment;
 using ComicReader.Common.BasePage;
 using ComicReader.Common.DebugTools;
 using ComicReader.Common.Threading;
@@ -513,7 +514,7 @@ internal sealed partial class SettingsPage : BasePage
     private void UpdateAbout()
     {
         string appName = StringResourceProvider.GetResourceString("AppDisplayName");
-        AboutBuildVersionControl.Text = appName + " " + AppEnvironment.Instance.GetVersionName();
+        AboutBuildVersionControl.Text = appName + " " + EnvironmentProvider.Instance.GetVersionName();
 
         string author = "aicd0";
         string aboutCopyright = StringResourceProvider.GetResourceString("AboutCopyright");
@@ -524,7 +525,7 @@ internal sealed partial class SettingsPage : BasePage
     private void UpdateDebugInformation()
     {
         StringBuilder sb = new();
-        AppEnvironment.Instance.AppendDebugText(sb);
+        EnvironmentProvider.Instance.AppendDebugText(sb);
         TbDebugInformation.Text = sb.ToString();
     }
 

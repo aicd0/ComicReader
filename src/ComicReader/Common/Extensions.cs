@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
@@ -48,5 +49,22 @@ internal static class Extensions
         }
 
         return null;
+    }
+
+    public static void SafeAppend(this StringBuilder sb, string category, Func<object> func)
+    {
+        string value;
+        try
+        {
+            value = func()?.ToString() ?? "[null]";
+        }
+        catch (Exception)
+        {
+            return;
+        }
+        sb.Append(category);
+        sb.Append(": ");
+        sb.Append(value);
+        sb.Append('\n');
     }
 }

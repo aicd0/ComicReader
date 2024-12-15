@@ -5,6 +5,7 @@ using System;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
+using ComicReader.Common.AppEnvironment;
 using ComicReader.Common.DebugTools;
 using ComicReader.Data;
 using ComicReader.Views.Main;
@@ -27,7 +28,7 @@ public partial class App : Application
     public App()
     {
         UnhandledException += CrashHandler.OnUnhandledException;
-        AppEnvironment.Instance.Initialize();
+        EnvironmentProvider.Instance.Initialize();
         ApplyAppTheme();
         InitializeComponent();
         StartAppCenter();
