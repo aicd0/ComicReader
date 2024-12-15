@@ -5,7 +5,7 @@ using System;
 using System.ComponentModel;
 
 using ComicReader.Common;
-using ComicReader.Data;
+using ComicReader.Data.Comic;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;

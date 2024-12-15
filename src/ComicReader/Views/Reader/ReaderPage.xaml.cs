@@ -16,6 +16,7 @@ using ComicReader.Common.KVStorage;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Common.Threading;
 using ComicReader.Data;
+using ComicReader.Data.Comic;
 using ComicReader.Helpers.Imaging;
 using ComicReader.Helpers.Navigation;
 using ComicReader.ViewModels;

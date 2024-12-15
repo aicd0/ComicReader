@@ -13,7 +13,7 @@ using Windows.Storage;
 using Windows.Storage.Search;
 using Windows.Storage.Streams;
 
-namespace ComicReader.Data;
+namespace ComicReader.Data.Comic;
 
 internal class ComicFolderData : ComicData
 {

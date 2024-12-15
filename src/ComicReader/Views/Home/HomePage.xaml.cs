@@ -11,6 +11,7 @@ using ComicReader.Common.BasePage;
 using ComicReader.Common.Imaging;
 using ComicReader.Common.Threading;
 using ComicReader.Data;
+using ComicReader.Data.Comic;
 using ComicReader.Data.SqlHelpers;
 using ComicReader.Helpers.Imaging;
 using ComicReader.Helpers.Navigation;

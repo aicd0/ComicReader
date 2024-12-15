@@ -8,6 +8,7 @@ using ComicReader.Common;
 using ComicReader.Common.BasePage;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Data;
+using ComicReader.Data.Comic;
 using ComicReader.Helpers.Navigation;
 using ComicReader.ViewModels;
 using ComicReader.Views.Main;

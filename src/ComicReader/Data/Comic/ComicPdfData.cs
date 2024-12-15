@@ -11,7 +11,7 @@ using Windows.Data.Pdf;
 using Windows.Storage;
 using Windows.Storage.Streams;
 
-namespace ComicReader.Data;
+namespace ComicReader.Data.Comic;
 
 internal class ComicPdfData : ComicData
 {

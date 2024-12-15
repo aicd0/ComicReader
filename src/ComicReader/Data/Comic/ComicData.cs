@@ -21,7 +21,7 @@ using Microsoft.Data.Sqlite;
 using Windows.Storage;
 using Windows.Storage.Streams;
 
-namespace ComicReader.Data;
+namespace ComicReader.Data.Comic;
 
 internal abstract class ComicData
 {

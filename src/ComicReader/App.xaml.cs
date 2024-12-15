@@ -8,6 +8,7 @@ using ComicReader.Common;
 using ComicReader.Common.AppEnvironment;
 using ComicReader.Common.DebugTools;
 using ComicReader.Data;
+using ComicReader.Data.Comic;
 using ComicReader.Views.Main;
 
 using Microsoft.AppCenter;

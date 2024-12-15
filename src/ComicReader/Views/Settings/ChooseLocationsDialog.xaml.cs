@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Data;
+using ComicReader.Data.Comic;
 using ComicReader.ViewModels;
 
 using Microsoft.UI.Xaml;
