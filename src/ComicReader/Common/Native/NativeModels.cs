@@ -68,4 +68,6 @@ internal class NativeModels
         public System.Drawing.Point ptMaxPosition { get; set; }
         public System.Drawing.Rectangle rcNormalPosition { get; set; }
     }
+
+    internal delegate void WinEventDelegate(IntPtr winEventHookHandle, uint eventType, IntPtr windowHandle, int objectId, int childId, uint eventThreadId, uint eventTimeInMilliseconds);
 }

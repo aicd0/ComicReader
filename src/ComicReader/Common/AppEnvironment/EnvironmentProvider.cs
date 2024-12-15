@@ -29,12 +29,16 @@ internal class EnvironmentProvider
 
     public void AppendDebugText(StringBuilder sb)
     {
-        sb.SafeAppend("OS version", () => Environment.OSVersion);
+        sb.SafeAppend("OS build", () => DeviceInformationHelper.Instance.GetOsBuild());
+        sb.SafeAppend("OS version", () => DeviceInformationHelper.Instance.GetOsVersion());
         sb.SafeAppend("OS architecture", () => RuntimeInformation.OSArchitecture);
         sb.SafeAppend("Installed language", () => CultureInfo.InstalledUICulture.Name);
         sb.SafeAppend("Current language", () => CultureInfo.CurrentUICulture.Name);
         sb.SafeAppend("Machine name", () => Environment.MachineName);
+        sb.SafeAppend("Device model", () => DeviceInformationHelper.Instance.GetDeviceModel());
+        sb.SafeAppend("OEM name", () => DeviceInformationHelper.Instance.GetDeviceOemName());
         sb.SafeAppend("Processor count", () => Environment.ProcessorCount);
+        sb.SafeAppend("Screen size", () => DeviceInformationHelper.Instance.GetScreenSize());
         sb.SafeAppend("Version name", GetVersionName);
         sb.SafeAppend("Build type", () => DebugUtils.DebugBuild ? "Debug" : "Release");
         sb.SafeAppend("Process architecture", () => RuntimeInformation.ProcessArchitecture);
