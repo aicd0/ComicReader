@@ -224,7 +224,7 @@
                 PaneBackground="{ThemeResource SidePaneBackground}"
                 PanePlacement="Right">
                 <SplitView.Pane>
-                    <navigation:SidePane Navigating="SidePane_Navigating" />
+                    <navigation:SidePane SelectionChanged="OnSidePaneSelectionChanged" />
                 </SplitView.Pane>
             </SplitView>
         </Grid>

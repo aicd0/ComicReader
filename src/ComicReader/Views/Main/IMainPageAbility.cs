@@ -15,6 +15,8 @@ internal interface IMainPageAbility : IPageAbility
 
     void SetNavigationBundle(NavigationBundle bundle);
 
+    NavigationBundle CreateNavigationBundle(Route route);
+
     void OpenInCurrentTab(Route route);
 
     void SetTitle(string title);

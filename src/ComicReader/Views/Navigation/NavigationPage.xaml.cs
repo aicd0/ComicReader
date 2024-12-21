@@ -313,10 +313,17 @@ internal sealed partial class NavigationPage : BasePage
         });
     }
 
-    private void SidePane_Navigating(NavigationBundle bundle)
+    private void OnSidePaneSelectionChanged(SidePane sender, string item)
     {
-        TransferAbilities(bundle);
+        Route route = item switch
+        {
+            "Favorites" => new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_FAVORITE),
+            "History" => new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_HISTORY),
+            _ => throw new Exception(),
+        };
+        NavigationBundle bundle = GetMainPageAbility().CreateNavigationBundle(route);
         bundle.Abilities[typeof(INavigationPageAbility)] = _ability;
+        sender.Navigate(bundle);
     }
 
     private void SetGridViewModeEnabled(bool enabled)

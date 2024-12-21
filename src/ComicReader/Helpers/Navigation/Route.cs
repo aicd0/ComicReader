@@ -31,7 +31,7 @@ internal class Route
         return this;
     }
 
-    public NavigationBundle Process()
+    public RouteInfo Build()
     {
         // parse scheme
         int index = _url.IndexOf("://");
@@ -173,13 +173,7 @@ internal class Route
             queries_dict[entry.Key] = entry.Value;
         }
 
-        return Process(scheme, host, port_num, path, queries_dict, fragment);
-    }
-
-    private NavigationBundle Process(string scheme, string host, int port, string path, Dictionary<string, string> queries, string fragment)
-    {
-        var routeInfo = new RouteInfo(scheme, host, port, path, queries, fragment);
-        return AppRouter.Process(routeInfo);
+        return new RouteInfo(scheme, host, port_num, path, queries_dict, fragment);
     }
 
     private string ThrowParseException(int code)

@@ -274,7 +274,8 @@ internal sealed partial class MainPage : StatefulPage
             throw new ArgumentException();
         }
 
-        NavigationBundle bundle = route.Process();
+        RouteInfo routeInfo = route.Build();
+        NavigationBundle bundle = AppRouter.Process(routeInfo);
 
         if (!bundle.PageTrait.SupportMultiInstance())
         {
@@ -318,7 +319,7 @@ internal sealed partial class MainPage : StatefulPage
             if (frame.Content == null || frame.Content.GetType() != typeof(NavigationPage))
             {
                 var navigationRoute = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_NAVIGATION);
-                NavigationBundle navigationPageBundle = navigationRoute.Process();
+                NavigationBundle navigationPageBundle = AppRouter.Process(navigationRoute.Build());
                 navigationPageBundle.Abilities[typeof(IMainPageAbility)] = new MainPageAbility(this, tabId);
                 if (!frame.Navigate(navigationPageBundle.PageTrait.GetPageType(), navigationPageBundle))
                 {
@@ -623,6 +624,13 @@ internal sealed partial class MainPage : StatefulPage
         {
             _parent = new WeakReference<MainPage>(parent);
             _tabId = tabId;
+        }
+
+        public NavigationBundle CreateNavigationBundle(Route route)
+        {
+            NavigationBundle bundle = AppRouter.Process(route.Build());
+            bundle.Abilities[typeof(IMainPageAbility)] = this;
+            return bundle;
         }
 
         public void OpenInCurrentTab(Route route)

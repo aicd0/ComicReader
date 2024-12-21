@@ -93,47 +93,45 @@ internal abstract class StatefulPage : Page
 
     private void TryStart(object p)
     {
-        if (!_isStarted)
+        if (_isStarted)
         {
-            _isStarted = true;
-            OnStart(p);
+            return;
         }
+
+        _isStarted = true;
+        OnStart(p);
     }
 
     private void TryResume()
     {
-        if (!_isStarted || !_isLoaded)
+        if (!_isStarted || !_isLoaded || _isResumed)
         {
             return;
         }
 
-        if (!_isResumed)
-        {
-            _isResumed = true;
-            OnResume();
-        }
+        _isResumed = true;
+        OnResume();
     }
 
     private void TryPause()
     {
-        if (_isResumed)
-        {
-            _isResumed = false;
-            OnPause();
-        }
-    }
-
-    private void TryStop()
-    {
-        if (_isResumed)
+        if (!_isResumed)
         {
             return;
         }
 
-        if (_isStarted)
+        _isResumed = false;
+        OnPause();
+    }
+
+    private void TryStop()
+    {
+        if (_isResumed || !_isStarted)
         {
-            _isStarted = false;
-            OnStop();
+            return;
         }
+
+        _isStarted = false;
+        OnStop();
     }
 }
