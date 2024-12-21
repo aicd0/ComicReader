@@ -5,8 +5,8 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
-using ComicReader.Common.BasePage;
 using ComicReader.Common.Lifecycle;
+using ComicReader.Common.PageBase;
 using ComicReader.Data;
 using ComicReader.Data.Comic;
 using ComicReader.Helpers.Navigation;

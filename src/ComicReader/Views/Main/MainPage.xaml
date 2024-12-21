@@ -1,8 +1,8 @@
-<base:StatefulPage
+<base:BasePage
     x:Class="ComicReader.Views.Main.MainPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:base="using:ComicReader.Common.BasePage"
+    xmlns:base="using:ComicReader.Common.PageBase"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:main="using:ComicReader.Views.Main"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -169,4 +169,4 @@
             </muxc:TabView.TabStripFooter>
         </muxc:TabView>
     </Grid>
-</base:StatefulPage>
+</base:BasePage>

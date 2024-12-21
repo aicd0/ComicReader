@@ -1,27 +1,15 @@
-// Copyright (c) aicd0. All rights reserved.
+﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
 
+using ComicReader.Common.PageBase;
 using ComicReader.Views.Help;
 using ComicReader.Views.Home;
 using ComicReader.Views.Search;
 using ComicReader.Views.Settings;
 
 namespace ComicReader.Helpers.Navigation;
-
-internal interface IPageTrait
-{
-    Type GetPageType();
-
-    bool HasNavigationBar();
-
-    bool ImmersiveMode();
-
-    bool SupportFullscreen();
-
-    bool SupportMultiInstance();
-}
 
 internal class DefaultPageTrait : IPageTrait
 {

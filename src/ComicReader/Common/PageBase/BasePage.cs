@@ -1,25 +1,32 @@
-// Copyright (c) aicd0. All rights reserved.
+﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 
-namespace ComicReader.Common.BasePage;
+namespace ComicReader.Common.PageBase;
 
-internal abstract class StatefulPage : Page
+internal abstract class BasePage : Page
 {
+    private PageCommunicator _communicator;
+    private PointerPoint _lastPointerPoint;
+
     private bool _isStarted = false;
     private bool _isResumed = false;
     private bool _isLoaded = false;
+    private bool _requireStop = false;
 
-    public StatefulPage()
+    public BasePage()
     {
         Loaded += OnLoadedInternal;
         Unloaded += OnUnloadedInternal;
+        AddHandler(PointerPressedEvent, new PointerEventHandler(OnPagePointerPressed), true);
     }
 
-    protected override void OnNavigatedTo(NavigationEventArgs e)
+    protected sealed override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
 
@@ -36,7 +43,7 @@ internal abstract class StatefulPage : Page
         }
     }
 
-    protected override void OnNavigatedFrom(NavigationEventArgs e)
+    protected sealed override void OnNavigatedFrom(NavigationEventArgs e)
     {
         base.OnNavigatedFrom(e);
 
@@ -53,7 +60,7 @@ internal abstract class StatefulPage : Page
         }
     }
 
-    protected virtual void OnStart(object p)
+    protected virtual void OnStart(PageBundle bundle)
     {
     }
 
@@ -67,6 +74,26 @@ internal abstract class StatefulPage : Page
 
     protected virtual void OnStop()
     {
+    }
+
+    protected T GetAbility<T>() where T : class
+    {
+        return _communicator.GetAbility<T>();
+    }
+
+    protected bool CanHandleTapped()
+    {
+        if (_lastPointerPoint == null)
+        {
+            return true;
+        }
+
+        if (_lastPointerPoint.Properties.IsXButton1Pressed || _lastPointerPoint.Properties.IsXButton2Pressed)
+        {
+            return false;
+        }
+
+        return true;
     }
 
     private void OnLoadedInternal(object sender, RoutedEventArgs e)
@@ -91,6 +118,11 @@ internal abstract class StatefulPage : Page
         TryPause();
     }
 
+    private void OnPagePointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        _lastPointerPoint = e.GetCurrentPoint((UIElement)sender);
+    }
+
     private void TryStart(object p)
     {
         if (_isStarted)
@@ -99,7 +131,21 @@ internal abstract class StatefulPage : Page
         }
 
         _isStarted = true;
-        OnStart(p);
+
+        if (p is NavigationBundle bundle)
+        {
+            _communicator = bundle.Communicator;
+            _communicator.GetAbility<ICommonPageAbility>()?.RegisterPageStoppedHandler(this, delegate
+            {
+                _requireStop = true;
+                TryStop();
+            });
+            OnStart(bundle.Bundle);
+        }
+        else
+        {
+            OnStart(null);
+        }
     }
 
     private void TryResume()
@@ -122,6 +168,11 @@ internal abstract class StatefulPage : Page
 
         _isResumed = false;
         OnPause();
+
+        if (_requireStop)
+        {
+            TryStop();
+        }
     }
 
     private void TryStop()

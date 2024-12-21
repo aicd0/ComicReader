@@ -9,11 +9,11 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
-using ComicReader.Common.BasePage;
 using ComicReader.Common.DebugTools;
 using ComicReader.Common.Imaging;
 using ComicReader.Common.KVStorage;
 using ComicReader.Common.Lifecycle;
+using ComicReader.Common.PageBase;
 using ComicReader.Common.Threading;
 using ComicReader.Data;
 using ComicReader.Data.Comic;
