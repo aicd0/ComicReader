@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
@@ -25,9 +26,6 @@ internal static class ImageCacheManager
     private const string TAG = "ImageCacheManager";
     private const string CACHE_FOLDER = "images";
     private const long MAX_CACHE_SIZE = 1024 * 1024 * 1024;
-
-    private const string CACHE_ENTRY_KEY_SMALL = "100k";
-    private const int CACHE_ENTRY_RESOLUTION_SMALL = 100000;
 
     private static readonly Lazy<LRUCache> sImageCache = new(delegate
     {
@@ -70,14 +68,18 @@ internal static class ImageCacheManager
         {
             requireCache = false;
             CalculateDesiredDimension(frameWidth, frameHeight, stretchMode, cacheRecord.Width, cacheRecord.Height, out int desiredWidth, out int desiredHeight);
-            string cacheEntryKey = CalculateCacheEntryKey(desiredWidth, desiredHeight, cacheRecord.Width, cacheRecord.Height);
-            if (cacheEntryKey != null && cacheEntryKey.Length > 0)
+            IEnumerable<string> cacheEntryKeys = ImageCacheStrategy.CalculateCacheEntryKeys(desiredWidth, desiredHeight, cacheRecord.Width, cacheRecord.Height);
+            foreach (string cacheEntryKey in cacheEntryKeys)
             {
                 requireCache = true;
                 string entry = cacheRecord.GetEntry(cacheEntryKey);
                 if (entry.Length > 0)
                 {
                     cacheStream = sImageCache.Value.Get(entry);
+                }
+                if (cacheStream != null)
+                {
+                    break;
                 }
             }
         }
@@ -180,7 +182,13 @@ internal static class ImageCacheManager
         int sourceWidth = image.Width;
         int sourceHeight = image.Height;
         CalculateDesiredDimension(frameWidth, frameHeight, stretchMode, sourceWidth, sourceHeight, out int desiredWidth, out int desiredHeight);
-        string cacheEntryKey = CalculateCacheEntryKey(desiredWidth, desiredHeight, sourceWidth, sourceHeight);
+        IEnumerable<string> cacheEntryKeys = ImageCacheStrategy.CalculateCacheEntryKeys(desiredWidth, desiredHeight, sourceWidth, sourceHeight);
+        string cacheEntryKey = null;
+        foreach (string key in cacheEntryKeys)
+        {
+            cacheEntryKey = key;
+            break;
+        }
         MemoryStream cacheStream = CreateImageCacheStream(cacheEntryKey, sourceWidth, sourceHeight, image);
 
         try
@@ -243,14 +251,10 @@ internal static class ImageCacheManager
             return null;
         }
 
-        int cacheResolution;
-        switch (cacheEntryKey)
+        int cacheResolution = ImageCacheStrategy.GetCacheResolution(cacheEntryKey);
+        if (cacheResolution <= 0)
         {
-            case CACHE_ENTRY_KEY_SMALL:
-                cacheResolution = CACHE_ENTRY_RESOLUTION_SMALL;
-                break;
-            default:
-                return null;
+            return null;
         }
 
         int sourceResolution = sourceWidth * sourceHeight;
@@ -283,24 +287,6 @@ internal static class ImageCacheManager
         }
 
         return memoryStream;
-    }
-
-    private static string CalculateCacheEntryKey(int desiredWidth, int desiredHeight, int originWidth, int originHeight)
-    {
-        int desiredResolution = desiredWidth * desiredHeight;
-        int originResolution = originWidth * originHeight;
-
-        if (desiredResolution >= originResolution)
-        {
-            return null;
-        }
-
-        if (desiredResolution <= CACHE_ENTRY_RESOLUTION_SMALL)
-        {
-            return CACHE_ENTRY_KEY_SMALL;
-        }
-
-        return null;
     }
 
     private static async Task<IRandomAccessStream> TryOpenImageStreamAsync(IImageSource source)
