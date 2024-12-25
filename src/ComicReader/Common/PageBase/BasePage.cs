@@ -1,6 +1,8 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+using ComicReader.Common.DebugTools;
+
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -140,6 +142,7 @@ internal abstract class BasePage : Page
 
         _isStarted = true;
 
+        LogLifecycleEvent("Start");
         if (p is NavigationBundle bundle)
         {
             _communicator = bundle.Communicator;
@@ -160,6 +163,7 @@ internal abstract class BasePage : Page
         }
 
         _isResumed = true;
+        LogLifecycleEvent("Resume");
         OnResume();
     }
 
@@ -171,6 +175,7 @@ internal abstract class BasePage : Page
         }
 
         _isResumed = false;
+        LogLifecycleEvent("Pause");
         OnPause();
 
         if (_requireStop)
@@ -188,6 +193,12 @@ internal abstract class BasePage : Page
 
         _isStarted = false;
         _communicator.GetAbility<ICommonPageAbility>()?.UnregisterPageStopHandler(_pageStopHandler);
+        LogLifecycleEvent("Stop");
         OnStop();
+    }
+
+    private void LogLifecycleEvent(string eventName)
+    {
+        Logger.I(LogTag.N("PageLifecycle", this.GetType().Name), eventName);
     }
 }
