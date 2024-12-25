@@ -19,8 +19,16 @@ internal abstract class BasePage : Page
     private bool _isLoaded = false;
     private bool _requireStop = false;
 
+    private readonly PageStopEventHandler _pageStopHandler;
+
     public BasePage()
     {
+        _pageStopHandler = delegate
+        {
+            _requireStop = true;
+            TryStop();
+        };
+
         Loaded += OnLoadedInternal;
         Unloaded += OnUnloadedInternal;
         AddHandler(PointerPressedEvent, new PointerEventHandler(OnPagePointerPressed), true);
@@ -135,11 +143,7 @@ internal abstract class BasePage : Page
         if (p is NavigationBundle bundle)
         {
             _communicator = bundle.Communicator;
-            _communicator.GetAbility<ICommonPageAbility>()?.RegisterPageStoppedHandler(this, delegate
-            {
-                _requireStop = true;
-                TryStop();
-            });
+            _communicator.GetAbility<ICommonPageAbility>()?.RegisterPageStopHandler(_pageStopHandler);
             OnStart(bundle.Bundle);
         }
         else
@@ -183,6 +187,7 @@ internal abstract class BasePage : Page
         }
 
         _isStarted = false;
+        _communicator.GetAbility<ICommonPageAbility>()?.UnregisterPageStopHandler(_pageStopHandler);
         OnStop();
     }
 }

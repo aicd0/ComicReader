@@ -1,13 +1,13 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-using Microsoft.UI.Xaml.Controls;
-
 namespace ComicReader.Common.PageBase;
+
+public delegate void PageStopEventHandler();
 
 internal interface ICommonPageAbility : IPageAbility
 {
-    public delegate void PageStoppedEventHandler();
+    void RegisterPageStopHandler(PageStopEventHandler handler);
 
-    void RegisterPageStoppedHandler(Page owner, PageStoppedEventHandler handler);
+    void UnregisterPageStopHandler(PageStopEventHandler handler);
 }

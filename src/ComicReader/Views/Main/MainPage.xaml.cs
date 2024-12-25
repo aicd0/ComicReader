@@ -616,7 +616,7 @@ internal sealed partial class MainPage : BasePage
         private readonly EventBus _eventBus = new();
         private readonly int _tabId;
 
-        private ICommonPageAbility.PageStoppedEventHandler _pageStopped;
+        private PageStopEventHandler _pageStopped;
 
         public MainPageAbility(MainPage parent, int tabId)
         {
@@ -624,9 +624,14 @@ internal sealed partial class MainPage : BasePage
             _tabId = tabId;
         }
 
-        public void RegisterPageStoppedHandler(Page owner, ICommonPageAbility.PageStoppedEventHandler handler)
+        public void RegisterPageStopHandler(PageStopEventHandler handler)
         {
             _pageStopped += handler;
+        }
+
+        public void UnregisterPageStopHandler(PageStopEventHandler handler)
+        {
+            _pageStopped -= handler;
         }
 
         public void DispatchPageStoppedEvent()
