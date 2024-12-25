@@ -218,8 +218,7 @@ internal class ComicPdfData : ComicData
                 try
                 {
                     SizeF size = pdfDocument.PageSizes[index];
-                    int width = (int)size.Width * 2;
-                    int height = (int)size.Height * 2;
+                    CalculatePageSize(size.Width, size.Height, out int width, out int height);
                     using Image image = pdfDocument.Render(index, width, height, 1, 1, false);
                     image.Save(memoryStream, ImageFormat.Png);
                 }
@@ -286,6 +285,53 @@ internal class ComicPdfData : ComicData
                 }
                 return _pdfDocumentHolder;
             }
+        }
+
+        private void CalculatePageSize(float originWidth, float originHeight, out int width, out int height)
+        {
+            int defaultWidth = 764;
+            int defaultHeight = 1080;
+
+            if (!(float.IsFinite(originWidth) && float.IsFinite(originHeight) && originWidth > 0 && originHeight > 0))
+            {
+                width = defaultWidth;
+                height = defaultHeight;
+                return;
+            }
+
+            DisplayUtils.GetScreenSize(out int screenWidth, out int screenHeight);
+            if (screenWidth <= 0 || screenHeight <= 0)
+            {
+                width = (int)originWidth;
+                height = (int)originHeight;
+                return;
+            }
+
+            float pageAspectRatio = originWidth / originHeight;
+            float screenAspectRatio = (float)screenWidth / screenHeight;
+
+            float targetWidth, targetHeight;
+            if (pageAspectRatio > screenAspectRatio)
+            {
+                targetHeight = screenHeight;
+                targetWidth = screenHeight / originHeight * originWidth;
+            }
+            else
+            {
+                targetWidth = screenWidth;
+                targetHeight = screenWidth / originWidth * originHeight;
+            }
+
+            float maxResolution = 10000000;
+            float targetResolution = targetWidth * targetHeight;
+            if (targetResolution > maxResolution)
+            {
+                float dimensionFactor = (float)Math.Sqrt(maxResolution / targetResolution);
+                targetWidth *= dimensionFactor;
+                targetHeight *= dimensionFactor;
+            }
+            width = (int)targetWidth;
+            height = (int)targetHeight;
         }
     }
 }

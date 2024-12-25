@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Drawing;
 
 using ComicReader.Common.DebugTools;
 using ComicReader.Common.Native;
@@ -18,6 +19,14 @@ internal static class DisplayUtils
     private const string TAG = "DisplayUtils";
 
     private static double sRawPixelPerPixel = -1;
+
+    public static void GetScreenSize(out int width, out int height)
+    {
+        using var graphics = Graphics.FromHwnd(IntPtr.Zero);
+        IntPtr hdc = graphics.GetHdc();
+        width = NativeMethods.GetDeviceCaps(hdc, 118);
+        height = NativeMethods.GetDeviceCaps(hdc, 117);
+    }
 
     public static double GetRawPixelPerPixel()
     {
