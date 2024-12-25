@@ -68,19 +68,17 @@ internal static class ImageCacheManager
 
         if (cacheRecord != null)
         {
-            double aspectRatio = (double)cacheRecord.Width / cacheRecord.Height;
-            if (CalculateDesiredDimension(frameWidth, frameHeight, stretchMode, aspectRatio, out int desiredWidth, out int desiredHeight))
+            requireCache = false;
+            CalculateDesiredDimension(frameWidth, frameHeight, stretchMode, cacheRecord.Width, cacheRecord.Height, out int desiredWidth, out int desiredHeight);
+            string cacheEntryKey = CalculateCacheEntryKey(desiredWidth, desiredHeight, cacheRecord.Width, cacheRecord.Height);
+            if (cacheEntryKey != null && cacheEntryKey.Length > 0)
             {
-                string cacheEntryKey = CalculateCacheEntryKey(desiredWidth * desiredHeight);
+                requireCache = true;
                 string entry = cacheRecord.GetEntry(cacheEntryKey);
                 if (entry.Length > 0)
                 {
                     cacheStream = sImageCache.Value.Get(entry);
                 }
-            }
-            else
-            {
-                requireCache = false;
             }
         }
 
@@ -138,8 +136,8 @@ internal static class ImageCacheManager
                     return;
                 }
 
-                double aspectRatio = (double)image.PixelWidth / image.PixelHeight;
-                if (CalculateDesiredDimension(frameWidth, frameHeight, stretchMode, aspectRatio, out int desiredWidth, out int desiredHeight))
+                CalculateDesiredDimension(frameWidth, frameHeight, stretchMode, image.PixelWidth, image.PixelHeight, out int desiredWidth, out int desiredHeight);
+                if (desiredWidth != image.PixelWidth || desiredHeight != image.PixelHeight)
                 {
                     image.DecodePixelWidth = desiredWidth;
                     image.DecodePixelHeight = desiredHeight;
@@ -181,15 +179,8 @@ internal static class ImageCacheManager
 
         int sourceWidth = image.Width;
         int sourceHeight = image.Height;
-        double aspectRatio = (double)sourceWidth / sourceHeight;
-
-        if (!CalculateDesiredDimension(frameWidth, frameHeight, stretchMode, aspectRatio, out int desiredWidth, out int desiredHeight))
-        {
-            return null;
-        }
-
-        int desiredResolution = desiredHeight * desiredWidth;
-        string cacheEntryKey = CalculateCacheEntryKey(desiredResolution);
+        CalculateDesiredDimension(frameWidth, frameHeight, stretchMode, sourceWidth, sourceHeight, out int desiredWidth, out int desiredHeight);
+        string cacheEntryKey = CalculateCacheEntryKey(desiredWidth, desiredHeight, sourceWidth, sourceHeight);
         MemoryStream cacheStream = CreateImageCacheStream(cacheEntryKey, sourceWidth, sourceHeight, image);
 
         try
@@ -247,6 +238,11 @@ internal static class ImageCacheManager
 
     private static MemoryStream CreateImageCacheStream(string cacheEntryKey, int sourceWidth, int sourceHeight, Image image)
     {
+        if (cacheEntryKey == null || cacheEntryKey.Length == 0)
+        {
+            return null;
+        }
+
         int cacheResolution;
         switch (cacheEntryKey)
         {
@@ -289,16 +285,22 @@ internal static class ImageCacheManager
         return memoryStream;
     }
 
-    private static string CalculateCacheEntryKey(int resolution)
+    private static string CalculateCacheEntryKey(int desiredWidth, int desiredHeight, int originWidth, int originHeight)
     {
-        string cacheEntryKey = "";
+        int desiredResolution = desiredWidth * desiredHeight;
+        int originResolution = originWidth * originHeight;
 
-        if (resolution <= CACHE_ENTRY_RESOLUTION_SMALL)
+        if (desiredResolution >= originResolution)
         {
-            cacheEntryKey = CACHE_ENTRY_KEY_SMALL;
+            return null;
         }
 
-        return cacheEntryKey;
+        if (desiredResolution <= CACHE_ENTRY_RESOLUTION_SMALL)
+        {
+            return CACHE_ENTRY_KEY_SMALL;
+        }
+
+        return null;
     }
 
     private static async Task<IRandomAccessStream> TryOpenImageStreamAsync(IImageSource source)
@@ -333,13 +335,11 @@ internal static class ImageCacheManager
         return image;
     }
 
-    private static bool CalculateDesiredDimension(double frameWidth, double frameHeight,
-        StretchModeEnum stretchMode, double imageRatio, out int desiredWidth, out int desiredHeight)
+    private static void CalculateDesiredDimension(double frameWidth, double frameHeight,
+        StretchModeEnum stretchMode, int originWidth, int originHeight, out int desiredWidth, out int desiredHeight)
     {
-        desiredWidth = 0;
-        desiredHeight = 0;
-
         double rawPixelsPerViewPixel = DisplayUtils.GetRawPixelPerPixel();
+        double imageRatio = (double)originWidth / originHeight;
         double frameRatio = frameWidth / frameHeight;
         double desiredWidthRaw;
         double desiredHeightRaw;
@@ -347,23 +347,30 @@ internal static class ImageCacheManager
         {
             if (double.IsInfinity(frameWidth))
             {
-                return false;
+                desiredWidthRaw = originWidth;
+                desiredHeightRaw = originHeight;
             }
-            desiredWidthRaw = frameWidth * rawPixelsPerViewPixel;
-            desiredHeightRaw = desiredWidthRaw / imageRatio;
+            else
+            {
+                desiredWidthRaw = frameWidth * rawPixelsPerViewPixel;
+                desiredHeightRaw = desiredWidthRaw / imageRatio;
+            }
         }
         else
         {
             if (double.IsInfinity(frameHeight))
             {
-                return false;
+                desiredWidthRaw = originWidth;
+                desiredHeightRaw = originHeight;
             }
-            desiredHeightRaw = frameHeight * rawPixelsPerViewPixel;
-            desiredWidthRaw = desiredHeightRaw * imageRatio;
+            else
+            {
+                desiredHeightRaw = frameHeight * rawPixelsPerViewPixel;
+                desiredWidthRaw = desiredHeightRaw * imageRatio;
+            }
         }
 
         desiredWidth = (int)desiredWidthRaw;
         desiredHeight = (int)desiredHeightRaw;
-        return true;
     }
 }

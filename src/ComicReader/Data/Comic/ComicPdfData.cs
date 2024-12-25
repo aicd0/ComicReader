@@ -217,7 +217,10 @@ internal class ComicPdfData : ComicData
                 MemoryStream memoryStream = new();
                 try
                 {
-                    Image image = pdfDocument.Render(index, 1, 1, false);
+                    SizeF size = pdfDocument.PageSizes[index];
+                    int width = (int)size.Width * 2;
+                    int height = (int)size.Height * 2;
+                    using Image image = pdfDocument.Render(index, width, height, 1, 1, false);
                     image.Save(memoryStream, ImageFormat.Png);
                 }
                 catch (Exception e)
