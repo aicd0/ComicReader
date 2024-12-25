@@ -3,6 +3,8 @@
 
 using System;
 
+using ComicReader.Common.PageBase;
+
 namespace ComicReader.Helpers.Navigation;
 
 internal class CheckRouteInterceptor : IRouterInterceptor

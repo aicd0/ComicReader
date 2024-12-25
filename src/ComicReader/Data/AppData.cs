@@ -7,6 +7,7 @@ using System.Threading;
 using ComicReader.Common;
 using ComicReader.Common.DebugTools;
 using ComicReader.Common.KVStorage;
+using ComicReader.Data.Comic;
 
 namespace ComicReader.Data;
 

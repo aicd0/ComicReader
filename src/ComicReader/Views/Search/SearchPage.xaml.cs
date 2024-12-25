@@ -9,10 +9,11 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
-using ComicReader.Common.BasePage;
 using ComicReader.Common.DebugTools;
 using ComicReader.Common.Imaging;
+using ComicReader.Common.PageBase;
 using ComicReader.Data;
+using ComicReader.Data.Comic;
 using ComicReader.Data.SqlHelpers;
 using ComicReader.Helpers.Imaging;
 using ComicReader.Helpers.Navigation;

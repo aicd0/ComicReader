@@ -7,11 +7,12 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
-using ComicReader.Common.BasePage;
 using ComicReader.Common.DebugTools;
 using ComicReader.Common.Lifecycle;
+using ComicReader.Common.PageBase;
 using ComicReader.Common.Threading;
 using ComicReader.Data;
+using ComicReader.Data.Comic;
 using ComicReader.Helpers.Navigation;
 using ComicReader.Views.Navigation;
 
@@ -28,7 +29,7 @@ using Windows.Storage.Search;
 
 namespace ComicReader.Views.Main;
 
-internal sealed partial class MainPage : StatefulPage
+internal sealed partial class MainPage : BasePage
 {
     public static MainPage Current = null;
     private static FileActivatedEventArgs s_startupFileArgs;
@@ -100,7 +101,7 @@ internal sealed partial class MainPage : StatefulPage
 
     public void ShowOrHideTitleBar(bool show)
     {
-        if (_currentTab == null || !_currentTab.CurrentBundle.PageTrait.ImmersiveMode())
+        if (_currentTab == null || !_currentTab.CurrentPageTrait.ImmersiveMode())
         {
             return;
         }
@@ -252,7 +253,11 @@ internal sealed partial class MainPage : StatefulPage
 
         int tabId = _nextTabId++;
         var tabInfo = new TabInfo(tabId, item);
-        tabInfo.CurrentBundle = bundle;
+        var ability = new MainPageAbility(this, tabId);
+        tabInfo.CurrentPageTrait = bundle.PageTrait;
+        tabInfo.CurrentUrl = bundle.Url;
+        tabInfo.Ability = ability;
+        RegisterPageAbility(bundle.Communicator, ability);
         _tabs.Add(tabInfo);
         RootTabView.TabItems.Add(item);
         return tabId;
@@ -273,13 +278,14 @@ internal sealed partial class MainPage : StatefulPage
             throw new ArgumentException();
         }
 
-        NavigationBundle bundle = route.Process();
+        RouteInfo routeInfo = route.Build();
+        NavigationBundle bundle = AppRouter.Process(routeInfo);
 
         if (!bundle.PageTrait.SupportMultiInstance())
         {
             foreach (TabInfo tab in _tabs)
             {
-                if (tab.CurrentBundle.Url == bundle.Url)
+                if (tab.CurrentUrl == bundle.Url)
                 {
                     RootTabView.SelectedItem = tab.Item;
                     return;
@@ -304,21 +310,20 @@ internal sealed partial class MainPage : StatefulPage
 
         RootTabView.SelectedItem = tabInfo.Item;
 
-        if (!newTab && tabInfo.CurrentBundle.Url == bundle.Url)
+        if (!newTab && tabInfo.CurrentUrl == bundle.Url)
         {
             return;
         }
 
         var frame = (Frame)tabInfo.Item.Content;
-        bundle.Abilities[typeof(IMainPageAbility)] = new MainPageAbility(this, tabId);
 
         if (bundle.PageTrait.HasNavigationBar())
         {
             if (frame.Content == null || frame.Content.GetType() != typeof(NavigationPage))
             {
                 var navigationRoute = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_NAVIGATION);
-                NavigationBundle navigationPageBundle = navigationRoute.Process();
-                navigationPageBundle.Abilities[typeof(IMainPageAbility)] = new MainPageAbility(this, tabId);
+                NavigationBundle navigationPageBundle = AppRouter.Process(navigationRoute.Build());
+                RegisterPageAbility(navigationPageBundle.Communicator, tabInfo.Ability);
                 if (!frame.Navigate(navigationPageBundle.PageTrait.GetPageType(), navigationPageBundle))
                 {
                     return;
@@ -336,7 +341,7 @@ internal sealed partial class MainPage : StatefulPage
         OnPageChanged();
     }
 
-    private void CloseTab(int tabId, bool allowExit)
+    private void CloseTab(int tabId)
     {
         if (tabId < 0)
         {
@@ -353,28 +358,18 @@ internal sealed partial class MainPage : StatefulPage
                 break;
             }
         }
-
         if (closingTab == null)
         {
             return;
         }
-        _tabs.Remove(closingTab);
 
-        if (RootTabView.TabItems.Count > 1)
+        closingTab.Ability.DispatchPageStoppedEvent();
+        _tabs.Remove(closingTab);
+        RootTabView.TabItems.Remove(closingTab.Item);
+
+        if (RootTabView.TabItems.Count <= 0)
         {
-            RootTabView.TabItems.Remove(closingTab.Item);
-        }
-        else
-        {
-            if (allowExit)
-            {
-                AppUtils.Exit();
-            }
-            else
-            {
-                var route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_HOME);
-                LoadTab(tabId, route);
-            }
+            AppUtils.Exit();
         }
     }
 
@@ -411,7 +406,7 @@ internal sealed partial class MainPage : StatefulPage
             }
         }
 
-        CloseTab(closingTabId, true);
+        CloseTab(closingTabId);
     }
 
     private void OnTabViewSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -453,7 +448,7 @@ internal sealed partial class MainPage : StatefulPage
         TabInfo currentTab = _currentTab;
         if (currentTab != null)
         {
-            IPageTrait pageTrait = currentTab.CurrentBundle.PageTrait;
+            IPageTrait pageTrait = currentTab.CurrentPageTrait;
 
             if (!pageTrait.ImmersiveMode())
             {
@@ -475,7 +470,7 @@ internal sealed partial class MainPage : StatefulPage
             return;
         }
 
-        if (_currentTab.CurrentBundle.PageTrait.ImmersiveMode())
+        if (_currentTab.CurrentPageTrait.ImmersiveMode())
         {
             _tabContentPresenter.Margin = new Thickness(0, 0, 0, 0);
             RootTabView.Background = (Brush)Application.Current.Resources["TitleBarBackground"];
@@ -582,10 +577,7 @@ internal sealed partial class MainPage : StatefulPage
 
     private void DispatchToTab(TabInfo tab, Action<MainPageAbility> action)
     {
-        if (tab.CurrentBundle.Abilities.TryGetValue(typeof(IMainPageAbility), out IPageAbility ability))
-        {
-            action(ability as MainPageAbility);
-        }
+        action(tab.Ability);
     }
 
     private void DispatchToAllTabs(Action<MainPageAbility> action)
@@ -609,7 +601,13 @@ internal sealed partial class MainPage : StatefulPage
         return App.Window.AppWindow.Presenter.Kind == AppWindowPresenterKind.FullScreen;
     }
 
-    private class MainPageAbility : IMainPageAbility
+    private static void RegisterPageAbility(PageCommunicator communicator, MainPageAbility ability)
+    {
+        communicator.RegisterAbility<ICommonPageAbility>(ability);
+        communicator.RegisterAbility<IMainPageAbility>(ability);
+    }
+
+    private class MainPageAbility : ICommonPageAbility, IMainPageAbility
     {
         private const string EVENT_TAB_UNSELECTED = "TabUnselected";
         private const string EVENT_FULLSCREEN_CHANGED = "FullscreenChanged";
@@ -618,10 +616,28 @@ internal sealed partial class MainPage : StatefulPage
         private readonly EventBus _eventBus = new();
         private readonly int _tabId;
 
+        private PageStopEventHandler _pageStopped;
+
         public MainPageAbility(MainPage parent, int tabId)
         {
             _parent = new WeakReference<MainPage>(parent);
             _tabId = tabId;
+        }
+
+        public void RegisterPageStopHandler(PageStopEventHandler handler)
+        {
+            _pageStopped += handler;
+        }
+
+        public void UnregisterPageStopHandler(PageStopEventHandler handler)
+        {
+            _pageStopped -= handler;
+        }
+
+        public void DispatchPageStoppedEvent()
+        {
+            _pageStopped?.Invoke();
+            _pageStopped = null;
         }
 
         public void OpenInCurrentTab(Route route)
@@ -634,35 +650,44 @@ internal sealed partial class MainPage : StatefulPage
             parent.LoadTab(_tabId, route);
         }
 
-        public void SetIcon(IconSource icon)
-        {
-            if (!_parent.TryGetTarget(out MainPage parent))
-            {
-                return;
-            }
-
-            parent.GetTabInfo(_tabId).Item.IconSource = icon;
-        }
-
-        public void SetNavigationBundle(NavigationBundle bundle)
-        {
-            if (!_parent.TryGetTarget(out MainPage parent))
-            {
-                return;
-            }
-
-            parent.GetTabInfo(_tabId).CurrentBundle = bundle;
-            parent.OnPageChanged();
-        }
-
         public void SetTitle(string title)
         {
+            TabInfo tab = GetTab();
+            if (tab == null)
+            {
+                return;
+            }
+
+            tab.Item.Header = title;
+        }
+
+        public void SetIcon(IconSource icon)
+        {
+            TabInfo tab = GetTab();
+            if (tab == null)
+            {
+                return;
+            }
+
+            tab.Item.IconSource = icon;
+        }
+
+        public void SetCurrentPageInfo(string url, IPageTrait pageTrait)
+        {
             if (!_parent.TryGetTarget(out MainPage parent))
             {
                 return;
             }
 
-            parent.GetTabInfo(_tabId).Item.Header = title;
+            TabInfo tab = parent.GetTabInfo(_tabId);
+            if (tab == null)
+            {
+                return;
+            }
+
+            tab.CurrentPageTrait = pageTrait;
+            tab.CurrentUrl = url;
+            parent.OnPageChanged();
         }
 
         public void RegisterTabUnselectedHandler(Page owner, IMainPageAbility.TabUnselectedEventHandler handler)
@@ -690,5 +715,30 @@ internal sealed partial class MainPage : StatefulPage
         {
             _eventBus.With<bool>(EVENT_FULLSCREEN_CHANGED).Emit(isFullscreen);
         }
+
+        private TabInfo GetTab()
+        {
+            if (!_parent.TryGetTarget(out MainPage parent))
+            {
+                return null;
+            }
+
+            return parent.GetTabInfo(_tabId);
+        }
+    }
+
+    private class TabInfo
+    {
+        public TabInfo(int id, TabViewItem item)
+        {
+            Id = id;
+            Item = item;
+        }
+
+        public TabViewItem Item { get; }
+        public int Id { get; }
+        public MainPageAbility Ability { get; set; }
+        public string CurrentUrl { get; set; }
+        public IPageTrait CurrentPageTrait { get; set; }
     }
 }

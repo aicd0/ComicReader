@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 
-namespace ComicReader.Helpers.Navigation;
+namespace ComicReader.Common.PageBase;
 
 internal class PageBundle
 {

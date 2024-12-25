@@ -4,7 +4,7 @@
 using System.ComponentModel;
 
 using ComicReader.Common.Threading;
-using ComicReader.Data;
+using ComicReader.Data.Comic;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;

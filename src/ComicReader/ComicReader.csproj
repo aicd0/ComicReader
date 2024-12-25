@@ -104,6 +104,9 @@
         <PackageReference Include="LiteDB" Version="5.0.21" />
         <PackageReference Include="Microsoft.AppCenter.Analytics" Version="5.0.6" />
         <PackageReference Include="Microsoft.AppCenter.Crashes" Version="5.0.6" />
+        <PackageReference Include="PdfiumViewer.Native.x86.v8-xfa" Version="2018.4.8.256" />
+        <PackageReference Include="PdfiumViewer.Native.x86_64.v8-xfa" Version="2018.4.8.256" />
+        <PackageReference Include="PdfiumViewer.Updated" Version="2.14.4" />
         <PackageReference Include="SharpCompress" Version="0.38.0" />
         <PackageReference Include="Microsoft.Data.Sqlite" Version="8.0.10" />
         <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.240923002" />

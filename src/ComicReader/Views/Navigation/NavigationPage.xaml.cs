@@ -5,9 +5,9 @@ using System;
 using System.ComponentModel;
 
 using ComicReader.Common;
-using ComicReader.Common.BasePage;
 using ComicReader.Common.DebugTools;
 using ComicReader.Common.Lifecycle;
+using ComicReader.Common.PageBase;
 using ComicReader.Common.Threading;
 using ComicReader.Data;
 using ComicReader.Helpers.Navigation;
@@ -80,9 +80,7 @@ internal sealed partial class NavigationPage : BasePage
 
     public void Navigate(NavigationBundle bundle)
     {
-        TransferAbilities(bundle);
-        bundle.Abilities[typeof(INavigationPageAbility)] = _ability;
-
+        TransferAbility(bundle.Communicator);
         ContentFrame.Navigate(bundle.PageTrait.GetPageType(), bundle);
     }
 
@@ -124,7 +122,7 @@ internal sealed partial class NavigationPage : BasePage
         _ability.ClearSubscriptions();
 
         _currentBundle = e.Parameter as NavigationBundle;
-        GetMainPageAbility().SetNavigationBundle(_currentBundle);
+        GetMainPageAbility().SetCurrentPageInfo(_currentBundle.Url, _currentBundle.PageTrait);
 
         NavigationPageSidePane.IsPaneOpen = false;
         bool isHomePage = _currentBundle.PageTrait is HomePageTrait;
@@ -313,10 +311,24 @@ internal sealed partial class NavigationPage : BasePage
         });
     }
 
-    private void SidePane_Navigating(NavigationBundle bundle)
+    private void OnSidePaneSelectionChanged(SidePane sender, string item)
     {
-        TransferAbilities(bundle);
-        bundle.Abilities[typeof(INavigationPageAbility)] = _ability;
+        Route route = item switch
+        {
+            "Favorites" => new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_FAVORITE),
+            "History" => new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_HISTORY),
+            _ => throw new Exception(),
+        };
+        NavigationBundle bundle = AppRouter.Process(route.Build());
+        TransferAbility(bundle.Communicator);
+        sender.Navigate(bundle);
+    }
+
+    private void TransferAbility(PageCommunicator communicator)
+    {
+        communicator.RegisterAbility(GetAbility<ICommonPageAbility>());
+        communicator.RegisterAbility(GetMainPageAbility());
+        communicator.RegisterAbility<INavigationPageAbility>(_ability);
     }
 
     private void SetGridViewModeEnabled(bool enabled)

@@ -3,9 +3,8 @@
 
 using System;
 
-using ComicReader.Common.BasePage;
 using ComicReader.Common.DebugTools;
-using ComicReader.Helpers.Navigation;
+using ComicReader.Common.PageBase;
 using ComicReader.Views.Main;
 
 using Microsoft.UI.Xaml.Controls;
