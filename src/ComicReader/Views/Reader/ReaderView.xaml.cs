@@ -449,7 +449,11 @@ internal partial class ReaderView : UserControl
         if (_uiStateUpdatedFlowDirection)
         {
             _uiStateUpdatedFlowDirection = false;
-            if (!_isVertical)
+            if (_isVertical)
+            {
+                SvReader.FlowDirection = FlowDirection.LeftToRight;
+            }
+            else
             {
                 SvReader.FlowDirection = _isLeftToRight ? FlowDirection.LeftToRight : FlowDirection.RightToLeft;
             }
