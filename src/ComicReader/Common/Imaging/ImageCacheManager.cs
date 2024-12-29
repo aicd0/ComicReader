@@ -134,7 +134,7 @@ internal static class ImageCacheManager
 
                 if (image == null)
                 {
-                    Logger.F(TAG, "image is null");
+                    Logger.E(TAG, "image is null");
                     return;
                 }
 
