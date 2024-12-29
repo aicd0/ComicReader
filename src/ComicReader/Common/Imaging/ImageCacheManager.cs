@@ -92,7 +92,7 @@ internal static class ImageCacheManager
 
             if (sourceStream == null)
             {
-                Logger.F(TAG, "sourceStream is null");
+                Logger.E(TAG, "sourceStream is null");
                 return;
             }
 

@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
 
 using ComicReader.Common.DebugTools;
@@ -48,33 +49,36 @@ internal static class PdfManager
         {
             lock (_lock)
             {
-                if (_cache.TryGetValue(fullpath, out PdfWrapper wrapper))
+                if (_cache.TryGetValue(fullpath, out PdfWrapper existing))
                 {
-                    wrapper.UseCount++;
-                    return new PdfConnection(wrapper);
+                    existing.UseCount++;
+                    return new PdfConnection(existing);
                 }
-
-                PdfDocument pdfDocument = null;
-                try
-                {
-                    pdfDocument = PdfDocument.Load(fullpath);
-                }
-                catch (Exception ex)
-                {
-                    Logger.F(TAG, "OpenDocument", ex);
-                    return null;
-                }
-
-                if (pdfDocument == null)
-                {
-                    return null;
-                }
-
-                wrapper = new(pdfDocument);
-                _cache.Add(fullpath, wrapper);
-                Logger.I(TAG, $"Opened {fullpath}");
-                return new PdfConnection(wrapper);
             }
+
+            PdfDocument pdfDocument = null;
+            try
+            {
+                pdfDocument = PdfDocument.Load(fullpath);
+            }
+            catch (Exception ex)
+            {
+                Logger.F(TAG, "OpenDocument", ex);
+                return null;
+            }
+
+            if (pdfDocument == null)
+            {
+                return null;
+            }
+
+            PdfWrapper wrapper = new(pdfDocument);
+            lock (_lock)
+            {
+                _cache.Add(fullpath, wrapper);
+            }
+            Logger.I(TAG, $"Opened {fullpath}");
+            return new PdfConnection(wrapper);
         }, "LoadPdf");
     }
 
@@ -121,7 +125,7 @@ internal static class PdfManager
     private class PdfConnection : IPdfConnection
     {
         private readonly PdfWrapper _wrapper;
-        private bool _disposed = false;
+        private int _disposed = 0;
 
         public PdfConnection(PdfWrapper wrapper)
         {
@@ -130,13 +134,13 @@ internal static class PdfManager
 
         public void Dispose()
         {
+            if (Interlocked.CompareExchange(ref _disposed, 1, 0) == 1)
+            {
+                return;
+            }
+
             lock (_lock)
             {
-                if (_disposed)
-                {
-                    return;
-                }
-                _disposed = true;
                 _wrapper.UseCount--;
             }
 
