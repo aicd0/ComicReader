@@ -3,9 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.Drawing.Drawing2D;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
@@ -15,6 +12,9 @@ using ComicReader.Common.DebugTools;
 using ComicReader.Common.Threading;
 
 using Microsoft.UI.Xaml.Media.Imaging;
+
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
 
 using Windows.Storage;
 using Windows.Storage.Streams;
@@ -60,24 +60,24 @@ internal static class ImageCacheManager
             return;
         }
 
-        IRandomAccessStream cacheStream = null;
+        IRandomAccessStream thumbnailStream = null;
+        bool requireThumbnail = true;
         ImageCacheDatabase.CacheRecord cacheRecord = ImageCacheDatabase.GetCacheRecord(source);
-        bool requireCache = true;
 
         if (cacheRecord != null)
         {
-            requireCache = false;
+            requireThumbnail = false;
             CalculateDesiredDimension(frameWidth, frameHeight, stretchMode, cacheRecord.Width, cacheRecord.Height, out int desiredWidth, out int desiredHeight);
             IEnumerable<string> cacheEntryKeys = ImageCacheStrategy.CalculateCacheEntryKeys(desiredWidth, desiredHeight, cacheRecord.Width, cacheRecord.Height);
             foreach (string cacheEntryKey in cacheEntryKeys)
             {
-                requireCache = true;
+                requireThumbnail = true;
                 string entry = cacheRecord.GetEntry(cacheEntryKey);
                 if (entry.Length > 0)
                 {
-                    cacheStream = sImageCache.Value.Get(entry);
+                    thumbnailStream = sImageCache.Value.Get(entry);
                 }
-                if (cacheStream != null)
+                if (thumbnailStream != null)
                 {
                     break;
                 }
@@ -86,7 +86,7 @@ internal static class ImageCacheManager
 
         IRandomAccessStream sourceStream = null;
 
-        if (cacheStream == null && requireCache)
+        if (thumbnailStream == null && requireThumbnail)
         {
             sourceStream = TryOpenImageStreamAsync(source).Result;
 
@@ -98,7 +98,7 @@ internal static class ImageCacheManager
 
             try
             {
-                cacheStream = TryCreateImageCache(cacheRecord, sourceStream, frameWidth, frameHeight, stretchMode, uri, sourceSignature);
+                thumbnailStream = TryCreateThumbnail(cacheRecord, sourceStream, frameWidth, frameHeight, stretchMode, uri, sourceSignature);
             }
             catch (Exception)
             {
@@ -117,9 +117,9 @@ internal static class ImageCacheManager
                     return;
                 }
 
-                if (cacheStream != null)
+                if (thumbnailStream != null)
                 {
-                    image = await TryLoadImageFromStreamAsync(cacheStream);
+                    image = await TryLoadImageFromStreamAsync(thumbnailStream);
                 }
 
                 if (image == null)
@@ -147,7 +147,7 @@ internal static class ImageCacheManager
             }
             finally
             {
-                cacheStream?.Dispose();
+                thumbnailStream?.Dispose();
                 sourceStream?.Dispose();
             }
 
@@ -161,87 +161,94 @@ internal static class ImageCacheManager
         }).Wait();
     }
 
-    private static IRandomAccessStream TryCreateImageCache(ImageCacheDatabase.CacheRecord cacheRecord, IRandomAccessStream sourceStream,
+    private static IRandomAccessStream TryCreateThumbnail(ImageCacheDatabase.CacheRecord cacheRecord, IRandomAccessStream sourceStream,
         double frameWidth, double frameHeight, StretchModeEnum stretchMode, string cacheKey, int sourceSignature)
     {
         sourceStream.Seek(0);
         Image image = null;
         try
         {
-            image = Image.FromStream(sourceStream.AsStream());
+            image = Image.Load(sourceStream.AsStream());
         }
         catch (Exception ex)
         {
-            Logger.F(TAG, "TryCreateImageCache", ex);
+            Logger.F(TAG, "TryCreateThumbnail", ex);
         }
         if (image == null)
         {
             return null;
         }
 
-        int sourceWidth = image.Width;
-        int sourceHeight = image.Height;
-        CalculateDesiredDimension(frameWidth, frameHeight, stretchMode, sourceWidth, sourceHeight, out int desiredWidth, out int desiredHeight);
-        IEnumerable<string> cacheEntryKeys = ImageCacheStrategy.CalculateCacheEntryKeys(desiredWidth, desiredHeight, sourceWidth, sourceHeight);
-        string cacheEntryKey = null;
-        foreach (string key in cacheEntryKeys)
-        {
-            cacheEntryKey = key;
-            break;
-        }
-        MemoryStream cacheStream = CreateImageCacheStream(cacheEntryKey, sourceWidth, sourceHeight, image);
-
         try
         {
-            string entry = null;
-            if (cacheStream != null)
+            int sourceWidth = image.Width;
+            int sourceHeight = image.Height;
+            CalculateDesiredDimension(frameWidth, frameHeight, stretchMode, sourceWidth, sourceHeight, out int desiredWidth, out int desiredHeight);
+            IEnumerable<string> cacheEntryKeys = ImageCacheStrategy.CalculateCacheEntryKeys(desiredWidth, desiredHeight, sourceWidth, sourceHeight);
+            string cacheEntryKey = null;
+            foreach (string key in cacheEntryKeys)
             {
-                try
+                cacheEntryKey = key;
+                break;
+            }
+            MemoryStream cacheStream = CreateImageCacheStream(cacheEntryKey, sourceWidth, sourceHeight, image);
+
+            try
+            {
+                string entry = null;
+                if (cacheStream != null)
                 {
-                    cacheStream.Seek(0, SeekOrigin.Begin);
-                    byte[] outByteArray = new byte[cacheStream.Length];
-                    cacheStream.Read(outByteArray, 0, outByteArray.Length);
-                    string tempEntry = StringUtils.RandomFileName(16) + ".png";
-                    using ILRUInputStream cacheFileStream = sImageCache.Value.Put(tempEntry);
-                    if (cacheFileStream == null)
+                    try
                     {
-                        Logger.F(TAG, "TryCreateImageCache cacheFileStream is null");
+                        cacheStream.Seek(0, SeekOrigin.Begin);
+                        byte[] outByteArray = new byte[cacheStream.Length];
+                        cacheStream.Read(outByteArray, 0, outByteArray.Length);
+                        string tempEntry = StringUtils.RandomFileName(16);
+                        using ILRUInputStream cacheFileStream = sImageCache.Value.Put(tempEntry);
+                        if (cacheFileStream == null)
+                        {
+                            Logger.F(TAG, "TryCreateImageCache cacheFileStream is null");
+                        }
+                        else
+                        {
+                            cacheFileStream.WriteAsync(outByteArray.AsBuffer()).Wait();
+                        }
+                        entry = tempEntry;
                     }
-                    else
+                    catch (Exception e)
                     {
-                        cacheFileStream.WriteAsync(outByteArray.AsBuffer()).Wait();
+                        Logger.F(TAG, "TryCreateImageCache", e);
                     }
-                    entry = tempEntry;
                 }
-                catch (Exception e)
+
+                if (cacheRecord != null)
                 {
-                    Logger.F(TAG, "TryCreateImageCache", e);
+                    cacheRecord.UpdateMeta(sourceSignature, sourceWidth, sourceHeight);
                 }
+                else
+                {
+                    cacheRecord = new ImageCacheDatabase.CacheRecord(cacheKey, sourceSignature, sourceWidth, sourceHeight);
+                }
+
+                if (entry != null)
+                {
+                    cacheRecord.PutEntry(cacheEntryKey, entry);
+                }
+
+                cacheRecord.Save();
+            }
+            catch (Exception)
+            {
+                cacheStream?.Dispose();
+                throw;
             }
 
-            if (cacheRecord != null)
-            {
-                cacheRecord.UpdateMeta(sourceSignature, sourceWidth, sourceHeight);
-            }
-            else
-            {
-                cacheRecord = new ImageCacheDatabase.CacheRecord(cacheKey, sourceSignature, sourceWidth, sourceHeight);
-            }
-
-            if (entry != null)
-            {
-                cacheRecord.PutEntry(cacheEntryKey, entry);
-            }
-
-            cacheRecord.Save();
+            return cacheStream?.AsRandomAccessStream();
         }
-        catch (Exception)
+        finally
         {
-            cacheStream?.Dispose();
-            throw;
+            image.Dispose();
         }
-
-        return cacheStream?.AsRandomAccessStream();
     }
 
     private static MemoryStream CreateImageCacheStream(string cacheEntryKey, int sourceWidth, int sourceHeight, Image image)
@@ -271,13 +278,8 @@ internal static class ImageCacheManager
         MemoryStream memoryStream = new();
         try
         {
-            using Bitmap resizedBitmap = new(aspectWidth, aspectHeight);
-            using var graphics = Graphics.FromImage(resizedBitmap);
-            graphics.CompositingQuality = CompositingQuality.HighSpeed;
-            graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
-            graphics.CompositingMode = CompositingMode.SourceCopy;
-            graphics.DrawImage(image, 0, 0, aspectWidth, aspectHeight);
-            resizedBitmap.Save(memoryStream, ImageFormat.Png);
+            image.Mutate(x => x.Resize(aspectWidth, aspectHeight));
+            image.Save(memoryStream, image.Metadata.DecodedImageFormat);
         }
         catch (Exception e)
         {
