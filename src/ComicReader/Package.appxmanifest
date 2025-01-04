@@ -16,7 +16,7 @@
 
   <Properties>
     <DisplayName>ms-resource:AppStoreName</DisplayName>
-    <PublisherDisplayName>aicd0</PublisherDisplayName>
+    <PublisherDisplayName>aicd</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 
