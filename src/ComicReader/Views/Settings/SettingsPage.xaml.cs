@@ -580,7 +580,7 @@ internal sealed partial class SettingsPage : BasePage
     private static string GetCacheSize()
     {
         var d = new DirectoryInfo(ApplicationData.Current.LocalCacheFolder.Path);
-        long size = FileUtils.GetDirectorySize(d);
+        long size = FileUtils.GetDirectorySize(d, ignoreErrors: true);
         string[] sizes = ["B", "KB", "MB", "GB", "TB"];
         int order = 0;
 

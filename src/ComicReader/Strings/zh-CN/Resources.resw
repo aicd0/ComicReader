@@ -121,7 +121,7 @@
     <value>关于</value>
   </data>
   <data name="AboutCopyright" xml:space="preserve">
-    <value>© 2024 $author。保留所有权利。</value>
+    <value>© 2025 $author。保留所有权利。</value>
   </data>
   <data name="AddFolderButton.Content" xml:space="preserve">
     <value>添加文件夹</value>

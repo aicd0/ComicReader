@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 
 using ComicReader.Common;
+using ComicReader.Common.DebugTools;
 
 using Microsoft.UI.Input;
 
@@ -12,6 +13,8 @@ namespace ComicReader.Views.Reader;
 
 internal class ReaderGestureRecognizer
 {
+    private const string TAG = nameof(ReaderGestureRecognizer);
+
     private readonly GestureRecognizer _gestureRecognizer = new();
     private WeakReference<IHandler> _handler;
 
@@ -72,22 +75,50 @@ internal class ReaderGestureRecognizer
 
     public void ProcessDownEvent(PointerPoint value)
     {
-        _gestureRecognizer.ProcessDownEvent(value);
+        try
+        {
+            _gestureRecognizer.ProcessDownEvent(value);
+        }
+        catch (Exception e)
+        {
+            Logger.F(TAG, "ProcessDownEvent", e);
+        }
     }
 
     public void ProcessMoveEvents(IList<PointerPoint> value)
     {
-        _gestureRecognizer.ProcessMoveEvents(value);
+        try
+        {
+            _gestureRecognizer.ProcessMoveEvents(value);
+        }
+        catch (Exception e)
+        {
+            Logger.F(TAG, "ProcessMoveEvents", e);
+        }
     }
 
     public void ProcessUpEvent(PointerPoint value)
     {
-        _gestureRecognizer.ProcessUpEvent(value);
+        try
+        {
+            _gestureRecognizer.ProcessUpEvent(value);
+        }
+        catch (Exception e)
+        {
+            Logger.F(TAG, "ProcessUpEvent", e);
+        }
     }
 
     public void CompleteGesture()
     {
-        _gestureRecognizer.CompleteGesture();
+        try
+        {
+            _gestureRecognizer.CompleteGesture();
+        }
+        catch (Exception e)
+        {
+            Logger.F(TAG, "CompleteGesture", e);
+        }
     }
 
     public interface IHandler
