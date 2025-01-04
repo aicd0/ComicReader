@@ -14,19 +14,74 @@ internal static class FileUtils
 {
     private const string TAG = nameof(FileUtils);
 
-    public static long GetDirectorySize(DirectoryInfo directory)
+    public static long GetDirectorySize(DirectoryInfo directory, bool ignoreErrors)
     {
         long size = 0;
-        FileInfo[] files = directory.GetFiles();
-        foreach (FileInfo file in files)
+
         {
-            size += file.Length;
+            FileInfo[] files;
+            try
+            {
+                files = directory.GetFiles();
+            }
+            catch (Exception e)
+            {
+                if (ignoreErrors)
+                {
+                    Logger.E(TAG, "GetDirectorySize", e);
+                    files = [];
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            foreach (FileInfo file in files)
+            {
+                try
+                {
+                    size += file.Length;
+                }
+                catch (Exception e)
+                {
+                    if (ignoreErrors)
+                    {
+                        Logger.E(TAG, "GetDirectorySize", e);
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+            }
         }
-        DirectoryInfo[] subDirectories = directory.GetDirectories();
-        foreach (DirectoryInfo subDirectory in subDirectories)
+
         {
-            size += GetDirectorySize(subDirectory);
+            DirectoryInfo[] subDirectories;
+            try
+            {
+                subDirectories = directory.GetDirectories();
+            }
+            catch (Exception e)
+            {
+                if (ignoreErrors)
+                {
+                    Logger.E(TAG, "GetDirectorySize", e);
+                    subDirectories = [];
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            foreach (DirectoryInfo subDirectory in subDirectories)
+            {
+                size += GetDirectorySize(subDirectory, ignoreErrors);
+            }
         }
+
         return size;
     }
 

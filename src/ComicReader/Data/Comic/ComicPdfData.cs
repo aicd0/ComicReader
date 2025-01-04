@@ -9,8 +9,7 @@ using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Common.DebugTools;
-
-using PdfiumViewer;
+using ComicReader.Common.Pdf;
 
 using Windows.Storage;
 using Windows.Storage.Streams;
@@ -108,183 +107,61 @@ internal class ComicPdfData : ComicData
 
     public override async Task<IComicConnection> OpenComicAsync()
     {
-        await LoadImageFiles();
-        return new PdfComicConnection(ThisFile);
-    }
-
-    private class AutoDisposeHolder<T>(T instance) : IDisposable where T : class, IDisposable
-    {
-        private readonly object _lock = new();
-        private int useCount = 0;
-        private bool _disposeRequested = false;
-        private bool _disposed = false;
-
-        public void Dispose()
+        TaskException r = await SetFile();
+        if (!r.Successful())
         {
-            lock (_lock)
-            {
-                if (useCount <= 0)
-                {
-                    PerformDispose();
-                }
-                else
-                {
-                    _disposeRequested = true;
-                }
-            }
+            return null;
         }
 
-        public T Acquire()
+        PdfManager.IPdfConnection connection = await PdfManager.OpenPdf(ThisFile.Path);
+        if (connection == null)
         {
-            if (_disposed || _disposeRequested)
-            {
-                return null;
-            }
-
-            lock (_lock)
-            {
-                if (_disposed || _disposeRequested)
-                {
-                    return null;
-                }
-
-                useCount++;
-                return instance;
-            }
+            return null;
         }
 
-        public void Release()
-        {
-            lock (_lock)
-            {
-                ArgumentOutOfRangeException.ThrowIfLessThan(useCount, 1);
-                useCount--;
-
-                if (_disposeRequested)
-                {
-                    PerformDispose();
-                }
-            }
-        }
-
-        private void PerformDispose()
-        {
-            if (!_disposed)
-            {
-                instance?.Dispose();
-                instance = null;
-                _disposed = true;
-            }
-        }
+        return new PdfComicConnection(connection);
     }
 
     private class PdfComicConnection : IComicConnection
     {
-        private readonly object _lock = new();
-        private readonly StorageFile _pdfFile;
-        private bool _openAttempted = false;
-        private AutoDisposeHolder<PdfDocument> _pdfDocumentHolder;
+        private readonly PdfManager.IPdfConnection _connection;
 
-        public PdfComicConnection(StorageFile pdfFile)
+        public PdfComicConnection(PdfManager.IPdfConnection connection)
         {
-            _pdfFile = pdfFile;
+            _connection = connection;
         }
 
         public void Dispose()
         {
-            lock (_lock)
-            {
-                _pdfDocumentHolder?.Dispose();
-                _pdfDocumentHolder = null;
-                _openAttempted = true;
-            }
+            _connection.Dispose();
         }
 
         public int GetImageCount()
         {
-            return UsingDocument(delegate (PdfDocument pdfDocument)
-            {
-                return pdfDocument.PageCount;
-            }, 0);
+            return _connection.GetPageCount();
         }
 
-#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
         public async Task<IRandomAccessStream> GetImageStream(int index)
-#pragma warning restore CS1998 // Async method lacks 'await' operators and will run synchronously
         {
-            return UsingDocument(delegate (PdfDocument pdfDocument)
-            {
-                MemoryStream memoryStream = new();
-                try
-                {
-                    SizeF size = pdfDocument.PageSizes[index];
-                    CalculatePageSize(size.Width, size.Height, out int width, out int height);
-                    using Image image = pdfDocument.Render(index, width, height, 1, 1, false);
-                    image.Save(memoryStream, ImageFormat.Png);
-                }
-                catch (Exception e)
-                {
-                    Logger.F(TAG, "GetImageStream", e);
-                    memoryStream.Dispose();
-                    memoryStream = null;
-                }
-                return memoryStream?.AsRandomAccessStream();
-            }, null);
-        }
-
-        private R UsingDocument<R>(Func<PdfDocument, R> action, R defaultValue)
-        {
-            AutoDisposeHolder<PdfDocument> holder = OpenDocumentInternal();
-            if (holder == null)
-            {
-                return defaultValue;
-            }
-            PdfDocument pdfDocument = holder.Acquire();
-            if (pdfDocument == null)
-            {
-                return defaultValue;
-            }
+            MemoryStream memoryStream = new();
             try
             {
-                return action(pdfDocument);
-            }
-            finally
-            {
-                holder.Release();
-            }
-        }
-
-        private AutoDisposeHolder<PdfDocument> OpenDocumentInternal()
-        {
-            if (_openAttempted)
-            {
-                return _pdfDocumentHolder;
-            }
-
-            lock (_lock)
-            {
-                if (_openAttempted)
+                SizeF size = _connection.GetPageSize(index);
+                CalculatePageSize(size.Width, size.Height, out int width, out int height);
+                using Image image = await _connection.Render(index, width, height);
+                if (image == null)
                 {
-                    return _pdfDocumentHolder;
-                }
-                _openAttempted = true;
-
-                PdfDocument pdfDocument = null;
-                try
-                {
-                    pdfDocument = PdfDocument.Load(_pdfFile.Path);
-                }
-                catch (Exception ex)
-                {
-                    Logger.F(TAG, "OpenDocument", ex);
                     return null;
                 }
-                if (pdfDocument != null)
-                {
-                    _pdfDocumentHolder = new(pdfDocument);
-                }
-                return _pdfDocumentHolder;
+                image.Save(memoryStream, ImageFormat.Png);
             }
+            catch (Exception e)
+            {
+                Logger.F(TAG, "GetImageStream", e);
+                memoryStream.Dispose();
+                memoryStream = null;
+            }
+            return memoryStream?.AsRandomAccessStream();
         }
 
         private void CalculatePageSize(float originWidth, float originHeight, out int width, out int height)

@@ -69,7 +69,7 @@ internal class LRUCache
     public void Clean()
     {
         var directory = new DirectoryInfo(_folder.Path);
-        long sizeToRemove = FileUtils.GetDirectorySize(directory) - _maxSize;
+        long sizeToRemove = FileUtils.GetDirectorySize(directory, ignoreErrors: true) - _maxSize;
         if (sizeToRemove <= 0)
         {
             return;

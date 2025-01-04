@@ -552,8 +552,9 @@ internal sealed partial class SettingsPage : BasePage
 
     private static void ClearCache()
     {
-        var di = new DirectoryInfo(ApplicationData.Current.LocalCacheFolder.Path);
-        foreach (FileInfo file in di.GetFiles())
+        var cacheDir = new DirectoryInfo(ApplicationData.Current.LocalCacheFolder.Path);
+
+        foreach (FileInfo file in cacheDir.GetFiles())
         {
             try
             {
@@ -564,8 +565,14 @@ internal sealed partial class SettingsPage : BasePage
                 Logger.E(TAG, "ClearCache", e);
             }
         }
-        foreach (DirectoryInfo dir in di.GetDirectories())
+
+        foreach (DirectoryInfo dir in cacheDir.GetDirectories())
         {
+            if (dir.Name == "Local")
+            {
+                continue;
+            }
+
             try
             {
                 dir.Delete(true);
@@ -580,7 +587,7 @@ internal sealed partial class SettingsPage : BasePage
     private static string GetCacheSize()
     {
         var d = new DirectoryInfo(ApplicationData.Current.LocalCacheFolder.Path);
-        long size = FileUtils.GetDirectorySize(d);
+        long size = GetCacheSize(d);
         string[] sizes = ["B", "KB", "MB", "GB", "TB"];
         int order = 0;
 
@@ -591,5 +598,60 @@ internal sealed partial class SettingsPage : BasePage
         }
 
         return string.Format("{0:0.##} {1}", size, sizes[order]);
+    }
+
+    public static long GetCacheSize(DirectoryInfo directory)
+    {
+        long size = 0;
+
+        {
+            FileInfo[] files;
+            try
+            {
+                files = directory.GetFiles();
+            }
+            catch (Exception e)
+            {
+                Logger.E(TAG, "GetCacheSize", e);
+                files = [];
+            }
+
+            foreach (FileInfo file in files)
+            {
+                try
+                {
+                    size += file.Length;
+                }
+                catch (Exception e)
+                {
+                    Logger.E(TAG, "GetCacheSize", e);
+                }
+            }
+        }
+
+        {
+            DirectoryInfo[] subDirectories;
+            try
+            {
+                subDirectories = directory.GetDirectories();
+            }
+            catch (Exception e)
+            {
+                Logger.E(TAG, "GetCacheSize", e);
+                subDirectories = [];
+            }
+
+            foreach (DirectoryInfo subDirectory in subDirectories)
+            {
+                if (subDirectory.Name == "Local")
+                {
+                    continue;
+                }
+
+                size += FileUtils.GetDirectorySize(subDirectory, ignoreErrors: true);
+            }
+        }
+
+        return size;
     }
 }

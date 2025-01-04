@@ -449,7 +449,11 @@ internal partial class ReaderView : UserControl
         if (_uiStateUpdatedFlowDirection)
         {
             _uiStateUpdatedFlowDirection = false;
-            if (!_isVertical)
+            if (_isVertical)
+            {
+                SvReader.FlowDirection = FlowDirection.LeftToRight;
+            }
+            else
             {
                 SvReader.FlowDirection = _isLeftToRight ? FlowDirection.LeftToRight : FlowDirection.RightToLeft;
             }
@@ -1636,6 +1640,17 @@ internal partial class ReaderView : UserControl
 
         context.HorizontalOffset ??= SCHorizontalOffsetFinal;
         context.VerticalOffset ??= SCVerticalOffsetFinal;
+
+        Log("Jump", "Zoom#2:"
+            + $" Z1={zoomFactorBefore}"
+            + $",Z2={zoomFactorAfter}"
+            + $",ZR={zoomChangeRatio}"
+            + $",P1={extraPaddingBefore}"
+            + $",P2={extraPaddingAfter}"
+            + $",VW={halfViewportWidth}"
+            + $",VH={halfViewportHeight}"
+            + $",HO={context.HorizontalOffset}"
+            + $",VO={context.VerticalOffset}");
 
         if (IsVertical)
         {
