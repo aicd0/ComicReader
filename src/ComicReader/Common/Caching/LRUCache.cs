@@ -1,0 +1,508 @@
+﻿// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+
+using ComicReader.Common.DebugTools;
+
+using Windows.Foundation;
+using Windows.Storage;
+using Windows.Storage.Streams;
+
+namespace ComicReader.Common.Caching;
+
+internal class LRUCache
+{
+    private const string TAG = nameof(LRUCache);
+    private const string DATABASE_FILE_NAME = "info.db";
+    private const int BATCH_SIZE = 1000;
+
+    private readonly StorageFolder _folder;
+    private readonly ConcurrentDictionary<string, CacheEntry> _entries = [];
+
+    private readonly long _maxSize;
+    private readonly LRUCacheDatabase _database;
+    private readonly ReaderWriterLock _flushLock = new();
+    private volatile ConcurrentDictionary<string, long> _pendingFlushKeys = [];
+    private int _postFlushTask = 0;
+
+    public LRUCache(StorageFolder folder, long maxSize)
+    {
+        _folder = folder;
+        _maxSize = maxSize;
+        _database = new(folder.Path + "\\" + DATABASE_FILE_NAME);
+    }
+
+    public ILRUInputStream Put(string key)
+    {
+        ArgumentNullException.ThrowIfNull(key, nameof(key));
+
+        string hashedKey = ToHashedKey(key);
+        CacheEntry entry = _entries.GetOrAdd(hashedKey, (string key) => new CacheEntry(this, key));
+        ILRUInputStream stream = entry.StartWrite();
+        if (stream != null)
+        {
+            AddPendingFlushKey(key);
+        }
+        return stream;
+    }
+
+    public ILRUOutputStream Get(string key)
+    {
+        ArgumentNullException.ThrowIfNull(key, nameof(key));
+
+        string hashedKey = ToHashedKey(key);
+        CacheEntry entry = _entries.GetOrAdd(hashedKey, (string key) => new CacheEntry(this, key));
+        ILRUOutputStream stream = entry.StartRead();
+        if (stream != null)
+        {
+            AddPendingFlushKey(key);
+        }
+        return stream;
+    }
+
+    public void Clean()
+    {
+        var directory = new DirectoryInfo(_folder.Path);
+        long sizeToRemove = FileUtils.GetDirectorySize(directory, ignoreErrors: true) - _maxSize;
+        if (sizeToRemove <= 0)
+        {
+            return;
+        }
+
+        IReadOnlyList<StorageFile> files;
+        try
+        {
+            files = _folder.GetFilesAsync().AsTask().Result;
+        }
+        catch (Exception ex)
+        {
+            Logger.F(TAG, "Clean", ex);
+            return;
+        }
+
+        List<Tuple<StorageFile, long>> lastUsedTimes = new();
+
+        for (int i = 0; i < files.Count;)
+        {
+            Dictionary<string, StorageFile> batch = [];
+
+            for (; i < files.Count && batch.Count < BATCH_SIZE; i++)
+            {
+                StorageFile file = files[i];
+                string fileName = file.Name;
+
+                if (fileName == DATABASE_FILE_NAME)
+                {
+                    continue;
+                }
+
+                string key = "";
+                if (fileName.StartsWith("1."))
+                {
+                    key = fileName[2..];
+                }
+                if (key.Length == 0)
+                {
+                    try
+                    {
+                        ulong fileSize = file.GetBasicPropertiesAsync().AsTask().Result.Size;
+                        file.DeleteAsync().Wait();
+                        sizeToRemove -= (long)fileSize;
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.F(TAG, "Clean", ex);
+                    }
+                    continue;
+                }
+
+                batch[key] = file;
+            }
+
+            Dictionary<string, long> result = _database.BatchQuery(batch.Keys);
+
+            foreach (KeyValuePair<string, long> pair in result)
+            {
+                if (pair.Value < 0)
+                {
+                    AddPendingFlushKey(pair.Key);
+                }
+                else
+                {
+                    lastUsedTimes.Add(new Tuple<StorageFile, long>(batch[pair.Key], pair.Value));
+                }
+            }
+        }
+
+        lastUsedTimes.Sort(new Comparison<Tuple<StorageFile, long>>(
+            delegate (Tuple<StorageFile, long> x, Tuple<StorageFile, long> y) { return x.Item2.CompareTo(y.Item2); }));
+
+        foreach (Tuple<StorageFile, long> item in lastUsedTimes)
+        {
+            if (sizeToRemove <= 0)
+            {
+                break;
+            }
+
+            StorageFile file = item.Item1;
+            try
+            {
+                ulong fileSize = file.GetBasicPropertiesAsync().AsTask().Result.Size;
+                file.DeleteAsync().Wait();
+                sizeToRemove -= (long)fileSize;
+            }
+            catch (Exception ex)
+            {
+                Logger.F(TAG, "Clean", ex);
+            }
+        }
+    }
+
+    private string ToHashedKey(string key)
+    {
+        return key;
+    }
+
+    private static string GetDirtyFileName(string key)
+    {
+        return "0." + key;
+    }
+
+    private static string GetCleanFileName(string key)
+    {
+        return "1." + key;
+    }
+
+    private void AddPendingFlushKey(string key)
+    {
+        _flushLock.AcquireReaderLock(-1);
+        try
+        {
+            _pendingFlushKeys[key] = DateTimeOffset.Now.ToUnixTimeSeconds();
+            if (Interlocked.CompareExchange(ref _postFlushTask, 1, 0) == 1)
+            {
+                return;
+            }
+        }
+        finally
+        {
+            _flushLock.ReleaseReaderLock();
+        }
+
+        Task.Delay(1000).ContinueWith(delegate
+        {
+            IDictionary<string, long> pendingFlushKeys;
+
+            _flushLock.AcquireWriterLock(-1);
+            try
+            {
+                pendingFlushKeys = _pendingFlushKeys;
+                _pendingFlushKeys = new();
+                Interlocked.Exchange(ref _postFlushTask, 0);
+            }
+            finally
+            {
+                _flushLock.ReleaseWriterLock();
+            }
+
+            _database.BatchUpdate(pendingFlushKeys);
+        });
+    }
+
+    private class CacheEntry : IDisposable
+    {
+        private readonly ReaderWriterLock _lock = new();
+        private readonly LRUCache _cache;
+        private readonly string _key;
+        private Status _status;
+        private int _readerCount = 0;
+        private LRUOutputStream _outputStream;
+
+        public CacheEntry(LRUCache cache, string key)
+        {
+            _cache = cache;
+            _key = key;
+            _status = Status.Empty;
+        }
+
+        public ILRUInputStream StartWrite()
+        {
+            _lock.AcquireWriterLock(-1);
+            try
+            {
+                if (_status == Status.Dirty || _readerCount > 0)
+                {
+                    return null;
+                }
+                _status = Status.Dirty;
+            }
+            finally
+            {
+                _lock.ReleaseWriterLock();
+            }
+
+            string dirtyFileName = GetDirtyFileName(_key);
+            StorageFile file = null;
+            try
+            {
+                file = _cache._folder.CreateFileAsync(dirtyFileName, CreationCollisionOption.ReplaceExisting).AsTask().Result;
+            }
+            catch (Exception e)
+            {
+                Logger.F(TAG, "StartWrite", e);
+            }
+            if (file == null)
+            {
+                SwitchToEmptyState();
+                return null;
+            }
+
+            IRandomAccessStream stream = null;
+            try
+            {
+                stream = file.OpenAsync(FileAccessMode.ReadWrite).AsTask().Result;
+            }
+            catch (Exception e)
+            {
+                Logger.F(TAG, "StartWrite", e);
+            }
+            if (stream == null)
+            {
+                SwitchToEmptyState();
+                return null;
+            }
+
+            return new LRUInputStream(this, stream);
+        }
+
+        public void EndWrite()
+        {
+            string dirtyFileName = GetDirtyFileName(_key);
+            StorageFile file = null;
+            try
+            {
+                file = _cache._folder.GetFileAsync(dirtyFileName).AsTask().Result;
+            }
+            catch (Exception e)
+            {
+                Logger.F(TAG, "EndWrite", e);
+            }
+            if (file == null)
+            {
+                SwitchToEmptyState();
+                return;
+            }
+
+            string cleanFileName = GetCleanFileName(_key);
+            try
+            {
+                file.RenameAsync(cleanFileName).AsTask().Wait();
+            }
+            catch (Exception e)
+            {
+                Logger.F(TAG, "EndWrite", e);
+                SwitchToEmptyState();
+                return;
+            }
+
+            _lock.AcquireWriterLock(-1);
+            try
+            {
+                DebugUtils.Assert(_status == Status.Dirty);
+                _status = Status.Clean;
+            }
+            finally
+            {
+                _lock.ReleaseWriterLock();
+            }
+        }
+
+        public ILRUOutputStream StartRead()
+        {
+            _lock.AcquireWriterLock(-1);
+            try
+            {
+                if (_status == Status.Dirty)
+                {
+                    return null;
+                }
+
+                if (_outputStream == null)
+                {
+                    string cleanFileName = GetCleanFileName(_key);
+                    StorageFile file = null;
+                    try
+                    {
+                        file = _cache._folder.GetFileAsync(cleanFileName).AsTask().Result;
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.E(TAG, "StartRead", e);
+                    }
+                    if (file == null)
+                    {
+                        return null;
+                    }
+
+                    IRandomAccessStream stream = null;
+                    try
+                    {
+                        stream = file.OpenAsync(FileAccessMode.Read).AsTask().Result;
+                    }
+                    catch (Exception e)
+                    {
+                        Logger.F(TAG, "StartRead", e);
+                    }
+                    if (stream == null)
+                    {
+                        return null;
+                    }
+
+                    _outputStream = new LRUOutputStream(this, stream);
+                    _status = Status.Clean;
+                }
+                else
+                {
+                    DebugUtils.Assert(_status == Status.Clean);
+                }
+
+                _readerCount++;
+                return _outputStream;
+            }
+            finally
+            {
+                _lock.ReleaseWriterLock();
+            }
+        }
+
+        public bool EndRead()
+        {
+            _lock.AcquireWriterLock(-1);
+            try
+            {
+                DebugUtils.Assert(_status == Status.Clean);
+                DebugUtils.Assert(_readerCount > 0);
+
+                if (_readerCount <= 1)
+                {
+                    DebugUtils.Assert(_outputStream != null);
+
+                    _readerCount = 0;
+                    _outputStream = null;
+                    return true;
+                }
+
+                _readerCount--;
+                return false;
+            }
+            finally
+            {
+                _lock.ReleaseWriterLock();
+            }
+        }
+
+        private void SwitchToEmptyState()
+        {
+            _lock.AcquireWriterLock(-1);
+            try
+            {
+                _status = Status.Empty;
+            }
+            finally
+            {
+                _lock.ReleaseWriterLock();
+            }
+        }
+
+        public void Dispose()
+        {
+            _outputStream?.Dispose();
+            _outputStream = null;
+        }
+
+        private enum Status
+        {
+            Empty,
+            Clean,
+            Dirty,
+        }
+    }
+
+    private class LRUInputStream(CacheEntry entry, IRandomAccessStream stream) : ILRUInputStream
+    {
+        public void Dispose()
+        {
+            stream.Dispose();
+            entry.EndWrite();
+        }
+
+        public async Task WriteAsync(IBuffer buffer)
+        {
+            await stream.WriteAsync(buffer);
+        }
+    }
+
+    private class LRUOutputStream(CacheEntry entry, IRandomAccessStream stream) : ILRUOutputStream
+    {
+        public bool CanRead => stream.CanRead;
+
+        public bool CanWrite => stream.CanWrite;
+
+        public ulong Position => stream.Position;
+
+        public ulong Size
+        {
+            get => stream.Size;
+            set => stream.Size = value;
+        }
+
+        public IRandomAccessStream CloneStream()
+        {
+            return stream.CloneStream();
+        }
+
+        public void Dispose()
+        {
+            if (entry.EndRead())
+            {
+                stream.Dispose();
+            }
+        }
+
+        public IAsyncOperation<bool> FlushAsync()
+        {
+            return stream.FlushAsync();
+        }
+
+        public IInputStream GetInputStreamAt(ulong position)
+        {
+            return stream.GetInputStreamAt(position);
+        }
+
+        public IOutputStream GetOutputStreamAt(ulong position)
+        {
+            return stream.GetOutputStreamAt(position);
+        }
+
+        public IAsyncOperationWithProgress<IBuffer, uint> ReadAsync(IBuffer buffer, uint count, InputStreamOptions options)
+        {
+            return stream.ReadAsync(buffer, count, options);
+        }
+
+        public void Seek(ulong position)
+        {
+            stream.Seek(position);
+        }
+
+        public IAsyncOperationWithProgress<uint, uint> WriteAsync(IBuffer buffer)
+        {
+            return stream.WriteAsync(buffer);
+        }
+    }
+}

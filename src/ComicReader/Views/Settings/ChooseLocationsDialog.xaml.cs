@@ -1,10 +1,17 @@
-using ComicReader.Database;
-using ComicReader.DesignData;
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;
+
+using ComicReader.Common;
+using ComicReader.Data;
+using ComicReader.Data.Comic;
+using ComicReader.ViewModels;
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-using System.Collections.ObjectModel;
-using System.Threading.Tasks;
 
 namespace ComicReader.Views.Settings;
 
@@ -24,13 +31,10 @@ public sealed partial class ChooseLocationsDialog : ContentDialog
     {
         FolderItemDataSource.Clear();
 
-        if (Utils.Storage.AllowAddToFutureAccessList())
+        FolderItemDataSource.Add(new FolderItemViewModel
         {
-            FolderItemDataSource.Add(new FolderItemViewModel
-            {
-                IsAddNew = true
-            });
-        }
+            IsAddNew = true
+        });
 
         await XmlDatabaseManager.WaitLock();
 
@@ -53,7 +57,7 @@ public sealed partial class ChooseLocationsDialog : ContentDialog
 
     private void ListViewLoaded(object sender, RoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             await Update();
         });
@@ -62,7 +66,7 @@ public sealed partial class ChooseLocationsDialog : ContentDialog
     private void AddNewPointerPressed(object sender, PointerRoutedEventArgs e)
     {
         // Add a folder.
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             if (!IsPrimaryButtonEnabled)
             {
@@ -90,7 +94,7 @@ public sealed partial class ChooseLocationsDialog : ContentDialog
     private void RemoveFolderPointerPressed(object sender, PointerRoutedEventArgs e)
     {
         // remove a folder
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             if (!IsPrimaryButtonEnabled)
             {

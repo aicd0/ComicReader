@@ -1,0 +1,111 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Microsoft.UI.Xaml.Controls">
+
+    <controls:RatingItemFontInfo
+        x:Key="RatingControlDefaultFontInfo"
+        Glyph="&#xE735;"
+        UnsetGlyph="&#xE735;" />
+
+    <Style x:Key="InfoPaneRatingControlStyle" TargetType="controls:RatingControl">
+        <Setter Property="Height" Value="32" />
+        <Setter Property="Foreground" Value="{ThemeResource RatingControlCaptionForeground}" />
+        <Setter Property="UseSystemFocusVisuals" Value="{StaticResource UseSystemFocusVisuals}" />
+        <Setter Property="ItemInfo" Value="{ThemeResource MUX_RatingControlDefaultFontInfo}" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="controls:RatingControl">
+                    <Grid x:Name="LayoutRoot">
+                        <!--<StackPanel Orientation="Horizontal"
+                                    Grid.Row="0"
+                                    Opacity="0.4">
+                            <StackPanel x:Name="RatingBackgroundStackPanel"
+                                        Spacing="-7"
+                                        Orientation="Horizontal" />
+                        </StackPanel>
+                        <ContentPresenter x:Name="ForegroundContentPresenter"
+                                          IsHitTestVisible="False"
+                                          Grid.Row="0">
+                            <StackPanel Orientation="Horizontal">
+                                <StackPanel x:Name="RatingForegroundStackPanel"
+                                            Spacing="-7"
+                                            IsHitTestVisible="False"
+                                            Orientation="Horizontal" />
+                            </StackPanel>
+                        </ContentPresenter>-->
+                        <StackPanel
+                            Grid.Row="0"
+                            Orientation="Horizontal"
+                            Spacing="-7">
+                            <StackPanel
+                                x:Name="RatingBackgroundStackPanel"
+                                Background="Transparent"
+                                Orientation="Horizontal"
+                                Spacing="-7" />
+                            <TextBlock
+                                x:Name="Caption"
+                                Height="32"
+                                Margin="4,9,20,0"
+                                VerticalAlignment="Center"
+                                AutomationProperties.AccessibilityView="Raw"
+                                AutomationProperties.Name="RatingCaption"
+                                Foreground="{ThemeResource RatingControlCaptionForeground}"
+                                IsHitTestVisible="False"
+                                Style="{ThemeResource CaptionTextBlockStyle}"
+                                Text="{TemplateBinding Caption}"
+                                TextLineBounds="TrimToBaseline" />
+                        </StackPanel>
+                        <ContentPresenter
+                            x:Name="ForegroundContentPresenter"
+                            Grid.Row="0"
+                            IsHitTestVisible="False">
+                            <StackPanel Orientation="Horizontal" Spacing="-7">
+                                <StackPanel
+                                    x:Name="RatingForegroundStackPanel"
+                                    IsHitTestVisible="False"
+                                    Orientation="Horizontal"
+                                    Spacing="-7" />
+                            </StackPanel>
+                        </ContentPresenter>
+                        <VisualStateManager.VisualStateGroups>
+                            <VisualStateGroup x:Name="CommonStates">
+                                <VisualState x:Name="Disabled">
+                                    <VisualState.Setters>
+                                        <Setter Target="ForegroundContentPresenter.Foreground" Value="{ThemeResource RatingControlDisabledSelectedForeground}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Placeholder">
+                                    <VisualState.Setters>
+                                        <Setter Target="ForegroundContentPresenter.Foreground" Value="{ThemeResource RatingControlPlaceholderForeground}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="PointerOverPlaceholder">
+                                    <VisualState.Setters>
+                                        <Setter Target="ForegroundContentPresenter.Foreground" Value="{ThemeResource RatingControlPointerOverPlaceholderForeground}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="PointerOverUnselected">
+                                    <VisualState.Setters>
+                                        <Setter Target="ForegroundContentPresenter.Foreground" Value="{ThemeResource RatingControlPointerOverUnselectedForeground}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="Set">
+                                    <VisualState.Setters>
+                                        <Setter Target="ForegroundContentPresenter.Foreground" Value="{ThemeResource RatingControlSelectedForeground}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                                <VisualState x:Name="PointerOverSet">
+                                    <VisualState.Setters>
+                                        <Setter Target="ForegroundContentPresenter.Foreground" Value="{ThemeResource RatingControlSelectedForeground}" />
+                                    </VisualState.Setters>
+                                </VisualState>
+                            </VisualStateGroup>
+                        </VisualStateManager.VisualStateGroups>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>

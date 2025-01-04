@@ -1,29 +1,53 @@
-using ComicReader.Common.Constants;
-using ComicReader.Database;
-using ComicReader.Router;
-using ComicReader.Utils;
-using ComicReader.Utils.Lifecycle;
-using ComicReader.Views.Base;
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
+using System;
+using System.ComponentModel;
+
+using ComicReader.Common;
+using ComicReader.Common.DebugTools;
+using ComicReader.Common.Lifecycle;
+using ComicReader.Common.PageBase;
+using ComicReader.Common.Threading;
+using ComicReader.Data;
+using ComicReader.Helpers.Navigation;
 using ComicReader.Views.Main;
+
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
-using System;
 
 namespace ComicReader.Views.Navigation;
 
-internal class NavigationPageBase : BasePage<NavigationPageViewModel>;
+public class NavigationPageViewModel : INotifyPropertyChanged
+{
+    public event PropertyChangedEventHandler PropertyChanged;
 
-sealed internal partial class NavigationPage : NavigationPageBase
+    private bool _devToolsVisible;
+    public bool DevToolsVisible
+    {
+        get => _devToolsVisible;
+        set
+        {
+            _devToolsVisible = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DevToolsVisible)));
+        }
+    }
+}
+
+internal sealed partial class NavigationPage : BasePage
 {
     private const string TAG = "NavigationPage";
 
+    private bool _isFavorite = false;
     private double _rootTabHeight = 0;
     private double _navigationBarHeight = 0;
     private NavigationBundle _currentBundle;
-    private NavigationPageAbility _ability;
+    private readonly NavigationPageAbility _ability;
+
+    private NavigationPageViewModel ViewModel { get; } = new();
 
     public NavigationPage()
     {
@@ -34,7 +58,9 @@ sealed internal partial class NavigationPage : NavigationPageBase
     protected override void OnResume()
     {
         base.OnResume();
+
         ObserveData();
+        ViewModel.DevToolsVisible = DebugUtils.DebugBuild;
     }
 
     private void ObserveData()
@@ -50,28 +76,11 @@ sealed internal partial class NavigationPage : NavigationPageBase
             TopTile.Opacity = opacity;
             TopTile.IsHitTestVisible = opacity > 0.5;
         });
-
-        ViewModel.GridViewModeEnabledLiveData.ObserveSticky(this, new ChangedObserver<bool>(delegate (bool toggled)
-        {
-            AbtbPreviewButton.IsChecked = toggled;
-        }));
-
-        ViewModel.IsFavoriteLiveData.ObserveSticky(this, new ChangedObserver<bool>(delegate (bool isFavorite)
-        {
-            FiFavoriteFilled.Visibility = isFavorite ? Visibility.Visible : Visibility.Collapsed;
-            FiFavoriteUnfilled.Visibility = isFavorite ? Visibility.Collapsed : Visibility.Visible;
-            string toolTip = isFavorite ? StringResourceProvider.GetResourceString("RemoveFromFavorites") :
-                StringResourceProvider.GetResourceString("AddToFavorites");
-            ToolTipService.SetToolTip(AbbAddToFavorite, toolTip);
-            _ability.SendFavoriteChangedEvent(isFavorite);
-        }));
     }
 
     public void Navigate(NavigationBundle bundle)
     {
-        TransferAbilities(bundle);
-        bundle.Abilities[typeof(INavigationPageAbility)] = _ability;
-
+        TransferAbility(bundle.Communicator);
         ContentFrame.Navigate(bundle.PageTrait.GetPageType(), bundle);
     }
 
@@ -113,7 +122,7 @@ sealed internal partial class NavigationPage : NavigationPageBase
         _ability.ClearSubscriptions();
 
         _currentBundle = e.Parameter as NavigationBundle;
-        GetMainPageAbility().SetNavigationBundle(_currentBundle);
+        GetMainPageAbility().SetCurrentPageInfo(_currentBundle.Url, _currentBundle.PageTrait);
 
         NavigationPageSidePane.IsPaneOpen = false;
         bool isHomePage = _currentBundle.PageTrait is HomePageTrait;
@@ -150,6 +159,15 @@ sealed internal partial class NavigationPage : NavigationPageBase
             // MainPage has done that job for us.
             TopTile.Margin = new Thickness(0, 0, 0, 0);
             ContentGrid.Margin = new Thickness(0, _navigationBarHeight, 0, 0);
+        }
+    }
+
+    private void OnDevToolsClick(object sender, RoutedEventArgs e)
+    {
+        if (DebugUtils.DebugBuild)
+        {
+            var route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_DEV_TOOLS);
+            MainPage.Current.OpenInNewTab(route);
         }
     }
 
@@ -218,13 +236,23 @@ sealed internal partial class NavigationPage : NavigationPageBase
 
     private void OnAddToFavoritesClick(object sender, RoutedEventArgs e)
     {
-        bool isFavorite = !ViewModel.IsFavoriteLiveData.GetValue();
-        ViewModel.SetIsFavorite(isFavorite);
+        SetIsFavorite(!_isFavorite);
     }
 
     private void OnComicInfoClick(object sender, RoutedEventArgs e)
     {
         _ability.SendExpandInfoPaneEvent();
+    }
+
+    private void SetIsFavorite(bool isFavorite)
+    {
+        _isFavorite = isFavorite;
+        FiFavoriteFilled.Visibility = isFavorite ? Visibility.Visible : Visibility.Collapsed;
+        FiFavoriteUnfilled.Visibility = isFavorite ? Visibility.Collapsed : Visibility.Visible;
+        string toolTip = isFavorite ? StringResourceProvider.GetResourceString("RemoveFromFavorites") :
+            StringResourceProvider.GetResourceString("AddToFavorites");
+        ToolTipService.SetToolTip(AbbAddToFavorite, toolTip);
+        _ability.SendFavoriteChangedEvent(isFavorite);
     }
 
     // Pointer events
@@ -267,26 +295,45 @@ sealed internal partial class NavigationPage : NavigationPageBase
     private void RspReaderSetting_DataChanged(ReaderSettingDataModel data)
     {
         _ability.SendReaderSettingsChangedEvent(data);
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             await XmlDatabaseManager.WaitLock();
 
-            Database.XmlDatabase.Settings.VerticalReading = data.IsVertical;
-            Database.XmlDatabase.Settings.LeftToRight = data.IsLeftToRight;
-            Database.XmlDatabase.Settings.VerticalContinuous = data.IsVerticalContinuous;
-            Database.XmlDatabase.Settings.HorizontalContinuous = data.IsHorizontalContinuous;
-            Database.XmlDatabase.Settings.VerticalPageArrangement = data.VerticalPageArrangement;
-            Database.XmlDatabase.Settings.HorizontalPageArrangement = data.HorizontalPageArrangement;
+            XmlDatabase.Settings.VerticalReading = data.IsVertical;
+            XmlDatabase.Settings.LeftToRight = data.IsLeftToRight;
+            XmlDatabase.Settings.VerticalContinuous = data.IsVerticalContinuous;
+            XmlDatabase.Settings.HorizontalContinuous = data.IsHorizontalContinuous;
+            XmlDatabase.Settings.VerticalPageArrangement = data.VerticalPageArrangement;
+            XmlDatabase.Settings.HorizontalPageArrangement = data.HorizontalPageArrangement;
 
             XmlDatabaseManager.ReleaseLock();
-            TaskQueue.DefaultQueue.Enqueue($"{TAG}#RspReaderSetting_DataChanged", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
+            TaskDispatcher.DefaultQueue.Submit($"{TAG}#RspReaderSetting_DataChanged", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
         });
     }
 
-    private void SidePane_Navigating(NavigationBundle bundle)
+    private void OnSidePaneSelectionChanged(SidePane sender, string item)
     {
-        TransferAbilities(bundle);
-        bundle.Abilities[typeof(INavigationPageAbility)] = _ability;
+        Route route = item switch
+        {
+            "Favorites" => new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_FAVORITE),
+            "History" => new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_HISTORY),
+            _ => throw new Exception(),
+        };
+        NavigationBundle bundle = AppRouter.Process(route.Build());
+        TransferAbility(bundle.Communicator);
+        sender.Navigate(bundle);
+    }
+
+    private void TransferAbility(PageCommunicator communicator)
+    {
+        communicator.RegisterAbility(GetAbility<ICommonPageAbility>());
+        communicator.RegisterAbility(GetMainPageAbility());
+        communicator.RegisterAbility<INavigationPageAbility>(_ability);
+    }
+
+    private void SetGridViewModeEnabled(bool enabled)
+    {
+        AbtbPreviewButton.IsChecked = enabled;
     }
 
     private class NavigationPageAbility : INavigationPageAbility
@@ -297,8 +344,8 @@ sealed internal partial class NavigationPage : NavigationPageBase
         private const string EVENT_GRID_VIEW_MODE_CHANGED = "GridViewModeChanged";
         private const string EVENT_READER_SETTINGS_CHANGED = "ReaderSettingsChanged";
 
-        private WeakReference<NavigationPage> _parent;
-        private EventBus _eventBus = new EventBus();
+        private readonly WeakReference<NavigationPage> _parent;
+        private readonly EventBus _eventBus = new();
 
         public NavigationPageAbility(NavigationPage parent)
         {
@@ -313,49 +360,70 @@ sealed internal partial class NavigationPage : NavigationPageBase
         public bool GetIsSidePaneOpen()
         {
             if (!_parent.TryGetTarget(out NavigationPage parent))
+            {
                 return false;
+            }
+
             return parent.NavigationPageSidePane.IsPaneOpen;
         }
 
         public void SetExternalComic(bool isExternal)
         {
             if (!_parent.TryGetTarget(out NavigationPage parent))
+            {
                 return;
+            }
+
             parent.AbbAddToFavorite.IsEnabled = !isExternal;
         }
 
         public void SetFavorite(bool isFavorite)
         {
             if (!_parent.TryGetTarget(out NavigationPage parent))
+            {
                 return;
-            parent.ViewModel.SetIsFavorite(isFavorite);
+            }
+
+            parent.SetIsFavorite(isFavorite);
         }
 
         public void SetGridViewMode(bool enabled)
         {
             if (!_parent.TryGetTarget(out NavigationPage parent))
+            {
                 return;
-            parent.ViewModel.SetGridViewMode(enabled);
+            }
+
+            parent.SetGridViewModeEnabled(enabled);
         }
 
         public void SetIsSidePaneOpen(bool isOpen)
         {
             if (!_parent.TryGetTarget(out NavigationPage parent))
+            {
                 return;
+            }
+
             parent.NavigationPageSidePane.IsPaneOpen = isOpen;
         }
 
         public void SetReaderSettings(ReaderSettingDataModel settings)
         {
             if (!_parent.TryGetTarget(out NavigationPage parent))
+            {
                 return;
+            }
+
             parent.RspReaderSetting.SetData(settings);
         }
 
         public void SetSearchBox(string text)
         {
             if (!_parent.TryGetTarget(out NavigationPage parent))
+            {
                 return;
+            }
+
             parent.SetSearchBox(text);
         }
 

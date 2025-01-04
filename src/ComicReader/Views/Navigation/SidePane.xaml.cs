@@ -1,31 +1,30 @@
-using ComicReader.Router;
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
+using ComicReader.Common.PageBase;
+
 using Microsoft.UI.Xaml.Controls;
-using System;
 
 namespace ComicReader.Views.Navigation;
 
-sealed internal partial class SidePane : UserControl
+internal sealed partial class SidePane : UserControl
 {
-    public delegate void NavigatingCancelEventHandler(NavigationBundle bundle);
-    public event NavigatingCancelEventHandler Navigating;
+    public delegate void SelectionChangedEventHandler(SidePane sender, string item);
+    public event SelectionChangedEventHandler SelectionChanged;
 
     public SidePane()
     {
         InitializeComponent();
     }
 
+    public void Navigate(NavigationBundle bundle)
+    {
+        ContentFrame.Navigate(bundle.PageTrait.GetPageType(), bundle);
+    }
+
     private void OnNavPaneSelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
     {
         string item = (string)((NavigationViewItem)args.SelectedItem).Content;
-
-        Route route = item switch
-        {
-            "Favorites" => new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_FAVORITE),
-            "History" => new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_HISTORY),
-            _ => throw new Exception(),
-        };
-        NavigationBundle bundle = route.Process();
-        Navigating?.Invoke(bundle);
-        ContentFrame.Navigate(bundle.PageTrait.GetPageType(), bundle);
+        SelectionChanged?.Invoke(this, item);
     }
 }

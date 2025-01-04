@@ -1,13 +1,22 @@
-using ComicReader.Database;
-using ComicReader.Utils;
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
+using System;
+using System.Threading.Tasks;
+
+using ComicReader.Common;
+using ComicReader.Common.AppEnvironment;
+using ComicReader.Common.DebugTools;
+using ComicReader.Data;
+using ComicReader.Data.Comic;
 using ComicReader.Views.Main;
-using ComicReader.Views.Settings;
+
 using Microsoft.AppCenter;
 using Microsoft.AppCenter.Analytics;
 using Microsoft.AppCenter.Crashes;
 using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppLifecycle;
-using System;
+
 using Windows.ApplicationModel.Activation;
 using Windows.Storage;
 
@@ -19,19 +28,11 @@ public partial class App : Application
 
     public App()
     {
-        // get and apply the appearance setting.
-        object appearance_setting = ApplicationData.Current.LocalSettings.Values[SettingsPage.AppearanceKey];
-        if (appearance_setting != null)
-        {
-            Current.RequestedTheme = (ApplicationTheme)(int)appearance_setting;
-        }
-
+        UnhandledException += CrashHandler.OnUnhandledException;
+        EnvironmentProvider.Instance.Initialize();
+        ApplyAppTheme();
         InitializeComponent();
-
-        if (Keys.AppSecret.Length > 0)
-        {
-            AppCenter.Start(Keys.AppSecret, typeof(Analytics), typeof(Crashes));
-        }
+        StartAppCenter();
     }
 
     protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs e)
@@ -53,12 +54,7 @@ public partial class App : Application
             return;
         }
 
-        // Initialize logger
-        Logger.Initialize();
-
-        // Initialize database here
-        TaskException result = await DatabaseManager.Init();
-        System.Diagnostics.Debug.Assert(result.Successful());
+        await PerformInitialization();
 
         // Initialize MainWindow here
         Window = new MainWindow();
@@ -74,5 +70,31 @@ public partial class App : Application
         {
             MainPage.OnFileActivated((FileActivatedEventArgs)e.Data);
         }
+    }
+
+    private void ApplyAppTheme()
+    {
+        object appearanceSetting = ApplicationData.Current.LocalSettings.Values[GlobalConstants.LOCAL_SETTINGS_KEY_APPEARANCE];
+        if (appearanceSetting != null)
+        {
+            Current.RequestedTheme = (ApplicationTheme)(int)appearanceSetting;
+        }
+    }
+
+    private void StartAppCenter()
+    {
+        string appSecret = Properties.AppCenterSecret;
+        if (appSecret.Length > 0)
+        {
+            AppCenter.Start(appSecret, typeof(Analytics), typeof(Crashes));
+        }
+    }
+
+    private async Task PerformInitialization()
+    {
+        Logger.Initialize();
+        await XmlDatabaseManager.Initialize();
+        await SqliteDatabaseManager.Initialize(XmlDatabase.Settings.DatabaseVersion);
+        ComicData.UpdateAllComics("DatabaseManager#init", lazy: true);
     }
 }

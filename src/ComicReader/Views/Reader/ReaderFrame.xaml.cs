@@ -1,4 +1,8 @@
-using ComicReader.DesignData;
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
+using System;
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
@@ -6,75 +10,138 @@ namespace ComicReader.Views.Reader;
 
 internal sealed partial class ReaderFrame : UserControl
 {
-    public ReaderFrameViewModel Ctx => DataContext as ReaderFrameViewModel;
-    public ReaderFrameViewModel Item { get; private set; }
+    private static readonly ReaderFrameViewModel sEmptyViewModel = new(null);
+
+    private bool _isLoaded = false;
+    private bool? _isReady = null;
+
+    public delegate void ReadyStateChangeListener(FrameworkElement container, bool isReady, string reason);
+    private event ReadyStateChangeListener ReadyStateChanged;
+
+    public delegate void ImageChangeListener(ReaderFrameViewModel model);
+    private event ImageChangeListener ImageChanged;
+
+    private ReaderFrameViewModel ViewModel { get; set; }
+    private ReaderFrameViewModel ViewModelNotNull => ViewModel ?? sEmptyViewModel;
+    private FrameworkElement Container => MainFrame;
 
     public ReaderFrame()
     {
         InitializeComponent();
+
+        Loaded += OnLoadedOrUnloaded;
+        Unloaded += OnLoadedOrUnloaded;
     }
 
-    private void Notify()
+    private void OnLoadedOrUnloaded(object sender, RoutedEventArgs e)
     {
-        if (Ctx == null)
+        if (IsLoaded == _isLoaded)
         {
             return;
         }
+        _isLoaded = IsLoaded;
 
-        if (Container == null)
+        if (ViewModel != null)
         {
-            return;
+            ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+            if (_isLoaded)
+            {
+                ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+            }
         }
-
-        Ctx.Notify();
     }
 
-    private void OnFrameDataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
+    public void Bind(ReaderFrameViewModel model)
     {
-        // Notify binding changes.
-        Bindings.Update();
+        if (ViewModel != null)
+        {
+            ViewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        }
 
-        Notify();
+        ViewModel = model;
+
+        if (ViewModel != null)
+        {
+            ViewModel.PropertyChanged += OnViewModelPropertyChanged;
+        }
+
+        RebindViewModel("Rebind by container");
+    }
+
+    public void SetReadyStateChangeHandler(ReadyStateChangeListener handler)
+    {
+        ReadyStateChanged = handler;
+    }
+
+    public void SetImageChangeHandler(ImageChangeListener handler)
+    {
+        ImageChanged = handler;
     }
 
     private void OnFrameLoaded(object sender, RoutedEventArgs e)
     {
-        Notify();
+        DispatchReadyStateChangeEvent("FrameLoaded");
     }
 
     private void OnFrameSizeChanged(object sender, SizeChangedEventArgs e)
     {
-        Notify();
+        DispatchReadyStateChangeEvent($"SizeChanged (W={e.NewSize.Width},H={e.NewSize.Height})");
     }
 
-    public Grid Container => MainFrame;
-
-    public void Bind(ReaderFrameViewModel item)
+    private void OnViewModelPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        if (Item != null)
+        if (e.PropertyName == nameof(ReaderFrameViewModel))
         {
-            Item.ItemContainer = null;
+            RebindViewModel("Rebind by property");
         }
-
-        Item = item;
-        Item.ItemContainer = this;
-        CompareAndBind(item);
+        else if (e.PropertyName == nameof(ReaderFrameViewModel.ImageLeft) || e.PropertyName == nameof(ReaderFrameViewModel.ImageRight))
+        {
+            if (ViewModel != null)
+            {
+                ImageChanged?.Invoke(ViewModel);
+            }
+        }
     }
 
-    public void CompareAndBind(ReaderFrameViewModel item)
+    private void RebindViewModel(string reason)
     {
-        if (item != Item)
+        Bindings.Update();
+        _isReady = null;
+        DispatchReadyStateChangeEvent(reason);
+    }
+
+    private void DispatchReadyStateChangeEvent(string reason)
+    {
+        bool isReady = IsReady();
+        if (isReady != _isReady)
         {
-            return;
+            _isReady = isReady;
+            ReadyStateChanged?.Invoke(Container, isReady, reason);
+        }
+    }
+
+    private bool IsReady()
+    {
+        FrameworkElement container = Container;
+        ReaderFrameViewModel model = ViewModel;
+        if (container == null || model == null)
+        {
+            return false;
         }
 
-        if (Item == null)
+        double desired_width = model.FrameWidth + model.FrameMargin.Left + model.FrameMargin.Right;
+        double desired_height = model.FrameHeight + model.FrameMargin.Top + model.FrameMargin.Bottom;
+
+        if (Math.Abs(container.ActualWidth - desired_width) > 5.0)
         {
-            ImageLeft.Source = null;
-            ImageRight.Source = null;
+            return false;
         }
 
-        ImageLeft.Source = Item.ImageL.Image;
-        ImageRight.Source = Item.ImageR.Image;
+        if (Math.Abs(container.ActualHeight - desired_height) > 5.0)
+        {
+            return false;
+        }
+
+        return true;
     }
 }

@@ -1,12 +1,19 @@
-using ComicReader.Common.Constants;
-using ComicReader.Native;
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
+using System;
+using System.Text.Json;
+
+using ComicReader.Common;
+using ComicReader.Common.Native;
 using ComicReader.Views.Main;
+
 using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
-using System;
-using System.Text.Json;
+
 using Windows.Storage;
+
 using WinRT.Interop;
 
 namespace ComicReader;
@@ -18,8 +25,18 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        TrySetAcrylicBackdrop();
         WindowHandle = WindowNative.GetWindowHandle(this);
+
+        Title = StringResourceProvider.GetResourceString("AppDisplayName");
+        TrySetAcrylicBackdrop();
+    }
+
+    private void OnWindowSizeChanged(object sender, WindowSizeChangedEventArgs args)
+    {
+        var placement = new NativeModels.WindowPlacement();
+        NativeMethods.GetWindowPlacement(WindowHandle, out placement);
+        string serialized = JsonSerializer.Serialize(placement);
+        ApplicationData.Current.LocalSettings.Values[GlobalConstants.LOCAL_SETTINGS_KEY_WINDOW_STATES] = serialized;
     }
 
     private void OnPageFrameLoaded(object sender, RoutedEventArgs e)
@@ -28,9 +45,18 @@ public sealed partial class MainWindow : Window
         PageFrame.Navigate(typeof(MainPage));
     }
 
+    private void TrySetAcrylicBackdrop()
+    {
+        if (DesktopAcrylicController.IsSupported())
+        {
+            var desktopAcrylicBackdrop = new DesktopAcrylicBackdrop();
+            SystemBackdrop = desktopAcrylicBackdrop;
+        }
+    }
+
     private void TryRecoverWindowStates()
     {
-        object windowStates = ApplicationData.Current.LocalSettings.Values[LocalSettings.WindowStates];
+        object windowStates = ApplicationData.Current.LocalSettings.Values[GlobalConstants.LOCAL_SETTINGS_KEY_WINDOW_STATES];
         if (windowStates is string)
         {
             NativeModels.WindowPlacement windowPlacement;
@@ -45,22 +71,5 @@ public sealed partial class MainWindow : Window
 
             NativeMethods.SetWindowPlacement(WindowHandle, ref windowPlacement);
         }
-    }
-
-    private void TrySetAcrylicBackdrop()
-    {
-        if (DesktopAcrylicController.IsSupported())
-        {
-            var desktopAcrylicBackdrop = new DesktopAcrylicBackdrop();
-            SystemBackdrop = desktopAcrylicBackdrop;
-        }
-    }
-
-    private void OnWindowSizeChanged(object sender, WindowSizeChangedEventArgs args)
-    {
-        var placement = new NativeModels.WindowPlacement();
-        NativeMethods.GetWindowPlacement(WindowHandle, out placement);
-        string serialized = JsonSerializer.Serialize(placement);
-        ApplicationData.Current.LocalSettings.Values[LocalSettings.WindowStates] = serialized;
     }
 }

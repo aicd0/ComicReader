@@ -1,5 +1,10 @@
-using ComicReader.Database;
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
+using ComicReader.Common.DebugTools;
+using ComicReader.Data;
 using ComicReader.Views.Navigation;
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
@@ -38,7 +43,7 @@ internal sealed partial class ReaderSettingPanel : UserControl
             case PageArrangementType.DualNoCoverMirror:
                 return 4;
             default:
-                System.Diagnostics.Debug.Assert(false);
+                DebugUtils.Assert(false);
                 return 0;
         }
     }
@@ -58,7 +63,7 @@ internal sealed partial class ReaderSettingPanel : UserControl
             case 4:
                 return PageArrangementType.DualNoCoverMirror;
             default:
-                System.Diagnostics.Debug.Assert(false);
+                DebugUtils.Assert(false);
                 return PageArrangementType.Single;
         }
     }

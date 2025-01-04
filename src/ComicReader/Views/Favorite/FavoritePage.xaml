@@ -1,13 +1,13 @@
-<favorite:FavoritePageBase
+<base:BasePage
     x:Class="ComicReader.Views.Favorite.FavoritePage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:base="using:ComicReader.Common.PageBase"
     xmlns:converters="using:ComicReader.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:data="using:ComicReader.DesignData"
-    xmlns:favorite="using:ComicReader.Views.Favorite"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
+    xmlns:vm="using:ComicReader.ViewModels"
     Background="Transparent"
     mc:Ignorable="d">
 
@@ -15,7 +15,7 @@
         <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
 
         <!--  Normal Template  -->
-        <DataTemplate x:Key="NormalTemplate" x:DataType="data:FavoriteItemViewModel">
+        <DataTemplate x:Key="NormalTemplate" x:DataType="vm:FavoriteItemViewModel">
             <muxc:TreeViewItem
                 HorizontalContentAlignment="Stretch"
                 VerticalContentAlignment="Stretch"
@@ -73,7 +73,7 @@
         </DataTemplate>
 
         <!--  Renaming Template  -->
-        <DataTemplate x:Key="RenamingTemplate" x:DataType="data:FavoriteItemViewModel">
+        <DataTemplate x:Key="RenamingTemplate" x:DataType="vm:FavoriteItemViewModel">
             <muxc:TreeViewItem
                 HorizontalContentAlignment="Stretch"
                 VerticalContentAlignment="Stretch"
@@ -122,4 +122,4 @@
             </muxc:TreeView.ContextFlyout>
         </muxc:TreeView>
     </Grid>
-</favorite:FavoritePageBase>
+</base:BasePage>

@@ -1,25 +1,30 @@
-using ComicReader.Common.Constants;
-using ComicReader.Database;
-using ComicReader.DesignData;
-using ComicReader.Router;
-using ComicReader.Utils.Lifecycle;
-using ComicReader.Views.Base;
-using ComicReader.Views.Main;
-using ComicReader.Views.Navigation;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 
+using ComicReader.Common;
+using ComicReader.Common.Lifecycle;
+using ComicReader.Common.PageBase;
+using ComicReader.Common.Threading;
+using ComicReader.Data;
+using ComicReader.Data.Comic;
+using ComicReader.Helpers.Navigation;
+using ComicReader.ViewModels;
+using ComicReader.Views.Main;
+using ComicReader.Views.Navigation;
+
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+
 namespace ComicReader.Views.Favorite;
 
-internal class FavoritePageBase : BasePage<EmptyViewModel>;
-
-sealed internal partial class FavoritePage : FavoritePageBase
+internal sealed partial class FavoritePage : BasePage
 {
     private const string TAG = "FavoritePage";
     private ObservableCollection<FavoriteItemViewModel> DataSource { get; set; }
@@ -36,7 +41,7 @@ sealed internal partial class FavoritePage : FavoritePageBase
         base.OnResume();
         ObserveData();
 
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             await Update();
         });
@@ -46,7 +51,7 @@ sealed internal partial class FavoritePage : FavoritePageBase
     {
         EventBus.Default.With(EventId.SidePaneUpdate).Observe(this, delegate
         {
-            Utils.C0.Run(async delegate
+            C0.Run(async delegate
             {
                 await Update();
             });
@@ -124,7 +129,7 @@ sealed internal partial class FavoritePage : FavoritePageBase
         XmlDatabase.Favorites.RootNodes.Clear();
         helper(XmlDatabase.Favorites.RootNodes, DataSource);
         XmlDatabaseManager.ReleaseLock();
-        Utils.TaskQueue.DefaultQueue.Enqueue($"{TAG}#Save", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Favorites));
+        TaskDispatcher.DefaultQueue.Submit($"{TAG}#Save", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Favorites));
     }
 
     private async Task DeleteItem(FavoriteItemViewModel item)
@@ -161,7 +166,7 @@ sealed internal partial class FavoritePage : FavoritePageBase
 
                     item.IsRenaming = false;
                     ObservableCollection<FavoriteItemViewModel> parent = item.Parent != null ? item.Parent.Children : DataSource;
-                    Utils.C1<FavoriteItemViewModel>.NotifyCollectionChanged(parent, item);
+                    C1<FavoriteItemViewModel>.NotifyCollectionChanged(parent, item);
                     await Save();
                     return true;
                 }
@@ -185,7 +190,7 @@ sealed internal partial class FavoritePage : FavoritePageBase
     private void CreateNewFolder(ObservableCollection<FavoriteItemViewModel> folder, FavoriteItemViewModel parent)
     {
         string folderName;
-        string new_folder_string = Utils.StringResourceProvider.GetResourceString("NewFolder");
+        string new_folder_string = StringResourceProvider.GetResourceString("NewFolder");
 
         for (int folderIndex = 1; folderIndex < 65536; ++folderIndex)
         {
@@ -226,9 +231,9 @@ sealed internal partial class FavoritePage : FavoritePageBase
 
     private void SortFavorites(ObservableCollection<FavoriteItemViewModel> source)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
-            var ordered = source.OrderBy(x => x.Name, new Utils.StringUtils.OrdinalComparer()).ToList();
+            var ordered = source.OrderBy(x => x.Name, new StringUtils.OrdinalComparer()).ToList();
 
             for (int i = 0; i < ordered.Count; ++i)
             {
@@ -250,7 +255,7 @@ sealed internal partial class FavoritePage : FavoritePageBase
     // events
     private void MainTreeViewBackgroundPressed(object sender, PointerRoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             await ResetItems();
         });
@@ -259,7 +264,7 @@ sealed internal partial class FavoritePage : FavoritePageBase
     private void MainTreeViewItemPressed(object sender, PointerRoutedEventArgs e)
     {
         // right-click
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             var item = (Microsoft.UI.Xaml.Controls.TreeViewItem)sender;
             var ctx = (FavoriteItemViewModel)item.DataContext;
@@ -277,7 +282,7 @@ sealed internal partial class FavoritePage : FavoritePageBase
     private void MainTreeViewItemInvoked(Microsoft.UI.Xaml.Controls.TreeView sender, Microsoft.UI.Xaml.Controls.TreeViewItemInvokedEventArgs e)
     {
         // left-click
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             var item = (FavoriteItemViewModel)e.InvokedItem;
 
@@ -309,7 +314,7 @@ sealed internal partial class FavoritePage : FavoritePageBase
 
     private void DeleteClick(object sender, RoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             var item = (FavoriteItemViewModel)((MenuFlyoutItem)sender).DataContext;
             await DeleteItem(item);
@@ -321,7 +326,7 @@ sealed internal partial class FavoritePage : FavoritePageBase
         var item = (FavoriteItemViewModel)((MenuFlyoutItem)sender).DataContext;
         item.IsRenaming = true;
         ObservableCollection<FavoriteItemViewModel> parent = item.Parent != null ? item.Parent.Children : DataSource;
-        Utils.C1<FavoriteItemViewModel>.NotifyCollectionChanged(parent, item);
+        C1<FavoriteItemViewModel>.NotifyCollectionChanged(parent, item);
     }
 
     private void RenameTextBoxTextChanged(object sender, TextChangedEventArgs e)
@@ -333,7 +338,7 @@ sealed internal partial class FavoritePage : FavoritePageBase
 
     private void RenameTextBoxKeyDown(object sender, KeyRoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             if (e.Key == Windows.System.VirtualKey.Enter)
             {
@@ -357,7 +362,7 @@ sealed internal partial class FavoritePage : FavoritePageBase
 
     private void NewFolderClick(object sender, RoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             var item = (FavoriteItemViewModel)((MenuFlyoutItem)sender).DataContext;
 
@@ -366,7 +371,7 @@ sealed internal partial class FavoritePage : FavoritePageBase
                 if (!item.Expanded)
                 {
                     item.Expanded = true;
-                    Utils.C1<FavoriteItemViewModel>.NotifyCollectionChanged(item.Parent != null ? item.Parent.Children : DataSource, item);
+                    C1<FavoriteItemViewModel>.NotifyCollectionChanged(item.Parent != null ? item.Parent.Children : DataSource, item);
                 }
 
                 CreateNewFolder(item.Children, item);
@@ -389,7 +394,7 @@ sealed internal partial class FavoritePage : FavoritePageBase
 
     private void RootNewFolderClick(object sender, RoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             CreateNewFolder(DataSource, null);
             await Save();
@@ -399,7 +404,7 @@ sealed internal partial class FavoritePage : FavoritePageBase
     private void MainTreeViewDragItemsCompleted(Microsoft.UI.Xaml.Controls.TreeView sender,
         Microsoft.UI.Xaml.Controls.TreeViewDragItemsCompletedEventArgs args)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             var parent = (FavoriteItemViewModel)args.NewParentItem;
 
@@ -414,7 +419,7 @@ sealed internal partial class FavoritePage : FavoritePageBase
 
     private void OpenInNewTabClick(object sender, RoutedEventArgs e)
     {
-        Utils.C0.Run(async delegate
+        C0.Run(async delegate
         {
             var item = (FavoriteItemViewModel)((MenuFlyoutItem)sender).DataContext;
             ComicData comic = await ComicData.FromId(item.Id, "FavoriteOpenInNewTabLoadComic");

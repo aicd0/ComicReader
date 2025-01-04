@@ -4,8 +4,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:converters="using:ComicReader.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-    xmlns:data="using:ComicReader.DesignData"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:ComicReader.ViewModels"
     x:Uid="ChooseLocationDialog"
     PrimaryButtonClick="ContentDialogPrimaryButtonClick"
     mc:Ignorable="d">
@@ -13,11 +13,11 @@
     <ContentDialog.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/Resources/Styles/ListViewItem.xaml" />
+                <ResourceDictionary Source="/Styles/ListViewItem.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <!--  Normal Template  -->
-            <DataTemplate x:Key="NormalTemplate" x:DataType="data:FolderItemViewModel">
+            <DataTemplate x:Key="NormalTemplate" x:DataType="vm:FolderItemViewModel">
                 <Grid
                     x:Uid="RemoveLocationButton"
                     Padding="20,10"
@@ -44,7 +44,7 @@
             </DataTemplate>
 
             <!--  Add New Template  -->
-            <DataTemplate x:Key="AddNewTemplate" x:DataType="data:FolderItemViewModel">
+            <DataTemplate x:Key="AddNewTemplate" x:DataType="vm:FolderItemViewModel">
                 <Grid
                     x:Uid="AddLocationButton"
                     Background="{ThemeResource SystemAccentColor}"

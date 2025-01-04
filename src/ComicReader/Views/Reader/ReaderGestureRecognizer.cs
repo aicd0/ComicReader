@@ -1,122 +1,157 @@
-using ComicReader.Utils;
-using Microsoft.UI.Input;
+// Copyright (c) aicd0. All rights reserved.
+// Licensed under the MIT License.
+
 using System;
 using System.Collections.Generic;
 
-namespace ComicReader.Views.Reader
+using ComicReader.Common;
+using ComicReader.Common.DebugTools;
+
+using Microsoft.UI.Input;
+
+namespace ComicReader.Views.Reader;
+
+internal class ReaderGestureRecognizer
 {
-    internal class ReaderGestureRecognizer
+    private const string TAG = nameof(ReaderGestureRecognizer);
+
+    private readonly GestureRecognizer _gestureRecognizer = new();
+    private WeakReference<IHandler> _handler;
+
+    public ReaderGestureRecognizer()
     {
-        private readonly GestureRecognizer _gestureRecognizer = new GestureRecognizer();
-        private WeakReference<IHandler> _handler;
+        _gestureRecognizer.GestureSettings =
+            GestureSettings.Tap |
+            GestureSettings.DoubleTap |
+            GestureSettings.ManipulationTranslateX |
+            GestureSettings.ManipulationTranslateY |
+            GestureSettings.ManipulationTranslateInertia |
+            GestureSettings.ManipulationScale;
 
-        public ReaderGestureRecognizer()
+        _gestureRecognizer.InertiaTranslationDeceleration = 0.002F;
+
+        _gestureRecognizer.Tapped += delegate (GestureRecognizer sender, TappedEventArgs e)
         {
-            _gestureRecognizer.GestureSettings =
-                GestureSettings.Tap |
-                GestureSettings.DoubleTap |
-                GestureSettings.ManipulationTranslateX |
-                GestureSettings.ManipulationTranslateY |
-                GestureSettings.ManipulationTranslateInertia |
-                GestureSettings.ManipulationScale;
-
-            _gestureRecognizer.InertiaTranslationDeceleration = 0.002F;
-
-            _gestureRecognizer.Tapped += delegate (GestureRecognizer sender, TappedEventArgs e)
-            {
-                Handler.Tapped(sender, e);
-            };
-            _gestureRecognizer.ManipulationStarted += delegate (GestureRecognizer sender, ManipulationStartedEventArgs e)
-            {
-                Handler.ManipulationStarted(sender, e);
-            };
-            _gestureRecognizer.ManipulationUpdated += delegate (GestureRecognizer sender, ManipulationUpdatedEventArgs e)
-            {
-                Handler.ManipulationUpdated(sender, e);
-            };
-            _gestureRecognizer.ManipulationCompleted += delegate (GestureRecognizer sender, ManipulationCompletedEventArgs e)
-            {
-                Handler.ManipulationCompleted(sender, e);
-            };
-        }
-
-        public bool AutoProcessInertia
+            Handler.Tapped(sender, e);
+        };
+        _gestureRecognizer.ManipulationStarted += delegate (GestureRecognizer sender, ManipulationStartedEventArgs e)
         {
-            get
-            {
-                return _gestureRecognizer.AutoProcessInertia;
-            }
-            set
-            {
-                _gestureRecognizer.AutoProcessInertia = value;
-            }
-        }
-
-        private IHandler Handler
+            Handler.ManipulationStarted(sender, e);
+        };
+        _gestureRecognizer.ManipulationUpdated += delegate (GestureRecognizer sender, ManipulationUpdatedEventArgs e)
         {
-            get
-            {
-                return _handler?.Get() ?? EmptyHandler.Instance;
-            }
-        }
-
-        public void SetHandler(IHandler handler)
+            Handler.ManipulationUpdated(sender, e);
+        };
+        _gestureRecognizer.ManipulationCompleted += delegate (GestureRecognizer sender, ManipulationCompletedEventArgs e)
         {
-            _handler = new WeakReference<IHandler>(handler);
-        }
+            Handler.ManipulationCompleted(sender, e);
+        };
+    }
 
-        public void ProcessDownEvent(PointerPoint value)
+    public bool AutoProcessInertia
+    {
+        get
+        {
+            return _gestureRecognizer.AutoProcessInertia;
+        }
+        set
+        {
+            _gestureRecognizer.AutoProcessInertia = value;
+        }
+    }
+
+    private IHandler Handler
+    {
+        get
+        {
+            return _handler?.Get() ?? EmptyHandler.Instance;
+        }
+    }
+
+    public void SetHandler(IHandler handler)
+    {
+        _handler = new WeakReference<IHandler>(handler);
+    }
+
+    public void ProcessDownEvent(PointerPoint value)
+    {
+        try
         {
             _gestureRecognizer.ProcessDownEvent(value);
         }
+        catch (Exception e)
+        {
+            Logger.F(TAG, "ProcessDownEvent", e);
+        }
+    }
 
-        public void ProcessMoveEvents(IList<PointerPoint> value)
+    public void ProcessMoveEvents(IList<PointerPoint> value)
+    {
+        try
         {
             _gestureRecognizer.ProcessMoveEvents(value);
         }
+        catch (Exception e)
+        {
+            Logger.F(TAG, "ProcessMoveEvents", e);
+        }
+    }
 
-        public void ProcessUpEvent(PointerPoint value)
+    public void ProcessUpEvent(PointerPoint value)
+    {
+        try
         {
             _gestureRecognizer.ProcessUpEvent(value);
         }
+        catch (Exception e)
+        {
+            Logger.F(TAG, "ProcessUpEvent", e);
+        }
+    }
 
-        public void CompleteGesture()
+    public void CompleteGesture()
+    {
+        try
         {
             _gestureRecognizer.CompleteGesture();
         }
-
-        public interface IHandler
+        catch (Exception e)
         {
-            void Tapped(object sender, TappedEventArgs e);
+            Logger.F(TAG, "CompleteGesture", e);
+        }
+    }
 
-            void ManipulationStarted(object sender, ManipulationStartedEventArgs e);
+    public interface IHandler
+    {
+        void Tapped(object sender, TappedEventArgs e);
 
-            void ManipulationUpdated(object sender, ManipulationUpdatedEventArgs e);
+        void ManipulationStarted(object sender, ManipulationStartedEventArgs e);
 
-            void ManipulationCompleted(object sender, ManipulationCompletedEventArgs e);
+        void ManipulationUpdated(object sender, ManipulationUpdatedEventArgs e);
+
+        void ManipulationCompleted(object sender, ManipulationCompletedEventArgs e);
+    }
+
+    private class EmptyHandler : IHandler
+    {
+        private EmptyHandler() { }
+
+        public static readonly EmptyHandler Instance = new();
+
+        public void ManipulationCompleted(object sender, ManipulationCompletedEventArgs e)
+        {
         }
 
-        private class EmptyHandler : IHandler
+        public void ManipulationStarted(object sender, ManipulationStartedEventArgs e)
         {
-            private EmptyHandler() { }
+        }
 
-            public static readonly EmptyHandler Instance = new EmptyHandler();
+        public void ManipulationUpdated(object sender, ManipulationUpdatedEventArgs e)
+        {
+        }
 
-            public void ManipulationCompleted(object sender, ManipulationCompletedEventArgs e)
-            {
-            }
-
-            public void ManipulationStarted(object sender, ManipulationStartedEventArgs e)
-            {
-            }
-
-            public void ManipulationUpdated(object sender, ManipulationUpdatedEventArgs e)
-            {
-            }
-
-            public void Tapped(object sender, TappedEventArgs e)
-            {
-            }
+        public void Tapped(object sender, TappedEventArgs e)
+        {
         }
     }
 }

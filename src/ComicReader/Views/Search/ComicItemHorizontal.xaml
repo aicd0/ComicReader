@@ -5,6 +5,7 @@
     xmlns:converters="using:ComicReader.Converters"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ucrating="using:ComicReader.UserControls.ReadonlyRatingView"
     d:DesignHeight="300"
     d:DesignWidth="400"
     Tapped="OnUserControlTapped"
@@ -12,10 +13,6 @@
 
     <UserControl.Resources>
         <ResourceDictionary>
-            <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/Resources/Styles/RatingControl.xaml" />
-            </ResourceDictionary.MergedDictionaries>
-
             <!--  Converters  -->
             <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
             <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
@@ -114,11 +111,7 @@
                                 Height="20"
                                 HorizontalAlignment="Left"
                                 VerticalAlignment="Center">
-                                <RatingControl
-                                    Margin="0,0,-13,0"
-                                    PlaceholderValue="{x:Bind Ctx.Rating}"
-                                    Style="{StaticResource RatingControlReadOnly}"
-                                    Visibility="{x:Bind Ctx.IsRatingVisible}" />
+                                <ucrating:ReadonlyRatingView PlaceholderValue="{x:Bind Ctx.Rating}" Visibility="{x:Bind Ctx.IsRatingVisible}" />
                             </Viewbox>
                             <TextBlock
                                 FontSize="12"
