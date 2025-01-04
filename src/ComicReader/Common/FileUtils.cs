@@ -14,10 +14,26 @@ internal static class FileUtils
 {
     private const string TAG = nameof(FileUtils);
 
-    public static long GetDirectorySize(DirectoryInfo directory)
+    public static long GetDirectorySize(DirectoryInfo directory, bool ignoreErrors)
     {
         long size = 0;
-        FileInfo[] files = directory.GetFiles();
+        FileInfo[] files;
+        try
+        {
+            files = directory.GetFiles();
+        }
+        catch (Exception e)
+        {
+            if (ignoreErrors)
+            {
+                Logger.E(TAG, "GetDirectorySize", e);
+                return 0;
+            }
+            else
+            {
+                throw;
+            }
+        }
         foreach (FileInfo file in files)
         {
             size += file.Length;
@@ -25,7 +41,7 @@ internal static class FileUtils
         DirectoryInfo[] subDirectories = directory.GetDirectories();
         foreach (DirectoryInfo subDirectory in subDirectories)
         {
-            size += GetDirectorySize(subDirectory);
+            size += GetDirectorySize(subDirectory, ignoreErrors);
         }
         return size;
     }
