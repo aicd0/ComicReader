@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
+using ComicReader.Common.DebugTools;
+
 using Windows.Storage;
 
 namespace ComicReader.Common;
@@ -29,13 +31,29 @@ internal static class Storage
     public static async Task<StorageFolder> TryGetFolder(string path)
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
-        return await StorageFolder.GetFolderFromPathAsync(path);
+        try
+        {
+            return await StorageFolder.GetFolderFromPathAsync(path);
+        }
+        catch (Exception ex)
+        {
+            Logger.E("Storage", "TryGetFolder", ex);
+        }
+        return null;
     }
 
     public static async Task<StorageFile> TryGetFile(string path)
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
-        return await StorageFile.GetFileFromPathAsync(path);
+        try
+        {
+            return await StorageFile.GetFileFromPathAsync(path);
+        }
+        catch (Exception ex)
+        {
+            Logger.E("Storage", "TryGetFolder", ex);
+        }
+        return null;
     }
 
     public static async Task<object> TryGetFile(StorageFolder folder, string name)
