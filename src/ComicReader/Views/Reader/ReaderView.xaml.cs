@@ -116,18 +116,7 @@ internal partial class ReaderView : UserControl
     public int PageCount { get; private set; } = 0;
     public double CurrentPage { get; private set; } = 0.0;
     private int CurrentPageInt => ToDiscretePage(CurrentPage);
-    public int CurrentPageDisplay
-    {
-        get
-        {
-            int page = CurrentPageInt;
-            if (page <= 0)
-            {
-                page = (int)Math.Round(_initialPage);
-            }
-            return page;
-        }
-    }
+    public int CurrentPageDisplay => CurrentPageInt;
     public bool IsLastPage => PageToFrame(CurrentPageDisplay, out _, out _) >= FrameDataSource.Count - 1;
     public bool IsVertical => _isVertical;
 
@@ -208,6 +197,8 @@ internal partial class ReaderView : UserControl
     // Loader
     //
 
+    private double InitialPage => Math.Min(_initialPage, PageCount);
+
     private void Reload(List<IImageSource> images, bool clear)
     {
         // Refresh token
@@ -236,8 +227,8 @@ internal partial class ReaderView : UserControl
         SCClearFinalVal("Reload");
 
         // Reset loader
-        int initialFrameIndex = PageToFrame(ToDiscretePage(_initialPage), out bool _, out int _);
-        Log("Reload", $"IP={_initialPage},IF={initialFrameIndex},LP={PageCount},LF={lastFrameIndex}");
+        int initialFrameIndex = PageToFrame(ToDiscretePage(InitialPage), out bool _, out int _);
+        Log("Reload", $"IP={InitialPage},IF={initialFrameIndex},LP={PageCount},LF={lastFrameIndex}");
         ResetLoader();
         _frameManager.ResetReadyIndex();
         _frameManager.SetFrameReadyHandler(delegate (int index)
@@ -371,7 +362,7 @@ internal partial class ReaderView : UserControl
 
             PostToCurrentThread(delegate
             {
-                ScrollResult scrollResult = SetScrollViewer2(_zoom, _initialPage, true, "JumpToInitialPage");
+                ScrollResult scrollResult = SetScrollViewer2(_zoom, InitialPage, true, "JumpToInitialPage");
                 Log("Load", $"InitialFrameScroll (result={scrollResult})");
                 if (scrollResult == ScrollResult.TooClose)
                 {
@@ -2032,6 +2023,7 @@ internal partial class ReaderView : UserControl
     private int PageToFrame(int page, out bool left_side, out int neighbor)
     {
         DebugUtils.Assert(int.IsPositive(page));
+        DebugUtils.Assert(page <= PageCount);
 
         switch (_pageArrangement)
         {
