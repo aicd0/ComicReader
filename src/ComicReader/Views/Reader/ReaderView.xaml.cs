@@ -696,6 +696,7 @@ internal partial class ReaderView : UserControl
             page = pageMax + pageFrac * 0.5;
         }
 
+        DebugUtils.Assert(page <= PageCount);
         CurrentPage = page;
 
         Log("PageUpdated",
