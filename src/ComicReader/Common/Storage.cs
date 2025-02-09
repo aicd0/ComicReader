@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using ComicReader.Common.DebugTools;
@@ -13,21 +12,6 @@ namespace ComicReader.Common;
 
 internal static class Storage
 {
-    private static readonly Dictionary<string, StorageFolder> s_FolderResources = new();
-    private static readonly Dictionary<string, StorageFile> s_FileResources = new();
-
-    public static void AddTrustedFolder(StorageFolder folder)
-    {
-        string token = StringUtils.TokenFromPath(folder.Path);
-        s_FolderResources[token] = folder;
-    }
-
-    public static void AddTrustedFile(StorageFile file)
-    {
-        string token = StringUtils.TokenFromPath(file.Path);
-        s_FileResources[token] = file;
-    }
-
     public static async Task<StorageFolder> TryGetFolder(string path)
     {
         ArgumentException.ThrowIfNullOrEmpty(path);

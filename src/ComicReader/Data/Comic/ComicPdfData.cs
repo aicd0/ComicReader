@@ -38,8 +38,6 @@ internal class ComicPdfData : ComicData
 
     public static async Task<ComicData> FromExternal(StorageFile file)
     {
-        Storage.AddTrustedFile(file);
-
         var comic = new ComicPdfData(true)
         {
             Title1 = file.DisplayName,

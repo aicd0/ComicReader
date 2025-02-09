@@ -143,16 +143,6 @@ class StringUtils
         return total_similarity;
     }
 
-    public static string TokenFromPath(string path)
-    {
-        return UniquePath(path).Replace('\\', '%');
-    }
-
-    public static string PathFromToken(string token)
-    {
-        return token.Replace('%', '\\');
-    }
-
     public static string UniquePath(string path)
     {
         return path.ToLower();

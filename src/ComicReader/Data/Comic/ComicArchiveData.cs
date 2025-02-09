@@ -37,8 +37,6 @@ internal class ComicArchiveData : ComicData
 
     public static async Task<ComicData> FromExternal(StorageFile archive)
     {
-        Storage.AddTrustedFile(archive);
-
         var comic = new ComicArchiveData(true)
         {
             Title1 = archive.DisplayName,
