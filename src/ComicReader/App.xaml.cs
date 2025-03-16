@@ -10,9 +10,6 @@ using ComicReader.Common.DebugTools;
 using ComicReader.Data;
 using ComicReader.Data.Comic;
 
-using Microsoft.AppCenter;
-using Microsoft.AppCenter.Analytics;
-using Microsoft.AppCenter.Crashes;
 using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppLifecycle;
 
@@ -31,7 +28,6 @@ public partial class App : Application
         EnvironmentProvider.Instance.Initialize();
         ApplyAppTheme();
         InitializeComponent();
-        StartAppCenter();
     }
 
     protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs e)
@@ -77,15 +73,6 @@ public partial class App : Application
         if (appearanceSetting != null)
         {
             Current.RequestedTheme = (ApplicationTheme)(int)appearanceSetting;
-        }
-    }
-
-    private void StartAppCenter()
-    {
-        string appSecret = Properties.AppCenterSecret;
-        if (appSecret.Length > 0)
-        {
-            AppCenter.Start(appSecret, typeof(Analytics), typeof(Crashes));
         }
     }
 

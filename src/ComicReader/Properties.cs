@@ -6,5 +6,4 @@ namespace ComicReader;
 internal static class Properties
 {
     public static readonly string AdditionalDebugInformation = "";
-    public static readonly string AppCenterSecret = "";
 }
