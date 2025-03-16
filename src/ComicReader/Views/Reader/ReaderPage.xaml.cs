@@ -321,13 +321,13 @@ internal sealed partial class ReaderPage : BasePage
             ViewModel.IsFullscreen = isFullscreen;
         });
 
-        EventBus.Default.With<double>(EventId.TitleBarHeightChange).ObserveSticky(this, delegate (double h)
+        GetEventBus().With<double>(EventId.TitleBarHeightChange).ObserveSticky(this, delegate (double h)
         {
             TitleBarArea.Height = h;
             PreviewTitleBarPlaceHolder.Height = h;
         });
 
-        EventBus.Default.With<double>(EventId.TitleBarOpacity).ObserveSticky(this, delegate (double opacity)
+        GetEventBus().With<double>(EventId.TitleBarOpacity).ObserveSticky(this, delegate (double opacity)
         {
             BottomGrid.Opacity = opacity;
         });

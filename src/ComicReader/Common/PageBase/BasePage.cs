@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using ComicReader.Common.DebugTools;
+using ComicReader.Common.Lifecycle;
 using ComicReader.Helpers.Navigation;
 
 using Microsoft.UI.Input;
@@ -92,6 +93,11 @@ internal abstract class BasePage : Page
     protected T GetAbility<T>() where T : class
     {
         return _communicator.GetAbility<T>();
+    }
+
+    protected EventBus GetEventBus()
+    {
+        return App.WindowManager.GetEventBus(WindowId);
     }
 
     protected bool CanHandleTapped()

@@ -72,6 +72,11 @@ public sealed partial class MainWindow : Window
 
     private void OnWindowSizeChanged(object sender, WindowSizeChangedEventArgs args)
     {
+        if (_mainPage == null)
+        {
+            return;
+        }
+
         var placement = new NativeModels.WindowPlacement();
         NativeMethods.GetWindowPlacement(WindowHandle, out placement);
         string serialized = JsonSerializer.Serialize(placement);
@@ -118,19 +123,21 @@ public sealed partial class MainWindow : Window
     private void TryRecoverWindowStates()
     {
         object windowStates = ApplicationData.Current.LocalSettings.Values[GlobalConstants.LOCAL_SETTINGS_KEY_WINDOW_STATES];
-        if (windowStates is string windowStatesJson)
+        if (windowStates is not string windowStatesJson)
         {
-            NativeModels.WindowPlacement windowPlacement;
-            try
-            {
-                windowPlacement = JsonSerializer.Deserialize<NativeModels.WindowPlacement>(windowStatesJson);
-            }
-            catch (Exception)
-            {
-                return;
-            }
-
-            NativeMethods.SetWindowPlacement(WindowHandle, ref windowPlacement);
+            return;
         }
+
+        NativeModels.WindowPlacement windowPlacement;
+        try
+        {
+            windowPlacement = JsonSerializer.Deserialize<NativeModels.WindowPlacement>(windowStatesJson);
+        }
+        catch (Exception)
+        {
+            return;
+        }
+
+        NativeMethods.SetWindowPlacement(WindowHandle, ref windowPlacement);
     }
 }

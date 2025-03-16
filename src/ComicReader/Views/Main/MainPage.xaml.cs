@@ -147,7 +147,7 @@ internal sealed partial class MainPage : BasePage
                 Duration = 0.2,
                 UpdateCallback = delegate (double value)
                 {
-                    EventBus.Default.With<double>(EventId.TitleBarOpacity).Emit(value);
+                    GetEventBus().With<double>(EventId.TitleBarOpacity).Emit(value);
                 }
             };
         }
@@ -171,20 +171,20 @@ internal sealed partial class MainPage : BasePage
 
     private void ObserveData()
     {
-        EventBus.Default.With<double>(EventId.RootTabHeightChange).ObserveSticky(this, delegate (double h)
+        GetEventBus().With<double>(EventId.RootTabHeightChange).ObserveSticky(this, delegate (double h)
         {
             _rootTabHeight = h;
-            EventBus.Default.With<double>(EventId.TitleBarHeightChange).Emit(_rootTabHeight + _navigationBarHeight);
+            GetEventBus().With<double>(EventId.TitleBarHeightChange).Emit(_rootTabHeight + _navigationBarHeight);
             UpdateTopPadding();
         });
 
-        EventBus.Default.With<double>(EventId.NavigationBarHeightChange).ObserveSticky(this, delegate (double h)
+        GetEventBus().With<double>(EventId.NavigationBarHeightChange).ObserveSticky(this, delegate (double h)
         {
             _navigationBarHeight = h;
-            EventBus.Default.With<double>(EventId.TitleBarHeightChange).Emit(_rootTabHeight + _navigationBarHeight);
+            GetEventBus().With<double>(EventId.TitleBarHeightChange).Emit(_rootTabHeight + _navigationBarHeight);
         });
 
-        EventBus.Default.With<double>(EventId.TitleBarOpacity).ObserveSticky(this, delegate (double opacity)
+        GetEventBus().With<double>(EventId.TitleBarOpacity).ObserveSticky(this, delegate (double opacity)
         {
             if (_tabContainerGrid != null)
             {
@@ -426,7 +426,10 @@ internal sealed partial class MainPage : BasePage
         return null;
     }
 
+    //
     // TabView
+    //
+
     private void OnAddTabButtonClicked(TabView sender, object args)
     {
         var route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_HOME);
@@ -512,7 +515,7 @@ internal sealed partial class MainPage : BasePage
             if (!pageTrait.ImmersiveMode())
             {
                 _titleBarAnimation?.Stop();
-                EventBus.Default.With<double>(EventId.TitleBarOpacity).Emit(1.0);
+                GetEventBus().With<double>(EventId.TitleBarOpacity).Emit(1.0);
             }
 
             if (!pageTrait.SupportFullscreen())
@@ -553,7 +556,7 @@ internal sealed partial class MainPage : BasePage
 
     private void OnTabContainerGridSizeChanged(object sender, SizeChangedEventArgs e)
     {
-        EventBus.Default.With<double>(EventId.RootTabHeightChange).Emit(e.NewSize.Height);
+        GetEventBus().With<double>(EventId.RootTabHeightChange).Emit(e.NewSize.Height);
     }
 
     // Keys

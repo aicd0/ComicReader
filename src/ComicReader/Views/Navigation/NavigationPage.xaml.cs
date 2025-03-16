@@ -65,13 +65,13 @@ internal sealed partial class NavigationPage : BasePage
 
     private void ObserveData()
     {
-        EventBus.Default.With<double>(EventId.RootTabHeightChange).ObserveSticky(this, delegate (double h)
+        GetEventBus().With<double>(EventId.RootTabHeightChange).ObserveSticky(this, delegate (double h)
         {
             _rootTabHeight = h;
             UpdateTopPadding();
         });
 
-        EventBus.Default.With<double>(EventId.TitleBarOpacity).ObserveSticky(this, delegate (double opacity)
+        GetEventBus().With<double>(EventId.TitleBarOpacity).ObserveSticky(this, delegate (double opacity)
         {
             TopTile.Opacity = opacity;
             TopTile.IsHitTestVisible = opacity > 0.5;
@@ -143,7 +143,7 @@ internal sealed partial class NavigationPage : BasePage
     private void OnTopTileSizeChanged(object sender, SizeChangedEventArgs e)
     {
         _navigationBarHeight = e.NewSize.Height;
-        EventBus.Default.With<double>(EventId.NavigationBarHeightChange).Emit(_navigationBarHeight);
+        GetEventBus().With<double>(EventId.NavigationBarHeightChange).Emit(_navigationBarHeight);
         UpdateTopPadding();
     }
 
