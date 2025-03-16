@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
@@ -23,10 +22,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 
-using Windows.ApplicationModel.Activation;
 using Windows.ApplicationModel.DataTransfer;
-using Windows.Storage;
-using Windows.Storage.Search;
 
 namespace ComicReader.Views.Main;
 
@@ -59,6 +55,11 @@ internal sealed partial class MainPage : BasePage
     //
     // Public Interfaces
     //
+
+    public void OpenInNewTab(Route route)
+    {
+        LoadTab(-1, route);
+    }
 
     public void CloseAllTabs()
     {
@@ -129,11 +130,6 @@ internal sealed partial class MainPage : BasePage
         }
     }
 
-    private void OpenInNewTab(Route route)
-    {
-        LoadTab(-1, route);
-    }
-
     private void ShowOrHideTitleBar(bool show)
     {
         if (_currentTab == null || !_currentTab.CurrentPageTrait.ImmersiveMode())
@@ -195,89 +191,6 @@ internal sealed partial class MainPage : BasePage
         });
 
         GetEventBus().With<int>(EventId.CloseTab).Observe(this, CloseTab);
-    }
-
-    // File activation
-    private async Task<ComicData> GetStartupComic(FileActivatedEventArgs args)
-    {
-        var target_file = (StorageFile)args.Files[0];
-
-        if (!AppInfoProvider.IsSupportedExternalFileExtension(target_file.FileType))
-        {
-            return null;
-        }
-
-        ComicData comic = null;
-
-        if (AppInfoProvider.IsSupportedDocumentExtension(target_file.FileType))
-        {
-            comic = await ComicData.FromLocation(target_file.Path, "MainGetStartupComicFromDocument");
-
-            if (comic == null)
-            {
-                switch (target_file.FileType.ToLower())
-                {
-                    case ".pdf":
-                        comic = await ComicPdfData.FromExternal(target_file);
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
-        else if (AppInfoProvider.IsSupportedArchiveExtension(target_file.FileType))
-        {
-            comic = await ComicData.FromLocation(target_file.Path, "MainGetStartupComicFromArchive");
-            comic ??= await ComicArchiveData.FromExternal(target_file);
-        }
-        else if (AppInfoProvider.IsSupportedImageExtension(target_file.FileType))
-        {
-            string dir = target_file.Path;
-            dir = StringUtils.ParentLocationFromLocation(dir);
-            comic = await ComicData.FromLocation(dir, "MainGetStartupComicFromImage");
-
-            if (comic == null)
-            {
-                StorageFile info_file = null;
-                var all_files = new List<StorageFile>();
-                var img_files = new List<StorageFile>();
-                StorageFileQueryResult neighboring_file_query =
-                    args.NeighboringFilesQuery;
-
-                if (neighboring_file_query != null)
-                {
-                    IReadOnlyList<StorageFile> files = await args.NeighboringFilesQuery.GetFilesAsync();
-                    all_files = files.ToList();
-                }
-
-                if (all_files.Count == 0)
-                {
-                    foreach (IStorageItem item in args.Files)
-                    {
-                        if (item is StorageFile file)
-                        {
-                            all_files.Add(file);
-                        }
-                    }
-                }
-
-                foreach (StorageFile file in all_files)
-                {
-                    if (file.Name.ToLower().Equals(ComicData.COMIC_INFO_FILE_NAME))
-                    {
-                        info_file = file;
-                    }
-                    else if (AppInfoProvider.IsSupportedImageExtension(file.FileType))
-                    {
-                        img_files.Add(file);
-                    }
-                }
-
-                comic = await ComicFolderData.FromExternal(dir, img_files, info_file);
-            }
-        }
-
-        return comic;
     }
 
     private int AddTab(NavigationBundle bundle)
@@ -658,26 +571,6 @@ internal sealed partial class MainPage : BasePage
         {
             e.Handled = true;
         }
-    }
-
-    public void OnFileActivated(FileActivatedEventArgs args)
-    {
-        _ = OpenFileActivatedComic(args);
-    }
-
-    private async Task<bool> OpenFileActivatedComic(FileActivatedEventArgs args)
-    {
-        ComicData comic = await GetStartupComic(args);
-        if (comic == null)
-        {
-            return false;
-        }
-
-        string token = AppData.PutComicData(comic);
-        Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
-            .WithParam(RouterConstants.ARG_COMIC_TOKEN, token);
-        OpenInNewTab(route);
-        return true;
     }
 
     // Fullscreen
