@@ -6,9 +6,11 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 
+using ComicReader.Common.DebugTools;
+
 namespace ComicReader.Helpers.Navigation;
 
-internal class Route
+public class Route
 {
     private static readonly Regex sSchemeRegex = new("^[a-z0-9]+$", RegexOptions.IgnoreCase);
     private static readonly Regex sHostRegex = new("^[_a-z0-9\\.]+$", RegexOptions.IgnoreCase);
@@ -24,7 +26,7 @@ internal class Route
     public Dictionary<string, string> Queries { get; }
     public string Path { get; }
     public string Fragment { get; }
-    public string Url { get; }
+    public string Url { get => EvaluateUrl(); }
 
     public static Route Create(string url)
     {
@@ -160,6 +162,8 @@ internal class Route
         return new Route(scheme, host, port_num, path, queries_dict, fragment);
     }
 
+    private string _url;
+
     private Route(string scheme, string host, int port, string path, Dictionary<string, string> queries, string fragment)
     {
         Scheme = scheme;
@@ -168,28 +172,66 @@ internal class Route
         Path = path;
         Queries = queries;
         Fragment = fragment;
+    }
 
-        var urlBuilder = new StringBuilder();
-        urlBuilder.Append(scheme);
-        urlBuilder.Append("://");
-        urlBuilder.Append(host);
-        if (port >= 0)
+    public Route WithParam(string key, string value)
+    {
+        if (string.IsNullOrWhiteSpace(key))
         {
-            urlBuilder.Append(':');
-            urlBuilder.Append(port);
+            DebugUtils.Assert(false);
+            return this;
         }
 
-        urlBuilder.Append(Uri.EscapeDataString(path));
-        if (queries.Count > 0)
+        if (value == null)
+        {
+            if (Queries.Remove(key))
+            {
+                _url = null;
+            }
+        }
+        else
+        {
+            Queries[key] = value;
+            _url = null;
+        }
+
+        return this;
+    }
+
+    private string EvaluateUrl()
+    {
+        if (_url != null)
+        {
+            return _url;
+        }
+        _url = BuildUrl();
+        return _url;
+    }
+
+    private string BuildUrl()
+    {
+        var urlBuilder = new StringBuilder();
+        urlBuilder.Append(Scheme);
+        urlBuilder.Append("://");
+        urlBuilder.Append(Host);
+        if (Port >= 0)
+        {
+            urlBuilder.Append(':');
+            urlBuilder.Append(Port);
+        }
+
+        urlBuilder.Append(Uri.EscapeDataString(Path));
+        if (Queries.Count > 0)
         {
             urlBuilder.Append('?');
             bool isFirst = true;
-            foreach (KeyValuePair<string, string> query in queries)
+            foreach (KeyValuePair<string, string> query in Queries)
             {
                 if (!isFirst)
                 {
                     urlBuilder.Append('&');
                 }
+                isFirst = false;
 
                 urlBuilder.Append(Uri.EscapeDataString(query.Key));
                 urlBuilder.Append('=');
@@ -197,19 +239,13 @@ internal class Route
             }
         }
 
-        if (fragment.Length > 0)
+        if (Fragment.Length > 0)
         {
             urlBuilder.Append('#');
-            urlBuilder.Append(fragment);
+            urlBuilder.Append(Fragment);
         }
 
-        Url = urlBuilder.ToString();
-    }
-
-    public Route WithParam(string key, string value)
-    {
-        Queries.Add(key, value);
-        return this;
+        return urlBuilder.ToString();
     }
 
     private static string ThrowParseException(int code, string url)

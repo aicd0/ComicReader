@@ -56,7 +56,7 @@ public partial class App : Application
         await PerformInitialization();
 
         // Initialize MainWindow here
-        var window = new MainWindow();
+        var window = new MainWindow("");
         window.Activate();
 
         mainInstance.Activated += OnActivated;

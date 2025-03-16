@@ -32,12 +32,6 @@ namespace ComicReader.Views.Main;
 internal sealed partial class MainPage : BasePage
 {
     //
-    // Static variables
-    //
-
-    private static FileActivatedEventArgs s_startupFileArgs;
-
-    //
     // Member variables
     //
 
@@ -49,7 +43,6 @@ internal sealed partial class MainPage : BasePage
     private TabInfo _currentTab;
     private int _nextTabId = 0;
 
-    private bool _isFirstStartUp = true;
     private double _rootTabHeight = 0;
     private double _navigationBarHeight = 0;
 
@@ -95,8 +88,8 @@ internal sealed partial class MainPage : BasePage
         titleBar.ButtonPressedBackgroundColor = MainTitleBar.ButtonPressedBackground?.Color;
         titleBar.ButtonPressedForegroundColor = MainTitleBar.ButtonPressedForeground?.Color;
 
-        _isFirstStartUp = false;
-        _ = OnFirstStartUp();
+        string url = bundle.GetString(RouterConstants.ARG_URL);
+        _ = OnFirstStartUp(url);
     }
 
     protected override void OnResume()
@@ -105,18 +98,15 @@ internal sealed partial class MainPage : BasePage
         ObserveData();
     }
 
-    private async Task OnFirstStartUp()
+    private async Task OnFirstStartUp(string url)
     {
-        bool pageStarted = false;
-
-        if (s_startupFileArgs != null)
+        if (url != null && url.Length > 0)
         {
-            FileActivatedEventArgs args = s_startupFileArgs;
-            s_startupFileArgs = null;
-            pageStarted = await OpenFileActivatedComic(args);
+            Route route = Route.Create(url).WithParam(RouterConstants.ARG_WINDOW_ID, WindowId.ToString());
+            LoadTab(-1, route);
+            return;
         }
 
-        if (!pageStarted)
         {
             long id = AppData.GetReadingComic();
             if (id >= 0)
@@ -127,12 +117,11 @@ internal sealed partial class MainPage : BasePage
                     Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
                         .WithParam(RouterConstants.ARG_COMIC_ID, comic.Id.ToString());
                     OpenInNewTab(route);
-                    pageStarted = true;
+                    return;
                 }
             }
         }
 
-        if (!pageStarted)
         {
             var route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_HOME);
             OpenInNewTab(route);
@@ -492,26 +481,6 @@ internal sealed partial class MainPage : BasePage
         OnPageChanged();
     }
 
-    private void OnRootTabViewTabDragStarting(TabView sender, TabViewTabDragStartingEventArgs args)
-    {
-
-    }
-
-    private void OnRootTabViewTabDragCompleted(TabView sender, TabViewTabDragCompletedEventArgs args)
-    {
-
-    }
-
-    private void OnRootTabViewDragStarting(UIElement sender, DragStartingEventArgs args)
-    {
-
-    }
-
-    private void OnRootTabViewDragOver(object sender, DragEventArgs e)
-    {
-
-    }
-
     private void OnRootTabViewTabDroppedOutside(TabView sender, TabViewTabDroppedOutsideEventArgs args)
     {
         TabViewItem tab = args.Tab;
@@ -527,7 +496,7 @@ internal sealed partial class MainPage : BasePage
         _tabs.Remove(removedTab);
         RootTabView.TabItems.Remove(tab);
 
-        var newWindow = new MainWindow();
+        var newWindow = new MainWindow(removedTab.CurrentUrl);
         newWindow.Activate();
     }
 
@@ -610,12 +579,6 @@ internal sealed partial class MainPage : BasePage
 
     public void OnFileActivated(FileActivatedEventArgs args)
     {
-        if (args == null || _isFirstStartUp)
-        {
-            s_startupFileArgs = args;
-            return;
-        }
-
         _ = OpenFileActivatedComic(args);
     }
 

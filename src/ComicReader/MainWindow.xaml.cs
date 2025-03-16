@@ -20,6 +20,7 @@ using WinRT.Interop;
 
 namespace ComicReader;
 
+// Do NOT write heavy logic in this class, as WinUI 3 SDK could be buggy.
 public sealed partial class MainWindow : Window
 {
     //
@@ -31,13 +32,16 @@ public sealed partial class MainWindow : Window
     // See http://github.com/microsoft/microsoft-ui-xaml/issues/7282 for more details.
 
     private MainPage _mainPage;
+    private string _url;
 
     //
     // Constructors
     //
 
-    public MainWindow()
+    public MainWindow(string url)
     {
+        _url = url;
+
         InitializeComponent();
         WindowId = App.WindowManager.RegisterWindow(this);
         WindowHandle = WindowNative.GetWindowHandle(this);
@@ -45,7 +49,6 @@ public sealed partial class MainWindow : Window
         Title = StringResourceProvider.GetResourceString("AppDisplayName");
         ExtendsContentIntoTitleBar = true;
         TrySetAcrylicBackdrop();
-        PageFrame.Loaded += OnPageFrameLoaded;
     }
 
     //
@@ -57,7 +60,7 @@ public sealed partial class MainWindow : Window
 
     public void OnFileActivated(FileActivatedEventArgs args)
     {
-        _mainPage.OnFileActivated(args);
+        _mainPage?.OnFileActivated(args);
     }
 
     //
@@ -80,7 +83,8 @@ public sealed partial class MainWindow : Window
         TryRecoverWindowStates();
 
         Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_MAIN)
-            .WithParam(RouterConstants.ARG_WINDOW_ID, WindowId.ToString());
+            .WithParam(RouterConstants.ARG_WINDOW_ID, WindowId.ToString())
+            .WithParam(RouterConstants.ARG_URL, _url);
         AppRouter.OpenInFrame(PageFrame, route);
         _mainPage = (MainPage)PageFrame.Content;
     }
@@ -88,10 +92,14 @@ public sealed partial class MainWindow : Window
     private void OnWindowClosed(object sender, WindowEventArgs args)
     {
         _mainPage.CloseAllTabs();
-        _mainPage = null;
-        PageFrame.Content = null;
         PageFrame.Loaded -= OnPageFrameLoaded;
         App.WindowManager.UnregisterWindow(WindowId);
+
+        _mainPage = null;
+        _url = null;
+        PageFrame.Content = null;
+        PageFrame = null;
+        WindowHandle = IntPtr.Zero;
     }
 
     //
@@ -110,12 +118,12 @@ public sealed partial class MainWindow : Window
     private void TryRecoverWindowStates()
     {
         object windowStates = ApplicationData.Current.LocalSettings.Values[GlobalConstants.LOCAL_SETTINGS_KEY_WINDOW_STATES];
-        if (windowStates is string)
+        if (windowStates is string windowStatesJson)
         {
             NativeModels.WindowPlacement windowPlacement;
             try
             {
-                windowPlacement = JsonSerializer.Deserialize<NativeModels.WindowPlacement>((string)windowStates);
+                windowPlacement = JsonSerializer.Deserialize<NativeModels.WindowPlacement>(windowStatesJson);
             }
             catch (Exception)
             {
