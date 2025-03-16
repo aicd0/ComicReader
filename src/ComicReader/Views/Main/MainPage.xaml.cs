@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
@@ -23,55 +22,93 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 
-using Windows.ApplicationModel.Activation;
-using Windows.Storage;
-using Windows.Storage.Search;
+using Windows.ApplicationModel.DataTransfer;
 
 namespace ComicReader.Views.Main;
 
 internal sealed partial class MainPage : BasePage
 {
-    public static MainPage Current = null;
-    private static FileActivatedEventArgs s_startupFileArgs;
+    //
+    // Member variables
+    //
 
-    private bool _isFirstStartUp = true;
+    private Grid _tabContainerGrid;
+    private ContentPresenter _tabContentPresenter;
+    private KeyFrameAnimation _titleBarAnimation;
+
     private readonly List<TabInfo> _tabs = new();
     private TabInfo _currentTab;
     private int _nextTabId = 0;
-    private Grid _tabContainerGrid;
-    private ContentPresenter _tabContentPresenter;
+
     private double _rootTabHeight = 0;
     private double _navigationBarHeight = 0;
-    private KeyFrameAnimation _titleBarAnimation;
+
+    //
+    // Constructors
+    //
 
     public MainPage()
     {
-        Current = this;
         InitializeComponent();
+    }
+
+    //
+    // Public Interfaces
+    //
+
+    public void OpenInNewTab(Route route)
+    {
+        LoadTab(-1, route);
+    }
+
+    public void CloseAllTabs()
+    {
+        while (_tabs.Count > 0)
+        {
+            CloseTab(_tabs[0]);
+        }
+    }
+
+    //
+    // Page Lifecycle
+    //
+
+    protected override void OnStart(PageBundle bundle)
+    {
+        base.OnStart(bundle);
+
+        Window window = App.WindowManager.GetWindow(WindowId);
+        window.SetTitleBar(MainTitleBar);
+
+        AppWindowTitleBar titleBar = window.AppWindow.TitleBar;
+        titleBar.ButtonBackgroundColor = MainTitleBar.ButtonBackground?.Color;
+        titleBar.ButtonForegroundColor = MainTitleBar.ButtonForeground?.Color;
+        titleBar.ButtonInactiveBackgroundColor = MainTitleBar.ButtonInactiveBackground?.Color;
+        titleBar.ButtonInactiveForegroundColor = MainTitleBar.ButtonInactiveForeground?.Color;
+        titleBar.ButtonHoverBackgroundColor = MainTitleBar.ButtonHoverBackground?.Color;
+        titleBar.ButtonHoverForegroundColor = MainTitleBar.ButtonHoverForeground?.Color;
+        titleBar.ButtonPressedBackgroundColor = MainTitleBar.ButtonPressedBackground?.Color;
+        titleBar.ButtonPressedForegroundColor = MainTitleBar.ButtonPressedForeground?.Color;
+
+        string url = bundle.GetString(RouterConstants.ARG_URL);
+        _ = OnFirstStartUp(url);
     }
 
     protected override void OnResume()
     {
         base.OnResume();
         ObserveData();
-
-        if (_isFirstStartUp)
-        {
-            _isFirstStartUp = false;
-            _ = OnFirstStartUp();
-        }
     }
 
-    private async Task OnFirstStartUp()
+    private async Task OnFirstStartUp(string url)
     {
-        bool page_started = false;
-
-        if (s_startupFileArgs != null)
+        if (url != null && url.Length > 0)
         {
-            page_started = await OpenFileActivatedComic(s_startupFileArgs);
+            Route route = Route.Create(url).WithParam(RouterConstants.ARG_WINDOW_ID, WindowId.ToString());
+            LoadTab(-1, route);
+            return;
         }
 
-        if (!page_started)
         {
             long id = AppData.GetReadingComic();
             if (id >= 0)
@@ -79,27 +116,21 @@ internal sealed partial class MainPage : BasePage
                 ComicData comic = await ComicData.FromId(id, "FetchLastComic");
                 if (comic != null)
                 {
-                    Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
+                    Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
                         .WithParam(RouterConstants.ARG_COMIC_ID, comic.Id.ToString());
                     OpenInNewTab(route);
-                    page_started = true;
+                    return;
                 }
             }
         }
 
-        if (!page_started)
         {
-            var route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_HOME);
+            var route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_HOME);
             OpenInNewTab(route);
         }
     }
 
-    public void OpenInNewTab(Route route)
-    {
-        LoadTab(-1, route);
-    }
-
-    public void ShowOrHideTitleBar(bool show)
+    private void ShowOrHideTitleBar(bool show)
     {
         if (_currentTab == null || !_currentTab.CurrentPageTrait.ImmersiveMode())
         {
@@ -113,7 +144,7 @@ internal sealed partial class MainPage : BasePage
                 Duration = 0.2,
                 UpdateCallback = delegate (double value)
                 {
-                    EventBus.Default.With<double>(EventId.TitleBarOpacity).Emit(value);
+                    GetEventBus().With<double>(EventId.TitleBarOpacity).Emit(value);
                 }
             };
         }
@@ -137,20 +168,20 @@ internal sealed partial class MainPage : BasePage
 
     private void ObserveData()
     {
-        EventBus.Default.With<double>(EventId.RootTabHeightChange).ObserveSticky(this, delegate (double h)
+        GetEventBus().With<double>(EventId.RootTabHeightChange).ObserveSticky(this, delegate (double h)
         {
             _rootTabHeight = h;
-            EventBus.Default.With<double>(EventId.TitleBarHeightChange).Emit(_rootTabHeight + _navigationBarHeight);
+            GetEventBus().With<double>(EventId.TitleBarHeightChange).Emit(_rootTabHeight + _navigationBarHeight);
             UpdateTopPadding();
         });
 
-        EventBus.Default.With<double>(EventId.NavigationBarHeightChange).ObserveSticky(this, delegate (double h)
+        GetEventBus().With<double>(EventId.NavigationBarHeightChange).ObserveSticky(this, delegate (double h)
         {
             _navigationBarHeight = h;
-            EventBus.Default.With<double>(EventId.TitleBarHeightChange).Emit(_rootTabHeight + _navigationBarHeight);
+            GetEventBus().With<double>(EventId.TitleBarHeightChange).Emit(_rootTabHeight + _navigationBarHeight);
         });
 
-        EventBus.Default.With<double>(EventId.TitleBarOpacity).ObserveSticky(this, delegate (double opacity)
+        GetEventBus().With<double>(EventId.TitleBarOpacity).ObserveSticky(this, delegate (double opacity)
         {
             if (_tabContainerGrid != null)
             {
@@ -158,89 +189,8 @@ internal sealed partial class MainPage : BasePage
                 _tabContainerGrid.IsHitTestVisible = opacity > 0.5;
             }
         });
-    }
 
-    // File activation
-    private async Task<ComicData> GetStartupComic(FileActivatedEventArgs args)
-    {
-        var target_file = (StorageFile)args.Files[0];
-
-        if (!AppInfoProvider.IsSupportedExternalFileExtension(target_file.FileType))
-        {
-            return null;
-        }
-
-        ComicData comic = null;
-
-        if (AppInfoProvider.IsSupportedDocumentExtension(target_file.FileType))
-        {
-            comic = await ComicData.FromLocation(target_file.Path, "MainGetStartupComicFromDocument");
-
-            if (comic == null)
-            {
-                switch (target_file.FileType.ToLower())
-                {
-                    case ".pdf":
-                        comic = await ComicPdfData.FromExternal(target_file);
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
-        else if (AppInfoProvider.IsSupportedArchiveExtension(target_file.FileType))
-        {
-            comic = await ComicData.FromLocation(target_file.Path, "MainGetStartupComicFromArchive");
-            comic ??= await ComicArchiveData.FromExternal(target_file);
-        }
-        else if (AppInfoProvider.IsSupportedImageExtension(target_file.FileType))
-        {
-            string dir = target_file.Path;
-            dir = StringUtils.ParentLocationFromLocation(dir);
-            comic = await ComicData.FromLocation(dir, "MainGetStartupComicFromImage");
-
-            if (comic == null)
-            {
-                StorageFile info_file = null;
-                var all_files = new List<StorageFile>();
-                var img_files = new List<StorageFile>();
-                StorageFileQueryResult neighboring_file_query =
-                    args.NeighboringFilesQuery;
-
-                if (neighboring_file_query != null)
-                {
-                    IReadOnlyList<StorageFile> files = await args.NeighboringFilesQuery.GetFilesAsync();
-                    all_files = files.ToList();
-                }
-
-                if (all_files.Count == 0)
-                {
-                    foreach (IStorageItem item in args.Files)
-                    {
-                        if (item is StorageFile file)
-                        {
-                            all_files.Add(file);
-                        }
-                    }
-                }
-
-                foreach (StorageFile file in all_files)
-                {
-                    if (file.Name.ToLower().Equals(ComicData.COMIC_INFO_FILE_NAME))
-                    {
-                        info_file = file;
-                    }
-                    else if (AppInfoProvider.IsSupportedImageExtension(file.FileType))
-                    {
-                        img_files.Add(file);
-                    }
-                }
-
-                comic = await ComicFolderData.FromExternal(dir, img_files, info_file);
-            }
-        }
-
-        return comic;
+        GetEventBus().With<int>(EventId.CloseTab).Observe(this, CloseTab);
     }
 
     private int AddTab(NavigationBundle bundle)
@@ -278,8 +228,8 @@ internal sealed partial class MainPage : BasePage
             throw new ArgumentException();
         }
 
-        RouteInfo routeInfo = route.Build();
-        NavigationBundle bundle = AppRouter.Process(routeInfo);
+        route.WithParam(RouterConstants.ARG_WINDOW_ID, WindowId.ToString());
+        NavigationBundle bundle = AppRouter.Process(route);
 
         if (!bundle.PageTrait.SupportMultiInstance())
         {
@@ -321,8 +271,9 @@ internal sealed partial class MainPage : BasePage
         {
             if (frame.Content == null || frame.Content.GetType() != typeof(NavigationPage))
             {
-                var navigationRoute = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_NAVIGATION);
-                NavigationBundle navigationPageBundle = AppRouter.Process(navigationRoute.Build());
+                Route navigationRoute = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_NAVIGATION)
+                    .WithParam(RouterConstants.ARG_WINDOW_ID, WindowId.ToString());
+                NavigationBundle navigationPageBundle = AppRouter.Process(navigationRoute);
                 RegisterPageAbility(navigationPageBundle.Communicator, tabInfo.Ability);
                 if (!frame.Navigate(navigationPageBundle.PageTrait.GetPageType(), navigationPageBundle))
                 {
@@ -363,14 +314,19 @@ internal sealed partial class MainPage : BasePage
             return;
         }
 
-        closingTab.Ability.DispatchPageStoppedEvent();
-        _tabs.Remove(closingTab);
-        RootTabView.TabItems.Remove(closingTab.Item);
+        CloseTab(closingTab);
 
         if (RootTabView.TabItems.Count <= 0)
         {
-            AppUtils.Exit();
+            App.WindowManager.GetWindow(WindowId).Close();
         }
+    }
+
+    private void CloseTab(TabInfo tabInfo)
+    {
+        tabInfo.Ability.DispatchPageStoppedEvent();
+        _tabs.Remove(tabInfo);
+        RootTabView.TabItems.Remove(tabInfo.Item);
     }
 
     private TabInfo GetTabInfo(int tabId)
@@ -386,10 +342,13 @@ internal sealed partial class MainPage : BasePage
         return null;
     }
 
+    //
     // TabView
+    //
+
     private void OnAddTabButtonClicked(TabView sender, object args)
     {
-        var route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_HOME);
+        var route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_HOME);
         OpenInNewTab(route);
     }
 
@@ -441,6 +400,102 @@ internal sealed partial class MainPage : BasePage
         OnPageChanged();
     }
 
+    private void OnRootTabViewTabDragStarting(TabView sender, TabViewTabDragStartingEventArgs args)
+    {
+        TabInfo draggingTab = null;
+        foreach (TabInfo tabInfo in _tabs)
+        {
+            if (tabInfo.Item == args.Tab)
+            {
+                draggingTab = tabInfo;
+            }
+        }
+        if (draggingTab == null)
+        {
+            DebugUtils.Assert(false);
+            return;
+        }
+
+        args.Data.Properties.Add("windowId", WindowId);
+        args.Data.Properties.Add("tabId", draggingTab.Id);
+        args.Data.Properties.Add("url", draggingTab.CurrentUrl);
+    }
+
+    private void OnRootTabViewDrop(object sender, DragEventArgs e)
+    {
+        int sourceWindowId;
+        {
+            if (!e.DataView.Properties.TryGetValue("windowId", out object id) || id is not int)
+            {
+                DebugUtils.Assert(false);
+                return;
+            }
+            sourceWindowId = (int)id;
+        }
+        int sourceTabId;
+        {
+            if (!e.DataView.Properties.TryGetValue("tabId", out object id) || id is not int)
+            {
+                DebugUtils.Assert(false);
+                return;
+            }
+            sourceTabId = (int)id;
+        }
+        string url;
+        {
+            if (!e.DataView.Properties.TryGetValue("url", out object u) || u is not string)
+            {
+                DebugUtils.Assert(false);
+                return;
+            }
+            url = (string)u;
+        }
+
+        if (sourceWindowId == WindowId)
+        {
+            return;
+        }
+
+        LoadTab(-1, Route.Create(url));
+        App.WindowManager.GetEventBus(sourceWindowId).With<int>(EventId.CloseTab).Emit(sourceTabId);
+    }
+
+    private void OnRootTabViewDragOver(object sender, DragEventArgs e)
+    {
+        e.AcceptedOperation = DataPackageOperation.Move;
+    }
+
+    private void OnRootTabViewTabDroppedOutside(TabView sender, TabViewTabDroppedOutsideEventArgs args)
+    {
+        TabViewItem tab = args.Tab;
+        DebugUtils.Assert(tab != null);
+
+        TabInfo removingTab = null;
+        foreach (TabInfo tabInfo in _tabs)
+        {
+            if (tabInfo.Item == tab)
+            {
+                removingTab = tabInfo;
+            }
+        }
+        if (removingTab == null)
+        {
+            DebugUtils.Assert(false);
+            return;
+        }
+
+        if (_tabs.Count <= 1)
+        {
+            return;
+        }
+
+        _tabs.Remove(removingTab);
+        RootTabView.TabItems.Remove(tab);
+
+        var newWindow = new MainWindow(removingTab.CurrentUrl);
+        newWindow.Activate();
+    }
+
     private void OnPageChanged()
     {
         UpdateTopPadding();
@@ -453,7 +508,7 @@ internal sealed partial class MainPage : BasePage
             if (!pageTrait.ImmersiveMode())
             {
                 _titleBarAnimation?.Stop();
-                EventBus.Default.With<double>(EventId.TitleBarOpacity).Emit(1.0);
+                GetEventBus().With<double>(EventId.TitleBarOpacity).Emit(1.0);
             }
 
             if (!pageTrait.SupportFullscreen())
@@ -494,7 +549,7 @@ internal sealed partial class MainPage : BasePage
 
     private void OnTabContainerGridSizeChanged(object sender, SizeChangedEventArgs e)
     {
-        EventBus.Default.With<double>(EventId.RootTabHeightChange).Emit(e.NewSize.Height);
+        GetEventBus().With<double>(EventId.RootTabHeightChange).Emit(e.NewSize.Height);
     }
 
     // Keys
@@ -518,41 +573,15 @@ internal sealed partial class MainPage : BasePage
         }
     }
 
-    public static void OnFileActivated(FileActivatedEventArgs args)
-    {
-        if (args == null || Current == null || Current._isFirstStartUp)
-        {
-            s_startupFileArgs = args;
-            return;
-        }
-
-        _ = OpenFileActivatedComic(args);
-    }
-
-    private static async Task<bool> OpenFileActivatedComic(FileActivatedEventArgs args)
-    {
-        ComicData comic = await Current.GetStartupComic(args);
-        if (comic == null)
-        {
-            return false;
-        }
-
-        string token = AppData.PutComicData(comic);
-        Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
-            .WithParam(RouterConstants.ARG_COMIC_TOKEN, token);
-        Current.OpenInNewTab(route);
-        return true;
-    }
-
     // Fullscreen
-    public void EnterFullscreen()
+    private void EnterFullscreen()
     {
         if (IsFullScreen())
         {
             return;
         }
 
-        App.Window.AppWindow.SetPresenter(AppWindowPresenterKind.FullScreen);
+        App.WindowManager.GetWindow(WindowId).AppWindow.SetPresenter(AppWindowPresenterKind.FullScreen);
 
         DispatchToAllTabs(delegate (MainPageAbility ability)
         {
@@ -560,14 +589,14 @@ internal sealed partial class MainPage : BasePage
         });
     }
 
-    public void ExitFullscreen()
+    private void ExitFullscreen()
     {
         if (!IsFullScreen())
         {
             return;
         }
 
-        App.Window.AppWindow.SetPresenter(AppWindowPresenterKind.Default);
+        App.WindowManager.GetWindow(WindowId).AppWindow.SetPresenter(AppWindowPresenterKind.Default);
 
         DispatchToAllTabs(delegate (MainPageAbility ability)
         {
@@ -598,7 +627,7 @@ internal sealed partial class MainPage : BasePage
 
     private bool IsFullScreen()
     {
-        return App.Window.AppWindow.Presenter.Kind == AppWindowPresenterKind.FullScreen;
+        return App.WindowManager.GetWindow(WindowId).AppWindow.Presenter.Kind == AppWindowPresenterKind.FullScreen;
     }
 
     private static void RegisterPageAbility(PageCommunicator communicator, MainPageAbility ability)
@@ -648,6 +677,36 @@ internal sealed partial class MainPage : BasePage
             }
 
             parent.LoadTab(_tabId, route);
+        }
+
+        public void OpenInNewTab(Route route)
+        {
+            if (!_parent.TryGetTarget(out MainPage parent))
+            {
+                return;
+            }
+
+            parent.OpenInNewTab(route);
+        }
+
+        public void EnterFullscreen()
+        {
+            if (!_parent.TryGetTarget(out MainPage parent))
+            {
+                return;
+            }
+
+            parent.EnterFullscreen();
+        }
+
+        public void ExitFullscreen()
+        {
+            if (!_parent.TryGetTarget(out MainPage parent))
+            {
+                return;
+            }
+
+            parent.ExitFullscreen();
         }
 
         public void SetTitle(string title)
@@ -709,6 +768,16 @@ internal sealed partial class MainPage : BasePage
             {
                 handler(isFullscreen);
             });
+        }
+
+        public void ShowOrHideTitleBar(bool show)
+        {
+            if (!_parent.TryGetTarget(out MainPage parent))
+            {
+                return;
+            }
+
+            parent.ShowOrHideTitleBar(show);
         }
 
         public void SendFullscreenChangedEvent(bool isFullscreen)

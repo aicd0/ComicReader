@@ -321,13 +321,13 @@ internal sealed partial class ReaderPage : BasePage
             ViewModel.IsFullscreen = isFullscreen;
         });
 
-        EventBus.Default.With<double>(EventId.TitleBarHeightChange).ObserveSticky(this, delegate (double h)
+        GetEventBus().With<double>(EventId.TitleBarHeightChange).ObserveSticky(this, delegate (double h)
         {
             TitleBarArea.Height = h;
             PreviewTitleBarPlaceHolder.Height = h;
         });
 
-        EventBus.Default.With<double>(EventId.TitleBarOpacity).ObserveSticky(this, delegate (double opacity)
+        GetEventBus().With<double>(EventId.TitleBarOpacity).ObserveSticky(this, delegate (double opacity)
         {
             BottomGrid.Opacity = opacity;
         });
@@ -721,9 +721,9 @@ internal sealed partial class ReaderPage : BasePage
     private void OnInfoPaneTagClicked(object sender, RoutedEventArgs e)
     {
         var ctx = (TagViewModel)((Button)sender).DataContext;
-        Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_SEARCH)
+        Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_SEARCH)
             .WithParam(RouterConstants.ARG_KEYWORD, "<tag: " + ctx.Tag + ">");
-        MainPage.Current.OpenInNewTab(route);
+        GetMainPageAbility().OpenInNewTab(route);
     }
 
     private void OnEditInfoClick(object sender, RoutedEventArgs e)
@@ -784,13 +784,13 @@ internal sealed partial class ReaderPage : BasePage
 
     private void OnFullscreenBtClicked(object sender, RoutedEventArgs e)
     {
-        MainPage.Current.EnterFullscreen();
+        GetMainPageAbility().EnterFullscreen();
         ViewModel.IsFullscreen = true;
     }
 
     private void OnBackToWindowBtClicked(object sender, RoutedEventArgs e)
     {
-        MainPage.Current.ExitFullscreen();
+        GetMainPageAbility().ExitFullscreen();
         ViewModel.IsFullscreen = false;
     }
 
@@ -818,7 +818,7 @@ internal sealed partial class ReaderPage : BasePage
             return;
         }
 
-        MainPage.Current.ShowOrHideTitleBar(true);
+        GetMainPageAbility().ShowOrHideTitleBar(true);
         _buttomTileShowed = true;
     }
 
@@ -865,7 +865,7 @@ internal sealed partial class ReaderPage : BasePage
 
     private void BottomGridForceHide()
     {
-        MainPage.Current.ShowOrHideTitleBar(false);
+        GetMainPageAbility().ShowOrHideTitleBar(false);
         _buttomTileShowed = false;
         _buttomTileHold = false;
     }

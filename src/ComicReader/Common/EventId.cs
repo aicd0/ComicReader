@@ -10,4 +10,5 @@ internal class EventId
     public const string SidePaneUpdate = "SidePaneUpdate";
     public const string TitleBarHeightChange = "TitleBarHeightChange";
     public const string TitleBarOpacity = "TitleBarOpacity";
+    public const string CloseTab = "CloseTab";
 }

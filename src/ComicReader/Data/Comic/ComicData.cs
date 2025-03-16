@@ -277,12 +277,12 @@ internal abstract class ComicData
         Title2 = "";
         Tags.Clear();
 
-        var sub_paths = Location.Split(ArchiveAccess.FileSeperator).ToList();
+        List<string> sub_paths = [.. Location.Split(ArchiveAccess.FileSeperator)];
         var tags = new List<string>();
 
         foreach (string path in sub_paths)
         {
-            var sub_tags = path.Split('\\').ToList();
+            List<string> sub_tags = [.. path.Split('\\')];
 
             if (sub_tags.Count == 0)
             {

@@ -10,8 +10,6 @@ using ComicReader.Common.Native;
 using Microsoft.UI;
 using Microsoft.UI.Windowing;
 
-using WinRT.Interop;
-
 namespace ComicReader.Common;
 
 internal static class DisplayUtils
@@ -48,15 +46,15 @@ internal static class DisplayUtils
 
     private static double GetScaleAdjustment()
     {
-        nint hWnd = WindowNative.GetWindowHandle(App.Window);
-        WindowId wndId = Win32Interop.GetWindowIdFromWindow(hWnd);
-        var displayArea = DisplayArea.GetFromWindowId(wndId, DisplayAreaFallback.Primary);
+        nint hWnd = App.WindowManager.GetAnyWindow().WindowHandle;
+        WindowId windowId = Win32Interop.GetWindowIdFromWindow(hWnd);
+        var displayArea = DisplayArea.GetFromWindowId(windowId, DisplayAreaFallback.Primary);
         nint hMonitor = Win32Interop.GetMonitorFromDisplayId(displayArea.DisplayId);
 
-        // Get DPI.
-        int result = NativeMethods.GetDpiForMonitor(hMonitor, NativeModels.MonitorDPIType.MDT_Default, out uint dpiX, out uint _);
-        if (result != 0)
+        int returnCode = NativeMethods.GetDpiForMonitor(hMonitor, NativeModels.MonitorDPIType.MDT_Default, out uint dpiX, out uint _);
+        if (returnCode != 0)
         {
+            DebugUtils.Assert(false);
             throw new Exception("Could not get DPI for monitor.");
         }
 

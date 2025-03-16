@@ -9,11 +9,7 @@ using ComicReader.Common.AppEnvironment;
 using ComicReader.Common.DebugTools;
 using ComicReader.Data;
 using ComicReader.Data.Comic;
-using ComicReader.Views.Main;
 
-using Microsoft.AppCenter;
-using Microsoft.AppCenter.Analytics;
-using Microsoft.AppCenter.Crashes;
 using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppLifecycle;
 
@@ -24,7 +20,7 @@ namespace ComicReader;
 
 public partial class App : Application
 {
-    public static MainWindow Window { get; private set; }
+    internal static readonly WindowManager<MainWindow> WindowManager = new();
 
     public App()
     {
@@ -32,7 +28,6 @@ public partial class App : Application
         EnvironmentProvider.Instance.Initialize();
         ApplyAppTheme();
         InitializeComponent();
-        StartAppCenter();
     }
 
     protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs e)
@@ -57,8 +52,8 @@ public partial class App : Application
         await PerformInitialization();
 
         // Initialize MainWindow here
-        Window = new MainWindow();
-        Window.Activate();
+        var window = new MainWindow("");
+        window.Activate();
 
         mainInstance.Activated += OnActivated;
         OnActivated(null, activatedEventArgs);
@@ -68,7 +63,7 @@ public partial class App : Application
     {
         if (e.Kind == ExtendedActivationKind.File)
         {
-            MainPage.OnFileActivated((FileActivatedEventArgs)e.Data);
+            WindowManager.GetAnyWindow().OnFileActivated((FileActivatedEventArgs)e.Data);
         }
     }
 
@@ -78,15 +73,6 @@ public partial class App : Application
         if (appearanceSetting != null)
         {
             Current.RequestedTheme = (ApplicationTheme)(int)appearanceSetting;
-        }
-    }
-
-    private void StartAppCenter()
-    {
-        string appSecret = Properties.AppCenterSecret;
-        if (appSecret.Length > 0)
-        {
-            AppCenter.Start(appSecret, typeof(Analytics), typeof(Crashes));
         }
     }
 

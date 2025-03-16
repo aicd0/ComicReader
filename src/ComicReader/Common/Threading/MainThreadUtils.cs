@@ -23,7 +23,7 @@ internal class MainThreadUtils
             return;
         }
 
-        DispatcherQueue queue = App.Window.DispatcherQueue;
+        DispatcherQueue queue = App.WindowManager.GetAnyWindow().DispatcherQueue;
 
         if (queue == null)
         {
@@ -41,7 +41,7 @@ internal class MainThreadUtils
             return;
         }
 
-        DispatcherQueue queue = App.Window.DispatcherQueue;
+        DispatcherQueue queue = App.WindowManager.GetAnyWindow().DispatcherQueue;
 
         if (queue == null)
         {
@@ -61,7 +61,7 @@ internal class MainThreadUtils
 
     public static bool IsMainThread()
     {
-        DispatcherQueue queue = App.Window.DispatcherQueue;
+        DispatcherQueue queue = App.WindowManager.GetAnyWindow().DispatcherQueue;
 
         if (queue == null)
         {

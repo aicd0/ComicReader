@@ -65,13 +65,13 @@ internal sealed partial class NavigationPage : BasePage
 
     private void ObserveData()
     {
-        EventBus.Default.With<double>(EventId.RootTabHeightChange).ObserveSticky(this, delegate (double h)
+        GetEventBus().With<double>(EventId.RootTabHeightChange).ObserveSticky(this, delegate (double h)
         {
             _rootTabHeight = h;
             UpdateTopPadding();
         });
 
-        EventBus.Default.With<double>(EventId.TitleBarOpacity).ObserveSticky(this, delegate (double opacity)
+        GetEventBus().With<double>(EventId.TitleBarOpacity).ObserveSticky(this, delegate (double opacity)
         {
             TopTile.Opacity = opacity;
             TopTile.IsHitTestVisible = opacity > 0.5;
@@ -143,7 +143,7 @@ internal sealed partial class NavigationPage : BasePage
     private void OnTopTileSizeChanged(object sender, SizeChangedEventArgs e)
     {
         _navigationBarHeight = e.NewSize.Height;
-        EventBus.Default.With<double>(EventId.NavigationBarHeightChange).Emit(_navigationBarHeight);
+        GetEventBus().With<double>(EventId.NavigationBarHeightChange).Emit(_navigationBarHeight);
         UpdateTopPadding();
     }
 
@@ -166,8 +166,8 @@ internal sealed partial class NavigationPage : BasePage
     {
         if (DebugUtils.DebugBuild)
         {
-            var route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_DEV_TOOLS);
-            MainPage.Current.OpenInNewTab(route);
+            var route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_DEV_TOOLS);
+            GetMainPageAbility().OpenInNewTab(route);
         }
     }
 
@@ -187,7 +187,7 @@ internal sealed partial class NavigationPage : BasePage
             return;
         }
 
-        Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_SEARCH)
+        Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_SEARCH)
             .WithParam(RouterConstants.ARG_KEYWORD, args.QueryText);
         GetMainPageAbility().OpenInCurrentTab(route);
     }
@@ -205,7 +205,7 @@ internal sealed partial class NavigationPage : BasePage
 
     private void OnHomeClick(object sender, RoutedEventArgs e)
     {
-        var route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_HOME);
+        var route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_HOME);
         GetMainPageAbility().OpenInCurrentTab(route);
     }
 
@@ -224,14 +224,14 @@ internal sealed partial class NavigationPage : BasePage
 
     private void OnMoreSettingsClick(object sender, RoutedEventArgs e)
     {
-        var route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_SETTING);
-        MainPage.Current.OpenInNewTab(route);
+        var route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_SETTING);
+        GetMainPageAbility().OpenInNewTab(route);
     }
 
     private void OnMoreHelpClick(object sender, RoutedEventArgs e)
     {
-        var route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_HELP);
-        MainPage.Current.OpenInNewTab(route);
+        var route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_HELP);
+        GetMainPageAbility().OpenInNewTab(route);
     }
 
     private void OnAddToFavoritesClick(object sender, RoutedEventArgs e)
@@ -315,11 +315,12 @@ internal sealed partial class NavigationPage : BasePage
     {
         Route route = item switch
         {
-            "Favorites" => new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_FAVORITE),
-            "History" => new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_HISTORY),
+            "Favorites" => Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_FAVORITE),
+            "History" => Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_HISTORY),
             _ => throw new Exception(),
         };
-        NavigationBundle bundle = AppRouter.Process(route.Build());
+        route.WithParam(RouterConstants.ARG_WINDOW_ID, WindowId.ToString());
+        NavigationBundle bundle = AppRouter.Process(route);
         TransferAbility(bundle.Communicator);
         sender.Navigate(bundle);
     }

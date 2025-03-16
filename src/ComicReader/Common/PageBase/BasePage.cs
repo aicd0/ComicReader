@@ -2,6 +2,8 @@
 // Licensed under the MIT License.
 
 using ComicReader.Common.DebugTools;
+using ComicReader.Common.Lifecycle;
+using ComicReader.Helpers.Navigation;
 
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
@@ -13,6 +15,8 @@ namespace ComicReader.Common.PageBase;
 
 internal abstract class BasePage : Page
 {
+    protected int WindowId { get; private set; } = 0;
+
     private PageCommunicator _communicator;
     private PointerPoint _lastPointerPoint;
 
@@ -91,6 +95,11 @@ internal abstract class BasePage : Page
         return _communicator.GetAbility<T>();
     }
 
+    protected EventBus GetEventBus()
+    {
+        return App.WindowManager.GetEventBus(WindowId);
+    }
+
     protected bool CanHandleTapped()
     {
         if (_lastPointerPoint == null)
@@ -141,16 +150,19 @@ internal abstract class BasePage : Page
         }
 
         _isStarted = true;
-
         LogLifecycleEvent("Start");
+
         if (p is NavigationBundle bundle)
         {
             _communicator = bundle.Communicator;
             _communicator.GetAbility<ICommonPageAbility>()?.RegisterPageStopHandler(_pageStopHandler);
+            WindowId = StringUtils.ParseInt(bundle.Bundle.GetString(RouterConstants.ARG_WINDOW_ID));
+            DebugUtils.Assert(WindowId > 0);
             OnStart(bundle.Bundle);
         }
         else
         {
+            DebugUtils.Assert(false);
             OnStart(null);
         }
     }
@@ -199,6 +211,6 @@ internal abstract class BasePage : Page
 
     private void LogLifecycleEvent(string eventName)
     {
-        Logger.I(LogTag.N("PageLifecycle", this.GetType().Name), eventName);
+        Logger.I(LogTag.N("PageLifecycle", GetType().Name), eventName);
     }
 }

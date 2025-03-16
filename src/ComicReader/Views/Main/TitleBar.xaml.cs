@@ -1,7 +1,6 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -13,19 +12,6 @@ public sealed partial class TitleBar : UserControl
     public TitleBar()
     {
         InitializeComponent();
-
-        App.Window.SetTitleBar(this);
-        App.Window.ExtendsContentIntoTitleBar = true;
-
-        AppWindowTitleBar title_bar = App.Window.AppWindow.TitleBar;
-        title_bar.ButtonBackgroundColor = ButtonBackground?.Color;
-        title_bar.ButtonForegroundColor = ButtonForeground?.Color;
-        title_bar.ButtonInactiveBackgroundColor = ButtonInactiveBackground?.Color;
-        title_bar.ButtonInactiveForegroundColor = ButtonInactiveForeground?.Color;
-        title_bar.ButtonHoverBackgroundColor = ButtonHoverBackground?.Color;
-        title_bar.ButtonHoverForegroundColor = ButtonHoverForeground?.Color;
-        title_bar.ButtonPressedBackgroundColor = ButtonPressedBackground?.Color;
-        title_bar.ButtonPressedForegroundColor = ButtonPressedForeground?.Color;
     }
 
     public SolidColorBrush ButtonBackground

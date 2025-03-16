@@ -284,4 +284,13 @@ class StringUtils
 
         return text.ToString();
     }
+
+    public static int ParseInt(string text, int defaultValue = 0)
+    {
+        if (int.TryParse(text, out int result))
+        {
+            return result;
+        }
+        return defaultValue;
+    }
 }

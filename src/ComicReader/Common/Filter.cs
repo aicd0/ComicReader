@@ -283,7 +283,7 @@ public class Filter
         }
 
         {
-            var sub_args = args.Split(',').ToList();
+            List<string> sub_args = [.. args.Split(',')];
 
             for (int i = sub_args.Count - 1; i >= 0; --i)
             {
