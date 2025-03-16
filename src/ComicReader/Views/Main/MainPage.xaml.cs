@@ -31,47 +31,64 @@ namespace ComicReader.Views.Main;
 
 internal sealed partial class MainPage : BasePage
 {
-    public static MainPage Current = null;
     private static FileActivatedEventArgs s_startupFileArgs;
 
-    private bool _isFirstStartUp = true;
+    private Grid _tabContainerGrid;
+    private ContentPresenter _tabContentPresenter;
+    private KeyFrameAnimation _titleBarAnimation;
+
     private readonly List<TabInfo> _tabs = new();
     private TabInfo _currentTab;
     private int _nextTabId = 0;
-    private Grid _tabContainerGrid;
-    private ContentPresenter _tabContentPresenter;
+
+    private bool _isFirstStartUp = true;
     private double _rootTabHeight = 0;
     private double _navigationBarHeight = 0;
-    private KeyFrameAnimation _titleBarAnimation;
 
     public MainPage()
     {
-        Current = this;
         InitializeComponent();
+    }
+
+    protected override void OnStart(PageBundle bundle)
+    {
+        base.OnStart(bundle);
+
+        Window window = App.WindowManager.GetWindow(WindowId);
+        window.SetTitleBar(MainTitleBar);
+
+        AppWindowTitleBar titleBar = window.AppWindow.TitleBar;
+        titleBar.ButtonBackgroundColor = MainTitleBar.ButtonBackground?.Color;
+        titleBar.ButtonForegroundColor = MainTitleBar.ButtonForeground?.Color;
+        titleBar.ButtonInactiveBackgroundColor = MainTitleBar.ButtonInactiveBackground?.Color;
+        titleBar.ButtonInactiveForegroundColor = MainTitleBar.ButtonInactiveForeground?.Color;
+        titleBar.ButtonHoverBackgroundColor = MainTitleBar.ButtonHoverBackground?.Color;
+        titleBar.ButtonHoverForegroundColor = MainTitleBar.ButtonHoverForeground?.Color;
+        titleBar.ButtonPressedBackgroundColor = MainTitleBar.ButtonPressedBackground?.Color;
+        titleBar.ButtonPressedForegroundColor = MainTitleBar.ButtonPressedForeground?.Color;
+
+        _isFirstStartUp = false;
+        _ = OnFirstStartUp();
     }
 
     protected override void OnResume()
     {
         base.OnResume();
         ObserveData();
-
-        if (_isFirstStartUp)
-        {
-            _isFirstStartUp = false;
-            _ = OnFirstStartUp();
-        }
     }
 
     private async Task OnFirstStartUp()
     {
-        bool page_started = false;
+        bool pageStarted = false;
 
         if (s_startupFileArgs != null)
         {
-            page_started = await OpenFileActivatedComic(s_startupFileArgs);
+            FileActivatedEventArgs args = s_startupFileArgs;
+            s_startupFileArgs = null;
+            pageStarted = await OpenFileActivatedComic(args);
         }
 
-        if (!page_started)
+        if (!pageStarted)
         {
             long id = AppData.GetReadingComic();
             if (id >= 0)
@@ -79,27 +96,27 @@ internal sealed partial class MainPage : BasePage
                 ComicData comic = await ComicData.FromId(id, "FetchLastComic");
                 if (comic != null)
                 {
-                    Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
+                    Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
                         .WithParam(RouterConstants.ARG_COMIC_ID, comic.Id.ToString());
                     OpenInNewTab(route);
-                    page_started = true;
+                    pageStarted = true;
                 }
             }
         }
 
-        if (!page_started)
+        if (!pageStarted)
         {
-            var route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_HOME);
+            var route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_HOME);
             OpenInNewTab(route);
         }
     }
 
-    public void OpenInNewTab(Route route)
+    private void OpenInNewTab(Route route)
     {
         LoadTab(-1, route);
     }
 
-    public void ShowOrHideTitleBar(bool show)
+    private void ShowOrHideTitleBar(bool show)
     {
         if (_currentTab == null || !_currentTab.CurrentPageTrait.ImmersiveMode())
         {
@@ -278,8 +295,8 @@ internal sealed partial class MainPage : BasePage
             throw new ArgumentException();
         }
 
-        RouteInfo routeInfo = route.Build();
-        NavigationBundle bundle = AppRouter.Process(routeInfo);
+        route.WithParam(RouterConstants.ARG_WINDOW_ID, WindowId.ToString());
+        NavigationBundle bundle = AppRouter.Process(route);
 
         if (!bundle.PageTrait.SupportMultiInstance())
         {
@@ -321,8 +338,9 @@ internal sealed partial class MainPage : BasePage
         {
             if (frame.Content == null || frame.Content.GetType() != typeof(NavigationPage))
             {
-                var navigationRoute = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_NAVIGATION);
-                NavigationBundle navigationPageBundle = AppRouter.Process(navigationRoute.Build());
+                Route navigationRoute = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_NAVIGATION)
+                    .WithParam(RouterConstants.ARG_WINDOW_ID, WindowId.ToString());
+                NavigationBundle navigationPageBundle = AppRouter.Process(navigationRoute);
                 RegisterPageAbility(navigationPageBundle.Communicator, tabInfo.Ability);
                 if (!frame.Navigate(navigationPageBundle.PageTrait.GetPageType(), navigationPageBundle))
                 {
@@ -369,7 +387,7 @@ internal sealed partial class MainPage : BasePage
 
         if (RootTabView.TabItems.Count <= 0)
         {
-            AppUtils.Exit();
+            App.WindowManager.GetWindow(WindowId).Close();
         }
     }
 
@@ -389,7 +407,7 @@ internal sealed partial class MainPage : BasePage
     // TabView
     private void OnAddTabButtonClicked(TabView sender, object args)
     {
-        var route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_HOME);
+        var route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_HOME);
         OpenInNewTab(route);
     }
 
@@ -439,6 +457,45 @@ internal sealed partial class MainPage : BasePage
         }
 
         OnPageChanged();
+    }
+
+    private void OnRootTabViewTabDragStarting(TabView sender, TabViewTabDragStartingEventArgs args)
+    {
+
+    }
+
+    private void OnRootTabViewTabDragCompleted(TabView sender, TabViewTabDragCompletedEventArgs args)
+    {
+
+    }
+
+    private void OnRootTabViewDragStarting(UIElement sender, DragStartingEventArgs args)
+    {
+
+    }
+
+    private void OnRootTabViewDragOver(object sender, DragEventArgs e)
+    {
+
+    }
+
+    private void OnRootTabViewTabDroppedOutside(TabView sender, TabViewTabDroppedOutsideEventArgs args)
+    {
+        TabViewItem tab = args.Tab;
+        DebugUtils.Assert(tab != null);
+        TabInfo removedTab = null;
+        foreach (TabInfo tabInfo in _tabs)
+        {
+            if (tabInfo.Item == tab)
+            {
+                removedTab = tabInfo;
+            }
+        }
+        _tabs.Remove(removedTab);
+        RootTabView.TabItems.Remove(tab);
+
+        var newWindow = new MainWindow();
+        newWindow.Activate();
     }
 
     private void OnPageChanged()
@@ -518,9 +575,9 @@ internal sealed partial class MainPage : BasePage
         }
     }
 
-    public static void OnFileActivated(FileActivatedEventArgs args)
+    public void OnFileActivated(FileActivatedEventArgs args)
     {
-        if (args == null || Current == null || Current._isFirstStartUp)
+        if (args == null || _isFirstStartUp)
         {
             s_startupFileArgs = args;
             return;
@@ -529,30 +586,30 @@ internal sealed partial class MainPage : BasePage
         _ = OpenFileActivatedComic(args);
     }
 
-    private static async Task<bool> OpenFileActivatedComic(FileActivatedEventArgs args)
+    private async Task<bool> OpenFileActivatedComic(FileActivatedEventArgs args)
     {
-        ComicData comic = await Current.GetStartupComic(args);
+        ComicData comic = await GetStartupComic(args);
         if (comic == null)
         {
             return false;
         }
 
         string token = AppData.PutComicData(comic);
-        Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
+        Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
             .WithParam(RouterConstants.ARG_COMIC_TOKEN, token);
-        Current.OpenInNewTab(route);
+        OpenInNewTab(route);
         return true;
     }
 
     // Fullscreen
-    public void EnterFullscreen()
+    private void EnterFullscreen()
     {
         if (IsFullScreen())
         {
             return;
         }
 
-        App.Window.AppWindow.SetPresenter(AppWindowPresenterKind.FullScreen);
+        App.WindowManager.GetWindow(WindowId).AppWindow.SetPresenter(AppWindowPresenterKind.FullScreen);
 
         DispatchToAllTabs(delegate (MainPageAbility ability)
         {
@@ -560,14 +617,14 @@ internal sealed partial class MainPage : BasePage
         });
     }
 
-    public void ExitFullscreen()
+    private void ExitFullscreen()
     {
         if (!IsFullScreen())
         {
             return;
         }
 
-        App.Window.AppWindow.SetPresenter(AppWindowPresenterKind.Default);
+        App.WindowManager.GetWindow(WindowId).AppWindow.SetPresenter(AppWindowPresenterKind.Default);
 
         DispatchToAllTabs(delegate (MainPageAbility ability)
         {
@@ -598,7 +655,7 @@ internal sealed partial class MainPage : BasePage
 
     private bool IsFullScreen()
     {
-        return App.Window.AppWindow.Presenter.Kind == AppWindowPresenterKind.FullScreen;
+        return App.WindowManager.GetWindow(WindowId).AppWindow.Presenter.Kind == AppWindowPresenterKind.FullScreen;
     }
 
     private static void RegisterPageAbility(PageCommunicator communicator, MainPageAbility ability)
@@ -648,6 +705,36 @@ internal sealed partial class MainPage : BasePage
             }
 
             parent.LoadTab(_tabId, route);
+        }
+
+        public void OpenInNewTab(Route route)
+        {
+            if (!_parent.TryGetTarget(out MainPage parent))
+            {
+                return;
+            }
+
+            parent.OpenInNewTab(route);
+        }
+
+        public void EnterFullscreen()
+        {
+            if (!_parent.TryGetTarget(out MainPage parent))
+            {
+                return;
+            }
+
+            parent.EnterFullscreen();
+        }
+
+        public void ExitFullscreen()
+        {
+            if (!_parent.TryGetTarget(out MainPage parent))
+            {
+                return;
+            }
+
+            parent.ExitFullscreen();
         }
 
         public void SetTitle(string title)
@@ -709,6 +796,16 @@ internal sealed partial class MainPage : BasePage
             {
                 handler(isFullscreen);
             });
+        }
+
+        public void ShowOrHideTitleBar(bool show)
+        {
+            if (!_parent.TryGetTarget(out MainPage parent))
+            {
+                return;
+            }
+
+            parent.ShowOrHideTitleBar(show);
         }
 
         public void SendFullscreenChangedEvent(bool isFullscreen)

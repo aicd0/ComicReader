@@ -543,7 +543,7 @@ internal sealed partial class SearchPage : BasePage
         {
             var item = (ComicItemViewModel)((FrameworkElement)sender).DataContext;
             ComicData comic = await ComicData.FromId(item.Comic.Id, "SearchOpenLoadComic");
-            Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
+            Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
                 .WithParam(RouterConstants.ARG_COMIC_ID, comic.Id.ToString());
             GetMainPageAbility().OpenInCurrentTab(route);
         });
@@ -580,9 +580,9 @@ internal sealed partial class SearchPage : BasePage
     private void OnOpenInNewTabClicked(object sender, RoutedEventArgs e)
     {
         var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-        Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
+        Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
             .WithParam(RouterConstants.ARG_COMIC_ID, item.Comic.Id.ToString());
-        MainPage.Current.OpenInNewTab(route);
+        GetMainPageAbility().OpenInNewTab(route);
     }
 
     private void OnAddToFavoritesClicked(object sender, RoutedEventArgs e)

@@ -14,7 +14,7 @@ internal class PageBundle
         _parameters = parameters;
     }
 
-    public string GetString(string key, string defaultValue)
+    public string GetString(string key, string defaultValue = "")
     {
         if (_parameters.TryGetValue(key, out string value))
         {
@@ -24,7 +24,7 @@ internal class PageBundle
         return defaultValue;
     }
 
-    public long GetLong(string key, long defaultValue)
+    public long GetLong(string key, long defaultValue = 0L)
     {
         if (_parameters.TryGetValue(key, out string value))
         {

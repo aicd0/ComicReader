@@ -15,6 +15,12 @@ internal interface IMainPageAbility : IPageAbility
 
     void OpenInCurrentTab(Route route);
 
+    void OpenInNewTab(Route route);
+
+    void EnterFullscreen();
+
+    void ExitFullscreen();
+
     void SetTitle(string title);
 
     void SetIcon(IconSource icon);
@@ -24,4 +30,6 @@ internal interface IMainPageAbility : IPageAbility
     void RegisterTabUnselectedHandler(Page owner, TabUnselectedEventHandler handler);
 
     void RegisterFullscreenChangedHandler(Page owner, FullscreenChangedEventHandler handler);
+
+    void ShowOrHideTitleBar(bool show);
 }

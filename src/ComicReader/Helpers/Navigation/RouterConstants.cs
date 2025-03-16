@@ -8,6 +8,7 @@ internal static class RouterConstants
     public const string SCHEME_APP_NO_PREFIX = "comicreader";
     public const string SCHEME_APP = SCHEME_APP_NO_PREFIX + "://";
 
+    public const string HOST_MAIN = "main";
     public const string HOST_READER = "reader";
     public const string HOST_HOME = "home";
     public const string HOST_SEARCH = "search";
@@ -18,6 +19,7 @@ internal static class RouterConstants
     public const string HOST_NAVIGATION = "navigation";
     public const string HOST_DEV_TOOLS = "dev_tools";
 
+    public const string ARG_WINDOW_ID = "window_id";
     public const string ARG_COMIC_ID = "comic_id";
     public const string ARG_COMIC_TOKEN = "comic_token";
     public const string ARG_KEYWORD = "keyword";

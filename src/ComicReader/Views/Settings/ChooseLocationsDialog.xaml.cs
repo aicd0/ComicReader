@@ -19,11 +19,13 @@ public sealed partial class ChooseLocationsDialog : ContentDialog
 {
     public ObservableCollection<FolderItemViewModel> FolderItemDataSource { get; set; }
 
-    public ChooseLocationsDialog()
-    {
-        FolderItemDataSource = new ObservableCollection<FolderItemViewModel>();
+    private int WindowId { get; }
 
+    public ChooseLocationsDialog(int windowId)
+    {
         InitializeComponent();
+        FolderItemDataSource = new ObservableCollection<FolderItemViewModel>();
+        WindowId = windowId;
     }
 
     // utilities
@@ -77,7 +79,7 @@ public sealed partial class ChooseLocationsDialog : ContentDialog
 
             try
             {
-                if (!await SettingDataManager.AddComicFolderUsingPicker())
+                if (!await SettingDataManager.AddComicFolderUsingPicker(WindowId))
                 {
                     return;
                 }

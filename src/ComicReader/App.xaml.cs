@@ -9,7 +9,6 @@ using ComicReader.Common.AppEnvironment;
 using ComicReader.Common.DebugTools;
 using ComicReader.Data;
 using ComicReader.Data.Comic;
-using ComicReader.Views.Main;
 
 using Microsoft.AppCenter;
 using Microsoft.AppCenter.Analytics;
@@ -24,7 +23,7 @@ namespace ComicReader;
 
 public partial class App : Application
 {
-    public static MainWindow Window { get; private set; }
+    internal static readonly WindowManager<MainWindow> WindowManager = new();
 
     public App()
     {
@@ -57,8 +56,8 @@ public partial class App : Application
         await PerformInitialization();
 
         // Initialize MainWindow here
-        Window = new MainWindow();
-        Window.Activate();
+        var window = new MainWindow();
+        window.Activate();
 
         mainInstance.Activated += OnActivated;
         OnActivated(null, activatedEventArgs);
@@ -68,7 +67,7 @@ public partial class App : Application
     {
         if (e.Kind == ExtendedActivationKind.File)
         {
-            MainPage.OnFileActivated((FileActivatedEventArgs)e.Data);
+            WindowManager.GetAnyWindow().OnFileActivated((FileActivatedEventArgs)e.Data);
         }
     }
 

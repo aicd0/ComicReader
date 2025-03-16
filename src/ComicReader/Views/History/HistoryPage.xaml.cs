@@ -99,11 +99,11 @@ internal sealed partial class HistoryPage : BasePage
         }
         else
         {
-            Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
+            Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
                 .WithParam(RouterConstants.ARG_COMIC_ID, comic.Id.ToString());
             if (newTab)
             {
-                MainPage.Current.OpenInNewTab(route);
+                GetMainPageAbility().OpenInNewTab(route);
             }
             else
             {

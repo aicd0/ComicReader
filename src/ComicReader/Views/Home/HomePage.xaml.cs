@@ -261,14 +261,14 @@ internal sealed partial class HomePage : BasePage
 
     private void OnSeeAllBtClicked(object sender, RoutedEventArgs e)
     {
-        Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_SEARCH)
+        Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_SEARCH)
             .WithParam(RouterConstants.ARG_KEYWORD, "<all>");
         GetMainPageAbility().OpenInCurrentTab(route);
     }
 
     private void OnSeeHiddenBtClick(object sender, RoutedEventArgs e)
     {
-        Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_SEARCH)
+        Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_SEARCH)
             .WithParam(RouterConstants.ARG_KEYWORD, "<hidden>");
         GetMainPageAbility().OpenInCurrentTab(route);
     }
@@ -276,9 +276,9 @@ internal sealed partial class HomePage : BasePage
     private void OnOpenInNewTabClicked(object sender, RoutedEventArgs e)
     {
         var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-        Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
+        Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
             .WithParam(RouterConstants.ARG_COMIC_ID, item.Comic.Id.ToString());
-        MainPage.Current.OpenInNewTab(route);
+        GetMainPageAbility().OpenInNewTab(route);
     }
 
     private void OnComicItemTapped(object sender, TappedRoutedEventArgs e)
@@ -289,7 +289,7 @@ internal sealed partial class HomePage : BasePage
         }
 
         var item = (ComicItemViewModel)((Grid)sender).DataContext;
-        Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
+        Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
             .WithParam(RouterConstants.ARG_COMIC_ID, item.Comic.Id.ToString());
         GetMainPageAbility().OpenInCurrentTab(route);
     }
@@ -342,7 +342,7 @@ internal sealed partial class HomePage : BasePage
     {
         C0.Run(async delegate
         {
-            if (!await SettingDataManager.AddComicFolderUsingPicker())
+            if (!await SettingDataManager.AddComicFolderUsingPicker(WindowId))
             {
                 return;
             }
@@ -366,7 +366,7 @@ internal sealed partial class HomePage : BasePage
         }
         else
         {
-            Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_SEARCH)
+            Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_SEARCH)
                 .WithParam(RouterConstants.ARG_KEYWORD, "<dir: " + item.Path + ">");
             GetMainPageAbility().OpenInCurrentTab(route);
         }

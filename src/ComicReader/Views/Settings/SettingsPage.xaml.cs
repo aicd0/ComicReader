@@ -364,7 +364,7 @@ internal sealed partial class SettingsPage : BasePage
     {
         C0.Run(async delegate
         {
-            var dialog = new ChooseLocationsDialog();
+            var dialog = new ChooseLocationsDialog(WindowId);
             await C0.ShowDialogAsync(dialog, XamlRoot);
         });
     }

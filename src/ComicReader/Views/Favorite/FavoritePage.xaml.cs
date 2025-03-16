@@ -303,7 +303,7 @@ internal sealed partial class FavoritePage : BasePage
                 }
                 else
                 {
-                    Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
+                    Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
                         .WithParam(RouterConstants.ARG_COMIC_ID, comic.Id.ToString());
                     GetMainPageAbility().OpenInCurrentTab(route);
                     GetNavigationPageAbility().SetIsSidePaneOpen(false);
@@ -423,10 +423,9 @@ internal sealed partial class FavoritePage : BasePage
         {
             var item = (FavoriteItemViewModel)((MenuFlyoutItem)sender).DataContext;
             ComicData comic = await ComicData.FromId(item.Id, "FavoriteOpenInNewTabLoadComic");
-            Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
+            Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
                 .WithParam(RouterConstants.ARG_COMIC_ID, comic.Id.ToString());
-            GetMainPageAbility().OpenInCurrentTab(route);
-            MainPage.Current.OpenInNewTab(route);
+            GetMainPageAbility().OpenInNewTab(route);
         });
     }
 

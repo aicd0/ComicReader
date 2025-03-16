@@ -107,9 +107,10 @@ class SettingDataManager
         }
     }
 
-    public static async Task<bool> AddComicFolderUsingPicker()
+    public static async Task<bool> AddComicFolderUsingPicker(int windowId)
     {
-        FolderPicker picker = InitializeWithWindow(new FolderPicker(), App.Window.WindowHandle);
+        MainWindow window = App.WindowManager.GetWindow(windowId);
+        FolderPicker picker = InitializeWithWindow(new FolderPicker(), window.WindowHandle);
         picker.FileTypeFilter.Add("*");
         StorageFolder folder = await picker.PickSingleFolderAsync();
         if (folder == null)
