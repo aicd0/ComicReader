@@ -22,10 +22,19 @@ namespace ComicReader;
 
 public sealed partial class MainWindow : Window
 {
-    public int WindowId { get; }
-    public IntPtr WindowHandle { get; private set; }
+    //
+    // Member variables
+    //
+
+    // IMPORTANT: Any resources or views that are created or stored directly in this class
+    // must be cleaned up in the OnWindowClosed method, or there will be memory leaks.
+    // See http://github.com/microsoft/microsoft-ui-xaml/issues/7282 for more details.
 
     private MainPage _mainPage;
+
+    //
+    // Constructors
+    //
 
     public MainWindow()
     {
@@ -36,12 +45,27 @@ public sealed partial class MainWindow : Window
         Title = StringResourceProvider.GetResourceString("AppDisplayName");
         ExtendsContentIntoTitleBar = true;
         TrySetAcrylicBackdrop();
+        PageFrame.Loaded += OnPageFrameLoaded;
     }
+
+    //
+    // Public Interfaces
+    //
+
+    public int WindowId { get; }
+    public IntPtr WindowHandle { get; private set; }
 
     public void OnFileActivated(FileActivatedEventArgs args)
     {
         _mainPage.OnFileActivated(args);
     }
+
+    //
+    // Event Handlers
+    //
+
+    // IMPORTANT: Handles event registration and unregistration in the code-behind file.
+    // Do NOT use XAML for this purpose.
 
     private void OnWindowSizeChanged(object sender, WindowSizeChangedEventArgs args)
     {
@@ -60,6 +84,19 @@ public sealed partial class MainWindow : Window
         AppRouter.OpenInFrame(PageFrame, route);
         _mainPage = (MainPage)PageFrame.Content;
     }
+
+    private void OnWindowClosed(object sender, WindowEventArgs args)
+    {
+        _mainPage.CloseAllTabs();
+        _mainPage = null;
+        PageFrame.Content = null;
+        PageFrame.Loaded -= OnPageFrameLoaded;
+        App.WindowManager.UnregisterWindow(WindowId);
+    }
+
+    //
+    // Private Helpers
+    //
 
     private void TrySetAcrylicBackdrop()
     {
@@ -87,10 +124,5 @@ public sealed partial class MainWindow : Window
 
             NativeMethods.SetWindowPlacement(WindowHandle, ref windowPlacement);
         }
-    }
-
-    private void OnWindowClosed(object sender, WindowEventArgs args)
-    {
-        App.WindowManager.UnregisterWindow(WindowId);
     }
 }

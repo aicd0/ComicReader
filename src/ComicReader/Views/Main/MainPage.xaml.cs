@@ -31,7 +31,15 @@ namespace ComicReader.Views.Main;
 
 internal sealed partial class MainPage : BasePage
 {
+    //
+    // Static variables
+    //
+
     private static FileActivatedEventArgs s_startupFileArgs;
+
+    //
+    // Member variables
+    //
 
     private Grid _tabContainerGrid;
     private ContentPresenter _tabContentPresenter;
@@ -45,10 +53,30 @@ internal sealed partial class MainPage : BasePage
     private double _rootTabHeight = 0;
     private double _navigationBarHeight = 0;
 
+    //
+    // Constructors
+    //
+
     public MainPage()
     {
         InitializeComponent();
     }
+
+    //
+    // Public Interfaces
+    //
+
+    public void CloseAllTabs()
+    {
+        while (_tabs.Count > 0)
+        {
+            CloseTab(_tabs[0]);
+        }
+    }
+
+    //
+    // Page Lifecycle
+    //
 
     protected override void OnStart(PageBundle bundle)
     {
@@ -381,14 +409,19 @@ internal sealed partial class MainPage : BasePage
             return;
         }
 
-        closingTab.Ability.DispatchPageStoppedEvent();
-        _tabs.Remove(closingTab);
-        RootTabView.TabItems.Remove(closingTab.Item);
+        CloseTab(closingTab);
 
         if (RootTabView.TabItems.Count <= 0)
         {
             App.WindowManager.GetWindow(WindowId).Close();
         }
+    }
+
+    private void CloseTab(TabInfo tabInfo)
+    {
+        tabInfo.Ability.DispatchPageStoppedEvent();
+        _tabs.Remove(tabInfo);
+        RootTabView.TabItems.Remove(tabInfo.Item);
     }
 
     private TabInfo GetTabInfo(int tabId)

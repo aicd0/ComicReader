@@ -9,6 +9,6 @@
     SizeChanged="OnWindowSizeChanged"
     mc:Ignorable="d">
 
-    <Frame x:Name="PageFrame" Loaded="OnPageFrameLoaded" />
+    <Frame x:Name="PageFrame" />
 
 </Window>
