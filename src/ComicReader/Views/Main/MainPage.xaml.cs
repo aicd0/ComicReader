@@ -24,6 +24,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 
 using Windows.ApplicationModel.Activation;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 using Windows.Storage.Search;
 
@@ -192,6 +193,8 @@ internal sealed partial class MainPage : BasePage
                 _tabContainerGrid.IsHitTestVisible = opacity > 0.5;
             }
         });
+
+        GetEventBus().With<int>(EventId.CloseTab).Observe(this, CloseTab);
     }
 
     // File activation
@@ -484,22 +487,99 @@ internal sealed partial class MainPage : BasePage
         OnPageChanged();
     }
 
+    private void OnRootTabViewTabDragStarting(TabView sender, TabViewTabDragStartingEventArgs args)
+    {
+        TabInfo draggingTab = null;
+        foreach (TabInfo tabInfo in _tabs)
+        {
+            if (tabInfo.Item == args.Tab)
+            {
+                draggingTab = tabInfo;
+            }
+        }
+        if (draggingTab == null)
+        {
+            DebugUtils.Assert(false);
+            return;
+        }
+
+        args.Data.Properties.Add("windowId", WindowId);
+        args.Data.Properties.Add("tabId", draggingTab.Id);
+        args.Data.Properties.Add("url", draggingTab.CurrentUrl);
+    }
+
+    private void OnRootTabViewDrop(object sender, DragEventArgs e)
+    {
+        int sourceWindowId;
+        {
+            if (!e.DataView.Properties.TryGetValue("windowId", out object id) || id is not int)
+            {
+                DebugUtils.Assert(false);
+                return;
+            }
+            sourceWindowId = (int)id;
+        }
+        int sourceTabId;
+        {
+            if (!e.DataView.Properties.TryGetValue("tabId", out object id) || id is not int)
+            {
+                DebugUtils.Assert(false);
+                return;
+            }
+            sourceTabId = (int)id;
+        }
+        string url;
+        {
+            if (!e.DataView.Properties.TryGetValue("url", out object u) || u is not string)
+            {
+                DebugUtils.Assert(false);
+                return;
+            }
+            url = (string)u;
+        }
+
+        if (sourceWindowId == WindowId)
+        {
+            return;
+        }
+
+        LoadTab(-1, Route.Create(url));
+        App.WindowManager.GetEventBus(sourceWindowId).With<int>(EventId.CloseTab).Emit(sourceTabId);
+    }
+
+    private void OnRootTabViewDragOver(object sender, DragEventArgs e)
+    {
+        e.AcceptedOperation = DataPackageOperation.Move;
+    }
+
     private void OnRootTabViewTabDroppedOutside(TabView sender, TabViewTabDroppedOutsideEventArgs args)
     {
         TabViewItem tab = args.Tab;
         DebugUtils.Assert(tab != null);
-        TabInfo removedTab = null;
+
+        TabInfo removingTab = null;
         foreach (TabInfo tabInfo in _tabs)
         {
             if (tabInfo.Item == tab)
             {
-                removedTab = tabInfo;
+                removingTab = tabInfo;
             }
         }
-        _tabs.Remove(removedTab);
+        if (removingTab == null)
+        {
+            DebugUtils.Assert(false);
+            return;
+        }
+
+        if (_tabs.Count <= 1)
+        {
+            return;
+        }
+
+        _tabs.Remove(removingTab);
         RootTabView.TabItems.Remove(tab);
 
-        var newWindow = new MainWindow(removedTab.CurrentUrl);
+        var newWindow = new MainWindow(removingTab.CurrentUrl);
         newWindow.Activate();
     }
 

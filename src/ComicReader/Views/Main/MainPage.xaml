@@ -161,10 +161,14 @@
             x:Name="RootTabView"
             VerticalAlignment="Stretch"
             AddTabButtonClick="OnAddTabButtonClicked"
+            AllowDrop="True"
             CanDragTabs="True"
+            DragOver="OnRootTabViewDragOver"
+            Drop="OnRootTabViewDrop"
             SelectionChanged="OnTabViewSelectionChanged"
             Style="{StaticResource MainPageTabViewStyle}"
             TabCloseRequested="OnTabCloseRequested"
+            TabDragStarting="OnRootTabViewTabDragStarting"
             TabDroppedOutside="OnRootTabViewTabDroppedOutside">
             <muxc:TabView.TabStripFooter>
                 <main:TitleBar x:Name="MainTitleBar" />
