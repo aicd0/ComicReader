@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using ComicReader.Common;
 using ComicReader.Common.DebugTools;
 using ComicReader.Data.Comic;
+using ComicReader.Data.Legacy;
 
 using Microsoft.Data.Sqlite;
 

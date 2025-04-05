@@ -244,7 +244,7 @@ public class ArchiveAccess
 
         // Reader options.
         var opts = new SharpCompress.Readers.ReaderOptions();
-        int default_code_page = AppData.DefaultArchiveCodePage;
+        int default_code_page = AppModel.DefaultArchiveCodePage;
 
         if (default_code_page > 0)
         {

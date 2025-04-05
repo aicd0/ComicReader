@@ -31,7 +31,7 @@ internal static class ImageCacheManager
     {
         StorageFolder cacheFolder = ApplicationData.Current.LocalCacheFolder;
         StorageFolder imageFolder = cacheFolder.CreateFolderAsync(CACHE_FOLDER, CreationCollisionOption.OpenIfExists).AsTask().Result;
-        LRUCache cache = new(imageFolder, MAX_CACHE_SIZE);
+        LRUCache cache = new(imageFolder.Path, MAX_CACHE_SIZE);
         TaskDispatcher.LongRunningThreadPool.Submit("CleanImageCache", delegate
         {
             cache.Clean();

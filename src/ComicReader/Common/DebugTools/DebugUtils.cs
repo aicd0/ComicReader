@@ -43,6 +43,10 @@ internal static class DebugUtils
     {
         if (!condition && DebugMode)
         {
+            if (DebugBuild)
+            {
+                System.Diagnostics.Debugger.Break();
+            }
             throw new AssertException();
         }
     }

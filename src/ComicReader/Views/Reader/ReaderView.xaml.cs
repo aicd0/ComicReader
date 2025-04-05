@@ -11,6 +11,7 @@ using ComicReader.Common.DebugTools;
 using ComicReader.Common.Imaging;
 using ComicReader.Common.Threading;
 using ComicReader.Data;
+using ComicReader.Data.Legacy;
 
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
@@ -696,7 +697,7 @@ internal partial class ReaderView : UserControl
             page = pageMax + pageFrac * 0.5;
         }
 
-        DebugUtils.Assert(page <= PageCount);
+        DebugUtils.Assert(page - PageCount < 0.5);
         CurrentPage = page;
 
         Log("PageUpdated",
@@ -761,7 +762,7 @@ internal partial class ReaderView : UserControl
 
     private void UpdateImageDecodeSize(ReaderFrameViewModel model)
     {
-        if (!AppData.AntiAliasingEnabled)
+        if (!AppModel.AntiAliasingEnabled)
         {
             return;
         }
@@ -1368,7 +1369,7 @@ internal partial class ReaderView : UserControl
 
     public bool MoveFrame(int increment, string reason)
     {
-        MoveFrameInternal(increment, !AppData.TransitionAnimation, reason);
+        MoveFrameInternal(increment, !AppModel.TransitionAnimation, reason);
         return true;
     }
 

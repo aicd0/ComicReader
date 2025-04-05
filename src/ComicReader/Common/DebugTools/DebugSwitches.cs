@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 using ComicReader.Common.KVStorage;
 
@@ -63,7 +64,10 @@ internal class DebugSwitches
 
     public class CommonConfig
     {
+        [JsonPropertyName("console_enabled")]
         public bool ConsoleEnabled { get; set; }
+
+        [JsonPropertyName("log_tree_enabled")]
         public bool LogTreeEnabled { get; set; }
     }
 

@@ -11,7 +11,7 @@ using ComicReader.Data.Comic;
 
 namespace ComicReader.Data;
 
-static class AppData
+static class AppModel
 {
     private const string TAG = "AppStatusPreserver";
     private const string KEY_DEFAULT_ARCHIVE_CODE_PAGE = "default_archive_code_page";

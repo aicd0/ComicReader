@@ -12,6 +12,7 @@ using ComicReader.Common.PageBase;
 using ComicReader.Common.Threading;
 using ComicReader.Data;
 using ComicReader.Data.Comic;
+using ComicReader.Data.Legacy;
 using ComicReader.Data.SqlHelpers;
 using ComicReader.Helpers.Imaging;
 using ComicReader.Helpers.Navigation;
@@ -75,13 +76,13 @@ internal sealed partial class HomePage : BasePage
         return GetAbility<IMainPageAbility>();
     }
 
-    private void BindComicData(ComicItemViewModel model, ComicData comic)
+    private async Task BindComicData(ComicItemViewModel model, ComicData comic)
     {
         model.Comic = comic;
         model.Title = comic.Title;
         model.Rating = comic.Rating;
         model.UpdateProgress(true);
-        model.IsFavorite = FavoriteDataManager.FromIdNoLock(comic.Id) != null;
+        model.IsFavorite = await FavoriteModel.Instance.FromId(comic.Id) != null;
         model.ItemHandler = _comicItemHandler;
     }
 
@@ -149,7 +150,7 @@ internal sealed partial class HomePage : BasePage
                 }
 
                 var model = new ComicItemViewModel();
-                BindComicData(model, comic);
+                await BindComicData(model, comic);
                 comic_items.Add(model);
             }
 
@@ -304,7 +305,8 @@ internal sealed partial class HomePage : BasePage
         {
             item.Comic.SetAsUnread();
         }
-        BindComicData(item, item.Comic);
+
+        _ = BindComicData(item, item.Comic);
     }
 
     private void OnAddToFavoritesClicked(object sender, RoutedEventArgs e)
@@ -313,7 +315,7 @@ internal sealed partial class HomePage : BasePage
         {
             var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
             item.IsFavorite = true;
-            await FavoriteDataManager.Add(item.Comic.Id, item.Title, true);
+            await FavoriteModel.Instance.Add(item.Comic.Id, item.Title, true);
         });
     }
 
@@ -323,7 +325,7 @@ internal sealed partial class HomePage : BasePage
         {
             var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
             item.IsFavorite = false;
-            await FavoriteDataManager.RemoveWithId(item.Comic.Id, true);
+            await FavoriteModel.Instance.RemoveWithId(item.Comic.Id, true);
         });
     }
 

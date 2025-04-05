@@ -11,7 +11,7 @@ using ComicReader.Common;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Common.Threading;
 
-namespace ComicReader.Data;
+namespace ComicReader.Data.Legacy;
 
 public class HistoryData : XmlData
 {
@@ -75,7 +75,7 @@ internal class HistoryDataManager
         await XmlDatabaseManager.WaitLock();
         try
         {
-            if (!AppData.SaveBrowsingHistory)
+            if (!AppModel.SaveBrowsingHistory)
             {
                 return;
             }

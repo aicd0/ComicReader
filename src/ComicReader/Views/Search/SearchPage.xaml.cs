@@ -444,7 +444,7 @@ internal sealed partial class SearchPage : BasePage
         model.Detail = "#" + comic.Id;
         model.Rating = comic.Rating;
         model.UpdateProgress(false);
-        model.IsFavorite = await FavoriteDataManager.FromId(comic.Id) != null;
+        model.IsFavorite = await FavoriteModel.Instance.FromId(comic.Id) != null;
         model.IsSelectMode = Shared.IsSelectMode;
         model.ItemHandler = _comicItemHandler;
     }
@@ -591,7 +591,7 @@ internal sealed partial class SearchPage : BasePage
         {
             var result = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
             result.IsFavorite = true;
-            await FavoriteDataManager.Add(result.Comic.Id, result.Title, true);
+            await FavoriteModel.Instance.Add(result.Comic.Id, result.Title, true);
         });
     }
 
@@ -601,7 +601,7 @@ internal sealed partial class SearchPage : BasePage
         {
             var result = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
             result.IsFavorite = false;
-            await FavoriteDataManager.RemoveWithId(result.Comic.Id, true);
+            await FavoriteModel.Instance.RemoveWithId(result.Comic.Id, true);
         });
     }
 
@@ -754,7 +754,7 @@ internal sealed partial class SearchPage : BasePage
                     continue;
                 }
                 model.IsFavorite = true;
-                await FavoriteDataManager.Add(model.Comic.Id, model.Title, i == selected_items.Count - 1);
+                await FavoriteModel.Instance.Add(model.Comic.Id, model.Title, i == selected_items.Count - 1);
             }
 
             UpdateCommandBarButtonStates();
@@ -774,7 +774,7 @@ internal sealed partial class SearchPage : BasePage
                     continue;
                 }
                 model.IsFavorite = false;
-                await FavoriteDataManager.RemoveWithId(model.Comic.Id, i == selected_items.Count - 1);
+                await FavoriteModel.Instance.RemoveWithId(model.Comic.Id, i == selected_items.Count - 1);
             }
 
             UpdateCommandBarButtonStates();

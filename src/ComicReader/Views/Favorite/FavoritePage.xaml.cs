@@ -10,7 +10,6 @@ using System.Threading.Tasks;
 using ComicReader.Common;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Common.PageBase;
-using ComicReader.Common.Threading;
 using ComicReader.Data;
 using ComicReader.Data.Comic;
 using ComicReader.Helpers.Navigation;
@@ -26,7 +25,6 @@ namespace ComicReader.Views.Favorite;
 
 internal sealed partial class FavoritePage : BasePage
 {
-    private const string TAG = "FavoritePage";
     private ObservableCollection<FavoriteItemViewModel> DataSource { get; set; }
 
     public FavoritePage()
@@ -71,9 +69,9 @@ internal sealed partial class FavoritePage : BasePage
     // utilities
     private async Task Update()
     {
-        void helper(List<FavoriteNodeData> it, ObservableCollection<FavoriteItemViewModel> et, FavoriteItemViewModel parent)
+        void helper(List<FavoriteModel.ExternalNodeModel> it, ObservableCollection<FavoriteItemViewModel> et, FavoriteItemViewModel parent)
         {
-            foreach (FavoriteNodeData inode in it)
+            foreach (FavoriteModel.ExternalNodeModel inode in it)
             {
                 FavoriteNodeType type = inode.Type == "i" ? FavoriteNodeType.Item : FavoriteNodeType.Filter;
                 var enode = new FavoriteItemViewModel(inode.Name, type, parent);
@@ -91,10 +89,14 @@ internal sealed partial class FavoritePage : BasePage
             }
         }
 
-        await XmlDatabaseManager.WaitLock();
+        FavoriteModel.ExternalModel model = await FavoriteModel.Instance.GetModel();
+        if (model == null)
+        {
+            return;
+        }
+
         DataSource.Clear();
-        helper(XmlDatabase.Favorites.RootNodes, DataSource, null);
-        XmlDatabaseManager.ReleaseLock();
+        helper(model.Children, DataSource, null);
         UpdateView();
     }
 
@@ -105,16 +107,16 @@ internal sealed partial class FavoritePage : BasePage
 
     private async Task Save()
     {
-        void helper(List<FavoriteNodeData> it, ObservableCollection<FavoriteItemViewModel> et)
+        void helper(List<FavoriteModel.ExternalNodeModel> it, ObservableCollection<FavoriteItemViewModel> et)
         {
             foreach (FavoriteItemViewModel enode in et)
             {
-                var inode = new FavoriteNodeData
-                {
-                    Type = enode.Type == FavoriteNodeType.Filter ? "f" : "i",
-                    Name = enode.Name,
-                    Id = enode.Id
-                };
+                var inode = new FavoriteModel.ExternalNodeModel(
+                    enode.Type == FavoriteNodeType.Filter ? "f" : "i",
+                    enode.Name,
+                    enode.Id,
+                    []
+                );
 
                 if (enode.Children.Count > 0)
                 {
@@ -125,11 +127,9 @@ internal sealed partial class FavoritePage : BasePage
             }
         }
 
-        await XmlDatabaseManager.WaitLock();
-        XmlDatabase.Favorites.RootNodes.Clear();
-        helper(XmlDatabase.Favorites.RootNodes, DataSource);
-        XmlDatabaseManager.ReleaseLock();
-        TaskDispatcher.DefaultQueue.Submit($"{TAG}#Save", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Favorites));
+        FavoriteModel.ExternalModel model = new([]);
+        helper(model.Children, DataSource);
+        await FavoriteModel.Instance.UpdateModel(model);
     }
 
     private async Task DeleteItem(FavoriteItemViewModel item)

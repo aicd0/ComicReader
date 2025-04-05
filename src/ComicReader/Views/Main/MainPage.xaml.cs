@@ -110,7 +110,7 @@ internal sealed partial class MainPage : BasePage
         }
 
         {
-            long id = AppData.GetReadingComic();
+            long id = AppModel.GetReadingComic();
             if (id >= 0)
             {
                 ComicData comic = await ComicData.FromId(id, "FetchLastComic");

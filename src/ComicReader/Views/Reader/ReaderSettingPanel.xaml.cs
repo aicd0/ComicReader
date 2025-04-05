@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 using ComicReader.Common.DebugTools;
-using ComicReader.Data;
+using ComicReader.Data.Legacy;
 using ComicReader.Views.Navigation;
 
 using Microsoft.UI.Xaml;
