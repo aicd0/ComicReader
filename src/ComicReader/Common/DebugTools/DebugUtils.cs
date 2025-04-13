@@ -41,13 +41,24 @@ internal static class DebugUtils
 
     public static void Assert(bool condition)
     {
+        Assert(condition, "");
+    }
+
+    public static void Assert(bool condition, string eventName)
+    {
+        Assert(condition, eventName, "");
+    }
+
+    public static void Assert(bool condition, string eventName, string message)
+    {
         if (!condition && DebugMode)
         {
             if (DebugBuild)
             {
                 System.Diagnostics.Debugger.Break();
             }
-            throw new AssertException();
+
+            throw new AssertException($"{eventName} ({message})");
         }
     }
 

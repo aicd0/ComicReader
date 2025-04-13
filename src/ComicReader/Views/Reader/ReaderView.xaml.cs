@@ -596,20 +596,20 @@ internal partial class ReaderView : UserControl
     {
         if (!_isInitialFrameLoaded)
         {
-            DebugUtils.Assert(false);
+            DebugUtils.Assert(false, "4208DD4212D06B63");
             return false;
         }
 
         double offset;
         {
-            double parallelOffset = ParallelOffset;
-            double zoomFactor = ZoomFactor;
+            double parallelOffset = SCParallelOffsetFinal;
+            double zoomFactor = SCZoomFactorFinal;
             offset = (parallelOffset + ViewportParallelLength * 0.5) / zoomFactor;
         }
 
         if (FrameDataSource.Count == 0)
         {
-            DebugUtils.Assert(false);
+            DebugUtils.Assert(false, "AFD63CD7A002E849");
             return false;
         }
 
@@ -666,7 +666,7 @@ internal partial class ReaderView : UserControl
 
         if (frame.PageL == -1 && frame.PageR == -1)
         {
-            DebugUtils.Assert(false);
+            DebugUtils.Assert(false, "3BF47694603B64BC");
             return false;
         }
 
@@ -697,7 +697,7 @@ internal partial class ReaderView : UserControl
             page = pageMax + pageFrac * 0.5;
         }
 
-        DebugUtils.Assert(page - PageCount < 0.5);
+        DebugUtils.Assert(page - PageCount < 0.5, "3BDCDB690350FE36", $"page={page},PageCount={PageCount}");
         CurrentPage = page;
 
         Log("PageUpdated",
@@ -855,22 +855,19 @@ internal partial class ReaderView : UserControl
 
     private void OnReaderScrollViewerViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
     {
-        if (OnViewChanged(!e.IsIntermediate))
-        {
-            ReaderEventPageChanged?.Invoke(this, e.IsIntermediate);
-        }
+        OnViewChanged(!e.IsIntermediate);
     }
 
-    private bool OnViewChanged(bool final)
+    private void OnViewChanged(bool final)
     {
         if (!_isInitialFrameLoaded)
         {
-            return false;
+            return;
         }
 
         if (!UpdatePage())
         {
-            return false;
+            return;
         }
 
         if (final)
@@ -890,14 +887,11 @@ internal partial class ReaderView : UserControl
                 // Stick our view to the center of two pages.
                 MoveFrameInternal(0, false, "StickToCenter");
             }
-        }
 
-        if (final)
-        {
             UpdateImages("ViewChanged");
         }
 
-        return true;
+        ReaderEventPageChanged?.Invoke(this, final);
     }
 
     //
