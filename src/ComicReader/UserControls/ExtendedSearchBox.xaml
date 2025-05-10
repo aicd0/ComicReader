@@ -31,8 +31,8 @@
             Text="&#xE721;" />
         <AutoSuggestBox
             x:Name="SearchBox"
-            MinWidth="300"
-            HorizontalAlignment="Left"
+            MinWidth="100"
+            HorizontalAlignment="Stretch"
             VerticalAlignment="Center"
             CornerRadius="6"
             GotFocus="SearchBox_GotFocus"

@@ -342,9 +342,6 @@
   <data name="RescanFilesButton.Content" xml:space="preserve">
     <value>重新扫描文件</value>
   </data>
-  <data name="RescanFilesDetail.Text" xml:space="preserve">
-    <value>当出现部分漫画缺失或信息不一致时，重新扫描文件可能解决问题。这一操作可能引发较高的CPU占用率，进而缩短您的电池使用时间。</value>
-  </data>
   <data name="SaveHistory.Text" xml:space="preserve">
     <value>记录您的浏览历史</value>
   </data>

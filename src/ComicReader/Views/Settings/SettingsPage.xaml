@@ -191,11 +191,6 @@
                                         VerticalAlignment="Center"
                                         IsActive="{x:Bind ViewModel.IsRescanning, Mode=OneWay}" />
                                 </StackPanel>
-                                <Grid Height="8" />
-                                <TextBlock
-                                    x:Uid="RescanFilesDetail"
-                                    Foreground="{ThemeResource ForegroundGrey2}"
-                                    Style="{StaticResource SettingsPageBodyTextBlock}" />
                                 <Grid Height="20" />
                                 <TextBlock x:Uid="DebugMode" Style="{StaticResource SettingsPageBodyTextBlock}" />
                                 <ToggleSwitch

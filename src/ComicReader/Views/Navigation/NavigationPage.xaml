@@ -90,7 +90,7 @@
                             <controls:ExtendedSearchBox
                                 x:Name="SearchBox"
                                 Grid.Column="1"
-                                MinWidth="300"
+                                MinWidth="250"
                                 Margin="15,0,15,0"
                                 HorizontalAlignment="Left"
                                 VerticalAlignment="Center"

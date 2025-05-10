@@ -342,9 +342,6 @@
   <data name="RescanFilesButton.Content" xml:space="preserve">
     <value>Rescan files</value>
   </data>
-  <data name="RescanFilesDetail.Text" xml:space="preserve">
-    <value>If there are missing comics or inconsist comic information, rescanning files may resolve the issue. Notice that this operation could lead to high CPU occupation which may drain your battery quickly.</value>
-  </data>
   <data name="SaveHistory.Text" xml:space="preserve">
     <value>Save browsing history</value>
   </data>
