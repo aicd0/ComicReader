@@ -70,79 +70,83 @@
     </Page.Resources>
 
     <Grid>
-        <ScrollViewer>
-            <StackPanel Margin="35,10" Orientation="Vertical">
-
-                <!--  Library  -->
-                <Grid Height="10" />
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock
-                        x:Uid="LibraryHeader"
-                        Grid.Column="0"
-                        Margin="6,0,0,0"
-                        FontSize="22"
-                        FontWeight="SemiBold"
-                        Text="Library" />
-                    <StackPanel
-                        Grid.Column="1"
-                        Margin="0,0,10,0"
-                        VerticalAlignment="Bottom"
-                        Orientation="Horizontal"
-                        Spacing="5">
-                        <HyperlinkButton
-                            x:Name="HbShowAllButton"
-                            x:Uid="ShowAllButton"
-                            Click="OnSeeAllBtClicked" />
-                        <HyperlinkButton x:Uid="ShowHiddenButton" Click="OnSeeHiddenBtClick" />
-                    </StackPanel>
-                </Grid>
-                <Grid Height="10" />
-                <controls:AdaptiveGridView
-                    Margin="0,0,-1,0"
-                    ContainerContentChanging="OnAdaptiveGridViewContainerContentChanging"
-                    DesiredWidth="{StaticResource ComicItemVerticalDesiredWidth}"
-                    ItemContainerStyle="{StaticResource ComicItemContainerStyle}"
-                    ItemHeight="310"
-                    ItemsSource="{x:Bind ComicItemSource}"
-                    ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                    ScrollViewer.HorizontalScrollMode="Disabled"
-                    StretchContentForSingleRow="False"
-                    Style="{StaticResource HomePageAdaptiveGridViewStyle}">
-                    <controls:AdaptiveGridView.ItemTemplate>
-                        <DataTemplate x:DataType="vm:ComicItemViewModel">
-                            <home:ComicItemVertical DataContext="{x:Bind}" />
-                        </DataTemplate>
-                    </controls:AdaptiveGridView.ItemTemplate>
-                </controls:AdaptiveGridView>
-                <StackPanel
-                    x:Name="SpLibraryEmpty"
-                    Margin="10,0,0,0"
-                    Padding="60,30"
-                    HorizontalAlignment="Left"
-                    BorderBrush="{ThemeResource ForegroundGrey1}"
-                    BorderThickness="2"
-                    CornerRadius="5"
-                    Orientation="Horizontal">
-                    <FontIcon
-                        Margin="0,3,0,0"
-                        VerticalAlignment="Center"
-                        FontSize="14"
-                        Glyph="&#xE946;" />
-                    <TextBlock
-                        x:Uid="LibraryEmptyPart1"
-                        Margin="6,0,0,0"
-                        VerticalAlignment="Center" />
-                    <HyperlinkButton x:Uid="AddFolderButton" Click="OnTryAddFolderBtClicked" />
-                    <TextBlock x:Uid="LibraryEmptyPart2" VerticalAlignment="Center" />
-                    <HyperlinkButton x:Uid="HomePageRefreshButton" Click="OnRefreshBtClicked" />
-                    <TextBlock x:Uid="LibraryEmptyPart3" VerticalAlignment="Center" />
+        <controls:AdaptiveGridView
+            Margin="0,0,-1,0"
+            Padding="35,10"
+            ContainerContentChanging="OnAdaptiveGridViewContainerContentChanging"
+            DesiredWidth="{StaticResource ComicItemVerticalDesiredWidth}"
+            ItemContainerStyle="{StaticResource ComicItemContainerStyle}"
+            ItemHeight="310"
+            ItemsSource="{x:Bind ComicItemSource}"
+            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+            ScrollViewer.HorizontalScrollMode="Disabled"
+            StretchContentForSingleRow="False"
+            Style="{StaticResource HomePageAdaptiveGridViewStyle}">
+            <controls:AdaptiveGridView.ItemTemplate>
+                <DataTemplate x:DataType="vm:ComicItemViewModel">
+                    <home:ComicItemVertical DataContext="{x:Bind}" />
+                </DataTemplate>
+            </controls:AdaptiveGridView.ItemTemplate>
+            <controls:AdaptiveGridView.Header>
+                <StackPanel Orientation="Vertical">
+                    <Grid Height="10" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock
+                            x:Uid="LibraryHeader"
+                            Grid.Column="0"
+                            Margin="6,0,0,0"
+                            FontSize="22"
+                            FontWeight="SemiBold"
+                            Text="Library" />
+                        <StackPanel
+                            Grid.Column="1"
+                            Margin="0,0,10,0"
+                            VerticalAlignment="Bottom"
+                            Orientation="Horizontal"
+                            Spacing="5">
+                            <HyperlinkButton
+                                x:Name="HbShowAllButton"
+                                x:Uid="ShowAllButton"
+                                Click="OnSeeAllBtClicked" />
+                            <HyperlinkButton x:Uid="ShowHiddenButton" Click="OnSeeHiddenBtClick" />
+                        </StackPanel>
+                    </Grid>
+                    <Grid Height="10" />
+                    <Grid x:Name="SpLibraryEmpty" Padding="0,30">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon
+                            Grid.Column="0"
+                            Margin="12,3,0,0"
+                            VerticalAlignment="Top"
+                            FontSize="14"
+                            Glyph="&#xE946;" />
+                        <RichTextBlock
+                            Grid.Column="1"
+                            Margin="6,0"
+                            VerticalAlignment="Center"
+                            IsTextSelectionEnabled="False">
+                            <Paragraph>
+                                <Run x:Uid="LibraryEmptyPart1" />
+                                <Hyperlink Click="AddFolderHyperlink_Click">
+                                    <Run x:Uid="AddFolderButton" />
+                                </Hyperlink>
+                                <Run x:Uid="LibraryEmptyPart2" />
+                                <Hyperlink Click="RefreshHyperlink_Click">
+                                    <Run x:Uid="HomePageRefreshButton" />
+                                </Hyperlink>
+                                <Run x:Uid="LibraryEmptyPart3" />
+                            </Paragraph>
+                        </RichTextBlock>
+                    </Grid>
                 </StackPanel>
-
-            </StackPanel>
-        </ScrollViewer>
+            </controls:AdaptiveGridView.Header>
+        </controls:AdaptiveGridView>
     </Grid>
 </base:BasePage>

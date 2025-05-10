@@ -95,9 +95,7 @@ internal sealed partial class HomePage : BasePage
             }
 
             // Get recent visited comics.
-            var records = new FixedHeap<Tuple<long, DateTimeOffset>>(100,
-                (Tuple<long, DateTimeOffset> x, Tuple<long, DateTimeOffset> y) => { return x.Item2.CompareTo(y.Item2); });
-
+            List<Tuple<long, DateTimeOffset>> records = new();
             await ComicData.EnqueueCommand(delegate
             {
                 // Use ORDER BY here will cause a crash (especially for a large result set)
@@ -112,29 +110,27 @@ internal sealed partial class HomePage : BasePage
 
                 var command = new SelectCommand<ComicTable>(ComicTable.Instance);
                 SelectCommand<ComicTable>.IToken<long> idToken = command.PutQueryInt64(ComicTable.ColumnId);
-                SelectCommand<ComicTable>.IToken<bool> hiddenToken = command.PutQueryBoolean(ComicTable.ColumnHidden);
                 SelectCommand<ComicTable>.IToken<DateTimeOffset> lastVisitToken = command.PutQueryDateTimeOffset(ComicTable.ColumnLastVisit);
-                using SelectCommand<ComicTable>.IReader reader = command.Execute();
+                using SelectCommand<ComicTable>.IReader reader = command.AppendCondition(ComicTable.ColumnHidden, false).Execute();
 
                 while (reader.Read())
                 {
-                    bool hidden = hiddenToken.GetValue();
-
-                    if (!hidden)
-                    {
-                        records.Add(new Tuple<long, DateTimeOffset>
-                        (
-                            idToken.GetValue(),
-                            lastVisitToken.GetValue()
-                        ));
-                    }
+                    records.Add(new Tuple<long, DateTimeOffset>
+                    (
+                        idToken.GetValue(),
+                        lastVisitToken.GetValue()
+                    ));
                 }
             }, "HomeLoadLibrary");
+            records.Sort(delegate (Tuple<long, DateTimeOffset> x, Tuple<long, DateTimeOffset> y)
+            {
+                return y.Item2.CompareTo(x.Item2);
+            });
 
             // Convert to view models.
             var comic_items = new List<ComicItemViewModel>();
 
-            foreach (Tuple<long, DateTimeOffset> record in records.GetSorted())
+            foreach (Tuple<long, DateTimeOffset> record in records)
             {
                 ComicData comic = await ComicData.FromId(record.Item1, "HomeLoadComic");
 
@@ -313,12 +309,12 @@ internal sealed partial class HomePage : BasePage
         });
     }
 
-    private void OnTryAddFolderBtClicked(object sender, RoutedEventArgs e)
+    private void AddFolderHyperlink_Click(Microsoft.UI.Xaml.Documents.Hyperlink sender, Microsoft.UI.Xaml.Documents.HyperlinkClickEventArgs args)
     {
         AddNewFolder();
     }
 
-    private void OnRefreshBtClicked(object sender, RoutedEventArgs e)
+    private void RefreshHyperlink_Click(Microsoft.UI.Xaml.Documents.Hyperlink sender, Microsoft.UI.Xaml.Documents.HyperlinkClickEventArgs args)
     {
         RefreshPage();
     }

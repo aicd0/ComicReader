@@ -123,7 +123,7 @@
   <data name="AboutCopyright" xml:space="preserve">
     <value>© 2025 $author. All rights reserved.</value>
   </data>
-  <data name="AddFolderButton.Content" xml:space="preserve">
+  <data name="AddFolderButton.Text" xml:space="preserve">
     <value>add a folder</value>
   </data>
   <data name="AddFolderControl.Detail" xml:space="preserve">
@@ -246,7 +246,7 @@
   <data name="HomeButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>Home</value>
   </data>
-  <data name="HomePageRefreshButton.Content" xml:space="preserve">
+  <data name="HomePageRefreshButton.Text" xml:space="preserve">
     <value>refresh</value>
   </data>
   <data name="ImageLocationExpander.Header" xml:space="preserve">
