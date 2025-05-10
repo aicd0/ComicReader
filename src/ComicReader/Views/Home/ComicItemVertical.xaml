@@ -2,12 +2,12 @@
     x:Class="ComicReader.Views.Home.ComicItemVertical"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:ComicReader.UserControls"
     xmlns:converters="using:ComicReader.Converters"
     xmlns:cw="using:CommunityToolkit.WinUI"
     xmlns:cwm="using:CommunityToolkit.WinUI.Media"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:ucrating="using:ComicReader.UserControls.ReadonlyRatingView"
     xmlns:vm="using:ComicReader.ViewModels"
     d:DataContext="{d:DesignInstance Type=vm:ComicItemViewModel}"
     d:DesignHeight="310"
@@ -115,7 +115,7 @@
                             Height="20"
                             HorizontalAlignment="Left"
                             VerticalAlignment="Center">
-                            <ucrating:ReadonlyRatingView PlaceholderValue="{x:Bind Ctx.Rating}" Visibility="{x:Bind Ctx.IsRatingVisible}" />
+                            <controls:ReadonlyRatingView PlaceholderValue="{x:Bind Ctx.Rating}" Visibility="{x:Bind Ctx.IsRatingVisible}" />
                         </Viewbox>
                         <TextBlock
                             FontSize="12"

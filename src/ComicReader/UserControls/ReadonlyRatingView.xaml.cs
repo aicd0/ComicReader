@@ -4,7 +4,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
-namespace ComicReader.UserControls.ReadonlyRatingView;
+namespace ComicReader.UserControls;
 
 public partial class ReadonlyRatingView : UserControl
 {
