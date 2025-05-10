@@ -64,78 +64,6 @@
                 </Setter>
             </Style>
 
-            <Style x:Key="FolderItemContainerStyle" TargetType="GridViewItem">
-                <Setter Property="Margin" Value="6" />
-                <Setter Property="cw:Effects.Shadow" Value="{StaticResource CommonShadow}" />
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="GridViewItem">
-                            <ListViewItemPresenter
-                                x:Name="Root"
-                                HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
-                                CheckBoxBrush="{ThemeResource GridViewItemCheckBoxBrush}"
-                                CheckBrush="{ThemeResource GridViewItemCheckBrush}"
-                                CheckMode="{ThemeResource GridViewItemCheckMode}"
-                                ContentMargin="{TemplateBinding Padding}"
-                                ContentTransitions="{TemplateBinding ContentTransitions}"
-                                Control.IsTemplateFocusTarget="True"
-                                DisabledOpacity="{ThemeResource ListViewItemDisabledThemeOpacity}"
-                                DragBackground="{ThemeResource GridViewItemDragBackground}"
-                                DragForeground="{ThemeResource GridViewItemDragForeground}"
-                                DragOpacity="{ThemeResource ListViewItemDragThemeOpacity}"
-                                FocusBorderBrush="{ThemeResource GridViewItemFocusBorderBrush}"
-                                FocusSecondaryBorderBrush="{ThemeResource GridViewItemFocusSecondaryBorderBrush}"
-                                FocusVisualMargin="{TemplateBinding FocusVisualMargin}"
-                                PlaceholderBackground="{ThemeResource GridViewItemPlaceholderBackground}"
-                                PointerOverBackground="{ThemeResource GridViewItemBackgroundPointerOver}"
-                                PressedBackground="{ThemeResource GridViewItemBackgroundPressed}"
-                                ReorderHintOffset="{ThemeResource GridViewItemReorderHintThemeOffset}"
-                                RevealBackground="{ThemeResource GridViewItemRevealBackground}"
-                                RevealBorderBrush="{ThemeResource GridViewItemRevealBorderBrush}"
-                                RevealBorderThickness="{ThemeResource GridViewItemRevealBorderThemeThickness}"
-                                SelectedBackground="{ThemeResource GridViewItemBackgroundSelected}"
-                                SelectedForeground="{ThemeResource GridViewItemForegroundSelected}"
-                                SelectedPointerOverBackground="{ThemeResource GridViewItemBackgroundSelectedPointerOver}"
-                                SelectedPressedBackground="{ThemeResource GridViewItemBackgroundSelectedPressed}"
-                                SelectionCheckMarkVisualEnabled="{ThemeResource GridViewItemSelectionCheckMarkVisualEnabled}">
-                                <VisualStateManager.VisualStateGroups>
-                                    <VisualStateGroup x:Name="CommonStates">
-                                        <VisualState x:Name="Normal" />
-                                        <VisualState x:Name="Selected" />
-                                        <VisualState x:Name="PointerOver" />
-                                        <VisualState x:Name="PointerOverSelected" />
-                                        <VisualState x:Name="PointerOverPressed" />
-                                        <VisualState x:Name="Pressed" />
-                                        <VisualState x:Name="PressedSelected" />
-                                    </VisualStateGroup>
-                                    <VisualStateGroup x:Name="DisabledStates">
-                                        <VisualState x:Name="Enabled" />
-                                        <VisualState x:Name="Disabled" />
-                                    </VisualStateGroup>
-                                </VisualStateManager.VisualStateGroups>
-                            </ListViewItemPresenter>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-
-            <DataTemplate x:Key="FolderItemNormalTemplate" x:DataType="vm:FolderItemViewModel">
-                <home:FolderItemDetailed
-                    Title="{x:Bind Folder}"
-                    Detail="{x:Bind Path}"
-                    Glyph="&#xE8B7;" />
-            </DataTemplate>
-
-            <DataTemplate x:Key="FolderItemAddNewTemplate" x:DataType="vm:FolderItemViewModel">
-                <home:FolderItemDetailed x:Uid="AddFolderControl" Glyph="&#xE8F4;" />
-            </DataTemplate>
-
-            <converters:FolderItemTemplateSelector
-                x:Key="FolderItemTemplateSelector"
-                AddNewTemplate="{StaticResource FolderItemAddNewTemplate}"
-                NormalTemplate="{StaticResource FolderItemNormalTemplate}" />
-
             <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
             <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
         </ResourceDictionary>
@@ -173,10 +101,6 @@
                     </StackPanel>
                 </Grid>
                 <Grid Height="10" />
-                <!--
-                    DO NOT attach Visibility property to mtuuc:AdaptiveGridView as this
-                    will result in a layout error (probably a bug from API).
-                -->
                 <ucadaptivegrid:AdaptiveGridView
                     Margin="0,0,-1,0"
                     ContainerContentChanging="OnAdaptiveGridViewContainerContentChanging"
@@ -184,7 +108,6 @@
                     ItemContainerStyle="{StaticResource ComicItemContainerStyle}"
                     ItemHeight="310"
                     ItemsSource="{x:Bind ComicItemSource}"
-                    MaxRows="2"
                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                     ScrollViewer.HorizontalScrollMode="Disabled"
                     StretchContentForSingleRow="False"
@@ -219,21 +142,6 @@
                     <TextBlock x:Uid="LibraryEmptyPart3" VerticalAlignment="Center" />
                 </StackPanel>
 
-                <!--  Folders  -->
-                <Grid Height="50" />
-                <TextBlock
-                    x:Uid="FoldersHeader"
-                    Margin="6,0,0,0"
-                    FontSize="22"
-                    FontWeight="SemiBold" />
-                <Grid Height="10" />
-                <ucadaptivegrid:AdaptiveGridView
-                    DesiredWidth="295"
-                    ItemContainerStyle="{StaticResource FolderItemContainerStyle}"
-                    ItemTemplateSelector="{StaticResource FolderItemTemplateSelector}"
-                    ItemsSource="{x:Bind FolderItemDataSource}"
-                    StretchContentForSingleRow="False"
-                    Style="{StaticResource HomePageAdaptiveGridViewStyle}" />
             </StackPanel>
         </ScrollViewer>
     </Grid>

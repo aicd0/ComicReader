@@ -23,8 +23,7 @@ internal class MainThreadUtils
             return;
         }
 
-        DispatcherQueue queue = App.WindowManager.GetAnyWindow().DispatcherQueue;
-
+        DispatcherQueue queue = GetDispatcherQueue();
         if (queue == null)
         {
             return;
@@ -41,8 +40,7 @@ internal class MainThreadUtils
             return;
         }
 
-        DispatcherQueue queue = App.WindowManager.GetAnyWindow().DispatcherQueue;
-
+        DispatcherQueue queue = GetDispatcherQueue();
         if (queue == null)
         {
             return;
@@ -61,13 +59,11 @@ internal class MainThreadUtils
 
     public static bool IsMainThread()
     {
-        DispatcherQueue queue = App.WindowManager.GetAnyWindow().DispatcherQueue;
-
+        DispatcherQueue queue = GetDispatcherQueue();
         if (queue == null)
         {
             return false;
         }
-
         return queue.HasThreadAccess;
     }
 
@@ -99,5 +95,15 @@ internal class MainThreadUtils
     private static long GetCurrentMilliseconds()
     {
         return DateTimeOffset.Now.ToUnixTimeMilliseconds();
+    }
+
+    private static DispatcherQueue GetDispatcherQueue()
+    {
+        MainWindow window = App.WindowManager.GetAnyWindow();
+        if (window == null)
+        {
+            return null;
+        }
+        return window.DispatcherQueue;
     }
 }

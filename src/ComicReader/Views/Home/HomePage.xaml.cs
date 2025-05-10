@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
@@ -29,12 +28,8 @@ namespace ComicReader.Views.Home;
 internal sealed partial class HomePage : BasePage
 {
     private readonly ComicItemViewModel.IItemHandler _comicItemHandler;
-    private ObservableCollectionPlus<ComicItemViewModel> ComicItemSource { get; set; }
-        = new ObservableCollectionPlus<ComicItemViewModel>();
-    public ObservableCollection<FolderItemViewModel> FolderItemDataSource { get; set; }
-        = new ObservableCollection<FolderItemViewModel>();
+    private ObservableCollectionPlus<ComicItemViewModel> ComicItemSource { get; set; } = [];
 
-    private readonly CancellationLock m_update_folder_lock = new();
     private readonly CancellationLock _updateLibraryLock = new();
     private readonly CancellationSession _updateLibrarySession = new();
 
@@ -67,7 +62,6 @@ internal sealed partial class HomePage : BasePage
     // Utilities
     private async Task Update()
     {
-        await UpdateFolders();
         await UpdateLibrary();
     }
 
@@ -209,40 +203,6 @@ internal sealed partial class HomePage : BasePage
         }
     }
 
-    public async Task UpdateFolders()
-    {
-        await m_update_folder_lock.LockAsync(async delegate (CancellationLock.Token token)
-        {
-            // Add to folder item source.
-            var new_folder_source = new Collection<FolderItemViewModel>
-            {
-                new() {
-                    OnItemTapped = OnFolderItemTapped,
-                    IsAddNew = true
-                }
-            };
-
-            await XmlDatabaseManager.WaitLock();
-
-            foreach (string path in XmlDatabase.Settings.ComicFolders)
-            {
-                var item = new FolderItemViewModel
-                {
-                    OnItemTapped = OnFolderItemTapped,
-                    OnRemoveClicked = FolderItemRemoveClick,
-                    Folder = StringUtils.ItemNameFromPath(path),
-                    Path = path,
-                    IsAddNew = false
-                };
-
-                new_folder_source.Add(item);
-            }
-
-            XmlDatabaseManager.ReleaseLock();
-            C1<FolderItemViewModel>.UpdateCollection(FolderItemDataSource, new_folder_source, FolderItemViewModel.ContentEquals);
-        });
-    }
-
     // Events
     private void OnAdaptiveGridViewContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
     {
@@ -349,39 +309,7 @@ internal sealed partial class HomePage : BasePage
                 return;
             }
 
-            await UpdateFolders();
             ComicData.UpdateAllComics("HomePage#AddNewFolder", lazy: true);
-        });
-    }
-
-    private void OnFolderItemTapped(object sender, TappedRoutedEventArgs e)
-    {
-        if (!CanHandleTapped())
-        {
-            return;
-        }
-
-        var item = (FolderItemViewModel)((Grid)sender).DataContext;
-        if (item.IsAddNew)
-        {
-            AddNewFolder();
-        }
-        else
-        {
-            Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_SEARCH)
-                .WithParam(RouterConstants.ARG_KEYWORD, "<dir: " + item.Path + ">");
-            GetMainPageAbility().OpenInCurrentTab(route);
-        }
-    }
-
-    private void FolderItemRemoveClick(object sender, RoutedEventArgs e)
-    {
-        C0.Run(async delegate
-        {
-            var item = (FolderItemViewModel)((MenuFlyoutItem)sender).DataContext;
-            await SettingDataManager.RemoveComicFolder(item.Path, final: true);
-            await UpdateFolders();
-            ComicData.UpdateAllComics("FolderItemRemoveClick", lazy: true);
         });
     }
 
