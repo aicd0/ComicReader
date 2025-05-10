@@ -13,7 +13,6 @@ internal static class RouterConstants
     public const string HOST_HOME = "home";
     public const string HOST_SEARCH = "search";
     public const string HOST_SETTING = "setting";
-    public const string HOST_HELP = "help";
     public const string HOST_FAVORITE = "favorite";
     public const string HOST_HISTORY = "history";
     public const string HOST_NAVIGATION = "navigation";

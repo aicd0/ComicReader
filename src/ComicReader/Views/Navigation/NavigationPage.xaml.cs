@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 using System;
-using System.ComponentModel;
 
 using ComicReader.Common;
 using ComicReader.Common.DebugTools;
@@ -20,22 +19,6 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 
 namespace ComicReader.Views.Navigation;
-
-public class NavigationPageViewModel : INotifyPropertyChanged
-{
-    public event PropertyChangedEventHandler PropertyChanged;
-
-    private bool _devToolsVisible;
-    public bool DevToolsVisible
-    {
-        get => _devToolsVisible;
-        set
-        {
-            _devToolsVisible = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DevToolsVisible)));
-        }
-    }
-}
 
 internal sealed partial class NavigationPage : BasePage
 {
@@ -225,12 +208,6 @@ internal sealed partial class NavigationPage : BasePage
     private void OnMoreSettingsClick(object sender, RoutedEventArgs e)
     {
         var route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_SETTING);
-        GetMainPageAbility().OpenInNewTab(route);
-    }
-
-    private void OnMoreHelpClick(object sender, RoutedEventArgs e)
-    {
-        var route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_HELP);
         GetMainPageAbility().OpenInNewTab(route);
     }
 

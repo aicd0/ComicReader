@@ -237,91 +237,6 @@
   <data name="Help" xml:space="preserve">
     <value>帮助</value>
   </data>
-  <data name="HelpPageMarkdown.Text" xml:space="preserve">
-    <value># 如何使用过滤器进行搜索
-您可以通过使用过滤器来让搜索引擎只展示您感兴趣的搜索结果。
-
-### 基本用法
-搜索关键词的基本格式： (过滤器间的空格非必需)
-
-`关键词1 关键词2 ... &lt;过滤器1&gt; &lt;过滤器2&gt; ...`
-
-以下为您列出几种常用的过滤器：
-
-### 搜索指定目录
-只搜索在指定目录下的漫画。
-
-* 格式：`&lt;dir: 目录1[, 目录2, 目录3...]&gt;`
-
-* 例如：`漫画标题 &lt;dir: D:\漫画文件夹&gt;`
-
-* 等价写法：directory, folder, location, path.
-
-### 搜索指定隐藏漫画
-只显示被隐藏的漫画
-
-* 格式：`&lt;hidden&gt;`
-
-* 等价写法：hide.
-
-### 搜索指定标签
-只显示包含特定标签的漫画。
-
-* 格式：`&lt;tag: 标签1[, 标签2, 标签3...]&gt;`
-
-* 例如：`漫画标题 &lt;tag: 漫画标签1&gt;`
-
-* 等价写法：tags.
-
-### 搜索带指定分类的标签
-在搜索标签的同时指定标签的分类。
-
-* 格式：`&lt;标签分类: 标签1[, 标签2, 标签3...]&gt;`
-
-* 例如：`漫画标题 &lt;语言: 中文, 英文&gt;`
-
-### 搜索漫画ID
-通过直接指定漫画ID的方式进行搜索。
-
-* 格式：`&lt;id: 漫画ID&gt;`
-
-* 例如：`&lt;id: 1234&gt;`
-
-* 等价写法：no, num, number.
-
-### 搜索评分
-依据漫画评分进行过滤。
-
-* 格式：`&lt;rating: 评分1[, 评分2, 评分3...]&gt;`
-
-* 例如：`&lt;rating: -1, 4, 5&gt;` (`-1` 表示没有评分)
-
-* 等价写法：ratings, rate, star, stars.
-
-### 使用逻辑 与/或 组合过滤器
-使用逻辑 与/或 组合多个过滤器。
-
-* 或格式: `&lt;or: &lt;过滤器1&gt; &lt;过滤器2&gt; &lt;过滤器3&gt; ...&gt;`
-
-* 与格式: `&lt;and: &lt;过滤器1&gt; &lt;过滤器2&gt; &lt;过滤器3&gt; ...&gt;`
-
-* 例如: `漫画标题 &lt;or: &lt;star: 5&gt; &lt;语言: 中文&gt;&gt;`
-
-### 对过滤器取反
-只搜索不能通过过滤器的漫画。
-
-* 格式：`&lt;~&lt;过滤器&gt;&gt;`
-
-* 例如：`&lt;~&lt;rating: 1&gt;&gt;` (不显示评分为1星的漫画)
-
-### 全部
-不进行过滤。只在需要查看仓库中所有漫画（除被隐藏的漫画）时使用。
-
-* 格式：`&lt;all&gt;`
-
-* 例如：`&lt;all&gt;`
-</value>
-  </data>
   <data name="HideAppBarButton.Label" xml:space="preserve">
     <value>隐藏</value>
   </data>
@@ -333,6 +248,9 @@
   </data>
   <data name="HomePageRefreshButton.Content" xml:space="preserve">
     <value>刷新</value>
+  </data>
+  <data name="ImageLocationExpander.Header" xml:space="preserve">
+    <value>此设备上的图片</value>
   </data>
   <data name="LeftToRight.Text" xml:space="preserve">
     <value>从左到右</value>
@@ -360,9 +278,6 @@
   </data>
   <data name="MenuFlyoutDelete.Text" xml:space="preserve">
     <value>删除</value>
-  </data>
-  <data name="MenuFlyoutHelp.Text" xml:space="preserve">
-    <value>帮助</value>
   </data>
   <data name="MenuFlyoutHide.Text" xml:space="preserve">
     <value>隐藏</value>
@@ -432,9 +347,6 @@
   </data>
   <data name="SaveHistory.Text" xml:space="preserve">
     <value>记录您的浏览历史</value>
-  </data>
-  <data name="SearchBox.PlaceholderText" xml:space="preserve">
-    <value>在帮助中了解如何过滤搜索结果</value>
   </data>
   <data name="SearchResults" xml:space="preserve">
     <value>搜索结果</value>
@@ -514,11 +426,11 @@
   <data name="DebugMode.Text" xml:space="preserve">
     <value>调试模式</value>
   </data>
-  <data name="PrivacyPolicy.Text" xml:space="preserve">
-    <value>隐私策略</value>
-  </data>
   <data name="UntitledCollection" xml:space="preserve">
     <value>未命名图片集</value>
+  </data>
+  <data name="PrivacyPolicy.Text" xml:space="preserve">
+    <value>隐私策略</value>
   </data>
   <data name="AdvancedExpander.Detail" xml:space="preserve">
     <value>重新扫描文件，开发者选项</value>
@@ -531,9 +443,6 @@
   </data>
   <data name="ImageLocationExpander.Detail" xml:space="preserve">
     <value>添加或修改图片位置</value>
-  </data>
-  <data name="ImageLocationExpander.Header" xml:space="preserve">
-    <value>此设备上的图片</value>
   </data>
   <data name="ReaderExpander.Detail" xml:space="preserve">
     <value>自定义阅读器</value>
