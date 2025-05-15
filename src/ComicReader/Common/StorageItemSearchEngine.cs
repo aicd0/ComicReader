@@ -76,7 +76,7 @@ public class SearchContext
 
             if (m_initial_search)
             {
-                DebugUtils.Assert(m_stack.Count == 1);
+                Logger.Assert(m_stack.Count == 1, "A928F82A1210EAEC");
                 m_initial_search = false;
 
                 foreach (PathInfo path_info in m_stack[0].Paths)

@@ -110,7 +110,7 @@ internal sealed partial class MainPage : BasePage
         }
 
         {
-            long id = AppData.GetReadingComic();
+            long id = AppModel.GetReadingComic();
             if (id >= 0)
             {
                 ComicData comic = await ComicData.FromId(id, "FetchLastComic");
@@ -254,7 +254,7 @@ internal sealed partial class MainPage : BasePage
 
         if (tabInfo == null)
         {
-            DebugUtils.Assert(false);
+            Logger.AssertNotReachHere("CF1E732FD7F4EECA");
             return;
         }
 
@@ -386,7 +386,7 @@ internal sealed partial class MainPage : BasePage
             }
         }
 
-        DebugUtils.Assert(newSelectedTab != null);
+        Logger.Assert(newSelectedTab != null, "59496F61DEF5BD3C");
         _currentTab = newSelectedTab;
 
         if (lastSelectedTab != null)
@@ -412,7 +412,7 @@ internal sealed partial class MainPage : BasePage
         }
         if (draggingTab == null)
         {
-            DebugUtils.Assert(false);
+            Logger.AssertNotReachHere("96A351AFF8B07EB6");
             return;
         }
 
@@ -427,7 +427,7 @@ internal sealed partial class MainPage : BasePage
         {
             if (!e.DataView.Properties.TryGetValue("windowId", out object id) || id is not int)
             {
-                DebugUtils.Assert(false);
+                Logger.AssertNotReachHere("98CC0674EF182B5D");
                 return;
             }
             sourceWindowId = (int)id;
@@ -436,7 +436,7 @@ internal sealed partial class MainPage : BasePage
         {
             if (!e.DataView.Properties.TryGetValue("tabId", out object id) || id is not int)
             {
-                DebugUtils.Assert(false);
+                Logger.AssertNotReachHere("352E7E7D7070988A");
                 return;
             }
             sourceTabId = (int)id;
@@ -445,7 +445,7 @@ internal sealed partial class MainPage : BasePage
         {
             if (!e.DataView.Properties.TryGetValue("url", out object u) || u is not string)
             {
-                DebugUtils.Assert(false);
+                Logger.AssertNotReachHere("E6337F0738EFC223");
                 return;
             }
             url = (string)u;
@@ -468,7 +468,7 @@ internal sealed partial class MainPage : BasePage
     private void OnRootTabViewTabDroppedOutside(TabView sender, TabViewTabDroppedOutsideEventArgs args)
     {
         TabViewItem tab = args.Tab;
-        DebugUtils.Assert(tab != null);
+        Logger.Assert(tab != null, "556A8735ED29D6B5");
 
         TabInfo removingTab = null;
         foreach (TabInfo tabInfo in _tabs)
@@ -480,7 +480,7 @@ internal sealed partial class MainPage : BasePage
         }
         if (removingTab == null)
         {
-            DebugUtils.Assert(false);
+            Logger.AssertNotReachHere("F40D97E40039ADF7");
             return;
         }
 

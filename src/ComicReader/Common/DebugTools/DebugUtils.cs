@@ -1,8 +1,6 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
-
 using ComicReader.Common.KVStorage;
 
 namespace ComicReader.Common.DebugTools;
@@ -38,21 +36,4 @@ internal static class DebugUtils
     }
 
     public static bool DebugModeStrict => IS_DEBUG_BUILD && DebugMode;
-
-    public static void Assert(bool condition)
-    {
-        if (!condition && DebugMode)
-        {
-            throw new AssertException();
-        }
-    }
-
-    private class AssertException : Exception
-    {
-        public AssertException() { }
-
-        public AssertException(string message) : base(message) { }
-
-        public AssertException(string message, Exception inner) : base(message, inner) { }
-    }
 }

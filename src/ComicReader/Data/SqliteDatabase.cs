@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using ComicReader.Common;
 using ComicReader.Common.DebugTools;
 using ComicReader.Data.Comic;
+using ComicReader.Data.Legacy;
 
 using Microsoft.Data.Sqlite;
 
@@ -90,13 +91,13 @@ public class SqliteDatabaseManager
 
     public static SqliteCommand NewCommand()
     {
-        DebugUtils.Assert(m_connection != null);
+        Logger.Assert(m_connection != null, "B16C84A49CD057D2");
         return m_connection.CreateCommand();
     }
 
     public static SqliteTransaction NewTransaction()
     {
-        DebugUtils.Assert(m_connection != null);
+        Logger.Assert(m_connection != null, "9D588AB3BDE60961");
         return m_connection.BeginTransaction();
     }
 
@@ -138,7 +139,7 @@ public class SqliteDatabaseManager
                 await XmlDatabaseManager.SaveUnsealed(XmlDatabaseItem.Settings);
                 return TaskException.Success;
             default:
-                DebugUtils.Assert(false);
+                Logger.AssertNotReachHere("A39EA189ED8BB40B");
                 return TaskException.UnknownEnum;
         }
     }

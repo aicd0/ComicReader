@@ -7,5 +7,5 @@ namespace ComicReader.Common.Threading;
 
 internal interface ITaskDispatcher
 {
-    void Submit(string taskName, Action actionn);
+    void Submit(string taskName, Action action);
 }

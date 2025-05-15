@@ -54,7 +54,7 @@ internal static class DisplayUtils
         int returnCode = NativeMethods.GetDpiForMonitor(hMonitor, NativeModels.MonitorDPIType.MDT_Default, out uint dpiX, out uint _);
         if (returnCode != 0)
         {
-            DebugUtils.Assert(false);
+            Logger.AssertNotReachHere("9610A388C81E2FA4");
             throw new Exception("Could not get DPI for monitor.");
         }
 

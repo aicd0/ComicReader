@@ -8,6 +8,10 @@ namespace ComicReader.Common.DebugTools;
 
 internal class LogTag
 {
+    private const string EMPTY_TAG = "Empty";
+
+    public static readonly LogTag Empty = new("Empty");
+
     private readonly TagTree _root;
 
     private LogTag()
@@ -15,9 +19,10 @@ internal class LogTag
         _root = new TagTree();
     }
 
-    private LogTag(LogTag tag)
+    private LogTag(string name)
     {
-        _root = new TagTree(tag._root);
+        _root = new TagTree();
+        _root.Add(name);
     }
 
     public override string ToString()
@@ -30,11 +35,16 @@ internal class LogTag
 
     public bool ContainsAny(LogTag tag)
     {
+        if (tag == null)
+        {
+            return false;
+        }
         return _root.ContainsAny(tag._root);
     }
 
     public static LogTag N(string name)
     {
+        name ??= EMPTY_TAG;
         var tag = new LogTag();
         tag._root.Add(name);
         return tag;
@@ -42,6 +52,8 @@ internal class LogTag
 
     public static LogTag N(string name1, string name2)
     {
+        name1 ??= EMPTY_TAG;
+        name2 ??= EMPTY_TAG;
         var tag = new LogTag();
         tag._root.With(name1).Add(name2);
         return tag;
@@ -49,6 +61,9 @@ internal class LogTag
 
     public static LogTag N(string name1, string name2, string name3)
     {
+        name1 ??= EMPTY_TAG;
+        name2 ??= EMPTY_TAG;
+        name3 ??= EMPTY_TAG;
         var tag = new LogTag();
         tag._root.With(name1).With(name2).Add(name3);
         return tag;
@@ -56,16 +71,41 @@ internal class LogTag
 
     public static LogTag F(LogTag tag1, LogTag tag2)
     {
-        var tag = new LogTag(tag1);
-        tag._root.Combine(tag2._root);
+        if (tag1 == null && tag2 == null)
+        {
+            return Empty;
+        }
+        var tag = new LogTag();
+        if (tag1 != null)
+        {
+            tag._root.Combine(tag1._root);
+        }
+        if (tag2 != null)
+        {
+            tag._root.Combine(tag2._root);
+        }
         return tag;
     }
 
     public static LogTag F(LogTag tag1, LogTag tag2, LogTag tag3)
     {
-        var tag = new LogTag(tag1);
-        tag._root.Combine(tag2._root);
-        tag._root.Combine(tag3._root);
+        if (tag1 == null && tag2 == null && tag3 == null)
+        {
+            return Empty;
+        }
+        var tag = new LogTag();
+        if (tag1 != null)
+        {
+            tag._root.Combine(tag1._root);
+        }
+        if (tag2 != null)
+        {
+            tag._root.Combine(tag2._root);
+        }
+        if (tag3 != null)
+        {
+            tag._root.Combine(tag3._root);
+        }
         return tag;
     }
 

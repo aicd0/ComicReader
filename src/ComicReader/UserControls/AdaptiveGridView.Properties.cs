@@ -10,7 +10,7 @@ using System.Windows.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
-namespace ComicReader.UserControls.AdaptiveGridView;
+namespace ComicReader.UserControls;
 
 /// <summary>
 /// The AdaptiveGridView control allows to present information within a Grid View perfectly adjusting the

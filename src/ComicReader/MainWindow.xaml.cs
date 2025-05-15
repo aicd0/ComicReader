@@ -124,7 +124,7 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        string token = AppData.PutComicData(comic);
+        string token = AppModel.PutComicData(comic);
         Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
             .WithParam(RouterConstants.ARG_COMIC_TOKEN, token);
 

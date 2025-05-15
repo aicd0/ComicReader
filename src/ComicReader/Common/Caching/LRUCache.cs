@@ -22,20 +22,21 @@ internal class LRUCache
     private const string DATABASE_FILE_NAME = "info.db";
     private const int BATCH_SIZE = 1000;
 
-    private readonly StorageFolder _folder;
+    private readonly string _directoryPath;
     private readonly ConcurrentDictionary<string, CacheEntry> _entries = [];
 
     private readonly long _maxSize;
     private readonly LRUCacheDatabase _database;
     private readonly ReaderWriterLock _flushLock = new();
+    private volatile StorageFolder _folder = null;
     private volatile ConcurrentDictionary<string, long> _pendingFlushKeys = [];
     private int _postFlushTask = 0;
 
-    public LRUCache(StorageFolder folder, long maxSize)
+    public LRUCache(string directoryPath, long maxSize)
     {
-        _folder = folder;
+        _directoryPath = directoryPath;
         _maxSize = maxSize;
-        _database = new(folder.Path + "\\" + DATABASE_FILE_NAME);
+        _database = new(Path.Combine(directoryPath, DATABASE_FILE_NAME));
     }
 
     public ILRUInputStream Put(string key)
@@ -68,7 +69,7 @@ internal class LRUCache
 
     public void Clean()
     {
-        var directory = new DirectoryInfo(_folder.Path);
+        var directory = new DirectoryInfo(_directoryPath);
         long sizeToRemove = FileUtils.GetDirectorySize(directory, ignoreErrors: true) - _maxSize;
         if (sizeToRemove <= 0)
         {
@@ -78,7 +79,7 @@ internal class LRUCache
         IReadOnlyList<StorageFile> files;
         try
         {
-            files = _folder.GetFilesAsync().AsTask().Result;
+            files = GetFolder().GetFilesAsync().AsTask().Result;
         }
         catch (Exception ex)
         {
@@ -215,6 +216,18 @@ internal class LRUCache
         });
     }
 
+    private StorageFolder GetFolder()
+    {
+        StorageFolder folder = _folder;
+        if (folder != null)
+        {
+            return folder;
+        }
+        folder = StorageFolder.GetFolderFromPathAsync(_directoryPath).AsTask().Result;
+        _folder = folder;
+        return folder;
+    }
+
     private class CacheEntry : IDisposable
     {
         private readonly ReaderWriterLock _lock = new();
@@ -251,11 +264,11 @@ internal class LRUCache
             StorageFile file = null;
             try
             {
-                file = _cache._folder.CreateFileAsync(dirtyFileName, CreationCollisionOption.ReplaceExisting).AsTask().Result;
+                file = _cache.GetFolder().CreateFileAsync(dirtyFileName, CreationCollisionOption.ReplaceExisting).AsTask().Result;
             }
             catch (Exception e)
             {
-                Logger.F(TAG, "StartWrite", e);
+                Logger.F(TAG, nameof(StartWrite), e);
             }
             if (file == null)
             {
@@ -270,7 +283,7 @@ internal class LRUCache
             }
             catch (Exception e)
             {
-                Logger.F(TAG, "StartWrite", e);
+                Logger.F(TAG, nameof(StartWrite), e);
             }
             if (stream == null)
             {
@@ -287,11 +300,11 @@ internal class LRUCache
             StorageFile file = null;
             try
             {
-                file = _cache._folder.GetFileAsync(dirtyFileName).AsTask().Result;
+                file = _cache.GetFolder().GetFileAsync(dirtyFileName).AsTask().Result;
             }
             catch (Exception e)
             {
-                Logger.F(TAG, "EndWrite", e);
+                Logger.F(TAG, nameof(EndWrite), e);
             }
             if (file == null)
             {
@@ -302,11 +315,11 @@ internal class LRUCache
             string cleanFileName = GetCleanFileName(_key);
             try
             {
-                file.RenameAsync(cleanFileName).AsTask().Wait();
+                file.RenameAsync(cleanFileName, NameCollisionOption.ReplaceExisting).AsTask().Wait();
             }
             catch (Exception e)
             {
-                Logger.F(TAG, "EndWrite", e);
+                Logger.F(TAG, nameof(EndWrite), e);
                 SwitchToEmptyState();
                 return;
             }
@@ -314,7 +327,7 @@ internal class LRUCache
             _lock.AcquireWriterLock(-1);
             try
             {
-                DebugUtils.Assert(_status == Status.Dirty);
+                Logger.Assert(_status == Status.Dirty, "77504AC355E8488C");
                 _status = Status.Clean;
             }
             finally
@@ -339,7 +352,7 @@ internal class LRUCache
                     StorageFile file = null;
                     try
                     {
-                        file = _cache._folder.GetFileAsync(cleanFileName).AsTask().Result;
+                        file = _cache.GetFolder().GetFileAsync(cleanFileName).AsTask().Result;
                     }
                     catch (Exception e)
                     {
@@ -369,7 +382,7 @@ internal class LRUCache
                 }
                 else
                 {
-                    DebugUtils.Assert(_status == Status.Clean);
+                    Logger.Assert(_status == Status.Clean, "255E7E1F0632BC05");
                 }
 
                 _readerCount++;
@@ -386,12 +399,17 @@ internal class LRUCache
             _lock.AcquireWriterLock(-1);
             try
             {
-                DebugUtils.Assert(_status == Status.Clean);
-                DebugUtils.Assert(_readerCount > 0);
+                Logger.Assert(_status == Status.Clean, "302BF5B1FB061FC9");
+                Logger.Assert(_readerCount > 0, "40B639B2784A378E");
 
-                if (_readerCount <= 1)
+                if (_readerCount <= 0)
                 {
-                    DebugUtils.Assert(_outputStream != null);
+                    return false;
+                }
+
+                if (_readerCount == 1)
+                {
+                    Logger.Assert(_outputStream != null, "0F7DECDC1B3B8B15");
 
                     _readerCount = 0;
                     _outputStream = null;

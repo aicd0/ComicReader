@@ -17,6 +17,7 @@ using ComicReader.Common.PageBase;
 using ComicReader.Common.Threading;
 using ComicReader.Data;
 using ComicReader.Data.Comic;
+using ComicReader.Data.Legacy;
 using ComicReader.Helpers.Imaging;
 using ComicReader.Helpers.Navigation;
 using ComicReader.ViewModels;
@@ -252,7 +253,7 @@ internal sealed partial class ReaderPage : BasePage
             if (comic == null)
             {
                 string token = bundle.GetString(RouterConstants.ARG_COMIC_TOKEN, "");
-                comic = AppData.GetComicData(token);
+                comic = AppModel.GetComicData(token);
             }
 
             if (comic != null)
@@ -283,7 +284,7 @@ internal sealed partial class ReaderPage : BasePage
         ComicData comic = _comic;
         if (comic != null && !comic.IsExternal)
         {
-            AppData.SetReadingComic(comic.Id);
+            AppModel.SetReadingComic(comic.Id);
         }
 
         C0.Run(async delegate
@@ -300,8 +301,8 @@ internal sealed partial class ReaderPage : BasePage
 
     private void ObserveData()
     {
-        GetMainPageAbility().RegisterTabUnselectedHandler(this, AppData.UnsetReadingComic);
-        GetNavigationPageAbility().RegisterLeavingHandler(this, AppData.UnsetReadingComic);
+        GetMainPageAbility().RegisterTabUnselectedHandler(this, AppModel.UnsetReadingComic);
+        GetNavigationPageAbility().RegisterLeavingHandler(this, AppModel.UnsetReadingComic);
 
         GetNavigationPageAbility().RegisterGridViewModeChangedHandler(this, delegate (bool enabled)
         {
@@ -479,7 +480,7 @@ internal sealed partial class ReaderPage : BasePage
 
         LoadComicTag();
 
-        bool isFavorite = !_comic.IsExternal && await FavoriteDataManager.FromId(_comic.Id) != null;
+        bool isFavorite = !_comic.IsExternal && await FavoriteModel.Instance.FromId(_comic.Id) != null;
         SetIsFavorite(isFavorite);
 
         if (!_comic.IsExternal)
@@ -914,11 +915,11 @@ internal sealed partial class ReaderPage : BasePage
             {
                 if (isFavorite)
                 {
-                    await FavoriteDataManager.Add(_comic.Id, _comic.Title1, true);
+                    await FavoriteModel.Instance.Add(_comic.Id, _comic.Title1, true);
                 }
                 else
                 {
-                    await FavoriteDataManager.RemoveWithId(_comic.Id, true);
+                    await FavoriteModel.Instance.RemoveWithId(_comic.Id, true);
                 }
             });
         }

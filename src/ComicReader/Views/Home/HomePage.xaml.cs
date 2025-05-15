@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
@@ -12,6 +11,7 @@ using ComicReader.Common.PageBase;
 using ComicReader.Common.Threading;
 using ComicReader.Data;
 using ComicReader.Data.Comic;
+using ComicReader.Data.Legacy;
 using ComicReader.Data.SqlHelpers;
 using ComicReader.Helpers.Imaging;
 using ComicReader.Helpers.Navigation;
@@ -28,12 +28,8 @@ namespace ComicReader.Views.Home;
 internal sealed partial class HomePage : BasePage
 {
     private readonly ComicItemViewModel.IItemHandler _comicItemHandler;
-    private ObservableCollectionPlus<ComicItemViewModel> ComicItemSource { get; set; }
-        = new ObservableCollectionPlus<ComicItemViewModel>();
-    public ObservableCollection<FolderItemViewModel> FolderItemDataSource { get; set; }
-        = new ObservableCollection<FolderItemViewModel>();
+    private ObservableCollectionPlus<ComicItemViewModel> ComicItemSource { get; set; } = [];
 
-    private readonly CancellationLock m_update_folder_lock = new();
     private readonly CancellationLock _updateLibraryLock = new();
     private readonly CancellationSession _updateLibrarySession = new();
 
@@ -66,7 +62,6 @@ internal sealed partial class HomePage : BasePage
     // Utilities
     private async Task Update()
     {
-        await UpdateFolders();
         await UpdateLibrary();
     }
 
@@ -75,13 +70,13 @@ internal sealed partial class HomePage : BasePage
         return GetAbility<IMainPageAbility>();
     }
 
-    private void BindComicData(ComicItemViewModel model, ComicData comic)
+    private async Task BindComicData(ComicItemViewModel model, ComicData comic)
     {
         model.Comic = comic;
         model.Title = comic.Title;
         model.Rating = comic.Rating;
         model.UpdateProgress(true);
-        model.IsFavorite = FavoriteDataManager.FromIdNoLock(comic.Id) != null;
+        model.IsFavorite = await FavoriteModel.Instance.FromId(comic.Id) != null;
         model.ItemHandler = _comicItemHandler;
     }
 
@@ -100,9 +95,7 @@ internal sealed partial class HomePage : BasePage
             }
 
             // Get recent visited comics.
-            var records = new FixedHeap<Tuple<long, DateTimeOffset>>(100,
-                (Tuple<long, DateTimeOffset> x, Tuple<long, DateTimeOffset> y) => { return x.Item2.CompareTo(y.Item2); });
-
+            List<Tuple<long, DateTimeOffset>> records = new();
             await ComicData.EnqueueCommand(delegate
             {
                 // Use ORDER BY here will cause a crash (especially for a large result set)
@@ -117,29 +110,27 @@ internal sealed partial class HomePage : BasePage
 
                 var command = new SelectCommand<ComicTable>(ComicTable.Instance);
                 SelectCommand<ComicTable>.IToken<long> idToken = command.PutQueryInt64(ComicTable.ColumnId);
-                SelectCommand<ComicTable>.IToken<bool> hiddenToken = command.PutQueryBoolean(ComicTable.ColumnHidden);
                 SelectCommand<ComicTable>.IToken<DateTimeOffset> lastVisitToken = command.PutQueryDateTimeOffset(ComicTable.ColumnLastVisit);
-                using SelectCommand<ComicTable>.IReader reader = command.Execute();
+                using SelectCommand<ComicTable>.IReader reader = command.AppendCondition(ComicTable.ColumnHidden, false).Execute();
 
                 while (reader.Read())
                 {
-                    bool hidden = hiddenToken.GetValue();
-
-                    if (!hidden)
-                    {
-                        records.Add(new Tuple<long, DateTimeOffset>
-                        (
-                            idToken.GetValue(),
-                            lastVisitToken.GetValue()
-                        ));
-                    }
+                    records.Add(new Tuple<long, DateTimeOffset>
+                    (
+                        idToken.GetValue(),
+                        lastVisitToken.GetValue()
+                    ));
                 }
             }, "HomeLoadLibrary");
+            records.Sort(delegate (Tuple<long, DateTimeOffset> x, Tuple<long, DateTimeOffset> y)
+            {
+                return y.Item2.CompareTo(x.Item2);
+            });
 
             // Convert to view models.
             var comic_items = new List<ComicItemViewModel>();
 
-            foreach (Tuple<long, DateTimeOffset> record in records.GetSorted())
+            foreach (Tuple<long, DateTimeOffset> record in records)
             {
                 ComicData comic = await ComicData.FromId(record.Item1, "HomeLoadComic");
 
@@ -149,7 +140,7 @@ internal sealed partial class HomePage : BasePage
                 }
 
                 var model = new ComicItemViewModel();
-                BindComicData(model, comic);
+                await BindComicData(model, comic);
                 comic_items.Add(model);
             }
 
@@ -206,40 +197,6 @@ internal sealed partial class HomePage : BasePage
             _viewModel.Image.Image = image;
             _viewHolder.CompareAndBind(_viewModel);
         }
-    }
-
-    public async Task UpdateFolders()
-    {
-        await m_update_folder_lock.LockAsync(async delegate (CancellationLock.Token token)
-        {
-            // Add to folder item source.
-            var new_folder_source = new Collection<FolderItemViewModel>
-            {
-                new() {
-                    OnItemTapped = OnFolderItemTapped,
-                    IsAddNew = true
-                }
-            };
-
-            await XmlDatabaseManager.WaitLock();
-
-            foreach (string path in XmlDatabase.Settings.ComicFolders)
-            {
-                var item = new FolderItemViewModel
-                {
-                    OnItemTapped = OnFolderItemTapped,
-                    OnRemoveClicked = FolderItemRemoveClick,
-                    Folder = StringUtils.ItemNameFromPath(path),
-                    Path = path,
-                    IsAddNew = false
-                };
-
-                new_folder_source.Add(item);
-            }
-
-            XmlDatabaseManager.ReleaseLock();
-            C1<FolderItemViewModel>.UpdateCollection(FolderItemDataSource, new_folder_source, FolderItemViewModel.ContentEquals);
-        });
     }
 
     // Events
@@ -304,7 +261,8 @@ internal sealed partial class HomePage : BasePage
         {
             item.Comic.SetAsUnread();
         }
-        BindComicData(item, item.Comic);
+
+        _ = BindComicData(item, item.Comic);
     }
 
     private void OnAddToFavoritesClicked(object sender, RoutedEventArgs e)
@@ -313,7 +271,7 @@ internal sealed partial class HomePage : BasePage
         {
             var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
             item.IsFavorite = true;
-            await FavoriteDataManager.Add(item.Comic.Id, item.Title, true);
+            await FavoriteModel.Instance.Add(item.Comic.Id, item.Title, true);
         });
     }
 
@@ -323,7 +281,7 @@ internal sealed partial class HomePage : BasePage
         {
             var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
             item.IsFavorite = false;
-            await FavoriteDataManager.RemoveWithId(item.Comic.Id, true);
+            await FavoriteModel.Instance.RemoveWithId(item.Comic.Id, true);
         });
     }
 
@@ -347,48 +305,16 @@ internal sealed partial class HomePage : BasePage
                 return;
             }
 
-            await UpdateFolders();
             ComicData.UpdateAllComics("HomePage#AddNewFolder", lazy: true);
         });
     }
 
-    private void OnFolderItemTapped(object sender, TappedRoutedEventArgs e)
-    {
-        if (!CanHandleTapped())
-        {
-            return;
-        }
-
-        var item = (FolderItemViewModel)((Grid)sender).DataContext;
-        if (item.IsAddNew)
-        {
-            AddNewFolder();
-        }
-        else
-        {
-            Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_SEARCH)
-                .WithParam(RouterConstants.ARG_KEYWORD, "<dir: " + item.Path + ">");
-            GetMainPageAbility().OpenInCurrentTab(route);
-        }
-    }
-
-    private void FolderItemRemoveClick(object sender, RoutedEventArgs e)
-    {
-        C0.Run(async delegate
-        {
-            var item = (FolderItemViewModel)((MenuFlyoutItem)sender).DataContext;
-            await SettingDataManager.RemoveComicFolder(item.Path, final: true);
-            await UpdateFolders();
-            ComicData.UpdateAllComics("FolderItemRemoveClick", lazy: true);
-        });
-    }
-
-    private void OnTryAddFolderBtClicked(object sender, RoutedEventArgs e)
+    private void AddFolderHyperlink_Click(Microsoft.UI.Xaml.Documents.Hyperlink sender, Microsoft.UI.Xaml.Documents.HyperlinkClickEventArgs args)
     {
         AddNewFolder();
     }
 
-    private void OnRefreshBtClicked(object sender, RoutedEventArgs e)
+    private void RefreshHyperlink_Click(Microsoft.UI.Xaml.Documents.Hyperlink sender, Microsoft.UI.Xaml.Documents.HyperlinkClickEventArgs args)
     {
         RefreshPage();
     }

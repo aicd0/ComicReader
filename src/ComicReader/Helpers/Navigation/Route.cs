@@ -178,7 +178,7 @@ public class Route
     {
         if (string.IsNullOrWhiteSpace(key))
         {
-            DebugUtils.Assert(false);
+            Logger.AssertNotReachHere("0D4C54A375DE2353");
             return this;
         }
 

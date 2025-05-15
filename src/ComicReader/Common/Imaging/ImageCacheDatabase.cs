@@ -135,7 +135,7 @@ internal static class ImageCacheDatabase
                     records.Add(record);
                 }
             }
-            DebugUtils.Assert(records.Count <= 1);
+            Logger.Assert(records.Count <= 1, "9C0107871C1B6CB1");
 
             if (records.Count == 0)
             {

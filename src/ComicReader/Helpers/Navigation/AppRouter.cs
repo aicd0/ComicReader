@@ -37,11 +37,11 @@ internal static class AppRouter
         NavigationBundle bundle = Process(route);
         if (bundle == null)
         {
-            DebugUtils.Assert(false);
+            Logger.AssertNotReachHere("E029F8E967CF6196");
             return;
         }
 
         bool success = frame.Navigate(bundle.PageTrait.GetPageType(), bundle);
-        DebugUtils.Assert(success);
+        Logger.Assert(success, "E331AFB9DB866700");
     }
 }

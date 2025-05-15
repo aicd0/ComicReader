@@ -17,6 +17,7 @@ using ComicReader.Common.PageBase;
 using ComicReader.Common.Threading;
 using ComicReader.Data;
 using ComicReader.Data.Comic;
+using ComicReader.Data.Legacy;
 using ComicReader.Views.Main;
 
 using Microsoft.Data.Sqlite;
@@ -73,7 +74,7 @@ public class SettingsPageViewModel : INotifyPropertyChanged
                 int selectedIndex = value;
                 if (selectedIndex >= 0 && selectedIndex < Encodings.Count)
                 {
-                    AppData.DefaultArchiveCodePage = Encodings[selectedIndex].Item2;
+                    AppModel.DefaultArchiveCodePage = Encodings[selectedIndex].Item2;
                 }
             }
         }
@@ -90,7 +91,7 @@ public class SettingsPageViewModel : INotifyPropertyChanged
 
             if (!Updating)
             {
-                AppData.TransitionAnimation = value;
+                AppModel.TransitionAnimation = value;
             }
         }
     }
@@ -106,7 +107,7 @@ public class SettingsPageViewModel : INotifyPropertyChanged
 
             if (!Updating)
             {
-                AppData.AntiAliasingEnabled = value;
+                AppModel.AntiAliasingEnabled = value;
             }
         }
     }
@@ -133,7 +134,7 @@ public class SettingsPageViewModel : INotifyPropertyChanged
 
             if (!Updating)
             {
-                AppData.SaveBrowsingHistory = value;
+                AppModel.SaveBrowsingHistory = value;
             }
         }
     }
@@ -420,9 +421,9 @@ internal sealed partial class SettingsPage : BasePage
         ViewModel.IsClearHistoryEnabled = XmlDatabase.History.Items.Count > 0;
         XmlDatabaseManager.ReleaseLock();
 
-        ViewModel.TransitionAnimation = AppData.TransitionAnimation;
-        ViewModel.HistorySaveBrowsingHistory = AppData.SaveBrowsingHistory;
-        ViewModel.AntiAliasingEnabled = AppData.AntiAliasingEnabled;
+        ViewModel.TransitionAnimation = AppModel.TransitionAnimation;
+        ViewModel.HistorySaveBrowsingHistory = AppModel.SaveBrowsingHistory;
+        ViewModel.AntiAliasingEnabled = AppModel.AntiAliasingEnabled;
         ViewModel.AdvancedDebugMode = DebugUtils.DebugMode;
 
         ViewModel.Initialize();
@@ -456,7 +457,7 @@ internal sealed partial class SettingsPage : BasePage
                 new(StringResourceProvider.GetResourceString("Default"), -1)
             };
 
-            int defaultCodePage = AppData.DefaultArchiveCodePage;
+            int defaultCodePage = AppModel.DefaultArchiveCodePage;
             int selectedIndex = 0;
             foreach (Encoding info in supportedEncodings.Values)
             {
@@ -471,7 +472,7 @@ internal sealed partial class SettingsPage : BasePage
 
             if (!supportedEncodings.ContainsKey(defaultCodePage))
             {
-                AppData.DefaultArchiveCodePage = -1;
+                AppModel.DefaultArchiveCodePage = -1;
                 selectedIndex = 0;
             }
 

@@ -12,7 +12,7 @@ using ComicReader.Common.Threading;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 
-namespace ComicReader.Data;
+namespace ComicReader.Data.Legacy;
 
 public class SettingData : XmlData
 {

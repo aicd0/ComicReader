@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using ComicReader.Common;
 using ComicReader.Common.DebugTools;
 using ComicReader.Common.Threading;
+using ComicReader.Data.Legacy;
 using ComicReader.Data.SqlHelpers;
 
 using LiteDB;
@@ -780,7 +781,7 @@ internal abstract class ComicData
             case ComicType.PDF:
                 return ComicPdfData.FromDatabase(location);
             default:
-                DebugUtils.Assert(false);
+                Logger.AssertNotReachHere("419CBCB3E803A525");
                 return null;
         }
     }

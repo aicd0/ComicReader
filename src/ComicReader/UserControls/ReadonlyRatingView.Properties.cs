@@ -3,7 +3,7 @@
 
 using Microsoft.UI.Xaml;
 
-namespace ComicReader.UserControls.ReadonlyRatingView;
+namespace ComicReader.UserControls;
 
 public partial class ReadonlyRatingView
 {

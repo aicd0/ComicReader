@@ -111,20 +111,75 @@ internal static class Logger
     public static void F(string tag, string message)
     {
         Log(LEVEL_FATAL, LogTag.N(tag), message, new Exception());
+        ThrowOnDebug(null);
     }
 
     public static void F(LogTag tag, string message)
     {
         Log(LEVEL_FATAL, tag, message, new Exception());
+        ThrowOnDebug(null);
     }
 
     public static void F(string tag, string message, Exception exception)
     {
         Log(LEVEL_FATAL, LogTag.N(tag), message, exception);
+        ThrowOnDebug(null);
     }
+
     public static void F(LogTag tag, string message, Exception exception)
     {
         Log(LEVEL_FATAL, tag, message, exception);
+        ThrowOnDebug(null);
+    }
+
+    public static void Assert(bool condition, string eventName)
+    {
+        if (condition)
+        {
+            return;
+        }
+
+        AssertNotReachHereInternal(eventName, null, null);
+    }
+
+    public static void AssertNotReachHere(string eventName)
+    {
+        AssertNotReachHereInternal(eventName, null, null);
+    }
+
+    public static void AssertNotReachHere(string eventName, string message)
+    {
+        AssertNotReachHereInternal(eventName, message, null);
+    }
+
+    public static void AssertNotReachHere(string eventName, Exception exception)
+    {
+        AssertNotReachHereInternal(eventName, null, new AssertException(eventName, exception));
+    }
+
+    public static void AssertNotReachHere(string eventName, string message, Exception exception)
+    {
+        AssertNotReachHereInternal(eventName, message, exception);
+    }
+
+    private static void AssertNotReachHereInternal(string eventName, string message, Exception exception)
+    {
+        if (string.IsNullOrEmpty(eventName))
+        {
+            eventName = "UnknownEvent";
+        }
+        Log(LEVEL_FATAL, LogTag.N("Assert", eventName), message, exception);
+
+        string fullMsg;
+        if (string.IsNullOrEmpty(message))
+        {
+            fullMsg = eventName;
+        }
+        else
+        {
+            fullMsg = $"{eventName}({message})";
+        }
+        ThrowOnDebug(new AssertException(fullMsg, exception));
     }
 
     private static void Console(string message)
@@ -167,7 +222,7 @@ internal static class Logger
                 levelTag = "F";
                 break;
             default:
-                DebugUtils.Assert(false);
+                ThrowOnDebug(null);
                 levelTag = "U";
                 break;
         }
@@ -191,8 +246,6 @@ internal static class Logger
             };
             LogToFile(item);
         }
-
-        DebugUtils.Assert(level < LEVEL_FATAL);
     }
 
     private static void LogToFile(LogItem message)
@@ -311,6 +364,20 @@ internal static class Logger
         System.Diagnostics.Debug.Print(message);
     }
 
+    private static void ThrowOnDebug(Exception exception)
+    {
+        if (DebugUtils.DebugMode)
+        {
+            if (DebugUtils.DebugBuild)
+            {
+                System.Diagnostics.Debugger.Break();
+            }
+
+            exception ??= new AssertException();
+            throw exception;
+        }
+    }
+
     private class LogItem
     {
         public LogTag Tag;
@@ -320,5 +387,14 @@ internal static class Logger
         {
             return base.ToString();
         }
+    }
+
+    private class AssertException : Exception
+    {
+        public AssertException() { }
+
+        public AssertException(string message) : base(message) { }
+
+        public AssertException(string message, Exception inner) : base(message, inner) { }
     }
 }

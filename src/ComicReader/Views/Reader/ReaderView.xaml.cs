@@ -11,6 +11,7 @@ using ComicReader.Common.DebugTools;
 using ComicReader.Common.Imaging;
 using ComicReader.Common.Threading;
 using ComicReader.Data;
+using ComicReader.Data.Legacy;
 
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
@@ -475,9 +476,9 @@ internal partial class ReaderView : UserControl
 
     private void SetImageData(int index, double aspectRatio, IImageSource source)
     {
-        DebugUtils.Assert(index >= 0);
-        DebugUtils.Assert(double.IsFinite(aspectRatio));
-        DebugUtils.Assert(source != null);
+        Logger.Assert(index >= 0, "E55E628AD1456D37");
+        Logger.Assert(double.IsFinite(aspectRatio), "175D4517329AFDDB");
+        Logger.Assert(source != null, "E25F726E34076E52");
 
         var model = new ImageDataModel
         {
@@ -488,8 +489,8 @@ internal partial class ReaderView : UserControl
 
         int frameIndex = PageToFrame(index + 1, out bool leftSide, out int neighbor);
 
-        DebugUtils.Assert(frameIndex >= 0);
-        DebugUtils.Assert(neighbor >= -1);
+        Logger.Assert(frameIndex >= 0, "50AEE34F38D316D0");
+        Logger.Assert(neighbor >= -1, "01CA2D7BCADC4663");
 
         int page = index + 1;
         bool dual = neighbor != -1;
@@ -547,10 +548,10 @@ internal partial class ReaderView : UserControl
         }
         ReaderFrameViewModel item = FrameDataSource[frameIndex];
 
-        DebugUtils.Assert(double.IsFinite(frameWidth));
-        DebugUtils.Assert(double.IsFinite(frameHeight));
-        DebugUtils.Assert(double.IsFinite(horizontalPadding));
-        DebugUtils.Assert(double.IsFinite(verticalPadding));
+        Logger.Assert(double.IsFinite(frameWidth), "EB5231296B9CFB11");
+        Logger.Assert(double.IsFinite(frameHeight), "23E0AC630045CA33");
+        Logger.Assert(double.IsFinite(horizontalPadding), "B742A59FA82023CD");
+        Logger.Assert(double.IsFinite(verticalPadding), "37E400F20758C487");
 
         item.FrameWidth = frameWidth;
         item.FrameHeight = frameHeight;
@@ -570,7 +571,7 @@ internal partial class ReaderView : UserControl
         if (item.PageL != -1)
         {
             item.LeftImageSource = _dataModel.GetValueOrDefault(item.PageL - 1, null)?.ImageSource;
-            DebugUtils.Assert(item.LeftImageSource != null);
+            Logger.Assert(item.LeftImageSource != null, "A02FF8F8CDE1D47D");
         }
         else
         {
@@ -580,7 +581,7 @@ internal partial class ReaderView : UserControl
         if (item.PageR != -1)
         {
             item.RightImageSource = _dataModel.GetValueOrDefault(item.PageR - 1, null)?.ImageSource;
-            DebugUtils.Assert(item.RightImageSource != null);
+            Logger.Assert(item.RightImageSource != null, "FAFB72226C3D1969");
         }
         else
         {
@@ -595,20 +596,20 @@ internal partial class ReaderView : UserControl
     {
         if (!_isInitialFrameLoaded)
         {
-            DebugUtils.Assert(false);
+            Logger.AssertNotReachHere("3EC47459C554E187");
             return false;
         }
 
         double offset;
         {
-            double parallelOffset = ParallelOffset;
-            double zoomFactor = ZoomFactor;
+            double parallelOffset = SCParallelOffsetFinal;
+            double zoomFactor = SCZoomFactorFinal;
             offset = (parallelOffset + ViewportParallelLength * 0.5) / zoomFactor;
         }
 
         if (FrameDataSource.Count == 0)
         {
-            DebugUtils.Assert(false);
+            Logger.AssertNotReachHere("9AE769598FEF42CA");
             return false;
         }
 
@@ -665,7 +666,7 @@ internal partial class ReaderView : UserControl
 
         if (frame.PageL == -1 && frame.PageR == -1)
         {
-            DebugUtils.Assert(false);
+            Logger.AssertNotReachHere("E06181918CA281F4");
             return false;
         }
 
@@ -696,7 +697,10 @@ internal partial class ReaderView : UserControl
             page = pageMax + pageFrac * 0.5;
         }
 
-        DebugUtils.Assert(page <= PageCount);
+        if (page - PageCount >= 0.5)
+        {
+            Logger.AssertNotReachHere("3BDCDB690350FE36", $"page={page},PageCount={PageCount}");
+        }
         CurrentPage = page;
 
         Log("PageUpdated",
@@ -761,7 +765,7 @@ internal partial class ReaderView : UserControl
 
     private void UpdateImageDecodeSize(ReaderFrameViewModel model)
     {
-        if (!AppData.AntiAliasingEnabled)
+        if (!AppModel.AntiAliasingEnabled)
         {
             return;
         }
@@ -854,22 +858,19 @@ internal partial class ReaderView : UserControl
 
     private void OnReaderScrollViewerViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
     {
-        if (OnViewChanged(!e.IsIntermediate))
-        {
-            ReaderEventPageChanged?.Invoke(this, e.IsIntermediate);
-        }
+        OnViewChanged(!e.IsIntermediate);
     }
 
-    private bool OnViewChanged(bool final)
+    private void OnViewChanged(bool final)
     {
         if (!_isInitialFrameLoaded)
         {
-            return false;
+            return;
         }
 
         if (!UpdatePage())
         {
-            return false;
+            return;
         }
 
         if (final)
@@ -889,14 +890,11 @@ internal partial class ReaderView : UserControl
                 // Stick our view to the center of two pages.
                 MoveFrameInternal(0, false, "StickToCenter");
             }
-        }
 
-        if (final)
-        {
             UpdateImages("ViewChanged");
         }
 
-        return true;
+        ReaderEventPageChanged?.Invoke(this, final);
     }
 
     //
@@ -1368,7 +1366,7 @@ internal partial class ReaderView : UserControl
 
     public bool MoveFrame(int increment, string reason)
     {
-        MoveFrameInternal(increment, !AppData.TransitionAnimation, reason);
+        MoveFrameInternal(increment, !AppModel.TransitionAnimation, reason);
         return true;
     }
 
@@ -1467,10 +1465,10 @@ internal partial class ReaderView : UserControl
             return ScrollResult.Failed;
         }
 
-        DebugUtils.Assert(float.IsFinite(request.zoom ?? 0));
-        DebugUtils.Assert(!float.IsNegative(request.zoom ?? 0));
-        DebugUtils.Assert(double.IsFinite(request.horizontalOffset ?? 0));
-        DebugUtils.Assert(double.IsFinite(request.verticalOffset ?? 0));
+        Logger.Assert(float.IsFinite(request.zoom ?? 0), "5D42C4251571A722");
+        Logger.Assert(!float.IsNegative(request.zoom ?? 0), "65075662668EE56D");
+        Logger.Assert(double.IsFinite(request.horizontalOffset ?? 0), "4FD89F79946B8D03");
+        Logger.Assert(double.IsFinite(request.verticalOffset ?? 0), "6678A0ED7D2FEB43");
 
         Log("Jump", "Request:"
             + $" Reason={reason}"
@@ -1490,12 +1488,12 @@ internal partial class ReaderView : UserControl
 
         SetScrollViewerZoom(request, context);
 
-        DebugUtils.Assert(float.IsFinite(context.ZoomPercentage ?? 0));
-        DebugUtils.Assert(!float.IsNegative(context.ZoomPercentage ?? 0));
-        DebugUtils.Assert(float.IsFinite(context.ZoomFactor ?? 0));
-        DebugUtils.Assert(!float.IsNegative(context.ZoomFactor ?? 0));
-        DebugUtils.Assert(double.IsFinite(context.HorizontalOffset ?? 0));
-        DebugUtils.Assert(double.IsFinite(context.VerticalOffset ?? 0));
+        Logger.Assert(float.IsFinite(context.ZoomPercentage ?? 0), "8E76EB6D567DCCB9");
+        Logger.Assert(!float.IsNegative(context.ZoomPercentage ?? 0), "7D83986CC7231EAE");
+        Logger.Assert(float.IsFinite(context.ZoomFactor ?? 0), "92391D195B22B685");
+        Logger.Assert(!float.IsNegative(context.ZoomFactor ?? 0), "358402C4AFBEA082");
+        Logger.Assert(double.IsFinite(context.HorizontalOffset ?? 0), "473A38A62A78DD26");
+        Logger.Assert(double.IsFinite(context.VerticalOffset ?? 0), "4C7278673747BA28");
 
         if (context.HorizontalOffset.HasValue)
         {
@@ -1515,12 +1513,12 @@ internal partial class ReaderView : UserControl
 
         AdjustParallelOffset(context);
 
-        DebugUtils.Assert(float.IsFinite(context.ZoomPercentage ?? 0));
-        DebugUtils.Assert(!float.IsNegative(context.ZoomPercentage ?? 0));
-        DebugUtils.Assert(float.IsFinite(context.ZoomFactor ?? 0));
-        DebugUtils.Assert(!float.IsNegative(context.ZoomFactor ?? 0));
-        DebugUtils.Assert(double.IsFinite(context.HorizontalOffset ?? 0));
-        DebugUtils.Assert(double.IsFinite(context.VerticalOffset ?? 0));
+        Logger.Assert(float.IsFinite(context.ZoomPercentage ?? 0), "6BC2B5793E12AFA4");
+        Logger.Assert(!float.IsNegative(context.ZoomPercentage ?? 0), "CF5A68638CB59852");
+        Logger.Assert(float.IsFinite(context.ZoomFactor ?? 0), "FF0AD921D9E8BBB0");
+        Logger.Assert(!float.IsNegative(context.ZoomFactor ?? 0), "C226B0EBAC496CED");
+        Logger.Assert(double.IsFinite(context.HorizontalOffset ?? 0), "A1FF6DDBAD093F79");
+        Logger.Assert(double.IsFinite(context.VerticalOffset ?? 0), "C8D35D8BDDF468F8");
 
         Log("Jump", "ParamAfterFix:"
             + $" Z={context.ZoomPercentage}"
@@ -1850,7 +1848,7 @@ internal partial class ReaderView : UserControl
 
     private Tuple<double, double> PageOffset(double page)
     {
-        DebugUtils.Assert(double.IsFinite(page));
+        Logger.Assert(double.IsFinite(page), "251D69B9AD4BFDDA");
 
         int pageInt = (int)page;
         page = Math.Min(page, PageCount);
@@ -1901,8 +1899,8 @@ internal partial class ReaderView : UserControl
         parallelOffset = parallelOffset * SCZoomFactorFinal - ViewportParallelLength * 0.5;
         var result = new Tuple<double, double>(parallelOffset, perpendicularOffset);
 
-        DebugUtils.Assert(double.IsFinite(result.Item1));
-        DebugUtils.Assert(double.IsFinite(result.Item2));
+        Logger.Assert(double.IsFinite(result.Item1), "F00BE2F8D9D28D43");
+        Logger.Assert(double.IsFinite(result.Item2), "FAD6B4BA580151CF");
 
         return result;
     }
@@ -1948,10 +1946,10 @@ internal partial class ReaderView : UserControl
                 item.FrameMargin.Top + item.FrameHeight * 0.5),
         };
 
-        DebugUtils.Assert(double.IsFinite(result.ParallelEnd));
-        DebugUtils.Assert(double.IsFinite(result.ParallelCenter));
-        DebugUtils.Assert(double.IsFinite(result.ParallelBegin));
-        DebugUtils.Assert(double.IsFinite(result.PerpendicularCenter));
+        Logger.Assert(double.IsFinite(result.ParallelEnd), "B3852325B440B619");
+        Logger.Assert(double.IsFinite(result.ParallelCenter), "FA97F0CF86C7DE35");
+        Logger.Assert(double.IsFinite(result.ParallelBegin), "1C006026686551CB");
+        Logger.Assert(double.IsFinite(result.PerpendicularCenter), "A5E16EBC969719EF");
         return result;
     }
 
@@ -1964,7 +1962,7 @@ internal partial class ReaderView : UserControl
 
         if (frameIndex < 0 || frameIndex >= FrameDataSource.Count)
         {
-            DebugUtils.Assert(false);
+            Logger.AssertNotReachHere("AC9607BD559C90F8");
             return null;
         }
 
@@ -2023,8 +2021,8 @@ internal partial class ReaderView : UserControl
 
     private int PageToFrame(int page, out bool left_side, out int neighbor)
     {
-        DebugUtils.Assert(int.IsPositive(page));
-        DebugUtils.Assert(page <= PageCount);
+        Logger.Assert(int.IsPositive(page), "6A1624FDFE839510");
+        Logger.Assert(page <= PageCount, "F8C3257028D32ED3");
 
         switch (_pageArrangement)
         {
@@ -2049,7 +2047,7 @@ internal partial class ReaderView : UserControl
                 neighbor = (PageCount % 2 == 0 || page < PageCount) ? (left_side ? page - 1 : page + 1) : -1;
                 return (page - 1) / 2;
             default:
-                DebugUtils.Assert(false);
+                Logger.AssertNotReachHere("734FF3964EFE8681");
                 goto case PageArrangementType.Single;
         }
     }

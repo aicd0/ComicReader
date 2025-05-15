@@ -75,7 +75,7 @@ internal class ComicArchiveData : ComicData
 
     private string GetSubPathFromFilename(string filename)
     {
-        DebugUtils.Assert(!IsExternal);
+        Logger.Assert(!IsExternal, "E811B52BC50C1652");
         string sub_path = ArchiveAccess.GetSubPath(Location, false);
 
         if (sub_path.Length == 0)
@@ -110,7 +110,7 @@ internal class ComicArchiveData : ComicData
                 {
                     if (filepath.Length <= base_path.Length)
                     {
-                        DebugUtils.Assert(false);
+                        Logger.AssertNotReachHere("F280B20B790F9D49");
                         continue;
                     }
 
@@ -184,7 +184,7 @@ internal class ComicArchiveData : ComicData
                 {
                     if (filepath.Length <= base_path.Length)
                     {
-                        DebugUtils.Assert(false);
+                        Logger.AssertNotReachHere("46158BE005A1988A");
                         continue;
                     }
 

@@ -9,7 +9,7 @@ using ComicReader.Common;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Common.Threading;
 
-namespace ComicReader.Data;
+namespace ComicReader.Data.Legacy;
 
 public class FavoriteData : XmlData
 {

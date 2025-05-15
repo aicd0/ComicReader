@@ -123,7 +123,7 @@
   <data name="AboutCopyright" xml:space="preserve">
     <value>© 2025 $author. All rights reserved.</value>
   </data>
-  <data name="AddFolderButton.Content" xml:space="preserve">
+  <data name="AddFolderButton.Text" xml:space="preserve">
     <value>add a folder</value>
   </data>
   <data name="AddFolderControl.Detail" xml:space="preserve">
@@ -237,91 +237,6 @@
   <data name="Help" xml:space="preserve">
     <value>Help</value>
   </data>
-  <data name="HelpPageMarkdown.Text" xml:space="preserve">
-    <value># How to use search filters
-You can use search filters to let the search engine only presents the results that you are interested.
-
-### Basic usage
-A normal query will be like: (spaces between filters is not required)
-
-`keyword1 keyword2 ... &lt;filter1&gt; &lt;filter2&gt; ...` 
-
-We listed a few search filters we commonly use as follow:
-
-### Search directories
-Search comics in specific directories:
-
-* Format: `&lt;dir: Directory1[, Directory2, Directory3...]&gt;`
-
-* Example: `SomeComicTitle &lt;dir: D:\MyComicFolder&gt;`
-
-* Alternative names: directory, folder, location, path.
-
-### Search hidden comics
-Search hidden comics.
-
-* Format: `&lt;hidden&gt;`
-
-* Alternative names: hide.
-
-### Search tags
-Search comics with specific tags.
-
-* Format: `&lt;tag: Tag1[, Tag2, Tag3...]&gt;`
-
-* Example: `SomeComicTitle &lt;tag: MyComicTag&gt;`
-
-* Alternative names: tags.
-
-### Search tags with category
-Search comics with specific tags which belong to specific tag categories.
-
-* Format: `&lt;TagCategory: Tag1[, Tag2, Tag3...]&gt;`
-
-* Example: `SomeComicTitle &lt;Language: Chinese, English&gt;`
-
-### Search comic ID
-Search comic ID directly.
-
-* Format: `&lt;id: MyComicId&gt;`
-
-* Example: `&lt;id: 1234&gt;`
-
-* Alternative names: no, num, number.
-
-### Search rating
-Search comics with a range of ratings.
-
-* Format: `&lt;rating: Rating1[, Rating2, Rating3...]&gt;`
-
-* Example: `&lt;rating: -1, 4, 5&gt;` (`-1` represents no rating)
-
-* Alternative names: ratings, rate, star, stars.
-
-### Combine with or/and
-Use logic or/and to combine multiple filters.
-
-* Or Format: `&lt;or: &lt;Filter1&gt; &lt;Filter2&gt; &lt;Filter3&gt; ...&gt;`
-
-* And Format: `&lt;and: &lt;Filter1&gt; &lt;Filter2&gt; &lt;Filter3&gt; ...&gt;`
-
-* Example: `SomeComicTitle &lt;or: &lt;star: 5&gt; &lt;Language: English&gt;&gt;`
-
-### Inverse a filter
-Search comics that DON'T pass the filter.
-
-* Format: `&lt;~&lt;Filter&gt;&gt;`
-
-* Example: `&lt;~&lt;rating: 1&gt;&gt;` (not showing comics with 1 star)
-
-### Show all comics
-Search everything. This filter does nothing, it is only used when we need to see all comics (except hidden) in the library.
-
-* Format: `&lt;all&gt;`
-
-* Example: `&lt;all&gt;`
-</value>
-  </data>
   <data name="HideAppBarButton.Label" xml:space="preserve">
     <value>Hide</value>
   </data>
@@ -331,7 +246,7 @@ Search everything. This filter does nothing, it is only used when we need to see
   <data name="HomeButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>Home</value>
   </data>
-  <data name="HomePageRefreshButton.Content" xml:space="preserve">
+  <data name="HomePageRefreshButton.Text" xml:space="preserve">
     <value>refresh</value>
   </data>
   <data name="ImageLocationExpander.Header" xml:space="preserve">
@@ -363,9 +278,6 @@ Search everything. This filter does nothing, it is only used when we need to see
   </data>
   <data name="MenuFlyoutDelete.Text" xml:space="preserve">
     <value>Delete</value>
-  </data>
-  <data name="MenuFlyoutHelp.Text" xml:space="preserve">
-    <value>Help</value>
   </data>
   <data name="MenuFlyoutHide.Text" xml:space="preserve">
     <value>Hide</value>
@@ -430,14 +342,8 @@ Search everything. This filter does nothing, it is only used when we need to see
   <data name="RescanFilesButton.Content" xml:space="preserve">
     <value>Rescan files</value>
   </data>
-  <data name="RescanFilesDetail.Text" xml:space="preserve">
-    <value>If there are missing comics or inconsist comic information, rescanning files may resolve the issue. Notice that this operation could lead to high CPU occupation which may drain your battery quickly.</value>
-  </data>
   <data name="SaveHistory.Text" xml:space="preserve">
     <value>Save browsing history</value>
-  </data>
-  <data name="SearchBox.PlaceholderText" xml:space="preserve">
-    <value>Learn how to use filters in Help</value>
   </data>
   <data name="SearchResults" xml:space="preserve">
     <value>Search results</value>

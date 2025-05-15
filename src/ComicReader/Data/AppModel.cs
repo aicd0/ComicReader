@@ -11,7 +11,7 @@ using ComicReader.Data.Comic;
 
 namespace ComicReader.Data;
 
-static class AppData
+static class AppModel
 {
     private const string TAG = "AppStatusPreserver";
     private const string KEY_DEFAULT_ARCHIVE_CODE_PAGE = "default_archive_code_page";
@@ -74,7 +74,7 @@ static class AppData
     public static void SetReadingComic(long id)
     {
         Logger.I(TAG, $"SetReadingComic(id={id})");
-        DebugUtils.Assert(id >= 0);
+        Logger.Assert(id >= 0, "A93DA0E76912639F");
         KVDatabase.GetDefaultMethod().SetLong(GlobalConstants.KV_DB_APP, KEY_READING_COMIC_ID, id);
     }
 

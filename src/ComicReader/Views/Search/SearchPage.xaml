@@ -28,7 +28,7 @@
             x:Name="SearchProgressRing"
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
-            IsActive="{x:Bind Shared.IsLoadingRingVisible, Mode=OneWay}"
+            IsActive="{x:Bind ViewModel.IsLoadingRingVisible, Mode=OneWay}"
             IsIndeterminate="True" />
 
         <!--  Search Results  -->
@@ -37,9 +37,9 @@
             Padding="15,15,15,0"
             ContainerContentChanging="OnGridViewContainerContentChanging"
             ItemContainerStyle="{StaticResource SearchResultItemContainerExpandedStyle}"
-            ItemsSource="{x:Bind Shared.SearchResults}"
+            ItemsSource="{x:Bind ViewModel.SearchResults}"
             SelectionChanged="OnGridViewSelectionChanged"
-            SelectionMode="{x:Bind Shared.ComicItemSelectionMode, Mode=OneWay}"
+            SelectionMode="{x:Bind ViewModel.ComicItemSelectionMode, Mode=OneWay}"
             Tapped="OnScrollViewerTapped">
             <GridView.ItemsPanel>
                 <ItemsPanelTemplate>
@@ -59,20 +59,20 @@
                     <TextBlock
                         FontSize="28"
                         FontWeight="SemiBold"
-                        Text="{x:Bind Shared.Title, Mode=OneWay}"
+                        Text="{x:Bind ViewModel.Title, Mode=OneWay}"
                         TextTrimming="CharacterEllipsis" />
                     <TextBlock
                         Margin="0,2,0,0"
                         FontSize="14"
                         FontWeight="Normal"
                         Foreground="{ThemeResource ForegroundGrey2}"
-                        Text="{x:Bind Shared.FilterDetails, Mode=OneWay}"
+                        Text="{x:Bind ViewModel.FilterDetails, Mode=OneWay}"
                         TextWrapping="Wrap"
-                        Visibility="{x:Bind Shared.FilterDetailsVisible, Mode=OneWay}" />
+                        Visibility="{x:Bind ViewModel.FilterDetailsVisible, Mode=OneWay}" />
                 </StackPanel>
             </GridView.Header>
             <GridView.Footer>
-                <Grid Height="60" Visibility="{x:Bind Shared.IsSelectMode, Mode=OneWay}" />
+                <Grid Height="60" Visibility="{x:Bind ViewModel.IsSelectMode, Mode=OneWay}" />
             </GridView.Footer>
         </GridView>
 
@@ -82,12 +82,12 @@
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             Orientation="Vertical"
-            Visibility="{x:Bind Shared.IsNoResultTextVisible, Mode=OneWay}">
+            Visibility="{x:Bind ViewModel.IsNoResultTextVisible, Mode=OneWay}">
             <TextBlock
                 HorizontalAlignment="Center"
                 FontSize="28"
                 FontWeight="SemiBold"
-                Text="{x:Bind Shared.NoResultText, Mode=OneWay}"
+                Text="{x:Bind ViewModel.NoResultText, Mode=OneWay}"
                 TextTrimming="CharacterEllipsis" />
             <TextBlock
                 x:Uid="NoResultsDetail"
@@ -100,27 +100,27 @@
         <Grid
             VerticalAlignment="Bottom"
             Background="{ThemeResource CommandBarBackground}"
-            Visibility="{x:Bind Shared.IsSelectMode, Mode=OneWay}">
+            Visibility="{x:Bind ViewModel.IsSelectMode, Mode=OneWay}">
             <StackPanel Margin="6,0" Orientation="Horizontal">
                 <AppBarToggleButton
                     x:Uid="SelectAllAppBarButton"
                     Icon="SelectAll"
-                    IsChecked="{x:Bind Shared.IsCommandBarSelectAllToggled, Mode=TwoWay}" />
+                    IsChecked="{x:Bind ViewModel.IsCommandBarSelectAllToggled, Mode=TwoWay}" />
                 <AppBarSeparator />
                 <AppBarButton
                     x:Uid="FavoriteAppBarButton"
                     Click="CommandBarFavoriteClicked"
                     Icon="Favorite"
-                    IsEnabled="{x:Bind Shared.IsCommandBarFavoriteEnabled, Mode=OneWay}" />
+                    IsEnabled="{x:Bind ViewModel.IsCommandBarFavoriteEnabled, Mode=OneWay}" />
                 <AppBarButton
                     x:Uid="UnFavoriteAppBarButton"
                     Click="CommandBarUnFavoriteClicked"
                     Icon="UnFavorite"
-                    IsEnabled="{x:Bind Shared.IsCommandBarUnFavoriteEnabled, Mode=OneWay}" />
+                    IsEnabled="{x:Bind ViewModel.IsCommandBarUnFavoriteEnabled, Mode=OneWay}" />
                 <AppBarButton
                     x:Uid="MarkAsReadAppBarButton"
                     Click="CommandBarMarkAsReadClicked"
-                    IsEnabled="{x:Bind Shared.IsCommandBarMarkAsReadEnabled, Mode=OneWay}">
+                    IsEnabled="{x:Bind ViewModel.IsCommandBarMarkAsReadEnabled, Mode=OneWay}">
                     <AppBarButton.Icon>
                         <FontIcon Glyph="&#xE930;" />
                     </AppBarButton.Icon>
@@ -128,7 +128,7 @@
                 <AppBarButton
                     x:Uid="MarkAsUnreadAppBarButton"
                     Click="CommandBarMarkAsUnreadClicked"
-                    IsEnabled="{x:Bind Shared.IsCommandBarMarkAsUnreadEnabled, Mode=OneWay}">
+                    IsEnabled="{x:Bind ViewModel.IsCommandBarMarkAsUnreadEnabled, Mode=OneWay}">
                     <AppBarButton.Icon>
                         <FontIcon Glyph="&#xECCA;" />
                     </AppBarButton.Icon>
@@ -136,7 +136,7 @@
                 <AppBarButton
                     x:Uid="HideAppBarButton"
                     Click="CommandBarHideClicked"
-                    IsEnabled="{x:Bind Shared.IsCommandBarHideEnabled, Mode=OneWay}">
+                    IsEnabled="{x:Bind ViewModel.IsCommandBarHideEnabled, Mode=OneWay}">
                     <AppBarButton.Icon>
                         <FontIcon Glyph="&#xE8FF;" />
                     </AppBarButton.Icon>
@@ -144,7 +144,7 @@
                 <AppBarButton
                     x:Uid="UnhideAppBarButton"
                     Click="CommandBarUnhideClicked"
-                    IsEnabled="{x:Bind Shared.IsCommandBarUnHideEnabled, Mode=OneWay}">
+                    IsEnabled="{x:Bind ViewModel.IsCommandBarUnHideEnabled, Mode=OneWay}">
                     <AppBarButton.Icon>
                         <FontIcon Glyph="&#xE7B3;" />
                     </AppBarButton.Icon>

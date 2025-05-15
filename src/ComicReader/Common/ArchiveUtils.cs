@@ -244,7 +244,7 @@ public class ArchiveAccess
 
         // Reader options.
         var opts = new SharpCompress.Readers.ReaderOptions();
-        int default_code_page = AppData.DefaultArchiveCodePage;
+        int default_code_page = AppModel.DefaultArchiveCodePage;
 
         if (default_code_page > 0)
         {
@@ -356,7 +356,7 @@ public class ArchiveAccess
     {
         if (stream == null)
         {
-            DebugUtils.Assert(false);
+            Logger.AssertNotReachHere("F1487557CF9CC3A7");
             return TaskException.InvalidParameters;
         }
 

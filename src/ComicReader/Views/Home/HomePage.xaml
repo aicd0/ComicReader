@@ -3,6 +3,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:base="using:ComicReader.Common.PageBase"
+    xmlns:controls="using:ComicReader.UserControls"
     xmlns:converters="using:ComicReader.Converters"
     xmlns:cw="using:CommunityToolkit.WinUI"
     xmlns:cwc="using:CommunityToolkit.WinUI.Controls"
@@ -10,7 +11,6 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:home="using:ComicReader.Views.Home"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:ucadaptivegrid="using:ComicReader.UserControls.AdaptiveGridView"
     xmlns:vm="using:ComicReader.ViewModels"
     Background="Transparent"
     mc:Ignorable="d">
@@ -64,177 +64,89 @@
                 </Setter>
             </Style>
 
-            <Style x:Key="FolderItemContainerStyle" TargetType="GridViewItem">
-                <Setter Property="Margin" Value="6" />
-                <Setter Property="cw:Effects.Shadow" Value="{StaticResource CommonShadow}" />
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="GridViewItem">
-                            <ListViewItemPresenter
-                                x:Name="Root"
-                                HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
-                                CheckBoxBrush="{ThemeResource GridViewItemCheckBoxBrush}"
-                                CheckBrush="{ThemeResource GridViewItemCheckBrush}"
-                                CheckMode="{ThemeResource GridViewItemCheckMode}"
-                                ContentMargin="{TemplateBinding Padding}"
-                                ContentTransitions="{TemplateBinding ContentTransitions}"
-                                Control.IsTemplateFocusTarget="True"
-                                DisabledOpacity="{ThemeResource ListViewItemDisabledThemeOpacity}"
-                                DragBackground="{ThemeResource GridViewItemDragBackground}"
-                                DragForeground="{ThemeResource GridViewItemDragForeground}"
-                                DragOpacity="{ThemeResource ListViewItemDragThemeOpacity}"
-                                FocusBorderBrush="{ThemeResource GridViewItemFocusBorderBrush}"
-                                FocusSecondaryBorderBrush="{ThemeResource GridViewItemFocusSecondaryBorderBrush}"
-                                FocusVisualMargin="{TemplateBinding FocusVisualMargin}"
-                                PlaceholderBackground="{ThemeResource GridViewItemPlaceholderBackground}"
-                                PointerOverBackground="{ThemeResource GridViewItemBackgroundPointerOver}"
-                                PressedBackground="{ThemeResource GridViewItemBackgroundPressed}"
-                                ReorderHintOffset="{ThemeResource GridViewItemReorderHintThemeOffset}"
-                                RevealBackground="{ThemeResource GridViewItemRevealBackground}"
-                                RevealBorderBrush="{ThemeResource GridViewItemRevealBorderBrush}"
-                                RevealBorderThickness="{ThemeResource GridViewItemRevealBorderThemeThickness}"
-                                SelectedBackground="{ThemeResource GridViewItemBackgroundSelected}"
-                                SelectedForeground="{ThemeResource GridViewItemForegroundSelected}"
-                                SelectedPointerOverBackground="{ThemeResource GridViewItemBackgroundSelectedPointerOver}"
-                                SelectedPressedBackground="{ThemeResource GridViewItemBackgroundSelectedPressed}"
-                                SelectionCheckMarkVisualEnabled="{ThemeResource GridViewItemSelectionCheckMarkVisualEnabled}">
-                                <VisualStateManager.VisualStateGroups>
-                                    <VisualStateGroup x:Name="CommonStates">
-                                        <VisualState x:Name="Normal" />
-                                        <VisualState x:Name="Selected" />
-                                        <VisualState x:Name="PointerOver" />
-                                        <VisualState x:Name="PointerOverSelected" />
-                                        <VisualState x:Name="PointerOverPressed" />
-                                        <VisualState x:Name="Pressed" />
-                                        <VisualState x:Name="PressedSelected" />
-                                    </VisualStateGroup>
-                                    <VisualStateGroup x:Name="DisabledStates">
-                                        <VisualState x:Name="Enabled" />
-                                        <VisualState x:Name="Disabled" />
-                                    </VisualStateGroup>
-                                </VisualStateManager.VisualStateGroups>
-                            </ListViewItemPresenter>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-
-            <DataTemplate x:Key="FolderItemNormalTemplate" x:DataType="vm:FolderItemViewModel">
-                <home:FolderItemDetailed
-                    Title="{x:Bind Folder}"
-                    Detail="{x:Bind Path}"
-                    Glyph="&#xE8B7;" />
-            </DataTemplate>
-
-            <DataTemplate x:Key="FolderItemAddNewTemplate" x:DataType="vm:FolderItemViewModel">
-                <home:FolderItemDetailed x:Uid="AddFolderControl" Glyph="&#xE8F4;" />
-            </DataTemplate>
-
-            <converters:FolderItemTemplateSelector
-                x:Key="FolderItemTemplateSelector"
-                AddNewTemplate="{StaticResource FolderItemAddNewTemplate}"
-                NormalTemplate="{StaticResource FolderItemNormalTemplate}" />
-
             <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
             <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
         </ResourceDictionary>
     </Page.Resources>
 
     <Grid>
-        <ScrollViewer>
-            <StackPanel Margin="35,10" Orientation="Vertical">
-
-                <!--  Library  -->
-                <Grid Height="10" />
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock
-                        x:Uid="LibraryHeader"
-                        Grid.Column="0"
-                        Margin="6,0,0,0"
-                        FontSize="22"
-                        FontWeight="SemiBold"
-                        Text="Library" />
-                    <StackPanel
-                        Grid.Column="1"
-                        Margin="0,0,10,0"
-                        VerticalAlignment="Bottom"
-                        Orientation="Horizontal"
-                        Spacing="5">
-                        <HyperlinkButton
-                            x:Name="HbShowAllButton"
-                            x:Uid="ShowAllButton"
-                            Click="OnSeeAllBtClicked" />
-                        <HyperlinkButton x:Uid="ShowHiddenButton" Click="OnSeeHiddenBtClick" />
-                    </StackPanel>
-                </Grid>
-                <Grid Height="10" />
-                <!--
-                    DO NOT attach Visibility property to mtuuc:AdaptiveGridView as this
-                    will result in a layout error (probably a bug from API).
-                -->
-                <ucadaptivegrid:AdaptiveGridView
-                    Margin="0,0,-1,0"
-                    ContainerContentChanging="OnAdaptiveGridViewContainerContentChanging"
-                    DesiredWidth="{StaticResource ComicItemVerticalDesiredWidth}"
-                    ItemContainerStyle="{StaticResource ComicItemContainerStyle}"
-                    ItemHeight="310"
-                    ItemsSource="{x:Bind ComicItemSource}"
-                    MaxRows="2"
-                    ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                    ScrollViewer.HorizontalScrollMode="Disabled"
-                    StretchContentForSingleRow="False"
-                    Style="{StaticResource HomePageAdaptiveGridViewStyle}">
-                    <ucadaptivegrid:AdaptiveGridView.ItemTemplate>
-                        <DataTemplate x:DataType="vm:ComicItemViewModel">
-                            <home:ComicItemVertical DataContext="{x:Bind}" />
-                        </DataTemplate>
-                    </ucadaptivegrid:AdaptiveGridView.ItemTemplate>
-                </ucadaptivegrid:AdaptiveGridView>
-                <StackPanel
-                    x:Name="SpLibraryEmpty"
-                    Margin="10,0,0,0"
-                    Padding="60,30"
-                    HorizontalAlignment="Left"
-                    BorderBrush="{ThemeResource ForegroundGrey1}"
-                    BorderThickness="2"
-                    CornerRadius="5"
-                    Orientation="Horizontal">
-                    <FontIcon
-                        Margin="0,3,0,0"
-                        VerticalAlignment="Center"
-                        FontSize="14"
-                        Glyph="&#xE946;" />
-                    <TextBlock
-                        x:Uid="LibraryEmptyPart1"
-                        Margin="6,0,0,0"
-                        VerticalAlignment="Center" />
-                    <HyperlinkButton x:Uid="AddFolderButton" Click="OnTryAddFolderBtClicked" />
-                    <TextBlock x:Uid="LibraryEmptyPart2" VerticalAlignment="Center" />
-                    <HyperlinkButton x:Uid="HomePageRefreshButton" Click="OnRefreshBtClicked" />
-                    <TextBlock x:Uid="LibraryEmptyPart3" VerticalAlignment="Center" />
+        <controls:AdaptiveGridView
+            Margin="0,0,-1,0"
+            Padding="35,10"
+            ContainerContentChanging="OnAdaptiveGridViewContainerContentChanging"
+            DesiredWidth="{StaticResource ComicItemVerticalDesiredWidth}"
+            ItemContainerStyle="{StaticResource ComicItemContainerStyle}"
+            ItemHeight="310"
+            ItemsSource="{x:Bind ComicItemSource}"
+            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+            ScrollViewer.HorizontalScrollMode="Disabled"
+            StretchContentForSingleRow="False"
+            Style="{StaticResource HomePageAdaptiveGridViewStyle}">
+            <controls:AdaptiveGridView.ItemTemplate>
+                <DataTemplate x:DataType="vm:ComicItemViewModel">
+                    <home:ComicItemVertical DataContext="{x:Bind}" />
+                </DataTemplate>
+            </controls:AdaptiveGridView.ItemTemplate>
+            <controls:AdaptiveGridView.Header>
+                <StackPanel Orientation="Vertical">
+                    <Grid Height="10" />
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock
+                            x:Uid="LibraryHeader"
+                            Grid.Column="0"
+                            Margin="6,0,0,0"
+                            FontSize="22"
+                            FontWeight="SemiBold"
+                            Text="Library" />
+                        <StackPanel
+                            Grid.Column="1"
+                            Margin="0,0,10,0"
+                            VerticalAlignment="Bottom"
+                            Orientation="Horizontal"
+                            Spacing="5">
+                            <HyperlinkButton
+                                x:Name="HbShowAllButton"
+                                x:Uid="ShowAllButton"
+                                Click="OnSeeAllBtClicked" />
+                            <HyperlinkButton x:Uid="ShowHiddenButton" Click="OnSeeHiddenBtClick" />
+                        </StackPanel>
+                    </Grid>
+                    <Grid Height="10" />
+                    <Grid x:Name="SpLibraryEmpty" Padding="0,30">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon
+                            Grid.Column="0"
+                            Margin="12,3,0,0"
+                            VerticalAlignment="Top"
+                            FontSize="14"
+                            Glyph="&#xE946;" />
+                        <RichTextBlock
+                            Grid.Column="1"
+                            Margin="6,0"
+                            VerticalAlignment="Center"
+                            IsTextSelectionEnabled="False">
+                            <Paragraph>
+                                <Run x:Uid="LibraryEmptyPart1" />
+                                <Hyperlink Click="AddFolderHyperlink_Click">
+                                    <Run x:Uid="AddFolderButton" />
+                                </Hyperlink>
+                                <Run x:Uid="LibraryEmptyPart2" />
+                                <Hyperlink Click="RefreshHyperlink_Click">
+                                    <Run x:Uid="HomePageRefreshButton" />
+                                </Hyperlink>
+                                <Run x:Uid="LibraryEmptyPart3" />
+                            </Paragraph>
+                        </RichTextBlock>
+                    </Grid>
                 </StackPanel>
-
-                <!--  Folders  -->
-                <Grid Height="50" />
-                <TextBlock
-                    x:Uid="FoldersHeader"
-                    Margin="6,0,0,0"
-                    FontSize="22"
-                    FontWeight="SemiBold" />
-                <Grid Height="10" />
-                <ucadaptivegrid:AdaptiveGridView
-                    DesiredWidth="295"
-                    ItemContainerStyle="{StaticResource FolderItemContainerStyle}"
-                    ItemTemplateSelector="{StaticResource FolderItemTemplateSelector}"
-                    ItemsSource="{x:Bind FolderItemDataSource}"
-                    StretchContentForSingleRow="False"
-                    Style="{StaticResource HomePageAdaptiveGridViewStyle}" />
-            </StackPanel>
-        </ScrollViewer>
+            </controls:AdaptiveGridView.Header>
+        </controls:AdaptiveGridView>
     </Grid>
 </base:BasePage>

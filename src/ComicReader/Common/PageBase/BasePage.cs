@@ -157,12 +157,12 @@ internal abstract class BasePage : Page
             _communicator = bundle.Communicator;
             _communicator.GetAbility<ICommonPageAbility>()?.RegisterPageStopHandler(_pageStopHandler);
             WindowId = StringUtils.ParseInt(bundle.Bundle.GetString(RouterConstants.ARG_WINDOW_ID));
-            DebugUtils.Assert(WindowId > 0);
+            Logger.Assert(WindowId > 0, "16EFCEB1C7797AA2");
             OnStart(bundle.Bundle);
         }
         else
         {
-            DebugUtils.Assert(false);
+            Logger.AssertNotReachHere("4E6487BEA8B0B06F");
             OnStart(null);
         }
     }
