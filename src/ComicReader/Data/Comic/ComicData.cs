@@ -781,7 +781,7 @@ internal abstract class ComicData
             case ComicType.PDF:
                 return ComicPdfData.FromDatabase(location);
             default:
-                DebugUtils.Assert(false);
+                Logger.AssertNotReachHere("419CBCB3E803A525");
                 return null;
         }
     }

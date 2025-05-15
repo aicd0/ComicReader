@@ -29,7 +29,7 @@ internal class KeyFrameAnimation
 
     public void InsertKeyFrame(double time, double value, CurveType curve = CurveType.Linear)
     {
-        DebugUtils.Assert(time >= 0 && time <= 1);
+        Logger.Assert(time >= 0 && time <= 1, "7C462358FFEB459D");
         time = Math.Max(0, Math.Min(1, time));
         _keyFrames.Add(new KeyFrame
         {

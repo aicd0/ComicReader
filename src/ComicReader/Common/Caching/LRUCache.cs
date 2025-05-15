@@ -327,7 +327,7 @@ internal class LRUCache
             _lock.AcquireWriterLock(-1);
             try
             {
-                DebugUtils.Assert(_status == Status.Dirty);
+                Logger.Assert(_status == Status.Dirty, "77504AC355E8488C");
                 _status = Status.Clean;
             }
             finally
@@ -382,7 +382,7 @@ internal class LRUCache
                 }
                 else
                 {
-                    DebugUtils.Assert(_status == Status.Clean);
+                    Logger.Assert(_status == Status.Clean, "255E7E1F0632BC05");
                 }
 
                 _readerCount++;
@@ -399,8 +399,8 @@ internal class LRUCache
             _lock.AcquireWriterLock(-1);
             try
             {
-                DebugUtils.Assert(_status == Status.Clean);
-                DebugUtils.Assert(_readerCount > 0);
+                Logger.Assert(_status == Status.Clean, "302BF5B1FB061FC9");
+                Logger.Assert(_readerCount > 0, "40B639B2784A378E");
 
                 if (_readerCount <= 0)
                 {
@@ -409,7 +409,7 @@ internal class LRUCache
 
                 if (_readerCount == 1)
                 {
-                    DebugUtils.Assert(_outputStream != null);
+                    Logger.Assert(_outputStream != null, "0F7DECDC1B3B8B15");
 
                     _readerCount = 0;
                     _outputStream = null;

@@ -58,6 +58,21 @@ abstract class JsonDatabase<T> where T : class
         }
     }
 
+    protected void Write(T model)
+    {
+        ArgumentNullException.ThrowIfNull(model, nameof(model));
+
+        _lock.AcquireWriterLock(Timeout.Infinite);
+        try
+        {
+            _jsonModel = model;
+        }
+        finally
+        {
+            _lock.ReleaseWriterLock();
+        }
+    }
+
     protected async Task<bool> TryInitialize()
     {
         if (_jsonModel != null)
@@ -78,6 +93,7 @@ abstract class JsonDatabase<T> where T : class
                 Logger.F(TAG, nameof(TryInitialize), ex);
             }
         }
+        jsonModel ??= CreateModel();
 
         _lock.AcquireWriterLock(Timeout.Infinite);
         try
@@ -86,15 +102,7 @@ abstract class JsonDatabase<T> where T : class
             {
                 return true;
             }
-
-            if (jsonModel == null)
-            {
-                _jsonModel = CreateModel();
-            }
-            else
-            {
-                _jsonModel = jsonModel;
-            }
+            _jsonModel = jsonModel;
         }
         finally
         {

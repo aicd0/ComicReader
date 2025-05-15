@@ -43,7 +43,7 @@ internal static class ImageCacheManager
         IImageSource source, double frameWidth, double frameHeight, StretchModeEnum stretchMode,
         IImageResultHandler handler)
     {
-        DebugUtils.Assert(!MainThreadUtils.IsMainThread());
+        Logger.Assert(!MainThreadUtils.IsMainThread(), "AD0290621DDD0E4F");
 
         if (token.IsCancellationRequested)
         {
@@ -56,7 +56,7 @@ internal static class ImageCacheManager
 
         if (uri == null || uri.Length == 0)
         {
-            DebugUtils.Assert(false);
+            Logger.AssertNotReachHere("0DA4B46E1643F4BF");
             return;
         }
 

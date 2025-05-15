@@ -43,7 +43,7 @@ internal sealed partial class ReaderSettingPanel : UserControl
             case PageArrangementType.DualNoCoverMirror:
                 return 4;
             default:
-                DebugUtils.Assert(false);
+                Logger.AssertNotReachHere("979D38CE673E1BC0");
                 return 0;
         }
     }
@@ -63,7 +63,7 @@ internal sealed partial class ReaderSettingPanel : UserControl
             case 4:
                 return PageArrangementType.DualNoCoverMirror;
             default:
-                DebugUtils.Assert(false);
+                Logger.AssertNotReachHere("B8CA81937666C2FB");
                 return PageArrangementType.Single;
         }
     }

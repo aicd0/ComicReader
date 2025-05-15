@@ -57,7 +57,7 @@ internal static class ImageInfoManager
 
         if (width <= 0 || height <= 0)
         {
-            DebugUtils.Assert(false);
+            Logger.AssertNotReachHere("8315BC14B4B0AE5D");
             return null;
         }
 

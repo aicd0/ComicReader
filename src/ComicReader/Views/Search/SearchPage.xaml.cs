@@ -263,7 +263,7 @@ internal sealed partial class SearchPage : BasePage
 
                 if (comic == null)
                 {
-                    DebugUtils.Assert(false);
+                    Logger.AssertNotReachHere("A86F0459678D1B60");
                     continue;
                 }
 

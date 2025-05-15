@@ -84,7 +84,7 @@ internal class LiveData<T> : ILiveData<T>, ILiveDataNoType
 
         if (owner == null || observer == null)
         {
-            DebugUtils.Assert(false);
+            Logger.AssertNotReachHere("3CC47B4DD23EFA9E");
             return;
         }
 
@@ -97,7 +97,7 @@ internal class LiveData<T> : ILiveData<T>, ILiveDataNoType
         {
             if (wrapper.IsSameOwner(owner))
             {
-                DebugUtils.Assert(false);
+                Logger.AssertNotReachHere("4EC4F8B92CAAE0D0");
             }
             return;
         }

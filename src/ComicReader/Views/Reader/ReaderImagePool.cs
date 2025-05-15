@@ -77,7 +77,7 @@ internal class ReaderImagePool
         string uri = source.GetUri();
         if (uri == null || uri.Length == 0)
         {
-            DebugUtils.Assert(false);
+            Logger.AssertNotReachHere("D7744CE87FA274AB");
             return;
         }
 
@@ -118,7 +118,7 @@ internal class ReaderImagePool
         string uri = source.GetUri();
         if (uri == null || uri.Length == 0)
         {
-            DebugUtils.Assert(false);
+            Logger.AssertNotReachHere("02760A5DB2BA42C4");
             return;
         }
 
@@ -234,7 +234,7 @@ internal class ReaderImagePool
                     _entries.Remove(uri);
                     break;
                 default:
-                    DebugUtils.Assert(false);
+                    Logger.AssertNotReachHere("0DA06D20A76086F2");
                     break;
             }
         }

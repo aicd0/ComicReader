@@ -1,8 +1,6 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
-
 using ComicReader.Common.KVStorage;
 
 namespace ComicReader.Common.DebugTools;
@@ -38,36 +36,4 @@ internal static class DebugUtils
     }
 
     public static bool DebugModeStrict => IS_DEBUG_BUILD && DebugMode;
-
-    public static void Assert(bool condition)
-    {
-        Assert(condition, "");
-    }
-
-    public static void Assert(bool condition, string eventName)
-    {
-        Assert(condition, eventName, "");
-    }
-
-    public static void Assert(bool condition, string eventName, string message)
-    {
-        if (!condition && DebugMode)
-        {
-            if (DebugBuild)
-            {
-                System.Diagnostics.Debugger.Break();
-            }
-
-            throw new AssertException($"{eventName} ({message})");
-        }
-    }
-
-    private class AssertException : Exception
-    {
-        public AssertException() { }
-
-        public AssertException(string message) : base(message) { }
-
-        public AssertException(string message, Exception inner) : base(message, inner) { }
-    }
 }
