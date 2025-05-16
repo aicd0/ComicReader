@@ -20,6 +20,7 @@ using ComicReader.Views.Main;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Imaging;
 
@@ -27,6 +28,8 @@ namespace ComicReader.Views.Home;
 
 internal sealed partial class HomePage : BasePage
 {
+    public readonly HomePageViewModel ViewModel = new();
+
     private readonly ComicItemViewModel.IItemHandler _comicItemHandler;
     private ObservableCollectionPlus<ComicItemViewModel> ComicItemSource { get; set; } = [];
 
@@ -35,20 +38,27 @@ internal sealed partial class HomePage : BasePage
 
     public HomePage()
     {
-        _comicItemHandler = new ComicItemHandler(this);
         InitializeComponent();
+        _comicItemHandler = new ComicItemHandler(this);
     }
+
+    //
+    // Lifecycle
+    //
 
     protected override void OnResume()
     {
         base.OnResume();
-        ComicData.OnUpdated += OnComicDataUpdated;
         GetMainPageAbility().SetTitle(StringResourceProvider.GetResourceString("NewTab"));
         GetMainPageAbility().SetIcon(new SymbolIconSource() { Symbol = Symbol.Document });
 
+        ComicData.OnUpdated += OnComicDataUpdated;
+        ObserveData();
+
         C0.Run(async delegate
         {
-            await Update();
+            await ViewModel.UpdateFilters();
+            await UpdateLibrary();
         });
     }
 
@@ -59,12 +69,80 @@ internal sealed partial class HomePage : BasePage
         _updateLibrarySession.Next();
     }
 
-    // Utilities
-    private async Task Update()
+    private void ObserveData()
     {
-        await UpdateLibrary();
+        ViewModel.FilterLiveData.ObserveSticky(this, UpdateFilters);
     }
 
+    private void UpdateFilters(HomePageViewModel.FilterModel model)
+    {
+        if (model == null)
+        {
+            return;
+        }
+
+        BindDropDownButton(ViewTypeDropDownButton, model.ViewTypeDropDown, ViewModel.SelectViewType);
+        BindDropDownButton(SortByDropDownButton, model.SortByDropDown, ViewModel.SelectSortBy);
+        BindDropDownButton(GroupByDropDownButton, model.GroupByDropDown, ViewModel.SelectGroupBy);
+        BindDropDownButton(FilterPresetDropDownButton, model.FilterPresetDropDown, ViewModel.SelectFilterPreset);
+    }
+
+    private void BindDropDownButton<T>(DropDownButton button, HomePageViewModel.DropDownButtonModel<T> model, Action<T> clickHandler)
+    {
+        if (button == null)
+        {
+            return;
+        }
+
+        button.Content = model.Name;
+
+        FlyoutBase flyout = button.Flyout;
+        if (flyout is not MenuFlyout)
+        {
+            flyout = new MenuFlyout();
+            flyout.Placement = FlyoutPlacementMode.BottomEdgeAlignedRight;
+            button.Flyout = flyout;
+        }
+        var menuFlyout = (MenuFlyout)flyout;
+
+        menuFlyout.Items.Clear();
+        foreach (HomePageViewModel.MenuFlyoutItemModel<T> item in model.Items)
+        {
+            MenuFlyoutItemBase menuItem;
+            if (item.IsSeperator)
+            {
+                menuItem = new MenuFlyoutSeparator();
+            }
+            else if (item.CanToggle)
+            {
+                var actualMenuItem = new ToggleMenuFlyoutItem
+                {
+                    Text = item.Name,
+                    IsChecked = item.Toggled,
+                };
+                actualMenuItem.Click += delegate (object sender, RoutedEventArgs e)
+                {
+                    clickHandler(item.DataContext);
+                };
+                menuItem = actualMenuItem;
+            }
+            else
+            {
+                var actualMenuItem = new MenuFlyoutItem
+                {
+                    Text = item.Name,
+                };
+                actualMenuItem.Click += delegate (object sender, RoutedEventArgs e)
+                {
+                    clickHandler(item.DataContext);
+                };
+                menuItem = actualMenuItem;
+            }
+            menuFlyout.Items.Add(menuItem);
+        }
+    }
+
+    // Utilities
     private IMainPageAbility GetMainPageAbility()
     {
         return GetAbility<IMainPageAbility>();
@@ -152,7 +230,6 @@ internal sealed partial class HomePage : BasePage
                 x.Progress == y.Progress &&
                 x.IsFavorite == y.IsFavorite);
             bool isEmpty = ComicItemSource.Count == 0;
-            HbShowAllButton.IsEnabled = !isEmpty;
             SpLibraryEmpty.Visibility = isEmpty ? Visibility.Visible : Visibility.Collapsed;
         });
     }
@@ -214,20 +291,6 @@ internal sealed partial class HomePage : BasePage
         {
             LoadImage(viewHolder, item);
         }
-    }
-
-    private void OnSeeAllBtClicked(object sender, RoutedEventArgs e)
-    {
-        Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_SEARCH)
-            .WithParam(RouterConstants.ARG_KEYWORD, "<all>");
-        GetMainPageAbility().OpenInCurrentTab(route);
-    }
-
-    private void OnSeeHiddenBtClick(object sender, RoutedEventArgs e)
-    {
-        Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_SEARCH)
-            .WithParam(RouterConstants.ARG_KEYWORD, "<hidden>");
-        GetMainPageAbility().OpenInCurrentTab(route);
     }
 
     private void OnOpenInNewTabClicked(object sender, RoutedEventArgs e)
@@ -293,6 +356,15 @@ internal sealed partial class HomePage : BasePage
             await item.Comic.SaveHiddenAsync(true);
             ComicItemSource.Remove(item);
             await UpdateLibrary();
+        });
+    }
+
+    private void EditFilterButton_Click(object sender, RoutedEventArgs e)
+    {
+        C0.Run(async delegate
+        {
+            var dialog = new EditFilterDialog();
+            _ = await C0.ShowDialogAsync(dialog, XamlRoot);
         });
     }
 

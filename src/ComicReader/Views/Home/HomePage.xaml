@@ -108,11 +108,11 @@
                             VerticalAlignment="Bottom"
                             Orientation="Horizontal"
                             Spacing="5">
-                            <HyperlinkButton
-                                x:Name="HbShowAllButton"
-                                x:Uid="ShowAllButton"
-                                Click="OnSeeAllBtClicked" />
-                            <HyperlinkButton x:Uid="ShowHiddenButton" Click="OnSeeHiddenBtClick" />
+                            <DropDownButton x:Name="ViewTypeDropDownButton" />
+                            <DropDownButton x:Name="SortByDropDownButton" />
+                            <DropDownButton x:Name="GroupByDropDownButton" />
+                            <DropDownButton x:Name="FilterPresetDropDownButton" />
+                            <Button Click="EditFilterButton_Click" Content="Edit filter" />
                         </StackPanel>
                     </Grid>
                     <Grid Height="10" />
