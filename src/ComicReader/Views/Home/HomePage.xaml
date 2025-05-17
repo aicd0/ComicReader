@@ -64,6 +64,48 @@
                 </Setter>
             </Style>
 
+            <Style x:Key="ComicGroupHeaderContainerStyle" TargetType="GridViewHeaderItem">
+                <Setter Property="FontFamily" Value="{ThemeResource ContentControlThemeFontFamily}" />
+                <Setter Property="FontSize" Value="{ThemeResource GridViewHeaderItemThemeFontSize}" />
+                <Setter Property="Background" Value="{ThemeResource GridViewHeaderItemBackground}" />
+                <Setter Property="Margin" Value="0" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="VerticalContentAlignment" Value="Top" />
+                <Setter Property="MinHeight" Value="0" />
+                <Setter Property="UseSystemFocusVisuals" Value="{StaticResource UseSystemFocusVisuals}" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="GridViewHeaderItem">
+                            <StackPanel
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="{TemplateBinding CornerRadius}">
+                                <ContentPresenter
+                                    x:Name="ContentPresenter"
+                                    HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                    VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                    Content="{TemplateBinding Content}"
+                                    ContentTemplate="{TemplateBinding ContentTemplate}"
+                                    ContentTransitions="{TemplateBinding ContentTransitions}" />
+                            </StackPanel>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
+
+            <CollectionViewSource
+                x:Name="FlatComicItemSource"
+                IsSourceGrouped="False"
+                Source="{x:Bind FlatComicItems, Mode=OneWay}" />
+
+            <CollectionViewSource
+                x:Name="GroupedComicItemSource"
+                IsSourceGrouped="True"
+                ItemsPath="Items"
+                Source="{x:Bind GroupedComicItems, Mode=OneWay}" />
+
             <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
             <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
         </ResourceDictionary>
@@ -71,22 +113,56 @@
 
     <Grid>
         <controls:AdaptiveGridView
+            x:Name="ComicGridView"
             Margin="0,0,-1,0"
             Padding="35,10"
             ContainerContentChanging="OnAdaptiveGridViewContainerContentChanging"
             DesiredWidth="{StaticResource ComicItemVerticalDesiredWidth}"
             ItemContainerStyle="{StaticResource ComicItemContainerStyle}"
             ItemHeight="310"
-            ItemsSource="{x:Bind ComicItemSource}"
             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
             ScrollViewer.HorizontalScrollMode="Disabled"
             StretchContentForSingleRow="False"
             Style="{StaticResource HomePageAdaptiveGridViewStyle}">
+            <controls:AdaptiveGridView.GroupStyle>
+                <GroupStyle HeaderContainerStyle="{StaticResource ComicGroupHeaderContainerStyle}">
+                    <GroupStyle.HeaderTemplate>
+                        <DataTemplate>
+                            <Grid Margin="6,0,8,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Button
+                                    Grid.Column="0"
+                                    Width="30"
+                                    Height="30"
+                                    Padding="0"
+                                    VerticalAlignment="Center">
+                                    <FontIcon FontSize="12" Glyph="&#xE728;" />
+                                </Button>
+                                <TextBlock
+                                    Grid.Column="1"
+                                    Margin="8,0"
+                                    VerticalAlignment="Center"
+                                    FontSize="16"
+                                    FontWeight="SemiBold"
+                                    Text="{Binding GroupName}" />
+                            </Grid>
+                        </DataTemplate>
+                    </GroupStyle.HeaderTemplate>
+                </GroupStyle>
+            </controls:AdaptiveGridView.GroupStyle>
             <controls:AdaptiveGridView.ItemTemplate>
                 <DataTemplate x:DataType="vm:ComicItemViewModel">
                     <home:ComicItemVertical DataContext="{x:Bind}" />
                 </DataTemplate>
             </controls:AdaptiveGridView.ItemTemplate>
+            <controls:AdaptiveGridView.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <ItemsWrapGrid AreStickyGroupHeadersEnabled="False" Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+            </controls:AdaptiveGridView.ItemsPanel>
             <controls:AdaptiveGridView.Header>
                 <StackPanel Orientation="Vertical">
                     <Grid Height="10" />
@@ -104,7 +180,7 @@
                             Text="Library" />
                         <StackPanel
                             Grid.Column="1"
-                            Margin="0,0,10,0"
+                            Margin="0,0,8,0"
                             VerticalAlignment="Bottom"
                             Orientation="Horizontal"
                             Spacing="5">

@@ -122,6 +122,8 @@
 
                     <x:Double x:Key="AppMinWindowHeight">500</x:Double>
                     <x:Double x:Key="AppMinWindowWidth">480</x:Double>
+                    <x:Double x:Key="ContentDialogMaxHeight">1000</x:Double>
+                    <x:Double x:Key="ContentDialogMaxWidth">1000</x:Double>
                     <x:Double x:Key="ComicItemVerticalDesiredWidth">160</x:Double>
                     <x:Double x:Key="ComicItemVerticalImageHeight">150</x:Double>
                     <x:Double x:Key="ComicItemHorizontalImageWidth">85</x:Double>

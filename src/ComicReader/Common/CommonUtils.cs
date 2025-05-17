@@ -256,7 +256,7 @@ public class C1<T> : IC1<T>
     public static void UpdateCollection(ObservableCollection<T> dst_collection,
         IEnumerable<T> src_collection, Func<T, T, bool> equal_func)
     {
-        if (dst_collection.Count * src_collection.Count() <= 512)
+        if (dst_collection.Count * src_collection.Count() <= 32768)
         {
             UpdateCollectionWithMinimumEditing(dst_collection, src_collection, equal_func);
         }

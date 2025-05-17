@@ -10,8 +10,6 @@ namespace ComicReader.Common;
 
 public sealed class ObservableCollectionPlus<T> : ObservableCollection<T> where T : INotifyPropertyChanged
 {
-    //public event PropertyChangedEventHandler CollectionItemChanged;
-
     public ObservableCollectionPlus()
     {
         CollectionChanged += FullObservableCollectionCollectionChanged;

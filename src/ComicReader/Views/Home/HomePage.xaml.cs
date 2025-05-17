@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
@@ -21,6 +22,7 @@ using ComicReader.Views.Main;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Imaging;
 
@@ -28,13 +30,15 @@ namespace ComicReader.Views.Home;
 
 internal sealed partial class HomePage : BasePage
 {
-    public readonly HomePageViewModel ViewModel = new();
+    private readonly HomePageViewModel ViewModel = new();
+
+    private ObservableCollection<ComicItemViewModel> FlatComicItems { get; set; } = [];
+    private ObservableCollection<SimpleGroupViewModel<ComicItemViewModel>> GroupedComicItems { get; set; } = [];
 
     private readonly ComicItemViewModel.IItemHandler _comicItemHandler;
-    private ObservableCollectionPlus<ComicItemViewModel> ComicItemSource { get; set; } = [];
-
     private readonly CancellationLock _updateLibraryLock = new();
     private readonly CancellationSession _updateLibrarySession = new();
+    private bool? _usingGroupSource = null;
 
     public HomePage()
     {
@@ -172,66 +176,80 @@ internal sealed partial class HomePage : BasePage
                 return;
             }
 
-            // Get recent visited comics.
-            List<Tuple<long, DateTimeOffset>> records = new();
-            await ComicData.EnqueueCommand(delegate
+            await UpdateLibraryInternal();
+        });
+    }
+
+    private async Task UpdateLibraryInternal()
+    {
+        // Get recent visited comics.
+        List<Tuple<long, DateTimeOffset>> records = new();
+        await ComicData.EnqueueCommand(delegate
+        {
+            // Use ORDER BY here will cause a crash (especially for a large result set)
+            // due to https://github.com/dotnet/efcore/issues/20044.
+            // Switch from Microsoft.Data.Sqlite to SQLitePCLRaw.bundle_winsqlite3 will
+            // solve the issue but the app then cannot not be built in Release mode.
+            // (See https://github.com/ericsink/SQLitePCL.raw/issues/346)
+            // A workaround here is to sort the data manually.
+
+            // command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.ComicTable +
+            //     " ORDER BY " + ComicData.Field.LastVisit + " DESC";
+
+            var command = new SelectCommand<ComicTable>(ComicTable.Instance);
+            SelectCommand<ComicTable>.IToken<long> idToken = command.PutQueryInt64(ComicTable.ColumnId);
+            SelectCommand<ComicTable>.IToken<DateTimeOffset> lastVisitToken = command.PutQueryDateTimeOffset(ComicTable.ColumnLastVisit);
+            using SelectCommand<ComicTable>.IReader reader = command.AppendCondition(ComicTable.ColumnHidden, false).Execute();
+
+            while (reader.Read())
             {
-                // Use ORDER BY here will cause a crash (especially for a large result set)
-                // due to https://github.com/dotnet/efcore/issues/20044.
-                // Switch from Microsoft.Data.Sqlite to SQLitePCLRaw.bundle_winsqlite3 will
-                // solve the issue but the app then cannot not be built in Release mode.
-                // (See https://github.com/ericsink/SQLitePCL.raw/issues/346)
-                // A workaround here is to sort the data manually.
+                records.Add(new Tuple<long, DateTimeOffset>
+                (
+                    idToken.GetValue(),
+                    lastVisitToken.GetValue()
+                ));
+            }
+        }, "HomeLoadLibrary");
+        records.Sort(delegate (Tuple<long, DateTimeOffset> x, Tuple<long, DateTimeOffset> y)
+        {
+            return y.Item2.CompareTo(x.Item2);
+        });
 
-                // command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.ComicTable +
-                //     " ORDER BY " + ComicData.Field.LastVisit + " DESC";
+        // Convert to view models.
+        var comic_items = new List<ComicItemViewModel>();
 
-                var command = new SelectCommand<ComicTable>(ComicTable.Instance);
-                SelectCommand<ComicTable>.IToken<long> idToken = command.PutQueryInt64(ComicTable.ColumnId);
-                SelectCommand<ComicTable>.IToken<DateTimeOffset> lastVisitToken = command.PutQueryDateTimeOffset(ComicTable.ColumnLastVisit);
-                using SelectCommand<ComicTable>.IReader reader = command.AppendCondition(ComicTable.ColumnHidden, false).Execute();
+        foreach (Tuple<long, DateTimeOffset> record in records)
+        {
+            ComicData comic = await ComicData.FromId(record.Item1, "HomeLoadComic");
 
-                while (reader.Read())
-                {
-                    records.Add(new Tuple<long, DateTimeOffset>
-                    (
-                        idToken.GetValue(),
-                        lastVisitToken.GetValue()
-                    ));
-                }
-            }, "HomeLoadLibrary");
-            records.Sort(delegate (Tuple<long, DateTimeOffset> x, Tuple<long, DateTimeOffset> y)
+            if (comic == null)
             {
-                return y.Item2.CompareTo(x.Item2);
-            });
-
-            // Convert to view models.
-            var comic_items = new List<ComicItemViewModel>();
-
-            foreach (Tuple<long, DateTimeOffset> record in records)
-            {
-                ComicData comic = await ComicData.FromId(record.Item1, "HomeLoadComic");
-
-                if (comic == null)
-                {
-                    continue;
-                }
-
-                var model = new ComicItemViewModel();
-                await BindComicData(model, comic);
-                comic_items.Add(model);
+                continue;
             }
 
-            // Save results.
-            C1<ComicItemViewModel>.UpdateCollection(ComicItemSource, comic_items,
-                (ComicItemViewModel x, ComicItemViewModel y) =>
-                x.Comic.Title == y.Comic.Title &&
-                x.Rating == y.Rating &&
-                x.Progress == y.Progress &&
-                x.IsFavorite == y.IsFavorite);
-            bool isEmpty = ComicItemSource.Count == 0;
-            SpLibraryEmpty.Visibility = isEmpty ? Visibility.Visible : Visibility.Collapsed;
-        });
+            var model = new ComicItemViewModel();
+            await BindComicData(model, comic);
+            comic_items.Add(model);
+        }
+
+        SpLibraryEmpty.Visibility = comic_items.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+
+        if (_usingGroupSource != false)
+        {
+            _usingGroupSource = false;
+            ComicGridView.SetBinding(ItemsControl.ItemsSourceProperty, new Binding()
+            {
+                Source = FlatComicItemSource,
+                Mode = BindingMode.OneWay,
+            });
+        }
+
+        C1<ComicItemViewModel>.UpdateCollection(FlatComicItems, comic_items,
+            (ComicItemViewModel x, ComicItemViewModel y) =>
+            x.Comic.Title == y.Comic.Title &&
+            x.Rating == y.Rating &&
+            x.Progress == y.Progress &&
+            x.IsFavorite == y.IsFavorite);
     }
 
     private void LoadImage(ComicItemVertical viewHolder, ComicItemViewModel item)
@@ -354,7 +372,7 @@ internal sealed partial class HomePage : BasePage
         {
             var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
             await item.Comic.SaveHiddenAsync(true);
-            ComicItemSource.Remove(item);
+            FlatComicItems.Remove(item);
             await UpdateLibrary();
         });
     }
@@ -388,11 +406,6 @@ internal sealed partial class HomePage : BasePage
     }
 
     private void RefreshHyperlink_Click(Microsoft.UI.Xaml.Documents.Hyperlink sender, Microsoft.UI.Xaml.Documents.HyperlinkClickEventArgs args)
-    {
-        RefreshPage();
-    }
-
-    public static void RefreshPage()
     {
         ComicData.UpdateAllComics("RefreshPage", lazy: true);
     }
