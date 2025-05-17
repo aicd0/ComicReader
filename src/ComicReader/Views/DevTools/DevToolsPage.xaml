@@ -12,10 +12,7 @@
     <Grid>
         <ScrollViewer>
             <StackPanel Padding="16" Orientation="Vertical">
-                <TextBlock
-                    x:Name="TbOperationResult"
-                    Foreground="Yellow"
-                    Text="Operation result shows here" />
+                <TextBlock x:Name="TbOperationResult" Foreground="Yellow" />
 
                 <Grid Height="16" />
                 <StackPanel Orientation="Horizontal" Spacing="8">
@@ -26,7 +23,6 @@
                 <TextBox
                     x:Name="TbCommonConfigs"
                     AcceptsReturn="True"
-                    TextChanged="OnCommonConfigsTextChanged"
                     TextWrapping="NoWrap" />
                 <Grid Height="8" />
                 <StackPanel Orientation="Horizontal" Spacing="8">

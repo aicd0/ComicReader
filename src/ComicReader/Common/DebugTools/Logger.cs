@@ -236,7 +236,11 @@ internal static class Logger
 
         if (DebugSwitches.Instance.ConsoleEnabled)
         {
-            LogToConsole(realMessage);
+            LogTag consoleWhitelist = DebugSwitches.Instance.ConsoleWhitelist;
+            if (consoleWhitelist == null || consoleWhitelist.ContainsAny(tag))
+            {
+                LogToConsole(realMessage);
+            }
         }
 
         if (DebugUtils.DebugMode && level >= LEVEL_INFO)

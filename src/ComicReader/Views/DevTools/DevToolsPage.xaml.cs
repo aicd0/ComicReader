@@ -39,9 +39,8 @@ internal sealed partial class DevToolsPage : BasePage
     protected override void OnResume()
     {
         base.OnResume();
-
         SetResult(null);
-        TbCommonConfigs.Text = DebugSwitches.Instance.SerializeToJson();
+        RestoreConfig();
     }
 
     //
@@ -58,7 +57,7 @@ internal sealed partial class DevToolsPage : BasePage
         string configs = TbCommonConfigs.Text;
         try
         {
-            DebugSwitches.Instance.ParseFromJson(configs);
+            DebugSwitches.Instance.SaveConfig(configs);
         }
         catch (Exception ex)
         {
@@ -67,16 +66,12 @@ internal sealed partial class DevToolsPage : BasePage
         }
 
         SetResult("Successfully applied");
+        RestoreConfig();
     }
 
     private void OnCommonConfigsRestoreClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        TbCommonConfigs.Text = DebugSwitches.Instance.SerializeToJson();
-    }
-
-    private void OnCommonConfigsTextChanged(object sender, TextChangedEventArgs e)
-    {
-        SetResult(null);
+        RestoreConfig();
     }
 
     //
@@ -96,5 +91,10 @@ internal sealed partial class DevToolsPage : BasePage
         }
 
         TbOperationResult.Text = result;
+    }
+
+    private void RestoreConfig()
+    {
+        TbCommonConfigs.Text = DebugSwitches.Instance.SerializeToJson();
     }
 }
