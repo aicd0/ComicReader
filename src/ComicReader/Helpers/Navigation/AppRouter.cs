@@ -1,6 +1,8 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System.Collections.Generic;
 
 using ComicReader.Common.DebugTools;

@@ -14,6 +14,8 @@ using Windows.Storage;
 
 namespace ComicReader.Common;
 
+#nullable disable
+
 public abstract class ArchiveEntry
 {
     public abstract string FullName { get; }

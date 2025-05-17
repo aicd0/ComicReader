@@ -4,6 +4,8 @@
 // Licensed to the Microsoft Corporation under one or more agreements.
 // The Microsoft Corporation licenses this file to you under the MIT license.
 
+#nullable disable
+
 using System;
 using System.Management;
 using System.Reflection;

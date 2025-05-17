@@ -1,6 +1,8 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 namespace ComicReader.Data.SqlHelpers;
 
 internal class EqualityCondition<T> : ICondition

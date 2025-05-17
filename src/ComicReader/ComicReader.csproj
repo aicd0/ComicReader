@@ -28,6 +28,7 @@
         <PackageCertificateThumbprint>43226C3B45DA957B723C3488B61DDE63234A2E3F</PackageCertificateThumbprint>
         <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
         <PackageCertificateKeyFile>ComicReader_TemporaryKey.pfx</PackageCertificateKeyFile>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
         <OutputPath>bin\x86\Debug\</OutputPath>
