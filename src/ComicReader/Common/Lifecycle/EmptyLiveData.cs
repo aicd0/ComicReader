@@ -3,7 +3,7 @@
 
 using System;
 
-using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml;
 
 namespace ComicReader.Common.Lifecycle;
 
@@ -22,19 +22,19 @@ internal class EmptyLiveData<T> : IMutableLiveData<T>
         return default;
     }
 
-    public void Observe(Page owner, Action<T> observer)
+    public void Observe(FrameworkElement owner, Action<T> observer)
     {
     }
 
-    public void Observe(Page owner, IObserver<T> observer)
+    public void Observe(FrameworkElement owner, IObserver<T> observer)
     {
     }
 
-    public void ObserveSticky(Page owner, Action<T> observer)
+    public void ObserveSticky(FrameworkElement owner, Action<T> observer)
     {
     }
 
-    public void ObserveSticky(Page owner, IObserver<T> observer)
+    public void ObserveSticky(FrameworkElement owner, IObserver<T> observer)
     {
     }
 }

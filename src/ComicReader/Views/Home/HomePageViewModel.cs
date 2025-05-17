@@ -25,11 +25,19 @@ internal class HomePageViewModel
         ComicFilterModel.PropertyTypeEnum.Progress,
     ];
 
-    public async Task UpdateFilters()
+    public void Initialize()
     {
-        ComicFilterModel.ExternalModel dataModel = await ComicFilterModel.Instance.GetModel();
-        _filterModel = dataModel;
-        UpdateFiltersInternal();
+        _ = InitializeInternal();
+    }
+
+    public void UpdateFilters()
+    {
+        _ = ReloadFilters();
+    }
+
+    public ComicFilterModel.ExternalFilterModel GetFilter()
+    {
+        return _filterModel?.LastFilter;
     }
 
     public void SelectViewType(ComicFilterModel.ViewTypeEnum viewType)
@@ -45,7 +53,6 @@ internal class HomePageViewModel
         if (modified)
         {
             _filterModel.LastFilterModified = true;
-            _ = ComicFilterModel.Instance.UpdateModel(_filterModel);
         }
         UpdateFiltersInternal();
     }
@@ -74,7 +81,6 @@ internal class HomePageViewModel
         if (modified)
         {
             _filterModel.LastFilterModified = true;
-            _ = ComicFilterModel.Instance.UpdateModel(_filterModel);
         }
         UpdateFiltersInternal();
     }
@@ -101,7 +107,6 @@ internal class HomePageViewModel
         }
 
         _filterModel.LastFilterModified = true;
-        _ = ComicFilterModel.Instance.UpdateModel(_filterModel);
         UpdateFiltersInternal();
     }
 
@@ -116,7 +121,17 @@ internal class HomePageViewModel
 
         _filterModel.LastFilterModified = false;
         UpdateFiltersInternal();
-        _ = ComicFilterModel.Instance.UpdateModel(_filterModel);
+    }
+
+    private async Task InitializeInternal()
+    {
+        await ReloadFilters();
+    }
+
+    private async Task ReloadFilters()
+    {
+        _filterModel = await ComicFilterModel.Instance.GetModel();
+        UpdateFiltersInternal();
     }
 
     private void UpdateFiltersInternal()
@@ -125,16 +140,16 @@ internal class HomePageViewModel
         dataModel ??= new();
         _filterModel = dataModel;
 
-        ComicFilterModel.ExternalFilterModel lastFilter = dataModel.LastFilter;
-        lastFilter ??= CreateDefaultFilter();
-        dataModel.LastFilter = lastFilter;
-
         List<ComicFilterModel.ExternalFilterModel> filters = dataModel.Filters;
         if (filters == null || filters.Count == 0)
         {
             filters = [CreateDefaultFilter()];
             dataModel.Filters = filters;
         }
+
+        ComicFilterModel.ExternalFilterModel lastFilter = dataModel.LastFilter;
+        lastFilter ??= filters[0].Clone();
+        dataModel.LastFilter = lastFilter;
 
         ComicFilterModel.ExternalPropertyModel sortBy = lastFilter.SortBy;
         sortBy ??= new()
@@ -144,6 +159,7 @@ internal class HomePageViewModel
         lastFilter.SortBy = sortBy;
 
         ComicFilterModel.ExternalPropertyModel groupBy = lastFilter.GroupBy;
+        _ = ComicFilterModel.Instance.UpdateModel(_filterModel);
 
         var viewTypeDropDown = new DropDownButtonModel<ComicFilterModel.ViewTypeEnum>
         {

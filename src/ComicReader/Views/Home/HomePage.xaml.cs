@@ -54,10 +54,10 @@ internal sealed partial class HomePage : BasePage
 
         ComicData.OnUpdated += OnComicDataUpdated;
         ObserveData();
+        ViewModel.Initialize();
 
         C0.Run(async delegate
         {
-            await ViewModel.UpdateFilters();
             await UpdateLibrary();
         });
     }
@@ -363,8 +363,9 @@ internal sealed partial class HomePage : BasePage
     {
         C0.Run(async delegate
         {
-            var dialog = new EditFilterDialog();
+            var dialog = new EditFilterDialog(ViewModel.GetFilter());
             _ = await C0.ShowDialogAsync(dialog, XamlRoot);
+            ViewModel.UpdateFilters();
         });
     }
 

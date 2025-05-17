@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using ComicReader.Common.DebugTools;
 
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 
 namespace ComicReader.Common.Lifecycle;
 
@@ -30,24 +29,24 @@ internal class LiveData<T> : ILiveData<T>, ILiveDataNoType
         _value = initialValue;
     }
 
-    public void Observe(Page owner, Action<T> observer)
+    public void Observe(FrameworkElement owner, Action<T> observer)
     {
         var wrapper = new Observer<T>(observer);
         Observe(owner, wrapper);
     }
 
-    public void ObserveSticky(Page owner, Action<T> observer)
+    public void ObserveSticky(FrameworkElement owner, Action<T> observer)
     {
         var wrapper = new Observer<T>(observer);
         ObserveSticky(owner, wrapper);
     }
 
-    public void Observe(Page owner, IObserver<T> observer)
+    public void Observe(FrameworkElement owner, IObserver<T> observer)
     {
         ObserveInternal(owner, observer, false);
     }
 
-    public void ObserveSticky(Page owner, IObserver<T> observer)
+    public void ObserveSticky(FrameworkElement owner, IObserver<T> observer)
     {
         ObserveInternal(owner, observer, true);
     }
@@ -75,7 +74,7 @@ internal class LiveData<T> : ILiveData<T>, ILiveDataNoType
         DispatchValue(null, value);
     }
 
-    private void ObserveInternal(Page owner, IObserver<T> observer, bool sticky)
+    private void ObserveInternal(FrameworkElement owner, IObserver<T> observer, bool sticky)
     {
         if (_clearing)
         {
@@ -165,10 +164,10 @@ internal class LiveData<T> : ILiveData<T>, ILiveDataNoType
     private class ObserverWrapper
     {
         private readonly LiveData<T> _liveData;
-        private readonly Page _owner;
+        private readonly FrameworkElement _owner;
         private readonly IObserver<T> _observer;
 
-        public ObserverWrapper(LiveData<T> liveData, Page owner, IObserver<T> observer)
+        public ObserverWrapper(LiveData<T> liveData, FrameworkElement owner, IObserver<T> observer)
         {
             _liveData = liveData;
             _owner = owner;
@@ -177,7 +176,7 @@ internal class LiveData<T> : ILiveData<T>, ILiveDataNoType
             _owner.Unloaded += UnloadedHandler;
         }
 
-        public bool IsSameOwner(Page owner)
+        public bool IsSameOwner(FrameworkElement owner)
         {
             return _owner == owner;
         }

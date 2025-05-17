@@ -135,7 +135,7 @@ class ComicFilterModel : JsonDatabase<ComicFilterModel.JsonModel>
                 return;
             }
 
-            model.LastFilter = LastFilter.To();
+            model.LastFilter = LastFilter?.To();
             model.LastFilterModified = LastFilterModified;
 
             if (Filters != null)
