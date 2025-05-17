@@ -3,17 +3,13 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Common.Imaging;
 using ComicReader.Common.PageBase;
-using ComicReader.Common.Threading;
 using ComicReader.Data;
 using ComicReader.Data.Comic;
 using ComicReader.Data.Legacy;
-using ComicReader.Data.SqlHelpers;
 using ComicReader.Helpers.Imaging;
 using ComicReader.Helpers.Navigation;
 using ComicReader.ViewModels;
@@ -32,13 +28,9 @@ internal sealed partial class HomePage : BasePage
 {
     private readonly HomePageViewModel ViewModel = new();
 
-    private ObservableCollection<ComicItemViewModel> FlatComicItems { get; set; } = [];
-    private ObservableCollection<SimpleGroupViewModel<ComicItemViewModel>> GroupedComicItems { get; set; } = [];
-
-    private readonly ComicItemViewModel.IItemHandler _comicItemHandler;
-    private readonly CancellationLock _updateLibraryLock = new();
-    private readonly CancellationSession _updateLibrarySession = new();
+    private readonly CancellationSession _loadImageToken = new();
     private bool? _usingGroupSource = null;
+    private readonly ComicItemViewModel.IItemHandler _comicItemHandler;
 
     public HomePage()
     {
@@ -59,23 +51,42 @@ internal sealed partial class HomePage : BasePage
         ComicData.OnUpdated += OnComicDataUpdated;
         ObserveData();
         ViewModel.Initialize();
-
-        C0.Run(async delegate
-        {
-            await UpdateLibrary();
-        });
+        ViewModel.UpdateLibrary();
     }
 
     protected override void OnPause()
     {
         base.OnPause();
         ComicData.OnUpdated -= OnComicDataUpdated;
-        _updateLibrarySession.Next();
+        _loadImageToken.Next();
     }
 
     private void ObserveData()
     {
         ViewModel.FilterLiveData.ObserveSticky(this, UpdateFilters);
+        ViewModel.GroupingEnabledLiveData.ObserveSticky(this, delegate (bool grouped)
+        {
+            if (_usingGroupSource != grouped)
+            {
+                _usingGroupSource = grouped;
+                if (grouped)
+                {
+                    ComicGridView.SetBinding(ItemsControl.ItemsSourceProperty, new Binding()
+                    {
+                        Source = GroupedComicItemSource,
+                        Mode = BindingMode.OneWay,
+                    });
+                }
+                else
+                {
+                    ComicGridView.SetBinding(ItemsControl.ItemsSourceProperty, new Binding()
+                    {
+                        Source = UngroupedComicItemSource,
+                        Mode = BindingMode.OneWay,
+                    });
+                }
+            }
+        });
     }
 
     private void UpdateFilters(HomePageViewModel.FilterModel model)
@@ -152,104 +163,9 @@ internal sealed partial class HomePage : BasePage
         return GetAbility<IMainPageAbility>();
     }
 
-    private async Task BindComicData(ComicItemViewModel model, ComicData comic)
-    {
-        model.Comic = comic;
-        model.Title = comic.Title;
-        model.Rating = comic.Rating;
-        model.UpdateProgress(true);
-        model.IsFavorite = await FavoriteModel.Instance.FromId(comic.Id) != null;
-        model.ItemHandler = _comicItemHandler;
-    }
-
     private void OnComicDataUpdated()
     {
-        MainThreadUtils.RunInMainThreadAsync(UpdateLibrary).Wait();
-    }
-
-    public async Task UpdateLibrary()
-    {
-        await _updateLibraryLock.LockAsync(async delegate (CancellationLock.Token token)
-        {
-            if (token.CancellationRequested)
-            {
-                return;
-            }
-
-            await UpdateLibraryInternal();
-        });
-    }
-
-    private async Task UpdateLibraryInternal()
-    {
-        // Get recent visited comics.
-        List<Tuple<long, DateTimeOffset>> records = new();
-        await ComicData.EnqueueCommand(delegate
-        {
-            // Use ORDER BY here will cause a crash (especially for a large result set)
-            // due to https://github.com/dotnet/efcore/issues/20044.
-            // Switch from Microsoft.Data.Sqlite to SQLitePCLRaw.bundle_winsqlite3 will
-            // solve the issue but the app then cannot not be built in Release mode.
-            // (See https://github.com/ericsink/SQLitePCL.raw/issues/346)
-            // A workaround here is to sort the data manually.
-
-            // command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.ComicTable +
-            //     " ORDER BY " + ComicData.Field.LastVisit + " DESC";
-
-            var command = new SelectCommand<ComicTable>(ComicTable.Instance);
-            SelectCommand<ComicTable>.IToken<long> idToken = command.PutQueryInt64(ComicTable.ColumnId);
-            SelectCommand<ComicTable>.IToken<DateTimeOffset> lastVisitToken = command.PutQueryDateTimeOffset(ComicTable.ColumnLastVisit);
-            using SelectCommand<ComicTable>.IReader reader = command.AppendCondition(ComicTable.ColumnHidden, false).Execute();
-
-            while (reader.Read())
-            {
-                records.Add(new Tuple<long, DateTimeOffset>
-                (
-                    idToken.GetValue(),
-                    lastVisitToken.GetValue()
-                ));
-            }
-        }, "HomeLoadLibrary");
-        records.Sort(delegate (Tuple<long, DateTimeOffset> x, Tuple<long, DateTimeOffset> y)
-        {
-            return y.Item2.CompareTo(x.Item2);
-        });
-
-        // Convert to view models.
-        var comic_items = new List<ComicItemViewModel>();
-
-        foreach (Tuple<long, DateTimeOffset> record in records)
-        {
-            ComicData comic = await ComicData.FromId(record.Item1, "HomeLoadComic");
-
-            if (comic == null)
-            {
-                continue;
-            }
-
-            var model = new ComicItemViewModel();
-            await BindComicData(model, comic);
-            comic_items.Add(model);
-        }
-
-        SpLibraryEmpty.Visibility = comic_items.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
-
-        if (_usingGroupSource != false)
-        {
-            _usingGroupSource = false;
-            ComicGridView.SetBinding(ItemsControl.ItemsSourceProperty, new Binding()
-            {
-                Source = FlatComicItemSource,
-                Mode = BindingMode.OneWay,
-            });
-        }
-
-        C1<ComicItemViewModel>.UpdateCollection(FlatComicItems, comic_items,
-            (ComicItemViewModel x, ComicItemViewModel y) =>
-            x.Comic.Title == y.Comic.Title &&
-            x.Rating == y.Rating &&
-            x.Progress == y.Progress &&
-            x.IsFavorite == y.IsFavorite);
+        ViewModel.UpdateLibrary();
     }
 
     private void LoadImage(ComicItemVertical viewHolder, ComicItemViewModel item)
@@ -273,7 +189,7 @@ internal sealed partial class HomePage : BasePage
             ImageResultHandler = new LoadImageCallback(viewHolder, item)
         });
 
-        new SimpleImageLoader.Transaction(_updateLibrarySession.Token, tokens).Commit();
+        new SimpleImageLoader.Transaction(_loadImageToken.Token, tokens).Commit();
     }
 
     private class LoadImageCallback : IImageResultHandler
@@ -297,8 +213,7 @@ internal sealed partial class HomePage : BasePage
     // Events
     private void OnAdaptiveGridViewContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
     {
-        var viewHolder = args.ItemContainer.ContentTemplateRoot as ComicItemVertical;
-        if (viewHolder == null || args.Item is not ComicItemViewModel item)
+        if (args.ItemContainer.ContentTemplateRoot is not ComicItemVertical viewHolder || args.Item is not ComicItemViewModel item)
         {
             return;
         }
@@ -307,10 +222,10 @@ internal sealed partial class HomePage : BasePage
         {
             item.Image.ImageSet = false;
         }
-
-        viewHolder.Bind(item);
-        if (!args.InRecycleQueue)
+        else
         {
+            item.ItemHandler = _comicItemHandler;
+            viewHolder.Bind(item);
             LoadImage(viewHolder, item);
         }
     }
@@ -347,7 +262,7 @@ internal sealed partial class HomePage : BasePage
             item.Comic.SetAsUnread();
         }
 
-        _ = BindComicData(item, item.Comic);
+        item.UpdateProgress(true);
     }
 
     private void OnAddToFavoritesClicked(object sender, RoutedEventArgs e)
@@ -376,8 +291,7 @@ internal sealed partial class HomePage : BasePage
         {
             var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
             await item.Comic.SaveHiddenAsync(true);
-            FlatComicItems.Remove(item);
-            await UpdateLibrary();
+            ViewModel.UpdateLibrary();
         });
     }
 
@@ -416,48 +330,48 @@ internal sealed partial class HomePage : BasePage
 
     private class ComicItemHandler : ComicItemViewModel.IItemHandler
     {
-        private readonly HomePage _page;
+        private readonly WeakReference<HomePage> _pageRef;
 
         public ComicItemHandler(HomePage page)
         {
-            _page = page;
+            _pageRef = new WeakReference<HomePage>(page);
         }
 
         public void OnAddToFavoritesClicked(object sender, RoutedEventArgs e)
         {
-            _page.OnAddToFavoritesClicked(sender, e);
+            GetPage()?.OnAddToFavoritesClicked(sender, e);
         }
 
         public void OnHideClicked(object sender, RoutedEventArgs e)
         {
-            _page.OnHideComicClicked(sender, e);
+            GetPage()?.OnHideComicClicked(sender, e);
         }
 
         public void OnItemTapped(object sender, TappedRoutedEventArgs e)
         {
-            _page.OnComicItemTapped(sender, e);
+            GetPage()?.OnComicItemTapped(sender, e);
         }
 
         public void OnMarkAsReadClicked(object sender, RoutedEventArgs e)
         {
             var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-            _page.MarkAsReadOrUnread(item, true);
+            GetPage()?.MarkAsReadOrUnread(item, true);
         }
 
         public void OnMarkAsUnreadClicked(object sender, RoutedEventArgs e)
         {
             var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-            _page.MarkAsReadOrUnread(item, false);
+            GetPage()?.MarkAsReadOrUnread(item, false);
         }
 
         public void OnOpenInNewTabClicked(object sender, RoutedEventArgs e)
         {
-            _page.OnOpenInNewTabClicked(sender, e);
+            GetPage()?.OnOpenInNewTabClicked(sender, e);
         }
 
         public void OnRemoveFromFavoritesClicked(object sender, RoutedEventArgs e)
         {
-            _page.OnRemoveFromFavoritesClicked(sender, e);
+            GetPage()?.OnRemoveFromFavoritesClicked(sender, e);
         }
 
         public void OnSelectClicked(object sender, RoutedEventArgs e)
@@ -466,6 +380,11 @@ internal sealed partial class HomePage : BasePage
 
         public void OnUnhideClicked(object sender, RoutedEventArgs e)
         {
+        }
+
+        private HomePage? GetPage()
+        {
+            return _pageRef.TryGetTarget(out HomePage? page) ? page : null;
         }
     }
 }

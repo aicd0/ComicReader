@@ -7,6 +7,7 @@ using System;
 using System.ComponentModel;
 
 using ComicReader.Common;
+using ComicReader.Data;
 using ComicReader.Data.Comic;
 
 using Microsoft.UI.Xaml;
@@ -75,6 +76,24 @@ internal class ComicItemViewModel : INotifyPropertyChanged
     //
     // functions
     //
+
+    public void Update(ComicData comic)
+    {
+        Comic = comic;
+        Title = Comic.Title;
+        Rating = comic.Rating;
+        UpdateProgress(true);
+
+        C0.Run(async delegate
+        {
+            bool isFavorite = await FavoriteModel.Instance.FromId(comic.Id) != null;
+            if (comic != Comic)
+            {
+                return;
+            }
+            IsFavorite = isFavorite;
+        });
+    }
 
     public void UpdateProgress(bool compat)
     {

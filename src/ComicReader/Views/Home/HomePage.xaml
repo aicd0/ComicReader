@@ -96,15 +96,15 @@
             </Style>
 
             <CollectionViewSource
-                x:Name="FlatComicItemSource"
+                x:Name="UngroupedComicItemSource"
                 IsSourceGrouped="False"
-                Source="{x:Bind FlatComicItems, Mode=OneWay}" />
+                Source="{x:Bind ViewModel.UngroupedComicItems, Mode=OneWay}" />
 
             <CollectionViewSource
                 x:Name="GroupedComicItemSource"
                 IsSourceGrouped="True"
                 ItemsPath="Items"
-                Source="{x:Bind GroupedComicItems, Mode=OneWay}" />
+                Source="{x:Bind ViewModel.GroupedComicItems, Mode=OneWay}" />
 
             <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
             <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
@@ -192,7 +192,10 @@
                         </StackPanel>
                     </Grid>
                     <Grid Height="10" />
-                    <Grid x:Name="SpLibraryEmpty" Padding="0,30">
+                    <Grid
+                        x:Name="SpLibraryEmpty"
+                        Padding="0,30"
+                        Visibility="{x:Bind ViewModel.LibraryEmptyVisible}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />

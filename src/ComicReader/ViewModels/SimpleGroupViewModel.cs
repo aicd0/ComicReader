@@ -2,14 +2,16 @@
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
+using System.ComponentModel;
+
+using ComicReader.Common;
 
 namespace ComicReader.ViewModels;
 
-internal class SimpleGroupViewModel<T>
+internal class SimpleGroupViewModel<T> where T : INotifyPropertyChanged
 {
     public string GroupName { get; private set; }
-    public ObservableCollection<T> Items { get; } = [];
+    public ObservableCollectionPlus<T> Items { get; } = [];
 
     public SimpleGroupViewModel(string groupName, IEnumerable<T> items)
     {

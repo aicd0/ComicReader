@@ -1,19 +1,47 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Threading.Tasks;
 
+using ComicReader.Common;
 using ComicReader.Common.Lifecycle;
+using ComicReader.Common.Threading;
 using ComicReader.Data;
+using ComicReader.Data.Comic;
+using ComicReader.Data.SqlHelpers;
+using ComicReader.ViewModels;
 
 namespace ComicReader.Views.Home;
 
-internal class HomePageViewModel
+internal class HomePageViewModel : INotifyPropertyChanged
 {
+    public event PropertyChangedEventHandler? PropertyChanged;
+
     public MutableLiveData<FilterModel> FilterLiveData = new();
+    public MutableLiveData<bool> GroupingEnabledLiveData = new();
+
+    public ObservableCollectionPlus<ComicItemViewModel> UngroupedComicItems { get; set; } = [];
+    public ObservableCollection<SimpleGroupViewModel<ComicItemViewModel>> GroupedComicItems { get; set; } = [];
+
+    private bool _libraryEmptyVisible = false;
+    public bool LibraryEmptyVisible
+    {
+        get => _libraryEmptyVisible;
+        set
+        {
+            _libraryEmptyVisible = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LibraryEmptyVisible)));
+        }
+    }
 
     private ComicFilterModel.ExternalModel _filterModel = new();
+
+    private readonly ITaskDispatcher _updateDispatcher = TaskDispatcher.DefaultQueue;
+    private bool _updateSubmitted = false;
 
     private readonly List<ComicFilterModel.ViewTypeEnum> _viewTypes = [
         ComicFilterModel.ViewTypeEnum.Large,
@@ -126,6 +154,86 @@ internal class HomePageViewModel
 
         _filterModel.LastFilterModified = false;
         UpdateFiltersInternal();
+    }
+
+    public void UpdateLibrary()
+    {
+        if (_updateSubmitted)
+        {
+            return;
+        }
+        _updateSubmitted = true;
+        _updateDispatcher.Submit("UpdateLibrary", delegate
+        {
+            _updateSubmitted = false;
+            UpdateLibraryInternal().Wait();
+        });
+    }
+
+    private async Task UpdateLibraryInternal()
+    {
+        // Get recent visited comics.
+        List<Tuple<long, DateTimeOffset>> records = new();
+        await ComicData.EnqueueCommand(delegate
+        {
+            // Use ORDER BY here will cause a crash (especially for a large result set)
+            // due to https://github.com/dotnet/efcore/issues/20044.
+            // Switch from Microsoft.Data.Sqlite to SQLitePCLRaw.bundle_winsqlite3 will
+            // solve the issue but the app then cannot not be built in Release mode.
+            // (See https://github.com/ericsink/SQLitePCL.raw/issues/346)
+            // A workaround here is to sort the data manually.
+
+            // command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.ComicTable +
+            //     " ORDER BY " + ComicData.Field.LastVisit + " DESC";
+
+            var command = new SelectCommand<ComicTable>(ComicTable.Instance);
+            SelectCommand<ComicTable>.IToken<long> idToken = command.PutQueryInt64(ComicTable.ColumnId);
+            SelectCommand<ComicTable>.IToken<DateTimeOffset> lastVisitToken = command.PutQueryDateTimeOffset(ComicTable.ColumnLastVisit);
+            using SelectCommand<ComicTable>.IReader reader = command.AppendCondition(ComicTable.ColumnHidden, false).Execute();
+
+            while (reader.Read())
+            {
+                records.Add(new Tuple<long, DateTimeOffset>
+                (
+                    idToken.GetValue(),
+                    lastVisitToken.GetValue()
+                ));
+            }
+        }, "HomeLoadLibrary");
+        records.Sort(delegate (Tuple<long, DateTimeOffset> x, Tuple<long, DateTimeOffset> y)
+        {
+            return y.Item2.CompareTo(x.Item2);
+        });
+
+        // Convert to view models.
+        var comicItems = new List<ComicItemViewModel>();
+
+        foreach (Tuple<long, DateTimeOffset> record in records)
+        {
+            ComicData comic = await ComicData.FromId(record.Item1, "HomeLoadComic");
+
+            if (comic == null)
+            {
+                continue;
+            }
+
+            var model = new ComicItemViewModel();
+            model.Update(comic);
+            comicItems.Add(model);
+        }
+
+        await MainThreadUtils.RunInMainThread(delegate
+        {
+            LibraryEmptyVisible = comicItems.Count == 0;
+            GroupingEnabledLiveData.Emit(false);
+
+            C1<ComicItemViewModel>.UpdateCollection(UngroupedComicItems, comicItems,
+                (ComicItemViewModel x, ComicItemViewModel y) =>
+                x.Comic.Title == y.Comic.Title &&
+                x.Rating == y.Rating &&
+                x.Progress == y.Progress &&
+                x.IsFavorite == y.IsFavorite);
+        });
     }
 
     private async Task InitializeInternal()
