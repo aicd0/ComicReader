@@ -27,22 +27,12 @@ class DatabaseVersionModel : JsonDatabase<DatabaseVersionModel.JsonModel>
 
     public async Task<JsonModel> GetModel()
     {
-        if (!await TryInitialize())
-        {
-            return null;
-        }
-
-        return Read(CloneModel);
+        return await Read(CloneModel);
     }
 
     public async Task UpdateModel(JsonModel model)
     {
-        if (!await TryInitialize())
-        {
-            return;
-        }
-
-        CloneFrom(model);
-        Save();
+        await Write(CloneModel(model));
+        await Save();
     }
 }

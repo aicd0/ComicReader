@@ -34,8 +34,9 @@ abstract class JsonDatabase<T> where T : class
 
     protected abstract T CreateModel();
 
-    protected R Read<R>(Func<T, R> func)
+    protected async Task<R> Read<R>(Func<T, R> func)
     {
+        await Initialize();
         _lock.AcquireReaderLock(Timeout.Infinite);
         try
         {
@@ -47,8 +48,9 @@ abstract class JsonDatabase<T> where T : class
         }
     }
 
-    protected R Write<R>(Func<T, R> func)
+    protected async Task<R> Write<R>(Func<T, R> func)
     {
+        await Initialize();
         _lock.AcquireWriterLock(Timeout.Infinite);
         try
         {
@@ -60,10 +62,11 @@ abstract class JsonDatabase<T> where T : class
         }
     }
 
-    protected void Write(T model)
+    protected async Task Write(T model)
     {
         ArgumentNullException.ThrowIfNull(model, nameof(model));
 
+        await Initialize();
         _lock.AcquireWriterLock(Timeout.Infinite);
         try
         {
@@ -75,48 +78,9 @@ abstract class JsonDatabase<T> where T : class
         }
     }
 
-    protected async Task<bool> TryInitialize()
+    protected async Task Save()
     {
-        if (_jsonModel != null)
-        {
-            return true;
-        }
-
-        string json = await SimpleConfigDatabase.Instance.TryGetConfig(_fileName);
-        T jsonModel = null;
-        if (json != null)
-        {
-            try
-            {
-                jsonModel = JsonSerializer.Deserialize<T>(json, _serializerOptions);
-            }
-            catch (JsonException ex)
-            {
-                Logger.F(TAG, nameof(TryInitialize), ex);
-            }
-        }
-        jsonModel ??= CreateModel();
-
-        _lock.AcquireWriterLock(Timeout.Infinite);
-        try
-        {
-            if (_jsonModel != null)
-            {
-                return true;
-            }
-            _jsonModel = jsonModel;
-        }
-        finally
-        {
-            _lock.ReleaseWriterLock();
-        }
-
-        return true;
-    }
-
-    protected void Save()
-    {
-        Read(delegate (T model)
+        await Read(delegate (T model)
         {
             T clonedModel = CloneModel(model);
             if (clonedModel != null)
@@ -145,16 +109,40 @@ abstract class JsonDatabase<T> where T : class
         }
     }
 
-    protected void CloneFrom(T model)
+    private async Task Initialize()
     {
-        Write(delegate (T m)
+        if (_jsonModel != null)
         {
-            m = CloneModel(model);
-            if (m != null)
+            return;
+        }
+
+        string json = await SimpleConfigDatabase.Instance.TryGetConfig(_fileName);
+        T jsonModel = null;
+        if (json != null)
+        {
+            try
             {
-                _jsonModel = m;
+                jsonModel = JsonSerializer.Deserialize<T>(json, _serializerOptions);
             }
-            return true;
-        });
+            catch (JsonException ex)
+            {
+                Logger.F(TAG, nameof(Initialize), ex);
+            }
+        }
+        jsonModel ??= CreateModel();
+
+        _lock.AcquireWriterLock(Timeout.Infinite);
+        try
+        {
+            if (_jsonModel != null)
+            {
+                return;
+            }
+            _jsonModel = jsonModel;
+        }
+        finally
+        {
+            _lock.ReleaseWriterLock();
+        }
     }
 }

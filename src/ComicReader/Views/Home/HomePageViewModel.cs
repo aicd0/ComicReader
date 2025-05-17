@@ -1,8 +1,6 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-#nullable disable
-
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -15,7 +13,7 @@ internal class HomePageViewModel
 {
     public MutableLiveData<FilterModel> FilterLiveData = new();
 
-    private ComicFilterModel.ExternalModel _filterModel;
+    private ComicFilterModel.ExternalModel _filterModel = new();
 
     private readonly List<ComicFilterModel.ViewTypeEnum> _viewTypes = [
         ComicFilterModel.ViewTypeEnum.Large,
@@ -39,17 +37,18 @@ internal class HomePageViewModel
 
     public ComicFilterModel.ExternalFilterModel GetFilter()
     {
-        return _filterModel?.LastFilter;
+        return _filterModel?.LastFilter ?? new();
     }
 
     public void SelectViewType(ComicFilterModel.ViewTypeEnum viewType)
     {
         bool modified = false;
 
-        if (_filterModel.LastFilter.ViewType != viewType)
+        ComicFilterModel.ExternalFilterModel lastFilter = EnsureLastFilter();
+        if (lastFilter.ViewType != viewType)
         {
             modified = true;
-            _filterModel.LastFilter.ViewType = viewType;
+            lastFilter.ViewType = viewType;
         }
 
         if (modified)
@@ -59,24 +58,30 @@ internal class HomePageViewModel
         UpdateFiltersInternal();
     }
 
-    public void SelectSortBy(SortByUIModel model)
+    public void SelectSortBy(SortByUIModel? model)
     {
+        if (model == null)
+        {
+            return;
+        }
+
         bool modified = false;
 
+        ComicFilterModel.ExternalFilterModel lastFilter = EnsureLastFilter();
         if (model.IsProperty)
         {
-            if (_filterModel.LastFilter.SortBy.Type != model.Property)
+            if (lastFilter.SortBy != model.Property)
             {
                 modified = true;
-                _filterModel.LastFilter.SortBy.Type = model.Property;
+                lastFilter.SortBy = model.Property;
             }
         }
         else
         {
-            if (_filterModel.LastFilter.SortByAscending != model.IsAscending)
+            if (lastFilter.SortByAscending != model.IsAscending)
             {
                 modified = true;
-                _filterModel.LastFilter.SortByAscending = model.IsAscending;
+                lastFilter.SortByAscending = model.IsAscending;
             }
         }
 
@@ -84,37 +89,35 @@ internal class HomePageViewModel
         {
             _filterModel.LastFilterModified = true;
         }
+
         UpdateFiltersInternal();
     }
 
-    public void SelectGroupBy(ComicFilterModel.PropertyTypeEnum propertyType)
+    public void SelectGroupBy(ComicFilterModel.ExternalPropertyModel? model)
     {
-        if (_filterModel.LastFilter.GroupBy == null)
+        if (model == null)
         {
-            _filterModel.LastFilter.GroupBy = new ComicFilterModel.ExternalPropertyModel
-            {
-                Type = propertyType,
-            };
+            return;
+        }
+
+        ComicFilterModel.ExternalFilterModel lastFilter = EnsureLastFilter();
+        if (lastFilter.GroupBy != model)
+        {
+            lastFilter.GroupBy = model;
         }
         else
         {
-            if (_filterModel.LastFilter.GroupBy.Type != propertyType)
-            {
-                _filterModel.LastFilter.GroupBy.Type = propertyType;
-            }
-            else
-            {
-                _filterModel.LastFilter.GroupBy = null;
-            }
+            lastFilter.GroupBy = null;
         }
 
         _filterModel.LastFilterModified = true;
         UpdateFiltersInternal();
     }
 
-    public void SelectFilterPreset(string name)
+    public void SelectFilterPreset(string? name)
     {
-        ComicFilterModel.ExternalFilterModel filter = _filterModel.Filters.Find(x => x.Name == name);
+        name ??= "";
+        ComicFilterModel.ExternalFilterModel? filter = _filterModel.Filters.Find(x => x.Name == name);
         if (filter == null)
         {
             return;
@@ -132,26 +135,23 @@ internal class HomePageViewModel
 
     private async Task ReloadFilters()
     {
-        _filterModel = await ComicFilterModel.Instance.GetModel();
+        _filterModel = await ComicFilterModel.Instance.GetModel() ?? new();
         UpdateFiltersInternal();
     }
 
     private void UpdateFiltersInternal()
     {
-        ComicFilterModel.ExternalModel dataModel = _filterModel;
-        dataModel ??= new();
-        _filterModel = dataModel;
+        // Validate and save
 
-        List<ComicFilterModel.ExternalFilterModel> filters = dataModel.Filters;
+        List<ComicFilterModel.ExternalFilterModel> filters = _filterModel.Filters;
         if (filters == null || filters.Count == 0)
         {
             filters = [CreateDefaultFilter()];
-            dataModel.Filters = filters;
+            _filterModel.Filters = filters;
         }
 
-        ComicFilterModel.ExternalFilterModel lastFilter = dataModel.LastFilter;
-        lastFilter ??= filters[0].Clone();
-        dataModel.LastFilter = lastFilter;
+        ComicFilterModel.ExternalFilterModel? lastFilter = _filterModel.LastFilter ?? filters[0].Clone();
+        _filterModel.LastFilter = lastFilter;
 
         ComicFilterModel.ExternalPropertyModel sortBy = lastFilter.SortBy;
         sortBy ??= new()
@@ -160,8 +160,10 @@ internal class HomePageViewModel
         };
         lastFilter.SortBy = sortBy;
 
-        ComicFilterModel.ExternalPropertyModel groupBy = lastFilter.GroupBy;
+        ComicFilterModel.ExternalPropertyModel? groupBy = lastFilter.GroupBy;
         _ = ComicFilterModel.Instance.UpdateModel(_filterModel);
+
+        // Update UI
 
         var viewTypeDropDown = new DropDownButtonModel<ComicFilterModel.ViewTypeEnum>
         {
@@ -169,7 +171,7 @@ internal class HomePageViewModel
             Items = _viewTypes.ConvertAll(x => CreateMenuFlyoutItem(ViewTypeToDisplayName(x), x)),
         };
 
-        List<MenuFlyoutItemModel<SortByUIModel>> sortByItems = _properties.ConvertAll(x => CreateToggleMenuFlyoutItem(PropertyTypeToDisplayName(x), x == sortBy.Type, new SortByUIModel
+        List<MenuFlyoutItemModel<SortByUIModel>> sortByItems = GetProperties().ConvertAll(x => CreateToggleMenuFlyoutItem(PropertyToDisplayName(x), x.Type == sortBy.Type, new SortByUIModel
         {
             IsProperty = true,
             IsAscending = lastFilter.SortByAscending,
@@ -185,7 +187,6 @@ internal class HomePageViewModel
         {
             IsProperty = false,
             IsAscending = false,
-            Property = sortBy.Type,
         }));
         var sortByDropDown = new DropDownButtonModel<SortByUIModel>
         {
@@ -193,14 +194,14 @@ internal class HomePageViewModel
             Items = sortByItems,
         };
 
-        var groupByDropDown = new DropDownButtonModel<ComicFilterModel.PropertyTypeEnum>
+        var groupByDropDown = new DropDownButtonModel<ComicFilterModel.ExternalPropertyModel>
         {
             Name = "Group by",
-            Items = _properties.ConvertAll(x => CreateToggleMenuFlyoutItem(PropertyTypeToDisplayName(x), groupBy == null ? false : x == groupBy.Type, x)),
+            Items = GetProperties().ConvertAll(x => CreateToggleMenuFlyoutItem(PropertyToDisplayName(x), groupBy == null ? false : x.Type == groupBy.Type, x)),
         };
 
         string lastFilterName = lastFilter.Name ?? "";
-        if (dataModel.LastFilterModified)
+        if (_filterModel.LastFilterModified)
         {
             lastFilterName += " *";
         }
@@ -218,6 +219,26 @@ internal class HomePageViewModel
             FilterPresetDropDown = filterPresetDropDown,
         };
         FilterLiveData.Emit(uiModel);
+    }
+
+    private ComicFilterModel.ExternalFilterModel EnsureLastFilter()
+    {
+        ComicFilterModel.ExternalFilterModel filter = _filterModel.LastFilter ?? CreateDefaultFilter();
+        _filterModel.LastFilter = filter;
+        return filter;
+    }
+
+    private List<ComicFilterModel.ExternalPropertyModel> GetProperties()
+    {
+        var properties = new List<ComicFilterModel.ExternalPropertyModel>();
+        foreach (ComicFilterModel.PropertyTypeEnum propertyType in _properties)
+        {
+            properties.Add(new ComicFilterModel.ExternalPropertyModel
+            {
+                Type = propertyType,
+            });
+        }
+        return properties;
     }
 
     private ComicFilterModel.ExternalFilterModel CreateDefaultFilter()
@@ -272,12 +293,13 @@ internal class HomePageViewModel
         };
     }
 
-    private string PropertyTypeToDisplayName(ComicFilterModel.PropertyTypeEnum propertyType)
+    private string PropertyToDisplayName(ComicFilterModel.ExternalPropertyModel property)
     {
-        return propertyType switch
+        return property.Type switch
         {
             ComicFilterModel.PropertyTypeEnum.Title => "Title",
             ComicFilterModel.PropertyTypeEnum.Progress => "Progress",
+            ComicFilterModel.PropertyTypeEnum.Tag => $"Tag: {property.Name}",
             _ => "Unknown"
         };
     }
@@ -294,31 +316,31 @@ internal class HomePageViewModel
 
     public class FilterModel
     {
-        public DropDownButtonModel<ComicFilterModel.ViewTypeEnum> ViewTypeDropDown { get; set; }
-        public DropDownButtonModel<SortByUIModel> SortByDropDown { get; set; }
-        public DropDownButtonModel<ComicFilterModel.PropertyTypeEnum> GroupByDropDown { get; set; }
-        public DropDownButtonModel<string> FilterPresetDropDown { get; set; }
+        public DropDownButtonModel<ComicFilterModel.ViewTypeEnum> ViewTypeDropDown { get; set; } = new();
+        public DropDownButtonModel<SortByUIModel> SortByDropDown { get; set; } = new();
+        public DropDownButtonModel<ComicFilterModel.ExternalPropertyModel> GroupByDropDown { get; set; } = new();
+        public DropDownButtonModel<string> FilterPresetDropDown { get; set; } = new();
     }
 
     public class DropDownButtonModel<T>
     {
-        public string Name { get; set; }
-        public List<MenuFlyoutItemModel<T>> Items { get; set; }
+        public string Name { get; set; } = "";
+        public List<MenuFlyoutItemModel<T>> Items { get; set; } = [];
     }
 
     public class MenuFlyoutItemModel<T>
     {
         public bool IsSeperator { get; set; }
-        public string Name { get; set; }
+        public string Name { get; set; } = "";
         public bool CanToggle { get; set; }
         public bool Toggled { get; set; }
-        public T DataContext { get; set; }
+        public T? DataContext { get; set; }
     }
 
     public class SortByUIModel
     {
         public bool IsProperty { get; set; }
         public bool IsAscending { get; set; }
-        public ComicFilterModel.PropertyTypeEnum Property { get; set; }
+        public ComicFilterModel.ExternalPropertyModel Property { get; set; } = new();
     }
 }

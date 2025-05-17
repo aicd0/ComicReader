@@ -1,8 +1,6 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-#nullable disable
-
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -93,7 +91,7 @@ internal sealed partial class HomePage : BasePage
         BindDropDownButton(FilterPresetDropDownButton, model.FilterPresetDropDown, ViewModel.SelectFilterPreset);
     }
 
-    private void BindDropDownButton<T>(DropDownButton button, HomePageViewModel.DropDownButtonModel<T> model, Action<T> clickHandler)
+    private void BindDropDownButton<T>(DropDownButton button, HomePageViewModel.DropDownButtonModel<T> model, Action<T?> clickHandler)
     {
         if (button == null)
         {
@@ -299,8 +297,12 @@ internal sealed partial class HomePage : BasePage
     // Events
     private void OnAdaptiveGridViewContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
     {
-        var item = args.Item as ComicItemViewModel;
         var viewHolder = args.ItemContainer.ContentTemplateRoot as ComicItemVertical;
+        if (viewHolder == null || args.Item is not ComicItemViewModel item)
+        {
+            return;
+        }
+
         if (args.InRecycleQueue)
         {
             item.Image.ImageSet = false;

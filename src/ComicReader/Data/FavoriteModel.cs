@@ -46,23 +46,12 @@ class FavoriteModel : JsonDatabase<FavoriteModel.JsonModel>
 
     public async Task<ExternalModel> GetModel()
     {
-        if (!await TryInitialize())
-        {
-            return null;
-        }
-
-        ExternalModel model = Read(ConvertToExternalModel);
-        return model;
+        return await Read(ConvertToExternalModel);
     }
 
     public async Task UpdateModel(ExternalModel model)
     {
-        if (!await TryInitialize())
-        {
-            return;
-        }
-
-        Write(m =>
+        await Write(m =>
         {
             m.Children.Clear();
             foreach (ExternalNodeModel node in model.Children)
@@ -71,28 +60,17 @@ class FavoriteModel : JsonDatabase<FavoriteModel.JsonModel>
             }
             return true;
         });
-
-        Save();
+        await Save();
     }
 
     public async Task<ExternalNodeModel> FromId(long id)
     {
-        if (!await TryInitialize())
-        {
-            return null;
-        }
-
-        JsonNodeModel model = Read(model => FromIdNoLock(model, id));
+        JsonNodeModel model = await Read(model => FromIdNoLock(model, id));
         return ConvertToExternalModel(model);
     }
 
     public async Task<bool> RemoveWithId(long id, bool sendEvent)
     {
-        if (!await TryInitialize())
-        {
-            return false;
-        }
-
         bool helper(List<JsonNodeModel> e)
         {
             for (int i = 0; i < e.Count; ++i)
@@ -122,8 +100,8 @@ class FavoriteModel : JsonDatabase<FavoriteModel.JsonModel>
             return false;
         }
 
-        bool result = Write(model => helper(model.Children));
-        Save();
+        bool result = await Write(model => helper(model.Children));
+        await Save();
 
         if (sendEvent)
         {
@@ -134,12 +112,7 @@ class FavoriteModel : JsonDatabase<FavoriteModel.JsonModel>
 
     public async Task Add(long id, string title, bool sendEvent)
     {
-        if (!await TryInitialize())
-        {
-            return;
-        }
-
-        bool updated = Write(delegate (JsonModel model)
+        bool updated = await Write(delegate (JsonModel model)
         {
             JsonNodeModel node = FromIdNoLock(model, id);
             if (node != null)
@@ -158,7 +131,7 @@ class FavoriteModel : JsonDatabase<FavoriteModel.JsonModel>
 
         if (updated)
         {
-            Save();
+            await Save();
 
             if (sendEvent)
             {
