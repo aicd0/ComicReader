@@ -5,9 +5,11 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Threading;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
+using ComicReader.Common.DebugTools;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Common.Threading;
 using ComicReader.Data;
@@ -19,6 +21,8 @@ namespace ComicReader.Views.Home;
 
 internal class HomePageViewModel : INotifyPropertyChanged
 {
+    private const string TAG = nameof(HomePageViewModel);
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public MutableLiveData<FilterModel> FilterLiveData = new();
@@ -39,9 +43,12 @@ internal class HomePageViewModel : INotifyPropertyChanged
     }
 
     private ComicFilterModel.ExternalModel _filterModel = new();
+    private readonly List<ComicItemViewModel> _comicItems = [];
 
-    private readonly ITaskDispatcher _updateDispatcher = TaskDispatcher.DefaultQueue;
-    private bool _updateSubmitted = false;
+    private readonly ITaskDispatcher _sharedDispatcher = TaskDispatcher.DefaultQueue;
+    private int _updateLibrarySubmitted = 0;
+    private int _updateFilterSubmitted = 0;
+    private int _updateComicSubmitted = 0;
 
     private readonly List<ComicFilterModel.ViewTypeEnum> _viewTypes = [
         ComicFilterModel.ViewTypeEnum.Large,
@@ -53,39 +60,77 @@ internal class HomePageViewModel : INotifyPropertyChanged
         ComicFilterModel.PropertyTypeEnum.Progress,
     ];
 
+    /// <summary>
+    /// Initializes the view model.
+    /// </summary>
+    /// <remarks>
+    /// Must be called on the UI thread.
+    /// </remarks>
     public void Initialize()
     {
-        _ = InitializeInternal();
+        ScheduleUpdateFilters(true);
+        ScheduleUpdateLibrary();
     }
 
+    /// <summary>
+    /// Reloads and applies the current filters.
+    /// </summary>
+    /// <remarks>
+    /// Must be called on the UI thread.
+    /// </remarks>
     public void UpdateFilters()
     {
-        _ = ReloadFilters();
+        ScheduleUpdateFilters(true);
     }
 
-    public ComicFilterModel.ExternalFilterModel GetFilter()
+    /// <summary>
+    /// Gets the current filter model.
+    /// </summary>
+    /// <returns>The current <see cref="ComicFilterModel.ExternalFilterModel"/>.</returns>
+    /// <remarks>
+    /// Must be called on the UI thread.
+    /// </remarks>
+    public async Task<ComicFilterModel.ExternalFilterModel> GetFilter()
     {
-        return _filterModel?.LastFilter ?? new();
+        return await ThreadingUtils.Submit(_sharedDispatcher, "GetFilter", () =>
+        {
+            return _filterModel?.LastFilter?.Clone() ?? new();
+        });
     }
 
+    /// <summary>
+    /// Selects the view type for displaying comics.
+    /// </summary>
+    /// <param name="viewType">The view type to select.</param>
+    /// <remarks>
+    /// Must be called on the UI thread.
+    /// </remarks>
     public void SelectViewType(ComicFilterModel.ViewTypeEnum viewType)
     {
-        bool modified = false;
-
-        ComicFilterModel.ExternalFilterModel lastFilter = EnsureLastFilter();
-        if (lastFilter.ViewType != viewType)
+        _sharedDispatcher.Submit("SelectViewType", delegate
         {
-            modified = true;
-            lastFilter.ViewType = viewType;
-        }
-
-        if (modified)
-        {
-            _filterModel.LastFilterModified = true;
-        }
-        UpdateFiltersInternal();
+            bool modified = false;
+            ComicFilterModel.ExternalFilterModel lastFilter = EnsureLastFilterNoLock();
+            if (lastFilter.ViewType != viewType)
+            {
+                modified = true;
+                lastFilter.ViewType = viewType;
+            }
+            if (modified)
+            {
+                _filterModel.LastFilterModified = true;
+                ScheduleUpdateFilters(false);
+            }
+        });
     }
 
+    /// <summary>
+    /// Selects the sorting method for comics.
+    /// </summary>
+    /// <param name="model">The sorting model to apply.</param>
+    /// <remarks>
+    /// Must be called on the UI thread.
+    /// </remarks>
     public void SelectSortBy(SortByUIModel? model)
     {
         if (model == null)
@@ -93,34 +138,41 @@ internal class HomePageViewModel : INotifyPropertyChanged
             return;
         }
 
-        bool modified = false;
-
-        ComicFilterModel.ExternalFilterModel lastFilter = EnsureLastFilter();
-        if (model.IsProperty)
+        _sharedDispatcher.Submit("SelectSortBy", delegate
         {
-            if (lastFilter.SortBy != model.Property)
+            bool modified = false;
+            ComicFilterModel.ExternalFilterModel lastFilter = EnsureLastFilterNoLock();
+            if (model.IsProperty)
             {
-                modified = true;
-                lastFilter.SortBy = model.Property;
+                if (!model.Property.Equals(lastFilter.SortBy))
+                {
+                    modified = true;
+                    lastFilter.SortBy = model.Property;
+                }
             }
-        }
-        else
-        {
-            if (lastFilter.SortByAscending != model.IsAscending)
+            else
             {
-                modified = true;
-                lastFilter.SortByAscending = model.IsAscending;
+                if (lastFilter.SortByAscending != model.IsAscending)
+                {
+                    modified = true;
+                    lastFilter.SortByAscending = model.IsAscending;
+                }
             }
-        }
-
-        if (modified)
-        {
-            _filterModel.LastFilterModified = true;
-        }
-
-        UpdateFiltersInternal();
+            if (modified)
+            {
+                _filterModel.LastFilterModified = true;
+                ScheduleUpdateFilters(false);
+            }
+        });
     }
 
+    /// <summary>
+    /// Selects the property to group comics by.
+    /// </summary>
+    /// <param name="model">The property model to group by.</param>
+    /// <remarks>
+    /// Must be called on the UI thread.
+    /// </remarks>
     public void SelectGroupBy(ComicFilterModel.ExternalPropertyModel? model)
     {
         if (model == null)
@@ -128,64 +180,102 @@ internal class HomePageViewModel : INotifyPropertyChanged
             return;
         }
 
-        ComicFilterModel.ExternalFilterModel lastFilter = EnsureLastFilter();
-        if (lastFilter.GroupBy != model)
+        _sharedDispatcher.Submit("SelectGroupBy", delegate
         {
-            lastFilter.GroupBy = model;
-        }
-        else
-        {
-            lastFilter.GroupBy = null;
-        }
-
-        _filterModel.LastFilterModified = true;
-        UpdateFiltersInternal();
-    }
-
-    public void SelectFilterPreset(string? name)
-    {
-        name ??= "";
-        ComicFilterModel.ExternalFilterModel? filter = _filterModel.Filters.Find(x => x.Name == name);
-        if (filter == null)
-        {
-            return;
-        }
-        _filterModel.LastFilter = filter.Clone();
-
-        _filterModel.LastFilterModified = false;
-        UpdateFiltersInternal();
-    }
-
-    public void UpdateLibrary()
-    {
-        if (_updateSubmitted)
-        {
-            return;
-        }
-        _updateSubmitted = true;
-        _updateDispatcher.Submit("UpdateLibrary", delegate
-        {
-            _updateSubmitted = false;
-            UpdateLibraryInternal().Wait();
+            ComicFilterModel.ExternalFilterModel lastFilter = EnsureLastFilterNoLock();
+            if (model.Equals(lastFilter.GroupBy))
+            {
+                lastFilter.GroupBy = null;
+            }
+            else
+            {
+                lastFilter.GroupBy = model;
+            }
+            _filterModel.LastFilterModified = true;
+            ScheduleUpdateFilters(false);
         });
     }
 
-    private async Task UpdateLibraryInternal()
+    /// <summary>
+    /// Selects a filter preset by name.
+    /// </summary>
+    /// <param name="name">The name of the filter preset.</param>
+    /// <remarks>
+    /// Must be called on the UI thread.
+    /// </remarks>
+    public void SelectFilterPreset(string? name)
     {
-        // Get recent visited comics.
-        List<Tuple<long, DateTimeOffset>> records = new();
+        name ??= "";
+        _sharedDispatcher.Submit("SelectFilterPreset", delegate
+        {
+            ComicFilterModel.ExternalFilterModel? filter = _filterModel.Filters.Find(x => x.Name == name);
+            if (filter == null)
+            {
+                return;
+            }
+            _filterModel.LastFilter = filter.Clone();
+            _filterModel.LastFilterModified = false;
+            ScheduleUpdateFilters(false);
+        });
+    }
+
+    /// <summary>
+    /// Updates the comic library and refreshes the displayed items.
+    /// </summary>
+    /// <remarks>
+    /// Must be called on the UI thread.
+    /// </remarks>
+    public void UpdateLibrary()
+    {
+        ScheduleUpdateLibrary();
+    }
+
+    private void ScheduleUpdateLibrary()
+    {
+        if (Interlocked.CompareExchange(ref _updateLibrarySubmitted, 1, 0) == 1)
+        {
+            return;
+        }
+        _sharedDispatcher.Submit("UpdateLibrary", delegate
+        {
+            Interlocked.Exchange(ref _updateLibrarySubmitted, 0);
+            UpdateLibraryNoLock().Wait();
+        });
+    }
+
+    private void ScheduleUpdateFilters(bool reloadFromDatabase)
+    {
+        if (Interlocked.CompareExchange(ref _updateFilterSubmitted, 1, 0) == 1)
+        {
+            return;
+        }
+        _sharedDispatcher.Submit("UpdateFilters", delegate
+        {
+            Interlocked.Exchange(ref _updateFilterSubmitted, 0);
+            UpdateFiltersNoLock(reloadFromDatabase).Wait();
+        });
+    }
+
+    private void ScheduleUpdateComics()
+    {
+        if (Interlocked.CompareExchange(ref _updateComicSubmitted, 1, 0) == 1)
+        {
+            return;
+        }
+        _sharedDispatcher.Submit("UpdateComics", delegate
+        {
+            Interlocked.Exchange(ref _updateComicSubmitted, 0);
+            UpdateComicsNoLock().Wait();
+        });
+    }
+
+    private async Task UpdateLibraryNoLock()
+    {
+        Logger.I(TAG, "UpdateLibraryNoLock");
+
+        List<Tuple<long, DateTimeOffset>> records = [];
         await ComicData.EnqueueCommand(delegate
         {
-            // Use ORDER BY here will cause a crash (especially for a large result set)
-            // due to https://github.com/dotnet/efcore/issues/20044.
-            // Switch from Microsoft.Data.Sqlite to SQLitePCLRaw.bundle_winsqlite3 will
-            // solve the issue but the app then cannot not be built in Release mode.
-            // (See https://github.com/ericsink/SQLitePCL.raw/issues/346)
-            // A workaround here is to sort the data manually.
-
-            // command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.ComicTable +
-            //     " ORDER BY " + ComicData.Field.LastVisit + " DESC";
-
             var command = new SelectCommand<ComicTable>(ComicTable.Instance);
             SelectCommand<ComicTable>.IToken<long> idToken = command.PutQueryInt64(ComicTable.ColumnId);
             SelectCommand<ComicTable>.IToken<DateTimeOffset> lastVisitToken = command.PutQueryDateTimeOffset(ComicTable.ColumnLastVisit);
@@ -200,63 +290,42 @@ internal class HomePageViewModel : INotifyPropertyChanged
                 ));
             }
         }, "HomeLoadLibrary");
-        records.Sort(delegate (Tuple<long, DateTimeOffset> x, Tuple<long, DateTimeOffset> y)
-        {
-            return y.Item2.CompareTo(x.Item2);
-        });
 
-        // Convert to view models.
         var comicItems = new List<ComicItemViewModel>();
-
         foreach (Tuple<long, DateTimeOffset> record in records)
         {
             ComicData comic = await ComicData.FromId(record.Item1, "HomeLoadComic");
-
             if (comic == null)
             {
                 continue;
             }
-
             var model = new ComicItemViewModel();
             model.Update(comic);
             comicItems.Add(model);
         }
 
-        await MainThreadUtils.RunInMainThread(delegate
-        {
-            LibraryEmptyVisible = comicItems.Count == 0;
-            GroupingEnabledLiveData.Emit(false);
+        _comicItems.Clear();
+        _comicItems.AddRange(comicItems);
 
-            C1<ComicItemViewModel>.UpdateCollection(UngroupedComicItems, comicItems,
-                (ComicItemViewModel x, ComicItemViewModel y) =>
-                x.Comic.Title == y.Comic.Title &&
-                x.Rating == y.Rating &&
-                x.Progress == y.Progress &&
-                x.IsFavorite == y.IsFavorite);
-        });
+        ScheduleUpdateComics();
     }
 
-    private async Task InitializeInternal()
+    private async Task UpdateFiltersNoLock(bool reloadFromDatabase)
     {
-        await ReloadFilters();
-    }
+        Logger.I(TAG, "UpdateFiltersNoLock");
 
-    private async Task ReloadFilters()
-    {
-        _filterModel = await ComicFilterModel.Instance.GetModel() ?? new();
-        UpdateFiltersInternal();
-    }
-
-    private void UpdateFiltersInternal()
-    {
         // Validate and save
-
+        if (reloadFromDatabase || _filterModel == null)
+        {
+            _filterModel = await ComicFilterModel.Instance.GetModel() ?? new();
+        }
         List<ComicFilterModel.ExternalFilterModel> filters = _filterModel.Filters;
         if (filters == null || filters.Count == 0)
         {
             filters = [CreateDefaultFilter()];
             _filterModel.Filters = filters;
         }
+        filters.Sort((a, b) => string.Compare(a.Name, b.Name, StringComparison.Ordinal));
 
         ComicFilterModel.ExternalFilterModel? lastFilter = _filterModel.LastFilter ?? filters[0].Clone();
         _filterModel.LastFilter = lastFilter;
@@ -272,14 +341,14 @@ internal class HomePageViewModel : INotifyPropertyChanged
         _ = ComicFilterModel.Instance.UpdateModel(_filterModel);
 
         // Update UI
-
         var viewTypeDropDown = new DropDownButtonModel<ComicFilterModel.ViewTypeEnum>
         {
             Name = ViewTypeToDisplayName(lastFilter.ViewType),
             Items = _viewTypes.ConvertAll(x => CreateMenuFlyoutItem(ViewTypeToDisplayName(x), x)),
         };
 
-        List<MenuFlyoutItemModel<SortByUIModel>> sortByItems = GetProperties().ConvertAll(x => CreateToggleMenuFlyoutItem(PropertyToDisplayName(x), x.Type == sortBy.Type, new SortByUIModel
+        List<ComicFilterModel.ExternalPropertyModel> properties = GetProperties();
+        List<MenuFlyoutItemModel<SortByUIModel>> sortByItems = properties.ConvertAll(x => CreateToggleMenuFlyoutItem(PropertyToDisplayName(x), x.Type == sortBy.Type, new SortByUIModel
         {
             IsProperty = true,
             IsAscending = lastFilter.SortByAscending,
@@ -305,7 +374,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
         var groupByDropDown = new DropDownButtonModel<ComicFilterModel.ExternalPropertyModel>
         {
             Name = "Group by",
-            Items = GetProperties().ConvertAll(x => CreateToggleMenuFlyoutItem(PropertyToDisplayName(x), groupBy == null ? false : x.Type == groupBy.Type, x)),
+            Items = properties.ConvertAll(x => CreateToggleMenuFlyoutItem(PropertyToDisplayName(x), groupBy == null ? false : x.Type == groupBy.Type, x)),
         };
 
         string lastFilterName = lastFilter.Name ?? "";
@@ -327,9 +396,33 @@ internal class HomePageViewModel : INotifyPropertyChanged
             FilterPresetDropDown = filterPresetDropDown,
         };
         FilterLiveData.Emit(uiModel);
+
+        ScheduleUpdateComics();
     }
 
-    private ComicFilterModel.ExternalFilterModel EnsureLastFilter()
+    private async Task UpdateComicsNoLock()
+    {
+        Logger.I(TAG, "UpdateComicsNoLock");
+
+        List<ComicItemViewModel> comics = [];
+        comics.AddRange(_comicItems);
+        await MainThreadUtils.RunInMainThread(delegate
+        {
+            _comicItems.Clear();
+            _comicItems.AddRange(comics);
+            LibraryEmptyVisible = comics.Count == 0;
+            GroupingEnabledLiveData.Emit(false);
+
+            C1<ComicItemViewModel>.UpdateCollection(UngroupedComicItems, comics,
+                (ComicItemViewModel x, ComicItemViewModel y) =>
+                x.Comic.Title == y.Comic.Title &&
+                x.Rating == y.Rating &&
+                x.Progress == y.Progress &&
+                x.IsFavorite == y.IsFavorite);
+        });
+    }
+
+    private ComicFilterModel.ExternalFilterModel EnsureLastFilterNoLock()
     {
         ComicFilterModel.ExternalFilterModel filter = _filterModel.LastFilter ?? CreateDefaultFilter();
         _filterModel.LastFilter = filter;

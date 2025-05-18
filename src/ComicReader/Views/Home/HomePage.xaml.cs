@@ -42,16 +42,19 @@ internal sealed partial class HomePage : BasePage
     // Lifecycle
     //
 
+    protected override void OnStart(PageBundle bundle)
+    {
+        base.OnStart(bundle);
+        GetMainPageAbility().SetTitle(StringResourceProvider.GetResourceString("NewTab"));
+        GetMainPageAbility().SetIcon(new SymbolIconSource() { Symbol = Symbol.Document });
+        ViewModel.Initialize();
+    }
+
     protected override void OnResume()
     {
         base.OnResume();
-        GetMainPageAbility().SetTitle(StringResourceProvider.GetResourceString("NewTab"));
-        GetMainPageAbility().SetIcon(new SymbolIconSource() { Symbol = Symbol.Document });
-
         ComicData.OnUpdated += OnComicDataUpdated;
         ObserveData();
-        ViewModel.Initialize();
-        ViewModel.UpdateLibrary();
     }
 
     protected override void OnPause()
@@ -299,7 +302,7 @@ internal sealed partial class HomePage : BasePage
     {
         C0.Run(async delegate
         {
-            var dialog = new EditFilterDialog(ViewModel.GetFilter());
+            var dialog = new EditFilterDialog(await ViewModel.GetFilter());
             _ = await C0.ShowDialogAsync(dialog, XamlRoot);
             ViewModel.UpdateFilters();
         });
