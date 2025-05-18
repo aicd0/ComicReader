@@ -12,6 +12,7 @@ using System.Xml.Serialization;
 using ComicReader.Common;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Common.Threading;
+using ComicReader.Data.Models;
 
 namespace ComicReader.Data.Legacy;
 

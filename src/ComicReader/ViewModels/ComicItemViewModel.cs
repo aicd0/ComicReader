@@ -7,8 +7,8 @@ using System;
 using System.ComponentModel;
 
 using ComicReader.Common;
-using ComicReader.Data;
-using ComicReader.Data.Comic;
+using ComicReader.Data.Models;
+using ComicReader.Data.Models.Comic;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;

@@ -17,9 +17,10 @@ using ComicReader.Common.AppEnvironment;
 using ComicReader.Common.DebugTools;
 using ComicReader.Common.PageBase;
 using ComicReader.Common.Threading;
-using ComicReader.Data;
-using ComicReader.Data.Comic;
 using ComicReader.Data.Legacy;
+using ComicReader.Data.Models;
+using ComicReader.Data.Models.Comic;
+using ComicReader.Data.Tables;
 using ComicReader.Views.Main;
 
 using Microsoft.Data.Sqlite;

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 using Windows.Storage.Streams;
 
-namespace ComicReader.Data.Comic;
+namespace ComicReader.Data.Models.Comic;
 
 internal interface IComicConnection : IDisposable
 {

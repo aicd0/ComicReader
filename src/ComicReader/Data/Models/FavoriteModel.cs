@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using ComicReader.Common;
 using ComicReader.Common.Lifecycle;
 
-namespace ComicReader.Data;
+namespace ComicReader.Data.Models;
 
 class FavoriteModel : JsonDatabase<FavoriteModel.JsonModel>
 {

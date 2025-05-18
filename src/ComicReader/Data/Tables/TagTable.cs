@@ -3,7 +3,7 @@
 
 using ComicReader.Data.SqlHelpers;
 
-namespace ComicReader.Data;
+namespace ComicReader.Data.Tables;
 
 internal class TagTable : ITable
 {

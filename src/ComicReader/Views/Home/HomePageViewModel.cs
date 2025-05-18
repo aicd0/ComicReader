@@ -12,9 +12,10 @@ using ComicReader.Common;
 using ComicReader.Common.DebugTools;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Common.Threading;
-using ComicReader.Data;
-using ComicReader.Data.Comic;
+using ComicReader.Data.Models;
+using ComicReader.Data.Models.Comic;
 using ComicReader.Data.SqlHelpers;
+using ComicReader.Data.Tables;
 using ComicReader.ViewModels;
 
 namespace ComicReader.Views.Home;

@@ -10,8 +10,8 @@ using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Common.Native;
-using ComicReader.Data;
-using ComicReader.Data.Comic;
+using ComicReader.Data.Models;
+using ComicReader.Data.Models.Comic;
 using ComicReader.Helpers.Navigation;
 using ComicReader.Views.Main;
 

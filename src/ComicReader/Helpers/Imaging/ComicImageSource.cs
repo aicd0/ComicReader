@@ -4,7 +4,7 @@
 using System.Threading.Tasks;
 
 using ComicReader.Common.Imaging;
-using ComicReader.Data.Comic;
+using ComicReader.Data.Models.Comic;
 
 using Windows.Storage.Streams;
 

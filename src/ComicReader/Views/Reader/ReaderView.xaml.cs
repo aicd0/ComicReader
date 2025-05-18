@@ -12,8 +12,8 @@ using ComicReader.Common;
 using ComicReader.Common.DebugTools;
 using ComicReader.Common.Imaging;
 using ComicReader.Common.Threading;
-using ComicReader.Data;
 using ComicReader.Data.Legacy;
+using ComicReader.Data.Models;
 
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;

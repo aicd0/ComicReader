@@ -10,8 +10,8 @@ using ComicReader.Common;
 using ComicReader.Common.AppEnvironment;
 using ComicReader.Common.DebugTools;
 using ComicReader.Data;
-using ComicReader.Data.Comic;
 using ComicReader.Data.Legacy;
+using ComicReader.Data.Models.Comic;
 
 using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppLifecycle;

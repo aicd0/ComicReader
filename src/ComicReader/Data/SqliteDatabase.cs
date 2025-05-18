@@ -9,8 +9,8 @@ using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Common.DebugTools;
-using ComicReader.Data.Comic;
 using ComicReader.Data.Legacy;
+using ComicReader.Data.Tables;
 
 using Microsoft.Data.Sqlite;
 

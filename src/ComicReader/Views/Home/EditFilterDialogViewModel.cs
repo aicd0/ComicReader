@@ -6,7 +6,7 @@
 using System.Threading.Tasks;
 
 using ComicReader.Common.Lifecycle;
-using ComicReader.Data;
+using ComicReader.Data.Models;
 
 namespace ComicReader.Views.Home;
 

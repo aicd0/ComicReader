@@ -14,7 +14,7 @@ using ComicReader.Common.DebugTools;
 using Windows.Storage;
 using Windows.Storage.Streams;
 
-namespace ComicReader.Data.Comic;
+namespace ComicReader.Data.Models.Comic;
 
 internal class ComicArchiveData : ComicData
 {

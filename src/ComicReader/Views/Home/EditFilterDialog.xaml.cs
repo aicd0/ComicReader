@@ -1,7 +1,7 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-using ComicReader.Data;
+using ComicReader.Data.Models;
 
 using Microsoft.UI.Xaml.Controls;
 

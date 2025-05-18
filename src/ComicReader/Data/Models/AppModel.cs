@@ -9,9 +9,9 @@ using System.Threading;
 using ComicReader.Common;
 using ComicReader.Common.DebugTools;
 using ComicReader.Common.KVStorage;
-using ComicReader.Data.Comic;
+using ComicReader.Data.Models.Comic;
 
-namespace ComicReader.Data;
+namespace ComicReader.Data.Models;
 
 static class AppModel
 {

@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 using ComicReader.Common.Threading;
-using ComicReader.Data.Comic;
+using ComicReader.Data.Models.Comic;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;

@@ -16,6 +16,7 @@ using ComicReader.Common.DebugTools;
 using ComicReader.Common.Threading;
 using ComicReader.Data.Legacy;
 using ComicReader.Data.SqlHelpers;
+using ComicReader.Data.Tables;
 
 using LiteDB;
 
@@ -23,7 +24,7 @@ using Microsoft.Data.Sqlite;
 
 using Windows.Storage;
 
-namespace ComicReader.Data.Comic;
+namespace ComicReader.Data.Models.Comic;
 
 internal abstract class ComicData
 {
