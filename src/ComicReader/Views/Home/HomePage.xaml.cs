@@ -126,38 +126,55 @@ internal sealed partial class HomePage : BasePage
         menuFlyout.Items.Clear();
         foreach (HomePageViewModel.MenuFlyoutItemModel<T> item in model.Items)
         {
-            MenuFlyoutItemBase menuItem;
-            if (item.IsSeperator)
-            {
-                menuItem = new MenuFlyoutSeparator();
-            }
-            else if (item.CanToggle)
-            {
-                var actualMenuItem = new ToggleMenuFlyoutItem
-                {
-                    Text = item.Name,
-                    IsChecked = item.Toggled,
-                };
-                actualMenuItem.Click += delegate (object sender, RoutedEventArgs e)
-                {
-                    clickHandler(item.DataContext);
-                };
-                menuItem = actualMenuItem;
-            }
-            else
-            {
-                var actualMenuItem = new MenuFlyoutItem
-                {
-                    Text = item.Name,
-                };
-                actualMenuItem.Click += delegate (object sender, RoutedEventArgs e)
-                {
-                    clickHandler(item.DataContext);
-                };
-                menuItem = actualMenuItem;
-            }
-            menuFlyout.Items.Add(menuItem);
+            menuFlyout.Items.Add(CreateMenuFlyoutItem(item, clickHandler));
         }
+    }
+
+    private MenuFlyoutItemBase CreateMenuFlyoutItem<T>(HomePageViewModel.MenuFlyoutItemModel<T> item, Action<T?> clickHandler)
+    {
+        MenuFlyoutItemBase menuItem;
+        if (item.IsSeperator)
+        {
+            menuItem = new MenuFlyoutSeparator();
+        }
+        else if (item.SubItems != null)
+        {
+            var actualMenuItem = new MenuFlyoutSubItem
+            {
+                Text = item.Name,
+            };
+            foreach (HomePageViewModel.MenuFlyoutItemModel<T> subItem in item.SubItems)
+            {
+                actualMenuItem.Items.Add(CreateMenuFlyoutItem(subItem, clickHandler));
+            }
+            menuItem = actualMenuItem;
+        }
+        else if (item.CanToggle)
+        {
+            var actualMenuItem = new ToggleMenuFlyoutItem
+            {
+                Text = item.Name,
+                IsChecked = item.Toggled,
+            };
+            actualMenuItem.Click += delegate (object sender, RoutedEventArgs e)
+            {
+                clickHandler(item.DataContext);
+            };
+            menuItem = actualMenuItem;
+        }
+        else
+        {
+            var actualMenuItem = new MenuFlyoutItem
+            {
+                Text = item.Name,
+            };
+            actualMenuItem.Click += delegate (object sender, RoutedEventArgs e)
+            {
+                clickHandler(item.DataContext);
+            };
+            menuItem = actualMenuItem;
+        }
+        return menuItem;
     }
 
     // Utilities

@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 
 using ComicReader.Common.DebugTools;
+using ComicReader.Common.Threading;
 
 using Microsoft.UI.Xaml;
 
@@ -71,9 +72,12 @@ internal class LiveData<T> : ILiveData<T>, ILiveDataNoType
 
     protected void EmitInternal(T value)
     {
-        _value = value;
-        _version++;
-        DispatchValue(null, value);
+        _ = MainThreadUtils.RunInMainThread(delegate
+        {
+            _value = value;
+            _version++;
+            DispatchValue(null, value);
+        });
     }
 
     private void ObserveInternal(FrameworkElement owner, IObserver<T> observer, bool sticky)

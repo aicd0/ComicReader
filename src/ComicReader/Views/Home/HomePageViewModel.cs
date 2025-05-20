@@ -56,11 +56,6 @@ internal class HomePageViewModel : INotifyPropertyChanged
         ComicFilterModel.ViewTypeEnum.Medium,
     ];
 
-    private readonly List<ComicFilterModel.PropertyTypeEnum> _properties = [
-        ComicFilterModel.PropertyTypeEnum.Title,
-        ComicFilterModel.PropertyTypeEnum.Progress,
-    ];
-
     /// <summary>
     /// Initializes the view model.
     /// </summary>
@@ -120,8 +115,8 @@ internal class HomePageViewModel : INotifyPropertyChanged
             if (modified)
             {
                 _filterModel.LastFilterModified = true;
-                ScheduleUpdateFilters(false);
             }
+            ScheduleUpdateFilters(false);
         });
     }
 
@@ -162,8 +157,8 @@ internal class HomePageViewModel : INotifyPropertyChanged
             if (modified)
             {
                 _filterModel.LastFilterModified = true;
-                ScheduleUpdateFilters(false);
             }
+            ScheduleUpdateFilters(false);
         });
     }
 
@@ -174,7 +169,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
     /// <remarks>
     /// Must be called on the UI thread.
     /// </remarks>
-    public void SelectGroupBy(ComicFilterModel.ExternalPropertyModel? model)
+    public void SelectGroupBy(SortByUIModel? model)
     {
         if (model == null)
         {
@@ -183,16 +178,32 @@ internal class HomePageViewModel : INotifyPropertyChanged
 
         _sharedDispatcher.Submit("SelectGroupBy", delegate
         {
+            bool modified = false;
             ComicFilterModel.ExternalFilterModel lastFilter = EnsureLastFilterNoLock();
-            if (model.Equals(lastFilter.GroupBy))
+            if (model.IsProperty)
             {
-                lastFilter.GroupBy = null;
+                modified = true;
+                if (model.Property.Equals(lastFilter.GroupBy))
+                {
+                    lastFilter.GroupBy = null;
+                }
+                else
+                {
+                    lastFilter.GroupBy = model.Property;
+                }
             }
             else
             {
-                lastFilter.GroupBy = model;
+                if (lastFilter.GroupByAscending != model.IsAscending)
+                {
+                    modified = true;
+                    lastFilter.SortByAscending = model.IsAscending;
+                }
             }
-            _filterModel.LastFilterModified = true;
+            if (modified)
+            {
+                _filterModel.LastFilterModified = true;
+            }
             ScheduleUpdateFilters(false);
         });
     }
@@ -331,14 +342,11 @@ internal class HomePageViewModel : INotifyPropertyChanged
         ComicFilterModel.ExternalFilterModel? lastFilter = _filterModel.LastFilter ?? filters[0].Clone();
         _filterModel.LastFilter = lastFilter;
 
-        ComicFilterModel.ExternalPropertyModel sortBy = lastFilter.SortBy;
-        sortBy ??= new()
-        {
-            Type = ComicFilterModel.PropertyTypeEnum.Title,
-        };
+        ComicPropertyModel sortBy = lastFilter.SortBy;
+        sortBy ??= new();
         lastFilter.SortBy = sortBy;
 
-        ComicFilterModel.ExternalPropertyModel? groupBy = lastFilter.GroupBy;
+        ComicPropertyModel? groupBy = lastFilter.GroupBy;
         _ = ComicFilterModel.Instance.UpdateModel(_filterModel);
 
         // Update UI
@@ -348,34 +356,17 @@ internal class HomePageViewModel : INotifyPropertyChanged
             Items = _viewTypes.ConvertAll(x => CreateMenuFlyoutItem(ViewTypeToDisplayName(x), x)),
         };
 
-        List<ComicFilterModel.ExternalPropertyModel> properties = GetProperties();
-        List<MenuFlyoutItemModel<SortByUIModel>> sortByItems = properties.ConvertAll(x => CreateToggleMenuFlyoutItem(PropertyToDisplayName(x), x.Type == sortBy.Type, new SortByUIModel
-        {
-            IsProperty = true,
-            IsAscending = lastFilter.SortByAscending,
-            Property = x,
-        }));
-        sortByItems.Add(CreateSeperatorMenuFlyoutItem<SortByUIModel>());
-        sortByItems.Add(CreateToggleMenuFlyoutItem("Ascending", lastFilter.SortByAscending, new SortByUIModel
-        {
-            IsProperty = false,
-            IsAscending = true,
-        }));
-        sortByItems.Add(CreateToggleMenuFlyoutItem("Descending", !lastFilter.SortByAscending, new SortByUIModel
-        {
-            IsProperty = false,
-            IsAscending = false,
-        }));
+        List<ComicPropertyModel> properties = await ComicPropertyModel.GetProperties();
         var sortByDropDown = new DropDownButtonModel<SortByUIModel>
         {
             Name = "Sort by",
-            Items = sortByItems,
+            Items = CreateSortByMenuItems(properties, lastFilter.SortBy, lastFilter.SortByAscending),
         };
 
-        var groupByDropDown = new DropDownButtonModel<ComicFilterModel.ExternalPropertyModel>
+        var groupByDropDown = new DropDownButtonModel<SortByUIModel>
         {
             Name = "Group by",
-            Items = properties.ConvertAll(x => CreateToggleMenuFlyoutItem(PropertyToDisplayName(x), groupBy == null ? false : x.Type == groupBy.Type, x)),
+            Items = CreateSortByMenuItems(properties, lastFilter.GroupBy, lastFilter.GroupByAscending),
         };
 
         string lastFilterName = lastFilter.Name ?? "";
@@ -430,43 +421,95 @@ internal class HomePageViewModel : INotifyPropertyChanged
         return filter;
     }
 
-    private List<ComicFilterModel.ExternalPropertyModel> GetProperties()
-    {
-        var properties = new List<ComicFilterModel.ExternalPropertyModel>();
-        foreach (ComicFilterModel.PropertyTypeEnum propertyType in _properties)
-        {
-            properties.Add(new ComicFilterModel.ExternalPropertyModel
-            {
-                Type = propertyType,
-            });
-        }
-        return properties;
-    }
-
     private ComicFilterModel.ExternalFilterModel CreateDefaultFilter()
     {
         return new ComicFilterModel.ExternalFilterModel
         {
             Name = "Default",
             ViewType = ComicFilterModel.ViewTypeEnum.Large,
-            SortBy = new ComicFilterModel.ExternalPropertyModel
-            {
-                Type = ComicFilterModel.PropertyTypeEnum.Title,
-            },
+            SortBy = new(),
             SortByAscending = true,
             GroupBy = null,
+            GroupByAscending = true,
             Expression = "TRUE",
         };
+    }
+
+    private List<MenuFlyoutItemModel<SortByUIModel>> CreateSortByMenuItems(List<ComicPropertyModel> properties, ComicPropertyModel? selectedProperty, bool ascending)
+    {
+        Dictionary<string, List<ComicPropertyModel>> propertyGroupMap = new();
+        foreach (ComicPropertyModel property in properties)
+        {
+            string groupName = property.DisplayGroupName;
+            if (!propertyGroupMap.ContainsKey(groupName))
+            {
+                propertyGroupMap[groupName] = [];
+            }
+            propertyGroupMap[groupName].Add(property);
+        }
+
+        List<ComicPropertyModel>? plainProperties = null;
+        List<KeyValuePair<string, List<ComicPropertyModel>>> propertyGroupList = [];
+        foreach (KeyValuePair<string, List<ComicPropertyModel>> kvp in propertyGroupMap)
+        {
+            if (kvp.Key == "")
+            {
+                plainProperties = kvp.Value;
+                continue;
+            }
+            propertyGroupList.Add(kvp);
+            kvp.Value.Sort();
+        }
+        propertyGroupList.Sort((a, b) => string.Compare(a.Key, b.Key, StringComparison.Ordinal));
+
+        List<MenuFlyoutItemModel<SortByUIModel>> items = [];
+        if (plainProperties != null)
+        {
+            foreach (ComicPropertyModel p in plainProperties)
+            {
+                items.Add(CreateToggleMenuFlyoutItem(p.DisplayName, p.Equals(selectedProperty), new SortByUIModel
+                {
+                    IsProperty = true,
+                    Property = p,
+                }));
+            }
+        }
+        foreach (KeyValuePair<string, List<ComicPropertyModel>> kvp in propertyGroupList)
+        {
+            List<MenuFlyoutItemModel<SortByUIModel>> subItems = [];
+            foreach (ComicPropertyModel p in kvp.Value)
+            {
+                subItems.Add(CreateToggleMenuFlyoutItem(p.DisplayName, p.Equals(selectedProperty), new SortByUIModel
+                {
+                    IsProperty = true,
+                    Property = p,
+                }));
+            }
+            items.Add(new MenuFlyoutItemModel<SortByUIModel>
+            {
+                Name = kvp.Key,
+                SubItems = subItems,
+            });
+        }
+        items.Add(CreateSeperatorMenuFlyoutItem<SortByUIModel>());
+        items.Add(CreateToggleMenuFlyoutItem("Ascending", ascending, new SortByUIModel
+        {
+            IsProperty = false,
+            IsAscending = true,
+        }));
+        items.Add(CreateToggleMenuFlyoutItem("Descending", !ascending, new SortByUIModel
+        {
+            IsProperty = false,
+            IsAscending = false,
+        }));
+        return items;
     }
 
     private MenuFlyoutItemModel<T> CreateMenuFlyoutItem<T>(string name, T dataContext)
     {
         return new MenuFlyoutItemModel<T>
         {
-            IsSeperator = false,
             Name = name,
-            CanToggle = false,
-            Toggled = false,
             DataContext = dataContext
         };
     }
@@ -475,7 +518,6 @@ internal class HomePageViewModel : INotifyPropertyChanged
     {
         return new MenuFlyoutItemModel<T>
         {
-            IsSeperator = false,
             Name = name,
             CanToggle = true,
             Toggled = toggled,
@@ -488,21 +530,6 @@ internal class HomePageViewModel : INotifyPropertyChanged
         return new MenuFlyoutItemModel<T>
         {
             IsSeperator = true,
-            Name = "",
-            CanToggle = false,
-            Toggled = false,
-            DataContext = default
-        };
-    }
-
-    private string PropertyToDisplayName(ComicFilterModel.ExternalPropertyModel property)
-    {
-        return property.Type switch
-        {
-            ComicFilterModel.PropertyTypeEnum.Title => "Title",
-            ComicFilterModel.PropertyTypeEnum.Progress => "Progress",
-            ComicFilterModel.PropertyTypeEnum.Tag => $"Tag: {property.Name}",
-            _ => "Unknown"
         };
     }
 
@@ -520,7 +547,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
     {
         public DropDownButtonModel<ComicFilterModel.ViewTypeEnum> ViewTypeDropDown { get; set; } = new();
         public DropDownButtonModel<SortByUIModel> SortByDropDown { get; set; } = new();
-        public DropDownButtonModel<ComicFilterModel.ExternalPropertyModel> GroupByDropDown { get; set; } = new();
+        public DropDownButtonModel<SortByUIModel> GroupByDropDown { get; set; } = new();
         public DropDownButtonModel<string> FilterPresetDropDown { get; set; } = new();
     }
 
@@ -532,17 +559,18 @@ internal class HomePageViewModel : INotifyPropertyChanged
 
     public class MenuFlyoutItemModel<T>
     {
-        public bool IsSeperator { get; set; }
+        public bool IsSeperator { get; set; } = false;
         public string Name { get; set; } = "";
-        public bool CanToggle { get; set; }
-        public bool Toggled { get; set; }
-        public T? DataContext { get; set; }
+        public bool CanToggle { get; set; } = false;
+        public bool Toggled { get; set; } = false;
+        public List<MenuFlyoutItemModel<T>>? SubItems { get; set; } = null;
+        public T? DataContext { get; set; } = default;
     }
 
     public class SortByUIModel
     {
         public bool IsProperty { get; set; }
         public bool IsAscending { get; set; }
-        public ComicFilterModel.ExternalPropertyModel Property { get; set; } = new();
+        public ComicPropertyModel Property { get; set; } = new();
     }
 }

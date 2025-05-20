@@ -1,8 +1,8 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
 using System.Collections.Generic;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
@@ -10,9 +10,6 @@ namespace ComicReader.Data.Models;
 
 class ComicFilterModel : JsonDatabase<ComicFilterModel.JsonModel>
 {
-    public const string PROP_TYPE_TITLE = "Title";
-    public const string PROP_TYPE_PROGRESS = "Progress";
-    public const string PROP_TYPE_TAG = "Tag";
     public const string VIEW_TYPE_LARGE = "Large";
     public const string VIEW_TYPE_MEDIUM = "Medium";
 
@@ -58,28 +55,22 @@ class ComicFilterModel : JsonDatabase<ComicFilterModel.JsonModel>
         public string? Name { get; set; }
 
         [JsonPropertyName("SortBy")]
-        public PropertyModel? SortBy { get; set; }
+        public JsonNode? SortBy { get; set; }
 
         [JsonPropertyName("SortByAscending")]
         public bool? SortByAscending { get; set; }
 
         [JsonPropertyName("GroupBy")]
-        public PropertyModel? GroupBy { get; set; }
+        public JsonNode? GroupBy { get; set; }
+
+        [JsonPropertyName("GroupByAscending")]
+        public bool? GroupByAscending { get; set; }
 
         [JsonPropertyName("ViewType")]
         public string? ViewType { get; set; }
 
         [JsonPropertyName("Expression")]
         public string? Expression { get; set; }
-    }
-
-    public class PropertyModel
-    {
-        [JsonPropertyName("Type")]
-        public string? Type { get; set; }
-
-        [JsonPropertyName("Name")]
-        public string? Name { get; set; }
     }
 
     public class ExternalModel
@@ -127,9 +118,10 @@ class ComicFilterModel : JsonDatabase<ComicFilterModel.JsonModel>
     public class ExternalFilterModel
     {
         public string Name { get; set; } = "";
-        public ExternalPropertyModel SortBy { get; set; } = new();
+        public ComicPropertyModel SortBy { get; set; } = new();
         public bool SortByAscending { get; set; }
-        public ExternalPropertyModel? GroupBy { get; set; }
+        public ComicPropertyModel? GroupBy { get; set; }
+        public bool GroupByAscending { get; set; }
         public ViewTypeEnum ViewType { get; set; }
         public string Expression { get; set; } = "";
 
@@ -143,9 +135,9 @@ class ComicFilterModel : JsonDatabase<ComicFilterModel.JsonModel>
             return new FilterModel
             {
                 Name = Name,
-                SortBy = SortBy.To(),
+                SortBy = SortBy.ToJson(),
                 SortByAscending = SortByAscending,
-                GroupBy = GroupBy?.To(),
+                GroupBy = GroupBy?.ToJson(),
                 ViewType = ViewTypeToString(ViewType),
                 Expression = Expression,
             };
@@ -161,9 +153,10 @@ class ComicFilterModel : JsonDatabase<ComicFilterModel.JsonModel>
             return new ExternalFilterModel
             {
                 Name = model.Name ?? "",
-                SortBy = ExternalPropertyModel.From(model.SortBy) ?? new(),
+                SortBy = ComicPropertyModel.FromJson(model.SortBy) ?? new(),
                 SortByAscending = model.SortByAscending ?? false,
-                GroupBy = ExternalPropertyModel.From(model.GroupBy),
+                GroupBy = ComicPropertyModel.FromJson(model.GroupBy),
+                GroupByAscending = model.GroupByAscending ?? false,
                 ViewType = StringToViewType(model.ViewType ?? ""),
                 Expression = model.Expression ?? "",
             };
@@ -192,83 +185,6 @@ class ComicFilterModel : JsonDatabase<ComicFilterModel.JsonModel>
                 _ => ViewTypeEnum.Large,
             };
         }
-    }
-
-    public class ExternalPropertyModel
-    {
-        public PropertyTypeEnum Type { get; set; }
-        public string Name { get; set; } = "";
-
-        public override bool Equals(object? obj)
-        {
-            if (obj is ExternalPropertyModel other)
-            {
-                return Type == other.Type && Name == other.Name;
-            }
-            return false;
-        }
-
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(Type, Name);
-        }
-
-        public PropertyModel To()
-        {
-            return new PropertyModel
-            {
-                Type = PropertyTypeToString(Type),
-                Name = Name,
-            };
-        }
-
-        public static ExternalPropertyModel? From(PropertyModel? model)
-        {
-            if (model == null)
-            {
-                return null;
-            }
-
-            return new ExternalPropertyModel
-            {
-                Type = StringToPropertyType(model.Type),
-                Name = model.Name ?? "",
-            };
-        }
-
-        private static string PropertyTypeToString(PropertyTypeEnum value)
-        {
-            return value switch
-            {
-                PropertyTypeEnum.Title => PROP_TYPE_TITLE,
-                PropertyTypeEnum.Progress => PROP_TYPE_PROGRESS,
-                PropertyTypeEnum.Tag => PROP_TYPE_TAG,
-                _ => PROP_TYPE_TITLE,
-            };
-        }
-
-        private static PropertyTypeEnum StringToPropertyType(string? value)
-        {
-            if (string.IsNullOrEmpty(value))
-            {
-                return PropertyTypeEnum.Title;
-            }
-
-            return value switch
-            {
-                PROP_TYPE_TITLE => PropertyTypeEnum.Title,
-                PROP_TYPE_PROGRESS => PropertyTypeEnum.Progress,
-                PROP_TYPE_TAG => PropertyTypeEnum.Tag,
-                _ => PropertyTypeEnum.Title,
-            };
-        }
-    }
-
-    public enum PropertyTypeEnum
-    {
-        Title,
-        Progress,
-        Tag,
     }
 
     public enum ViewTypeEnum
