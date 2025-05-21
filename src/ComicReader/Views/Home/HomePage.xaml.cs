@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 using ComicReader.Common;
 using ComicReader.Common.Imaging;
@@ -20,6 +21,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace ComicReader.Views.Home;
@@ -28,9 +30,13 @@ internal sealed partial class HomePage : BasePage
 {
     private readonly HomePageViewModel ViewModel = new();
 
+    private ScrollViewer? _comicGridScrollViewer;
+
     private readonly CancellationSession _loadImageToken = new();
     private bool? _usingGroupSource = null;
     private readonly ComicItemViewModel.IItemHandler _comicItemHandler;
+    private Storyboard? _headerTextBlockAnimation = null;
+    private double _lastGridViewVerticalOffset = 0.0;
 
     public HomePage()
     {
@@ -91,6 +97,132 @@ internal sealed partial class HomePage : BasePage
             }
         });
     }
+
+    //
+    // GridView
+    //
+
+    private void ComicGridView_Loaded(object sender, RoutedEventArgs e)
+    {
+        ScrollViewer? scrollViewer = ComicGridView.ChildrenBreadthFirst().OfType<ScrollViewer>().FirstOrDefault();
+        if (scrollViewer != null)
+        {
+            _comicGridScrollViewer = scrollViewer;
+            scrollViewer.ViewChanged += ComicGridScrollViewer_ViewChanged;
+        }
+    }
+
+    private void ComicGridView_Unloaded(object sender, RoutedEventArgs e)
+    {
+        ScrollViewer? scrollViewer = _comicGridScrollViewer;
+        if (scrollViewer != null)
+        {
+            scrollViewer.ViewChanged -= ComicGridScrollViewer_ViewChanged;
+        }
+        _comicGridScrollViewer = null;
+    }
+
+    private void ComicGridScrollViewer_ViewChanged(object? sender, ScrollViewerViewChangedEventArgs e)
+    {
+        if (sender is not ScrollViewer sv)
+        {
+            return;
+        }
+
+        double verticalOffset = sv.VerticalOffset;
+
+        Thickness p = HeaderAreaGrid.Padding;
+        double newTop = Math.Max(20 - verticalOffset, 7);
+        if (p.Top != newTop)
+        {
+            p.Top = newTop;
+            HeaderAreaGrid.Padding = p;
+        }
+
+        if (verticalOffset > 20 && _lastGridViewVerticalOffset <= 20)
+        {
+            AnimateHeaderTextBlockOpacity(0.0);
+        }
+        else if (verticalOffset < 20 && _lastGridViewVerticalOffset >= 20)
+        {
+            AnimateHeaderTextBlockOpacity(1.0);
+        }
+
+        _lastGridViewVerticalOffset = verticalOffset;
+    }
+
+    private void OnAdaptiveGridViewContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
+    {
+        if (args.ItemContainer.ContentTemplateRoot is not ComicItemVertical viewHolder || args.Item is not ComicItemViewModel item)
+        {
+            return;
+        }
+
+        if (args.InRecycleQueue)
+        {
+            item.Image.ImageSet = false;
+        }
+        else
+        {
+            item.ItemHandler = _comicItemHandler;
+            viewHolder.Bind(item);
+            LoadImage(viewHolder, item);
+        }
+    }
+
+    private void LoadImage(ComicItemVertical viewHolder, ComicItemViewModel item)
+    {
+        double image_width = (double)Application.Current.Resources["ComicItemVerticalDesiredWidth"] - 40.0;
+        double image_height = (double)Application.Current.Resources["ComicItemVerticalImageHeight"];
+        var tokens = new List<SimpleImageLoader.Token>();
+
+        if (item.Image.ImageSet)
+        {
+            return;
+        }
+
+        item.Image.ImageSet = true;
+        tokens.Add(new SimpleImageLoader.Token
+        {
+            Width = image_width,
+            Height = image_height,
+            Multiplication = 1.4,
+            Source = new ComicCoverImageSource(item.Comic),
+            ImageResultHandler = new LoadImageCallback(viewHolder, item)
+        });
+
+        new SimpleImageLoader.Transaction(_loadImageToken.Token, tokens).Commit();
+    }
+
+    //
+    // Animation
+    //
+
+    private void AnimateHeaderTextBlockOpacity(double to)
+    {
+        double from = HeaderTextBlock.Opacity;
+        if (_headerTextBlockAnimation != null)
+        {
+            _headerTextBlockAnimation.Stop();
+            _headerTextBlockAnimation = null;
+        }
+        var animation = new DoubleAnimation
+        {
+            From = from,
+            To = to,
+            Duration = new Duration(TimeSpan.FromSeconds(Math.Abs(to - from) * 0.2)),
+        };
+        Storyboard.SetTarget(animation, HeaderTextBlock);
+        Storyboard.SetTargetProperty(animation, "Opacity");
+        var storyboard = new Storyboard();
+        storyboard.Children.Add(animation);
+        storyboard.Begin();
+        _headerTextBlockAnimation = storyboard;
+    }
+
+    //
+    // Filters
+    //
 
     private void UpdateFilters(HomePageViewModel.FilterModel model)
     {
@@ -177,7 +309,10 @@ internal sealed partial class HomePage : BasePage
         return menuItem;
     }
 
+    //
     // Utilities
+    //
+
     private IMainPageAbility GetMainPageAbility()
     {
         return GetAbility<IMainPageAbility>();
@@ -186,30 +321,6 @@ internal sealed partial class HomePage : BasePage
     private void OnComicDataUpdated()
     {
         ViewModel.UpdateLibrary();
-    }
-
-    private void LoadImage(ComicItemVertical viewHolder, ComicItemViewModel item)
-    {
-        double image_width = (double)Application.Current.Resources["ComicItemVerticalDesiredWidth"] - 40.0;
-        double image_height = (double)Application.Current.Resources["ComicItemVerticalImageHeight"];
-        var tokens = new List<SimpleImageLoader.Token>();
-
-        if (item.Image.ImageSet)
-        {
-            return;
-        }
-
-        item.Image.ImageSet = true;
-        tokens.Add(new SimpleImageLoader.Token
-        {
-            Width = image_width,
-            Height = image_height,
-            Multiplication = 1.4,
-            Source = new ComicCoverImageSource(item.Comic),
-            ImageResultHandler = new LoadImageCallback(viewHolder, item)
-        });
-
-        new SimpleImageLoader.Transaction(_loadImageToken.Token, tokens).Commit();
     }
 
     private class LoadImageCallback : IImageResultHandler
@@ -230,25 +341,9 @@ internal sealed partial class HomePage : BasePage
         }
     }
 
-    // Events
-    private void OnAdaptiveGridViewContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
-    {
-        if (args.ItemContainer.ContentTemplateRoot is not ComicItemVertical viewHolder || args.Item is not ComicItemViewModel item)
-        {
-            return;
-        }
-
-        if (args.InRecycleQueue)
-        {
-            item.Image.ImageSet = false;
-        }
-        else
-        {
-            item.ItemHandler = _comicItemHandler;
-            viewHolder.Bind(item);
-            LoadImage(viewHolder, item);
-        }
-    }
+    //
+    // Right Click Menu
+    //
 
     private void OnOpenInNewTabClicked(object sender, RoutedEventArgs e)
     {
@@ -347,6 +442,10 @@ internal sealed partial class HomePage : BasePage
     {
         ComicData.UpdateAllComics("RefreshPage", lazy: true);
     }
+
+    //
+    // Helper Class
+    //
 
     private class ComicItemHandler : ComicItemViewModel.IItemHandler
     {

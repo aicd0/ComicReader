@@ -67,7 +67,7 @@
                         <settings:SettingExpander.InnerContent>
                             <StackPanel Orientation="Vertical">
                                 <Button x:Uid="ChooseLocationButton" Click="ChooseLocationsClick" />
-                                <Grid Height="20" />
+                                <Grid Height="12" />
                                 <TextBlock x:Uid="ArchiveEncoding" Style="{StaticResource SettingsPageBodyTextBlock}" />
                                 <Grid Height="8" />
                                 <ComboBox
@@ -106,7 +106,7 @@
                                     x:Uid="ClearAllHistoryButton"
                                     Click="OnHistoryClearAllClicked"
                                     IsEnabled="{x:Bind ViewModel.IsClearHistoryEnabled, Mode=OneWay}" />
-                                <Grid Height="20" />
+                                <Grid Height="12" />
                                 <TextBlock x:Uid="SaveHistory" Style="{StaticResource SettingsPageBodyTextBlock}" />
                                 <ToggleSwitch IsOn="{x:Bind ViewModel.HistorySaveBrowsingHistory, Mode=TwoWay}" />
                             </StackPanel>
@@ -180,7 +180,7 @@
                                     Foreground="{ThemeResource ForegroundGrey2}"
                                     Style="{StaticResource SettingsPageBodyTextBlock}"
                                     Text="{x:Bind ViewModel.CacheSize, Mode=OneWay}" />
-                                <Grid Height="20" />
+                                <Grid Height="12" />
                                 <StackPanel Orientation="Horizontal">
                                     <Button
                                         x:Uid="RescanFilesButton"
@@ -191,7 +191,7 @@
                                         VerticalAlignment="Center"
                                         IsActive="{x:Bind ViewModel.IsRescanning, Mode=OneWay}" />
                                 </StackPanel>
-                                <Grid Height="20" />
+                                <Grid Height="12" />
                                 <TextBlock x:Uid="DebugMode" Style="{StaticResource SettingsPageBodyTextBlock}" />
                                 <ToggleSwitch
                                     x:Name="TsDebugMode"

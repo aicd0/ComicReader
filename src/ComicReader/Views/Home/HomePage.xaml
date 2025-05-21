@@ -120,10 +120,12 @@
             DesiredWidth="{StaticResource ComicItemVerticalDesiredWidth}"
             ItemContainerStyle="{StaticResource ComicItemContainerStyle}"
             ItemHeight="310"
+            Loaded="ComicGridView_Loaded"
             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
             ScrollViewer.HorizontalScrollMode="Disabled"
             StretchContentForSingleRow="False"
-            Style="{StaticResource HomePageAdaptiveGridViewStyle}">
+            Style="{StaticResource HomePageAdaptiveGridViewStyle}"
+            Unloaded="ComicGridView_Unloaded">
             <controls:AdaptiveGridView.GroupStyle>
                 <GroupStyle HeaderContainerStyle="{StaticResource ComicGroupHeaderContainerStyle}">
                     <GroupStyle.HeaderTemplate>
@@ -165,33 +167,7 @@
             </controls:AdaptiveGridView.ItemsPanel>
             <controls:AdaptiveGridView.Header>
                 <StackPanel Orientation="Vertical">
-                    <Grid Height="10" />
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock
-                            x:Uid="LibraryHeader"
-                            Grid.Column="0"
-                            Margin="6,0,0,0"
-                            FontSize="22"
-                            FontWeight="SemiBold"
-                            Text="Library" />
-                        <StackPanel
-                            Grid.Column="1"
-                            Margin="0,0,8,0"
-                            VerticalAlignment="Bottom"
-                            Orientation="Horizontal"
-                            Spacing="5">
-                            <DropDownButton x:Name="ViewTypeDropDownButton" />
-                            <DropDownButton x:Name="SortByDropDownButton" />
-                            <DropDownButton x:Name="GroupByDropDownButton" />
-                            <DropDownButton x:Name="FilterPresetDropDownButton" />
-                            <Button Click="EditFilterButton_Click" Content="Edit filter" />
-                        </StackPanel>
-                    </Grid>
-                    <Grid Height="10" />
+                    <Grid Height="52" />
                     <Grid
                         x:Name="SpLibraryEmpty"
                         Padding="0,30"
@@ -227,5 +203,34 @@
                 </StackPanel>
             </controls:AdaptiveGridView.Header>
         </controls:AdaptiveGridView>
+        <Grid
+            x:Name="HeaderAreaGrid"
+            Padding="40,20,34,8"
+            VerticalAlignment="Top"
+            Background="{ThemeResource HomeHeaderBackground}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock
+                x:Name="HeaderTextBlock"
+                x:Uid="LibraryHeader"
+                Grid.Column="0"
+                FontSize="22"
+                FontWeight="SemiBold"
+                Text="Library" />
+            <StackPanel
+                Grid.Column="1"
+                Margin="0,0,8,0"
+                VerticalAlignment="Bottom"
+                Orientation="Horizontal"
+                Spacing="5">
+                <DropDownButton x:Name="ViewTypeDropDownButton" />
+                <DropDownButton x:Name="SortByDropDownButton" />
+                <DropDownButton x:Name="GroupByDropDownButton" />
+                <DropDownButton x:Name="FilterPresetDropDownButton" />
+                <Button Click="EditFilterButton_Click" Content="Edit preset" />
+            </StackPanel>
+        </Grid>
     </Grid>
 </base:BasePage>

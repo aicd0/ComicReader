@@ -30,6 +30,11 @@
                             <SolidColorBrush x:Key="NavigationPageTopTileBorderBrush" Color="#000000" />
                             <SolidColorBrush x:Key="PageDemoBrush" Color="#60FFFFFF" />
                             <muxm:AcrylicBrush
+                                x:Key="HomeHeaderBackground"
+                                TintColor="MidnightBlue"
+                                TintLuminosityOpacity="0.85"
+                                TintOpacity="0.0" />
+                            <muxm:AcrylicBrush
                                 x:Key="ReaderBottomTileBackground"
                                 TintColor="MidnightBlue"
                                 TintLuminosityOpacity="0.6"
@@ -70,6 +75,11 @@
                             <SolidColorBrush x:Key="NavigationPageTopTileBorderBrush" Color="#E6E3EA" />
                             <SolidColorBrush x:Key="PageDemoBrush" Color="#30000000" />
                             <muxm:AcrylicBrush
+                                x:Key="HomeHeaderBackground"
+                                TintColor="#FFFFFF"
+                                TintLuminosityOpacity="0.85"
+                                TintOpacity="0.0" />
+                            <muxm:AcrylicBrush
                                 x:Key="ReaderBottomTileBackground"
                                 TintColor="#FFFFFF"
                                 TintLuminosityOpacity="0.6"
@@ -109,6 +119,7 @@
                             <SolidColorBrush x:Key="NavigationPageBackground" Color="#FAF8FC" />
                             <SolidColorBrush x:Key="NavigationPageTopTileBorderBrush" Color="#E6E3EA" />
                             <SolidColorBrush x:Key="PageDemoBrush" Color="#000000" />
+                            <SolidColorBrush x:Key="HomeHeaderBackground" Color="#FFFFFF" />
                             <SolidColorBrush x:Key="ReaderBottomTileBackground" Color="#FFFFFF" />
                             <SolidColorBrush x:Key="ReaderBottomTileButtonFillForeground" Color="{ThemeResource SystemAccentColorDark1}" />
                             <SolidColorBrush x:Key="SidePaneBackground" Color="#FFFFFF" />

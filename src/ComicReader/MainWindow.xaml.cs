@@ -27,15 +27,14 @@ using WinRT.Interop;
 
 namespace ComicReader;
 
-// Do NOT write heavy logic in this class, as WinUI 3 SDK could be buggy.
 public sealed partial class MainWindow : Window
 {
     //
     // Member variables
     //
 
-    // IMPORTANT: Any resources or views that are created or stored directly in this class
-    // must be cleaned up in the OnWindowClosed method, or there will be memory leaks.
+    // IMPORTANT: Any object referenced by this class need be dereferenced in OnWindowClosed,
+    // or else memory leaks will occur.
     // See http://github.com/microsoft/microsoft-ui-xaml/issues/7282 for more details.
 
     private MainPage _mainPage;
@@ -74,8 +73,8 @@ public sealed partial class MainWindow : Window
     // Event Handlers
     //
 
-    // IMPORTANT: Handles event registration and unregistration in the code-behind file.
-    // Do NOT use XAML for this purpose.
+    // IMPORTANT: Handle event registration and unregistration in the code-behind file,
+    // do not use XAML for this purpose in order to prevent memory leaks.
 
     private void OnWindowSizeChanged(object sender, WindowSizeChangedEventArgs args)
     {

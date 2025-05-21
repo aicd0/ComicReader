@@ -352,20 +352,20 @@ internal class HomePageViewModel : INotifyPropertyChanged
         // Update UI
         var viewTypeDropDown = new DropDownButtonModel<ComicFilterModel.ViewTypeEnum>
         {
-            Name = ViewTypeToDisplayName(lastFilter.ViewType),
-            Items = _viewTypes.ConvertAll(x => CreateMenuFlyoutItem(ViewTypeToDisplayName(x), x)),
+            Name = "View",
+            Items = _viewTypes.ConvertAll(x => CreateToggleMenuFlyoutItem(ViewTypeToDisplayName(x), x == lastFilter.ViewType, x)),
         };
 
         List<ComicPropertyModel> properties = await ComicPropertyModel.GetProperties();
         var sortByDropDown = new DropDownButtonModel<SortByUIModel>
         {
-            Name = "Sort by",
+            Name = "Sort",
             Items = CreateSortByMenuItems(properties, lastFilter.SortBy, lastFilter.SortByAscending),
         };
 
         var groupByDropDown = new DropDownButtonModel<SortByUIModel>
         {
-            Name = "Group by",
+            Name = "Group",
             Items = CreateSortByMenuItems(properties, lastFilter.GroupBy, lastFilter.GroupByAscending),
         };
 
