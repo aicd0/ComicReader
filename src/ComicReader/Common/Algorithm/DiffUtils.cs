@@ -193,7 +193,7 @@ static class DiffUtils
         {
             if (i < fromCollection.Count)
             {
-                if (j < toCollection.Count && comparer(fromCollection[j], toCollection[j]))
+                if (j < toCollection.Count && comparer(fromCollection[i], toCollection[j]))
                 {
                     ++j;
                 }
