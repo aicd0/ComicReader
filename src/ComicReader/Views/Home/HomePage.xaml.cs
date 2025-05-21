@@ -132,7 +132,7 @@ internal sealed partial class HomePage : BasePage
         double verticalOffset = sv.VerticalOffset;
 
         Thickness p = HeaderAreaGrid.Padding;
-        double newTop = Math.Max(20 - verticalOffset, 7);
+        double newTop = Math.Max(20 - verticalOffset, 6);
         if (p.Top != newTop)
         {
             p.Top = newTop;

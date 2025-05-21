@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
+using ComicReader.Common.Algorithm;
 using ComicReader.Common.DebugTools;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Common.Threading;
@@ -405,7 +406,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
             LibraryEmptyVisible = comics.Count == 0;
             GroupingEnabledLiveData.Emit(false);
 
-            C1<ComicItemViewModel>.UpdateCollection(UngroupedComicItems, comics,
+            DiffUtils.UpdateCollection(UngroupedComicItems, comics,
                 (ComicItemViewModel x, ComicItemViewModel y) =>
                 x.Comic.Title == y.Comic.Title &&
                 x.Rating == y.Rating &&
