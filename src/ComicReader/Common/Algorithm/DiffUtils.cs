@@ -5,34 +5,46 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
-using ComicReader.Common.DebugTools;
-
 namespace ComicReader.Common.Algorithm;
 
 public static class DiffUtils
 {
-    public static void UpdateCollection<T>(ObservableCollection<T> fromCollection,
-        IReadOnlyList<T> toCollection, Func<T, T, bool> comparer)
+    public static void UpdateCollection<T>(ObservableCollection<T> fromCollection, IReadOnlyList<T> toCollection, Func<T, T, bool> comparer)
     {
-        bool debug = DebugUtils.DebugMode;
-        List<T>? fromCollectionCopy = null;
-        if (debug)
-        {
-            fromCollectionCopy = [.. fromCollection];
-        }
-
         List<Modification> modifications;
-        if (fromCollection.Count * toCollection.Count <= 32768)
+        if (fromCollection.Count * toCollection.Count <= 65536)
         {
-            modifications = UpdateCollectionWithMinimumEditing(fromCollection, toCollection, comparer);
+            modifications = UpdateCollectionUsingMinimumEditing(fromCollection, toCollection, comparer);
         }
         else
         {
-            List<Modification> deleteFirstModifications = UpdateCollectionWithDeleteFirstMatch(fromCollection, toCollection, comparer);
-            List<Modification> addFirstModifications = UpdateCollectionWithAddFirstMatch(fromCollection, toCollection, comparer);
+            List<Modification> deleteFirstModifications = UpdateCollectionUsingDeleteFirstMatch(fromCollection, toCollection, comparer);
+            List<Modification> addFirstModifications = UpdateCollectionUsingAddFirstMatch(fromCollection, toCollection, comparer);
             modifications = deleteFirstModifications.Count <= addFirstModifications.Count ? deleteFirstModifications : addFirstModifications;
         }
+        UpdateCollection(fromCollection, toCollection, modifications);
+    }
 
+    public static void UpdateCollectionUsingME<T>(ObservableCollection<T> fromCollection, IReadOnlyList<T> toCollection, Func<T, T, bool> comparer)
+    {
+        List<Modification> modifications = UpdateCollectionUsingMinimumEditing(fromCollection, toCollection, comparer);
+        UpdateCollection(fromCollection, toCollection, modifications);
+    }
+
+    public static void UpdateCollectionUsingAF<T>(ObservableCollection<T> fromCollection, IReadOnlyList<T> toCollection, Func<T, T, bool> comparer)
+    {
+        List<Modification> modifications = UpdateCollectionUsingAddFirstMatch(fromCollection, toCollection, comparer);
+        UpdateCollection(fromCollection, toCollection, modifications);
+    }
+
+    public static void UpdateCollectionUsingDF<T>(ObservableCollection<T> fromCollection, IReadOnlyList<T> toCollection, Func<T, T, bool> comparer)
+    {
+        List<Modification> modifications = UpdateCollectionUsingDeleteFirstMatch(fromCollection, toCollection, comparer);
+        UpdateCollection(fromCollection, toCollection, modifications);
+    }
+
+    private static void UpdateCollection<T>(ObservableCollection<T> fromCollection, IReadOnlyList<T> toCollection, List<Modification> modifications)
+    {
         foreach (Modification modification in modifications)
         {
             switch (modification.Type)
@@ -47,25 +59,9 @@ public static class DiffUtils
                     throw new InvalidOperationException("Unexpected modification type.");
             }
         }
-
-        if (debug)
-        {
-            if (fromCollection.Count != toCollection.Count)
-            {
-                throw new InvalidOperationException("Unexpected collection state.");
-            }
-            for (int i = 0; i < fromCollection.Count; ++i)
-            {
-                if (!comparer(fromCollection[i], toCollection[i]))
-                {
-                    throw new InvalidOperationException("Unexpected collection state.");
-                }
-            }
-        }
     }
 
-    private static List<Modification> UpdateCollectionWithMinimumEditing<T>(IReadOnlyList<T> fromCollection,
-        IReadOnlyList<T> toCollection, Func<T, T, bool> comparer)
+    private static List<Modification> UpdateCollectionUsingMinimumEditing<T>(IReadOnlyList<T> fromCollection, IReadOnlyList<T> toCollection, Func<T, T, bool> comparer)
     {
         // DP Problem: Edit Distance
         // Initialize cache
@@ -181,8 +177,7 @@ public static class DiffUtils
         return [.. solution];
     }
 
-    private static List<Modification> UpdateCollectionWithDeleteFirstMatch<T>(IReadOnlyList<T> fromCollection,
-        IReadOnlyList<T> toCollection, Func<T, T, bool> comparer)
+    private static List<Modification> UpdateCollectionUsingDeleteFirstMatch<T>(IReadOnlyList<T> fromCollection, IReadOnlyList<T> toCollection, Func<T, T, bool> comparer)
     {
         List<Modification> modifications = [];
         int i = 0, j = 0, offset = 0;
@@ -224,8 +219,7 @@ public static class DiffUtils
         return modifications;
     }
 
-    private static List<Modification> UpdateCollectionWithAddFirstMatch<T>(IReadOnlyList<T> fromCollection,
-        IReadOnlyList<T> toCollection, Func<T, T, bool> comparer)
+    private static List<Modification> UpdateCollectionUsingAddFirstMatch<T>(IReadOnlyList<T> fromCollection, IReadOnlyList<T> toCollection, Func<T, T, bool> comparer)
     {
         List<Modification> modifications = [];
         int i = 0, j = 0, offset = 0;
