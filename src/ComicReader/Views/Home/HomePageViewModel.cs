@@ -397,22 +397,102 @@ internal class HomePageViewModel : INotifyPropertyChanged
     {
         Logger.I(TAG, "UpdateComicsNoLock");
 
-        List<ComicItemViewModel> comics = [];
-        comics.AddRange(_comicItems);
+        bool isEmpty = _comicItems.Count == 0;
+        List<ComicItemViewModel>? comicsUngrouped = null;
+        List<SimpleGroupViewModel<ComicItemViewModel>>? comicsGrouped = null;
+
+        if (!isEmpty)
+        {
+            ComicFilterModel.ExternalFilterModel filter = _filterModel.LastFilter ?? CreateDefaultFilter();
+            ComicPropertyModel sortBy = filter.SortBy;
+            bool sortByAscending = filter.SortByAscending;
+            ComicPropertyModel? groupBy = filter.GroupBy;
+            bool groupByAscending = filter.GroupByAscending;
+
+            if (groupBy != null)
+            {
+                Dictionary<string, List<ComicItemViewModel>> groupMap = [];
+                foreach (ComicItemViewModel item in _comicItems)
+                {
+                    string groupName = groupBy.GetPropertyAsGroupName(item.Comic);
+                    if (!groupMap.TryGetValue(groupName, out List<ComicItemViewModel>? group))
+                    {
+                        group = [];
+                        groupMap[groupName] = group;
+                    }
+                    group.Add(item);
+                }
+                comicsGrouped = [];
+                foreach (KeyValuePair<string, List<ComicItemViewModel>> p in groupMap)
+                {
+                    List<ComicItemViewModel> sorted = SortComicItemsByProerty(p.Value, sortBy, sortByAscending);
+                    var group = new SimpleGroupViewModel<ComicItemViewModel>(p.Key, sorted);
+                    comicsGrouped.Add(group);
+                }
+                if (groupByAscending)
+                {
+                    comicsGrouped.Sort((x, y) => x.GroupName.CompareTo(y.GroupName));
+                }
+                else
+                {
+                    comicsGrouped.Sort((x, y) => y.GroupName.CompareTo(x.GroupName));
+                }
+            }
+            else
+            {
+                comicsUngrouped = SortComicItemsByProerty(_comicItems, sortBy, sortByAscending);
+            }
+        }
+
         await MainThreadUtils.RunInMainThread(delegate
         {
-            _comicItems.Clear();
-            _comicItems.AddRange(comics);
-            LibraryEmptyVisible = comics.Count == 0;
-            GroupingEnabledLiveData.Emit(false);
+            LibraryEmptyVisible = isEmpty;
 
-            DiffUtils.UpdateCollection(UngroupedComicItems, comics,
-                (ComicItemViewModel x, ComicItemViewModel y) =>
-                x.Comic.Title == y.Comic.Title &&
-                x.Rating == y.Rating &&
-                x.Progress == y.Progress &&
-                x.IsFavorite == y.IsFavorite);
+            if (!isEmpty)
+            {
+                Func<ComicItemViewModel, ComicItemViewModel, bool> comparer = (ComicItemViewModel x, ComicItemViewModel y) =>
+                    x.Comic.Title == y.Comic.Title &&
+                    x.Rating == y.Rating &&
+                    x.Progress == y.Progress &&
+                    x.IsFavorite == y.IsFavorite;
+                if (comicsGrouped != null)
+                {
+                    Dictionary<string, SimpleGroupViewModel<ComicItemViewModel>> groupMap = [];
+                    foreach (SimpleGroupViewModel<ComicItemViewModel> item in comicsGrouped)
+                    {
+                        groupMap[item.GroupName] = item;
+                    }
+                    foreach (SimpleGroupViewModel<ComicItemViewModel> item in GroupedComicItems)
+                    {
+                        if (groupMap.TryGetValue(item.GroupName, out SimpleGroupViewModel<ComicItemViewModel>? group))
+                        {
+                            DiffUtils.UpdateCollection(item.Items, group.Items, comparer);
+                        }
+                    }
+                    DiffUtils.UpdateCollection(GroupedComicItems, comicsGrouped, (SimpleGroupViewModel<ComicItemViewModel> x, SimpleGroupViewModel<ComicItemViewModel> y) => x.GroupName == y.GroupName);
+                    GroupingEnabledLiveData.Emit(true);
+                }
+                else if (comicsUngrouped != null)
+                {
+                    DiffUtils.UpdateCollection(UngroupedComicItems, comicsUngrouped, comparer);
+                    GroupingEnabledLiveData.Emit(false);
+                }
+            }
         });
+    }
+
+    private List<ComicItemViewModel> SortComicItemsByProerty(List<ComicItemViewModel> items, ComicPropertyModel property, bool ascending)
+    {
+        List<KeyValuePair<IComparable, ComicItemViewModel>> paired = items.ConvertAll(x => new KeyValuePair<IComparable, ComicItemViewModel>(property.GetPropertyAsComparable(x.Comic), x));
+        if (ascending)
+        {
+            paired.Sort((x, y) => x.Key.CompareTo(y.Key));
+        }
+        else
+        {
+            paired.Sort((x, y) => y.Key.CompareTo(x.Key));
+        }
+        return paired.ConvertAll(x => x.Value);
     }
 
     private ComicFilterModel.ExternalFilterModel EnsureLastFilterNoLock()

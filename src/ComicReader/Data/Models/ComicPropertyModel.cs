@@ -9,6 +9,7 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 using ComicReader.Common.DebugTools;
+using ComicReader.Data.Models.Comic;
 using ComicReader.Data.SqlHelpers;
 using ComicReader.Data.Tables;
 
@@ -55,6 +56,46 @@ internal class ComicPropertyModel
     public override int GetHashCode()
     {
         return HashCode.Combine(Type, Name);
+    }
+
+    public IComparable GetPropertyAsComparable(ComicData? comic)
+    {
+        if (comic == null)
+        {
+            return "";
+        }
+        return Type switch
+        {
+            PropertyTypeEnum.Title => comic.Title ?? "",
+            PropertyTypeEnum.Progress => comic.Progress,
+            _ => comic.Id
+        };
+    }
+
+    public string GetPropertyAsGroupName(ComicData? comic)
+    {
+        if (comic == null)
+        {
+            return "";
+        }
+
+        string GetFirstLetter(string? value)
+        {
+            value ??= string.Empty;
+            value = value.TrimStart();
+            if (string.IsNullOrEmpty(value))
+            {
+                return "";
+            }
+            return value.ToUpper()[0].ToString();
+        }
+
+        return Type switch
+        {
+            PropertyTypeEnum.Title => GetFirstLetter(comic.Title),
+            PropertyTypeEnum.Progress => (comic.Progress / 10 * 10).ToString(),
+            _ => ""
+        };
     }
 
     public JsonNode? ToJson()

@@ -131,12 +131,22 @@ internal sealed partial class HomePage : BasePage
 
         double verticalOffset = sv.VerticalOffset;
 
-        Thickness p = HeaderAreaGrid.Padding;
-        double newTop = Math.Max(20 - verticalOffset, 6);
-        if (p.Top != newTop)
         {
-            p.Top = newTop;
-            HeaderAreaGrid.Padding = p;
+            Thickness p = HeaderAreaGrid.Padding;
+            double newTop = Math.Max(20 - verticalOffset, 6);
+            if (p.Top != newTop)
+            {
+                p.Top = newTop;
+                HeaderAreaGrid.Padding = p;
+            }
+        }
+
+        {
+            double newOpacity = Math.Min(1.0, Math.Max(0, verticalOffset - 10) * 0.05);
+            if (HeaderAreaBackgroundGrid.Opacity != newOpacity)
+            {
+                HeaderAreaBackgroundGrid.Opacity = newOpacity;
+            }
         }
 
         if (verticalOffset > 20 && _lastGridViewVerticalOffset <= 20)

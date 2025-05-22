@@ -203,34 +203,40 @@
                 </StackPanel>
             </controls:AdaptiveGridView.Header>
         </controls:AdaptiveGridView>
-        <Grid
-            x:Name="HeaderAreaGrid"
-            Padding="40,20,34,8"
-            VerticalAlignment="Top"
-            Background="{ThemeResource HomeHeaderBackground}">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <TextBlock
-                x:Name="HeaderTextBlock"
-                x:Uid="LibraryHeader"
-                Grid.Column="0"
-                FontSize="22"
-                FontWeight="SemiBold"
-                Text="Library" />
-            <StackPanel
-                Grid.Column="1"
-                Margin="0,0,8,0"
-                VerticalAlignment="Bottom"
-                Orientation="Horizontal"
-                Spacing="5">
-                <DropDownButton x:Name="ViewTypeDropDownButton" />
-                <DropDownButton x:Name="SortByDropDownButton" />
-                <DropDownButton x:Name="GroupByDropDownButton" />
-                <DropDownButton x:Name="FilterPresetDropDownButton" />
-                <Button Click="EditFilterButton_Click" Content="Edit preset" />
-            </StackPanel>
+        <Grid VerticalAlignment="Top">
+            <Grid
+                x:Name="HeaderAreaBackgroundGrid"
+                Background="{ThemeResource HomeHeaderBackground}"
+                IsHitTestVisible="False"
+                Opacity="0" />
+            <Grid
+                x:Name="HeaderAreaGrid"
+                Padding="40,20,34,8"
+                VerticalAlignment="Top">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock
+                    x:Name="HeaderTextBlock"
+                    x:Uid="LibraryHeader"
+                    Grid.Column="0"
+                    FontSize="22"
+                    FontWeight="SemiBold"
+                    Text="Library" />
+                <StackPanel
+                    Grid.Column="1"
+                    Margin="0,0,8,0"
+                    VerticalAlignment="Bottom"
+                    Orientation="Horizontal"
+                    Spacing="5">
+                    <DropDownButton x:Name="ViewTypeDropDownButton" />
+                    <DropDownButton x:Name="SortByDropDownButton" />
+                    <DropDownButton x:Name="GroupByDropDownButton" />
+                    <DropDownButton x:Name="FilterPresetDropDownButton" />
+                    <Button Click="EditFilterButton_Click" Content="Edit preset" />
+                </StackPanel>
+            </Grid>
         </Grid>
     </Grid>
 </base:BasePage>
