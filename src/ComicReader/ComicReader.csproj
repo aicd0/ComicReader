@@ -1,8 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <TargetFramework>net8.0-windows10.0.22621.0</TargetFramework>
-        <AppxBundlePlatforms>x86|x64|arm|arm64</AppxBundlePlatforms>
-        <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+        <AppxBundlePlatforms>x86|x64|arm64</AppxBundlePlatforms>
         <OutputType>WinExe</OutputType>
         <DefaultLanguage>en</DefaultLanguage>
         <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
@@ -16,7 +15,7 @@
         <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
         <GenerateTemporaryStoreCertificate>True</GenerateTemporaryStoreCertificate>
         <UseWinUI>true</UseWinUI>
-        <Platforms>x86;x64;arm64</Platforms>
+        <Platforms>x86;x64;ARM64</Platforms>
         <ApplicationManifest>app.manifest</ApplicationManifest>
         <EnablePreviewMsixTooling>true</EnablePreviewMsixTooling>
         <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
@@ -45,51 +44,38 @@
         <UseDotNetNativeToolchain>true</UseDotNetNativeToolchain>
         <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     </PropertyGroup>
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|ARM'">
-        <OutputPath>bin\ARM\Debug\</OutputPath>
-        <DefineConstants>DEBUG;TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
-        <NoWarn>;2008</NoWarn>
-        <UseVSHostingProcess>false</UseVSHostingProcess>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|ARM'">
-        <OutputPath>bin\ARM\Release\</OutputPath>
-        <DefineConstants>TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
-        <NoWarn>;2008</NoWarn>
-        <UseVSHostingProcess>false</UseVSHostingProcess>
-        <UseDotNetNativeToolchain>true</UseDotNetNativeToolchain>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|ARM64'">
-        <OutputPath>bin\ARM64\Debug\</OutputPath>
-        <DefineConstants>DEBUG;TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
-        <NoWarn>;2008</NoWarn>
-        <UseVSHostingProcess>false</UseVSHostingProcess>
-        <UseDotNetNativeToolchain>true</UseDotNetNativeToolchain>
-        <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|ARM64'">
-        <OutputPath>bin\ARM64\Release\</OutputPath>
-        <DefineConstants>TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
-        <NoWarn>;2008</NoWarn>
-        <UseVSHostingProcess>false</UseVSHostingProcess>
-        <UseDotNetNativeToolchain>true</UseDotNetNativeToolchain>
-        <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
-        <OutputPath>bin\x64\Debug\</OutputPath>
-        <DefineConstants>DEBUG;TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
-        <NoWarn>;2008</NoWarn>
-        <UseVSHostingProcess>false</UseVSHostingProcess>
-        <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-        <RunCodeAnalysis>false</RunCodeAnalysis>
-        <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
-    </PropertyGroup>
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
-        <OutputPath>bin\x64\Release\</OutputPath>
-        <DefineConstants>TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
-        <NoWarn>;2008</NoWarn>
-        <UseVSHostingProcess>false</UseVSHostingProcess>
-        <UseDotNetNativeToolchain>true</UseDotNetNativeToolchain>
-        <TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+		<OutputPath>bin\x64\Debug\</OutputPath>
+		<DefineConstants>DEBUG;TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
+		<NoWarn>;2008</NoWarn>
+		<UseVSHostingProcess>false</UseVSHostingProcess>
+		<CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+		<RunCodeAnalysis>false</RunCodeAnalysis>
+		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+		<OutputPath>bin\x64\Release\</OutputPath>
+		<DefineConstants>TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
+		<NoWarn>;2008</NoWarn>
+		<UseVSHostingProcess>false</UseVSHostingProcess>
+		<UseDotNetNativeToolchain>true</UseDotNetNativeToolchain>
+		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|ARM64'">
+		<OutputPath>bin\ARM64\Debug\</OutputPath>
+		<DefineConstants>DEBUG;TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
+		<NoWarn>;2008</NoWarn>
+		<UseVSHostingProcess>false</UseVSHostingProcess>
+		<UseDotNetNativeToolchain>true</UseDotNetNativeToolchain>
+		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|ARM64'">
+		<OutputPath>bin\ARM64\Release\</OutputPath>
+		<DefineConstants>TRACE;NETFX_CORE;WINDOWS_UWP</DefineConstants>
+		<NoWarn>;2008</NoWarn>
+		<UseVSHostingProcess>false</UseVSHostingProcess>
+		<UseDotNetNativeToolchain>true</UseDotNetNativeToolchain>
+		<TreatWarningsAsErrors>True</TreatWarningsAsErrors>
     </PropertyGroup>
     <ItemGroup>
         <AppxManifest Include="Package.appxmanifest">

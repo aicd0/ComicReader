@@ -9,7 +9,7 @@ using ComicReader.Common.DebugTools;
 
 namespace ComicReader.Common.Algorithm;
 
-static class DiffUtils
+public static class DiffUtils
 {
     public static void UpdateCollection<T>(ObservableCollection<T> fromCollection,
         IReadOnlyList<T> toCollection, Func<T, T, bool> comparer)
@@ -130,7 +130,6 @@ static class DiffUtils
             LinkedListNode<Modification> tail = solution.AddLast(new Modification());
             int i = fromCollection.Count;
             int j = toCollection.Count;
-            int size = toCollection.Count - 1;
             while (i > 0 || j > 0)
             {
                 MEModificationType type = modificationTable[i][j].Type;
@@ -141,38 +140,36 @@ static class DiffUtils
                         --j;
                         break;
                     case MEModificationType.Replace:
+                        --i;
+                        --j;
                         head = solution.AddAfter(head, new Modification
                         {
-                            FromIndex = i - 1,
+                            FromIndex = i,
                             Type = ModificationType.Delete
                         });
                         tail = solution.AddBefore(tail, new Modification
                         {
-                            FromIndex = size,
-                            ToIndex = j - 1,
+                            FromIndex = j,
+                            ToIndex = j,
                             Type = ModificationType.Add
                         });
-                        --size;
-                        --i;
-                        --j;
                         break;
                     case MEModificationType.Delete:
+                        --i;
                         head = solution.AddAfter(head, new Modification
                         {
-                            FromIndex = i - 1,
+                            FromIndex = i,
                             Type = ModificationType.Delete
                         });
-                        --i;
                         break;
                     case MEModificationType.Add:
+                        --j;
                         tail = solution.AddBefore(tail, new Modification
                         {
-                            FromIndex = size,
-                            ToIndex = j - 1,
+                            FromIndex = j,
+                            ToIndex = j,
                             Type = ModificationType.Add
                         });
-                        --size;
-                        --j;
                         break;
                     default:
                         throw new InvalidOperationException("Unexpected modification type.");
