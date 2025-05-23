@@ -213,6 +213,75 @@ internal sealed partial class HomePage : BasePage
         }
     }
 
+    private void ComicGridView_Tapped(object sender, TappedRoutedEventArgs e)
+    {
+        ViewModel.SetSelectionMode(false);
+    }
+
+    private void ComicGridView_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        List<ComicItemViewModel> selectedItems = [];
+        foreach (object? item in ComicGridView.SelectedItems)
+        {
+            if (item is ComicItemViewModel comicItem)
+            {
+                selectedItems.Add(comicItem);
+            }
+        }
+        ViewModel.SetSelection(selectedItems);
+    }
+
+    //
+    // Command Bar
+    //
+
+    private void CommandBarSelectAllClicked(object sender, RoutedEventArgs e)
+    {
+        var button = sender as AppBarToggleButton;
+        if (button == null)
+        {
+            return;
+        }
+        if (button.IsChecked == true)
+        {
+            ComicGridView.SelectAll();
+        }
+        else
+        {
+            ComicGridView.DeselectRange(new ItemIndexRange(0, (uint)ComicGridView.Items.Count));
+        }
+    }
+
+    private void CommandBarFavoriteClicked(object sender, RoutedEventArgs e)
+    {
+        ViewModel.ApplyOperationToSelection(HomePageViewModel.BatchOperationType.Favorite);
+    }
+
+    private void CommandBarUnFavoriteClicked(object sender, RoutedEventArgs e)
+    {
+        ViewModel.ApplyOperationToSelection(HomePageViewModel.BatchOperationType.UnFavorite);
+    }
+
+    private void CommandBarHideClicked(object sender, RoutedEventArgs e)
+    {
+        ViewModel.ApplyOperationToSelection(HomePageViewModel.BatchOperationType.Hide);
+    }
+
+    private void CommandBarUnhideClicked(object sender, RoutedEventArgs e)
+    {
+        ViewModel.ApplyOperationToSelection(HomePageViewModel.BatchOperationType.UnHide);
+    }
+
+    private void CommandBarMarkAsReadClicked(object sender, RoutedEventArgs e)
+    {
+        ViewModel.ApplyOperationToSelection(HomePageViewModel.BatchOperationType.MarkAsRead);
+    }
+
+    private void CommandBarMarkAsUnreadClicked(object sender, RoutedEventArgs e)
+    {
+        ViewModel.ApplyOperationToSelection(HomePageViewModel.BatchOperationType.MarkAsUnread);
+    }
+
     //
     // Animation
     //
@@ -361,7 +430,7 @@ internal sealed partial class HomePage : BasePage
     }
 
     //
-    // Right Click Menu
+    // Comic Item
     //
 
     private void OnOpenInNewTabClicked(object sender, RoutedEventArgs e)
@@ -374,7 +443,7 @@ internal sealed partial class HomePage : BasePage
 
     private void OnComicItemTapped(object sender, TappedRoutedEventArgs e)
     {
-        if (!CanHandleTapped())
+        if (!CanHandleTapped() || ViewModel.IsSelectMode)
         {
             return;
         }
@@ -514,6 +583,7 @@ internal sealed partial class HomePage : BasePage
 
         public void OnSelectClicked(object sender, RoutedEventArgs e)
         {
+            GetPage()?.ViewModel?.SetSelectionMode(true);
         }
 
         public void OnUnhideClicked(object sender, RoutedEventArgs e)

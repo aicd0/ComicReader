@@ -62,14 +62,14 @@ internal class ComicItemViewModel : INotifyPropertyChanged
     public bool IsRead => Comic.IsRead;
     public bool IsUnread => Comic.IsUnread;
 
-    private bool m_IsSelectMode = false;
+    private bool _isSelectMode = false;
     public bool IsSelectMode
     {
-        get => m_IsSelectMode;
+        get => _isSelectMode;
         set
         {
-            m_IsSelectMode = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsSelectMode"));
+            _isSelectMode = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelectMode)));
         }
     }
 

@@ -19,6 +19,8 @@ using ComicReader.Data.SqlHelpers;
 using ComicReader.Data.Tables;
 using ComicReader.ViewModels;
 
+using Microsoft.UI.Xaml.Controls;
+
 namespace ComicReader.Views.Home;
 
 internal class HomePageViewModel : INotifyPropertyChanged
@@ -44,8 +46,108 @@ internal class HomePageViewModel : INotifyPropertyChanged
         }
     }
 
+    private bool _isSelectMode = false;
+    public bool IsSelectMode
+    {
+        get => _isSelectMode;
+        set
+        {
+            _isSelectMode = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsSelectMode)}"));
+        }
+    }
+
+    private ListViewSelectionMode _comicItemSelectionMode = ListViewSelectionMode.None;
+    public ListViewSelectionMode ComicItemSelectionMode
+    {
+        get => _comicItemSelectionMode;
+        set
+        {
+            _comicItemSelectionMode = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(ComicItemSelectionMode)}"));
+        }
+    }
+
+    private bool _isCommandBarSelectAllToggled = false;
+    public bool IsCommandBarSelectAllToggled
+    {
+        get => _isCommandBarSelectAllToggled;
+        set
+        {
+            _isCommandBarSelectAllToggled = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsCommandBarSelectAllToggled)));
+        }
+    }
+
+    private bool _isCommandBarFavoriteEnabled = false;
+    public bool IsCommandBarFavoriteEnabled
+    {
+        get => _isCommandBarFavoriteEnabled;
+        set
+        {
+            _isCommandBarFavoriteEnabled = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsCommandBarFavoriteEnabled)));
+        }
+    }
+
+    private bool _isCommandBarUnFavoriteEnabled = false;
+    public bool IsCommandBarUnFavoriteEnabled
+    {
+        get => _isCommandBarUnFavoriteEnabled;
+        set
+        {
+            _isCommandBarUnFavoriteEnabled = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsCommandBarUnFavoriteEnabled)));
+        }
+    }
+
+    private bool _isCommandBarHideEnabled = false;
+    public bool IsCommandBarHideEnabled
+    {
+        get => _isCommandBarHideEnabled;
+        set
+        {
+            _isCommandBarHideEnabled = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsCommandBarHideEnabled)));
+        }
+    }
+
+    private bool _isCommandBarUnHideEnabled = false;
+    public bool IsCommandBarUnHideEnabled
+    {
+        get => _isCommandBarUnHideEnabled;
+        set
+        {
+            _isCommandBarUnHideEnabled = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsCommandBarUnHideEnabled)));
+        }
+    }
+
+    private bool _isCommandBarMarkAsReadEnabled = false;
+    public bool IsCommandBarMarkAsReadEnabled
+    {
+        get => _isCommandBarMarkAsReadEnabled;
+        set
+        {
+            _isCommandBarMarkAsReadEnabled = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsCommandBarMarkAsReadEnabled)));
+        }
+    }
+
+    private bool _isCommandBarMarkAsUnreadEnabled = false;
+    public bool IsCommandBarMarkAsUnreadEnabled
+    {
+        get => _isCommandBarMarkAsUnreadEnabled;
+        set
+        {
+            _isCommandBarMarkAsUnreadEnabled = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsCommandBarMarkAsUnreadEnabled)));
+        }
+    }
+
     private ComicFilterModel.ExternalModel _filterModel = new();
     private readonly List<ComicItemViewModel> _comicItems = [];
+    private readonly List<ComicItemViewModel> _selectedComicItems = [];
 
     private readonly ITaskDispatcher _sharedDispatcher = TaskDispatcher.DefaultQueue;
     private int _updateLibrarySubmitted = 0;
@@ -233,6 +335,150 @@ internal class HomePageViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
+    /// Set the selection mode.
+    /// </summary>
+    /// <param name="enabled">Is selection mode enabled.</param>
+    /// <remarks>
+    /// Must be called on the UI thread.
+    /// </remarks>
+    public void SetSelectionMode(bool enabled)
+    {
+        if (IsSelectMode == enabled)
+        {
+            return;
+        }
+        IsSelectMode = enabled;
+        ComicItemSelectionMode = enabled ? ListViewSelectionMode.Multiple : ListViewSelectionMode.None;
+        if (enabled)
+        {
+            _sharedDispatcher.Submit("SetSelectionMode", delegate
+            {
+                _selectedComicItems.Clear();
+                UpdateCommandBarButtonsNoLock();
+            });
+        }
+    }
+
+    /// <summary>
+    /// Sets the selected comic items.
+    /// </summary>
+    /// <param name="items">The selected comic items.</param>
+    /// <remarks>
+    /// Must be called on the UI thread.
+    /// </remarks>
+    public void SetSelection(List<ComicItemViewModel> items)
+    {
+        _sharedDispatcher.Submit("SetSelection", delegate
+        {
+            _selectedComicItems.Clear();
+            _selectedComicItems.AddRange(items);
+            UpdateCommandBarButtonsNoLock();
+        });
+    }
+
+    /// <summary>
+    /// Applies a batch operation to the selected comic items.
+    /// </summary>
+    /// <param name="operationType">The operation type.</param>
+    /// <remarks>
+    /// Must be called on the UI thread.
+    /// </remarks>
+    public void ApplyOperationToSelection(BatchOperationType operationType)
+    {
+        _sharedDispatcher.Submit("ApplyOperationToSelection", delegate
+        {
+            switch (operationType)
+            {
+                case BatchOperationType.Favorite:
+                    {
+                        List<ComicItemViewModel> items = _selectedComicItems.FindAll(x => !x.IsFavorite);
+                        FavoriteModel.Instance.BatchAdd(items.ConvertAll(x => new FavoriteModel.FavoriteItem
+                        {
+                            Id = x.Comic.Id,
+                            Title = x.Comic.Title,
+                        })).Wait();
+                        _ = MainThreadUtils.RunInMainThread(delegate
+                        {
+                            foreach (ComicItemViewModel item in items)
+                            {
+                                item.IsFavorite = true;
+                            }
+                        });
+                    }
+                    break;
+                case BatchOperationType.UnFavorite:
+                    {
+                        List<ComicItemViewModel> items = _selectedComicItems.FindAll(x => x.IsFavorite);
+                        FavoriteModel.Instance.BatchRemoveWithId(items.ConvertAll(x => x.Comic.Id)).Wait();
+                        _ = MainThreadUtils.RunInMainThread(delegate
+                        {
+                            foreach (ComicItemViewModel item in items)
+                            {
+                                item.IsFavorite = false;
+                            }
+                        });
+                    }
+                    break;
+                case BatchOperationType.Hide:
+                    {
+                        List<ComicItemViewModel> items = _selectedComicItems.FindAll(x => !x.IsHide);
+                        foreach (ComicItemViewModel item in items)
+                        {
+                            item.Comic.SaveHiddenAsync(true).Wait();
+                        }
+                        ScheduleUpdateComics();
+                    }
+                    break;
+                case BatchOperationType.UnHide:
+                    {
+                        List<ComicItemViewModel> items = _selectedComicItems.FindAll(x => x.IsHide);
+                        foreach (ComicItemViewModel item in items)
+                        {
+                            item.Comic.SaveHiddenAsync(false).Wait();
+                        }
+                        ScheduleUpdateComics();
+                    }
+                    break;
+                case BatchOperationType.MarkAsRead:
+                    {
+                        List<ComicItemViewModel> items = _selectedComicItems.FindAll(x => !x.IsRead);
+                        foreach (ComicItemViewModel item in items)
+                        {
+                            item.Comic.SetAsRead();
+                        }
+                        _ = MainThreadUtils.RunInMainThread(delegate
+                        {
+                            foreach (ComicItemViewModel item in items)
+                            {
+                                item.UpdateProgress(true);
+                            }
+                        });
+                    }
+                    break;
+                case BatchOperationType.MarkAsUnread:
+                    {
+                        List<ComicItemViewModel> items = _selectedComicItems.FindAll(x => !x.IsUnread);
+                        foreach (ComicItemViewModel item in items)
+                        {
+                            item.Comic.SetAsUnread();
+                        }
+                        _ = MainThreadUtils.RunInMainThread(delegate
+                        {
+                            foreach (ComicItemViewModel item in items)
+                            {
+                                item.UpdateProgress(true);
+                            }
+                        });
+                    }
+                    break;
+                default:
+                    break;
+            }
+            UpdateCommandBarButtonsNoLock();
+        });
+    }
+
+    /// <summary>
     /// Updates the comic library and refreshes the displayed items.
     /// </summary>
     /// <remarks>
@@ -241,6 +487,59 @@ internal class HomePageViewModel : INotifyPropertyChanged
     public void UpdateLibrary()
     {
         ScheduleUpdateLibrary();
+    }
+
+    private void UpdateCommandBarButtonsNoLock()
+    {
+        bool allSelected = _selectedComicItems.Count == _comicItems.Count;
+        bool favoriteEnabled = false;
+        bool unfavoriteEnabled = false;
+        bool hideEnabled = false;
+        bool unhideEnabled = false;
+        bool markAsReadEnabled = false;
+        bool markAsUnreadEnabled = false;
+
+        foreach (ComicItemViewModel item in _selectedComicItems)
+        {
+            if (item.IsFavorite)
+            {
+                unfavoriteEnabled = true;
+            }
+            else
+            {
+                favoriteEnabled = true;
+            }
+
+            if (item.IsHide)
+            {
+                unhideEnabled = true;
+            }
+            else
+            {
+                hideEnabled = true;
+            }
+
+            if (!item.IsRead)
+            {
+                markAsReadEnabled = true;
+            }
+
+            if (!item.IsUnread)
+            {
+                markAsUnreadEnabled = true;
+            }
+        }
+
+        _ = MainThreadUtils.RunInMainThread(delegate
+        {
+            IsCommandBarSelectAllToggled = allSelected;
+            IsCommandBarFavoriteEnabled = favoriteEnabled;
+            IsCommandBarUnFavoriteEnabled = unfavoriteEnabled;
+            IsCommandBarHideEnabled = hideEnabled;
+            IsCommandBarUnHideEnabled = unhideEnabled;
+            IsCommandBarMarkAsReadEnabled = markAsReadEnabled;
+            IsCommandBarMarkAsUnreadEnabled = markAsUnreadEnabled;
+        });
     }
 
     private void ScheduleUpdateLibrary()
@@ -292,7 +591,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
             var command = new SelectCommand<ComicTable>(ComicTable.Instance);
             SelectCommand<ComicTable>.IToken<long> idToken = command.PutQueryInt64(ComicTable.ColumnId);
             SelectCommand<ComicTable>.IToken<DateTimeOffset> lastVisitToken = command.PutQueryDateTimeOffset(ComicTable.ColumnLastVisit);
-            using SelectCommand<ComicTable>.IReader reader = command.AppendCondition(ComicTable.ColumnHidden, false).Execute();
+            using SelectCommand<ComicTable>.IReader reader = command.Execute();
 
             while (reader.Read())
             {
@@ -397,7 +696,8 @@ internal class HomePageViewModel : INotifyPropertyChanged
     {
         Logger.I(TAG, "UpdateComicsNoLock");
 
-        bool isEmpty = _comicItems.Count == 0;
+        List<ComicItemViewModel> filteredItems = _comicItems.FindAll(x => !x.IsHide);
+        bool isEmpty = filteredItems.Count == 0;
         List<ComicItemViewModel>? comicsUngrouped = null;
         List<ComicGroupViewModel>? comicsGrouped = null;
 
@@ -412,7 +712,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
             if (groupBy != null)
             {
                 Dictionary<string, List<ComicItemViewModel>> groupMap = [];
-                foreach (ComicItemViewModel item in _comicItems)
+                foreach (ComicItemViewModel item in filteredItems)
                 {
                     string groupName = groupBy.GetPropertyAsGroupName(item.Comic);
                     if (!groupMap.TryGetValue(groupName, out List<ComicItemViewModel>? group))
@@ -440,7 +740,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
             }
             else
             {
-                comicsUngrouped = SortComicItemsByProerty(_comicItems, sortBy, sortByAscending);
+                comicsUngrouped = SortComicItemsByProerty(filteredItems, sortBy, sortByAscending);
             }
         }
 
@@ -653,5 +953,15 @@ internal class HomePageViewModel : INotifyPropertyChanged
         public bool IsProperty { get; set; }
         public bool IsAscending { get; set; }
         public ComicPropertyModel Property { get; set; } = new();
+    }
+
+    public enum BatchOperationType
+    {
+        Favorite,
+        UnFavorite,
+        Hide,
+        UnHide,
+        MarkAsRead,
+        MarkAsUnread,
     }
 }

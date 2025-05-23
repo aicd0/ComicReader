@@ -1,8 +1,6 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-#nullable disable
-
 using ComicReader.ViewModels;
 
 using Microsoft.UI.Xaml;
@@ -13,8 +11,8 @@ namespace ComicReader.Views.Home;
 
 internal sealed partial class ComicItemVertical : UserControl
 {
-    public ComicItemViewModel Ctx => DataContext as ComicItemViewModel;
-    public ComicItemViewModel Item { get; private set; }
+    public ComicItemViewModel? Ctx => DataContext as ComicItemViewModel;
+    public ComicItemViewModel? Item { get; private set; }
 
     public ComicItemVertical()
     {
@@ -36,6 +34,12 @@ internal sealed partial class ComicItemVertical : UserControl
         VisualStateManager.GoToState(this, "Normal", true);
     }
 
+    private void UserControl_Tapped(object sender, TappedRoutedEventArgs e)
+    {
+        // Prevent tap events being dispatched to other controls
+        e.Handled = true;
+    }
+
     public void Bind(ComicItemViewModel item)
     {
         Item = item;
@@ -54,8 +58,10 @@ internal sealed partial class ComicItemVertical : UserControl
             ImageHolder1.Source = null;
             ImageHolder2.Source = null;
         }
-
-        ImageHolder1.Source = Item.Image.Image;
-        ImageHolder2.Source = Item.Image.Image;
+        else
+        {
+            ImageHolder1.Source = Item.Image.Image;
+            ImageHolder2.Source = Item.Image.Image;
+        }
     }
 }

@@ -110,6 +110,41 @@ class FavoriteModel : JsonDatabase<FavoriteModel.JsonModel>
         return result;
     }
 
+    public async Task BatchRemoveWithId(List<long> ids)
+    {
+        if (ids == null || ids.Count == 0)
+        {
+            return;
+        }
+        bool Helper(List<JsonNodeModel> e)
+        {
+            bool updated = false;
+            for (int i = 0; i < e.Count; ++i)
+            {
+                JsonNodeModel node = e[i];
+                if (node.Type == "i")
+                {
+                    if (ids.Contains(node.Id))
+                    {
+                        e.RemoveAt(i);
+                        updated = true;
+                    }
+                }
+                else if (node.Children.Count > 0 && Helper(node.Children))
+                {
+                    updated = true;
+                }
+            }
+            return updated;
+        }
+        bool updated = await Write(model => Helper(model.Children));
+        if (updated)
+        {
+            await Save();
+            DispatchUpdateEvent();
+        }
+    }
+
     public async Task Add(long id, string title, bool sendEvent)
     {
         bool updated = await Write(delegate (JsonModel model)
@@ -137,6 +172,40 @@ class FavoriteModel : JsonDatabase<FavoriteModel.JsonModel>
             {
                 DispatchUpdateEvent();
             }
+        }
+    }
+
+    public async Task BatchAdd(List<FavoriteItem> items)
+    {
+        if (items == null || items.Count == 0)
+        {
+            return;
+        }
+        bool updated = await Write(delegate (JsonModel model)
+        {
+            bool updated = false;
+            foreach (FavoriteItem item in items)
+            {
+                JsonNodeModel node = FromIdNoLock(model, item.Id);
+                if (node != null)
+                {
+                    continue;
+                }
+                node = new JsonNodeModel
+                {
+                    Type = "i",
+                    Name = item.Title,
+                    Id = item.Id
+                };
+                model.Children.Add(node);
+                updated = true;
+            }
+            return updated;
+        });
+        if (updated)
+        {
+            await Save();
+            DispatchUpdateEvent();
         }
     }
 
@@ -239,5 +308,11 @@ class FavoriteModel : JsonDatabase<FavoriteModel.JsonModel>
         public string Name { get; set; } = name;
         public long Id { get; set; } = id;
         public List<ExternalNodeModel> Children { get; set; } = nodes;
+    }
+
+    public struct FavoriteItem
+    {
+        public string Title;
+        public long Id;
     }
 }
