@@ -103,11 +103,12 @@
             <CollectionViewSource
                 x:Name="GroupedComicItemSource"
                 IsSourceGrouped="True"
-                ItemsPath="Items"
+                ItemsPath="DisplayItems"
                 Source="{x:Bind ViewModel.GroupedComicItems, Mode=OneWay}" />
 
             <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
             <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
+            <converters:BooleanToCollapseGlyphConverter x:Key="BooleanToCollapseGlyphConverter" />
         </ResourceDictionary>
     </Page.Resources>
 
@@ -129,8 +130,8 @@
             <controls:AdaptiveGridView.GroupStyle>
                 <GroupStyle HeaderContainerStyle="{StaticResource ComicGroupHeaderContainerStyle}">
                     <GroupStyle.HeaderTemplate>
-                        <DataTemplate>
-                            <Grid Margin="6,0,8,0">
+                        <DataTemplate x:DataType="vm:ComicGroupViewModel">
+                            <Grid Margin="-29,0,8,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
@@ -140,12 +141,15 @@
                                     Width="30"
                                     Height="30"
                                     Padding="0"
-                                    VerticalAlignment="Center">
-                                    <FontIcon FontSize="12" Glyph="&#xE728;" />
+                                    VerticalAlignment="Center"
+                                    Background="Transparent"
+                                    BorderBrush="Transparent"
+                                    Click="CollapseExpandGroupButton_Click">
+                                    <FontIcon FontSize="12" Glyph="{x:Bind Collapsed, Converter={StaticResource BooleanToCollapseGlyphConverter}, Mode=OneWay}" />
                                 </Button>
                                 <TextBlock
                                     Grid.Column="1"
-                                    Margin="8,0"
+                                    Margin="5,0"
                                     VerticalAlignment="Center"
                                     FontSize="16"
                                     FontWeight="SemiBold"

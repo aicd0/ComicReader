@@ -204,6 +204,15 @@ internal sealed partial class HomePage : BasePage
         new SimpleImageLoader.Transaction(_loadImageToken.Token, tokens).Commit();
     }
 
+    private void CollapseExpandGroupButton_Click(object sender, RoutedEventArgs e)
+    {
+        var button = sender as Button;
+        if (button?.DataContext is ComicGroupViewModel group)
+        {
+            group.Collapsed = !group.Collapsed;
+        }
+    }
+
     //
     // Animation
     //

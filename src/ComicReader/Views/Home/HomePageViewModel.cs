@@ -31,7 +31,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
     public MutableLiveData<bool> GroupingEnabledLiveData = new();
 
     public ObservableCollectionPlus<ComicItemViewModel> UngroupedComicItems { get; set; } = [];
-    public ObservableCollection<SimpleGroupViewModel<ComicItemViewModel>> GroupedComicItems { get; set; } = [];
+    public ObservableCollection<ComicGroupViewModel> GroupedComicItems { get; set; } = [];
 
     private bool _libraryEmptyVisible = false;
     public bool LibraryEmptyVisible
@@ -198,7 +198,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
                 if (lastFilter.GroupByAscending != model.IsAscending)
                 {
                     modified = true;
-                    lastFilter.SortByAscending = model.IsAscending;
+                    lastFilter.GroupByAscending = model.IsAscending;
                 }
             }
             if (modified)
@@ -399,7 +399,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
 
         bool isEmpty = _comicItems.Count == 0;
         List<ComicItemViewModel>? comicsUngrouped = null;
-        List<SimpleGroupViewModel<ComicItemViewModel>>? comicsGrouped = null;
+        List<ComicGroupViewModel>? comicsGrouped = null;
 
         if (!isEmpty)
         {
@@ -426,7 +426,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
                 foreach (KeyValuePair<string, List<ComicItemViewModel>> p in groupMap)
                 {
                     List<ComicItemViewModel> sorted = SortComicItemsByProerty(p.Value, sortBy, sortByAscending);
-                    var group = new SimpleGroupViewModel<ComicItemViewModel>(p.Key, sorted);
+                    var group = new ComicGroupViewModel(p.Key, sorted, false);
                     comicsGrouped.Add(group);
                 }
                 if (groupByAscending)
@@ -457,19 +457,19 @@ internal class HomePageViewModel : INotifyPropertyChanged
                     x.IsFavorite == y.IsFavorite;
                 if (comicsGrouped != null)
                 {
-                    Dictionary<string, SimpleGroupViewModel<ComicItemViewModel>> groupMap = [];
-                    foreach (SimpleGroupViewModel<ComicItemViewModel> item in comicsGrouped)
+                    Dictionary<string, ComicGroupViewModel> groupMap = [];
+                    foreach (ComicGroupViewModel item in comicsGrouped)
                     {
                         groupMap[item.GroupName] = item;
                     }
-                    foreach (SimpleGroupViewModel<ComicItemViewModel> item in GroupedComicItems)
+                    foreach (ComicGroupViewModel item in GroupedComicItems)
                     {
-                        if (groupMap.TryGetValue(item.GroupName, out SimpleGroupViewModel<ComicItemViewModel>? group))
+                        if (groupMap.TryGetValue(item.GroupName, out ComicGroupViewModel? group))
                         {
-                            DiffUtils.UpdateCollection(item.Items, group.Items, comparer);
+                            item.UpdateItems(group.Items, comparer);
                         }
                     }
-                    DiffUtils.UpdateCollection(GroupedComicItems, comicsGrouped, (SimpleGroupViewModel<ComicItemViewModel> x, SimpleGroupViewModel<ComicItemViewModel> y) => x.GroupName == y.GroupName);
+                    DiffUtils.UpdateCollection(GroupedComicItems, comicsGrouped, (ComicGroupViewModel x, ComicGroupViewModel y) => x.GroupName == y.GroupName);
                     GroupingEnabledLiveData.Emit(true);
                 }
                 else if (comicsUngrouped != null)
