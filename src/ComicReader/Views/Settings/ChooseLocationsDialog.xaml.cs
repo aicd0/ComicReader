@@ -54,7 +54,7 @@ public sealed partial class ChooseLocationsDialog : ContentDialog
 
     private void ContentDialogPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
     {
-        ComicData.UpdateAllComics("ContentDialogPrimaryButtonClick", lazy: true);
+        ComicModel.UpdateAllComics("ContentDialogPrimaryButtonClick", lazy: true);
     }
 
     private void ListViewLoaded(object sender, RoutedEventArgs e)

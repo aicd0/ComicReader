@@ -115,7 +115,7 @@ internal sealed partial class MainPage : BasePage
             long id = AppModel.GetReadingComic();
             if (id >= 0)
             {
-                ComicData comic = await ComicData.FromId(id, "FetchLastComic");
+                ComicModel comic = await ComicModel.FromId(id, "FetchLastComic");
                 if (comic != null)
                 {
                     Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)

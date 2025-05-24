@@ -69,7 +69,7 @@ internal abstract class ComicData
     // Public Interfaces
     //
 
-    public long Id { get; private set; }
+    public long Id { get; private set; } = -1;
     private ComicType Type { get; set; }
     public string Location { get; protected set; } = "";
     public string Title1 { get; protected set; } = "";
@@ -317,9 +317,6 @@ internal abstract class ComicData
         Tags.Add(default_tag);
     }
 
-    public Action SaveToInfoFileSealed() =>
-        () => SaveToInfoFile().Wait();
-
     public string TagString()
     {
         string text = "";
@@ -545,7 +542,7 @@ internal abstract class ComicData
 
     protected abstract Task<TaskException> ReloadImages();
 
-    protected abstract Task<TaskException> SaveToInfoFile();
+    public abstract Task<TaskException> SaveToInfoFile();
 
     //
     // Protected Methods

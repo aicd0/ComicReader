@@ -12,7 +12,7 @@ internal class EventBus
     public static readonly EventBus Default = new();
     private static readonly IMutableLiveData<object> sEmptyLiveData = new EmptyLiveData<object>();
 
-    private readonly Dictionary<string, ILiveDataNoType> _topics = new();
+    private readonly Dictionary<string, ILiveDataNoType> _topics = [];
     private bool _clearing = false;
 
     public IMutableLiveData<T> With<T>(string eventId)

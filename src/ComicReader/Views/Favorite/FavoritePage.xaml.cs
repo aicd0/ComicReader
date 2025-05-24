@@ -297,7 +297,7 @@ internal sealed partial class FavoritePage : BasePage
 
             if (item.Type == FavoriteNodeType.Item)
             {
-                ComicData comic = await ComicData.FromId(item.Id, "FavoriteLoadComic");
+                ComicModel comic = await ComicModel.FromId(item.Id, "FavoriteLoadComic");
 
                 if (comic == null)
                 {
@@ -424,7 +424,7 @@ internal sealed partial class FavoritePage : BasePage
         C0.Run(async delegate
         {
             var item = (FavoriteItemViewModel)((MenuFlyoutItem)sender).DataContext;
-            ComicData comic = await ComicData.FromId(item.Id, "FavoriteOpenInNewTabLoadComic");
+            ComicModel comic = await ComicModel.FromId(item.Id, "FavoriteOpenInNewTabLoadComic");
             Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
                 .WithParam(RouterConstants.ARG_COMIC_ID, comic.Id.ToString());
             GetMainPageAbility().OpenInNewTab(route);

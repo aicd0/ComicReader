@@ -10,9 +10,9 @@ using Windows.Storage.Streams;
 
 namespace ComicReader.Helpers.Imaging;
 
-internal class ComicCoverImageSource(ComicData comic) : IImageSource
+internal class ComicCoverImageSource(ComicModel comic) : IImageSource
 {
-    private readonly ComicData _comic = comic;
+    private readonly ComicModel _comic = comic;
 
     public async Task<IRandomAccessStream> GetImageStream()
     {
@@ -22,7 +22,7 @@ internal class ComicCoverImageSource(ComicData comic) : IImageSource
 
     public string GetUri()
     {
-        return _comic.GetCoverImageCacheKey();
+        return _comic.CoverImageCacheKey;
     }
 
     public int GetContentSignature()

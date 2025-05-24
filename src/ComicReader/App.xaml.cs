@@ -85,6 +85,6 @@ public partial class App : Application
         await XmlDatabaseManager.Initialize();
         await DatabaseUpgradeManager.Instance.UpgradeDatabase();
         await SqliteDatabaseManager.Initialize(XmlDatabase.Settings.DatabaseVersion);
-        ComicData.UpdateAllComics("DatabaseManager#init", lazy: true);
+        ComicModel.UpdateAllComics("DatabaseManager#init", lazy: true);
     }
 }

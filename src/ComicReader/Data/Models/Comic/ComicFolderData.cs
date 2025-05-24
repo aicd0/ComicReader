@@ -154,7 +154,7 @@ internal class ComicFolderData : ComicData
         return TaskException.Success;
     }
 
-    protected override async Task<TaskException> SaveToInfoFile()
+    public override async Task<TaskException> SaveToInfoFile()
     {
         TaskException r = await SetInfoFile(true);
 

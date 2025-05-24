@@ -79,7 +79,7 @@ internal class ComicPdfData : ComicData
         return Task.FromResult(TaskException.NotSupported);
     }
 
-    protected override Task<TaskException> SaveToInfoFile()
+    public override Task<TaskException> SaveToInfoFile()
     {
         return Task.FromResult(TaskException.NotSupported);
     }

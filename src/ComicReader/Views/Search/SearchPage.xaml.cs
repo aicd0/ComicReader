@@ -224,7 +224,7 @@ internal sealed partial class SearchPage : BasePage
             .ToList();
     }
 
-    private async Task BindComicData(ComicItemViewModel model, ComicData comic)
+    private async Task BindComicData(ComicItemViewModel model, ComicModel comic)
     {
         model.Comic = comic;
         model.Title = comic.Title;
@@ -252,7 +252,7 @@ internal sealed partial class SearchPage : BasePage
                 }
 
                 Match match = _matches[_matchIndex];
-                ComicData comic = await ComicData.FromId(match.Id, "SearchLoadComic");
+                ComicModel comic = await ComicModel.FromId(match.Id, "SearchLoadComic");
 
                 if (comic == null)
                 {
@@ -285,7 +285,7 @@ internal sealed partial class SearchPage : BasePage
         C0.Run(async delegate
         {
             var item = (ComicItemViewModel)((FrameworkElement)sender).DataContext;
-            ComicData comic = await ComicData.FromId(item.Comic.Id, "SearchOpenLoadComic");
+            ComicModel comic = await ComicModel.FromId(item.Comic.Id, "SearchOpenLoadComic");
             Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
                 .WithParam(RouterConstants.ARG_COMIC_ID, comic.Id.ToString());
             GetMainPageAbility().OpenInCurrentTab(route);

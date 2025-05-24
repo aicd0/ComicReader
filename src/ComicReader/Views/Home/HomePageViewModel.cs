@@ -607,7 +607,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
         var comicItems = new List<ComicItemViewModel>();
         foreach (Tuple<long, DateTimeOffset> record in records)
         {
-            ComicData comic = await ComicData.FromId(record.Item1, "HomeLoadComic");
+            ComicModel? comic = await ComicModel.FromId(record.Item1, "HomeLoadComic");
             if (comic == null)
             {
                 continue;

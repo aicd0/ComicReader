@@ -58,7 +58,7 @@ internal class ComicPropertyModel
         return HashCode.Combine(Type, Name);
     }
 
-    public IComparable GetPropertyAsComparable(ComicData? comic)
+    public IComparable GetPropertyAsComparable(ComicModel? comic)
     {
         if (comic == null)
         {
@@ -72,7 +72,7 @@ internal class ComicPropertyModel
         };
     }
 
-    public string GetPropertyAsGroupName(ComicData? comic)
+    public string GetPropertyAsGroupName(ComicModel? comic)
     {
         if (comic == null)
         {

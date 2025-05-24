@@ -119,7 +119,7 @@ public sealed partial class MainWindow : Window
 
     private async Task OnFileActivatedAsync(FileActivatedEventArgs args)
     {
-        ComicData comic = await GetStartupComic(args);
+        ComicModel comic = await GetStartupComic(args);
         if (comic == null)
         {
             return;
@@ -138,7 +138,7 @@ public sealed partial class MainWindow : Window
         _mainPage.OpenInNewTab(route);
     }
 
-    private async Task<ComicData> GetStartupComic(FileActivatedEventArgs args)
+    private async Task<ComicModel> GetStartupComic(FileActivatedEventArgs args)
     {
         var target_file = (StorageFile)args.Files[0];
 
@@ -147,34 +147,13 @@ public sealed partial class MainWindow : Window
             return null;
         }
 
-        ComicData comic = null;
+        ComicModel comic = await ComicModel.FromFile(target_file);
 
-        if (AppInfoProvider.IsSupportedDocumentExtension(target_file.FileType))
-        {
-            comic = await ComicData.FromLocation(target_file.Path, "MainGetStartupComicFromDocument");
-
-            if (comic == null)
-            {
-                switch (target_file.FileType.ToLower())
-                {
-                    case ".pdf":
-                        comic = await ComicPdfData.FromExternal(target_file);
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
-        else if (AppInfoProvider.IsSupportedArchiveExtension(target_file.FileType))
-        {
-            comic = await ComicData.FromLocation(target_file.Path, "MainGetStartupComicFromArchive");
-            comic ??= await ComicArchiveData.FromExternal(target_file);
-        }
-        else if (AppInfoProvider.IsSupportedImageExtension(target_file.FileType))
+        if (comic == null && AppInfoProvider.IsSupportedImageExtension(target_file.FileType))
         {
             string dir = target_file.Path;
             dir = StringUtils.ParentLocationFromLocation(dir);
-            comic = await ComicData.FromLocation(dir, "MainGetStartupComicFromImage");
+            comic = await ComicModel.FromLocation(dir, "MainGetStartupComicFromImage");
 
             if (comic == null)
             {
@@ -203,7 +182,7 @@ public sealed partial class MainWindow : Window
 
                 foreach (StorageFile file in all_files)
                 {
-                    if (file.Name.ToLower().Equals(ComicData.COMIC_INFO_FILE_NAME))
+                    if (file.Name.ToLower().Equals(ComicModel.COMIC_INFO_FILE_NAME))
                     {
                         info_file = file;
                     }
@@ -213,7 +192,7 @@ public sealed partial class MainWindow : Window
                     }
                 }
 
-                comic = await ComicFolderData.FromExternal(dir, img_files, info_file);
+                comic = await ComicModel.FromImageFiles(dir, img_files, info_file);
             }
         }
 

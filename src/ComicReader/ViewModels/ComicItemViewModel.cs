@@ -27,7 +27,7 @@ internal class ComicItemViewModel : INotifyPropertyChanged
     // properties
     //
 
-    public ComicData Comic;
+    public ComicModel Comic;
     public string Title { get; set; }
     public string Detail { get; set; }
     public int Rating { get; set; } = -1;
@@ -66,7 +66,7 @@ internal class ComicItemViewModel : INotifyPropertyChanged
     // functions
     //
 
-    public void Update(ComicData comic)
+    public void Update(ComicModel comic)
     {
         Comic = comic;
         Title = Comic.Title;

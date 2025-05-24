@@ -93,7 +93,7 @@ internal sealed partial class HistoryPage : BasePage
 
     private async Task OpenItem(HistoryItemViewModel item, bool newTab)
     {
-        ComicData comic = await ComicData.FromId(item.Id, "HistoryLoadComic");
+        ComicModel comic = await ComicModel.FromId(item.Id, "HistoryLoadComic");
 
         if (comic == null)
         {

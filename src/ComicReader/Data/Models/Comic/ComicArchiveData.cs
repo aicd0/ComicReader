@@ -158,7 +158,7 @@ internal class ComicArchiveData : ComicData
         return TaskException.Success;
     }
 
-    protected override Task<TaskException> SaveToInfoFile()
+    public override Task<TaskException> SaveToInfoFile()
     {
         return Task.FromResult(TaskException.NotSupported);
     }
