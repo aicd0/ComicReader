@@ -34,7 +34,7 @@ internal class MainThreadUtils
         await queue.EnqueueAsync(MeasureMainThreadExecutionTimeAction(action), DispatcherQueuePriority.Normal);
     }
 
-    public static async Task RunInMainThreadAsync(Func<Task> action)
+    public static async Task RunInMainThreadAsync(Func<Task> action, DispatcherQueuePriority priority = DispatcherQueuePriority.Normal)
     {
         if (IsMainThread())
         {
@@ -54,7 +54,7 @@ internal class MainThreadUtils
         {
             await action();
             completionSrc.SetResult(true);
-        }, DispatcherQueuePriority.Normal);
+        }, priority);
 
         await completionSrc.Task;
     }
@@ -79,9 +79,9 @@ internal class MainThreadUtils
         StackTrace stackTrace = new();
         return delegate
         {
-            long startTime = GetCurrentMilliseconds();
+            long startTime = GetCurrentTick();
             action();
-            long timeUsed = GetCurrentMilliseconds() - startTime;
+            long timeUsed = GetCurrentTick() - startTime;
             OnMainThreadExecutionTime(timeUsed, stackTrace);
         };
     }
@@ -94,9 +94,9 @@ internal class MainThreadUtils
         }
     }
 
-    private static long GetCurrentMilliseconds()
+    private static long GetCurrentTick()
     {
-        return DateTimeOffset.Now.ToUnixTimeMilliseconds();
+        return Environment.TickCount64;
     }
 
     private static DispatcherQueue GetDispatcherQueue()
