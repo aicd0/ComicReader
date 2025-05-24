@@ -1,6 +1,8 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -12,7 +14,7 @@ using ComicReader.Common.DebugTools;
 using Windows.Storage;
 using Windows.Storage.Streams;
 
-namespace ComicReader.Data.Comic;
+namespace ComicReader.Data.Models.Comic;
 
 internal class ComicArchiveData : ComicData
 {
@@ -156,7 +158,7 @@ internal class ComicArchiveData : ComicData
         return TaskException.Success;
     }
 
-    protected override Task<TaskException> SaveToInfoFile()
+    public override Task<TaskException> SaveToInfoFile()
     {
         return Task.FromResult(TaskException.NotSupported);
     }

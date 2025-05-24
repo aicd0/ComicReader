@@ -1,6 +1,8 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
@@ -8,8 +10,8 @@ using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Common.Native;
-using ComicReader.Data;
-using ComicReader.Data.Comic;
+using ComicReader.Data.Models;
+using ComicReader.Data.Models.Comic;
 using ComicReader.Helpers.Navigation;
 using ComicReader.Views.Main;
 
@@ -25,15 +27,14 @@ using WinRT.Interop;
 
 namespace ComicReader;
 
-// Do NOT write heavy logic in this class, as WinUI 3 SDK could be buggy.
 public sealed partial class MainWindow : Window
 {
     //
     // Member variables
     //
 
-    // IMPORTANT: Any resources or views that are created or stored directly in this class
-    // must be cleaned up in the OnWindowClosed method, or there will be memory leaks.
+    // IMPORTANT: Any object referenced by this class need be dereferenced in OnWindowClosed,
+    // or else memory leaks will occur.
     // See http://github.com/microsoft/microsoft-ui-xaml/issues/7282 for more details.
 
     private MainPage _mainPage;
@@ -72,8 +73,8 @@ public sealed partial class MainWindow : Window
     // Event Handlers
     //
 
-    // IMPORTANT: Handles event registration and unregistration in the code-behind file.
-    // Do NOT use XAML for this purpose.
+    // IMPORTANT: Handle event registration and unregistration in the code-behind file,
+    // do not use XAML for this purpose in order to prevent memory leaks.
 
     private void OnWindowSizeChanged(object sender, WindowSizeChangedEventArgs args)
     {
@@ -118,7 +119,7 @@ public sealed partial class MainWindow : Window
 
     private async Task OnFileActivatedAsync(FileActivatedEventArgs args)
     {
-        ComicData comic = await GetStartupComic(args);
+        ComicModel comic = await GetStartupComic(args);
         if (comic == null)
         {
             return;
@@ -137,7 +138,7 @@ public sealed partial class MainWindow : Window
         _mainPage.OpenInNewTab(route);
     }
 
-    private async Task<ComicData> GetStartupComic(FileActivatedEventArgs args)
+    private async Task<ComicModel> GetStartupComic(FileActivatedEventArgs args)
     {
         var target_file = (StorageFile)args.Files[0];
 
@@ -146,34 +147,13 @@ public sealed partial class MainWindow : Window
             return null;
         }
 
-        ComicData comic = null;
+        ComicModel comic = await ComicModel.FromFile(target_file);
 
-        if (AppInfoProvider.IsSupportedDocumentExtension(target_file.FileType))
-        {
-            comic = await ComicData.FromLocation(target_file.Path, "MainGetStartupComicFromDocument");
-
-            if (comic == null)
-            {
-                switch (target_file.FileType.ToLower())
-                {
-                    case ".pdf":
-                        comic = await ComicPdfData.FromExternal(target_file);
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
-        else if (AppInfoProvider.IsSupportedArchiveExtension(target_file.FileType))
-        {
-            comic = await ComicData.FromLocation(target_file.Path, "MainGetStartupComicFromArchive");
-            comic ??= await ComicArchiveData.FromExternal(target_file);
-        }
-        else if (AppInfoProvider.IsSupportedImageExtension(target_file.FileType))
+        if (comic == null && AppInfoProvider.IsSupportedImageExtension(target_file.FileType))
         {
             string dir = target_file.Path;
             dir = StringUtils.ParentLocationFromLocation(dir);
-            comic = await ComicData.FromLocation(dir, "MainGetStartupComicFromImage");
+            comic = await ComicModel.FromLocation(dir, "MainGetStartupComicFromImage");
 
             if (comic == null)
             {
@@ -202,7 +182,7 @@ public sealed partial class MainWindow : Window
 
                 foreach (StorageFile file in all_files)
                 {
-                    if (file.Name.ToLower().Equals(ComicData.COMIC_INFO_FILE_NAME))
+                    if (file.Name.ToLower().Equals(ComicModel.COMIC_INFO_FILE_NAME))
                     {
                         info_file = file;
                     }
@@ -212,7 +192,7 @@ public sealed partial class MainWindow : Window
                     }
                 }
 
-                comic = await ComicFolderData.FromExternal(dir, img_files, info_file);
+                comic = await ComicModel.FromImageFiles(dir, img_files, info_file);
             }
         }
 

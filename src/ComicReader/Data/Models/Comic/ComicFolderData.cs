@@ -1,6 +1,8 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,7 +15,7 @@ using Windows.Storage;
 using Windows.Storage.Search;
 using Windows.Storage.Streams;
 
-namespace ComicReader.Data.Comic;
+namespace ComicReader.Data.Models.Comic;
 
 internal class ComicFolderData : ComicData
 {
@@ -152,7 +154,7 @@ internal class ComicFolderData : ComicData
         return TaskException.Success;
     }
 
-    protected override async Task<TaskException> SaveToInfoFile()
+    public override async Task<TaskException> SaveToInfoFile()
     {
         TaskException r = await SetInfoFile(true);
 

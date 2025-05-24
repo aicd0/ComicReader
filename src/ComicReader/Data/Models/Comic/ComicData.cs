@@ -1,6 +1,8 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,6 +16,7 @@ using ComicReader.Common.DebugTools;
 using ComicReader.Common.Threading;
 using ComicReader.Data.Legacy;
 using ComicReader.Data.SqlHelpers;
+using ComicReader.Data.Tables;
 
 using LiteDB;
 
@@ -21,7 +24,7 @@ using Microsoft.Data.Sqlite;
 
 using Windows.Storage;
 
-namespace ComicReader.Data.Comic;
+namespace ComicReader.Data.Models.Comic;
 
 internal abstract class ComicData
 {
@@ -66,7 +69,7 @@ internal abstract class ComicData
     // Public Interfaces
     //
 
-    public long Id { get; private set; }
+    public long Id { get; private set; } = -1;
     private ComicType Type { get; set; }
     public string Location { get; protected set; } = "";
     public string Title1 { get; protected set; } = "";
@@ -314,9 +317,6 @@ internal abstract class ComicData
         Tags.Add(default_tag);
     }
 
-    public Action SaveToInfoFileSealed() =>
-        () => SaveToInfoFile().Wait();
-
     public string TagString()
     {
         string text = "";
@@ -542,7 +542,7 @@ internal abstract class ComicData
 
     protected abstract Task<TaskException> ReloadImages();
 
-    protected abstract Task<TaskException> SaveToInfoFile();
+    public abstract Task<TaskException> SaveToInfoFile();
 
     //
     // Protected Methods

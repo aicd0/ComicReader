@@ -3,7 +3,7 @@
 
 using ComicReader.Data.SqlHelpers;
 
-namespace ComicReader.Data.Comic;
+namespace ComicReader.Data.Tables;
 
 internal class ComicTable : ITable
 {

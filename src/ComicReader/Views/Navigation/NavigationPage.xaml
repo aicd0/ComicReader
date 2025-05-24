@@ -46,7 +46,7 @@
                     VerticalAlignment="Top"
                     Background="{ThemeResource TabViewItemHeaderBackgroundSelected}"
                     SizeChanged="OnTopTileSizeChanged">
-                    <Grid Margin="0,0,0,1">
+                    <Grid>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
@@ -58,7 +58,6 @@
                             <StackPanel
                                 Grid.Column="0"
                                 HorizontalAlignment="Left"
-                                VerticalAlignment="Center"
                                 Orientation="Horizontal">
                                 <AppBarButton
                                     x:Uid="BackButton"
@@ -91,7 +90,7 @@
                                 x:Name="SearchBox"
                                 Grid.Column="1"
                                 MinWidth="250"
-                                Margin="15,0,15,0"
+                                Margin="15,0,15,2"
                                 HorizontalAlignment="Left"
                                 VerticalAlignment="Center"
                                 QuerySubmitted="OnSearchBoxQuerySubmitted"

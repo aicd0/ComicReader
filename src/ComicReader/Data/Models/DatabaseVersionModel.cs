@@ -1,10 +1,12 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace ComicReader.Data;
+namespace ComicReader.Data.Models;
 
 class DatabaseVersionModel : JsonDatabase<DatabaseVersionModel.JsonModel>
 {
@@ -25,22 +27,12 @@ class DatabaseVersionModel : JsonDatabase<DatabaseVersionModel.JsonModel>
 
     public async Task<JsonModel> GetModel()
     {
-        if (!await TryInitialize())
-        {
-            return null;
-        }
-
-        return Read(CloneModel);
+        return await Read(CloneModel);
     }
 
     public async Task UpdateModel(JsonModel model)
     {
-        if (!await TryInitialize())
-        {
-            return;
-        }
-
-        CloneFrom(model);
-        Save();
+        await Write(CloneModel(model));
+        await Save();
     }
 }

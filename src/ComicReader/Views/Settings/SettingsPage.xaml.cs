@@ -1,6 +1,8 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -15,9 +17,10 @@ using ComicReader.Common.AppEnvironment;
 using ComicReader.Common.DebugTools;
 using ComicReader.Common.PageBase;
 using ComicReader.Common.Threading;
-using ComicReader.Data;
-using ComicReader.Data.Comic;
 using ComicReader.Data.Legacy;
+using ComicReader.Data.Models;
+using ComicReader.Data.Models.Comic;
+using ComicReader.Data.Tables;
 using ComicReader.Views.Main;
 
 using Microsoft.Data.Sqlite;
@@ -391,7 +394,7 @@ internal sealed partial class SettingsPage : BasePage
     private void OnRescanFilesClicked(object sender, RoutedEventArgs e)
     {
         ViewModel.IsRescanning = true;
-        ComicData.UpdateAllComics("OnRescanFilesClicked", lazy: false);
+        ComicModel.UpdateAllComics("OnRescanFilesClicked", lazy: false);
     }
 
     private void OnClearCacheClick(object sender, RoutedEventArgs e)

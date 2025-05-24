@@ -1,12 +1,13 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System.Collections.Generic;
 using System.Linq;
 
-using ComicReader.Data;
-using ComicReader.Data.Comic;
 using ComicReader.Data.SqlHelpers;
+using ComicReader.Data.Tables;
 
 using LiteDB;
 

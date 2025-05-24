@@ -1,6 +1,8 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,13 +10,13 @@ using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Common.DebugTools;
-using ComicReader.Common.Imaging;
 using ComicReader.Common.PageBase;
-using ComicReader.Data;
-using ComicReader.Data.Comic;
+using ComicReader.Data.Models;
+using ComicReader.Data.Models.Comic;
 using ComicReader.Data.SqlHelpers;
-using ComicReader.Helpers.Imaging;
+using ComicReader.Data.Tables;
 using ComicReader.Helpers.Navigation;
+using ComicReader.UserControls;
 using ComicReader.ViewModels;
 using ComicReader.Views.Main;
 using ComicReader.Views.Navigation;
@@ -25,7 +27,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace ComicReader.Views.Search;
 
@@ -37,7 +38,6 @@ internal sealed partial class SearchPage : BasePage
     private List<Match> _matches = new();
     private int _matchIndex = 0;
     private readonly CancellationLock _searchLock = new();
-    private readonly CancellationSession _loadImageSession = new();
     private string _keyword = "";
 
     public SearchPage()
@@ -67,12 +67,6 @@ internal sealed partial class SearchPage : BasePage
         GetNavigationPageAbility().SetSearchBox(_keyword);
         ScrollViewer scrollViewer = SearchResultGridView.ChildrenBreadthFirst().OfType<ScrollViewer>().First();
         scrollViewer.ViewChanged += OnScrollViewerViewChanged;
-    }
-
-    protected override void OnPause()
-    {
-        base.OnPause();
-        _loadImageSession.Next();
     }
 
     private IMainPageAbility GetMainPageAbility()
@@ -230,7 +224,7 @@ internal sealed partial class SearchPage : BasePage
             .ToList();
     }
 
-    private async Task BindComicData(ComicItemViewModel model, ComicData comic)
+    private async Task BindComicData(ComicItemViewModel model, ComicModel comic)
     {
         model.Comic = comic;
         model.Title = comic.Title;
@@ -238,7 +232,6 @@ internal sealed partial class SearchPage : BasePage
         model.Rating = comic.Rating;
         model.UpdateProgress(false);
         model.IsFavorite = await FavoriteModel.Instance.FromId(comic.Id) != null;
-        model.IsSelectMode = ViewModel.IsSelectMode;
         model.ItemHandler = _comicItemHandler;
     }
 
@@ -259,7 +252,7 @@ internal sealed partial class SearchPage : BasePage
                 }
 
                 Match match = _matches[_matchIndex];
-                ComicData comic = await ComicData.FromId(match.Id, "SearchLoadComic");
+                ComicModel comic = await ComicModel.FromId(match.Id, "SearchLoadComic");
 
                 if (comic == null)
                 {
@@ -277,49 +270,6 @@ internal sealed partial class SearchPage : BasePage
         });
     }
 
-    private void LoadImage(ComicItemHorizontal viewHolder, ComicItemViewModel item)
-    {
-        double image_width = (double)Application.Current.Resources["ComicItemHorizontalImageWidth"];
-        double image_height = (double)Application.Current.Resources["ComicItemHorizontalImageHeight"];
-        var tokens = new List<SimpleImageLoader.Token>();
-
-        if (item.Image.ImageSet)
-        {
-            return;
-        }
-
-        item.Image.ImageSet = true;
-        tokens.Add(new SimpleImageLoader.Token
-        {
-            Width = image_width,
-            Height = image_height,
-            Multiplication = 1.4,
-            StretchMode = StretchModeEnum.UniformToFill,
-            Source = new ComicCoverImageSource(item.Comic),
-            ImageResultHandler = new LoadImageCallback(viewHolder, item)
-        });
-
-        new SimpleImageLoader.Transaction(_loadImageSession.Token, tokens).Commit();
-    }
-
-    private class LoadImageCallback : IImageResultHandler
-    {
-        private readonly ComicItemHorizontal _viewHolder;
-        private readonly ComicItemViewModel _viewModel;
-
-        public LoadImageCallback(ComicItemHorizontal viewHolder, ComicItemViewModel viewModel)
-        {
-            _viewHolder = viewHolder;
-            _viewModel = viewModel;
-        }
-
-        public void OnSuccess(BitmapImage image)
-        {
-            _viewModel.Image.Image = image;
-            _viewHolder.CompareAndBind(_viewModel);
-        }
-    }
-
     private void OnComicItemTapped(object sender, TappedRoutedEventArgs e)
     {
         if (!CanHandleTapped())
@@ -335,7 +285,7 @@ internal sealed partial class SearchPage : BasePage
         C0.Run(async delegate
         {
             var item = (ComicItemViewModel)((FrameworkElement)sender).DataContext;
-            ComicData comic = await ComicData.FromId(item.Comic.Id, "SearchOpenLoadComic");
+            ComicModel comic = await ComicModel.FromId(item.Comic.Id, "SearchOpenLoadComic");
             Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
                 .WithParam(RouterConstants.ARG_COMIC_ID, comic.Id.ToString());
             GetMainPageAbility().OpenInCurrentTab(route);
@@ -346,15 +296,14 @@ internal sealed partial class SearchPage : BasePage
     {
         var item = args.Item as ComicItemViewModel;
         var viewHolder = args.ItemContainer.ContentTemplateRoot as ComicItemHorizontal;
+
         if (args.InRecycleQueue)
         {
-            item.Image.ImageSet = false;
+            viewHolder.Unbind();
         }
-
-        viewHolder.Bind(item);
-        if (!args.InRecycleQueue)
+        else
         {
-            LoadImage(viewHolder, item);
+            viewHolder.Bind(item);
         }
     }
 
@@ -443,11 +392,6 @@ internal sealed partial class SearchPage : BasePage
 
         ViewModel.IsSelectMode = val;
         ViewModel.ComicItemSelectionMode = val ? ListViewSelectionMode.Multiple : ListViewSelectionMode.None;
-
-        foreach (ComicItemViewModel model in ViewModel.SearchResults)
-        {
-            model.IsSelectMode = val;
-        }
     }
 
     private void OnSelectClicked(object sender, RoutedEventArgs e)

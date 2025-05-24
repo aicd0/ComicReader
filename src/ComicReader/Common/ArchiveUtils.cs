@@ -8,11 +8,13 @@ using System.Text;
 using System.Threading.Tasks;
 
 using ComicReader.Common.DebugTools;
-using ComicReader.Data;
+using ComicReader.Data.Models;
 
 using Windows.Storage;
 
 namespace ComicReader.Common;
+
+#nullable disable
 
 public abstract class ArchiveEntry
 {

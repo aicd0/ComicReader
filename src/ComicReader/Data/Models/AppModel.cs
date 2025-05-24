@@ -1,15 +1,17 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System.Collections.Concurrent;
 using System.Threading;
 
 using ComicReader.Common;
 using ComicReader.Common.DebugTools;
 using ComicReader.Common.KVStorage;
-using ComicReader.Data.Comic;
+using ComicReader.Data.Models.Comic;
 
-namespace ComicReader.Data;
+namespace ComicReader.Data.Models;
 
 static class AppModel
 {
@@ -20,7 +22,7 @@ static class AppModel
     private const string KEY_SAVE_BROWSING_HISTORY = "save_browsing_history";
     private const string KEY_TRANSITION_ANIMATION = "transition_animation";
 
-    private static readonly ConcurrentDictionary<string, ComicData> sComicMap = new();
+    private static readonly ConcurrentDictionary<string, ComicModel> sComicMap = new();
     private static int _nextComicToken = 0;
 
     public static int DefaultArchiveCodePage
@@ -91,12 +93,12 @@ static class AppModel
         return id;
     }
 
-    public static ComicData GetComicData(string token)
+    public static ComicModel GetComicData(string token)
     {
-        return sComicMap.TryGetValue(token, out ComicData comicData) ? comicData : null;
+        return sComicMap.TryGetValue(token, out ComicModel comicData) ? comicData : null;
     }
 
-    public static string PutComicData(ComicData comicData)
+    public static string PutComicData(ComicModel comicData)
     {
         string token = (Interlocked.Increment(ref _nextComicToken) - 1).ToString();
         sComicMap[token] = comicData;

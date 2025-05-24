@@ -1,14 +1,16 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Common.PageBase;
-using ComicReader.Data.Comic;
 using ComicReader.Data.Legacy;
+using ComicReader.Data.Models.Comic;
 using ComicReader.Helpers.Navigation;
 using ComicReader.ViewModels;
 using ComicReader.Views.Main;
@@ -91,7 +93,7 @@ internal sealed partial class HistoryPage : BasePage
 
     private async Task OpenItem(HistoryItemViewModel item, bool newTab)
     {
-        ComicData comic = await ComicData.FromId(item.Id, "HistoryLoadComic");
+        ComicModel comic = await ComicModel.FromId(item.Id, "HistoryLoadComic");
 
         if (comic == null)
         {

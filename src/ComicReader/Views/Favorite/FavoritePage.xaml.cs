@@ -1,6 +1,8 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -10,8 +12,8 @@ using System.Threading.Tasks;
 using ComicReader.Common;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Common.PageBase;
-using ComicReader.Data;
-using ComicReader.Data.Comic;
+using ComicReader.Data.Models;
+using ComicReader.Data.Models.Comic;
 using ComicReader.Helpers.Navigation;
 using ComicReader.ViewModels;
 using ComicReader.Views.Main;
@@ -295,7 +297,7 @@ internal sealed partial class FavoritePage : BasePage
 
             if (item.Type == FavoriteNodeType.Item)
             {
-                ComicData comic = await ComicData.FromId(item.Id, "FavoriteLoadComic");
+                ComicModel comic = await ComicModel.FromId(item.Id, "FavoriteLoadComic");
 
                 if (comic == null)
                 {
@@ -422,7 +424,7 @@ internal sealed partial class FavoritePage : BasePage
         C0.Run(async delegate
         {
             var item = (FavoriteItemViewModel)((MenuFlyoutItem)sender).DataContext;
-            ComicData comic = await ComicData.FromId(item.Id, "FavoriteOpenInNewTabLoadComic");
+            ComicModel comic = await ComicModel.FromId(item.Id, "FavoriteOpenInNewTabLoadComic");
             Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
                 .WithParam(RouterConstants.ARG_COMIC_ID, comic.Id.ToString());
             GetMainPageAbility().OpenInNewTab(route);

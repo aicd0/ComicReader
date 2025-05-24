@@ -1,6 +1,8 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System;
 using System.Threading.Tasks;
 
@@ -8,8 +10,8 @@ using ComicReader.Common;
 using ComicReader.Common.AppEnvironment;
 using ComicReader.Common.DebugTools;
 using ComicReader.Data;
-using ComicReader.Data.Comic;
 using ComicReader.Data.Legacy;
+using ComicReader.Data.Models.Comic;
 
 using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppLifecycle;
@@ -83,6 +85,6 @@ public partial class App : Application
         await XmlDatabaseManager.Initialize();
         await DatabaseUpgradeManager.Instance.UpgradeDatabase();
         await SqliteDatabaseManager.Initialize(XmlDatabase.Settings.DatabaseVersion);
-        ComicData.UpdateAllComics("DatabaseManager#init", lazy: true);
+        ComicModel.UpdateAllComics("DatabaseManager#init", lazy: true);
     }
 }

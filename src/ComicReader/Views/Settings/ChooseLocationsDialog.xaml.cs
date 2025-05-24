@@ -5,8 +5,8 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
-using ComicReader.Data.Comic;
 using ComicReader.Data.Legacy;
+using ComicReader.Data.Models.Comic;
 using ComicReader.ViewModels;
 
 using Microsoft.UI.Xaml;
@@ -54,7 +54,7 @@ public sealed partial class ChooseLocationsDialog : ContentDialog
 
     private void ContentDialogPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
     {
-        ComicData.UpdateAllComics("ContentDialogPrimaryButtonClick", lazy: true);
+        ComicModel.UpdateAllComics("ContentDialogPrimaryButtonClick", lazy: true);
     }
 
     private void ListViewLoaded(object sender, RoutedEventArgs e)

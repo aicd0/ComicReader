@@ -2,7 +2,7 @@
 // Licensed under the MIT License.
 
 using ComicReader.Common.Threading;
-using ComicReader.Data.Comic;
+using ComicReader.Data.Models.Comic;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -13,9 +13,9 @@ internal sealed partial class EditComicInfoDialog : ContentDialog
 {
     public EditComicInfoDialogViewModel ViewModel = new();
 
-    private readonly ComicData _comic;
+    private readonly ComicModel _comic;
 
-    public EditComicInfoDialog(ComicData comic)
+    public EditComicInfoDialog(ComicModel comic)
     {
         _comic = comic;
         InitializeComponent();
@@ -30,7 +30,7 @@ internal sealed partial class EditComicInfoDialog : ContentDialog
         Title1TextBox.Text = _comic.Title1;
         Title2TextBox.Text = _comic.Title2;
         DescriptionTextBox.Text = _comic.Description;
-        TagTextBox.Text = _comic.TagString();
+        TagTextBox.Text = _comic.ReadableTags;
     }
 
     private void ContentDialogPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
@@ -39,7 +39,10 @@ internal sealed partial class EditComicInfoDialog : ContentDialog
         _comic.ParseInfo(infoText);
         _comic.SaveBasic();
 
-        TaskDispatcher.DefaultQueue.Submit("ContentDialogPrimaryButtonClick", _comic.SaveToInfoFileSealed());
+        TaskDispatcher.DefaultQueue.Submit("ContentDialogPrimaryButtonClick", delegate
+        {
+            _comic.SaveToInfoFile().Wait();
+        });
     }
 
     private void ContentDialogSecondaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)

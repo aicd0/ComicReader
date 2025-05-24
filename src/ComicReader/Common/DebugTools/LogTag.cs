@@ -3,6 +3,7 @@
 
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json.Nodes;
 
 namespace ComicReader.Common.DebugTools;
 
@@ -40,6 +41,24 @@ internal class LogTag
             return false;
         }
         return _root.ContainsAny(tag._root);
+    }
+
+    public static LogTag FromJson(JsonObject jsonObject)
+    {
+        var tag = new LogTag();
+        foreach (KeyValuePair<string, JsonNode?> node in jsonObject)
+        {
+            if (node.Value == null)
+            {
+                tag._root.Add(node.Key);
+            }
+            else if (node.Value is JsonObject subJsonObject)
+            {
+                LogTag subTag = FromJson(subJsonObject);
+                tag._root.With(node.Key).Combine(subTag._root);
+            }
+        }
+        return tag;
     }
 
     public static LogTag N(string name)
@@ -111,7 +130,7 @@ internal class LogTag
 
     private class TagTree
     {
-        private Dictionary<string, TagTree> _subTrees;
+        private Dictionary<string, TagTree?>? _subTrees;
 
         public TagTree() { }
 
@@ -120,9 +139,9 @@ internal class LogTag
             if (tree._subTrees != null)
             {
                 _subTrees = [];
-                foreach (KeyValuePair<string, TagTree> pair in tree._subTrees)
+                foreach (KeyValuePair<string, TagTree?> pair in tree._subTrees)
                 {
-                    TagTree subTree = null;
+                    TagTree? subTree = null;
                     if (pair.Value != null)
                     {
                         subTree = new TagTree(pair.Value);
@@ -135,7 +154,7 @@ internal class LogTag
         public void Add(string name)
         {
             _subTrees ??= [];
-            if (!_subTrees.TryGetValue(name, out TagTree subTree))
+            if (!_subTrees.TryGetValue(name, out TagTree? subTree))
             {
                 _subTrees[name] = null;
             }
@@ -144,7 +163,7 @@ internal class LogTag
         public TagTree With(string name)
         {
             _subTrees ??= [];
-            if (!_subTrees.TryGetValue(name, out TagTree subTree))
+            if (!_subTrees.TryGetValue(name, out TagTree? subTree) || subTree == null)
             {
                 subTree = new TagTree();
                 _subTrees[name] = subTree;
@@ -157,23 +176,38 @@ internal class LogTag
             if (tree._subTrees != null)
             {
                 _subTrees ??= [];
-                foreach (KeyValuePair<string, TagTree> pair in tree._subTrees)
+                foreach (KeyValuePair<string, TagTree?> pair in tree._subTrees)
                 {
-                    if (_subTrees.TryGetValue(pair.Key, out TagTree subTree) && subTree != null)
+                    if (_subTrees.TryGetValue(pair.Key, out TagTree? subTree))
                     {
-                        subTree.Combine(pair.Value);
+                        if (pair.Value != null)
+                        {
+                            if (subTree == null)
+                            {
+                                subTree = new TagTree(pair.Value);
+                                _subTrees[pair.Key] = subTree;
+                            }
+                            else
+                            {
+                                subTree.Combine(pair.Value);
+                            }
+                        }
                         continue;
                     }
                     if (pair.Value != null)
                     {
                         subTree = new TagTree(pair.Value);
+                        _subTrees[pair.Key] = subTree;
                     }
-                    _subTrees[pair.Key] = subTree;
+                    else
+                    {
+                        _subTrees[pair.Key] = null;
+                    }
                 }
             }
         }
 
-        public bool ContainsAny(TagTree tree)
+        public bool ContainsAny(TagTree? tree)
         {
             if (_subTrees == null)
             {
@@ -185,9 +219,9 @@ internal class LogTag
                 return false;
             }
 
-            foreach (KeyValuePair<string, TagTree> pair in tree._subTrees)
+            foreach (KeyValuePair<string, TagTree?> pair in tree._subTrees)
             {
-                if (_subTrees.TryGetValue(pair.Key, out TagTree subTree))
+                if (_subTrees.TryGetValue(pair.Key, out TagTree? subTree))
                 {
                     if (subTree == null)
                     {
@@ -206,7 +240,11 @@ internal class LogTag
 
         public void AppendToString(bool divider, StringBuilder sb, List<string> tags)
         {
-            foreach (KeyValuePair<string, TagTree> pair in _subTrees)
+            if (_subTrees == null)
+            {
+                return;
+            }
+            foreach (KeyValuePair<string, TagTree?> pair in _subTrees)
             {
                 tags.Add(pair.Key);
                 if (pair.Value == null)

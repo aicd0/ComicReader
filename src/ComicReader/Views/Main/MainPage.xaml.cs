@@ -1,6 +1,8 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -10,8 +12,8 @@ using ComicReader.Common.DebugTools;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Common.PageBase;
 using ComicReader.Common.Threading;
-using ComicReader.Data;
-using ComicReader.Data.Comic;
+using ComicReader.Data.Models;
+using ComicReader.Data.Models.Comic;
 using ComicReader.Helpers.Navigation;
 using ComicReader.Views.Navigation;
 
@@ -113,7 +115,7 @@ internal sealed partial class MainPage : BasePage
             long id = AppModel.GetReadingComic();
             if (id >= 0)
             {
-                ComicData comic = await ComicData.FromId(id, "FetchLastComic");
+                ComicModel comic = await ComicModel.FromId(id, "FetchLastComic");
                 if (comic != null)
                 {
                     Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)

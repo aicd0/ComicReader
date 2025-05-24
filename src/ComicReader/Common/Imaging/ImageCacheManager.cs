@@ -1,16 +1,21 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading;
 using System.Threading.Tasks;
 
 using ComicReader.Common.Caching;
 using ComicReader.Common.DebugTools;
 using ComicReader.Common.Threading;
 
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml.Media.Imaging;
 
 using SixLabors.ImageSharp;
@@ -26,6 +31,9 @@ internal static class ImageCacheManager
     private const string TAG = "ImageCacheManager";
     private const string CACHE_FOLDER = "images";
     private const long MAX_CACHE_SIZE = 1024 * 1024 * 1024;
+
+    private static int sPostMainThreadTask = 0;
+    private static readonly ConcurrentQueue<RenderItem> sRenderQueue = new();
 
     private static readonly Lazy<LRUCache> sImageCache = new(delegate
     {
@@ -50,7 +58,7 @@ internal static class ImageCacheManager
             return;
         }
 
-        long startTime = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+        long startTime = GetCurrentTick();
         string uri = source.GetUri();
         int sourceSignature = source.GetContentSignature();
 
@@ -107,58 +115,101 @@ internal static class ImageCacheManager
             }
         }
 
-        MainThreadUtils.RunInMainThreadAsync(async delegate
+        var item = new RenderItem
         {
-            BitmapImage image = null;
-            try
+            Token = token,
+            Source = source,
+            Uri = uri,
+            FrameWidth = frameWidth,
+            FrameHeight = frameHeight,
+            StretchMode = stretchMode,
+            ThumbnailStream = thumbnailStream,
+            SourceStream = sourceStream,
+            Handler = handler,
+            StartTime = startTime,
+        };
+        sRenderQueue.Enqueue(item);
+        ScheduleRender();
+    }
+
+    private static void ScheduleRender()
+    {
+        if (Interlocked.CompareExchange(ref sPostMainThreadTask, 1, 0) == 1)
+        {
+            return;
+        }
+        _ = MainThreadUtils.PostInMainThreadAsync(async delegate
+        {
+            long startTime = GetCurrentTick();
+            Interlocked.Exchange(ref sPostMainThreadTask, 0);
+            // Only responsible for rendering tasks that have been queued before this point.
+            while (sRenderQueue.TryDequeue(out RenderItem item))
             {
-                if (token.IsCancellationRequested)
+                await PerformRender(item);
+                if (GetCurrentTick() - startTime > 50)
                 {
-                    return;
-                }
-
-                if (thumbnailStream != null)
-                {
-                    image = await TryLoadImageFromStreamAsync(thumbnailStream);
-                }
-
-                if (image == null)
-                {
-                    sourceStream ??= await TryOpenImageStreamAsync(source);
-
-                    if (sourceStream != null)
+                    // Keep main thread responsive.
+                    if (sRenderQueue.TryPeek(out _))
                     {
-                        image = await TryLoadImageFromStreamAsync(sourceStream);
+                        ScheduleRender();
                     }
-                }
-
-                if (image == null)
-                {
-                    Logger.E(TAG, "image is null");
-                    return;
-                }
-
-                CalculateDesiredDimension(frameWidth, frameHeight, stretchMode, image.PixelWidth, image.PixelHeight, out int desiredWidth, out int desiredHeight);
-                if (desiredWidth != image.PixelWidth || desiredHeight != image.PixelHeight)
-                {
-                    image.DecodePixelWidth = desiredWidth;
-                    image.DecodePixelHeight = desiredHeight;
+                    break;
                 }
             }
-            finally
-            {
-                thumbnailStream?.Dispose();
-                sourceStream?.Dispose();
-            }
+        }, DispatcherQueuePriority.Low);
+    }
 
-            if (token.IsCancellationRequested)
+    private static async Task PerformRender(RenderItem item)
+    {
+        BitmapImage image = null;
+        try
+        {
+            if (item.Token.IsCancellationRequested)
             {
-                Logger.I(TAG, $"task cancelled (time={DateTimeOffset.Now.ToUnixTimeMilliseconds() - startTime},uri={uri})");
                 return;
             }
 
-            handler.OnSuccess(image);
-        }).Wait();
+            if (item.ThumbnailStream != null)
+            {
+                image = await TryLoadImageFromStreamAsync(item.ThumbnailStream);
+            }
+
+            if (image == null)
+            {
+                item.SourceStream ??= await TryOpenImageStreamAsync(item.Source);
+
+                if (item.SourceStream != null)
+                {
+                    image = await TryLoadImageFromStreamAsync(item.SourceStream);
+                }
+            }
+
+            if (image == null)
+            {
+                Logger.E(TAG, "image is null");
+                return;
+            }
+
+            CalculateDesiredDimension(item.FrameWidth, item.FrameHeight, item.StretchMode, image.PixelWidth, image.PixelHeight, out int desiredWidth, out int desiredHeight);
+            if (desiredWidth != image.PixelWidth || desiredHeight != image.PixelHeight)
+            {
+                image.DecodePixelWidth = desiredWidth;
+                image.DecodePixelHeight = desiredHeight;
+            }
+        }
+        finally
+        {
+            item.ThumbnailStream?.Dispose();
+            item.SourceStream?.Dispose();
+        }
+
+        if (item.Token.IsCancellationRequested)
+        {
+            Logger.I(TAG, $"task cancelled (time={GetCurrentTick() - item.StartTime},uri={item.Uri})");
+            return;
+        }
+
+        item.Handler.OnSuccess(image);
     }
 
     private static IRandomAccessStream TryCreateThumbnail(ImageCacheDatabase.CacheRecord cacheRecord, IRandomAccessStream sourceStream,
@@ -360,5 +411,24 @@ internal static class ImageCacheManager
 
         desiredWidth = (int)desiredWidthRaw;
         desiredHeight = (int)desiredHeightRaw;
+    }
+
+    private static long GetCurrentTick()
+    {
+        return Environment.TickCount64;
+    }
+
+    private class RenderItem
+    {
+        public CancellationSession.IToken Token;
+        public IImageSource Source;
+        public string Uri;
+        public double FrameWidth;
+        public double FrameHeight;
+        public StretchModeEnum StretchMode;
+        public IRandomAccessStream ThumbnailStream;
+        public IRandomAccessStream SourceStream;
+        public IImageResultHandler Handler;
+        public long StartTime;
     }
 }

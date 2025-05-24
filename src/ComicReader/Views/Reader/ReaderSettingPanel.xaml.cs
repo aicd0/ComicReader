@@ -1,6 +1,8 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using ComicReader.Common.DebugTools;
 using ComicReader.Data.Legacy;
 using ComicReader.Views.Navigation;

@@ -46,8 +46,13 @@ internal static class DisplayUtils
 
     private static double GetScaleAdjustment()
     {
-        nint hWnd = App.WindowManager.GetAnyWindow().WindowHandle;
-        WindowId windowId = Win32Interop.GetWindowIdFromWindow(hWnd);
+        MainWindow? window = App.WindowManager.GetAnyWindow();
+        if (window == null)
+        {
+            Logger.AssertNotReachHere("A10F68C0A70A9EC2");
+            return 1.0;
+        }
+        WindowId windowId = Win32Interop.GetWindowIdFromWindow(window.WindowHandle);
         var displayArea = DisplayArea.GetFromWindowId(windowId, DisplayAreaFallback.Primary);
         nint hMonitor = Win32Interop.GetMonitorFromDisplayId(displayArea.DisplayId);
 
