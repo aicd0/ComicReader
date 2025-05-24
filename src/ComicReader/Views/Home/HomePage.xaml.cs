@@ -6,13 +6,13 @@ using System.Collections.Generic;
 using System.Linq;
 
 using ComicReader.Common;
-using ComicReader.Common.Imaging;
+using ComicReader.Common.DebugTools;
 using ComicReader.Common.PageBase;
 using ComicReader.Data.Legacy;
 using ComicReader.Data.Models;
 using ComicReader.Data.Models.Comic;
-using ComicReader.Helpers.Imaging;
 using ComicReader.Helpers.Navigation;
+using ComicReader.UserControls;
 using ComicReader.ViewModels;
 using ComicReader.Views.Main;
 
@@ -22,7 +22,6 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Animation;
-using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace ComicReader.Views.Home;
 
@@ -32,7 +31,7 @@ internal sealed partial class HomePage : BasePage
 
     private ScrollViewer? _comicGridScrollViewer;
 
-    private readonly CancellationSession _loadImageToken = new();
+    private ComicFilterModel.ViewTypeEnum? _viewType = null;
     private bool? _usingGroupSource = null;
     private readonly ComicItemViewModel.IItemHandler _comicItemHandler;
     private Storyboard? _headerTextBlockAnimation = null;
@@ -67,7 +66,6 @@ internal sealed partial class HomePage : BasePage
     {
         base.OnPause();
         ComicData.OnUpdated -= OnComicDataUpdated;
-        _loadImageToken.Next();
     }
 
     private void ObserveData()
@@ -75,25 +73,52 @@ internal sealed partial class HomePage : BasePage
         ViewModel.FilterLiveData.ObserveSticky(this, UpdateFilters);
         ViewModel.GroupingEnabledLiveData.ObserveSticky(this, delegate (bool grouped)
         {
-            if (_usingGroupSource != grouped)
+            if (_usingGroupSource == grouped)
             {
-                _usingGroupSource = grouped;
-                if (grouped)
+                return;
+            }
+            _usingGroupSource = grouped;
+            if (grouped)
+            {
+                ComicGridView.SetBinding(ItemsControl.ItemsSourceProperty, new Binding()
                 {
-                    ComicGridView.SetBinding(ItemsControl.ItemsSourceProperty, new Binding()
-                    {
-                        Source = GroupedComicItemSource,
-                        Mode = BindingMode.OneWay,
-                    });
-                }
-                else
+                    Source = GroupedComicItemSource,
+                    Mode = BindingMode.OneWay,
+                });
+            }
+            else
+            {
+                ComicGridView.SetBinding(ItemsControl.ItemsSourceProperty, new Binding()
                 {
-                    ComicGridView.SetBinding(ItemsControl.ItemsSourceProperty, new Binding()
-                    {
-                        Source = UngroupedComicItemSource,
-                        Mode = BindingMode.OneWay,
-                    });
-                }
+                    Source = UngroupedComicItemSource,
+                    Mode = BindingMode.OneWay,
+                });
+            }
+        });
+        ViewModel.ViewTypeLiveData.ObserveSticky(this, delegate (ComicFilterModel.ViewTypeEnum type)
+        {
+            if (_viewType == type)
+            {
+                return;
+            }
+            _viewType = type;
+            switch (type)
+            {
+                case ComicFilterModel.ViewTypeEnum.Large:
+                    ComicGridView.ItemTemplate = LargeComicItemTemplate;
+                    ComicGridView.ItemContainerStyle = (Style)Resources["VerticalComicItemContainerStyle"];
+                    ComicGridView.DesiredWidth = (double)Application.Current.Resources["ComicItemVerticalDesiredWidth"];
+                    ComicGridView.ItemHeight = (double)Application.Current.Resources["ComicItemVerticalDesiredHeight"];
+                    break;
+                case ComicFilterModel.ViewTypeEnum.Medium:
+                    ComicGridView.ItemTemplate = MediumComicItemTemplate;
+                    ComicGridView.ItemContainerStyle = (Style)Resources["SearchResultItemContainerExpandedStyle"];
+                    ComicGridView.DesiredWidth = (double)Application.Current.Resources["ComicItemHorizontalDesiredWidth"];
+                    ComicGridView.ItemHeight = (double)Application.Current.Resources["ComicItemHorizontalDesiredHeight"];
+                    break;
+                default:
+                    Logger.AssertNotReachHere("DBC3B0E205A8C333");
+                    break;
             }
         });
     }
@@ -104,16 +129,30 @@ internal sealed partial class HomePage : BasePage
 
     private void ComicGridView_Loaded(object sender, RoutedEventArgs e)
     {
+        if (sender is not FrameworkElement element || !element.IsLoaded)
+        {
+            return;
+        }
+
         ScrollViewer? scrollViewer = ComicGridView.ChildrenBreadthFirst().OfType<ScrollViewer>().FirstOrDefault();
         if (scrollViewer != null)
         {
             _comicGridScrollViewer = scrollViewer;
             scrollViewer.ViewChanged += ComicGridScrollViewer_ViewChanged;
         }
+        else
+        {
+            Logger.AssertNotReachHere("90801E4FD070C67A");
+        }
     }
 
     private void ComicGridView_Unloaded(object sender, RoutedEventArgs e)
     {
+        if (sender is not FrameworkElement element || element.IsLoaded)
+        {
+            return;
+        }
+
         ScrollViewer? scrollViewer = _comicGridScrollViewer;
         if (scrollViewer != null)
         {
@@ -163,45 +202,20 @@ internal sealed partial class HomePage : BasePage
 
     private void OnAdaptiveGridViewContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
     {
-        if (args.ItemContainer.ContentTemplateRoot is not ComicItemVertical viewHolder || args.Item is not ComicItemViewModel item)
+        if (args.ItemContainer.ContentTemplateRoot is not IComicItemView viewHolder || args.Item is not ComicItemViewModel item)
         {
             return;
         }
 
         if (args.InRecycleQueue)
         {
-            item.Image.ImageSet = false;
+            viewHolder.Unbind();
         }
         else
         {
             item.ItemHandler = _comicItemHandler;
             viewHolder.Bind(item);
-            LoadImage(viewHolder, item);
         }
-    }
-
-    private void LoadImage(ComicItemVertical viewHolder, ComicItemViewModel item)
-    {
-        double image_width = (double)Application.Current.Resources["ComicItemVerticalDesiredWidth"] - 40.0;
-        double image_height = (double)Application.Current.Resources["ComicItemVerticalImageHeight"];
-        var tokens = new List<SimpleImageLoader.Token>();
-
-        if (item.Image.ImageSet)
-        {
-            return;
-        }
-
-        item.Image.ImageSet = true;
-        tokens.Add(new SimpleImageLoader.Token
-        {
-            Width = image_width,
-            Height = image_height,
-            Multiplication = 1.4,
-            Source = new ComicCoverImageSource(item.Comic),
-            ImageResultHandler = new LoadImageCallback(viewHolder, item)
-        });
-
-        new SimpleImageLoader.Transaction(_loadImageToken.Token, tokens).Commit();
     }
 
     private void CollapseExpandGroupButton_Click(object sender, RoutedEventArgs e)
@@ -409,24 +423,6 @@ internal sealed partial class HomePage : BasePage
     private void OnComicDataUpdated()
     {
         ViewModel.UpdateLibrary();
-    }
-
-    private class LoadImageCallback : IImageResultHandler
-    {
-        private readonly ComicItemVertical _viewHolder;
-        private readonly ComicItemViewModel _viewModel;
-
-        public LoadImageCallback(ComicItemVertical viewHolder, ComicItemViewModel viewModel)
-        {
-            _viewHolder = viewHolder;
-            _viewModel = viewModel;
-        }
-
-        public void OnSuccess(BitmapImage image)
-        {
-            _viewModel.Image.Image = image;
-            _viewHolder.CompareAndBind(_viewModel);
-        }
     }
 
     //

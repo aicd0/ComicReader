@@ -64,6 +64,14 @@
                 ItemsPath="DisplayItems"
                 Source="{x:Bind ViewModel.GroupedComicItems, Mode=OneWay}" />
 
+            <DataTemplate x:Name="LargeComicItemTemplate" x:DataType="vm:ComicItemViewModel">
+                <controls:ComicItemVertical />
+            </DataTemplate>
+
+            <DataTemplate x:Name="MediumComicItemTemplate" x:DataType="vm:ComicItemViewModel">
+                <controls:ComicItemHorizontal />
+            </DataTemplate>
+
             <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
             <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
             <converters:BooleanToCollapseGlyphConverter x:Key="BooleanToCollapseGlyphConverter" />
@@ -83,9 +91,6 @@
                 Margin="0,0,-1,0"
                 Padding="35,10"
                 ContainerContentChanging="OnAdaptiveGridViewContainerContentChanging"
-                DesiredWidth="{StaticResource ComicItemVerticalDesiredWidth}"
-                ItemContainerStyle="{StaticResource VerticalComicItemContainerStyle}"
-                ItemHeight="310"
                 Loaded="ComicGridView_Loaded"
                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                 ScrollViewer.HorizontalScrollMode="Disabled"
@@ -127,11 +132,6 @@
                         </GroupStyle.HeaderTemplate>
                     </GroupStyle>
                 </controls:AdaptiveGridView.GroupStyle>
-                <controls:AdaptiveGridView.ItemTemplate>
-                    <DataTemplate x:DataType="vm:ComicItemViewModel">
-                        <home:ComicItemVertical DataContext="{x:Bind}" />
-                    </DataTemplate>
-                </controls:AdaptiveGridView.ItemTemplate>
                 <controls:AdaptiveGridView.ItemsPanel>
                     <ItemsPanelTemplate>
                         <ItemsWrapGrid AreStickyGroupHeadersEnabled="False" Orientation="Horizontal" />

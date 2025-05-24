@@ -1,8 +1,6 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-#nullable disable
-
 using System.Collections.Concurrent;
 using System.Threading;
 
@@ -21,7 +19,7 @@ class WindowManager<T> where T : Window
     public int RegisterWindow(T window)
     {
         int windowId = Interlocked.Increment(ref _nextWindowId);
-        WindowWrapper wrapper = new() { Window = window };
+        WindowWrapper wrapper = new(window);
         bool success = _windows.TryAdd(windowId, wrapper);
         Logger.Assert(success, "B62A8795DA9036E2");
         return windowId;
@@ -33,19 +31,18 @@ class WindowManager<T> where T : Window
         Logger.Assert(success, "1A3BA06AD5A4351E");
     }
 
-    public T GetAnyWindow()
+    public T? GetAnyWindow()
     {
         foreach (WindowWrapper wrapper in _windows.Values)
         {
             return wrapper.Window;
         }
-        Logger.AssertNotReachHere("0C81B273522AB715");
         return null;
     }
 
-    public T GetWindow(int windowId)
+    public T? GetWindow(int windowId)
     {
-        if (_windows.TryGetValue(windowId, out WindowWrapper wrapper))
+        if (_windows.TryGetValue(windowId, out WindowWrapper? wrapper))
         {
             return wrapper.Window;
         }
@@ -53,9 +50,9 @@ class WindowManager<T> where T : Window
         return null;
     }
 
-    public EventBus GetEventBus(int windowId)
+    public EventBus? GetEventBus(int windowId)
     {
-        if (_windows.TryGetValue(windowId, out WindowWrapper wrapper))
+        if (_windows.TryGetValue(windowId, out WindowWrapper? wrapper))
         {
             return wrapper.EventBus;
         }
@@ -67,5 +64,10 @@ class WindowManager<T> where T : Window
     {
         public T Window { get; set; }
         public EventBus EventBus { get; } = new();
+
+        public WindowWrapper(T window)
+        {
+            Window = window;
+        }
     }
 }

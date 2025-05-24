@@ -31,6 +31,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
 
     public MutableLiveData<FilterModel> FilterLiveData = new();
     public MutableLiveData<bool> GroupingEnabledLiveData = new();
+    public MutableLiveData<ComicFilterModel.ViewTypeEnum> ViewTypeLiveData = new();
 
     public ObservableCollectionPlus<ComicItemViewModel> UngroupedComicItems { get; set; } = [];
     public ObservableCollection<ComicGroupViewModel> GroupedComicItems { get; set; } = [];
@@ -688,6 +689,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
             FilterPresetDropDown = filterPresetDropDown,
         };
         FilterLiveData.Emit(uiModel);
+        ViewTypeLiveData.Emit(lastFilter.ViewType);
 
         ScheduleUpdateComics();
     }

@@ -1,5 +1,5 @@
 <UserControl
-    x:Class="ComicReader.Views.Search.ComicItemHorizontal"
+    x:Class="ComicReader.UserControls.ComicItemHorizontal"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:ComicReader.UserControls"
@@ -8,7 +8,9 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     d:DesignHeight="300"
     d:DesignWidth="400"
-    Tapped="OnUserControlTapped"
+    Loaded="UserControl_Loaded"
+    Tapped="UserControl_Tapped"
+    Unloaded="UserControl_Unloaded"
     mc:Ignorable="d">
 
     <UserControl.Resources>
@@ -19,9 +21,12 @@
         </ResourceDictionary>
     </UserControl.Resources>
 
-    <Grid Background="Transparent" Tapped="{x:Bind Ctx.ItemHandler.OnItemTapped}">
+    <Grid
+        Background="Transparent"
+        DataContextChanged="RootGrid_DataContextChanged"
+        Tapped="{x:Bind Ctx.ItemHandler.OnItemTapped}">
         <Grid.ContextFlyout>
-            <MenuFlyout Opening="OnMenuFlyoutOpening">
+            <MenuFlyout>
                 <MenuFlyoutItem
                     x:Uid="MenuFlyoutOpenInNewTab"
                     Click="{x:Bind Ctx.ItemHandler.OnOpenInNewTabClicked}"
@@ -76,10 +81,7 @@
                 </MenuFlyoutItem>
             </MenuFlyout>
         </Grid.ContextFlyout>
-        <Grid
-            Width="300"
-            Height="{StaticResource ComicItemHorizontalImageHeight}"
-            Margin="10,8">
+        <Grid Margin="10,8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />

@@ -10,14 +10,13 @@ using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Common.DebugTools;
-using ComicReader.Common.Imaging;
 using ComicReader.Common.PageBase;
 using ComicReader.Data.Models;
 using ComicReader.Data.Models.Comic;
 using ComicReader.Data.SqlHelpers;
 using ComicReader.Data.Tables;
-using ComicReader.Helpers.Imaging;
 using ComicReader.Helpers.Navigation;
+using ComicReader.UserControls;
 using ComicReader.ViewModels;
 using ComicReader.Views.Main;
 using ComicReader.Views.Navigation;
@@ -28,7 +27,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace ComicReader.Views.Search;
 
@@ -40,7 +38,6 @@ internal sealed partial class SearchPage : BasePage
     private List<Match> _matches = new();
     private int _matchIndex = 0;
     private readonly CancellationLock _searchLock = new();
-    private readonly CancellationSession _loadImageSession = new();
     private string _keyword = "";
 
     public SearchPage()
@@ -70,12 +67,6 @@ internal sealed partial class SearchPage : BasePage
         GetNavigationPageAbility().SetSearchBox(_keyword);
         ScrollViewer scrollViewer = SearchResultGridView.ChildrenBreadthFirst().OfType<ScrollViewer>().First();
         scrollViewer.ViewChanged += OnScrollViewerViewChanged;
-    }
-
-    protected override void OnPause()
-    {
-        base.OnPause();
-        _loadImageSession.Next();
     }
 
     private IMainPageAbility GetMainPageAbility()
@@ -241,7 +232,6 @@ internal sealed partial class SearchPage : BasePage
         model.Rating = comic.Rating;
         model.UpdateProgress(false);
         model.IsFavorite = await FavoriteModel.Instance.FromId(comic.Id) != null;
-        model.IsSelectMode = ViewModel.IsSelectMode;
         model.ItemHandler = _comicItemHandler;
     }
 
@@ -280,49 +270,6 @@ internal sealed partial class SearchPage : BasePage
         });
     }
 
-    private void LoadImage(ComicItemHorizontal viewHolder, ComicItemViewModel item)
-    {
-        double image_width = (double)Application.Current.Resources["ComicItemHorizontalImageWidth"];
-        double image_height = (double)Application.Current.Resources["ComicItemHorizontalImageHeight"];
-        var tokens = new List<SimpleImageLoader.Token>();
-
-        if (item.Image.ImageSet)
-        {
-            return;
-        }
-
-        item.Image.ImageSet = true;
-        tokens.Add(new SimpleImageLoader.Token
-        {
-            Width = image_width,
-            Height = image_height,
-            Multiplication = 1.4,
-            StretchMode = StretchModeEnum.UniformToFill,
-            Source = new ComicCoverImageSource(item.Comic),
-            ImageResultHandler = new LoadImageCallback(viewHolder, item)
-        });
-
-        new SimpleImageLoader.Transaction(_loadImageSession.Token, tokens).Commit();
-    }
-
-    private class LoadImageCallback : IImageResultHandler
-    {
-        private readonly ComicItemHorizontal _viewHolder;
-        private readonly ComicItemViewModel _viewModel;
-
-        public LoadImageCallback(ComicItemHorizontal viewHolder, ComicItemViewModel viewModel)
-        {
-            _viewHolder = viewHolder;
-            _viewModel = viewModel;
-        }
-
-        public void OnSuccess(BitmapImage image)
-        {
-            _viewModel.Image.Image = image;
-            _viewHolder.CompareAndBind(_viewModel);
-        }
-    }
-
     private void OnComicItemTapped(object sender, TappedRoutedEventArgs e)
     {
         if (!CanHandleTapped())
@@ -349,15 +296,14 @@ internal sealed partial class SearchPage : BasePage
     {
         var item = args.Item as ComicItemViewModel;
         var viewHolder = args.ItemContainer.ContentTemplateRoot as ComicItemHorizontal;
+
         if (args.InRecycleQueue)
         {
-            item.Image.ImageSet = false;
+            viewHolder.Unbind();
         }
-
-        viewHolder.Bind(item);
-        if (!args.InRecycleQueue)
+        else
         {
-            LoadImage(viewHolder, item);
+            viewHolder.Bind(item);
         }
     }
 
@@ -446,11 +392,6 @@ internal sealed partial class SearchPage : BasePage
 
         ViewModel.IsSelectMode = val;
         ViewModel.ComicItemSelectionMode = val ? ListViewSelectionMode.Multiple : ListViewSelectionMode.None;
-
-        foreach (ComicItemViewModel model in ViewModel.SearchResults)
-        {
-            model.IsSelectMode = val;
-        }
     }
 
     private void OnSelectClicked(object sender, RoutedEventArgs e)
