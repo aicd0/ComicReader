@@ -138,7 +138,7 @@ internal static class ImageCacheManager
         {
             return;
         }
-        _ = MainThreadUtils.RunInMainThreadAsync(async delegate
+        _ = MainThreadUtils.PostInMainThreadAsync(async delegate
         {
             long startTime = GetCurrentTick();
             Interlocked.Exchange(ref sPostMainThreadTask, 0);
