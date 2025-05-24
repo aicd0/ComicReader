@@ -142,6 +142,7 @@ internal static class ImageCacheManager
         {
             long startTime = GetCurrentTick();
             Interlocked.Exchange(ref sPostMainThreadTask, 0);
+            // Only responsible for rendering tasks that have been queued before this point.
             while (sRenderQueue.TryDequeue(out RenderItem item))
             {
                 await PerformRender(item);
