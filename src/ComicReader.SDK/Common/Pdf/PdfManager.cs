@@ -3,21 +3,16 @@
 
 #nullable disable
 
-using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 
 using ComicReader.SDK.Common.DebugTools;
 using ComicReader.SDK.Common.Threading;
 
 using PdfiumViewer;
 
-namespace ComicReader.Common.Pdf;
+namespace ComicReader.SDK.Common.Pdf;
 
-internal static class PdfManager
+public static class PdfManager
 {
     private const string TAG = nameof(PdfManager);
 
