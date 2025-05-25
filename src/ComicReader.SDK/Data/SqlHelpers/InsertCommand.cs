@@ -26,7 +26,7 @@ public class InsertCommand<T> where T : ITable
         return this;
     }
 
-    public long Execute()
+    public long Execute(SqlDatabase database)
     {
         if (_executed)
         {
@@ -39,7 +39,7 @@ public class InsertCommand<T> where T : ITable
             throw new ArgumentException("Empty tokens.");
         }
 
-        using CommandWrapper command = new();
+        using CommandWrapper command = new(database);
 
         StringBuilder sb = new("INSERT INTO ");
         sb.Append(_table.GetTableName());

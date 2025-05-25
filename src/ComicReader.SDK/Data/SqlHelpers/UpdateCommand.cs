@@ -38,7 +38,7 @@ public class UpdateCommand<T> where T : ITable
         return this;
     }
 
-    public void Execute()
+    public void Execute(SqlDatabase database)
     {
         if (_executed)
         {
@@ -51,7 +51,7 @@ public class UpdateCommand<T> where T : ITable
             return;
         }
 
-        using CommandWrapper command = new();
+        using CommandWrapper command = new(database);
 
         StringBuilder sb = new($"UPDATE {_table.GetTableName()} SET ");
 

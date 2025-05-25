@@ -16,6 +16,7 @@ using ComicReader.Common;
 using ComicReader.Common.AppEnvironment;
 using ComicReader.Common.PageBase;
 using ComicReader.Common.Threading;
+using ComicReader.Data;
 using ComicReader.Data.Legacy;
 using ComicReader.Data.Models;
 using ComicReader.Data.Models.Comic;
@@ -23,9 +24,9 @@ using ComicReader.Data.Tables;
 using ComicReader.SDK.Common.DebugTools;
 using ComicReader.SDK.Common.Threading;
 using ComicReader.SDK.Common.Utils;
+using ComicReader.SDK.Data.SqlHelpers;
 using ComicReader.Views.Main;
 
-using Microsoft.Data.Sqlite;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
@@ -490,13 +491,13 @@ internal sealed partial class SettingsPage : BasePage
         C0.Run(async delegate
         {
             long comicCount = 0;
-            await ComicData.CommandBlock2(async delegate (SqliteCommand command)
+            SelectCommand<ComicTable> command = new(ComicTable.Instance);
+            SelectCommand<ComicTable>.IToken<long> comicCountToken = command.PutQueryCountAll();
+            using SelectCommand<ComicTable>.IReader reader = await command.ExecuteAsync(SqlDatabaseManager.MainDatabase);
+            if (await reader.ReadAsync())
             {
-#pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
-                command.CommandText = "SELECT COUNT(*) FROM " + ComicTable.Instance.GetTableName();
-#pragma warning restore CA2100 // Review SQL queries for security vulnerabilities
-                comicCount = (long)await command.ExecuteScalarAsync();
-            }, "SettingUpdateStatistics");
+                comicCount = comicCountToken.GetValue();
+            }
             string total_comic_string = StringResourceProvider.GetResourceString("TotalComics");
             StatisticsTextBlock.Text = total_comic_string +
                 comicCount.ToString("#,#0", CultureInfo.InvariantCulture);

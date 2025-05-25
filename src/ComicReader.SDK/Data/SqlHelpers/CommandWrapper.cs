@@ -1,16 +1,20 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-#nullable disable
-
 using Microsoft.Data.Sqlite;
 
 namespace ComicReader.SDK.Data.SqlHelpers;
 
-internal class CommandWrapper : ICommandContext, IDisposable
+public sealed class CommandWrapper : ICommandContext, IDisposable
 {
-    private readonly SqliteCommand _command = SqliteDatabase.NewCommand();
+    private readonly SqliteCommand _command;
     private int _parameterIndex = 0;
+
+    public CommandWrapper(SqlDatabase database)
+    {
+        _command = database.NewCommand();
+        _command.CommandType = System.Data.CommandType.Text;
+    }
 
     public string AppendParameter(object value)
     {
@@ -21,7 +25,7 @@ internal class CommandWrapper : ICommandContext, IDisposable
 
     public void Dispose()
     {
-        _command?.Dispose();
+        _command.Dispose();
     }
 
     public void SetCommandText(string commandText)
@@ -41,7 +45,7 @@ internal class CommandWrapper : ICommandContext, IDisposable
         return await _command.ExecuteNonQueryAsync();
     }
 
-    public object ExecuteScalar()
+    public object? ExecuteScalar()
     {
         return _command.ExecuteScalar();
     }

@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Common.PageBase;
+using ComicReader.Data;
 using ComicReader.Data.Models;
 using ComicReader.Data.Models.Comic;
 using ComicReader.Data.Tables;
@@ -173,7 +174,7 @@ internal sealed partial class SearchPage : BasePage
             SelectCommand<ComicTable>.IToken<long> idToken = command.PutQueryInt64(ComicTable.ColumnId);
             SelectCommand<ComicTable>.IToken<string> title1Token = command.PutQueryString(ComicTable.ColumnTitle1);
             SelectCommand<ComicTable>.IToken<string> title2Token = command.PutQueryString(ComicTable.ColumnTitle2);
-            using SelectCommand<ComicTable>.IReader reader = command.Execute();
+            using SelectCommand<ComicTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 
             while (reader.Read())
             {

@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using ComicReader.Common;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Common.Threading;
+using ComicReader.Data;
 using ComicReader.Data.Models;
 using ComicReader.Data.Models.Comic;
 using ComicReader.Data.Tables;
@@ -593,7 +594,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
             var command = new SelectCommand<ComicTable>(ComicTable.Instance);
             SelectCommand<ComicTable>.IToken<long> idToken = command.PutQueryInt64(ComicTable.ColumnId);
             SelectCommand<ComicTable>.IToken<DateTimeOffset> lastVisitToken = command.PutQueryDateTimeOffset(ComicTable.ColumnLastVisit);
-            using SelectCommand<ComicTable>.IReader reader = command.Execute();
+            using SelectCommand<ComicTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 
             while (reader.Read())
             {

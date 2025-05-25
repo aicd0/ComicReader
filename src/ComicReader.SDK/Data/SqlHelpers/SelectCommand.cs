@@ -43,46 +43,39 @@ public class SelectCommand<T> where T : ITable
         return this;
     }
 
+    public IToken<long> PutQueryCountAll()
+    {
+        return PutToken(new GeneralToken<long>("COUNT(*)", delegate (SqliteDataReader reader, int ordinal) { return reader.GetInt64(ordinal); }));
+    }
+
     public IToken<int> PutQueryInt32(Column column)
     {
-        var token = new Token<int>(column, delegate (SqliteDataReader reader, int ordinal) { return reader.GetInt32(ordinal); });
-        _tokens[column.Name] = token;
-        return token;
+        return PutToken(new ColumnToken<int>(column, delegate (SqliteDataReader reader, int ordinal) { return reader.GetInt32(ordinal); }));
     }
 
     public IToken<long> PutQueryInt64(Column column)
     {
-        var token = new Token<long>(column, delegate (SqliteDataReader reader, int ordinal) { return reader.GetInt64(ordinal); });
-        _tokens[column.Name] = token;
-        return token;
+        return PutToken(new ColumnToken<long>(column, delegate (SqliteDataReader reader, int ordinal) { return reader.GetInt64(ordinal); }));
     }
 
     public IToken<string> PutQueryString(Column column)
     {
-        var token = new Token<string>(column, delegate (SqliteDataReader reader, int ordinal) { return reader.GetString(ordinal); });
-        _tokens[column.Name] = token;
-        return token;
+        return PutToken(new ColumnToken<string>(column, delegate (SqliteDataReader reader, int ordinal) { return reader.GetString(ordinal); }));
     }
 
     public IToken<bool> PutQueryBoolean(Column column)
     {
-        var token = new Token<bool>(column, delegate (SqliteDataReader reader, int ordinal) { return reader.GetBoolean(ordinal); });
-        _tokens[column.Name] = token;
-        return token;
+        return PutToken(new ColumnToken<bool>(column, delegate (SqliteDataReader reader, int ordinal) { return reader.GetBoolean(ordinal); }));
     }
 
     public IToken<double> PutQueryDouble(Column column)
     {
-        var token = new Token<double>(column, delegate (SqliteDataReader reader, int ordinal) { return reader.GetDouble(ordinal); });
-        _tokens[column.Name] = token;
-        return token;
+        return PutToken(new ColumnToken<double>(column, delegate (SqliteDataReader reader, int ordinal) { return reader.GetDouble(ordinal); }));
     }
 
     public IToken<DateTimeOffset> PutQueryDateTimeOffset(Column column)
     {
-        var token = new Token<DateTimeOffset>(column, delegate (SqliteDataReader reader, int ordinal) { return reader.GetDateTimeOffset(ordinal); });
-        _tokens[column.Name] = token;
-        return token;
+        return PutToken(new ColumnToken<DateTimeOffset>(column, delegate (SqliteDataReader reader, int ordinal) { return reader.GetDateTimeOffset(ordinal); }));
     }
 
     public SelectCommand<T> AppendCondition<U>(Column column, U value)
@@ -96,7 +89,7 @@ public class SelectCommand<T> where T : ITable
         return this;
     }
 
-    public IReader Execute()
+    public IReader Execute(SqlDatabase database)
     {
         if (_executed)
         {
@@ -110,11 +103,11 @@ public class SelectCommand<T> where T : ITable
         }
 
         var tokens = new List<ITokenInternal>(_tokens.Values);
-        CommandWrapper command = GenerateCommand(tokens);
+        CommandWrapper command = GenerateCommand(database, tokens);
         return new Reader(command, command.ExecuteReader(), tokens);
     }
 
-    public async Task<IReader> ExecuteAsync()
+    public async Task<IReader> ExecuteAsync(SqlDatabase database)
     {
         if (_executed)
         {
@@ -128,13 +121,13 @@ public class SelectCommand<T> where T : ITable
         }
 
         var tokens = new List<ITokenInternal>(_tokens.Values);
-        CommandWrapper command = GenerateCommand(tokens);
+        CommandWrapper command = GenerateCommand(database, tokens);
         return new Reader(command, await command.ExecuteReaderAsync(), tokens);
     }
 
-    private CommandWrapper GenerateCommand(List<ITokenInternal> tokens)
+    private CommandWrapper GenerateCommand(SqlDatabase database, List<ITokenInternal> tokens)
     {
-        CommandWrapper command = new();
+        CommandWrapper command = new(database);
 
         StringBuilder sb = new($"SELECT ");
 
@@ -151,7 +144,7 @@ public class SelectCommand<T> where T : ITable
                 sb.Append(',');
             }
             divider = true;
-            sb.Append(token.GetColumnName());
+            sb.Append(token.GetQueryExpression());
         }
 
         sb.Append(" FROM ");
@@ -179,6 +172,12 @@ public class SelectCommand<T> where T : ITable
         return command;
     }
 
+    private Token<V> PutToken<V>(Token<V> token)
+    {
+        _tokens[token.GetQueryExpression()] = token;
+        return token;
+    }
+
     private class Reader(CommandWrapper command, SqliteDataReader reader, List<ITokenInternal> tokens) : IReader
     {
         public void Dispose()
@@ -190,7 +189,6 @@ public class SelectCommand<T> where T : ITable
         public bool Read()
         {
             bool hasMore = reader.Read();
-
             if (hasMore)
             {
                 for (int i = 0; i < tokens.Count; ++i)
@@ -199,7 +197,20 @@ public class SelectCommand<T> where T : ITable
                     token.UpdateValue(reader, i);
                 }
             }
+            return hasMore;
+        }
 
+        public async Task<bool> ReadAsync()
+        {
+            bool hasMore = await reader.ReadAsync();
+            if (hasMore)
+            {
+                for (int i = 0; i < tokens.Count; ++i)
+                {
+                    ITokenInternal token = tokens[i];
+                    token.UpdateValue(reader, i);
+                }
+            }
             return hasMore;
         }
     }
@@ -214,25 +225,25 @@ public class SelectCommand<T> where T : ITable
         {
             return false;
         }
+
+        public Task<bool> ReadAsync()
+        {
+            return Task.FromResult(false);
+        }
     }
 
-    private class Token<V> : IToken<V>, ITokenInternal
+    private abstract class Token<V> : IToken<V>, ITokenInternal
     {
-        private readonly Column _column;
         private readonly Func<SqliteDataReader, int, V> _getter;
         private bool _valueSet = false;
         private V _value = default;
 
-        public Token(Column column, Func<SqliteDataReader, int, V> getter)
+        public Token(Func<SqliteDataReader, int, V> getter)
         {
-            _column = column;
             _getter = getter;
         }
 
-        public string GetColumnName()
-        {
-            return _column.Name;
-        }
+        public abstract string GetQueryExpression();
 
         public V GetValue()
         {
@@ -251,14 +262,46 @@ public class SelectCommand<T> where T : ITable
         }
     }
 
+    private class GeneralToken<V> : Token<V>
+    {
+        private readonly string _expression;
+
+        public GeneralToken(string expression, Func<SqliteDataReader, int, V> getter) : base(getter)
+        {
+            _expression = expression;
+        }
+
+        public override string GetQueryExpression()
+        {
+            return _expression;
+        }
+    }
+
+    private class ColumnToken<V> : Token<V>
+    {
+        private readonly Column _column;
+
+        public ColumnToken(Column column, Func<SqliteDataReader, int, V> getter) : base(getter)
+        {
+            _column = column;
+        }
+
+        public override string GetQueryExpression()
+        {
+            return _column.Name;
+        }
+    }
+
     public interface IReader : IDisposable
     {
         bool Read();
+
+        Task<bool> ReadAsync();
     }
 
     private interface ITokenInternal
     {
-        string GetColumnName();
+        string GetQueryExpression();
 
         void UpdateValue(SqliteDataReader reader, int ordinal);
     }
