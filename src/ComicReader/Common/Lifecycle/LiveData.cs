@@ -6,8 +6,8 @@
 using System;
 using System.Collections.Generic;
 
-using ComicReader.Common.DebugTools;
 using ComicReader.Common.Threading;
+using ComicReader.SDK.Common.DebugTools;
 
 using Microsoft.UI.Xaml;
 

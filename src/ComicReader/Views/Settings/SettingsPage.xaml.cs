@@ -14,13 +14,13 @@ using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Common.AppEnvironment;
-using ComicReader.Common.DebugTools;
 using ComicReader.Common.PageBase;
 using ComicReader.Common.Threading;
 using ComicReader.Data.Legacy;
 using ComicReader.Data.Models;
 using ComicReader.Data.Models.Comic;
 using ComicReader.Data.Tables;
+using ComicReader.SDK.Common.DebugTools;
 using ComicReader.Views.Main;
 
 using Microsoft.Data.Sqlite;

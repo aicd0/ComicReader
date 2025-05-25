@@ -9,7 +9,7 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
-using ComicReader.Common.DebugTools;
+using ComicReader.SDK.Common.DebugTools;
 
 using Microsoft.Data.Sqlite;
 

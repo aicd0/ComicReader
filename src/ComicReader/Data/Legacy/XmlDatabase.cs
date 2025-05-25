@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using System.Xml.Serialization;
 
 using ComicReader.Common;
-using ComicReader.Common.DebugTools;
+using ComicReader.SDK.Common.DebugTools;
 
 using Windows.Storage;
 using Windows.Storage.Streams;

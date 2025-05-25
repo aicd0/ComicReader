@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 
-using ComicReader.Common.DebugTools;
+using ComicReader.SDK.Common.DebugTools;
 
 namespace ComicReader.Helpers.Navigation;
 

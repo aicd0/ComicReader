@@ -6,7 +6,7 @@ using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
 
-using ComicReader.Common.DebugTools;
+using ComicReader.SDK.Common.DebugTools;
 
 using Windows.ApplicationModel;
 

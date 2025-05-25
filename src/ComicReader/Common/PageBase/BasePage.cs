@@ -3,9 +3,9 @@
 
 #nullable disable
 
-using ComicReader.Common.DebugTools;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Helpers.Navigation;
+using ComicReader.SDK.Common.DebugTools;
 
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;

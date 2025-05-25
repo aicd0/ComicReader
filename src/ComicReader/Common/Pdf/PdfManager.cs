@@ -10,8 +10,8 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-using ComicReader.Common.DebugTools;
 using ComicReader.Common.Threading;
+using ComicReader.SDK.Common.DebugTools;
 
 using PdfiumViewer;
 

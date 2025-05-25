@@ -1,13 +1,12 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-using System.Collections.Generic;
 using System.Text;
 using System.Text.Json.Nodes;
 
-namespace ComicReader.Common.DebugTools;
+namespace ComicReader.SDK.Common.DebugTools;
 
-internal class LogTag
+public class LogTag
 {
     private const string EMPTY_TAG = "Empty";
 
@@ -61,7 +60,7 @@ internal class LogTag
         return tag;
     }
 
-    public static LogTag N(string name)
+    public static LogTag N(string? name)
     {
         name ??= EMPTY_TAG;
         var tag = new LogTag();
@@ -69,7 +68,7 @@ internal class LogTag
         return tag;
     }
 
-    public static LogTag N(string name1, string name2)
+    public static LogTag N(string? name1, string? name2)
     {
         name1 ??= EMPTY_TAG;
         name2 ??= EMPTY_TAG;
@@ -78,7 +77,7 @@ internal class LogTag
         return tag;
     }
 
-    public static LogTag N(string name1, string name2, string name3)
+    public static LogTag N(string? name1, string? name2, string? name3)
     {
         name1 ??= EMPTY_TAG;
         name2 ??= EMPTY_TAG;
@@ -88,7 +87,7 @@ internal class LogTag
         return tag;
     }
 
-    public static LogTag F(LogTag tag1, LogTag tag2)
+    public static LogTag F(LogTag? tag1, LogTag? tag2)
     {
         if (tag1 == null && tag2 == null)
         {
@@ -106,7 +105,7 @@ internal class LogTag
         return tag;
     }
 
-    public static LogTag F(LogTag tag1, LogTag tag2, LogTag tag3)
+    public static LogTag F(LogTag? tag1, LogTag? tag2, LogTag? tag3)
     {
         if (tag1 == null && tag2 == null && tag3 == null)
         {

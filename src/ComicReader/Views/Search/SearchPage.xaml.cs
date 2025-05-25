@@ -9,13 +9,13 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
-using ComicReader.Common.DebugTools;
 using ComicReader.Common.PageBase;
 using ComicReader.Data.Models;
 using ComicReader.Data.Models.Comic;
 using ComicReader.Data.SqlHelpers;
 using ComicReader.Data.Tables;
 using ComicReader.Helpers.Navigation;
+using ComicReader.SDK.Common.DebugTools;
 using ComicReader.UserControls;
 using ComicReader.ViewModels;
 using ComicReader.Views.Main;

@@ -5,12 +5,15 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
+using ComicReader.SDK.Common.DebugTools;
 using ComicReader.SDK.Common.KVStorage;
 
 namespace ComicReader.Common.DebugTools;
 
 internal class DebugSwitches
 {
+    private const string KEY_DEBUG_MODE = "debug_mode";
+
     public static readonly DebugSwitches Instance = new();
 
     private CommonConfig? _config;
@@ -23,7 +26,26 @@ internal class DebugSwitches
 
     private DebugSwitches() { }
 
-    public bool ConsoleEnabled
+    private static bool? _debugMode = null;
+    public static bool DebugMode
+    {
+        get
+        {
+            if (!_debugMode.HasValue)
+            {
+                _debugMode = KVDatabase.GetDefaultMethod().GetBoolean(GlobalConstants.KV_DB_APP, KEY_DEBUG_MODE, DebugUtils.DebugBuild);
+            }
+            return _debugMode.Value;
+        }
+        set
+        {
+            _debugMode = value;
+            KVDatabase.GetDefaultMethod().SetBoolean(GlobalConstants.KV_DB_APP, KEY_DEBUG_MODE, value);
+            DebugUtils.DebugMode = value;
+        }
+    }
+
+    private bool ConsoleEnabled
     {
         get => DebugUtils.DebugBuild && GetConfig().ConsoleEnabled;
         set
@@ -33,7 +55,7 @@ internal class DebugSwitches
         }
     }
 
-    public bool LogTreeEnabled
+    private bool LogTreeEnabled
     {
         get => DebugUtils.DebugBuild && GetConfig().LogTreeEnabled;
         set
@@ -43,7 +65,7 @@ internal class DebugSwitches
         }
     }
 
-    public LogTag? ConsoleWhitelist
+    private LogTag? ConsoleWhitelist
     {
         get
         {
@@ -63,6 +85,12 @@ internal class DebugSwitches
         }
     }
 
+    public void Initialize()
+    {
+        DebugUtils.DebugMode = DebugMode;
+        ApplyCommonConfigs();
+    }
+
     public string SerializeToJson()
     {
         return JsonSerializer.Serialize(GetConfig(), _serializeOption);
@@ -73,11 +101,6 @@ internal class DebugSwitches
         _config = JsonSerializer.Deserialize<CommonConfig>(json) ?? new();
         InvalidateCache();
         SaveConfig();
-    }
-
-    private void InvalidateCache()
-    {
-        _consoleWhitelist = null;
     }
 
     private CommonConfig GetConfig()
@@ -111,6 +134,11 @@ internal class DebugSwitches
         return config ?? new();
     }
 
+    private void InvalidateCache()
+    {
+        _consoleWhitelist = null;
+    }
+
     private void SaveConfig()
     {
         if (_config == null)
@@ -119,6 +147,14 @@ internal class DebugSwitches
         }
         string json = JsonSerializer.Serialize(_config);
         KVDatabase.GetDefaultMethod().SetString(GlobalConstants.KV_DB_DEV_TOOLS, "debug_switches", json);
+        ApplyCommonConfigs();
+    }
+
+    private void ApplyCommonConfigs()
+    {
+        Logger.SetConsoleEnabled(ConsoleEnabled);
+        Logger.SetConsoleWhitelist(ConsoleWhitelist);
+        Logger.SetLogTreeEnabled(LogTreeEnabled);
     }
 
     //

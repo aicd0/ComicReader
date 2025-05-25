@@ -11,7 +11,6 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
-using ComicReader.Common.DebugTools;
 using ComicReader.Common.Imaging;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Common.PageBase;
@@ -21,6 +20,7 @@ using ComicReader.Data.Models;
 using ComicReader.Data.Models.Comic;
 using ComicReader.Helpers.Imaging;
 using ComicReader.Helpers.Navigation;
+using ComicReader.SDK.Common.DebugTools;
 using ComicReader.SDK.Common.KVStorage;
 using ComicReader.ViewModels;
 using ComicReader.Views.Main;

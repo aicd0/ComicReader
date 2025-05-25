@@ -6,7 +6,7 @@ using System.IO;
 using System.Text;
 
 using ComicReader.Common.AppEnvironment;
-using ComicReader.Common.DebugTools;
+using ComicReader.SDK.Common.DebugTools;
 
 using Windows.Storage;
 

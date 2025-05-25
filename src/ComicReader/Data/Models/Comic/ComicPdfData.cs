@@ -10,8 +10,8 @@ using System.IO;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
-using ComicReader.Common.DebugTools;
 using ComicReader.Common.Pdf;
+using ComicReader.SDK.Common.DebugTools;
 
 using Windows.Storage;
 using Windows.Storage.Streams;

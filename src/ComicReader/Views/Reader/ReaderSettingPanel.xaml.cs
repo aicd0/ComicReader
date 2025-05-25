@@ -3,8 +3,8 @@
 
 #nullable disable
 
-using ComicReader.Common.DebugTools;
 using ComicReader.Data.Legacy;
+using ComicReader.SDK.Common.DebugTools;
 using ComicReader.Views.Navigation;
 
 using Microsoft.UI.Xaml;

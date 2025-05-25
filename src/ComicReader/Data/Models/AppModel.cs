@@ -7,8 +7,8 @@ using System.Collections.Concurrent;
 using System.Threading;
 
 using ComicReader.Common;
-using ComicReader.Common.DebugTools;
 using ComicReader.Data.Models.Comic;
+using ComicReader.SDK.Common.DebugTools;
 using ComicReader.SDK.Common.KVStorage;
 
 namespace ComicReader.Data.Models;

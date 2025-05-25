@@ -8,7 +8,7 @@ using System.IO;
 using System.Threading.Tasks;
 
 using ComicReader.Common.Caching;
-using ComicReader.Common.DebugTools;
+using ComicReader.SDK.Common.DebugTools;
 
 using Windows.Security.Cryptography;
 using Windows.Storage;

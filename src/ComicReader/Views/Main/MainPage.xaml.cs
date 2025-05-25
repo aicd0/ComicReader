@@ -8,13 +8,13 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
-using ComicReader.Common.DebugTools;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Common.PageBase;
 using ComicReader.Common.Threading;
 using ComicReader.Data.Models;
 using ComicReader.Data.Models.Comic;
 using ComicReader.Helpers.Navigation;
+using ComicReader.SDK.Common.DebugTools;
 using ComicReader.Views.Navigation;
 
 using Microsoft.UI;

@@ -8,9 +8,9 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 
 using ComicReader.Common;
-using ComicReader.Common.DebugTools;
 using ComicReader.Common.Imaging;
 using ComicReader.Common.Threading;
+using ComicReader.SDK.Common.DebugTools;
 
 using Microsoft.UI.Xaml.Media.Imaging;
 

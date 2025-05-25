@@ -6,7 +6,7 @@
 using System;
 using System.Threading.Tasks;
 
-using ComicReader.Common.DebugTools;
+using ComicReader.SDK.Common.DebugTools;
 
 using Windows.Storage;
 

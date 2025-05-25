@@ -9,7 +9,6 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
-using ComicReader.Common.DebugTools;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Common.Threading;
 using ComicReader.Data.Models;
@@ -17,6 +16,7 @@ using ComicReader.Data.Models.Comic;
 using ComicReader.Data.SqlHelpers;
 using ComicReader.Data.Tables;
 using ComicReader.SDK.Common.Algorithm;
+using ComicReader.SDK.Common.DebugTools;
 using ComicReader.ViewModels;
 
 using Microsoft.UI.Xaml.Controls;

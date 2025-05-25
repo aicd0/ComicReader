@@ -1,20 +1,14 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-#nullable disable
-
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.IO;
 using System.Text;
-using System.Threading;
 
 using Windows.Storage;
 
-namespace ComicReader.Common.DebugTools;
+namespace ComicReader.SDK.Common.DebugTools;
 
-internal static class Logger
+public static class Logger
 {
     private const string TAG = "Logger";
     private const int LEVEL_CONSOLE = 0;
@@ -26,6 +20,9 @@ internal static class Logger
     private const int LOG_INTERVAL = 5000;
 
     private static int sInitialized = 0;
+    private static bool sConsoleEnabled = false;
+    private static LogTag? sConsoleWhitelist = null;
+    private static bool sLogTreeEnabled = false;
     private static string sLogFolderPath = "";
     private static readonly ConcurrentQueue<LogItem> sBuffer = new();
 
@@ -45,96 +42,111 @@ internal static class Logger
         logThread.Start();
     }
 
+    public static void SetConsoleEnabled(bool enabled)
+    {
+        sConsoleEnabled = enabled;
+    }
+
+    public static void SetConsoleWhitelist(LogTag? tag)
+    {
+        sConsoleWhitelist = tag;
+    }
+
+    public static void SetLogTreeEnabled(bool enabled)
+    {
+        sLogTreeEnabled = enabled;
+    }
+
     public static void Flush()
     {
         FlushToFile();
     }
 
-    public static void D(string tag, string message)
+    public static void D(string? tag, string? message)
     {
         Log(LEVEL_DEBUG, LogTag.N(tag), message, null);
     }
 
-    public static void D(LogTag tag, string message)
+    public static void D(LogTag? tag, string? message)
     {
         Log(LEVEL_DEBUG, tag, message, null);
     }
 
-    public static void I(string tag, string message)
+    public static void I(string? tag, string? message)
     {
         Log(LEVEL_INFO, LogTag.N(tag), message, null);
     }
 
-    public static void I(LogTag tag, string message)
+    public static void I(LogTag? tag, string? message)
     {
         Log(LEVEL_INFO, tag, message, null);
     }
 
-    public static void W(string tag, string message)
+    public static void W(string? tag, string? message)
     {
         Log(LEVEL_WARN, LogTag.N(tag), message, null);
     }
 
-    public static void W(LogTag tag, string message)
+    public static void W(LogTag? tag, string? message)
     {
         Log(LEVEL_WARN, tag, message, null);
     }
 
-    public static void W(string tag, string message, Exception exception)
+    public static void W(string? tag, string? message, Exception? exception)
     {
         Log(LEVEL_WARN, LogTag.N(tag), message, exception);
     }
 
-    public static void W(LogTag tag, string message, Exception exception)
+    public static void W(LogTag? tag, string? message, Exception? exception)
     {
         Log(LEVEL_WARN, tag, message, exception);
     }
 
-    public static void E(string tag, string message)
+    public static void E(string? tag, string? message)
     {
         Log(LEVEL_ERROR, LogTag.N(tag), message, null);
     }
 
-    public static void E(LogTag tag, string message)
+    public static void E(LogTag? tag, string? message)
     {
         Log(LEVEL_ERROR, tag, message, null);
     }
 
-    public static void E(string tag, string message, Exception exception)
+    public static void E(string? tag, string? message, Exception? exception)
     {
         Log(LEVEL_ERROR, LogTag.N(tag), message, exception);
     }
 
-    public static void E(LogTag tag, string message, Exception exception)
+    public static void E(LogTag? tag, string? message, Exception? exception)
     {
         Log(LEVEL_ERROR, tag, message, exception);
     }
 
-    public static void F(string tag, string message)
+    public static void F(string? tag, string? message)
     {
         Log(LEVEL_FATAL, LogTag.N(tag), message, new Exception());
         ThrowOnDebug(null);
     }
 
-    public static void F(LogTag tag, string message)
+    public static void F(LogTag? tag, string? message)
     {
         Log(LEVEL_FATAL, tag, message, new Exception());
         ThrowOnDebug(null);
     }
 
-    public static void F(string tag, string message, Exception exception)
+    public static void F(string? tag, string? message, Exception? exception)
     {
         Log(LEVEL_FATAL, LogTag.N(tag), message, exception);
         ThrowOnDebug(null);
     }
 
-    public static void F(LogTag tag, string message, Exception exception)
+    public static void F(LogTag? tag, string? message, Exception? exception)
     {
         Log(LEVEL_FATAL, tag, message, exception);
         ThrowOnDebug(null);
     }
 
-    public static void Assert(bool condition, string eventName)
+    public static void Assert(bool condition, string? eventName)
     {
         if (condition)
         {
@@ -144,27 +156,27 @@ internal static class Logger
         AssertNotReachHereInternal(eventName, null, null);
     }
 
-    public static void AssertNotReachHere(string eventName)
+    public static void AssertNotReachHere(string? eventName)
     {
         AssertNotReachHereInternal(eventName, null, null);
     }
 
-    public static void AssertNotReachHere(string eventName, string message)
+    public static void AssertNotReachHere(string? eventName, string? message)
     {
         AssertNotReachHereInternal(eventName, message, null);
     }
 
-    public static void AssertNotReachHere(string eventName, Exception exception)
+    public static void AssertNotReachHere(string? eventName, Exception? exception)
     {
         AssertNotReachHereInternal(eventName, null, new AssertException(eventName, exception));
     }
 
-    public static void AssertNotReachHere(string eventName, string message, Exception exception)
+    public static void AssertNotReachHere(string? eventName, string? message, Exception? exception)
     {
         AssertNotReachHereInternal(eventName, message, exception);
     }
 
-    private static void AssertNotReachHereInternal(string eventName, string message, Exception exception)
+    private static void AssertNotReachHereInternal(string? eventName, string? message, Exception? exception)
     {
         if (string.IsNullOrEmpty(eventName))
         {
@@ -200,8 +212,9 @@ internal static class Logger
         }
     }
 
-    private static void Log(int level, LogTag tag, string message, Exception exception)
+    private static void Log(int level, LogTag? tag, string? message, Exception? exception)
     {
+        tag ??= LogTag.Empty;
         string levelTag;
         switch (level)
         {
@@ -234,9 +247,9 @@ internal static class Logger
             realMessage += "\n" + exception.ToString();
         }
 
-        if (DebugSwitches.Instance.ConsoleEnabled)
+        if (sConsoleEnabled)
         {
-            LogTag consoleWhitelist = DebugSwitches.Instance.ConsoleWhitelist;
+            LogTag? consoleWhitelist = sConsoleWhitelist;
             if (consoleWhitelist == null || consoleWhitelist.ContainsAny(tag))
             {
                 LogToConsole(realMessage);
@@ -270,7 +283,7 @@ internal static class Logger
 
         while (true)
         {
-            if (sBuffer.TryDequeue(out LogItem item))
+            if (sBuffer.TryDequeue(out LogItem? item))
             {
                 logs.Add(item);
             }
@@ -282,7 +295,7 @@ internal static class Logger
 
         FlushToLogFile(logs);
 
-        if (DebugSwitches.Instance.LogTreeEnabled)
+        if (sLogTreeEnabled)
         {
             FlushToLogTree(logs);
         }
@@ -334,7 +347,7 @@ internal static class Logger
                     divider = true;
                     sb.Append(category);
                     string path = sb.ToString();
-                    if (!fileLogs.TryGetValue(path, out List<LogItem> logItems))
+                    if (!fileLogs.TryGetValue(path, out List<LogItem>? logItems))
                     {
                         logItems = [];
                         fileLogs[path] = logItems;
@@ -370,7 +383,7 @@ internal static class Logger
         System.Diagnostics.Debug.Print(message);
     }
 
-    private static void ThrowOnDebug(Exception exception)
+    private static void ThrowOnDebug(Exception? exception)
     {
         if (DebugUtils.DebugMode)
         {
@@ -386,21 +399,16 @@ internal static class Logger
 
     private class LogItem
     {
-        public LogTag Tag;
-        public string Message;
-
-        public override string ToString()
-        {
-            return base.ToString();
-        }
+        public required LogTag Tag;
+        public required string Message;
     }
 
     private class AssertException : Exception
     {
         public AssertException() { }
 
-        public AssertException(string message) : base(message) { }
+        public AssertException(string? message) : base(message) { }
 
-        public AssertException(string message, Exception inner) : base(message, inner) { }
+        public AssertException(string? message, Exception? inner) : base(message, inner) { }
     }
 }

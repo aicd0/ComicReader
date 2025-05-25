@@ -4,7 +4,7 @@
 using System;
 using System.IO;
 
-using ComicReader.Common.DebugTools;
+using ComicReader.SDK.Common.DebugTools;
 
 using Windows.Storage;
 

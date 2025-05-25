@@ -13,7 +13,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
-using ComicReader.Common.DebugTools;
+using ComicReader.SDK.Common.DebugTools;
 
 using Microsoft.Data.Sqlite;
 
