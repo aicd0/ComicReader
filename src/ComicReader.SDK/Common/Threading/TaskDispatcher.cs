@@ -1,15 +1,11 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-
 using ComicReader.SDK.Common.DebugTools;
 
-namespace ComicReader.Common.Threading;
+namespace ComicReader.SDK.Common.Threading;
 
-internal abstract class TaskDispatcher : ITaskDispatcher
+public abstract class TaskDispatcher : ITaskDispatcher
 {
     private const string TAG = "TaskDispatcher";
 
@@ -92,7 +88,7 @@ internal abstract class TaskDispatcher : ITaskDispatcher
 
     private class QueueDispatcher : TaskDispatcher
     {
-        private Task _queue = Task.Factory.StartNew(() => TaskException.Success);
+        private Task _queue = Task.Factory.StartNew(() => { });
 
         public QueueDispatcher(string name) : base(name)
         {

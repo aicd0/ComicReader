@@ -21,6 +21,7 @@ using ComicReader.Data.Models;
 using ComicReader.Data.Models.Comic;
 using ComicReader.Data.Tables;
 using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Common.Threading;
 using ComicReader.Views.Main;
 
 using Microsoft.Data.Sqlite;

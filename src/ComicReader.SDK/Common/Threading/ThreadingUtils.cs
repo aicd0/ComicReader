@@ -1,12 +1,9 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
-using System.Threading.Tasks;
+namespace ComicReader.SDK.Common.Threading;
 
-namespace ComicReader.Common.Threading;
-
-internal static class ThreadingUtils
+public static class ThreadingUtils
 {
     public static async Task<R> Submit<R>(ITaskDispatcher dispatcher, string taskName, Func<R> action)
     {

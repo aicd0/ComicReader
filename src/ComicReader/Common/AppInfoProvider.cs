@@ -8,7 +8,7 @@ using System.Collections.ObjectModel;
 using System.Text;
 using System.Threading.Tasks;
 
-using ComicReader.Common.Threading;
+using ComicReader.SDK.Common.Threading;
 
 namespace ComicReader.Common;
 

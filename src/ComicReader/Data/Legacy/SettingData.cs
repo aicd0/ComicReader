@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 using System.Xml.Serialization;
 
 using ComicReader.Common;
-using ComicReader.Common.Threading;
+using ComicReader.SDK.Common.Threading;
 
 using Windows.Storage;
 using Windows.Storage.Pickers;

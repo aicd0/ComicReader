@@ -9,7 +9,7 @@ using System.Xml.Serialization;
 
 using ComicReader.Common;
 using ComicReader.Common.Lifecycle;
-using ComicReader.Common.Threading;
+using ComicReader.SDK.Common.Threading;
 
 namespace ComicReader.Data.Legacy;
 

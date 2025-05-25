@@ -12,11 +12,11 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
-using ComicReader.Common.Threading;
 using ComicReader.Data.Legacy;
 using ComicReader.Data.SqlHelpers;
 using ComicReader.Data.Tables;
 using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Common.Threading;
 
 using LiteDB;
 

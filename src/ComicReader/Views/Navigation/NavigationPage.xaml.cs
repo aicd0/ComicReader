@@ -8,10 +8,10 @@ using System;
 using ComicReader.Common;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Common.PageBase;
-using ComicReader.Common.Threading;
 using ComicReader.Data.Legacy;
 using ComicReader.Helpers.Navigation;
 using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Common.Threading;
 using ComicReader.Views.Main;
 
 using Microsoft.UI.Input;

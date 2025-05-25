@@ -17,6 +17,7 @@ using ComicReader.Data.SqlHelpers;
 using ComicReader.Data.Tables;
 using ComicReader.SDK.Common.Algorithm;
 using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Common.Threading;
 using ComicReader.ViewModels;
 
 using Microsoft.UI.Xaml.Controls;

@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using ComicReader.Common.Caching;
 using ComicReader.Common.Threading;
 using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Common.Threading;
 
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml.Media.Imaging;
