@@ -15,6 +15,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ComicReader", "ComicReader\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ComicReader.SDK", "ComicReader.SDK\ComicReader.SDK.csproj", "{3A555A1B-826E-41A4-8808-29C2E214F671}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ComicReader.SDK.Tests", "Tests\ComicReader.SDK.Tests\ComicReader.SDK.Tests.csproj", "{A57B0BCD-96D2-4E88-9E91-03CDE828B3C4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM64 = Debug|ARM64
@@ -67,12 +69,25 @@ Global
 		{3A555A1B-826E-41A4-8808-29C2E214F671}.Release|x64.Build.0 = Release|Any CPU
 		{3A555A1B-826E-41A4-8808-29C2E214F671}.Release|x86.ActiveCfg = Release|Any CPU
 		{3A555A1B-826E-41A4-8808-29C2E214F671}.Release|x86.Build.0 = Release|Any CPU
+		{A57B0BCD-96D2-4E88-9E91-03CDE828B3C4}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{A57B0BCD-96D2-4E88-9E91-03CDE828B3C4}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{A57B0BCD-96D2-4E88-9E91-03CDE828B3C4}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{A57B0BCD-96D2-4E88-9E91-03CDE828B3C4}.Debug|x64.Build.0 = Debug|Any CPU
+		{A57B0BCD-96D2-4E88-9E91-03CDE828B3C4}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{A57B0BCD-96D2-4E88-9E91-03CDE828B3C4}.Debug|x86.Build.0 = Debug|Any CPU
+		{A57B0BCD-96D2-4E88-9E91-03CDE828B3C4}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{A57B0BCD-96D2-4E88-9E91-03CDE828B3C4}.Release|ARM64.Build.0 = Release|Any CPU
+		{A57B0BCD-96D2-4E88-9E91-03CDE828B3C4}.Release|x64.ActiveCfg = Release|Any CPU
+		{A57B0BCD-96D2-4E88-9E91-03CDE828B3C4}.Release|x64.Build.0 = Release|Any CPU
+		{A57B0BCD-96D2-4E88-9E91-03CDE828B3C4}.Release|x86.ActiveCfg = Release|Any CPU
+		{A57B0BCD-96D2-4E88-9E91-03CDE828B3C4}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{080FD1B1-888C-49CB-BF10-3863A9151583} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{A57B0BCD-96D2-4E88-9E91-03CDE828B3C4} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {9E3D33BF-C5F7-4866-A1FF-A1D8446607F1}

@@ -3,7 +3,7 @@
 
 using System.Collections.ObjectModel;
 
-using ComicReader.Common.Algorithm;
+using ComicReader.SDK.Common.Algorithm;
 
 namespace ComicReader.Tests;
 

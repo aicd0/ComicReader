@@ -1,11 +1,9 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
-namespace ComicReader.Common.Algorithm;
+namespace ComicReader.SDK.Common.Algorithm;
 
 public static class DiffUtils
 {
