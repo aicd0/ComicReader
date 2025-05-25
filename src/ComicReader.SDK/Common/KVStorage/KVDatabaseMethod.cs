@@ -3,11 +3,9 @@
 
 #nullable disable
 
-using System.Collections.Generic;
+namespace ComicReader.SDK.Common.KVStorage;
 
-namespace ComicReader.Common.KVStorage;
-
-internal abstract class KVDatabaseMethod
+public abstract class KVDatabaseMethod
 {
     private readonly Dictionary<string, KVDatabaseLib> mLibs = new();
 

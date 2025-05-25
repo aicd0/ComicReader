@@ -3,11 +3,9 @@
 
 #nullable disable
 
-using System;
+namespace ComicReader.SDK.Common.KVStorage;
 
-namespace ComicReader.Common.KVStorage;
-
-internal class KVDatabaseLib
+public class KVDatabaseLib
 {
     private readonly WeakReference<KVDatabaseMethod> mMethod;
     private readonly string mName;

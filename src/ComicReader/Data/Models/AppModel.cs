@@ -8,8 +8,8 @@ using System.Threading;
 
 using ComicReader.Common;
 using ComicReader.Common.DebugTools;
-using ComicReader.Common.KVStorage;
 using ComicReader.Data.Models.Comic;
+using ComicReader.SDK.Common.KVStorage;
 
 namespace ComicReader.Data.Models;
 

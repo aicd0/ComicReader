@@ -1,17 +1,13 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-#nullable disable
-
-using System;
 using System.Collections.Concurrent;
-using System.IO;
 
 using LiteDB;
 
 using Windows.Storage;
 
-namespace ComicReader.Common.KVStorage;
+namespace ComicReader.SDK.Common.KVStorage;
 
 internal class KVDatabaseMethodLiteDB : KVDatabaseMethod, IDisposable
 {
@@ -43,7 +39,7 @@ internal class KVDatabaseMethodLiteDB : KVDatabaseMethod, IDisposable
         SetValue(lib, key, value);
     }
 
-    public override string GetString(string lib, string key)
+    public override string? GetString(string lib, string key)
     {
         return GetValue(lib, key);
     }
@@ -56,7 +52,7 @@ internal class KVDatabaseMethodLiteDB : KVDatabaseMethod, IDisposable
 
     public override bool? GetBoolean(string lib, string key)
     {
-        string s = GetValue(lib, key);
+        string? s = GetValue(lib, key);
         if (s == null)
         {
             return null;
@@ -73,7 +69,7 @@ internal class KVDatabaseMethodLiteDB : KVDatabaseMethod, IDisposable
 
     public override long? GetLong(string lib, string key)
     {
-        string s = GetValue(lib, key);
+        string? s = GetValue(lib, key);
 
         if (s == null)
         {
@@ -91,7 +87,7 @@ internal class KVDatabaseMethodLiteDB : KVDatabaseMethod, IDisposable
     private LiteDatabase GetDatabase(string lib)
     {
         {
-            if (_db.TryGetValue(lib, out LiteDatabase db))
+            if (_db.TryGetValue(lib, out LiteDatabase? db))
             {
                 return db;
             }
@@ -99,7 +95,7 @@ internal class KVDatabaseMethodLiteDB : KVDatabaseMethod, IDisposable
 
         lock (_lock)
         {
-            if (_db.TryGetValue(lib, out LiteDatabase db))
+            if (_db.TryGetValue(lib, out LiteDatabase? db))
             {
                 return db;
             }
@@ -113,7 +109,7 @@ internal class KVDatabaseMethodLiteDB : KVDatabaseMethod, IDisposable
         }
     }
 
-    private string GetValue(string lib, string key)
+    private string? GetValue(string lib, string key)
     {
         ILiteCollection<KVPair> col = GetDatabase(lib).GetCollection<KVPair>(DEFAULT_COLLECTION);
         KVPair pair = col.FindById(key);
@@ -158,7 +154,7 @@ internal class KVDatabaseMethodLiteDB : KVDatabaseMethod, IDisposable
     private class KVPair
     {
         [BsonId]
-        public string Key { get; set; }
-        public string Value { get; set; }
+        public required string Key { get; set; }
+        public required string Value { get; set; }
     }
 }

@@ -3,10 +3,9 @@
 
 #nullable disable
 
-using System;
 using System.Collections.Concurrent;
 
-namespace ComicReader.Common.KVStorage;
+namespace ComicReader.SDK.Common.KVStorage;
 
 internal class KVDatabaseMethodCache(KVDatabaseMethod method) : KVDatabaseMethod
 {

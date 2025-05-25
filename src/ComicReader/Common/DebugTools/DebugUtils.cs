@@ -1,7 +1,7 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-using ComicReader.Common.KVStorage;
+using ComicReader.SDK.Common.KVStorage;
 
 namespace ComicReader.Common.DebugTools;
 

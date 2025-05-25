@@ -5,7 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 
-using ComicReader.Common.KVStorage;
+using ComicReader.SDK.Common.KVStorage;
 
 namespace ComicReader.Common.DebugTools;
 

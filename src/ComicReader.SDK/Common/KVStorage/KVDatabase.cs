@@ -1,11 +1,9 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
+namespace ComicReader.SDK.Common.KVStorage;
 
-namespace ComicReader.Common.KVStorage;
-
-internal static class KVDatabase
+public static class KVDatabase
 {
     private static readonly Lazy<KVDatabaseMethod> sDefaultMethod = new(delegate
     {
