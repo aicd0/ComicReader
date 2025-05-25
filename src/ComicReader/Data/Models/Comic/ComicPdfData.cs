@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using ComicReader.Common;
 using ComicReader.SDK.Common.DebugTools;
 using ComicReader.SDK.Common.Pdf;
+using ComicReader.SDK.Common.Utils;
 
 using Windows.Storage;
 using Windows.Storage.Streams;

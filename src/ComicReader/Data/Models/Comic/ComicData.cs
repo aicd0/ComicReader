@@ -13,10 +13,11 @@ using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Data.Legacy;
-using ComicReader.Data.SqlHelpers;
 using ComicReader.Data.Tables;
 using ComicReader.SDK.Common.DebugTools;
 using ComicReader.SDK.Common.Threading;
+using ComicReader.SDK.Data;
+using ComicReader.SDK.Data.SqlHelpers;
 
 using LiteDB;
 
@@ -798,7 +799,7 @@ internal abstract class ComicData
 
     private static void CommandBlock2NoLock(Func<SqliteCommand, Task> op)
     {
-        using (SqliteCommand command = SqliteDatabaseManager.NewCommand())
+        using (SqliteCommand command = SqliteDatabase.NewCommand())
         {
             op(command).Wait();
         }
@@ -808,7 +809,7 @@ internal abstract class ComicData
     {
         await Enqueue(delegate
         {
-            using (SqliteTransaction transaction = SqliteDatabaseManager.NewTransaction())
+            using (SqliteTransaction transaction = SqliteDatabase.NewTransaction())
             {
                 op().Wait();
                 transaction.Commit();

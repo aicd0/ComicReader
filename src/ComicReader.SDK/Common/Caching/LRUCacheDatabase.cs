@@ -3,17 +3,13 @@
 
 #nullable disable
 
-using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Text;
-using System.Threading.Tasks;
 
 using ComicReader.SDK.Common.DebugTools;
 
 using Microsoft.Data.Sqlite;
 
-namespace ComicReader.Common.Caching;
+namespace ComicReader.SDK.Common.Caching;
 
 internal class LRUCacheDatabase
 {

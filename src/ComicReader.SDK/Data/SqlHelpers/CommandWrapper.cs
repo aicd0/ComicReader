@@ -3,16 +3,13 @@
 
 #nullable disable
 
-using System;
-using System.Threading.Tasks;
-
 using Microsoft.Data.Sqlite;
 
-namespace ComicReader.Data.SqlHelpers;
+namespace ComicReader.SDK.Data.SqlHelpers;
 
 internal class CommandWrapper : ICommandContext, IDisposable
 {
-    private readonly SqliteCommand _command = SqliteDatabaseManager.NewCommand();
+    private readonly SqliteCommand _command = SqliteDatabase.NewCommand();
     private int _parameterIndex = 0;
 
     public string AppendParameter(object value)

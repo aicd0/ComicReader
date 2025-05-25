@@ -3,16 +3,13 @@
 
 #nullable disable
 
-using System;
-using System.Collections.Generic;
 using System.Text;
-using System.Threading.Tasks;
 
 using Microsoft.Data.Sqlite;
 
-namespace ComicReader.Data.SqlHelpers;
+namespace ComicReader.SDK.Data.SqlHelpers;
 
-internal class SelectCommand<T> where T : ITable
+public class SelectCommand<T> where T : ITable
 {
     private readonly T _table;
     private readonly Dictionary<string, ITokenInternal> _tokens = [];

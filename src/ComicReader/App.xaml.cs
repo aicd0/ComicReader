@@ -11,6 +11,7 @@ using ComicReader.Data;
 using ComicReader.Data.Legacy;
 using ComicReader.Data.Models.Comic;
 using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Data;
 
 using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppLifecycle;
@@ -90,6 +91,7 @@ public partial class App : Application
         Logger.Initialize();
         await XmlDatabaseManager.Initialize();
         await DatabaseUpgradeManager.Instance.UpgradeDatabase();
+        await SqliteDatabase.Initialize();
         await SqliteDatabaseManager.Initialize(XmlDatabase.Settings.DatabaseVersion);
         ComicModel.UpdateAllComics("DatabaseManager#init", lazy: true);
     }

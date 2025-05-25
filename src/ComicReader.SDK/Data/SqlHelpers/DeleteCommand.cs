@@ -1,14 +1,11 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
-using System.Collections.Generic;
 using System.Text;
-using System.Threading.Tasks;
 
-namespace ComicReader.Data.SqlHelpers;
+namespace ComicReader.SDK.Data.SqlHelpers;
 
-internal class DeleteCommand<T> where T : ITable
+public class DeleteCommand<T> where T : ITable
 {
     private readonly T _table;
     private readonly List<ICondition> _conditions = [];

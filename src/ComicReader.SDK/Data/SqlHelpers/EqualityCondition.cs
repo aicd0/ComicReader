@@ -3,9 +3,9 @@
 
 #nullable disable
 
-namespace ComicReader.Data.SqlHelpers;
+namespace ComicReader.SDK.Data.SqlHelpers;
 
-internal class EqualityCondition<T> : ICondition
+public class EqualityCondition<T> : ICondition
 {
     private readonly string _columnName;
     private readonly T _value;
@@ -16,7 +16,7 @@ internal class EqualityCondition<T> : ICondition
         _value = value;
     }
 
-    public string GetExpression(ICommandContext command)
+    string ICondition.GetExpression(ICommandContext command)
     {
         string parameterName = command.AppendParameter(_value);
         return $"{_columnName}={parameterName}";

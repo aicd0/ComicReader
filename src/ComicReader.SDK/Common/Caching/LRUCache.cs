@@ -3,22 +3,18 @@
 
 #nullable disable
 
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 
 using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Common.Utils;
 
 using Windows.Foundation;
 using Windows.Storage;
 using Windows.Storage.Streams;
 
-namespace ComicReader.Common.Caching;
+namespace ComicReader.SDK.Common.Caching;
 
-internal class LRUCache
+public class LRUCache
 {
     private const string TAG = nameof(LRUCache);
     private const string DATABASE_FILE_NAME = "info.db";

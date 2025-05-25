@@ -3,20 +3,16 @@
 
 #nullable disable
 
-using System;
-using System.IO;
-using System.Threading.Tasks;
-
-using ComicReader.Common.Caching;
+using ComicReader.SDK.Common.Caching;
 using ComicReader.SDK.Common.DebugTools;
 
 using Windows.Security.Cryptography;
 using Windows.Storage;
 using Windows.Storage.Streams;
 
-namespace ComicReader.Data;
+namespace ComicReader.SDK.Data;
 
-class SimpleConfigDatabase
+internal class SimpleConfigDatabase
 {
     private const string TAG = nameof(SimpleConfigDatabase);
 

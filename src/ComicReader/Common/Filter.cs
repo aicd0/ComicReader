@@ -6,8 +6,8 @@
 using System.Collections.Generic;
 using System.Linq;
 
-using ComicReader.Data.SqlHelpers;
 using ComicReader.Data.Tables;
+using ComicReader.SDK.Data.SqlHelpers;
 
 using LiteDB;
 

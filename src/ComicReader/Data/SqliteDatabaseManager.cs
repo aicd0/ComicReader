@@ -4,52 +4,24 @@
 #nullable disable
 
 using System;
-using System.IO;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Data.Legacy;
 using ComicReader.Data.Tables;
 using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Data;
 
 using Microsoft.Data.Sqlite;
 
-using Windows.Storage;
-
 namespace ComicReader.Data;
-
-public class SqlKey
-{
-    public SqlKey(string name, object value = null)
-    {
-        Name = name;
-        Value = value;
-    }
-
-    public string Name;
-    public object Value;
-}
 
 public class SqliteDatabaseManager
 {
-    private static StorageFolder DatabaseFolder => ApplicationData.Current.LocalFolder;
-    private static string DatabaseFileName => "database.db";
-    private static string DatabasePath => Path.Combine(DatabaseFolder.Path, DatabaseFileName);
-
-    private static SqliteConnection m_connection = null;
-
     public static async Task Initialize(int databaseVersion)
     {
-        // Create database.
-        await DatabaseFolder.CreateFileAsync(DatabaseFileName, CreationCollisionOption.OpenIfExists);
-
-        // Build connection.
-        var connection = new SqliteConnection($"Filename={DatabasePath}");
-        connection.Open();
-        m_connection = connection;
-
         // Create tables.
-        using (SqliteCommand command = NewCommand())
+        using (SqliteCommand command = SqliteDatabase.NewCommand())
         {
             string comicTable = ComicTable.Instance.GetTableName();
             string tagCategoryTable = TagCategoryTable.Instance.GetTableName();
@@ -91,27 +63,6 @@ public class SqliteDatabaseManager
         await UpdateDatabase(databaseVersion);
     }
 
-    public static SqliteCommand NewCommand()
-    {
-        Logger.Assert(m_connection != null, "B16C84A49CD057D2");
-        return m_connection.CreateCommand();
-    }
-
-    public static SqliteTransaction NewTransaction()
-    {
-        Logger.Assert(m_connection != null, "9D588AB3BDE60961");
-        return m_connection.BeginTransaction();
-    }
-
-    public static async Task<bool> IsTableExist(string table)
-    {
-        SqliteCommand command = NewCommand();
-        command.CommandText = "select count(*) from sqlite_master where type='table' and name='$table'";
-        command.Parameters.AddWithValue("$table", table);
-        long count = (long)await command.ExecuteScalarAsync();
-        return count > 0;
-    }
-
     private static async Task<TaskException> UpdateDatabase(int databaseVersion)
     {
         switch (databaseVersion)
@@ -121,7 +72,7 @@ public class SqliteDatabaseManager
             case 1:
                 goto case 3;
             case 2:
-                using (SqliteCommand command = NewCommand())
+                using (SqliteCommand command = SqliteDatabase.NewCommand())
                 {
                     string comicTable = ComicTable.Instance.GetTableName();
 #pragma warning disable CA2100 // Review SQL queries for security vulnerabilities

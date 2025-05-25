@@ -1,16 +1,13 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
-using System.IO;
-
 using ComicReader.SDK.Common.DebugTools;
 
 using Windows.Storage;
 
-namespace ComicReader.Common;
+namespace ComicReader.SDK.Common.Utils;
 
-internal static class FileUtils
+public static class FileUtils
 {
     private const string TAG = nameof(FileUtils);
 

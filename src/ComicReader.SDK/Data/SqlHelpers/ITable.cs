@@ -1,9 +1,9 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-namespace ComicReader.Data.SqlHelpers;
+namespace ComicReader.SDK.Data.SqlHelpers;
 
-internal interface ITable
+public interface ITable
 {
     string GetTableName();
 }

@@ -3,32 +3,42 @@
 
 #nullable disable
 
-using System;
-using System.Collections.Generic;
 using System.Text;
 
-namespace ComicReader.Data.SqlHelpers;
+namespace ComicReader.SDK.Data.SqlHelpers;
 
-internal class InsertCommand<T> where T : ITable
+public class UpdateCommand<T> where T : ITable
 {
     private readonly T _table;
     private readonly Dictionary<string, IToken> _tokens = [];
+    private readonly List<ICondition> _conditions = [];
 
     private bool _executed = false;
 
-    public InsertCommand(T table)
+    public UpdateCommand(T table)
     {
         _table = table;
     }
 
-    public InsertCommand<T> AppendColumn<U>(Column column, U value)
+    public UpdateCommand<T> AppendColumn<U>(Column column, U value)
     {
         var token = new Token<U>(column, value);
         _tokens[column.Name] = token;
         return this;
     }
 
-    public long Execute()
+    public UpdateCommand<T> AppendCondition<U>(Column column, U value)
+    {
+        return AppendCondition(new EqualityCondition<U>(column, value));
+    }
+
+    public UpdateCommand<T> AppendCondition(ICondition condition)
+    {
+        _conditions.Add(condition);
+        return this;
+    }
+
+    public void Execute()
     {
         if (_executed)
         {
@@ -38,45 +48,38 @@ internal class InsertCommand<T> where T : ITable
 
         if (_tokens.Count == 0)
         {
-            throw new ArgumentException("Empty tokens.");
+            return;
         }
 
         using CommandWrapper command = new();
 
-        StringBuilder sb = new("INSERT INTO ");
-        sb.Append(_table.GetTableName());
-        sb.Append(" (");
+        StringBuilder sb = new($"UPDATE {_table.GetTableName()} SET ");
 
         bool divider = false;
         foreach (IToken token in _tokens.Values)
         {
+            string parameterKey = token.AppendParameter(command);
+
             if (divider)
             {
                 sb.Append(',');
             }
             divider = true;
             sb.Append(token.GetColumnName());
+            sb.Append('=');
+            sb.Append(parameterKey);
         }
 
-        sb.Append(") VALUES (");
+        sb.Append(" WHERE TRUE");
 
-        divider = false;
-        foreach (IToken token in _tokens.Values)
+        foreach (ICondition condition in _conditions)
         {
-            string parameterName = token.AppendParameter(command);
-
-            if (divider)
-            {
-                sb.Append(',');
-            }
-            divider = true;
-            sb.Append(parameterName);
+            sb.Append(" AND ");
+            sb.Append(condition.GetExpression(command));
         }
-
-        sb.Append(");SELECT LAST_INSERT_ROWID();");
 
         command.SetCommandText(sb.ToString());
-        return (long)command.ExecuteScalar();
+        command.ExecuteNonQuery();
     }
 
     private class Token<U> : IToken

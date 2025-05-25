@@ -11,8 +11,8 @@ using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading;
 using System.Threading.Tasks;
 
-using ComicReader.Common.Caching;
 using ComicReader.Common.Threading;
+using ComicReader.SDK.Common.Caching;
 using ComicReader.SDK.Common.DebugTools;
 using ComicReader.SDK.Common.Threading;
 

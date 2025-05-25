@@ -6,6 +6,8 @@ using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
+using ComicReader.SDK.Data;
+
 namespace ComicReader.Data.Models;
 
 class ComicFilterModel : JsonDatabase<ComicFilterModel.JsonModel>

@@ -3,8 +3,8 @@
 
 using Windows.Storage.Streams;
 
-namespace ComicReader.Common.Caching;
+namespace ComicReader.SDK.Common.Caching;
 
-internal interface ILRUOutputStream : IRandomAccessStream
+public interface ILRUOutputStream : IRandomAccessStream
 {
 }

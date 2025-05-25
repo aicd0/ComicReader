@@ -3,17 +3,14 @@
 
 #nullable disable
 
-using System;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 
 using ComicReader.SDK.Common.DebugTools;
 using ComicReader.SDK.Common.Threading;
 
-namespace ComicReader.Data;
+namespace ComicReader.SDK.Data;
 
-abstract class JsonDatabase<T> where T : class
+public abstract class JsonDatabase<T> where T : class
 {
     private const string TAG = nameof(JsonDatabase<T>);
 
