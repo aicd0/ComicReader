@@ -5,11 +5,11 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace ComicReader.SDK.Data.AutoProperty;
 
-internal interface IRequestThrottleStrategy<T> where T : IReadonlyExternalRequest
+public interface IRequestThrottleStrategy<T> where T : IReadonlyExternalRequest
 {
-    public void Enqueue(T request);
+    void Enqueue(T request);
 
-    public bool TryDequeue([MaybeNullWhen(false)] out T request);
+    bool TryDequeue([MaybeNullWhen(false)] out T request);
 
-    public void OnRequestCompleted(T request);
+    void OnRequestCompleted(T request);
 }

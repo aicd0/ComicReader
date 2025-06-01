@@ -5,7 +5,7 @@ using System.Collections.ObjectModel;
 
 using ComicReader.SDK.Common.Algorithm;
 
-namespace ComicReader.Tests;
+namespace ComicReader.SDK.Tests;
 
 [TestFixture]
 public class DiffUtilsTests

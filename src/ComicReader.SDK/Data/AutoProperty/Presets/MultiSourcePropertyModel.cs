@@ -3,15 +3,15 @@
 
 namespace ComicReader.SDK.Data.AutoProperty.Presets;
 
-public class MemoryCachePropertyModel<T>
+public class MultiSourcePropertyModel<T>
 {
     public Dictionary<string, CacheItem> cacheItems = [];
     public Dictionary<long, CacheItem> requests = [];
 
-    public class CacheItem(string key)
+    public class CacheItem
     {
-        public readonly string key = key;
-        public int readVersion = 0;
+        public int readIndex = 0;
+        public int writeIndex = -1;
         public PropertyResponseContent<T>? readResponse = null;
         public PropertyResponseContent<T>? writeResponse = null;
         public Queue<SealedPropertyRequest<T>> requests = [];

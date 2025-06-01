@@ -5,22 +5,27 @@ using ComicReader.SDK.Common.DebugTools;
 
 namespace ComicReader.SDK.Data.AutoProperty.Presets;
 
-internal class MemoryCacheProperty<T>(IQRProperty<T, T> source) : AbsProperty<T, T, MemoryCachePropertyModel<T>>
+public class MemoryCacheProperty<T>(IQRProperty<T, T> source) : AbsProperty<T, T, MemoryCachePropertyModel<T>, IValueObserverExtension<T>>
 {
     public override MemoryCachePropertyModel<T> CreateModel()
     {
         return new MemoryCachePropertyModel<T>();
     }
 
-    public override void RearrangeRequests(PropertyContext<T, T, MemoryCachePropertyModel<T>> context)
+    public override List<IProperty> GetDependentProperties()
+    {
+        return [source];
+    }
+
+    public override void RearrangeRequests(PropertyContext<T, T, MemoryCachePropertyModel<T>, IValueObserverExtension<T>> context)
     {
         MemoryCachePropertyModel<T> model = context.Model;
-        foreach (ServerPropertyRequest<T> serverRequest in context.NewRequests)
+        foreach (SealedPropertyRequest<T> serverRequest in context.NewRequests)
         {
             PropertyRequestContent<T> request = serverRequest.RequestContent;
             if (!model.cacheItems.TryGetValue(request.Key, out MemoryCachePropertyModel<T>.CacheItem? cache))
             {
-                cache = new MemoryCachePropertyModel<T>.CacheItem();
+                cache = new MemoryCachePropertyModel<T>.CacheItem(request.Key);
                 model.cacheItems[request.Key] = cache;
             }
             cache.requests.Enqueue(serverRequest);
@@ -31,15 +36,22 @@ internal class MemoryCacheProperty<T>(IQRProperty<T, T> source) : AbsProperty<T,
         }
     }
 
-    public override void ProcessRequests(PropertyContext<T, T, MemoryCachePropertyModel<T>> context, IProcessCallback callback)
+    public override void ProcessRequests(PropertyContext<T, T, MemoryCachePropertyModel<T>, IValueObserverExtension<T>> context, IProcessCallback callback)
     {
         callback.PostCompletion(null);
     }
 
-    private void DequeueRequests(PropertyContext<T, T, MemoryCachePropertyModel<T>> context, MemoryCachePropertyModel<T>.CacheItem cache)
+    private void DequeueRequests(PropertyContext<T, T, MemoryCachePropertyModel<T>, IValueObserverExtension<T>> context, MemoryCachePropertyModel<T>.CacheItem cache)
     {
+        int dependencyVersion = context.Dependency.GetDependencyVersion(cache.key);
+        if (cache.readVersion < dependencyVersion)
+        {
+            cache.readVersion = dependencyVersion;
+            cache.readResponse = null;
+        }
+
         bool requesting = false;
-        while (!requesting && cache.requests.TryPeek(out ServerPropertyRequest<T>? request))
+        while (!requesting && cache.requests.TryPeek(out SealedPropertyRequest<T>? request))
         {
             switch (request.RequestContent.Type)
             {
@@ -48,11 +60,12 @@ internal class MemoryCacheProperty<T>(IQRProperty<T, T> source) : AbsProperty<T,
                         PropertyResponseContent<T>? response = cache.readResponse;
                         if (response is not null)
                         {
+                            OnValueUpdate(context, request.RequestContent.Key, response.Value);
                             cache.requests.Dequeue();
                             context.Respond(request.Id, response);
                             break;
                         }
-                        ServerPropertyRequest<T>? subRequest = context.Request(source, request.RequestContent, OnReadResponse);
+                        SealedPropertyRequest<T>? subRequest = context.Request(source, request.RequestContent, OnReadResponse);
                         if (subRequest is null)
                         {
                             cache.requests.Dequeue();
@@ -71,13 +84,14 @@ internal class MemoryCacheProperty<T>(IQRProperty<T, T> source) : AbsProperty<T,
                             cache.writeResponse = null;
                             if (response.Result == RequestResult.Successful)
                             {
-                                cache.readResponse = PropertyResponseContent<T>.NewSuccessfuleResponse(request.RequestContent.Value);
+                                cache.readResponse = PropertyResponseContent<T>.NewSuccessfulResponse(request.RequestContent.Value);
+                                OnValueUpdate(context, request.RequestContent.Key, request.RequestContent.Value);
                             }
                             cache.requests.Dequeue();
                             context.Respond(request.Id, response);
                             break;
                         }
-                        ServerPropertyRequest<T>? subRequest = context.Request(source, request.RequestContent, OnWriteResponse);
+                        SealedPropertyRequest<T>? subRequest = context.Request(source, request.RequestContent, OnWriteResponse);
                         if (subRequest is null)
                         {
                             cache.requests.Dequeue();
@@ -97,7 +111,7 @@ internal class MemoryCacheProperty<T>(IQRProperty<T, T> source) : AbsProperty<T,
         }
     }
 
-    private void OnReadResponse(PropertyContext<T, T, MemoryCachePropertyModel<T>> context, long id, PropertyResponseContent<T> response)
+    private void OnReadResponse(PropertyContext<T, T, MemoryCachePropertyModel<T>, IValueObserverExtension<T>> context, long id, PropertyResponseContent<T> response)
     {
         if (!context.Model.requests.Remove(id, out MemoryCachePropertyModel<T>.CacheItem? cache))
         {
@@ -105,10 +119,11 @@ internal class MemoryCacheProperty<T>(IQRProperty<T, T> source) : AbsProperty<T,
             return;
         }
         cache.readResponse = response;
+        cache.readVersion = context.Dependency.GetDependencyVersion(cache.key);
         DequeueRequests(context, cache);
     }
 
-    private void OnWriteResponse(PropertyContext<T, T, MemoryCachePropertyModel<T>> context, long id, PropertyResponseContent<T> response)
+    private void OnWriteResponse(PropertyContext<T, T, MemoryCachePropertyModel<T>, IValueObserverExtension<T>> context, long id, PropertyResponseContent<T> response)
     {
         if (!context.Model.requests.Remove(id, out MemoryCachePropertyModel<T>.CacheItem? cache))
         {
@@ -117,5 +132,17 @@ internal class MemoryCacheProperty<T>(IQRProperty<T, T> source) : AbsProperty<T,
         }
         cache.writeResponse = response;
         DequeueRequests(context, cache);
+    }
+
+    private void OnValueUpdate(PropertyContext<T, T, MemoryCachePropertyModel<T>, IValueObserverExtension<T>> context, string key, T? value)
+    {
+        if (value is null)
+        {
+            Logger.AssertNotReachHere("5F1124DE08843941");
+        }
+        foreach (IValueObserverExtension<T> extension in context.Extensions)
+        {
+            extension.UpdateValue(key, value);
+        }
     }
 }

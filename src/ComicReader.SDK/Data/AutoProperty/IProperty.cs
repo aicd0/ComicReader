@@ -5,5 +5,7 @@ namespace ComicReader.SDK.Data.AutoProperty;
 
 public interface IProperty
 {
-    IPropertyContext CreatePropertyContext(IServerContext context);
+    internal IPropertyContext CreatePropertyContext(IServerContext context, DependencyToken dependency);
+
+    List<IProperty> GetDependentProperties();
 }

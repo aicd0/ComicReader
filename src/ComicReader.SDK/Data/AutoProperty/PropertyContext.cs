@@ -5,26 +5,32 @@ using ComicReader.SDK.Common.DebugTools;
 
 namespace ComicReader.SDK.Data.AutoProperty;
 
-public class PropertyContext<Q, R, M> : IQRPropertyContext<Q, R>
+public class PropertyContext<Q, R, M, E> : IQRPropertyContext<Q, R>, IEPropertyContext<E> where E : IPropertyExtension
 {
     private readonly IServerContext _context;
-    private readonly AbsProperty<Q, R, M> _property;
-    private readonly Dictionary<long, PropertyRequestContent<Q>> _ongoingRequests = [];
+    private readonly AbsProperty<Q, R, M, E> _property;
+    private readonly Dictionary<long, SealedPropertyRequest<Q>> _ongoingRequests = [];
 
-    private readonly List<ServerPropertyRequest<Q>> _newRequests = [];
-    public IReadOnlyList<ServerPropertyRequest<Q>> NewRequests => _newRequests;
+    private readonly List<SealedPropertyRequest<Q>> _newRequests = [];
+    public IReadOnlyList<SealedPropertyRequest<Q>> NewRequests => _newRequests;
 
     private readonly M _model;
     public M Model => _model;
 
-    public PropertyContext(IServerContext context, AbsProperty<Q, R, M> property)
+    private readonly List<E> _extensions = [];
+    public IReadOnlyList<E> Extensions => _extensions;
+
+    public DependencyToken Dependency { get; }
+
+    internal PropertyContext(IServerContext context, AbsProperty<Q, R, M, E> property, DependencyToken dependency)
     {
         _context = context;
         _property = property;
         _model = property.CreateModel();
+        Dependency = dependency;
     }
 
-    public ServerPropertyRequest<A>? Request<A, B>(IQRProperty<A, B> target, PropertyRequestContent<A> request, Action<PropertyContext<Q, R, M>, long, PropertyResponseContent<B>> handler)
+    public SealedPropertyRequest<A>? Request<A, B>(IQRProperty<A, B> target, PropertyRequestContent<A> request, Action<PropertyContext<Q, R, M, E>, long, PropertyResponseContent<B>> handler)
     {
         return _context.HandleRequest(_property, target, request, (p1, p2) =>
         {
@@ -34,8 +40,12 @@ public class PropertyContext<Q, R, M> : IQRPropertyContext<Q, R>
 
     public void Respond(long requestId, PropertyResponseContent<R> response)
     {
+        if (!_ongoingRequests.Remove(requestId, out SealedPropertyRequest<Q>? _))
+        {
+            Logger.AssertNotReachHere("14672E06AAB0669E");
+            return;
+        }
         _context.HandleRespond(_property, requestId, response);
-        _ongoingRequests.Remove(requestId);
     }
 
     public void Redirect(long requestId, IQRProperty<Q, R> target)
@@ -46,34 +56,34 @@ public class PropertyContext<Q, R, M> : IQRPropertyContext<Q, R>
         }
     }
 
-    public void ClearNewRequests()
+    void IPropertyContext.ClearNewRequests()
     {
         _newRequests.Clear();
     }
 
-    public void AddNewRequest(long id, PropertyRequestContent<Q> request)
+    void IQRPropertyContext<Q, R>.AddNewRequest(SealedPropertyRequest<Q> request)
     {
-        _ongoingRequests.Add(id, request);
-        _newRequests.Add(new ServerPropertyRequest<Q>(id, request));
+        _ongoingRequests.Add(request.Id, request);
+        _newRequests.Add(request);
     }
 
-    public void RearrangeRequests()
+    void IPropertyContext.RearrangeRequests()
     {
         _property.RearrangeRequests(this);
     }
 
-    public void ProcessRequests(IProcessCallback callback)
+    void IPropertyContext.ProcessRequests(IProcessCallback callback)
     {
         _property.ProcessRequests(this, callback);
     }
 
-    public void CancelRequest(long id)
+    void IPropertyContext.CancelRequest(long id)
     {
-        if (!_ongoingRequests.TryGetValue(id, out PropertyRequestContent<Q>? actualRequest))
-        {
-            Logger.AssertNotReachHere("14672E06AAB0669E");
-            return;
-        }
         Respond(id, PropertyResponseContent<R>.NewFailedResponse());
+    }
+
+    void IEPropertyContext<E>.RegisterExtension(E extension)
+    {
+        _extensions.Add(extension);
     }
 }

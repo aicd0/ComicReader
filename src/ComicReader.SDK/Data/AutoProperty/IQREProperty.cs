@@ -3,7 +3,6 @@
 
 namespace ComicReader.SDK.Data.AutoProperty;
 
-public interface IQRPropertyContext<Q, R> : IPropertyContext
+public interface IQREProperty<Q, R, E> : IQRProperty<Q, R>, IEProperty<E> where E : IPropertyExtension
 {
-    internal void AddNewRequest(SealedPropertyRequest<Q> request);
 }

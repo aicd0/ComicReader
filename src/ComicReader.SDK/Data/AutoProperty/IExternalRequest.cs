@@ -5,9 +5,11 @@ namespace ComicReader.SDK.Data.AutoProperty;
 
 public interface IExternalRequest : IReadonlyExternalRequest
 {
-    IExternalRequest Clone();
+    internal IExternalRequest Clone();
 
-    void SetFailedResult(string reason);
+    internal void Activate(BatchInfo batch);
 
-    void Request(IServerContext context, IProperty sender, Action callback);
+    internal void SetFailedResult(string reason);
+
+    internal void Request(IServerContext context, IProperty sender, Action callback);
 }

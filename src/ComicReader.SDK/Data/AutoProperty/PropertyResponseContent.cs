@@ -14,7 +14,7 @@ public class PropertyResponseContent<T>
         Value = value;
     }
 
-    public static PropertyResponseContent<T> NewSuccessfuleResponse(T? value = default)
+    public static PropertyResponseContent<T> NewSuccessfulResponse(T? value = default)
     {
         return new(RequestResult.Successful, value);
     }

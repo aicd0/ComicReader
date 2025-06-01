@@ -5,8 +5,8 @@ namespace ComicReader.SDK.Data.AutoProperty;
 
 public interface IReadonlyExternalRequest
 {
-    public RequestType Type { get; }
-    public string Key { get; }
+    internal RequestType Type { get; }
+    internal string Key { get; }
 
-    public bool IsNullValue();
+    internal bool IsNullValue();
 }

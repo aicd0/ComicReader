@@ -3,7 +3,7 @@
 
 namespace ComicReader.SDK.Data.AutoProperty;
 
-public interface IPropertyRequest
+internal interface IPropertyRequest
 {
     long Id { get; }
     RequestState State { get; set; }

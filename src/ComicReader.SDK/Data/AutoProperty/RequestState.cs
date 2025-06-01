@@ -3,7 +3,7 @@
 
 namespace ComicReader.SDK.Data.AutoProperty;
 
-public enum RequestState
+internal enum RequestState
 {
     Requesting,
     Processing,

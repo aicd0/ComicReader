@@ -19,12 +19,13 @@ internal class InternalServer(string name) : IServerContext
     private readonly ThreadLocal<bool> _threadFlag = new();
     private int _serverRoutineScheduled = 0;
 
-    private readonly IRequestThrottleStrategy<ExternalRequestWrapper> _throttleStrategy = new ParallelReadThrottleStrategy<ExternalRequestWrapper>();
+    private readonly IRequestThrottleStrategy<IExternalRequest> _throttleStrategy = new ParallelReadThrottleStrategy<IExternalRequest>();
     private int _nextRequestId = 0;
+    private readonly ServerProperty _serverProperty = new();
     private readonly Dictionary<long, IPropertyRequest> _requests = [];
     private readonly HashSet<ProcessCallback> _processCallbacks = [];
     private readonly Dictionary<IProperty, IPropertyContext> _propertyContextMap = [];
-    private readonly ServerProperty _serverProperty = new();
+    private readonly Dictionary<IProperty, DependencyToken> _dependencyTokens = [];
 
     private readonly List<Action<DelayActionResult>> _delayedActions = [];
 
@@ -36,11 +37,19 @@ internal class InternalServer(string name) : IServerContext
         return await batchInfo.CompletionSource.Task;
     }
 
+    public void RegisterExtension<E>(IEProperty<E> property, E extension) where E : IPropertyExtension
+    {
+        sDispatcher.Submit($"{name}.RegisterExtension", () =>
+        {
+            GetOrCreatePropertyContext(property).RegisterExtension(extension);
+        });
+    }
+
     private void ScheduleServerRoutine(string reason)
     {
         if (Interlocked.CompareExchange(ref _serverRoutineScheduled, 1, 0) == 0)
         {
-            sDispatcher.Submit($"{name}.{reason}", delegate
+            sDispatcher.Submit($"{name}.{reason}", () =>
             {
                 Interlocked.Exchange(ref _serverRoutineScheduled, 0);
                 _threadFlag.Value = true;
@@ -83,22 +92,21 @@ internal class InternalServer(string name) : IServerContext
         {
             List<IExternalRequest> requests = [.. batchInfo.Request.Requests];
             batchInfo.RemainingRequests = requests.Count;
-            foreach (IExternalRequest request in requests)
+            foreach (IExternalRequest rawRequest in requests)
             {
+                IExternalRequest request = rawRequest.Clone();
+                request.Activate(batchInfo);
                 if (string.IsNullOrEmpty(request.Key))
                 {
                     request.SetFailedResult("Key is empty.");
-                    batchInfo.CompleteOne();
                     continue;
                 }
                 if (request.Type == RequestType.Modify && request.IsNullValue())
                 {
                     request.SetFailedResult("Value is null for modify request.");
-                    batchInfo.CompleteOne();
                     continue;
                 }
-                ExternalRequestWrapper wrapper = new(request.Clone(), batchInfo);
-                _throttleStrategy.Enqueue(wrapper);
+                _throttleStrategy.Enqueue(request);
             }
         }
     }
@@ -113,12 +121,11 @@ internal class InternalServer(string name) : IServerContext
 
     private void DequeueBatches()
     {
-        while (_throttleStrategy.TryDequeue(out ExternalRequestWrapper? wrapper))
+        while (_throttleStrategy.TryDequeue(out IExternalRequest? request))
         {
-            wrapper.Request.Request(this, _serverProperty, delegate
+            request.Request(this, _serverProperty, () =>
             {
-                _throttleStrategy.OnRequestCompleted(wrapper);
-                wrapper.Batch.CompleteOne();
+                _throttleStrategy.OnRequestCompleted(request);
             });
         }
     }
@@ -182,7 +189,7 @@ internal class InternalServer(string name) : IServerContext
         }
     }
 
-    public ServerPropertyRequest<Q>? HandleRequest<Q, R>(IProperty sender, IQRProperty<Q, R> receiver, PropertyRequestContent<Q> requestContent, Action<long, PropertyResponseContent<R>> handler)
+    public SealedPropertyRequest<Q>? HandleRequest<Q, R>(IProperty sender, IQRProperty<Q, R> receiver, PropertyRequestContent<Q> requestContent, Action<long, PropertyResponseContent<R>> handler)
     {
         if (!IsServerThread())
         {
@@ -203,14 +210,15 @@ internal class InternalServer(string name) : IServerContext
         int requestId = _nextRequestId++;
         PropertyRequest<Q, R> request = new(requestId, sender, receiver, requestContent, handler);
         _requests[requestId] = request;
+        var sealedRequest = new SealedPropertyRequest<Q>(requestId, requestContent);
 
         _delayedActions.Add((result) =>
         {
             IQRPropertyContext<Q, R> receiverContext = GetOrCreatePropertyContext(receiver);
-            receiverContext.AddNewRequest(requestId, requestContent);
+            receiverContext.AddNewRequest(sealedRequest);
             result.RearrangingProperties.Add(receiverContext);
         });
-        return new ServerPropertyRequest<Q>(requestId, requestContent);
+        return sealedRequest;
     }
 
     public void HandleRespond<Q, R>(IQRProperty<Q, R> receiver, long requestId, PropertyResponseContent<R> responseContent)
@@ -285,7 +293,7 @@ internal class InternalServer(string name) : IServerContext
         _delayedActions.Add((result) =>
         {
             IQRPropertyContext<Q, R> receiverContext = GetOrCreatePropertyContext(newReceiver);
-            receiverContext.AddNewRequest(requestId, request.RequestContent);
+            receiverContext.AddNewRequest(new SealedPropertyRequest<Q>(requestId, request.RequestContent));
             result.RearrangingProperties.Add(receiverContext);
         });
         return true;
@@ -295,20 +303,133 @@ internal class InternalServer(string name) : IServerContext
     {
         if (!_propertyContextMap.TryGetValue(property, out IPropertyContext? context))
         {
-            context = property.CreatePropertyContext(this);
+            DependencyToken token = GetDependencyToken(property);
+            context = property.CreatePropertyContext(this, token);
             _propertyContextMap.Add(property, context);
         }
         return context;
     }
 
+    private IEPropertyContext<E> GetOrCreatePropertyContext<E>(IEProperty<E> property) where E : IPropertyExtension
+    {
+        return (IEPropertyContext<E>)GetOrCreatePropertyContext((IProperty)property); // must agree
+    }
+
     private IQRPropertyContext<Q, R> GetOrCreatePropertyContext<Q, R>(IQRProperty<Q, R> property)
     {
-        if (!_propertyContextMap.TryGetValue(property, out IPropertyContext? context))
+        return (IQRPropertyContext<Q, R>)GetOrCreatePropertyContext((IProperty)property); // must agree
+    }
+
+    private DependencyToken GetDependencyToken(IProperty property)
+    {
         {
-            context = property.CreatePropertyContext(this);
-            _propertyContextMap.Add(property, context);
+            if (_dependencyTokens.TryGetValue(property, out DependencyToken? token))
+            {
+                return token;
+            }
         }
-        return (IQRPropertyContext<Q, R>)context; // must agree
+
+        Dictionary<IProperty, HashSet<IProperty>> allChildren = [];
+
+        {
+            Dictionary<IProperty, List<IProperty>> newChildrenMap = [];
+
+            {
+                List<IProperty> searchList = [property];
+                List<IProperty> nextSearchList = [];
+                while (searchList.Count > 0)
+                {
+                    foreach (IProperty p in searchList)
+                    {
+                        List<IProperty> children = p.GetDependentProperties();
+                        HashSet<IProperty> childrenSet = [.. children];
+                        allChildren[p] = childrenSet;
+                        List<IProperty> newChildren = [];
+                        foreach (IProperty child in childrenSet)
+                        {
+                            if (!_dependencyTokens.ContainsKey(child))
+                            {
+                                newChildren.Add(child);
+                            }
+                        }
+                        if (newChildren.Count > 0)
+                        {
+                            newChildrenMap[p] = newChildren;
+                            foreach (IProperty child in newChildren)
+                            {
+                                if (!newChildrenMap.ContainsKey(child))
+                                {
+                                    nextSearchList.Add(child);
+                                }
+                            }
+                        }
+                    }
+                    (searchList, nextSearchList) = (nextSearchList, searchList);
+                    nextSearchList.Clear();
+                }
+            }
+
+            Dictionary<IProperty, List<IProperty>> nextNewChildrenMap = [];
+            while (newChildrenMap.Count > 0)
+            {
+                foreach (KeyValuePair<IProperty, List<IProperty>> pair in newChildrenMap)
+                {
+                    IProperty p = pair.Key;
+                    HashSet<IProperty> children = allChildren[p];
+                    List<IProperty> newChildren = [];
+                    foreach (IProperty newChild in pair.Value)
+                    {
+                        if (newChild == p)
+                        {
+                            continue;
+                        }
+                        foreach (IProperty childOfNewChild in allChildren[newChild])
+                        {
+                            if (children.Add(childOfNewChild) && !_dependencyTokens.ContainsKey(childOfNewChild))
+                            {
+                                newChildren.Add(childOfNewChild);
+                            }
+                        }
+                    }
+                    if (newChildren.Count > 0)
+                    {
+                        nextNewChildrenMap[p] = newChildren;
+                    }
+                }
+                (nextNewChildrenMap, newChildrenMap) = (newChildrenMap, nextNewChildrenMap);
+                nextNewChildrenMap.Clear();
+            }
+        }
+
+        Dictionary<IProperty, DependencyToken> tokenMap = [];
+        foreach (IProperty p in allChildren.Keys)
+        {
+            tokenMap[p] = new();
+        }
+        foreach (KeyValuePair<IProperty, HashSet<IProperty>> pair in allChildren)
+        {
+            HashSet<DependencyToken> tokens = [];
+            foreach (IProperty p in pair.Value)
+            {
+                if (tokenMap.TryGetValue(p, out DependencyToken? subToken))
+                {
+                    tokens.Add(subToken);
+                }
+                else
+                {
+                    subToken = _dependencyTokens[p];
+                    tokens.Add(subToken);
+                    foreach (DependencyToken subSubToken in subToken.GetTokens())
+                    {
+                        tokens.Add(subSubToken);
+                    }
+                }
+            }
+            DependencyToken token = tokenMap[pair.Key];
+            token.SetTokens([.. tokens]);
+            _dependencyTokens[pair.Key] = token;
+        }
+        return tokenMap[property];
     }
 
     private PropertyRequest<Q, R> GetRequest<Q, R>(long requestId)
@@ -325,26 +446,6 @@ internal class InternalServer(string name) : IServerContext
         return _threadFlag.Value;
     }
 
-    private class ExternalRequestWrapper : IReadonlyExternalRequest
-    {
-        public IExternalRequest Request { get; }
-        public BatchInfo Batch { get; }
-
-        public ExternalRequestWrapper(IExternalRequest request, BatchInfo batch)
-        {
-            Request = request;
-            Batch = batch;
-        }
-
-        RequestType IReadonlyExternalRequest.Type => Request.Type;
-        string IReadonlyExternalRequest.Key => Request.Key;
-
-        bool IReadonlyExternalRequest.IsNullValue()
-        {
-            return Request.IsNullValue();
-        }
-    }
-
     private class DelayActionResult
     {
         public HashSet<IPropertyContext> RearrangingProperties { get; } = [];
@@ -354,39 +455,6 @@ internal class InternalServer(string name) : IServerContext
         {
             RearrangingProperties.Clear();
             HandlerActions.Clear();
-        }
-    }
-
-    private class RequestInfo
-    {
-        public IPropertyRequest Request { get; }
-        public ExternalRequestWrapper Wrapper { get; }
-
-        public RequestInfo(IPropertyRequest request, ExternalRequestWrapper wrapper)
-        {
-            Request = request;
-            Wrapper = wrapper;
-        }
-    }
-
-    internal class BatchInfo
-    {
-        public ExternalBatchRequest Request { get; }
-        public TaskCompletionSource<ExternalBatchResponse> CompletionSource { get; } = new TaskCompletionSource<ExternalBatchResponse>();
-        public int RemainingRequests { get; set; }
-
-        public BatchInfo(ExternalBatchRequest request)
-        {
-            Request = request;
-        }
-
-        public void CompleteOne()
-        {
-            Logger.Assert(RemainingRequests > 0, "A5E3AF05B00F7CED");
-            if (--RemainingRequests == 0)
-            {
-                CompletionSource.TrySetResult(new ExternalBatchResponse());
-            }
         }
     }
 
@@ -419,18 +487,23 @@ internal class InternalServer(string name) : IServerContext
         }
     }
 
-    private class ServerProperty : AbsProperty<VoidType, VoidType, VoidType>
+    private class ServerProperty : AbsProperty<VoidType, VoidType, VoidType, IPropertyExtension>
     {
         public override VoidType CreateModel()
         {
-            return new VoidType();
+            return VoidType.Instance;
         }
 
-        public override void RearrangeRequests(PropertyContext<VoidType, VoidType, VoidType> context)
+        public override List<IProperty> GetDependentProperties()
+        {
+            return [];
+        }
+
+        public override void RearrangeRequests(PropertyContext<VoidType, VoidType, VoidType, IPropertyExtension> context)
         {
         }
 
-        public override void ProcessRequests(PropertyContext<VoidType, VoidType, VoidType> context, IProcessCallback callback)
+        public override void ProcessRequests(PropertyContext<VoidType, VoidType, VoidType, IPropertyExtension> context, IProcessCallback callback)
         {
             throw new InvalidOperationException("Not supported.");
         }

@@ -5,11 +5,11 @@ namespace ComicReader.SDK.Data.AutoProperty;
 
 public interface IPropertyContext
 {
-    void ClearNewRequests();
+    internal void ClearNewRequests();
 
-    void RearrangeRequests();
+    internal void RearrangeRequests();
 
-    void ProcessRequests(IProcessCallback callback);
+    internal void ProcessRequests(IProcessCallback callback);
 
-    void CancelRequest(long id);
+    internal void CancelRequest(long id);
 }
