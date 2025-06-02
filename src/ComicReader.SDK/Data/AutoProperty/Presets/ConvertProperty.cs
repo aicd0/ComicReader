@@ -5,7 +5,7 @@ using ComicReader.SDK.Common.DebugTools;
 
 namespace ComicReader.SDK.Data.AutoProperty.Presets;
 
-public class ConvertProperty<A, Q, R, B>(IQRProperty<Q, R> source, Func<A?, Q> requestConverter, Func<R?, B> responseConverter) : AbsProperty<A, B, ConvertPropertyModel, IPropertyExtension>
+public class ConvertProperty<A, Q, R, B>(IQRProperty<Q, R> source, Func<PropertyRequestContent<A>, PropertyRequestContent<Q>> requestConverter, Func<PropertyResponseContent<R>, PropertyResponseContent<B>> responseConverter) : AbsProperty<A, B, ConvertPropertyModel, IPropertyExtension>
 {
     public override ConvertPropertyModel CreateModel()
     {
@@ -22,8 +22,7 @@ public class ConvertProperty<A, Q, R, B>(IQRProperty<Q, R> source, Func<A?, Q> r
         ConvertPropertyModel model = context.Model;
         foreach (SealedPropertyRequest<A> serverRequest in context.NewRequests)
         {
-            PropertyRequestContent<A> request = serverRequest.RequestContent;
-            PropertyRequestContent<Q> convertedRequest = request.WithValue(requestConverter(request.Value));
+            PropertyRequestContent<Q> convertedRequest = requestConverter(serverRequest.RequestContent);
             SealedPropertyRequest<Q>? subRequest = context.Request(source, convertedRequest, OnResponse);
             if (subRequest is null)
             {
@@ -46,15 +45,6 @@ public class ConvertProperty<A, Q, R, B>(IQRProperty<Q, R> source, Func<A?, Q> r
             Logger.AssertNotReachHere("");
             return;
         }
-        PropertyResponseContent<B> convertedResponse;
-        if (response.Result == RequestResult.Successful)
-        {
-            convertedResponse = PropertyResponseContent<B>.NewSuccessfulResponse(responseConverter(response.Value));
-        }
-        else
-        {
-            convertedResponse = PropertyResponseContent<B>.NewFailedResponse();
-        }
-        context.Respond(originId, convertedResponse);
+        context.Respond(originId, responseConverter(response));
     }
 }

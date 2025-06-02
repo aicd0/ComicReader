@@ -10,6 +10,100 @@ namespace ComicReader.SDK.Tests.AutoProperty;
 public class AutoPropertyTest
 {
     [Test]
+    public void TestPropertyException()
+    {
+        PropertyServer server = new("Test");
+        TestProperty<int, int> sourceProperty = new();
+        Func<PropertyResponseContent<int>, PropertyResponseContent<int>> responseConversionFunc = (response) => response;
+        ConvertProperty<int, int, int, int> converterProperty = new(sourceProperty, (request) => request, (response) => responseConversionFunc(response));
+
+        Func<string, int> valueFunc = (key) =>
+        {
+            return -1;
+        };
+        int keyCount = 10;
+
+        void TestInternal(int offset, bool patchRequestCallback)
+        {
+            valueFunc = (key) =>
+            {
+                if (int.TryParse(key, out int value))
+                {
+                    return value + offset;
+                }
+                return -1;
+            };
+            if (patchRequestCallback)
+            {
+                responseConversionFunc = (response) => throw new InvalidOperationException();
+            }
+            else
+            {
+                sourceProperty.ServerFunc = (request) =>
+                {
+                    throw new InvalidOperationException();
+                };
+            }
+            {
+                ExternalBatchRequest batch = new();
+                List<IRequestTest> tests = [];
+                tests.AddRange(AppendSerialReadTest(batch, converterProperty, 0, keyCount, valueFunc, RequestResult.Failed));
+                tests.AddRange(AppendSerialWriteTest(batch, converterProperty, 0, keyCount, valueFunc, RequestResult.Failed));
+                ExternalBatchResponse response = server.Request(batch).Result;
+                // Exception in property
+                foreach (IRequestTest test in tests)
+                {
+                    test.AssertResult(response);
+                }
+            }
+            if (patchRequestCallback)
+            {
+                responseConversionFunc = (response) => response;
+            }
+            else
+            {
+                sourceProperty.ServerFunc = (request) =>
+                {
+                    return PropertyResponseContent<int>.NewSuccessfulResponse(valueFunc(request.Key));
+                };
+            }
+            {
+                ExternalBatchRequest batch = new();
+                List<IRequestTest> tests = [];
+                tests.AddRange(AppendSerialReadTest(batch, converterProperty, 0, keyCount, valueFunc));
+                tests.AddRange(AppendSerialWriteTest(batch, converterProperty, 0, keyCount, valueFunc));
+                tests.AddRange(AppendSerialWriteTest(batch, sourceProperty, 0, keyCount, valueFunc));
+                ExternalBatchResponse response = server.Request(batch).Result;
+                // Recover from exception
+                foreach (IRequestTest test in tests)
+                {
+                    test.AssertResult(response);
+                }
+            }
+        }
+
+        // Rearrange
+        sourceProperty.Rearrange = true;
+        sourceProperty.ProcessOnServerThread = true;
+        TestInternal(0, false);
+
+        // Process
+        sourceProperty.Rearrange = false;
+        sourceProperty.ProcessOnServerThread = true;
+        TestInternal(1, false);
+
+        // Post-process
+        sourceProperty.Rearrange = false;
+        sourceProperty.ProcessOnServerThread = false;
+        TestInternal(2, false);
+
+        // Request callback
+        sourceProperty.Rearrange = true;
+        sourceProperty.ProcessOnServerThread = true;
+        TestInternal(3, true);
+    }
+
+    [Test]
     public void TestMemoryCacheProperty1()
     {
         PropertyServer server = new("Test");

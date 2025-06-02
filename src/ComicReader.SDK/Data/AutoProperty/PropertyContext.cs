@@ -14,7 +14,7 @@ public class PropertyContext<Q, R, M, E> : IQRPropertyContext<Q, R>, IEPropertyC
     private readonly List<SealedPropertyRequest<Q>> _newRequests = [];
     public IReadOnlyList<SealedPropertyRequest<Q>> NewRequests => _newRequests;
 
-    private readonly M _model;
+    private M _model;
     public M Model => _model;
 
     private readonly List<E> _extensions = [];
@@ -41,7 +41,7 @@ public class PropertyContext<Q, R, M, E> : IQRPropertyContext<Q, R>, IEPropertyC
             catch (Exception e)
             {
                 Logger.AssertNotReachHere("E8FC3756E7055FA8", e);
-                CancelAllRequests();
+                ResetProperty();
             }
         });
     }
@@ -84,7 +84,7 @@ public class PropertyContext<Q, R, M, E> : IQRPropertyContext<Q, R>, IEPropertyC
         catch (Exception e)
         {
             Logger.AssertNotReachHere("5C58129E65F52513", e);
-            CancelAllRequests();
+            ResetProperty();
         }
     }
 
@@ -97,8 +97,21 @@ public class PropertyContext<Q, R, M, E> : IQRPropertyContext<Q, R>, IEPropertyC
         catch (Exception e)
         {
             Logger.AssertNotReachHere("88927512645D06B0", e);
-            CancelAllRequests();
+            ResetProperty();
             callback.PostCompletion(null);
+        }
+    }
+
+    void IPropertyContext.PostProcessRequests(Action action)
+    {
+        try
+        {
+            action();
+        }
+        catch (Exception e)
+        {
+            Logger.AssertNotReachHere("588E267CBF041BCD", e);
+            ResetProperty();
         }
     }
 
@@ -112,12 +125,14 @@ public class PropertyContext<Q, R, M, E> : IQRPropertyContext<Q, R>, IEPropertyC
         _extensions.Add(extension);
     }
 
-    private void CancelAllRequests()
+    private void ResetProperty()
     {
         List<SealedPropertyRequest<Q>> requests = [.. _ongoingRequests.Values];
         foreach (SealedPropertyRequest<Q> request in requests)
         {
             Respond(request.Id, PropertyResponseContent<R>.NewFailedResponse());
         }
+        _model = _property.CreateModel();
+        _newRequests.Clear();
     }
 }

@@ -11,5 +11,7 @@ public interface IPropertyContext
 
     internal void ProcessRequests(IProcessCallback callback);
 
+    internal void PostProcessRequests(Action action);
+
     internal void CancelRequest(long id);
 }

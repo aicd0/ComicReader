@@ -202,7 +202,7 @@ internal class InternalServer(string name) : IServerContext
         foreach (IProperty property in receivers)
         {
             IPropertyContext propertyContext = GetOrCreatePropertyContext(property);
-            ProcessCallback processCallback = new(this);
+            ProcessCallback processCallback = new(this, propertyContext);
             _processCallbacks.Add(processCallback);
             propertyContext.ProcessRequests(processCallback);
         }
@@ -477,7 +477,7 @@ internal class InternalServer(string name) : IServerContext
         }
     }
 
-    private class ProcessCallback(InternalServer server) : IProcessCallback
+    private class ProcessCallback(InternalServer server, IPropertyContext context) : IProcessCallback
     {
         private int _completed = 0;
 
@@ -492,14 +492,20 @@ internal class InternalServer(string name) : IServerContext
             if (server.IsServerThread())
             {
                 server._processCallbacks.Remove(this);
-                action?.Invoke();
+                if (action is not null)
+                {
+                    context.PostProcessRequests(action);
+                }
             }
             else
             {
                 server._processCallbackActions.Enqueue(() =>
                 {
                     server._processCallbacks.Remove(this);
-                    action?.Invoke();
+                    if (action is not null)
+                    {
+                        context.PostProcessRequests(action);
+                    }
                 });
                 server.ScheduleServerRoutine("ProcessCallback");
             }
