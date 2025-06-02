@@ -104,6 +104,67 @@ public class AutoPropertyTest
     }
 
     [Test]
+    public void TestPropertyHang()
+    {
+        PropertyServer server = new("Test");
+        TestProperty<int, int> sourceProperty = new();
+
+        Func<string, int> valueFunc = (key) =>
+        {
+            return -1;
+        };
+        int keyCount = 10;
+
+        void TestInternal(int offset)
+        {
+            valueFunc = (key) =>
+            {
+                if (int.TryParse(key, out int value))
+                {
+                    return value + offset;
+                }
+                return -1;
+            };
+            sourceProperty.ServerFunc = (request) =>
+            {
+                if (request.Type != RequestType.Read)
+                {
+                    throw new InvalidOperationException();
+                }
+                return PropertyResponseContent<int>.NewSuccessfulResponse(valueFunc(request.Key));
+            };
+            sourceProperty.Hang = true;
+            {
+                ExternalBatchRequest batch = new();
+                List<IRequestTest> tests = AppendSerialReadTest(batch, sourceProperty, 0, keyCount, valueFunc, RequestResult.Failed);
+                ExternalBatchResponse response = server.Request(batch).Result;
+                foreach (IRequestTest test in tests)
+                {
+                    test.AssertResult(response);
+                }
+            }
+            sourceProperty.Hang = false;
+            {
+                ExternalBatchRequest batch = new();
+                List<IRequestTest> tests = AppendSerialReadTest(batch, sourceProperty, 0, keyCount, valueFunc);
+                ExternalBatchResponse response = server.Request(batch).Result;
+                foreach (IRequestTest test in tests)
+                {
+                    test.AssertResult(response);
+                }
+            }
+        }
+
+        sourceProperty.Rearrange = true;
+        sourceProperty.ProcessOnServerThread = true;
+        TestInternal(0);
+
+        sourceProperty.Rearrange = true;
+        sourceProperty.ProcessOnServerThread = false;
+        TestInternal(1);
+    }
+
+    [Test]
     public void TestMemoryCacheProperty1()
     {
         PropertyServer server = new("Test");
@@ -142,6 +203,7 @@ public class AutoPropertyTest
         {
             return -1;
         };
+        int keyCount = 1;
 
         {
             sourceProperty.ServerFunc = (request) =>
@@ -162,7 +224,7 @@ public class AutoPropertyTest
             };
             {
                 ExternalBatchRequest batch = new();
-                List<IRequestTest> tests = AppendSerialReadTest(batch, cacheProperty, 0, 100, valueFunc);
+                List<IRequestTest> tests = AppendSerialReadTest(batch, cacheProperty, 0, keyCount, valueFunc);
                 {
                     ExternalBatchResponse response = server.Request(batch).Result;
                     // Single batch
@@ -182,7 +244,7 @@ public class AutoPropertyTest
             }
             {
                 ExternalBatchRequest batch = new();
-                List<IRequestTest> tests = AppendSerialReadTest(batch, cacheProperty, 0, 100, valueFunc);
+                List<IRequestTest> tests = AppendSerialReadTest(batch, cacheProperty, 0, keyCount, valueFunc);
                 valueFunc = (key) =>
                 {
                     if (int.TryParse(key, out int value))
@@ -230,8 +292,9 @@ public class AutoPropertyTest
                 };
                 ExternalBatchRequest batch = new();
                 List<IRequestTest> subTests = [];
-                subTests.AddRange(AppendSerialWriteTest(batch, sourceProperty, i * 50, i * 50 + 100, valueFunc));
-                subTests.AddRange(AppendSerialReadTest(batch, cacheProperty, i * 50, i * 50 + 100, valueFunc));
+                int step = keyCount / 2;
+                subTests.AddRange(AppendSerialWriteTest(batch, sourceProperty, i * step, i * step + keyCount, valueFunc));
+                subTests.AddRange(AppendSerialReadTest(batch, cacheProperty, i * step, i * step + keyCount, valueFunc));
                 tests.Add(subTests);
                 tasks.Add(server.Request(batch));
             }
@@ -269,7 +332,7 @@ public class AutoPropertyTest
             };
             {
                 ExternalBatchRequest batch = new();
-                List<IRequestTest> tests = AppendSerialWriteTest(batch, cacheProperty, 0, 100, valueFunc);
+                List<IRequestTest> tests = AppendSerialWriteTest(batch, cacheProperty, 0, keyCount, valueFunc);
                 ExternalBatchResponse response = server.Request(batch).Result;
                 // Write
                 foreach (IRequestTest test in tests)
@@ -287,7 +350,7 @@ public class AutoPropertyTest
             };
             {
                 ExternalBatchRequest batch = new();
-                List<IRequestTest> tests = AppendSerialReadTest(batch, cacheProperty, 0, 100, valueFunc);
+                List<IRequestTest> tests = AppendSerialReadTest(batch, cacheProperty, 0, keyCount, valueFunc);
                 ExternalBatchResponse response = server.Request(batch).Result;
                 // Read after write
                 foreach (IRequestTest test in tests)
@@ -322,8 +385,8 @@ public class AutoPropertyTest
                 }
                 return -1;
             };
-            tests.AddRange(AppendSerialWriteTest(batch, cacheProperty, 0, 10, valueFunc));
-            tests.AddRange(AppendSerialReadTest(batch, cacheProperty, 0, 10, valueFunc));
+            tests.AddRange(AppendSerialWriteTest(batch, cacheProperty, 0, keyCount, valueFunc));
+            tests.AddRange(AppendSerialReadTest(batch, cacheProperty, 0, keyCount, valueFunc));
             valueFunc = (key) =>
             {
                 if (int.TryParse(key, out int value))
@@ -332,8 +395,8 @@ public class AutoPropertyTest
                 }
                 return -1;
             };
-            tests.AddRange(AppendSerialWriteTest(batch, cacheProperty, 0, 10, valueFunc));
-            tests.AddRange(AppendSerialReadTest(batch, cacheProperty, 0, 10, valueFunc));
+            tests.AddRange(AppendSerialWriteTest(batch, cacheProperty, 0, keyCount, valueFunc));
+            tests.AddRange(AppendSerialReadTest(batch, cacheProperty, 0, keyCount, valueFunc));
             valueFunc = (key) =>
             {
                 if (int.TryParse(key, out int value))
@@ -342,8 +405,8 @@ public class AutoPropertyTest
                 }
                 return -1;
             };
-            tests.AddRange(AppendSerialWriteTest(batch, cacheProperty, 0, 10, valueFunc));
-            tests.AddRange(AppendSerialReadTest(batch, cacheProperty, 0, 10, valueFunc));
+            tests.AddRange(AppendSerialWriteTest(batch, cacheProperty, 0, keyCount, valueFunc));
+            tests.AddRange(AppendSerialReadTest(batch, cacheProperty, 0, keyCount, valueFunc));
             ExternalBatchResponse response = server.Request(batch).Result;
             // Read and write
             foreach (IRequestTest test in tests)
@@ -362,7 +425,7 @@ public class AutoPropertyTest
                 return PropertyResponseContent<int>.NewFailedResponse();
             };
             ExternalBatchRequest readBatch = new();
-            List<IRequestTest> readTests = AppendSerialReadTest(readBatch, cacheProperty, 0, 10, valueFunc);
+            List<IRequestTest> readTests = AppendSerialReadTest(readBatch, cacheProperty, 0, keyCount, valueFunc);
             valueFunc = (key) =>
             {
                 if (int.TryParse(key, out int value))
@@ -372,7 +435,7 @@ public class AutoPropertyTest
                 return -1;
             };
             ExternalBatchRequest writeBatch = new();
-            List<IRequestTest> writeTests = AppendSerialWriteTest(writeBatch, cacheProperty, 0, 10, valueFunc, result: RequestResult.Failed);
+            List<IRequestTest> writeTests = AppendSerialWriteTest(writeBatch, cacheProperty, 0, keyCount, valueFunc, result: RequestResult.Failed);
             {
                 ExternalBatchResponse response = server.Request(writeBatch).Result;
                 // Failed write
@@ -410,8 +473,8 @@ public class AutoPropertyTest
             };
             List<IRequestTest> tests = [];
             ExternalBatchRequest batch = new();
-            tests.AddRange(AppendSerialWriteTest(batch, sourceProperty, 0, 10, valueFunc));
-            tests.AddRange(AppendSerialReadTest(batch, cacheProperty, 0, 10, valueFunc, RequestResult.Failed));
+            tests.AddRange(AppendSerialWriteTest(batch, sourceProperty, 0, keyCount, valueFunc));
+            tests.AddRange(AppendSerialReadTest(batch, cacheProperty, 0, keyCount, valueFunc, RequestResult.Failed));
             {
                 ExternalBatchResponse response = server.Request(batch).Result;
                 // Failed read
@@ -442,7 +505,7 @@ public class AutoPropertyTest
                 };
                 List<IRequestTest> tests = [];
                 ExternalBatchRequest batch = new();
-                tests.AddRange(AppendSerialReadTest(batch, cacheProperty, 0, 10, valueFunc, RequestResult.Failed));
+                tests.AddRange(AppendSerialReadTest(batch, cacheProperty, 0, keyCount, valueFunc, RequestResult.Failed));
                 ExternalBatchResponse response = server.Request(batch).Result;
                 // Cached failed read
                 foreach (IRequestTest test in tests)
@@ -461,8 +524,8 @@ public class AutoPropertyTest
                 };
                 List<IRequestTest> tests = [];
                 ExternalBatchRequest batch = new();
-                tests.AddRange(AppendSerialWriteTest(batch, sourceProperty, 0, 10, valueFunc));
-                tests.AddRange(AppendSerialReadTest(batch, cacheProperty, 0, 10, valueFunc));
+                tests.AddRange(AppendSerialWriteTest(batch, sourceProperty, 0, keyCount, valueFunc));
+                tests.AddRange(AppendSerialReadTest(batch, cacheProperty, 0, keyCount, valueFunc));
                 ExternalBatchResponse response = server.Request(batch).Result;
                 // Successful read after failed read
                 foreach (IRequestTest test in tests)

@@ -22,7 +22,7 @@ internal class InternalServer(string name) : IServerContext
     private readonly IRequestThrottleStrategy<IExternalRequest> _throttleStrategy = new ParallelReadThrottleStrategy<IExternalRequest>();
     private int _nextRequestId = 0;
     private readonly ServerProperty _serverProperty = new();
-    private readonly Dictionary<long, IPropertyRequest> _requests = [];
+    private readonly RequestManager _requestManager = new();
     private readonly HashSet<ProcessCallback> _processCallbacks = [];
     private readonly Dictionary<IProperty, IPropertyContext> _propertyContextMap = [];
     private readonly Dictionary<IProperty, DependencyToken> _dependencyTokens = [];
@@ -85,15 +85,6 @@ internal class InternalServer(string name) : IServerContext
             EnqueueBatches();
             DequeueProcessCallbacks();
             DequeueBatches();
-
-            if (_delayedActions.Count == 0 && _requests.Count > 0 && _processCallbacks.Count == 0)
-            {
-                Logger.AssertNotReachHere("58F8BEB2DA18331E");
-                foreach (IPropertyRequest request in _requests.Values)
-                {
-                    GetOrCreatePropertyContext(request.Receiver).CancelRequest(request.Id);
-                }
-            }
 
             if (_delayedActions.Count == 0)
             {
@@ -178,28 +169,8 @@ internal class InternalServer(string name) : IServerContext
 
     private void ProcessRequests()
     {
-        List<IPropertyRequest> requests = [.. _requests.Values];
-        HashSet<IProperty> senders = [];
-        foreach (IPropertyRequest request in requests)
-        {
-            senders.Add(request.Sender);
-        }
-        HashSet<IProperty> receivers = [];
-        foreach (IPropertyRequest request in requests)
-        {
-            if (!senders.Contains(request.Receiver))
-            {
-                if (request.State == RequestState.Processing)
-                {
-                    Logger.AssertNotReachHere("929C4A72E8E3C8E6");
-                    GetOrCreatePropertyContext(request.Receiver).CancelRequest(request.Id);
-                    continue;
-                }
-                request.State = RequestState.Processing;
-            }
-            receivers.Add(request.Receiver);
-        }
-        foreach (IProperty property in receivers)
+        IReadOnlyList<IProperty> properties = _requestManager.StartProcess();
+        foreach (IProperty property in properties)
         {
             IPropertyContext propertyContext = GetOrCreatePropertyContext(property);
             ProcessCallback processCallback = new(this, propertyContext);
@@ -221,14 +192,14 @@ internal class InternalServer(string name) : IServerContext
             Logger.AssertNotReachHere("92922E47E55B3E4A");
             return null;
         }
-        if (_requests.Count >= MAX_REQUEST_COUNT)
+        if (_requestManager.RequestCount >= MAX_REQUEST_COUNT)
         {
             Logger.AssertNotReachHere("EAD7677C9D9E84BE");
             return null;
         }
         int requestId = _nextRequestId++;
         PropertyRequest<Q, R> request = new(requestId, sender, receiver, requestContent, handler);
-        _requests[requestId] = request;
+        _requestManager.AddRequest(request);
         var sealedRequest = new SealedPropertyRequest<Q>(requestId, requestContent);
 
         _delayedActions.Add((result) =>
@@ -266,7 +237,7 @@ internal class InternalServer(string name) : IServerContext
         }
         request.ResponseContent = responseContent;
         request.State = RequestState.Completed;
-        _requests.Remove(requestId);
+        _requestManager.RemoveRequest(requestId);
 
         _delayedActions.Add((result) =>
         {
@@ -453,7 +424,7 @@ internal class InternalServer(string name) : IServerContext
 
     private PropertyRequest<Q, R> GetRequest<Q, R>(long requestId)
     {
-        if (!_requests.TryGetValue(requestId, out IPropertyRequest? request))
+        if (!_requestManager.TryGetRequest(requestId, out IPropertyRequest? request))
         {
             throw new InvalidOperationException("Request not found.");
         }
@@ -491,23 +462,31 @@ internal class InternalServer(string name) : IServerContext
 
             if (server.IsServerThread())
             {
-                server._processCallbacks.Remove(this);
-                if (action is not null)
-                {
-                    context.PostProcessRequests(action);
-                }
+                OnCompletion(action);
             }
             else
             {
                 server._processCallbackActions.Enqueue(() =>
                 {
-                    server._processCallbacks.Remove(this);
-                    if (action is not null)
-                    {
-                        context.PostProcessRequests(action);
-                    }
+                    OnCompletion(action);
                 });
                 server.ScheduleServerRoutine("ProcessCallback");
+            }
+        }
+
+        private void OnCompletion(Action? action)
+        {
+            server._processCallbacks.Remove(this);
+
+            if (action is not null)
+            {
+                context.PostProcessRequests(action);
+            }
+
+            server._requestManager.EndProcess(context.Property, out IReadOnlyList<IPropertyRequest> cancellingRequests);
+            foreach (IPropertyRequest request in cancellingRequests)
+            {
+                context.CancelRequest(request.Id);
             }
         }
     }

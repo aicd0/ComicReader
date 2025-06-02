@@ -5,6 +5,8 @@ namespace ComicReader.SDK.Data.AutoProperty;
 
 public interface IPropertyContext
 {
+    internal IProperty Property { get; }
+
     internal void ClearNewRequests();
 
     internal void RearrangeRequests();

@@ -8,11 +8,13 @@ namespace ComicReader.SDK.Data.AutoProperty;
 public class PropertyContext<Q, R, M, E> : IQRPropertyContext<Q, R>, IEPropertyContext<E> where E : IPropertyExtension
 {
     private readonly IServerContext _context;
-    private readonly AbsProperty<Q, R, M, E> _property;
     private readonly Dictionary<long, SealedPropertyRequest<Q>> _ongoingRequests = [];
 
     private readonly List<SealedPropertyRequest<Q>> _newRequests = [];
     public IReadOnlyList<SealedPropertyRequest<Q>> NewRequests => _newRequests;
+
+    private readonly AbsProperty<Q, R, M, E> _property;
+    IProperty IPropertyContext.Property => _property;
 
     private M _model;
     public M Model => _model;

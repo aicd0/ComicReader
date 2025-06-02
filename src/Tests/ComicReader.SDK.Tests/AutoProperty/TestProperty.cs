@@ -13,6 +13,7 @@ internal class TestProperty<Q, R> : AbsProperty<Q, R, TestPropertyModel<Q>, IPro
         return PropertyResponseContent<R>.NewFailedResponse();
     };
 
+    public volatile bool Hang = false;
     public volatile bool Rearrange = true;
     public volatile bool ProcessOnServerThread = true;
 
@@ -28,6 +29,11 @@ internal class TestProperty<Q, R> : AbsProperty<Q, R, TestPropertyModel<Q>, IPro
 
     public override void RearrangeRequests(PropertyContext<Q, R, TestPropertyModel<Q>, IPropertyExtension> context)
     {
+        if (Hang)
+        {
+            return;
+        }
+
         TestPropertyModel<Q> model = context.Model;
 
         foreach (SealedPropertyRequest<Q> serverRequest in context.NewRequests)
