@@ -17,10 +17,10 @@ public static class PdfManager
     private const string TAG = nameof(PdfManager);
 
     private static readonly object _lock = new();
-    private static readonly Lazy<ITaskDispatcher> _pdfQueue = new(() => TaskDispatcher.Factory.NewQueue("PdfQueue"));
+    private static readonly Lazy<IDisposableTaskDispatcher> _pdfQueue = new(() => TaskDispatcher.Factory.NewSingleThread("PdfQueue"));
     private static readonly Dictionary<string, PdfWrapper> _cache = [];
 
-    public static async Task<IPdfConnection> OpenPdf(string filepath)
+    public static Task<IPdfConnection> OpenPdf(string filepath)
     {
         string fullpath;
         try
@@ -38,11 +38,12 @@ public static class PdfManager
             if (_cache.TryGetValue(fullpath, out PdfWrapper existing))
             {
                 existing.UseCount++;
-                return new PdfConnection(existing);
+                IPdfConnection connection = new PdfConnection(existing);
+                return Task.FromResult(connection);
             }
         }
 
-        return await Enqueue(delegate
+        IPdfConnection loadPdfFunc()
         {
             lock (_lock)
             {
@@ -76,17 +77,18 @@ public static class PdfManager
             }
             Logger.I(TAG, $"Opened {fullpath}");
             return new PdfConnection(wrapper);
-        }, "LoadPdf");
+        }
+        return Enqueue(loadPdfFunc, "LoadPdf");
     }
 
-    private static async Task<T> Enqueue<T>(Func<T> op, string taskName)
+    private static Task<T> Enqueue<T>(Func<T> op, string taskName)
     {
         var taskResult = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
         _pdfQueue.Value.Submit($"{TAG}#Enqueue#{taskName}", delegate
         {
             taskResult.SetResult(op());
         });
-        return await taskResult.Task;
+        return taskResult.Task;
     }
 
     private class PdfWrapper : IDisposable
@@ -100,7 +102,7 @@ public static class PdfManager
         {
             RawPdfDocument = pdfDocument;
             PageCount = pdfDocument.PageCount;
-            PageSizes = new(pdfDocument.PageSizes);
+            PageSizes = [.. pdfDocument.PageSizes];
         }
 
         public void Dispose()
@@ -172,9 +174,9 @@ public static class PdfManager
             return _wrapper.PageSizes[page];
         }
 
-        public async Task<Image> Render(int page, int width, int height)
+        public Task<Image> Render(int page, int width, int height)
         {
-            return await Enqueue(delegate
+            return Enqueue(delegate
             {
                 if (_wrapper.RawPdfDocument == null)
                 {

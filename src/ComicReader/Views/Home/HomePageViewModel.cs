@@ -843,7 +843,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
                 continue;
             }
             propertyGroupList.Add(kvp);
-            kvp.Value.Sort();
+            kvp.Value.Sort((a, b) => string.Compare(a.DisplayName, b.DisplayName));
         }
         propertyGroupList.Sort((a, b) => string.Compare(a.Key, b.Key, StringComparison.Ordinal));
 

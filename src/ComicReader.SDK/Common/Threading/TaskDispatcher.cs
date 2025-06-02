@@ -1,6 +1,8 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Collections.Concurrent;
+
 using ComicReader.SDK.Common.DebugTools;
 
 namespace ComicReader.SDK.Common.Threading;
@@ -127,6 +129,42 @@ public abstract class TaskDispatcher : ITaskDispatcher
         }
     }
 
+    private class SingleThreadDispatcher : TaskDispatcher, IDisposableTaskDispatcher
+    {
+        private readonly BlockingCollection<Action> _queue = [];
+        private readonly Thread _thread;
+
+        public SingleThreadDispatcher(string name) : base(name)
+        {
+            _thread = new Thread(Run)
+            {
+                IsBackground = true,
+                Name = name
+            };
+            _thread.Start();
+        }
+
+        protected override void SubmitInternal(Action action)
+        {
+            _queue.Add(action);
+        }
+
+        private void Run()
+        {
+            foreach (Action action in _queue.GetConsumingEnumerable())
+            {
+                action();
+            }
+        }
+
+        public void Dispose()
+        {
+            _queue.CompleteAdding();
+            _thread.Join();
+            _queue.Dispose();
+        }
+    }
+
     public static class Factory
     {
         public static ITaskDispatcher NewQueue(string name)
@@ -137,6 +175,19 @@ public abstract class TaskDispatcher : ITaskDispatcher
         public static ITaskDispatcher NewThreadPool(string name)
         {
             return new ThreadPoolDispatcher(name, TaskCreationOptions.PreferFairness);
+        }
+
+        /**
+         * <summary>
+         * Creates a new single-threaded dispatcher.
+         * </summary>
+         * <remarks>
+         * This dispatcher requests thread resource from system. If possible, use the queue dispatcher instead.
+         * </remarks>
+         */
+        public static IDisposableTaskDispatcher NewSingleThread(string name)
+        {
+            return new SingleThreadDispatcher(name);
         }
     }
 }
