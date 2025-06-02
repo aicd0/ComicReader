@@ -20,8 +20,6 @@
                             <SolidColorBrush x:Key="CommandBarBorderBrush" Color="#1C1C1C" />
                             <SolidColorBrush x:Key="ForegroundGrey1" Color="#404040" />
                             <SolidColorBrush x:Key="ForegroundGrey2" Color="#858585" />
-                            <SolidColorBrush x:Key="FolderTileBackground" Color="#2F2F2F" />
-                            <SolidColorBrush x:Key="FolderTileCoverBackground" Color="#363636" />
                             <SolidColorBrush x:Key="HistoryGroupHeaderBackground" Color="#404040" />
                             <SolidColorBrush x:Key="ImagePlaceHolderBackground" Color="#505050" />
                             <SolidColorBrush x:Key="ListViewItemPointerOverBackground1" Color="#505050" />
@@ -29,11 +27,7 @@
                             <SolidColorBrush x:Key="NavigationPageBackground" Color="#282828" />
                             <SolidColorBrush x:Key="NavigationPageTopTileBorderBrush" Color="#000000" />
                             <SolidColorBrush x:Key="PageDemoBrush" Color="#60FFFFFF" />
-                            <muxm:AcrylicBrush
-                                x:Key="HomeHeaderBackground"
-                                TintColor="MidnightBlue"
-                                TintLuminosityOpacity="0.85"
-                                TintOpacity="0.0" />
+                            <SolidColorBrush x:Key="HomeHeaderBackground" Color="#282828" />
                             <muxm:AcrylicBrush
                                 x:Key="ReaderBottomTileBackground"
                                 TintColor="MidnightBlue"
@@ -65,8 +59,6 @@
                             <SolidColorBrush x:Key="CommandBarBorderBrush" Color="#EBEBEB" />
                             <SolidColorBrush x:Key="ForegroundGrey1" Color="#E0E0E0" />
                             <SolidColorBrush x:Key="ForegroundGrey2" Color="#858585" />
-                            <SolidColorBrush x:Key="FolderTileBackground" Color="#ADACAE" />
-                            <SolidColorBrush x:Key="FolderTileCoverBackground" Color="#FFFFFF" />
                             <SolidColorBrush x:Key="HistoryGroupHeaderBackground" Color="#DADADA" />
                             <SolidColorBrush x:Key="ImagePlaceHolderBackground" Color="#E0E0E0" />
                             <SolidColorBrush x:Key="ListViewItemPointerOverBackground1" Color="#E0E0E0" />
@@ -74,11 +66,7 @@
                             <SolidColorBrush x:Key="NavigationPageBackground" Color="#FAF8FC" />
                             <SolidColorBrush x:Key="NavigationPageTopTileBorderBrush" Color="#E6E3EA" />
                             <SolidColorBrush x:Key="PageDemoBrush" Color="#30000000" />
-                            <muxm:AcrylicBrush
-                                x:Key="HomeHeaderBackground"
-                                TintColor="#FFFFFF"
-                                TintLuminosityOpacity="0.85"
-                                TintOpacity="0.0" />
+                            <SolidColorBrush x:Key="HomeHeaderBackground" Color="#FAF8FC" />
                             <muxm:AcrylicBrush
                                 x:Key="ReaderBottomTileBackground"
                                 TintColor="#FFFFFF"
@@ -110,8 +98,6 @@
                             <SolidColorBrush x:Key="CommandBarBorderBrush" Color="#EBEBEB" />
                             <SolidColorBrush x:Key="ForegroundGrey1" Color="#E0E0E0" />
                             <SolidColorBrush x:Key="ForegroundGrey2" Color="#858585" />
-                            <SolidColorBrush x:Key="FolderTileBackground" Color="#ADACAE" />
-                            <SolidColorBrush x:Key="FolderTileCoverBackground" Color="#FFFFFF" />
                             <SolidColorBrush x:Key="HistoryGroupHeaderBackground" Color="#DADADA" />
                             <SolidColorBrush x:Key="ImagePlaceHolderBackground" Color="#E0E0E0" />
                             <SolidColorBrush x:Key="ListViewItemPointerOverBackground1" Color="#505050" />
@@ -119,7 +105,7 @@
                             <SolidColorBrush x:Key="NavigationPageBackground" Color="#FAF8FC" />
                             <SolidColorBrush x:Key="NavigationPageTopTileBorderBrush" Color="#E6E3EA" />
                             <SolidColorBrush x:Key="PageDemoBrush" Color="#000000" />
-                            <SolidColorBrush x:Key="HomeHeaderBackground" Color="#FFFFFF" />
+                            <SolidColorBrush x:Key="HomeHeaderBackground" Color="#FAF8FC" />
                             <SolidColorBrush x:Key="ReaderBottomTileBackground" Color="#FFFFFF" />
                             <SolidColorBrush x:Key="ReaderBottomTileButtonFillForeground" Color="{ThemeResource SystemAccentColorDark1}" />
                             <SolidColorBrush x:Key="SidePaneBackground" Color="#FFFFFF" />
