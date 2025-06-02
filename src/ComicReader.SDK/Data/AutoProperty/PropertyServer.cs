@@ -7,10 +7,10 @@ public class PropertyServer(string name)
 {
     private readonly InternalServer _server = new(name);
 
-    public async Task<ExternalBatchResponse> Request(ExternalBatchRequest? request)
+    public Task<ExternalBatchResponse> Request(ExternalBatchRequest? request)
     {
         ArgumentNullException.ThrowIfNull(request);
-        return await _server.Request(request);
+        return _server.Request(request);
     }
 
     public void RegisterExtension<E>(IEProperty<E> property, E extension) where E : IPropertyExtension

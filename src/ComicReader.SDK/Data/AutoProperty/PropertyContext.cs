@@ -34,7 +34,15 @@ public class PropertyContext<Q, R, M, E> : IQRPropertyContext<Q, R>, IEPropertyC
     {
         return _context.HandleRequest(_property, target, request, (p1, p2) =>
         {
-            handler(this, p1, p2);
+            try
+            {
+                handler(this, p1, p2);
+            }
+            catch (Exception e)
+            {
+                Logger.AssertNotReachHere("E8FC3756E7055FA8", e);
+                CancelAllRequests();
+            }
         });
     }
 
@@ -69,12 +77,29 @@ public class PropertyContext<Q, R, M, E> : IQRPropertyContext<Q, R>, IEPropertyC
 
     void IPropertyContext.RearrangeRequests()
     {
-        _property.RearrangeRequests(this);
+        try
+        {
+            _property.RearrangeRequests(this);
+        }
+        catch (Exception e)
+        {
+            Logger.AssertNotReachHere("5C58129E65F52513", e);
+            CancelAllRequests();
+        }
     }
 
     void IPropertyContext.ProcessRequests(IProcessCallback callback)
     {
-        _property.ProcessRequests(this, callback);
+        try
+        {
+            _property.ProcessRequests(this, callback);
+        }
+        catch (Exception e)
+        {
+            Logger.AssertNotReachHere("88927512645D06B0", e);
+            CancelAllRequests();
+            callback.PostCompletion(null);
+        }
     }
 
     void IPropertyContext.CancelRequest(long id)
@@ -85,5 +110,14 @@ public class PropertyContext<Q, R, M, E> : IQRPropertyContext<Q, R>, IEPropertyC
     void IEPropertyContext<E>.RegisterExtension(E extension)
     {
         _extensions.Add(extension);
+    }
+
+    private void CancelAllRequests()
+    {
+        List<SealedPropertyRequest<Q>> requests = [.. _ongoingRequests.Values];
+        foreach (SealedPropertyRequest<Q> request in requests)
+        {
+            Respond(request.Id, PropertyResponseContent<R>.NewFailedResponse());
+        }
     }
 }

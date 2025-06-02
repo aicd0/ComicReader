@@ -1,20 +1,17 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
-using System.IO;
 using System.Text;
 
-using ComicReader.Common.AppEnvironment;
-using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Common.ServiceManagement;
 
 using Windows.Storage;
 
-namespace ComicReader.Common;
+namespace ComicReader.SDK.Common.DebugTools;
 
-internal static class CrashHandler
+public static class CrashHandler
 {
-    public static void OnUnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs e)
+    public static void OnUnhandledException(Exception e)
     {
         try
         {
@@ -25,16 +22,22 @@ internal static class CrashHandler
             sb.Append("\n\n");
 
             sb.Append("Stack trace:\n");
-            sb.Append(e.Exception.ToString());
+            sb.Append(e.ToString());
             sb.Append("\n\n");
 
             sb.Append("Crash time: ");
             sb.Append(DateTimeOffset.Now);
             sb.Append('\n');
 
-            EnvironmentProvider.Instance.AppendDebugText(sb);
+            {
+                IApplicationService? service = ServiceManager.GetServiceNullable<IApplicationService>();
+                if (service != null)
+                {
+                    sb.Append(service.GetEnvironmentDebugInfo());
+                }
+            }
 
-            string fileName = $"crash_report_{DateTimeOffset.Now:yyyyMMddHHmmss}.txt";
+            string fileName = $"crash_report_{DateTimeOffset.Now:yyyyMMddHHmmss}_{RandomString(4)}.txt";
             string filePath = ApplicationData.Current.LocalCacheFolder.Path + "\\" + fileName;
             using StreamWriter writer = new(filePath, true, Encoding.UTF8);
             writer.Write(sb.ToString());
@@ -57,6 +60,17 @@ internal static class CrashHandler
         {
             System.Diagnostics.Debugger.Break();
         }
+    }
+
+    private static string RandomString(int length)
+    {
+        const string symbols = "0123456789abcdefghijklmnopqrstuvwxyz";
+        StringBuilder sb = new();
+        for (int i = 0; i < length; ++i)
+        {
+            sb.Append(symbols[Random.Shared.Next(symbols.Length)]);
+        }
+        return sb.ToString();
     }
 
     private static void Console(string message)

@@ -32,14 +32,9 @@ internal class TestProperty<Q, R> : AbsProperty<Q, R, TestPropertyModel<Q>, IPro
 
         foreach (SealedPropertyRequest<Q> serverRequest in context.NewRequests)
         {
-            PropertyRequestContent<Q> request = serverRequest.RequestContent;
-            if (request.Type == RequestType.Modify)
-            {
-                context.Dependency.IncrementVersion(request.Key);
-            }
             if (Rearrange)
             {
-                context.Respond(serverRequest.Id, ServerFunc(serverRequest.RequestContent));
+                Respond(context, serverRequest);
             }
             else
             {
@@ -54,7 +49,7 @@ internal class TestProperty<Q, R> : AbsProperty<Q, R, TestPropertyModel<Q>, IPro
         {
             while (context.Model.requests.TryDequeue(out SealedPropertyRequest<Q>? request))
             {
-                context.Respond(request.Id, ServerFunc(request.RequestContent));
+                Respond(context, request);
             }
             callback.PostCompletion(null);
         }
@@ -66,10 +61,20 @@ internal class TestProperty<Q, R> : AbsProperty<Q, R, TestPropertyModel<Q>, IPro
                 {
                     while (context.Model.requests.TryDequeue(out SealedPropertyRequest<Q>? request))
                     {
-                        context.Respond(request.Id, ServerFunc(request.RequestContent));
+                        Respond(context, request);
                     }
                 });
             });
         }
+    }
+
+    private void Respond(PropertyContext<Q, R, TestPropertyModel<Q>, IPropertyExtension> context, SealedPropertyRequest<Q> request)
+    {
+        PropertyResponseContent<R> response = ServerFunc(request.RequestContent);
+        if (request.RequestContent.Type == RequestType.Modify && response.Result == RequestResult.Successful)
+        {
+            context.Dependency.IncrementVersion(request.RequestContent.Key);
+        }
+        context.Respond(request.Id, response);
     }
 }

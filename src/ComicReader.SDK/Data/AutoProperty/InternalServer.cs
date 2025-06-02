@@ -29,17 +29,17 @@ internal class InternalServer(string name) : IServerContext
 
     private readonly List<Action<DelayActionResult>> _delayedActions = [];
 
-    public async Task<ExternalBatchResponse> Request(ExternalBatchRequest request)
+    public Task<ExternalBatchResponse> Request(ExternalBatchRequest request)
     {
         var batchInfo = new BatchInfo(request);
         _batchInfoQueue.Enqueue(batchInfo);
         ScheduleServerRoutine("Request");
-        return await batchInfo.CompletionSource.Task;
+        return batchInfo.CompletionSource.Task;
     }
 
     public void RegisterExtension<E>(IEProperty<E> property, E extension) where E : IPropertyExtension
     {
-        sDispatcher.Submit($"{name}.RegisterExtension", () =>
+        PostOnServerThread("RegisterExtension", () =>
         {
             GetOrCreatePropertyContext(property).RegisterExtension(extension);
         });
@@ -49,14 +49,33 @@ internal class InternalServer(string name) : IServerContext
     {
         if (Interlocked.CompareExchange(ref _serverRoutineScheduled, 1, 0) == 0)
         {
-            sDispatcher.Submit($"{name}.{reason}", () =>
+            PostOnServerThread(reason, () =>
             {
                 Interlocked.Exchange(ref _serverRoutineScheduled, 0);
-                _threadFlag.Value = true;
                 ServerRoutine();
-                _threadFlag.Value = false;
             });
         }
+    }
+
+    private void PostOnServerThread(string reason, Action action)
+    {
+        sDispatcher.Submit($"{name}.{reason}", () =>
+        {
+            _threadFlag.Value = true;
+            try
+            {
+                action();
+            }
+            catch (Exception e)
+            {
+                Logger.AssertNotReachHere("B4604C74D0E10DAC", e);
+                throw;
+            }
+            finally
+            {
+                _threadFlag.Value = false;
+            }
+        });
     }
 
     private void ServerRoutine()

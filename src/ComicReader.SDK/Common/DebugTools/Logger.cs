@@ -387,12 +387,13 @@ public static class Logger
     {
         if (DebugUtils.DebugMode)
         {
-            if (DebugUtils.DebugBuild)
+            if (DebugUtils.DebugBuild && System.Diagnostics.Debugger.IsAttached)
             {
                 System.Diagnostics.Debugger.Break();
             }
 
             exception ??= new AssertException();
+            CrashHandler.OnUnhandledException(exception);
             throw exception;
         }
     }

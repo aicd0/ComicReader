@@ -10,17 +10,40 @@ namespace ComicReader.SDK.Tests.AutoProperty;
 public class AutoPropertyTest
 {
     [Test]
-    public async Task TestMemoryCacheProperty()
+    public void TestMemoryCacheProperty1()
     {
         PropertyServer server = new("Test");
-
-        TestProperty<int, int> sourceProperty = new()
-        {
-            Rearrange = true,
-            ProcessOnServerThread = true
-        };
+        TestProperty<int, int> sourceProperty = new();
         MemoryCacheProperty<int> cacheProperty = new(sourceProperty);
+        sourceProperty.Rearrange = true;
+        sourceProperty.ProcessOnServerThread = true;
+        TestMemoryCachePropertyInternal(server, sourceProperty, cacheProperty);
+    }
 
+    [Test]
+    public void TestMemoryCacheProperty2()
+    {
+        PropertyServer server = new("Test");
+        TestProperty<int, int> sourceProperty = new();
+        MemoryCacheProperty<int> cacheProperty = new(sourceProperty);
+        sourceProperty.Rearrange = false;
+        sourceProperty.ProcessOnServerThread = true;
+        TestMemoryCachePropertyInternal(server, sourceProperty, cacheProperty);
+    }
+
+    [Test]
+    public void TestMemoryCacheProperty3()
+    {
+        PropertyServer server = new("Test");
+        TestProperty<int, int> sourceProperty = new();
+        MemoryCacheProperty<int> cacheProperty = new(sourceProperty);
+        sourceProperty.Rearrange = false;
+        sourceProperty.ProcessOnServerThread = false;
+        TestMemoryCachePropertyInternal(server, sourceProperty, cacheProperty);
+    }
+
+    private void TestMemoryCachePropertyInternal(PropertyServer server, TestProperty<int, int> sourceProperty, MemoryCacheProperty<int> cacheProperty)
+    {
         Func<string, int> valueFunc = (key) =>
         {
             return -1;
@@ -47,7 +70,7 @@ public class AutoPropertyTest
                 ExternalBatchRequest batch = new();
                 List<IRequestTest> tests = AppendSerialReadTest(batch, cacheProperty, 0, 100, valueFunc);
                 {
-                    ExternalBatchResponse response = await server.Request(batch);
+                    ExternalBatchResponse response = server.Request(batch).Result;
                     // Single batch
                     foreach (IRequestTest test in tests)
                     {
@@ -55,7 +78,7 @@ public class AutoPropertyTest
                     }
                 }
                 {
-                    ExternalBatchResponse response = await server.Request(batch);
+                    ExternalBatchResponse response = server.Request(batch).Result;
                     // Request reuse
                     foreach (IRequestTest test in tests)
                     {
@@ -75,7 +98,7 @@ public class AutoPropertyTest
                     return -1;
                 };
                 // Memory cache
-                ExternalBatchResponse response = await server.Request(batch);
+                ExternalBatchResponse response = server.Request(batch).Result;
                 foreach (IRequestTest test in tests)
                 {
                     test.AssertResult(response);
@@ -122,7 +145,7 @@ public class AutoPropertyTest
             // Dependency version
             for (int i = 0; i < batchCount; i++)
             {
-                ExternalBatchResponse response = await tasks[i];
+                ExternalBatchResponse response = tasks[i].Result;
                 List<IRequestTest> subTests = tests[i];
                 foreach (IRequestTest test in subTests)
                 {
@@ -153,7 +176,7 @@ public class AutoPropertyTest
             {
                 ExternalBatchRequest batch = new();
                 List<IRequestTest> tests = AppendSerialWriteTest(batch, cacheProperty, 0, 100, valueFunc);
-                ExternalBatchResponse response = await server.Request(batch);
+                ExternalBatchResponse response = server.Request(batch).Result;
                 // Write
                 foreach (IRequestTest test in tests)
                 {
@@ -171,7 +194,7 @@ public class AutoPropertyTest
             {
                 ExternalBatchRequest batch = new();
                 List<IRequestTest> tests = AppendSerialReadTest(batch, cacheProperty, 0, 100, valueFunc);
-                ExternalBatchResponse response = await server.Request(batch);
+                ExternalBatchResponse response = server.Request(batch).Result;
                 // Read after write
                 foreach (IRequestTest test in tests)
                 {
@@ -227,16 +250,137 @@ public class AutoPropertyTest
             };
             tests.AddRange(AppendSerialWriteTest(batch, cacheProperty, 0, 10, valueFunc));
             tests.AddRange(AppendSerialReadTest(batch, cacheProperty, 0, 10, valueFunc));
-            ExternalBatchResponse response = await server.Request(batch);
+            ExternalBatchResponse response = server.Request(batch).Result;
             // Read and write
             foreach (IRequestTest test in tests)
             {
                 test.AssertResult(response);
             }
         }
+
+        {
+            sourceProperty.ServerFunc = (request) =>
+            {
+                if (request.Type != RequestType.Modify)
+                {
+                    throw new InvalidOperationException();
+                }
+                return PropertyResponseContent<int>.NewFailedResponse();
+            };
+            ExternalBatchRequest readBatch = new();
+            List<IRequestTest> readTests = AppendSerialReadTest(readBatch, cacheProperty, 0, 10, valueFunc);
+            valueFunc = (key) =>
+            {
+                if (int.TryParse(key, out int value))
+                {
+                    return value + 7;
+                }
+                return -1;
+            };
+            ExternalBatchRequest writeBatch = new();
+            List<IRequestTest> writeTests = AppendSerialWriteTest(writeBatch, cacheProperty, 0, 10, valueFunc, result: RequestResult.Failed);
+            {
+                ExternalBatchResponse response = server.Request(writeBatch).Result;
+                // Failed write
+                foreach (IRequestTest test in writeTests)
+                {
+                    test.AssertResult(response);
+                }
+            }
+            {
+                ExternalBatchResponse response = server.Request(readBatch).Result;
+                // Read after failed write
+                foreach (IRequestTest test in readTests)
+                {
+                    test.AssertResult(response);
+                }
+            }
+        }
+
+        {
+            valueFunc = (key) =>
+            {
+                if (int.TryParse(key, out int value))
+                {
+                    return value + 8;
+                }
+                return -1;
+            };
+            sourceProperty.ServerFunc = (request) =>
+            {
+                if (request.Type == RequestType.Modify)
+                {
+                    return PropertyResponseContent<int>.NewSuccessfulResponse();
+                }
+                return PropertyResponseContent<int>.NewFailedResponse();
+            };
+            List<IRequestTest> tests = [];
+            ExternalBatchRequest batch = new();
+            tests.AddRange(AppendSerialWriteTest(batch, sourceProperty, 0, 10, valueFunc));
+            tests.AddRange(AppendSerialReadTest(batch, cacheProperty, 0, 10, valueFunc, RequestResult.Failed));
+            {
+                ExternalBatchResponse response = server.Request(batch).Result;
+                // Failed read
+                foreach (IRequestTest test in tests)
+                {
+                    test.AssertResult(response);
+                }
+            }
+        }
+
+        {
+            valueFunc = (key) =>
+            {
+                if (int.TryParse(key, out int value))
+                {
+                    return value + 9;
+                }
+                return -1;
+            };
+            {
+                sourceProperty.ServerFunc = (request) =>
+                {
+                    if (request.Type == RequestType.Modify)
+                    {
+                        throw new InvalidOperationException();
+                    }
+                    return PropertyResponseContent<int>.NewSuccessfulResponse(valueFunc(request.Key));
+                };
+                List<IRequestTest> tests = [];
+                ExternalBatchRequest batch = new();
+                tests.AddRange(AppendSerialReadTest(batch, cacheProperty, 0, 10, valueFunc, RequestResult.Failed));
+                ExternalBatchResponse response = server.Request(batch).Result;
+                // Cached failed read
+                foreach (IRequestTest test in tests)
+                {
+                    test.AssertResult(response);
+                }
+            }
+            {
+                sourceProperty.ServerFunc = (request) =>
+                {
+                    if (request.Type == RequestType.Modify)
+                    {
+                        return PropertyResponseContent<int>.NewSuccessfulResponse();
+                    }
+                    return PropertyResponseContent<int>.NewSuccessfulResponse(valueFunc(request.Key));
+                };
+                List<IRequestTest> tests = [];
+                ExternalBatchRequest batch = new();
+                tests.AddRange(AppendSerialWriteTest(batch, sourceProperty, 0, 10, valueFunc));
+                tests.AddRange(AppendSerialReadTest(batch, cacheProperty, 0, 10, valueFunc));
+                ExternalBatchResponse response = server.Request(batch).Result;
+                // Successful read after failed read
+                foreach (IRequestTest test in tests)
+                {
+                    test.AssertResult(response);
+                }
+            }
+        }
     }
 
-    private List<IRequestTest> AppendSerialReadTest<T>(ExternalBatchRequest batch, IQRProperty<T, T> property, int start, int count, Func<string, T> valueFunc)
+    private static List<IRequestTest> AppendSerialReadTest<T>(ExternalBatchRequest batch, IQRProperty<T, T> property,
+        int start, int count, Func<string, T> valueFunc, RequestResult result = RequestResult.Successful)
     {
         List<IRequestTest> tests = [];
         for (int i = start; i < count; i++)
@@ -244,13 +388,22 @@ public class AutoPropertyTest
             string key = i.ToString();
             ExternalRequest<T, T> request = new ExternalRequest<T, T>.Builder(property).SetRequestType(RequestType.Read).SetKey(key).Build();
             batch.Requests.Add(request);
-            ReadRequestTest<T, T> test = new(request, valueFunc(key));
+            IRequestTest test;
+            if (result == RequestResult.Successful)
+            {
+                test = new ReadRequestTest<T, T>(request, valueFunc(key));
+            }
+            else
+            {
+                test = new RequestResultTest<T, T>(request, result);
+            }
             tests.Add(test);
         }
         return tests;
     }
 
-    private List<IRequestTest> AppendSerialWriteTest<T>(ExternalBatchRequest batch, IQRProperty<T, T> property, int start, int count, Func<string, T> valueFunc)
+    private static List<IRequestTest> AppendSerialWriteTest<T>(ExternalBatchRequest batch, IQRProperty<T, T> property,
+        int start, int count, Func<string, T> valueFunc, RequestResult result = RequestResult.Successful)
     {
         List<IRequestTest> tests = [];
         for (int i = start; i < count; i++)
@@ -259,7 +412,7 @@ public class AutoPropertyTest
             T value = valueFunc(key);
             ExternalRequest<T, T> request = new ExternalRequest<T, T>.Builder(property).SetRequestType(RequestType.Modify).SetKey(key).SetValue(value).Build();
             batch.Requests.Add(request);
-            RequestResultTest<T, T> test = new(request, RequestResult.Successful);
+            RequestResultTest<T, T> test = new(request, result);
             tests.Add(test);
         }
         return tests;

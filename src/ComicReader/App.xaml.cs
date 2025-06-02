@@ -7,10 +7,12 @@ using System.Threading.Tasks;
 using ComicReader.Common;
 using ComicReader.Common.AppEnvironment;
 using ComicReader.Common.DebugTools;
+using ComicReader.Common.Services;
 using ComicReader.Data;
 using ComicReader.Data.Legacy;
 using ComicReader.Data.Models.Comic;
 using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Common.ServiceManagement;
 
 using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppLifecycle;
@@ -79,8 +81,15 @@ public partial class App : Application
 
     private void InitializationBeforeCreate()
     {
-        UnhandledException += CrashHandler.OnUnhandledException;
+        UnhandledException += (_, e) =>
+        {
+            CrashHandler.OnUnhandledException(e.Exception);
+        };
+
+        ServiceManager.RegisterService<IApplicationService>(new ApplicationService());
+
         EnvironmentProvider.Instance.Initialize();
+
         ApplyAppTheme();
     }
 
