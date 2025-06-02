@@ -53,21 +53,11 @@ public abstract class TaskDispatcher : ITaskDispatcher
 
             try
             {
-                if (DebugUtils.DebugModeStrict)
-                {
-                    action();
-                }
-                else
-                {
-                    try
-                    {
-                        action();
-                    }
-                    catch (Exception e)
-                    {
-                        Logger.F(_endTag, $"exception occured in task {taskName}", e);
-                    }
-                }
+                action();
+            }
+            catch (Exception e)
+            {
+                Logger.F(_endTag, $"Task '{taskName}' failed with an exception.", e);
             }
             finally
             {

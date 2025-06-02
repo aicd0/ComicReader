@@ -124,26 +124,30 @@ public static class Logger
 
     public static void F(string? tag, string? message)
     {
-        Log(LEVEL_FATAL, LogTag.N(tag), message, new Exception());
-        ThrowOnDebug(null);
+        Exception exceptionNotNull = new(message);
+        Log(LEVEL_FATAL, LogTag.N(tag), message, exceptionNotNull);
+        FailOnDebug(exceptionNotNull);
     }
 
     public static void F(LogTag? tag, string? message)
     {
-        Log(LEVEL_FATAL, tag, message, new Exception());
-        ThrowOnDebug(null);
+        Exception exceptionNotNull = new(message);
+        Log(LEVEL_FATAL, tag, message, exceptionNotNull);
+        FailOnDebug(exceptionNotNull);
     }
 
     public static void F(string? tag, string? message, Exception? exception)
     {
-        Log(LEVEL_FATAL, LogTag.N(tag), message, exception);
-        ThrowOnDebug(null);
+        Exception exceptionNotNull = exception ?? new(message);
+        Log(LEVEL_FATAL, LogTag.N(tag), message, exceptionNotNull);
+        FailOnDebug(exceptionNotNull);
     }
 
     public static void F(LogTag? tag, string? message, Exception? exception)
     {
-        Log(LEVEL_FATAL, tag, message, exception);
-        ThrowOnDebug(null);
+        Exception exceptionNotNull = exception ?? new(message);
+        Log(LEVEL_FATAL, tag, message, exceptionNotNull);
+        FailOnDebug(exceptionNotNull);
     }
 
     public static void Assert(bool condition, string? eventName)
@@ -152,7 +156,6 @@ public static class Logger
         {
             return;
         }
-
         AssertNotReachHereInternal(eventName, null, null);
     }
 
@@ -193,7 +196,7 @@ public static class Logger
         {
             fullMsg = $"{eventName}({message})";
         }
-        ThrowOnDebug(new AssertException(fullMsg, exception));
+        FailOnDebug(new AssertException(fullMsg, exception));
     }
 
     private static void Console(string message)
@@ -237,7 +240,7 @@ public static class Logger
                 levelTag = "F";
                 break;
             default:
-                ThrowOnDebug(null);
+                FailOnDebug(new AssertException($"Unknown log level {level}."));
                 levelTag = "U";
                 break;
         }
@@ -383,7 +386,7 @@ public static class Logger
         System.Diagnostics.Debug.Print(message);
     }
 
-    private static void ThrowOnDebug(Exception? exception)
+    private static void FailOnDebug(Exception exception)
     {
         if (DebugUtils.DebugMode)
         {
@@ -394,6 +397,7 @@ public static class Logger
 
             exception ??= new AssertException();
             CrashHandler.OnUnhandledException(exception);
+            Environment.FailFast("The application encountered an assertion failure.", exception);
             throw exception;
         }
     }
