@@ -22,7 +22,12 @@ internal class BatchInfo
         Logger.Assert(RemainingRequests > 0, "A5E3AF05B00F7CED");
         if (--RemainingRequests == 0)
         {
-            CompletionSource.TrySetResult(Response);
+            CompleteNow();
         }
+    }
+
+    public void CompleteNow()
+    {
+        CompletionSource.TrySetResult(Response);
     }
 }

@@ -18,6 +18,11 @@ public class PropertyRequestContent<T>
         Option = option;
     }
 
+    public PropertyRequestContent<T> WithValue(T? value)
+    {
+        return new(Type, Key, value, Option);
+    }
+
     public PropertyRequestContent<T> WithRequestTypeAndValue(RequestType type, T? value)
     {
         return new(type, Key, value, Option);

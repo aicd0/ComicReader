@@ -101,6 +101,11 @@ internal class InternalServer(string name) : IServerContext
         while (_batchInfoQueue.TryDequeue(out BatchInfo? batchInfo))
         {
             List<IExternalRequest> requests = [.. batchInfo.Request.Requests];
+            if (requests.Count == 0)
+            {
+                batchInfo.CompleteNow();
+                continue;
+            }
             batchInfo.RemainingRequests = requests.Count;
             foreach (IExternalRequest rawRequest in requests)
             {

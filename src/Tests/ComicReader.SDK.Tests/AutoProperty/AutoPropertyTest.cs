@@ -15,7 +15,7 @@ public class AutoPropertyTest
         PropertyServer server = new("Test");
         TestProperty<int, int> sourceProperty = new();
         Func<PropertyResponseContent<int>, PropertyResponseContent<int>> responseConversionFunc = (response) => response;
-        ConvertProperty<int, int, int, int> converterProperty = new(sourceProperty, (request) => request, (response) => responseConversionFunc(response));
+        ConverterProperty<int, int, int, int> converterProperty = new(sourceProperty, (request) => request, (response) => responseConversionFunc(response));
 
         Func<string, int> valueFunc = (key) =>
         {
@@ -551,7 +551,7 @@ public class AutoPropertyTest
         sourceProperty3.ProcessOnServerThread = true;
         MultiSourceProperty<int> multiSourceProperty = new([sourceProperty1, sourceProperty2, sourceProperty3]);
 
-        int keyCount = 1;
+        int keyCount = 100;
 
         void TestInternal(int offset, bool readTest, bool read1, bool write1, bool read2, bool write2, bool read3, bool write3)
         {
@@ -740,6 +740,123 @@ public class AutoPropertyTest
         {
             TestInternal(i, (i & 0x01) != 0, (i & 0x02) != 0, (i & 0x04) != 0, (i & 0x08) != 0, (i & 0x10) != 0, (i & 0x20) != 0, (i & 0x40) != 0);
             TestInternal(i, (i & 0x40) != 0, (i & 0x20) != 0, (i & 0x10) != 0, (i & 0x08) != 0, (i & 0x04) != 0, (i & 0x02) != 0, (i & 0x01) != 0);
+        }
+    }
+
+    [Test]
+    public void TestConverterProperty()
+    {
+        PropertyServer server = new("Test");
+        TestProperty<int, int> sourceProperty = new();
+        sourceProperty.Rearrange = true;
+        sourceProperty.ProcessOnServerThread = true;
+        Func<PropertyRequestContent<int>, PropertyRequestContent<int>> requestConversionFunc = (request) => request;
+        Func<PropertyResponseContent<int>, PropertyResponseContent<int>> responseConversionFunc = (response) => response;
+        ConverterProperty<int, int, int, int> convertProperty = new(sourceProperty, (request) => requestConversionFunc(request), (response) => responseConversionFunc(response));
+
+        int keyCount = 100;
+
+        void TestInternal(int offset, bool requestException, bool responseException, bool read, bool write)
+        {
+            int valueFunc(string key, int value)
+            {
+                if (int.TryParse(key, out int keyValue))
+                {
+                    return keyValue + value + offset + 300;
+                }
+                return -1;
+            }
+            int requestValueFunc(string key)
+            {
+                if (!int.TryParse(key, out int value))
+                {
+                    value = -1;
+                }
+                return value + offset;
+            }
+            int responseValueFunc(int value)
+            {
+                return value * 7 + offset;
+            }
+            requestConversionFunc = (request) =>
+            {
+                if (requestException)
+                {
+                    throw new InvalidOperationException();
+                }
+                return request.WithValue(requestValueFunc(request.Key));
+            };
+            responseConversionFunc = (response) =>
+            {
+                if (responseException)
+                {
+                    throw new InvalidOperationException();
+                }
+                return PropertyResponseContent<int>.NewSuccessfulResponse(responseValueFunc(response.Value));
+            };
+            Dictionary<string, int> writtenValues = [];
+            sourceProperty.ServerFunc = (request) =>
+            {
+                int result = valueFunc(request.Key, request.Value);
+                switch (request.Type)
+                {
+                    case RequestType.Read:
+                        return PropertyResponseContent<int>.NewSuccessfulResponse(result);
+                    case RequestType.Modify:
+                        writtenValues[request.Key] = result;
+                        return PropertyResponseContent<int>.NewSuccessfulResponse();
+                    default:
+                        throw new InvalidOperationException();
+                }
+            };
+            List<IRequestTest> tests = [];
+            ExternalBatchRequest batch = new();
+            Dictionary<string, int> expectWrittenValue = [];
+            if (read)
+            {
+                if (requestException || responseException)
+                {
+                    tests.AddRange(AppendSerialReadTest(batch, convertProperty, 0, keyCount, (key) => -1, RequestResult.Failed));
+                }
+                else
+                {
+                    int examFunc(string key)
+                    {
+                        return responseValueFunc(valueFunc(key, requestValueFunc(key)));
+                    }
+                    tests.AddRange(AppendSerialReadTest(batch, convertProperty, 0, keyCount, examFunc));
+                }
+            }
+            if (write)
+            {
+                if (requestException || responseException)
+                {
+                    tests.AddRange(AppendSerialWriteTest(batch, convertProperty, 0, keyCount, (key) => -1, RequestResult.Failed));
+                }
+                else
+                {
+                    tests.AddRange(AppendSerialWriteTest(batch, convertProperty, 0, keyCount, (key) => -1));
+                }
+                if (!requestException)
+                {
+                    for (int i = 0; i < keyCount; i++)
+                    {
+                        string key = i.ToString();
+                        expectWrittenValue[key] = valueFunc(key, requestValueFunc(key));
+                    }
+                }
+            }
+            ExternalBatchResponse response = server.Request(batch).Result;
+            foreach (IRequestTest test in tests)
+            {
+                test.AssertResult(response);
+            }
+            AssertDictionaryEqual(writtenValues, expectWrittenValue);
+        }
+
+        for (int i = 0; i < 1 << 4; i++)
+        {
+            TestInternal(i, (i & 0x01) != 0, (i & 0x02) != 0, (i & 0x04) != 0, (i & 0x08) != 0);
         }
     }
 
