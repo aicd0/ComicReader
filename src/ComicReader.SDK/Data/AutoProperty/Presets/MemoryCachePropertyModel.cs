@@ -5,10 +5,10 @@ namespace ComicReader.SDK.Data.AutoProperty.Presets;
 
 public class MemoryCachePropertyModel<T>
 {
-    public Dictionary<string, CacheItem> cacheItems = [];
-    public Dictionary<long, CacheItem> requests = [];
+    internal Dictionary<string, CacheItem> cacheItems = [];
+    internal Dictionary<long, CacheItem> requests = [];
 
-    public class CacheItem(string key)
+    internal class CacheItem(string key)
     {
         public readonly string key = key;
         public int readVersion = 0;

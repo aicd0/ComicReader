@@ -5,5 +5,5 @@ namespace ComicReader.SDK.Data.AutoProperty.Presets;
 
 public class ConvertPropertyModel
 {
-    public Dictionary<long, long> requests = [];
+    internal Dictionary<long, long> requests = [];
 }

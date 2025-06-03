@@ -21,7 +21,7 @@ public class AutoPropertyTest
         {
             return -1;
         };
-        int keyCount = 10;
+        int keyCount = 100;
 
         void TestInternal(int offset, bool patchRequestCallback)
         {
@@ -113,7 +113,7 @@ public class AutoPropertyTest
         {
             return -1;
         };
-        int keyCount = 10;
+        int keyCount = 100;
 
         void TestInternal(int offset)
         {
@@ -203,7 +203,7 @@ public class AutoPropertyTest
         {
             return -1;
         };
-        int keyCount = 1;
+        int keyCount = 100;
 
         {
             sourceProperty.ServerFunc = (request) =>
@@ -536,6 +536,213 @@ public class AutoPropertyTest
         }
     }
 
+    [Test]
+    public void TestMultiSourceProperty()
+    {
+        PropertyServer server = new("Test");
+        TestProperty<int, int> sourceProperty1 = new();
+        sourceProperty1.Rearrange = true;
+        sourceProperty1.ProcessOnServerThread = true;
+        TestProperty<int, int> sourceProperty2 = new();
+        sourceProperty2.Rearrange = true;
+        sourceProperty2.ProcessOnServerThread = true;
+        TestProperty<int, int> sourceProperty3 = new();
+        sourceProperty3.Rearrange = true;
+        sourceProperty3.ProcessOnServerThread = true;
+        MultiSourceProperty<int> multiSourceProperty = new([sourceProperty1, sourceProperty2, sourceProperty3]);
+
+        int keyCount = 1;
+
+        void TestInternal(int offset, bool readTest, bool read1, bool write1, bool read2, bool write2, bool read3, bool write3)
+        {
+            Dictionary<string, int> writtenValues1 = [];
+            Func<string, int> valueFunc1 = (key) =>
+            {
+                if (int.TryParse(key, out int value))
+                {
+                    return value + offset;
+                }
+                return -1;
+            };
+            sourceProperty1.ServerFunc = (request) =>
+            {
+                switch (request.Type)
+                {
+                    case RequestType.Read:
+                        if (read1)
+                        {
+                            return PropertyResponseContent<int>.NewSuccessfulResponse(valueFunc1(request.Key));
+                        }
+                        return PropertyResponseContent<int>.NewFailedResponse();
+                    case RequestType.Modify:
+                        if (write1)
+                        {
+                            writtenValues1[request.Key] = request.Value;
+                            return PropertyResponseContent<int>.NewSuccessfulResponse();
+                        }
+                        return PropertyResponseContent<int>.NewFailedResponse();
+                    default:
+                        throw new InvalidOperationException();
+                }
+            };
+            Dictionary<string, int> writtenValues2 = [];
+            Func<string, int> valueFunc2 = (key) =>
+            {
+                if (int.TryParse(key, out int value))
+                {
+                    return value + offset + 100;
+                }
+                return -1;
+            };
+            sourceProperty2.ServerFunc = (request) =>
+            {
+                switch (request.Type)
+                {
+                    case RequestType.Read:
+                        if (read2)
+                        {
+                            return PropertyResponseContent<int>.NewSuccessfulResponse(valueFunc2(request.Key));
+                        }
+                        return PropertyResponseContent<int>.NewFailedResponse();
+                    case RequestType.Modify:
+                        if (write2)
+                        {
+                            writtenValues2[request.Key] = request.Value;
+                            return PropertyResponseContent<int>.NewSuccessfulResponse();
+                        }
+                        return PropertyResponseContent<int>.NewFailedResponse();
+                    default:
+                        throw new InvalidOperationException();
+                }
+            };
+            Dictionary<string, int> writtenValues3 = [];
+            Func<string, int> valueFunc3 = (key) =>
+            {
+                if (int.TryParse(key, out int value))
+                {
+                    return value + offset + 200;
+                }
+                return -1;
+            };
+            sourceProperty3.ServerFunc = (request) =>
+            {
+                switch (request.Type)
+                {
+                    case RequestType.Read:
+                        if (read3)
+                        {
+                            return PropertyResponseContent<int>.NewSuccessfulResponse(valueFunc3(request.Key));
+                        }
+                        return PropertyResponseContent<int>.NewFailedResponse();
+                    case RequestType.Modify:
+                        if (write3)
+                        {
+                            writtenValues3[request.Key] = request.Value;
+                            return PropertyResponseContent<int>.NewSuccessfulResponse();
+                        }
+                        return PropertyResponseContent<int>.NewFailedResponse();
+                    default:
+                        throw new InvalidOperationException();
+                }
+            };
+            List<IRequestTest> tests = [];
+            ExternalBatchRequest batch = new();
+            Dictionary<string, int> expectWrittenValue1 = [];
+            Dictionary<string, int> expectWrittenValue2 = [];
+            Dictionary<string, int> expectWrittenValue3 = [];
+            if (readTest)
+            {
+                if (read1)
+                {
+                    tests.AddRange(AppendSerialReadTest(batch, multiSourceProperty, 0, keyCount, valueFunc1));
+                }
+                else if (read2)
+                {
+                    tests.AddRange(AppendSerialReadTest(batch, multiSourceProperty, 0, keyCount, valueFunc2));
+                    for (int i = 0; i < keyCount; i++)
+                    {
+                        string key = i.ToString();
+                        if (write1)
+                        {
+                            expectWrittenValue1[key] = valueFunc2(key);
+                        }
+                    }
+                }
+                else if (read3)
+                {
+                    tests.AddRange(AppendSerialReadTest(batch, multiSourceProperty, 0, keyCount, valueFunc3));
+                    for (int i = 0; i < keyCount; i++)
+                    {
+                        string key = i.ToString();
+                        if (write1)
+                        {
+                            expectWrittenValue1[key] = valueFunc3(key);
+                        }
+                        if (write2)
+                        {
+                            expectWrittenValue2[key] = valueFunc3(key);
+                        }
+                    }
+                }
+                else
+                {
+                    tests.AddRange(AppendSerialReadTest(batch, multiSourceProperty, 0, keyCount, (key) => -1, RequestResult.Failed));
+                }
+            }
+            else
+            {
+                Func<string, int> valueFunc = (key) =>
+                {
+                    if (int.TryParse(key, out int value))
+                    {
+                        return value + offset + 300;
+                    }
+                    return -1;
+                };
+                RequestResult result = write1 && write2 && write3 ? RequestResult.Successful : RequestResult.Failed;
+                tests.AddRange(AppendSerialWriteTest(batch, multiSourceProperty, 0, keyCount, valueFunc, result));
+                if (write3)
+                {
+                    for (int i = 0; i < keyCount; i++)
+                    {
+                        string key = i.ToString();
+                        expectWrittenValue3[key] = valueFunc(key);
+                    }
+                    if (write2)
+                    {
+                        for (int i = 0; i < keyCount; i++)
+                        {
+                            string key = i.ToString();
+                            expectWrittenValue2[key] = valueFunc(key);
+                        }
+                        if (write1)
+                        {
+                            for (int i = 0; i < keyCount; i++)
+                            {
+                                string key = i.ToString();
+                                expectWrittenValue1[key] = valueFunc(key);
+                            }
+                        }
+                    }
+                }
+            }
+            ExternalBatchResponse response = server.Request(batch).Result;
+            foreach (IRequestTest test in tests)
+            {
+                test.AssertResult(response);
+            }
+            AssertDictionaryEqual(writtenValues1, expectWrittenValue1);
+            AssertDictionaryEqual(writtenValues2, expectWrittenValue2);
+            AssertDictionaryEqual(writtenValues3, expectWrittenValue3);
+        }
+
+        for (int i = 0; i < 1 << 7; i++)
+        {
+            TestInternal(i, (i & 0x01) != 0, (i & 0x02) != 0, (i & 0x04) != 0, (i & 0x08) != 0, (i & 0x10) != 0, (i & 0x20) != 0, (i & 0x40) != 0);
+            TestInternal(i, (i & 0x40) != 0, (i & 0x20) != 0, (i & 0x10) != 0, (i & 0x08) != 0, (i & 0x04) != 0, (i & 0x02) != 0, (i & 0x01) != 0);
+        }
+    }
+
     private static List<IRequestTest> AppendSerialReadTest<T>(ExternalBatchRequest batch, IQRProperty<T, T> property,
         int start, int count, Func<string, T> valueFunc, RequestResult result = RequestResult.Successful)
     {
@@ -573,6 +780,19 @@ public class AutoPropertyTest
             tests.Add(test);
         }
         return tests;
+    }
+
+    private static void AssertDictionaryEqual<A, B>(Dictionary<A, B> actual, Dictionary<A, B> expected) where A : notnull
+    {
+        Assert.Multiple(() =>
+        {
+            Assert.That(actual.Count, Is.EqualTo(expected.Count));
+            foreach (KeyValuePair<A, B> pair in expected)
+            {
+                Assert.That(actual.TryGetValue(pair.Key, out B? value), Is.True);
+                Assert.That(value, Is.EqualTo(pair.Value));
+            }
+        });
     }
 
     private interface IRequestTest

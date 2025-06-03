@@ -5,10 +5,10 @@ namespace ComicReader.SDK.Data.AutoProperty.Presets;
 
 public class MultiSourcePropertyModel<T>
 {
-    public Dictionary<string, CacheItem> cacheItems = [];
-    public Dictionary<long, CacheItem> requests = [];
+    internal Dictionary<string, CacheItem> cacheItems = [];
+    internal Dictionary<long, CacheItem> requests = [];
 
-    public class CacheItem
+    internal class CacheItem
     {
         public int readIndex = 0;
         public int writeIndex = -1;

@@ -62,37 +62,49 @@ public class MultiSourceProperty<T>(List<IQRProperty<T, T>> sources) : AbsProper
                         PropertyResponseContent<T>? response = cache.readResponse;
                         if (response is not null)
                         {
-                            cache.readResponse = null;
                             if (response.Result == RequestResult.Successful)
                             {
-                                cache.readIndex = 0;
-                                cache.requests.Dequeue();
-                                context.Respond(request.Id, response);
-                                PropertyRequestContent<T> compensateRequest = request.RequestContent.WithRequestType(RequestType.Modify);
-                                for (int i = 0; i < cache.readIndex; ++i)
+                                while (--cache.readIndex >= 0)
                                 {
-                                    context.Request(_sources[i], compensateRequest, OnCompensateResponse);
+                                    PropertyRequestContent<T> compensateRequest = request.RequestContent.WithRequestTypeAndValue(RequestType.Modify, response.Value);
+                                    SealedPropertyRequest<T>? subRequest = context.Request(_sources[cache.readIndex], compensateRequest, OnCompensateResponse);
+                                    if (subRequest is not null)
+                                    {
+                                        context.Model.requests[subRequest.Id] = cache;
+                                        requesting = true;
+                                        break;
+                                    }
+                                }
+                                if (!requesting)
+                                {
+                                    cache.readResponse = null;
+                                    cache.readIndex = 0;
+                                    cache.requests.Dequeue();
+                                    context.Respond(request.Id, response);
                                 }
                                 break;
                             }
                             if (++cache.readIndex >= _sources.Count)
                             {
+                                cache.readResponse = null;
                                 cache.readIndex = 0;
                                 cache.requests.Dequeue();
                                 context.Respond(request.Id, response);
                                 break;
                             }
                         }
-                        SealedPropertyRequest<T>? subRequest = context.Request(_sources[cache.readIndex], request.RequestContent, OnReadResponse);
-                        if (subRequest is null)
                         {
-                            cache.readIndex = 0;
-                            cache.requests.Dequeue();
-                            context.Respond(request.Id, PropertyResponseContent<T>.NewFailedResponse());
-                            break;
+                            SealedPropertyRequest<T>? subRequest = context.Request(_sources[cache.readIndex], request.RequestContent, OnReadResponse);
+                            if (subRequest is null)
+                            {
+                                cache.readIndex = 0;
+                                cache.requests.Dequeue();
+                                context.Respond(request.Id, PropertyResponseContent<T>.NewFailedResponse());
+                                break;
+                            }
+                            context.Model.requests[subRequest.Id] = cache;
+                            requesting = true;
                         }
-                        context.Model.requests[subRequest.Id] = cache;
-                        requesting = true;
                     }
                     break;
                 case RequestType.Modify:
@@ -147,6 +159,7 @@ public class MultiSourceProperty<T>(List<IQRProperty<T, T>> sources) : AbsProper
             return;
         }
         cache.readResponse = response;
+        cache.writeResponse = null;
         DequeueRequests(context, cache);
     }
 
@@ -157,11 +170,18 @@ public class MultiSourceProperty<T>(List<IQRProperty<T, T>> sources) : AbsProper
             Logger.AssertNotReachHere("9E8E40A5965DEC73");
             return;
         }
+        cache.readResponse = null;
         cache.writeResponse = response;
         DequeueRequests(context, cache);
     }
 
     private void OnCompensateResponse(PropertyContext<T, T, MultiSourcePropertyModel<T>, IPropertyExtension> context, long id, PropertyResponseContent<T> response)
     {
+        if (!context.Model.requests.Remove(id, out MultiSourcePropertyModel<T>.CacheItem? cache))
+        {
+            Logger.AssertNotReachHere("62E1C6D5E7618C45");
+            return;
+        }
+        DequeueRequests(context, cache);
     }
 }
