@@ -283,7 +283,9 @@ internal class InternalServer(string name) : IServerContext
             Logger.AssertNotReachHere("1FDE7E144FF60CA5");
             return false;
         }
+        _requestManager.RemoveRequest(requestId);
         request.Receiver = newReceiver;
+        _requestManager.AddRequest(request);
 
         _delayedActions.Add((result) =>
         {

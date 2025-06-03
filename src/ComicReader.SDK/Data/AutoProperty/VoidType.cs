@@ -3,7 +3,7 @@
 
 namespace ComicReader.SDK.Data.AutoProperty;
 
-internal class VoidType
+public class VoidType
 {
     public static readonly VoidType Instance = new();
 

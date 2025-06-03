@@ -5,7 +5,7 @@ using ComicReader.SDK.Common.DebugTools;
 
 namespace ComicReader.SDK.Data.AutoProperty.Presets;
 
-internal class SplitProperty<T>(IQRProperty<T, T> readSource, IQRProperty<T, T> modifySource) : AbsProperty<T, T, VoidType, IPropertyExtension>
+public class SplitProperty<T>(IQRProperty<T, T> readSource, IQRProperty<T, T> modifySource) : AbsProperty<T, T, VoidType, IPropertyExtension>
 {
     public override VoidType CreateModel()
     {

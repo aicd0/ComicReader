@@ -860,6 +860,91 @@ public class AutoPropertyTest
         }
     }
 
+    [Test]
+    public void TestSplitProperty()
+    {
+        PropertyServer server = new("Test");
+        TestProperty<int, int> readProperty = new();
+        TestProperty<int, int> writeProperty = new();
+        SplitProperty<int> splitProperty = new(readProperty, writeProperty);
+
+        int keyCount = 100;
+
+        void TestInternal(int offset)
+        {
+            int readValueFunc(string key)
+            {
+                if (int.TryParse(key, out int keyValue))
+                {
+                    return keyValue + offset;
+                }
+                return -1;
+            }
+            int writeValueFunc(string key)
+            {
+                if (int.TryParse(key, out int keyValue))
+                {
+                    return keyValue + offset + 100;
+                }
+                return -1;
+            }
+            Dictionary<string, int> writtenValues = [];
+            readProperty.ServerFunc = (request) =>
+            {
+                if (request.Type != RequestType.Read)
+                {
+                    throw new InvalidOperationException();
+                }
+                return PropertyResponseContent<int>.NewSuccessfulResponse(readValueFunc(request.Key));
+            };
+            writeProperty.ServerFunc = (request) =>
+            {
+                if (request.Type != RequestType.Modify)
+                {
+                    throw new InvalidOperationException();
+                }
+                writtenValues[request.Key] = request.Value;
+                return PropertyResponseContent<int>.NewSuccessfulResponse();
+            };
+            {
+                List<IRequestTest> tests = [];
+                ExternalBatchRequest batch = new();
+                tests.AddRange(AppendSerialReadTest(batch, splitProperty, 0, keyCount, readValueFunc));
+                ExternalBatchResponse response = server.Request(batch).Result;
+                foreach (IRequestTest test in tests)
+                {
+                    test.AssertResult(response);
+                }
+            }
+            {
+                List<IRequestTest> tests = [];
+                ExternalBatchRequest batch = new();
+                Dictionary<string, int> expectWrittenValue = [];
+                tests.AddRange(AppendSerialWriteTest(batch, splitProperty, 0, keyCount, writeValueFunc));
+                for (int i = 0; i < keyCount; i++)
+                {
+                    string key = i.ToString();
+                    expectWrittenValue[key] = writeValueFunc(key);
+                }
+                ExternalBatchResponse response = server.Request(batch).Result;
+                foreach (IRequestTest test in tests)
+                {
+                    test.AssertResult(response);
+                }
+                AssertDictionaryEqual(writtenValues, expectWrittenValue);
+            }
+        }
+
+        for (int i = 0; i < 1 << 4; i++)
+        {
+            readProperty.Rearrange = (i & 0x01) != 0;
+            readProperty.ProcessOnServerThread = (i & 0x02) != 0;
+            writeProperty.Rearrange = (i & 0x04) != 0;
+            writeProperty.ProcessOnServerThread = (i & 0x08) != 0;
+            TestInternal(i);
+        }
+    }
+
     private static List<IRequestTest> AppendSerialReadTest<T>(ExternalBatchRequest batch, IQRProperty<T, T> property,
         int start, int count, Func<string, T> valueFunc, RequestResult result = RequestResult.Successful)
     {
