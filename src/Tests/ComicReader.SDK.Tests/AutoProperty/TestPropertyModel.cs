@@ -5,7 +5,7 @@ using ComicReader.SDK.Data.AutoProperty;
 
 namespace ComicReader.SDK.Tests.AutoProperty;
 
-internal class TestPropertyModel<Q>
+internal class TestPropertyModel<V>
 {
-    public Queue<SealedPropertyRequest<Q>> requests = [];
+    public Queue<SealedPropertyRequest<TestPropertyKey, V>> requests = [];
 }

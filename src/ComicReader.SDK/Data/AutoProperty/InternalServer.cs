@@ -8,7 +8,7 @@ using ComicReader.SDK.Common.Threading;
 
 namespace ComicReader.SDK.Data.AutoProperty;
 
-internal class InternalServer(string name) : IServerContext
+internal class InternalServer : IServerContext
 {
     private const int MAX_REQUEST_COUNT = 65536;
 
@@ -19,15 +19,21 @@ internal class InternalServer(string name) : IServerContext
     private readonly ThreadLocal<bool> _threadFlag = new();
     private int _serverRoutineScheduled = 0;
 
-    private readonly IRequestThrottleStrategy<IExternalRequest> _throttleStrategy = new ParallelReadThrottleStrategy<IExternalRequest>();
-    private int _nextRequestId = 0;
-    private readonly ServerProperty _serverProperty = new();
+    private readonly string _name;
+    private readonly ServerProperty _serverProperty;
     private readonly RequestManager _requestManager = new();
+    private readonly LockManager _lockManager = new();
     private readonly HashSet<ProcessCallback> _processCallbacks = [];
     private readonly Dictionary<IProperty, IPropertyContext> _propertyContextMap = [];
-    private readonly Dictionary<IProperty, DependencyToken> _dependencyTokens = [];
+    private int _nextRequestId = 0;
 
     private readonly List<Action<DelayActionResult>> _delayedActions = [];
+
+    public InternalServer(string name)
+    {
+        _name = name;
+        _serverProperty = new(this);
+    }
 
     public Task<ExternalBatchResponse> Request(ExternalBatchRequest request)
     {
@@ -59,7 +65,7 @@ internal class InternalServer(string name) : IServerContext
 
     private void PostOnServerThread(string reason, Action action)
     {
-        sDispatcher.Submit($"{name}.{reason}", () =>
+        sDispatcher.Submit($"{_name}.{reason}", () =>
         {
             _threadFlag.Value = true;
             try
@@ -82,7 +88,6 @@ internal class InternalServer(string name) : IServerContext
     {
         while (true)
         {
-            EnqueueBatches();
             DequeueProcessCallbacks();
             DequeueBatches();
 
@@ -96,8 +101,18 @@ internal class InternalServer(string name) : IServerContext
         }
     }
 
-    private void EnqueueBatches()
+    private void DequeueProcessCallbacks()
     {
+        while (_processCallbackActions.TryDequeue(out Action? action))
+        {
+            action();
+        }
+    }
+
+    private void DequeueBatches()
+    {
+        IKVPropertyContext<VoidRequest, VoidType> context = GetOrCreatePropertyContext<VoidRequest, VoidType>(_serverProperty);
+        bool hasRequest = false;
         while (_batchInfoQueue.TryDequeue(out BatchInfo? batchInfo))
         {
             List<IExternalRequest> requests = [.. batchInfo.Request.Requests];
@@ -111,36 +126,21 @@ internal class InternalServer(string name) : IServerContext
             {
                 IExternalRequest request = rawRequest.Clone();
                 request.Activate(batchInfo);
-                if (string.IsNullOrEmpty(request.Key))
-                {
-                    request.SetFailedResult("Key is empty.");
-                    continue;
-                }
                 if (request.Type == RequestType.Modify && request.IsNullValue())
                 {
                     request.SetFailedResult("Value is null for modify request.");
                     continue;
                 }
-                _throttleStrategy.Enqueue(request);
+                _serverProperty.EnqueueRequest(request);
+                hasRequest = true;
             }
         }
-    }
 
-    private void DequeueProcessCallbacks()
-    {
-        while (_processCallbackActions.TryDequeue(out Action? action))
+        if (hasRequest)
         {
-            action();
-        }
-    }
-
-    private void DequeueBatches()
-    {
-        while (_throttleStrategy.TryDequeue(out IExternalRequest? request))
-        {
-            request.Request(this, _serverProperty, () =>
+            _delayedActions.Add((result) =>
             {
-                _throttleStrategy.OnRequestCompleted(request);
+                result.RearrangingProperties.Add(context);
             });
         }
     }
@@ -184,7 +184,7 @@ internal class InternalServer(string name) : IServerContext
         }
     }
 
-    public SealedPropertyRequest<Q>? HandleRequest<Q, R>(IProperty sender, IQRProperty<Q, R> receiver, PropertyRequestContent<Q> requestContent, Action<long, PropertyResponseContent<R>> handler)
+    public SealedPropertyRequest<K, V>? HandleRequest<K, V>(IProperty sender, IKVProperty<K, V> receiver, PropertyRequestContent<K, V> requestContent, Action<long, PropertyResponseContent<V>> handler) where K : IRequestKey
     {
         if (!IsServerThread())
         {
@@ -202,21 +202,39 @@ internal class InternalServer(string name) : IServerContext
             Logger.AssertNotReachHere("EAD7677C9D9E84BE");
             return null;
         }
+
+        LockResource lockResource = requestContent.Type switch
+        {
+            RequestType.Read => receiver.GetLockResource(requestContent.Key, LockType.Read),
+            RequestType.Modify => receiver.GetLockResource(requestContent.Key, LockType.Write),
+            _ => receiver.GetLockResource(requestContent.Key, LockType.Write),
+        };
+        if (!requestContent.Lock.TryAcquire(lockResource, out LockToken? lockToken))
+        {
+            Logger.AssertNotReachHere("0BE4547085684DD9");
+            return null;
+        }
+        if (requestContent.Lock.CanRelease)
+        {
+            requestContent.Lock.Release();
+        }
+        requestContent = requestContent.WithLock(lockToken);
+
         int requestId = _nextRequestId++;
-        PropertyRequest<Q, R> request = new(requestId, sender, receiver, requestContent, handler);
+        PropertyRequest<K, V> request = new(requestId, sender, receiver, requestContent, handler);
         _requestManager.AddRequest(request);
-        var sealedRequest = new SealedPropertyRequest<Q>(requestId, requestContent);
+        var sealedRequest = new SealedPropertyRequest<K, V>(requestId, requestContent);
 
         _delayedActions.Add((result) =>
         {
-            IQRPropertyContext<Q, R> receiverContext = GetOrCreatePropertyContext(receiver);
+            IKVPropertyContext<K, V> receiverContext = GetOrCreatePropertyContext(receiver);
             receiverContext.AddNewRequest(sealedRequest);
             result.RearrangingProperties.Add(receiverContext);
         });
         return sealedRequest;
     }
 
-    public void HandleRespond<Q, R>(IQRProperty<Q, R> receiver, long requestId, PropertyResponseContent<R> responseContent)
+    public void HandleRespond<K, V>(IKVProperty<K, V> receiver, long requestId, PropertyResponseContent<V> responseContent) where K : IRequestKey
     {
         if (!IsServerThread())
         {
@@ -224,7 +242,7 @@ internal class InternalServer(string name) : IServerContext
             return;
         }
 
-        PropertyRequest<Q, R> request = GetRequest<Q, R>(requestId);
+        PropertyRequest<K, V> request = GetRequest<K, V>(requestId);
         if (request.State == RequestState.Completed)
         {
             Logger.AssertNotReachHere("08E129B618734844");
@@ -240,6 +258,7 @@ internal class InternalServer(string name) : IServerContext
             Logger.AssertNotReachHere("167FF26E226CE99B");
             return;
         }
+        request.RequestContent.Lock.Release();
         request.ResponseContent = responseContent;
         request.State = RequestState.Completed;
         _requestManager.RemoveRequest(requestId);
@@ -254,7 +273,7 @@ internal class InternalServer(string name) : IServerContext
         });
     }
 
-    public bool HandleRedirect<Q, R>(IQRProperty<Q, R> oldReceiver, long requestId, IQRProperty<Q, R> newReceiver)
+    public bool HandleRedirect<K, V>(IKVProperty<K, V> oldReceiver, long requestId, IKVProperty<K, V> newReceiver) where K : IRequestKey
     {
         if (!IsServerThread())
         {
@@ -262,7 +281,7 @@ internal class InternalServer(string name) : IServerContext
             return false;
         }
 
-        PropertyRequest<Q, R> request = GetRequest<Q, R>(requestId);
+        PropertyRequest<K, V> request = GetRequest<K, V>(requestId);
         if (request.State == RequestState.Completed)
         {
             Logger.AssertNotReachHere("7D849855150D963C");
@@ -289,8 +308,8 @@ internal class InternalServer(string name) : IServerContext
 
         _delayedActions.Add((result) =>
         {
-            IQRPropertyContext<Q, R> receiverContext = GetOrCreatePropertyContext(newReceiver);
-            receiverContext.AddNewRequest(new SealedPropertyRequest<Q>(requestId, request.RequestContent));
+            IKVPropertyContext<K, V> receiverContext = GetOrCreatePropertyContext(newReceiver);
+            receiverContext.AddNewRequest(new SealedPropertyRequest<K, V>(requestId, request.RequestContent));
             result.RearrangingProperties.Add(receiverContext);
         });
         return true;
@@ -300,8 +319,7 @@ internal class InternalServer(string name) : IServerContext
     {
         if (!_propertyContextMap.TryGetValue(property, out IPropertyContext? context))
         {
-            DependencyToken token = GetDependencyToken(property);
-            context = property.CreatePropertyContext(this, token);
+            context = property.CreatePropertyContext(this);
             _propertyContextMap.Add(property, context);
         }
         return context;
@@ -312,130 +330,18 @@ internal class InternalServer(string name) : IServerContext
         return (IEPropertyContext<E>)GetOrCreatePropertyContext((IProperty)property); // must agree
     }
 
-    private IQRPropertyContext<Q, R> GetOrCreatePropertyContext<Q, R>(IQRProperty<Q, R> property)
+    private IKVPropertyContext<K, V> GetOrCreatePropertyContext<K, V>(IKVProperty<K, V> property) where K : IRequestKey
     {
-        return (IQRPropertyContext<Q, R>)GetOrCreatePropertyContext((IProperty)property); // must agree
+        return (IKVPropertyContext<K, V>)GetOrCreatePropertyContext((IProperty)property); // must agree
     }
 
-    private DependencyToken GetDependencyToken(IProperty property)
-    {
-        {
-            if (_dependencyTokens.TryGetValue(property, out DependencyToken? token))
-            {
-                return token;
-            }
-        }
-
-        Dictionary<IProperty, HashSet<IProperty>> allChildren = [];
-
-        {
-            Dictionary<IProperty, List<IProperty>> newChildrenMap = [];
-
-            {
-                List<IProperty> searchList = [property];
-                List<IProperty> nextSearchList = [];
-                while (searchList.Count > 0)
-                {
-                    foreach (IProperty p in searchList)
-                    {
-                        List<IProperty> children = p.GetDependentProperties();
-                        HashSet<IProperty> childrenSet = [.. children];
-                        allChildren[p] = childrenSet;
-                        List<IProperty> newChildren = [];
-                        foreach (IProperty child in childrenSet)
-                        {
-                            if (!_dependencyTokens.ContainsKey(child))
-                            {
-                                newChildren.Add(child);
-                            }
-                        }
-                        if (newChildren.Count > 0)
-                        {
-                            newChildrenMap[p] = newChildren;
-                            foreach (IProperty child in newChildren)
-                            {
-                                if (!newChildrenMap.ContainsKey(child))
-                                {
-                                    nextSearchList.Add(child);
-                                }
-                            }
-                        }
-                    }
-                    (searchList, nextSearchList) = (nextSearchList, searchList);
-                    nextSearchList.Clear();
-                }
-            }
-
-            Dictionary<IProperty, List<IProperty>> nextNewChildrenMap = [];
-            while (newChildrenMap.Count > 0)
-            {
-                foreach (KeyValuePair<IProperty, List<IProperty>> pair in newChildrenMap)
-                {
-                    IProperty p = pair.Key;
-                    HashSet<IProperty> children = allChildren[p];
-                    List<IProperty> newChildren = [];
-                    foreach (IProperty newChild in pair.Value)
-                    {
-                        if (newChild == p)
-                        {
-                            continue;
-                        }
-                        foreach (IProperty childOfNewChild in allChildren[newChild])
-                        {
-                            if (children.Add(childOfNewChild) && !_dependencyTokens.ContainsKey(childOfNewChild))
-                            {
-                                newChildren.Add(childOfNewChild);
-                            }
-                        }
-                    }
-                    if (newChildren.Count > 0)
-                    {
-                        nextNewChildrenMap[p] = newChildren;
-                    }
-                }
-                (nextNewChildrenMap, newChildrenMap) = (newChildrenMap, nextNewChildrenMap);
-                nextNewChildrenMap.Clear();
-            }
-        }
-
-        Dictionary<IProperty, DependencyToken> tokenMap = [];
-        foreach (IProperty p in allChildren.Keys)
-        {
-            tokenMap[p] = new();
-        }
-        foreach (KeyValuePair<IProperty, HashSet<IProperty>> pair in allChildren)
-        {
-            HashSet<DependencyToken> tokens = [];
-            foreach (IProperty p in pair.Value)
-            {
-                if (tokenMap.TryGetValue(p, out DependencyToken? subToken))
-                {
-                    tokens.Add(subToken);
-                }
-                else
-                {
-                    subToken = _dependencyTokens[p];
-                    tokens.Add(subToken);
-                    foreach (DependencyToken subSubToken in subToken.GetTokens())
-                    {
-                        tokens.Add(subSubToken);
-                    }
-                }
-            }
-            DependencyToken token = tokenMap[pair.Key];
-            token.SetTokens([.. tokens]);
-            _dependencyTokens[pair.Key] = token;
-        }
-        return tokenMap[property];
-    }
-
-    private PropertyRequest<Q, R> GetRequest<Q, R>(long requestId)
+    private PropertyRequest<K, V> GetRequest<K, V>(long requestId) where K : IRequestKey
     {
         if (!_requestManager.TryGetRequest(requestId, out IPropertyRequest? request))
         {
             throw new InvalidOperationException("Request not found.");
         }
-        return (PropertyRequest<Q, R>)request; // must agree
+        return (PropertyRequest<K, V>)request; // must agree
     }
 
     private bool IsServerThread()
@@ -498,25 +404,43 @@ internal class InternalServer(string name) : IServerContext
         }
     }
 
-    private class ServerProperty : AbsProperty<VoidType, VoidType, VoidType, IPropertyExtension>
+    private class ServerProperty(InternalServer server) : AbsProperty<VoidRequest, VoidType, VoidType, IPropertyExtension>
     {
+        private readonly Queue<IExternalRequest> _requests = [];
+
         public override VoidType CreateModel()
         {
             return VoidType.Instance;
         }
 
-        public override List<IProperty> GetDependentProperties()
-        {
-            return [];
-        }
-
-        public override void RearrangeRequests(PropertyContext<VoidType, VoidType, VoidType, IPropertyExtension> context)
-        {
-        }
-
-        public override void ProcessRequests(PropertyContext<VoidType, VoidType, VoidType, IPropertyExtension> context, IProcessCallback callback)
+        public override LockResource GetLockResource(VoidRequest key, LockType type)
         {
             throw new InvalidOperationException("Not supported.");
+        }
+
+        public override void RearrangeRequests(PropertyContext<VoidRequest, VoidType, VoidType, IPropertyExtension> context)
+        {
+            while (_requests.TryPeek(out IExternalRequest? request))
+            {
+                if (request.TryRequest(context, server._lockManager))
+                {
+                    _requests.Dequeue();
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+
+        public override void ProcessRequests(PropertyContext<VoidRequest, VoidType, VoidType, IPropertyExtension> context, IProcessCallback callback)
+        {
+            throw new InvalidOperationException("Not supported.");
+        }
+
+        public void EnqueueRequest(IExternalRequest request)
+        {
+            _requests.Enqueue(request);
         }
     }
 }

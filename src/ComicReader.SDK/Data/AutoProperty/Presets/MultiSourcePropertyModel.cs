@@ -3,17 +3,28 @@
 
 namespace ComicReader.SDK.Data.AutoProperty.Presets;
 
-public class MultiSourcePropertyModel<T>
+public class MultiSourcePropertyModel<K, V> where K : IRequestKey
 {
-    internal Dictionary<string, CacheItem> cacheItems = [];
-    internal Dictionary<long, CacheItem> requests = [];
+    internal Dictionary<K, CacheItem> cacheItems = [];
+    internal Dictionary<long, RequestItem> requests = [];
 
     internal class CacheItem
     {
+        public List<long> pendingRequests = [];
         public int readIndex = 0;
-        public int writeIndex = -1;
-        public PropertyResponseContent<T>? readResponse = null;
-        public PropertyResponseContent<T>? writeResponse = null;
-        public Queue<SealedPropertyRequest<T>> requests = [];
+    }
+
+    internal class RequestItem(OriginalRequestItem originalRequest, CacheItem cache)
+    {
+        public readonly OriginalRequestItem originalRequest = originalRequest;
+        public readonly CacheItem cache = cache;
+    }
+
+    internal class OriginalRequestItem(SealedPropertyRequest<K, V> request)
+    {
+        public readonly SealedPropertyRequest<K, V> request = request;
+        public bool responded = false;
+        public int requesting = 0;
+        public List<PropertyResponseContent<V>> responses = [];
     }
 }

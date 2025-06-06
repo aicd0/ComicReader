@@ -9,17 +9,17 @@ public class ExternalBatchResponse
 
     internal ExternalBatchResponse() { }
 
-    public ExternalResponse<R>? GetResponse<Q, R>(ExternalRequest<Q, R> request)
+    public ExternalResponse<V>? GetResponse<K, V>(ExternalRequest<K, V> request) where K : IRequestKey
     {
         ArgumentNullException.ThrowIfNull(nameof(request));
         if (_responses.TryGetValue(request, out IExternalResponse? response))
         {
-            return (ExternalResponse<R>)response;
+            return (ExternalResponse<V>)response;
         }
         return null;
     }
 
-    internal void SetResponse<Q, R>(ExternalRequest<Q, R> request, ExternalResponse<R> response)
+    internal void SetResponse<K, V>(ExternalRequest<K, V> request, ExternalResponse<V> response) where K : IRequestKey
     {
         _responses.Add(request, response);
     }

@@ -5,34 +5,33 @@ using ComicReader.SDK.Common.DebugTools;
 
 namespace ComicReader.SDK.Data.AutoProperty;
 
-public class PropertyContext<Q, R, M, E> : IQRPropertyContext<Q, R>, IEPropertyContext<E> where E : IPropertyExtension
+public class PropertyContext<K, V, M, E> : IKVPropertyContext<K, V>, IEPropertyContext<E> where K : IRequestKey where E : IPropertyExtension
 {
     private readonly IServerContext _context;
-    private readonly Dictionary<long, SealedPropertyRequest<Q>> _ongoingRequests = [];
+    private readonly Dictionary<long, SealedPropertyRequest<K, V>> _ongoingRequests = [];
 
-    private readonly List<SealedPropertyRequest<Q>> _newRequests = [];
-    public IReadOnlyList<SealedPropertyRequest<Q>> NewRequests => _newRequests;
+    private readonly List<SealedPropertyRequest<K, V>> _newRequests = [];
+    public IReadOnlyList<SealedPropertyRequest<K, V>> NewRequests => _newRequests;
 
-    private readonly AbsProperty<Q, R, M, E> _property;
+    private readonly AbsProperty<K, V, M, E> _property;
     IProperty IPropertyContext.Property => _property;
 
     private M _model;
     public M Model => _model;
 
+    public ResponseTrackerManager<K> TrackerManager { get; } = new();
+
     private readonly List<E> _extensions = [];
     public IReadOnlyList<E> Extensions => _extensions;
 
-    public DependencyToken Dependency { get; }
-
-    internal PropertyContext(IServerContext context, AbsProperty<Q, R, M, E> property, DependencyToken dependency)
+    internal PropertyContext(IServerContext context, AbsProperty<K, V, M, E> property)
     {
         _context = context;
         _property = property;
         _model = property.CreateModel();
-        Dependency = dependency;
     }
 
-    public SealedPropertyRequest<A>? Request<A, B>(IQRProperty<A, B> target, PropertyRequestContent<A> request, Action<PropertyContext<Q, R, M, E>, long, PropertyResponseContent<B>> handler)
+    public SealedPropertyRequest<A, B>? Request<A, B>(IKVProperty<A, B> target, PropertyRequestContent<A, B> request, Action<PropertyContext<K, V, M, E>, long, PropertyResponseContent<B>> handler) where A : IRequestKey
     {
         return _context.HandleRequest(_property, target, request, (p1, p2) =>
         {
@@ -48,9 +47,9 @@ public class PropertyContext<Q, R, M, E> : IQRPropertyContext<Q, R>, IEPropertyC
         });
     }
 
-    public void Respond(long requestId, PropertyResponseContent<R> response)
+    public void Respond(long requestId, PropertyResponseContent<V> response)
     {
-        if (!_ongoingRequests.Remove(requestId, out SealedPropertyRequest<Q>? _))
+        if (!_ongoingRequests.Remove(requestId, out SealedPropertyRequest<K, V>? _))
         {
             Logger.AssertNotReachHere("14672E06AAB0669E");
             return;
@@ -58,7 +57,7 @@ public class PropertyContext<Q, R, M, E> : IQRPropertyContext<Q, R>, IEPropertyC
         _context.HandleRespond(_property, requestId, response);
     }
 
-    public void Redirect(long requestId, IQRProperty<Q, R> target)
+    public void Redirect(long requestId, IKVProperty<K, V> target)
     {
         if (_context.HandleRedirect(_property, requestId, target))
         {
@@ -71,7 +70,7 @@ public class PropertyContext<Q, R, M, E> : IQRPropertyContext<Q, R>, IEPropertyC
         _newRequests.Clear();
     }
 
-    void IQRPropertyContext<Q, R>.AddNewRequest(SealedPropertyRequest<Q> request)
+    void IKVPropertyContext<K, V>.AddNewRequest(SealedPropertyRequest<K, V> request)
     {
         _ongoingRequests.Add(request.Id, request);
         _newRequests.Add(request);
@@ -119,7 +118,7 @@ public class PropertyContext<Q, R, M, E> : IQRPropertyContext<Q, R>, IEPropertyC
 
     void IPropertyContext.CancelRequest(long id)
     {
-        Respond(id, PropertyResponseContent<R>.NewFailedResponse());
+        Respond(id, PropertyResponseContent<V>.NewFailedResponse());
     }
 
     void IEPropertyContext<E>.RegisterExtension(E extension)
@@ -129,10 +128,10 @@ public class PropertyContext<Q, R, M, E> : IQRPropertyContext<Q, R>, IEPropertyC
 
     private void ResetProperty()
     {
-        List<SealedPropertyRequest<Q>> requests = [.. _ongoingRequests.Values];
-        foreach (SealedPropertyRequest<Q> request in requests)
+        List<SealedPropertyRequest<K, V>> requests = [.. _ongoingRequests.Values];
+        foreach (SealedPropertyRequest<K, V> request in requests)
         {
-            Respond(request.Id, PropertyResponseContent<R>.NewFailedResponse());
+            Respond(request.Id, PropertyResponseContent<V>.NewFailedResponse());
         }
         _model = _property.CreateModel();
         _newRequests.Clear();

@@ -3,8 +3,8 @@
 
 namespace ComicReader.SDK.Data.AutoProperty;
 
-public class SealedPropertyRequest<T>(long id, PropertyRequestContent<T> requestContent)
+public class SealedPropertyRequest<K, V>(long id, PropertyRequestContent<K, V> requestContent) where K : IRequestKey
 {
     public long Id { get; } = id;
-    public PropertyRequestContent<T> RequestContent { get; } = requestContent;
+    public PropertyRequestContent<K, V> RequestContent { get; } = requestContent;
 }

@@ -3,13 +3,13 @@
 
 namespace ComicReader.SDK.Data.AutoProperty;
 
-public class ExternalResponse<T> : IExternalResponse
+public class ExternalResponse<V> : IExternalResponse
 {
     public RequestResult Result { get; }
-    public T? Value { get; }
+    public V? Value { get; }
     public string Reason { get; }
 
-    internal ExternalResponse(RequestResult result, T? value = default, string reason = "")
+    internal ExternalResponse(RequestResult result, V? value = default, string reason = "")
     {
         Result = result;
         Value = value;

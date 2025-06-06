@@ -3,17 +3,20 @@
 
 namespace ComicReader.SDK.Data.AutoProperty.Presets;
 
-public class MemoryCachePropertyModel<T>
+public class MemoryCachePropertyModel<K, V> where K : IRequestKey
 {
-    internal Dictionary<string, CacheItem> cacheItems = [];
-    internal Dictionary<long, CacheItem> requests = [];
+    internal Dictionary<K, CacheItem> cacheItems = [];
+    internal Dictionary<long, RequestItem> requests = [];
 
-    internal class CacheItem(string key)
+    internal class CacheItem
     {
-        public readonly string key = key;
-        public int readVersion = 0;
-        public PropertyResponseContent<T>? readResponse = null;
-        public PropertyResponseContent<T>? writeResponse = null;
-        public Queue<SealedPropertyRequest<T>> requests = [];
+        public PropertyResponseContent<V>? response = null;
+        public List<long> pendingRequests = [];
+    }
+
+    internal class RequestItem(SealedPropertyRequest<K, V> originalRequest, CacheItem cache)
+    {
+        public readonly SealedPropertyRequest<K, V> originalRequest = originalRequest;
+        public readonly CacheItem cache = cache;
     }
 }

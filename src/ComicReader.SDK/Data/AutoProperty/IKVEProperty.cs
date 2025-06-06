@@ -3,9 +3,6 @@
 
 namespace ComicReader.SDK.Data.AutoProperty;
 
-public interface IReadonlyExternalRequest
+public interface IKVEProperty<K, V, E> : IKVProperty<K, V>, IEProperty<E> where K : IRequestKey where E : IPropertyExtension
 {
-    internal RequestType Type { get; }
-
-    internal bool IsNullValue();
 }

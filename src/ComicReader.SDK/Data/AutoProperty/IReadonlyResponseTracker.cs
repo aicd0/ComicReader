@@ -3,9 +3,7 @@
 
 namespace ComicReader.SDK.Data.AutoProperty;
 
-public interface IReadonlyExternalRequest
+public interface IReadonlyResponseTracker
 {
-    internal RequestType Type { get; }
-
-    internal bool IsNullValue();
+    int Version { get; }
 }

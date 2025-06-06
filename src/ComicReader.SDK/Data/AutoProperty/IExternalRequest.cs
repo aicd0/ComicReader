@@ -11,5 +11,5 @@ public interface IExternalRequest : IReadonlyExternalRequest
 
     internal void SetFailedResult(string reason);
 
-    internal void Request(IServerContext context, IProperty sender, Action callback);
+    internal bool TryRequest(PropertyContext<VoidRequest, VoidType, VoidType, IPropertyExtension> context, LockManager lockManager);
 }

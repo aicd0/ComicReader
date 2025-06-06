@@ -52,7 +52,7 @@ internal class ConcurrentWeakPool<K, V> where K : notnull where V : class
 
     private void CleanupIfNeeded()
     {
-        if (_pool.Count <= 1000 && !DebugUtils.DebugMode)
+        if (_pool.Count <= 256)
         {
             return;
         }
@@ -63,14 +63,12 @@ internal class ConcurrentWeakPool<K, V> where K : notnull where V : class
         try
         {
             long tick = GetTick();
-            if (tick - _lastCleanupTime < 60000)
+            if (tick - _lastCleanupTime < 30000)
             {
                 return;
             }
             _lastCleanupTime = tick;
 
-            Logger.I(TAG, "Cleanup started.");
-            int sizeBefore = _pool.Count;
             var kvpToRemove = new List<KeyValuePair<K, WeakReference<V>>>();
             foreach (KeyValuePair<K, WeakReference<V>> kvp in _pool)
             {
@@ -83,7 +81,6 @@ internal class ConcurrentWeakPool<K, V> where K : notnull where V : class
             {
                 _pool.TryRemove(kvp);
             }
-            Logger.I(TAG, $"Cleanup complete. Removed {kvpToRemove.Count}/{sizeBefore} entries from the pool.");
         }
         finally
         {

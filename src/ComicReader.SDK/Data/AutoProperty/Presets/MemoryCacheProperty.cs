@@ -2,145 +2,123 @@
 // Licensed under the MIT License.
 
 using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Data.AutoProperty.Extension;
 
 namespace ComicReader.SDK.Data.AutoProperty.Presets;
 
-public class MemoryCacheProperty<T>(IQRProperty<T, T> source) : AbsProperty<T, T, MemoryCachePropertyModel<T>, IValueObserverExtension<T>>
+public class MemoryCacheProperty<K, V>(IKVProperty<K, V> source) : AbsProperty<K, V, MemoryCachePropertyModel<K, V>, IValueObserverExtension<K, V>> where K : IRequestKey
 {
-    public override MemoryCachePropertyModel<T> CreateModel()
+    public override MemoryCachePropertyModel<K, V> CreateModel()
     {
-        return new MemoryCachePropertyModel<T>();
+        return new MemoryCachePropertyModel<K, V>();
     }
 
-    public override List<IProperty> GetDependentProperties()
+    public override LockResource GetLockResource(K key, LockType type)
     {
-        return [source];
+        return source.GetLockResource(key, type);
     }
 
-    public override void RearrangeRequests(PropertyContext<T, T, MemoryCachePropertyModel<T>, IValueObserverExtension<T>> context)
+    public override void RearrangeRequests(PropertyContext<K, V, MemoryCachePropertyModel<K, V>, IValueObserverExtension<K, V>> context)
     {
-        MemoryCachePropertyModel<T> model = context.Model;
-        foreach (SealedPropertyRequest<T> serverRequest in context.NewRequests)
+        MemoryCachePropertyModel<K, V> model = context.Model;
+        foreach (SealedPropertyRequest<K, V> request in context.NewRequests)
         {
-            PropertyRequestContent<T> request = serverRequest.RequestContent;
-            if (!model.cacheItems.TryGetValue(request.Key, out MemoryCachePropertyModel<T>.CacheItem? cache))
+            PropertyRequestContent<K, V> requestContnet = request.RequestContent;
+            if (!model.cacheItems.TryGetValue(requestContnet.Key, out MemoryCachePropertyModel<K, V>.CacheItem? cache))
             {
-                cache = new MemoryCachePropertyModel<T>.CacheItem(request.Key);
-                model.cacheItems[request.Key] = cache;
+                cache = new();
+                model.cacheItems[requestContnet.Key] = cache;
             }
-            cache.requests.Enqueue(serverRequest);
-            if (cache.requests.Count == 1)
+
+            if (cache.response is not null)
             {
-                DequeueRequests(context, cache);
+                if (cache.response.Tracker is null || cache.response.Version < cache.response.Tracker.Version)
+                {
+                    cache.response = null;
+                }
             }
-        }
-    }
 
-    public override void ProcessRequests(PropertyContext<T, T, MemoryCachePropertyModel<T>, IValueObserverExtension<T>> context, IProcessCallback callback)
-    {
-        callback.PostCompletion(null);
-    }
-
-    private void DequeueRequests(PropertyContext<T, T, MemoryCachePropertyModel<T>, IValueObserverExtension<T>> context, MemoryCachePropertyModel<T>.CacheItem cache)
-    {
-        int dependencyVersion = context.Dependency.GetDependencyVersion(cache.key);
-        if (cache.readVersion < dependencyVersion)
-        {
-            cache.readVersion = dependencyVersion;
-            cache.readResponse = null;
-        }
-
-        bool requesting = false;
-        while (!requesting && cache.requests.TryPeek(out SealedPropertyRequest<T>? request))
-        {
-            switch (request.RequestContent.Type)
+            switch (requestContnet.Type)
             {
                 case RequestType.Read:
                     {
-                        PropertyResponseContent<T>? response = cache.readResponse;
+                        PropertyResponseContent<V>? response = cache.response;
                         if (response is not null)
                         {
-                            OnValueUpdate(context, request.RequestContent.Key, response.Value);
-                            cache.requests.Dequeue();
+                            MemoryCacheProperty<K, V>.OnValueUpdate(context, request.RequestContent.Key, response.Value);
                             context.Respond(request.Id, response);
                             break;
                         }
-                        SealedPropertyRequest<T>? subRequest = context.Request(source, request.RequestContent, OnReadResponse);
-                        if (subRequest is null)
+                        if (cache.pendingRequests.Count == 0)
                         {
-                            cache.requests.Dequeue();
-                            context.Respond(request.Id, PropertyResponseContent<T>.NewFailedResponse());
-                            break;
+                            SealedPropertyRequest<K, V>? subRequest = context.Request(source, request.RequestContent, OnReadResponse);
+                            if (subRequest is null)
+                            {
+                                context.Respond(request.Id, PropertyResponseContent<V>.NewFailedResponse());
+                                break;
+                            }
+                            context.Model.requests[subRequest.Id] = new(request, cache);
                         }
-                        context.Model.requests[subRequest.Id] = cache;
-                        requesting = true;
+                        cache.pendingRequests.Add(request.Id);
                     }
                     break;
                 case RequestType.Modify:
                     {
-                        PropertyResponseContent<T>? response = cache.writeResponse;
-                        if (response is not null)
-                        {
-                            cache.writeResponse = null;
-                            if (response.Result == RequestResult.Successful)
-                            {
-                                cache.readResponse = PropertyResponseContent<T>.NewSuccessfulResponse(request.RequestContent.Value);
-                                OnValueUpdate(context, request.RequestContent.Key, request.RequestContent.Value);
-                            }
-                            cache.requests.Dequeue();
-                            context.Respond(request.Id, response);
-                            break;
-                        }
-                        SealedPropertyRequest<T>? subRequest = context.Request(source, request.RequestContent, OnWriteResponse);
+                        SealedPropertyRequest<K, V>? subRequest = context.Request(source, request.RequestContent, OnWriteResponse);
                         if (subRequest is null)
                         {
-                            cache.requests.Dequeue();
-                            context.Respond(request.Id, PropertyResponseContent<T>.NewFailedResponse());
+                            context.Respond(request.Id, PropertyResponseContent<V>.NewFailedResponse());
                             break;
                         }
-                        context.Model.requests[subRequest.Id] = cache;
-                        requesting = true;
+                        context.Model.requests[subRequest.Id] = new(request, cache);
                     }
                     break;
                 default:
                     Logger.AssertNotReachHere("E6180AB865322377");
-                    cache.requests.Dequeue();
-                    context.Respond(request.Id, PropertyResponseContent<T>.NewFailedResponse());
+                    context.Respond(request.Id, PropertyResponseContent<V>.NewFailedResponse());
                     break;
             }
         }
     }
 
-    private void OnReadResponse(PropertyContext<T, T, MemoryCachePropertyModel<T>, IValueObserverExtension<T>> context, long id, PropertyResponseContent<T> response)
+    public override void ProcessRequests(PropertyContext<K, V, MemoryCachePropertyModel<K, V>, IValueObserverExtension<K, V>> context, IProcessCallback callback)
     {
-        if (!context.Model.requests.Remove(id, out MemoryCachePropertyModel<T>.CacheItem? cache))
+        callback.PostCompletion(null);
+    }
+
+    private void OnReadResponse(PropertyContext<K, V, MemoryCachePropertyModel<K, V>, IValueObserverExtension<K, V>> context, long id, PropertyResponseContent<V> response)
+    {
+        if (!context.Model.requests.Remove(id, out MemoryCachePropertyModel<K, V>.RequestItem? request))
         {
             Logger.AssertNotReachHere("62BE9E80ECABA2A9");
             return;
         }
-        cache.readResponse = response;
-        cache.readVersion = context.Dependency.GetDependencyVersion(cache.key);
-        DequeueRequests(context, cache);
+        request.cache.response = response;
+        foreach (long requestId in request.cache.pendingRequests)
+        {
+            context.Respond(requestId, response);
+        }
+        request.cache.pendingRequests.Clear();
     }
 
-    private void OnWriteResponse(PropertyContext<T, T, MemoryCachePropertyModel<T>, IValueObserverExtension<T>> context, long id, PropertyResponseContent<T> response)
+    private void OnWriteResponse(PropertyContext<K, V, MemoryCachePropertyModel<K, V>, IValueObserverExtension<K, V>> context, long id, PropertyResponseContent<V> response)
     {
-        if (!context.Model.requests.Remove(id, out MemoryCachePropertyModel<T>.CacheItem? cache))
+        if (!context.Model.requests.Remove(id, out MemoryCachePropertyModel<K, V>.RequestItem? request))
         {
             Logger.AssertNotReachHere("438086EBB6951D9E");
             return;
         }
-        cache.writeResponse = response;
-        DequeueRequests(context, cache);
+        request.cache.response = PropertyResponseContent<V>.NewSuccessfulResponse(request.originalRequest.RequestContent.Value, response.Tracker, response.Version);
+        context.Respond(request.originalRequest.Id, response);
     }
 
-    private void OnValueUpdate(PropertyContext<T, T, MemoryCachePropertyModel<T>, IValueObserverExtension<T>> context, string key, T? value)
+    private static void OnValueUpdate(PropertyContext<K, V, MemoryCachePropertyModel<K, V>, IValueObserverExtension<K, V>> context, K key, V? value)
     {
         if (value is null)
         {
             Logger.AssertNotReachHere("5F1124DE08843941");
         }
-        foreach (IValueObserverExtension<T> extension in context.Extensions)
+        foreach (IValueObserverExtension<K, V> extension in context.Extensions)
         {
             extension.UpdateValue(key, value);
         }

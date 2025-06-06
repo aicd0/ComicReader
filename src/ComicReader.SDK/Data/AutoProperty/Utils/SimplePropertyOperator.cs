@@ -3,25 +3,27 @@
 
 using System.Collections.Concurrent;
 
-namespace ComicReader.SDK.Data.AutoProperty.Presets;
+using ComicReader.SDK.Data.AutoProperty.Extension;
 
-public class SimplePropertyOperator<T>
+namespace ComicReader.SDK.Data.AutoProperty.Utils;
+
+public class SimplePropertyOperator<K, V> where K : IRequestKey
 {
     private readonly PropertyServer _server;
-    private readonly IQRProperty<T, T> _property;
+    private readonly IKVProperty<K, V> _property;
     private readonly CoreExtension _coreExtension = new();
-    private readonly ConcurrentDictionary<string, T?> _localCache = [];
+    private readonly ConcurrentDictionary<K, V?> _localCache = [];
 
-    public SimplePropertyOperator(PropertyServer server, IQREProperty<T, T, IValueObserverExtension<T>> property)
+    public SimplePropertyOperator(PropertyServer server, IKVEProperty<K, V, IValueObserverExtension<K, V>> property)
     {
         _server = server;
         _property = property;
         server.RegisterExtension(property, _coreExtension);
     }
 
-    public T? LocalRead(string key)
+    public V? LocalRead(K key)
     {
-        if (_localCache.TryGetValue(key, out T? value))
+        if (_localCache.TryGetValue(key, out V? value))
         {
             return value;
         }
@@ -32,18 +34,18 @@ public class SimplePropertyOperator<T>
         return default;
     }
 
-    public void LocalWrite(string key, T value)
+    public void LocalWrite(K key, V value)
     {
         _localCache[key] = value;
     }
 
-    public async Task<T?> Read(string key)
+    public async Task<V?> Read(K key)
     {
         ExternalBatchRequest batchRequest = new();
-        ExternalRequest<T, T> request = new ExternalRequest<T, T>.Builder(_property).SetRequestType(RequestType.Read).SetKey(key).Build();
+        ExternalRequest<K, V> request = new ExternalRequest<K, V>.Builder(_property, key).SetRequestType(RequestType.Read).Build();
         batchRequest.Requests.Add(request);
         ExternalBatchResponse batchResponse = await _server.Request(batchRequest);
-        ExternalResponse<T>? response = batchResponse.GetResponse(request);
+        ExternalResponse<V>? response = batchResponse.GetResponse(request);
         if (response != null && response.Result == RequestResult.Successful)
         {
             _localCache[key] = response.Value;
@@ -52,27 +54,27 @@ public class SimplePropertyOperator<T>
         return default;
     }
 
-    public async Task Write(string key, T value, RequestOption? option = null)
+    public async Task Write(K key, V value, RequestOption? option = null)
     {
         await WriteInternal(key, value, option);
         _localCache.TryRemove(key, out _);
     }
 
-    private async Task<bool> WriteInternal(string key, T value, RequestOption? option)
+    private async Task<bool> WriteInternal(K key, V value, RequestOption? option)
     {
         ExternalBatchRequest batchRequest = new();
-        ExternalRequest<T, T> request = new ExternalRequest<T, T>.Builder(_property).SetRequestType(RequestType.Modify).SetKey(key).SetValue(value).SetOption(option).Build();
+        ExternalRequest<K, V> request = new ExternalRequest<K, V>.Builder(_property, key).SetRequestType(RequestType.Modify).SetValue(value).SetOption(option).Build();
         batchRequest.Requests.Add(request);
         ExternalBatchResponse batchResponse = await _server.Request(batchRequest);
-        ExternalResponse<T>? response = batchResponse.GetResponse(request);
+        ExternalResponse<V>? response = batchResponse.GetResponse(request);
         return response != null && response.Result == RequestResult.Successful;
     }
 
-    private class CoreExtension : IValueObserverExtension<T>
+    private class CoreExtension : IValueObserverExtension<K, V>
     {
-        public readonly ConcurrentDictionary<string, T?> cache = [];
+        public readonly ConcurrentDictionary<K, V?> cache = [];
 
-        public void UpdateValue(string key, T? value)
+        public void UpdateValue(K key, V? value)
         {
             cache[key] = value;
         }

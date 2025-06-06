@@ -3,6 +3,9 @@
 
 namespace ComicReader.SDK.Data.AutoProperty;
 
-public interface IQREProperty<Q, R, E> : IQRProperty<Q, R>, IEProperty<E> where E : IPropertyExtension
+public enum LockType
 {
+    None,
+    Read,
+    Write,
 }

@@ -5,183 +5,218 @@ using ComicReader.SDK.Common.DebugTools;
 
 namespace ComicReader.SDK.Data.AutoProperty.Presets;
 
-public class MultiSourceProperty<T>(List<IQRProperty<T, T>> sources) : AbsProperty<T, T, MultiSourcePropertyModel<T>, IPropertyExtension>
+public class MultiSourceProperty<K, V>(List<IKVProperty<K, V>> sources) : AbsProperty<K, V, MultiSourcePropertyModel<K, V>, IPropertyExtension> where K : IRequestKey
 {
-    private readonly List<IQRProperty<T, T>> _sources = [.. sources];
+    private readonly List<IKVProperty<K, V>> _sources = [.. sources];
 
-    public override MultiSourcePropertyModel<T> CreateModel()
+    public override MultiSourcePropertyModel<K, V> CreateModel()
     {
-        return new MultiSourcePropertyModel<T>();
+        return new MultiSourcePropertyModel<K, V>();
     }
 
-    public override List<IProperty> GetDependentProperties()
+    public override LockResource GetLockResource(K key, LockType type)
     {
-        return [.. _sources];
-    }
-
-    public override void RearrangeRequests(PropertyContext<T, T, MultiSourcePropertyModel<T>, IPropertyExtension> context)
-    {
-        MultiSourcePropertyModel<T> model = context.Model;
-        foreach (SealedPropertyRequest<T> serverRequest in context.NewRequests)
+        var lockResource = new LockResource();
+        for (int i = 0; i < _sources.Count; i++)
         {
-            PropertyRequestContent<T> request = serverRequest.RequestContent;
-            if (!model.cacheItems.TryGetValue(request.Key, out MultiSourcePropertyModel<T>.CacheItem? cache))
+            if (i == _sources.Count - 1)
             {
-                cache = new MultiSourcePropertyModel<T>.CacheItem();
-                model.cacheItems[request.Key] = cache;
+                lockResource.Merge(_sources[i].GetLockResource(key, type));
             }
-            cache.requests.Enqueue(serverRequest);
-            if (cache.requests.Count == 1)
+            else
             {
-                DequeueRequests(context, cache);
+                lockResource.Merge(_sources[i].GetLockResource(key, LockType.Write));
             }
         }
+        return lockResource;
     }
 
-    public override void ProcessRequests(PropertyContext<T, T, MultiSourcePropertyModel<T>, IPropertyExtension> context, IProcessCallback callback)
+    public override void RearrangeRequests(PropertyContext<K, V, MultiSourcePropertyModel<K, V>, IPropertyExtension> context)
     {
-        callback.PostCompletion(null);
-    }
-
-    private void DequeueRequests(PropertyContext<T, T, MultiSourcePropertyModel<T>, IPropertyExtension> context, MultiSourcePropertyModel<T>.CacheItem cache)
-    {
-        bool requesting = false;
-        while (!requesting && cache.requests.TryPeek(out SealedPropertyRequest<T>? request))
+        MultiSourcePropertyModel<K, V> model = context.Model;
+        foreach (SealedPropertyRequest<K, V> request in context.NewRequests)
         {
             if (_sources.Count == 0)
             {
                 Logger.AssertNotReachHere("7572F634B2A6413C");
-                cache.requests.Dequeue();
-                context.Respond(request.Id, PropertyResponseContent<T>.NewFailedResponse());
+                context.Respond(request.Id, PropertyResponseContent<V>.NewFailedResponse());
                 break;
             }
-            switch (request.RequestContent.Type)
+
+            PropertyRequestContent<K, V> requestContent = request.RequestContent;
+            if (!model.cacheItems.TryGetValue(requestContent.Key, out MultiSourcePropertyModel<K, V>.CacheItem? cache))
+            {
+                cache = new MultiSourcePropertyModel<K, V>.CacheItem();
+                model.cacheItems[requestContent.Key] = cache;
+            }
+
+            switch (requestContent.Type)
             {
                 case RequestType.Read:
                     {
-                        PropertyResponseContent<T>? response = cache.readResponse;
-                        if (response is not null)
+                        if (cache.pendingRequests.Count == 0)
                         {
-                            if (response.Result == RequestResult.Successful)
-                            {
-                                while (--cache.readIndex >= 0)
-                                {
-                                    PropertyRequestContent<T> compensateRequest = request.RequestContent.WithRequestTypeAndValue(RequestType.Modify, response.Value);
-                                    SealedPropertyRequest<T>? subRequest = context.Request(_sources[cache.readIndex], compensateRequest, OnCompensateResponse);
-                                    if (subRequest is not null)
-                                    {
-                                        context.Model.requests[subRequest.Id] = cache;
-                                        requesting = true;
-                                        break;
-                                    }
-                                }
-                                if (!requesting)
-                                {
-                                    cache.readResponse = null;
-                                    cache.readIndex = 0;
-                                    cache.requests.Dequeue();
-                                    context.Respond(request.Id, response);
-                                }
-                                break;
-                            }
-                            if (++cache.readIndex >= _sources.Count)
-                            {
-                                cache.readResponse = null;
-                                cache.readIndex = 0;
-                                cache.requests.Dequeue();
-                                context.Respond(request.Id, response);
-                                break;
-                            }
+                            ContinueReadRequest(context, request, cache);
                         }
-                        {
-                            SealedPropertyRequest<T>? subRequest = context.Request(_sources[cache.readIndex], request.RequestContent, OnReadResponse);
-                            if (subRequest is null)
-                            {
-                                cache.readIndex = 0;
-                                cache.requests.Dequeue();
-                                context.Respond(request.Id, PropertyResponseContent<T>.NewFailedResponse());
-                                break;
-                            }
-                            context.Model.requests[subRequest.Id] = cache;
-                            requesting = true;
-                        }
+                        cache.pendingRequests.Add(request.Id);
                     }
                     break;
                 case RequestType.Modify:
                     {
-                        PropertyResponseContent<T>? response = cache.writeResponse;
-                        if (response is not null)
+                        PropertyRequestContent<K, V> subRequestContent = request.RequestContent.WithLock(request.RequestContent.Lock.Readonly());
+                        MultiSourcePropertyModel<K, V>.OriginalRequestItem originalRequest = new(request);
+                        foreach (IKVProperty<K, V> source in _sources)
                         {
-                            cache.writeResponse = null;
-                            if (response.Result != RequestResult.Successful)
+                            SealedPropertyRequest<K, V>? subRequest = context.Request(source, subRequestContent, OnWriteResponse);
+                            if (subRequest is null)
                             {
-                                cache.writeIndex = -1;
-                                cache.requests.Dequeue();
-                                context.Respond(request.Id, response);
-                                break;
+                                if (!originalRequest.responded)
+                                {
+                                    originalRequest.responded = true;
+                                    context.Respond(request.Id, PropertyResponseContent<V>.NewFailedResponse());
+                                }
+                                continue;
                             }
-                            if (--cache.writeIndex < 0)
-                            {
-                                cache.requests.Dequeue();
-                                context.Respond(request.Id, response);
-                                break;
-                            }
+                            context.Model.requests[subRequest.Id] = new(originalRequest, cache);
+                            originalRequest.requesting++;
                         }
-                        if (cache.writeIndex < 0)
-                        {
-                            cache.writeIndex = _sources.Count - 1;
-                        }
-                        SealedPropertyRequest<T>? subRequest = context.Request(_sources[cache.writeIndex], request.RequestContent, OnWriteResponse);
-                        if (subRequest is null)
-                        {
-                            cache.requests.Dequeue();
-                            context.Respond(request.Id, PropertyResponseContent<T>.NewFailedResponse());
-                            break;
-                        }
-                        context.Model.requests[subRequest.Id] = cache;
-                        requesting = true;
+                        request.RequestContent.Lock.Release();
                     }
                     break;
                 default:
                     Logger.AssertNotReachHere("0703A032230BD03C");
-                    cache.requests.Dequeue();
-                    context.Respond(request.Id, PropertyResponseContent<T>.NewFailedResponse());
+                    context.Respond(request.Id, PropertyResponseContent<V>.NewFailedResponse());
                     break;
             }
         }
     }
 
-    private void OnReadResponse(PropertyContext<T, T, MultiSourcePropertyModel<T>, IPropertyExtension> context, long id, PropertyResponseContent<T> response)
+    public override void ProcessRequests(PropertyContext<K, V, MultiSourcePropertyModel<K, V>, IPropertyExtension> context, IProcessCallback callback)
     {
-        if (!context.Model.requests.Remove(id, out MultiSourcePropertyModel<T>.CacheItem? cache))
+        callback.PostCompletion(null);
+    }
+
+    private void ContinueReadRequest(PropertyContext<K, V, MultiSourcePropertyModel<K, V>, IPropertyExtension> context, SealedPropertyRequest<K, V> request, MultiSourcePropertyModel<K, V>.CacheItem cache)
+    {
+        SealedPropertyRequest<K, V>? subRequest = null;
+        PropertyRequestContent<K, V> requestContent = request.RequestContent.WithLock(request.RequestContent.Lock.Readonly());
+        while (subRequest is null)
+        {
+            if (cache.readIndex >= _sources.Count)
+            {
+                break;
+            }
+            subRequest = context.Request(_sources[cache.readIndex], requestContent, OnReadResponse);
+            cache.readIndex++;
+        }
+        if (subRequest is null)
+        {
+            cache.readIndex = 0;
+            foreach (long pendingRequest in cache.pendingRequests)
+            {
+                context.Respond(pendingRequest, PropertyResponseContent<V>.NewFailedResponse());
+            }
+            return;
+        }
+        MultiSourcePropertyModel<K, V>.OriginalRequestItem originalRequest = new(request);
+        context.Model.requests[subRequest.Id] = new(originalRequest, cache);
+    }
+
+    private void OnReadResponse(PropertyContext<K, V, MultiSourcePropertyModel<K, V>, IPropertyExtension> context, long id, PropertyResponseContent<V> response)
+    {
+        if (!context.Model.requests.Remove(id, out MultiSourcePropertyModel<K, V>.RequestItem? request))
         {
             Logger.AssertNotReachHere("9701FB2B66EC550E");
             return;
         }
-        cache.readResponse = response;
-        cache.writeResponse = null;
-        DequeueRequests(context, cache);
+
+        request.originalRequest.responses.Add(response);
+        if (response.Result != RequestResult.Successful)
+        {
+            ContinueReadRequest(context, request.originalRequest.request, request.cache);
+            return;
+        }
+
+        PropertyRequestContent<K, V> originalRequestContent = request.originalRequest.request.RequestContent;
+        PropertyRequestContent<K, V> compensationRequest = originalRequestContent.WithRequestTypeAndValueAndLock(RequestType.Modify, response.Value, originalRequestContent.Lock.Readonly());
+        for (int i = request.cache.readIndex - 2; i >= 0; i--)
+        {
+            context.Request(_sources[i], compensationRequest, OnCompensateResponse);
+        }
+        originalRequestContent.Lock.Release();
+
+        request.cache.readIndex = 0;
+        {
+            List<IReadonlyResponseTracker> trackers = [];
+            int version = 0;
+            foreach (PropertyResponseContent<V> res in request.originalRequest.responses)
+            {
+                if (res.Tracker is not null)
+                {
+                    trackers.Add(res.Tracker);
+                    version += res.Version;
+                }
+            }
+            if (trackers.Count > 0)
+            {
+                ResponseTracker tracker = context.TrackerManager.GetOrAddTracker(request.originalRequest.request.RequestContent.Key);
+                tracker.UpdateTrackers(trackers, version);
+                response = PropertyResponseContent<V>.NewSuccessfulResponse(response.Value, tracker, version);
+            }
+        }
+        foreach (long pendingRequest in request.cache.pendingRequests)
+        {
+            context.Respond(pendingRequest, response);
+        }
     }
 
-    private void OnWriteResponse(PropertyContext<T, T, MultiSourcePropertyModel<T>, IPropertyExtension> context, long id, PropertyResponseContent<T> response)
+    private void OnWriteResponse(PropertyContext<K, V, MultiSourcePropertyModel<K, V>, IPropertyExtension> context, long id, PropertyResponseContent<V> response)
     {
-        if (!context.Model.requests.Remove(id, out MultiSourcePropertyModel<T>.CacheItem? cache))
+        if (!context.Model.requests.Remove(id, out MultiSourcePropertyModel<K, V>.RequestItem? request))
         {
             Logger.AssertNotReachHere("9E8E40A5965DEC73");
             return;
         }
-        cache.readResponse = null;
-        cache.writeResponse = response;
-        DequeueRequests(context, cache);
+
+        request.originalRequest.requesting--;
+        Logger.Assert(request.originalRequest.requesting >= 0, "A535A27D0D6F1E51");
+        request.originalRequest.responses.Add(response);
+
+        if (!request.originalRequest.responded)
+        {
+            if (response.Result == RequestResult.Failed)
+            {
+                request.originalRequest.responded = true;
+                context.Respond(request.originalRequest.request.Id, PropertyResponseContent<V>.NewFailedResponse());
+            }
+            else if (request.originalRequest.requesting == 0)
+            {
+                Logger.Assert(request.originalRequest.responses.Count == _sources.Count, "67C26DE2CD2834B6");
+                request.originalRequest.responded = true;
+                {
+                    List<IReadonlyResponseTracker> trackers = [];
+                    int version = 0;
+                    foreach (PropertyResponseContent<V> res in request.originalRequest.responses)
+                    {
+                        if (res.Tracker is not null)
+                        {
+                            trackers.Add(res.Tracker);
+                            version += res.Version;
+                        }
+                    }
+                    if (trackers.Count > 0)
+                    {
+                        ResponseTracker tracker = context.TrackerManager.GetOrAddTracker(request.originalRequest.request.RequestContent.Key);
+                        tracker.UpdateTrackers(trackers, version);
+                        response = PropertyResponseContent<V>.NewSuccessfulResponse(default, tracker, version);
+                    }
+                }
+                context.Respond(request.originalRequest.request.Id, response);
+            }
+        }
     }
 
-    private void OnCompensateResponse(PropertyContext<T, T, MultiSourcePropertyModel<T>, IPropertyExtension> context, long id, PropertyResponseContent<T> response)
+    private void OnCompensateResponse(PropertyContext<K, V, MultiSourcePropertyModel<K, V>, IPropertyExtension> context, long id, PropertyResponseContent<V> response)
     {
-        if (!context.Model.requests.Remove(id, out MultiSourcePropertyModel<T>.CacheItem? cache))
-        {
-            Logger.AssertNotReachHere("62E1C6D5E7618C45");
-            return;
-        }
-        DequeueRequests(context, cache);
     }
 }

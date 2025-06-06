@@ -5,57 +5,58 @@ using ComicReader.SDK.Common.DebugTools;
 
 namespace ComicReader.SDK.Data.AutoProperty.Presets;
 
-public class ConverterProperty<A, Q, R, B>(IQRProperty<Q, R> source, Func<PropertyRequestContent<A>, PropertyRequestContent<Q>> requestConverter, Func<PropertyResponseContent<R>, PropertyResponseContent<B>> responseConverter) : AbsProperty<A, B, ConverterPropertyModel, IPropertyExtension>
+public class ConverterProperty<K, A, B, V>(IKVProperty<A, B> source, Func<K, A> requestConverter, Func<PropertyResponseContent<B>, PropertyResponseContent<V>> responseConverter) : AbsProperty<K, V, ConverterPropertyModel, IPropertyExtension> where K : IRequestKey where A : IRequestKey
 {
     public override ConverterPropertyModel CreateModel()
     {
         return new ConverterPropertyModel();
     }
 
-    public override List<IProperty> GetDependentProperties()
+    public override LockResource GetLockResource(K key, LockType type)
     {
-        return [source];
+        return source.GetLockResource(requestConverter(key), type);
     }
 
-    public override void RearrangeRequests(PropertyContext<A, B, ConverterPropertyModel, IPropertyExtension> context)
+    public override void RearrangeRequests(PropertyContext<K, V, ConverterPropertyModel, IPropertyExtension> context)
     {
         ConverterPropertyModel model = context.Model;
-        foreach (SealedPropertyRequest<A> serverRequest in context.NewRequests)
+        foreach (SealedPropertyRequest<K, V> serverRequest in context.NewRequests)
         {
-            PropertyRequestContent<Q> convertedRequest;
+            A convertedKey;
             try
             {
-                convertedRequest = requestConverter(serverRequest.RequestContent);
+                convertedKey = requestConverter(serverRequest.RequestContent.Key);
             }
             catch (Exception e)
             {
                 Logger.AssertNotReachHere("DC4669BD138CDCBB", e);
-                context.Respond(serverRequest.Id, PropertyResponseContent<B>.NewFailedResponse());
+                context.Respond(serverRequest.Id, PropertyResponseContent<V>.NewFailedResponse());
                 continue;
             }
-            SealedPropertyRequest<Q>? subRequest = context.Request(source, convertedRequest, OnResponse);
+            PropertyRequestContent<A, B> convertedRequest = serverRequest.RequestContent.WithKeyAndValue<A, B>(convertedKey, default);
+            SealedPropertyRequest<A, B>? subRequest = context.Request(source, convertedRequest, OnResponse);
             if (subRequest is null)
             {
-                context.Respond(serverRequest.Id, PropertyResponseContent<B>.NewFailedResponse());
+                context.Respond(serverRequest.Id, PropertyResponseContent<V>.NewFailedResponse());
                 continue;
             }
             model.requests[subRequest.Id] = serverRequest.Id;
         }
     }
 
-    public override void ProcessRequests(PropertyContext<A, B, ConverterPropertyModel, IPropertyExtension> context, IProcessCallback callback)
+    public override void ProcessRequests(PropertyContext<K, V, ConverterPropertyModel, IPropertyExtension> context, IProcessCallback callback)
     {
         callback.PostCompletion(null);
     }
 
-    private void OnResponse(PropertyContext<A, B, ConverterPropertyModel, IPropertyExtension> context, long id, PropertyResponseContent<R> response)
+    private void OnResponse(PropertyContext<K, V, ConverterPropertyModel, IPropertyExtension> context, long id, PropertyResponseContent<B> response)
     {
         if (!context.Model.requests.Remove(id, out long originId))
         {
             Logger.AssertNotReachHere("");
             return;
         }
-        PropertyResponseContent<B> convertedResponse;
+        PropertyResponseContent<V> convertedResponse;
         try
         {
             convertedResponse = responseConverter(response);
@@ -63,7 +64,7 @@ public class ConverterProperty<A, Q, R, B>(IQRProperty<Q, R> source, Func<Proper
         catch (Exception e)
         {
             Logger.AssertNotReachHere("F7A6288C8CB7584C", e);
-            convertedResponse = PropertyResponseContent<B>.NewFailedResponse();
+            convertedResponse = PropertyResponseContent<V>.NewFailedResponse();
         }
         context.Respond(originId, convertedResponse);
     }

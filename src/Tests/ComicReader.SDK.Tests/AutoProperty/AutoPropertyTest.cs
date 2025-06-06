@@ -13,9 +13,9 @@ public class AutoPropertyTest
     public void TestPropertyException()
     {
         PropertyServer server = new("Test");
-        TestProperty<int, int> sourceProperty = new();
+        TestProperty<int> sourceProperty = new();
         Func<PropertyResponseContent<int>, PropertyResponseContent<int>> responseConversionFunc = (response) => response;
-        ConverterProperty<int, int, int, int> converterProperty = new(sourceProperty, (request) => request, (response) => responseConversionFunc(response));
+        ConverterProperty<TestPropertyKey, TestPropertyKey, int, int> converterProperty = new(sourceProperty, (request) => request, (response) => responseConversionFunc(response));
 
         Func<string, int> valueFunc = (key) =>
         {
@@ -64,7 +64,7 @@ public class AutoPropertyTest
             {
                 sourceProperty.ServerFunc = (request) =>
                 {
-                    return PropertyResponseContent<int>.NewSuccessfulResponse(valueFunc(request.Key));
+                    return PropertyResponseContent<int>.NewSuccessfulResponse(valueFunc(request.Key.Name));
                 };
             }
             {
@@ -107,7 +107,7 @@ public class AutoPropertyTest
     public void TestPropertyHang()
     {
         PropertyServer server = new("Test");
-        TestProperty<int, int> sourceProperty = new();
+        TestProperty<int> sourceProperty = new();
 
         Func<string, int> valueFunc = (key) =>
         {
@@ -131,7 +131,7 @@ public class AutoPropertyTest
                 {
                     throw new InvalidOperationException();
                 }
-                return PropertyResponseContent<int>.NewSuccessfulResponse(valueFunc(request.Key));
+                return PropertyResponseContent<int>.NewSuccessfulResponse(valueFunc(request.Key.Name));
             };
             sourceProperty.Hang = true;
             {
@@ -168,8 +168,8 @@ public class AutoPropertyTest
     public void TestMemoryCacheProperty1()
     {
         PropertyServer server = new("Test");
-        TestProperty<int, int> sourceProperty = new();
-        MemoryCacheProperty<int> cacheProperty = new(sourceProperty);
+        TestProperty<int> sourceProperty = new();
+        MemoryCacheProperty<TestPropertyKey, int> cacheProperty = new(sourceProperty);
         sourceProperty.Rearrange = true;
         sourceProperty.ProcessOnServerThread = true;
         TestMemoryCachePropertyInternal(server, sourceProperty, cacheProperty);
@@ -179,8 +179,8 @@ public class AutoPropertyTest
     public void TestMemoryCacheProperty2()
     {
         PropertyServer server = new("Test");
-        TestProperty<int, int> sourceProperty = new();
-        MemoryCacheProperty<int> cacheProperty = new(sourceProperty);
+        TestProperty<int> sourceProperty = new();
+        MemoryCacheProperty<TestPropertyKey, int> cacheProperty = new(sourceProperty);
         sourceProperty.Rearrange = false;
         sourceProperty.ProcessOnServerThread = true;
         TestMemoryCachePropertyInternal(server, sourceProperty, cacheProperty);
@@ -190,14 +190,14 @@ public class AutoPropertyTest
     public void TestMemoryCacheProperty3()
     {
         PropertyServer server = new("Test");
-        TestProperty<int, int> sourceProperty = new();
-        MemoryCacheProperty<int> cacheProperty = new(sourceProperty);
+        TestProperty<int> sourceProperty = new();
+        MemoryCacheProperty<TestPropertyKey, int> cacheProperty = new(sourceProperty);
         sourceProperty.Rearrange = false;
         sourceProperty.ProcessOnServerThread = false;
         TestMemoryCachePropertyInternal(server, sourceProperty, cacheProperty);
     }
 
-    private void TestMemoryCachePropertyInternal(PropertyServer server, TestProperty<int, int> sourceProperty, MemoryCacheProperty<int> cacheProperty)
+    private void TestMemoryCachePropertyInternal(PropertyServer server, TestProperty<int> sourceProperty, MemoryCacheProperty<TestPropertyKey, int> cacheProperty)
     {
         Func<string, int> valueFunc = (key) =>
         {
@@ -212,7 +212,7 @@ public class AutoPropertyTest
                 {
                     throw new InvalidOperationException();
                 }
-                return PropertyResponseContent<int>.NewSuccessfulResponse(valueFunc(request.Key));
+                return PropertyResponseContent<int>.NewSuccessfulResponse(valueFunc(request.Key.Name));
             };
             valueFunc = (key) =>
             {
@@ -269,9 +269,9 @@ public class AutoPropertyTest
                 switch (request.Type)
                 {
                     case RequestType.Read:
-                        return PropertyResponseContent<int>.NewSuccessfulResponse(writtenValues[request.Key]);
+                        return PropertyResponseContent<int>.NewSuccessfulResponse(writtenValues[request.Key.Name]);
                     case RequestType.Modify:
-                        writtenValues[request.Key] = request.Value;
+                        writtenValues[request.Key.Name] = request.Value;
                         return PropertyResponseContent<int>.NewSuccessfulResponse();
                     default:
                         throw new InvalidOperationException();
@@ -319,7 +319,7 @@ public class AutoPropertyTest
                 {
                     throw new InvalidOperationException();
                 }
-                writtenValues[request.Key] = request.Value;
+                writtenValues[request.Key.Name] = request.Value;
                 return PropertyResponseContent<int>.NewSuccessfulResponse();
             };
             valueFunc = (key) =>
@@ -346,7 +346,7 @@ public class AutoPropertyTest
                 {
                     throw new InvalidOperationException();
                 }
-                return PropertyResponseContent<int>.NewSuccessfulResponse(writtenValues[request.Key]);
+                return PropertyResponseContent<int>.NewSuccessfulResponse(writtenValues[request.Key.Name]);
             };
             {
                 ExternalBatchRequest batch = new();
@@ -367,9 +367,9 @@ public class AutoPropertyTest
                 switch (request.Type)
                 {
                     case RequestType.Read:
-                        return PropertyResponseContent<int>.NewSuccessfulResponse(writtenValues[request.Key]);
+                        return PropertyResponseContent<int>.NewSuccessfulResponse(writtenValues[request.Key.Name]);
                     case RequestType.Modify:
-                        writtenValues[request.Key] = request.Value;
+                        writtenValues[request.Key.Name] = request.Value;
                         return PropertyResponseContent<int>.NewSuccessfulResponse();
                     default:
                         throw new InvalidOperationException();
@@ -501,7 +501,7 @@ public class AutoPropertyTest
                     {
                         throw new InvalidOperationException();
                     }
-                    return PropertyResponseContent<int>.NewSuccessfulResponse(valueFunc(request.Key));
+                    return PropertyResponseContent<int>.NewSuccessfulResponse(valueFunc(request.Key.Name));
                 };
                 List<IRequestTest> tests = [];
                 ExternalBatchRequest batch = new();
@@ -520,7 +520,7 @@ public class AutoPropertyTest
                     {
                         return PropertyResponseContent<int>.NewSuccessfulResponse();
                     }
-                    return PropertyResponseContent<int>.NewSuccessfulResponse(valueFunc(request.Key));
+                    return PropertyResponseContent<int>.NewSuccessfulResponse(valueFunc(request.Key.Name));
                 };
                 List<IRequestTest> tests = [];
                 ExternalBatchRequest batch = new();
@@ -540,16 +540,16 @@ public class AutoPropertyTest
     public void TestMultiSourceProperty()
     {
         PropertyServer server = new("Test");
-        TestProperty<int, int> sourceProperty1 = new();
+        TestProperty<int> sourceProperty1 = new();
         sourceProperty1.Rearrange = true;
         sourceProperty1.ProcessOnServerThread = true;
-        TestProperty<int, int> sourceProperty2 = new();
+        TestProperty<int> sourceProperty2 = new();
         sourceProperty2.Rearrange = true;
         sourceProperty2.ProcessOnServerThread = true;
-        TestProperty<int, int> sourceProperty3 = new();
+        TestProperty<int> sourceProperty3 = new();
         sourceProperty3.Rearrange = true;
         sourceProperty3.ProcessOnServerThread = true;
-        MultiSourceProperty<int> multiSourceProperty = new([sourceProperty1, sourceProperty2, sourceProperty3]);
+        MultiSourceProperty<TestPropertyKey, int> multiSourceProperty = new([sourceProperty1, sourceProperty2, sourceProperty3]);
 
         int keyCount = 100;
 
@@ -571,13 +571,13 @@ public class AutoPropertyTest
                     case RequestType.Read:
                         if (read1)
                         {
-                            return PropertyResponseContent<int>.NewSuccessfulResponse(valueFunc1(request.Key));
+                            return PropertyResponseContent<int>.NewSuccessfulResponse(valueFunc1(request.Key.Name));
                         }
                         return PropertyResponseContent<int>.NewFailedResponse();
                     case RequestType.Modify:
                         if (write1)
                         {
-                            writtenValues1[request.Key] = request.Value;
+                            writtenValues1[request.Key.Name] = request.Value;
                             return PropertyResponseContent<int>.NewSuccessfulResponse();
                         }
                         return PropertyResponseContent<int>.NewFailedResponse();
@@ -601,13 +601,13 @@ public class AutoPropertyTest
                     case RequestType.Read:
                         if (read2)
                         {
-                            return PropertyResponseContent<int>.NewSuccessfulResponse(valueFunc2(request.Key));
+                            return PropertyResponseContent<int>.NewSuccessfulResponse(valueFunc2(request.Key.Name));
                         }
                         return PropertyResponseContent<int>.NewFailedResponse();
                     case RequestType.Modify:
                         if (write2)
                         {
-                            writtenValues2[request.Key] = request.Value;
+                            writtenValues2[request.Key.Name] = request.Value;
                             return PropertyResponseContent<int>.NewSuccessfulResponse();
                         }
                         return PropertyResponseContent<int>.NewFailedResponse();
@@ -631,13 +631,13 @@ public class AutoPropertyTest
                     case RequestType.Read:
                         if (read3)
                         {
-                            return PropertyResponseContent<int>.NewSuccessfulResponse(valueFunc3(request.Key));
+                            return PropertyResponseContent<int>.NewSuccessfulResponse(valueFunc3(request.Key.Name));
                         }
                         return PropertyResponseContent<int>.NewFailedResponse();
                     case RequestType.Modify:
                         if (write3)
                         {
-                            writtenValues3[request.Key] = request.Value;
+                            writtenValues3[request.Key.Name] = request.Value;
                             return PropertyResponseContent<int>.NewSuccessfulResponse();
                         }
                         return PropertyResponseContent<int>.NewFailedResponse();
@@ -747,12 +747,12 @@ public class AutoPropertyTest
     public void TestConverterProperty()
     {
         PropertyServer server = new("Test");
-        TestProperty<int, int> sourceProperty = new();
+        TestProperty<int> sourceProperty = new();
         sourceProperty.Rearrange = true;
         sourceProperty.ProcessOnServerThread = true;
-        Func<PropertyRequestContent<int>, PropertyRequestContent<int>> requestConversionFunc = (request) => request;
+        Func<TestPropertyKey, TestPropertyKey> requestConversionFunc = (request) => request;
         Func<PropertyResponseContent<int>, PropertyResponseContent<int>> responseConversionFunc = (response) => response;
-        ConverterProperty<int, int, int, int> convertProperty = new(sourceProperty, (request) => requestConversionFunc(request), (response) => responseConversionFunc(response));
+        ConverterProperty<TestPropertyKey, TestPropertyKey, int, int> convertProperty = new(sourceProperty, (request) => requestConversionFunc(request), (response) => responseConversionFunc(response));
 
         int keyCount = 100;
 
@@ -784,7 +784,7 @@ public class AutoPropertyTest
                 {
                     throw new InvalidOperationException();
                 }
-                return request.WithValue(requestValueFunc(request.Key));
+                return new(requestValueFunc(request.Name).ToString());
             };
             responseConversionFunc = (response) =>
             {
@@ -797,13 +797,13 @@ public class AutoPropertyTest
             Dictionary<string, int> writtenValues = [];
             sourceProperty.ServerFunc = (request) =>
             {
-                int result = valueFunc(request.Key, request.Value);
+                int result = valueFunc(request.Key.Name, request.Value);
                 switch (request.Type)
                 {
                     case RequestType.Read:
                         return PropertyResponseContent<int>.NewSuccessfulResponse(result);
                     case RequestType.Modify:
-                        writtenValues[request.Key] = result;
+                        writtenValues[request.Key.Name] = result;
                         return PropertyResponseContent<int>.NewSuccessfulResponse();
                     default:
                         throw new InvalidOperationException();
@@ -864,9 +864,9 @@ public class AutoPropertyTest
     public void TestSplitProperty()
     {
         PropertyServer server = new("Test");
-        TestProperty<int, int> readProperty = new();
-        TestProperty<int, int> writeProperty = new();
-        SplitProperty<int> splitProperty = new(readProperty, writeProperty);
+        TestProperty<int> readProperty = new();
+        TestProperty<int> writeProperty = new();
+        SplitProperty<TestPropertyKey, int> splitProperty = new(readProperty, writeProperty);
 
         int keyCount = 100;
 
@@ -895,7 +895,7 @@ public class AutoPropertyTest
                 {
                     throw new InvalidOperationException();
                 }
-                return PropertyResponseContent<int>.NewSuccessfulResponse(readValueFunc(request.Key));
+                return PropertyResponseContent<int>.NewSuccessfulResponse(readValueFunc(request.Key.Name));
             };
             writeProperty.ServerFunc = (request) =>
             {
@@ -903,7 +903,7 @@ public class AutoPropertyTest
                 {
                     throw new InvalidOperationException();
                 }
-                writtenValues[request.Key] = request.Value;
+                writtenValues[request.Key.Name] = request.Value;
                 return PropertyResponseContent<int>.NewSuccessfulResponse();
             };
             {
@@ -945,40 +945,40 @@ public class AutoPropertyTest
         }
     }
 
-    private static List<IRequestTest> AppendSerialReadTest<T>(ExternalBatchRequest batch, IQRProperty<T, T> property,
+    private static List<IRequestTest> AppendSerialReadTest<T>(ExternalBatchRequest batch, IKVProperty<TestPropertyKey, T> property,
         int start, int count, Func<string, T> valueFunc, RequestResult result = RequestResult.Successful)
     {
         List<IRequestTest> tests = [];
         for (int i = start; i < count; i++)
         {
-            string key = i.ToString();
-            ExternalRequest<T, T> request = new ExternalRequest<T, T>.Builder(property).SetRequestType(RequestType.Read).SetKey(key).Build();
+            TestPropertyKey key = new(i.ToString());
+            ExternalRequest<TestPropertyKey, T> request = new ExternalRequest<TestPropertyKey, T>.Builder(property, key).SetRequestType(RequestType.Read).Build();
             batch.Requests.Add(request);
             IRequestTest test;
             if (result == RequestResult.Successful)
             {
-                test = new ReadRequestTest<T, T>(request, valueFunc(key));
+                test = new ReadRequestTest<TestPropertyKey, T>(request, valueFunc(key.Name));
             }
             else
             {
-                test = new RequestResultTest<T, T>(request, result);
+                test = new RequestResultTest<TestPropertyKey, T>(request, result);
             }
             tests.Add(test);
         }
         return tests;
     }
 
-    private static List<IRequestTest> AppendSerialWriteTest<T>(ExternalBatchRequest batch, IQRProperty<T, T> property,
+    private static List<IRequestTest> AppendSerialWriteTest<T>(ExternalBatchRequest batch, IKVProperty<TestPropertyKey, T> property,
         int start, int count, Func<string, T> valueFunc, RequestResult result = RequestResult.Successful)
     {
         List<IRequestTest> tests = [];
         for (int i = start; i < count; i++)
         {
-            string key = i.ToString();
-            T value = valueFunc(key);
-            ExternalRequest<T, T> request = new ExternalRequest<T, T>.Builder(property).SetRequestType(RequestType.Modify).SetKey(key).SetValue(value).Build();
+            TestPropertyKey key = new(i.ToString());
+            T value = valueFunc(key.Name);
+            ExternalRequest<TestPropertyKey, T> request = new ExternalRequest<TestPropertyKey, T>.Builder(property, key).SetRequestType(RequestType.Modify).SetValue(value).Build();
             batch.Requests.Add(request);
-            RequestResultTest<T, T> test = new(request, result);
+            RequestResultTest<TestPropertyKey, T> test = new(request, result);
             tests.Add(test);
         }
         return tests;
@@ -1002,11 +1002,11 @@ public class AutoPropertyTest
         void AssertResult(ExternalBatchResponse batchResponse);
     }
 
-    private class RequestResultTest<Q, R>(ExternalRequest<Q, R> request, RequestResult expectResult) : IRequestTest
+    private class RequestResultTest<K, V>(ExternalRequest<K, V> request, RequestResult expectResult) : IRequestTest where K : IRequestKey
     {
         public void AssertResult(ExternalBatchResponse batchResponse)
         {
-            ExternalResponse<R>? response = batchResponse.GetResponse(request);
+            ExternalResponse<V>? response = batchResponse.GetResponse(request);
             if (response == null)
             {
                 Assert.Fail();
@@ -1019,11 +1019,11 @@ public class AutoPropertyTest
         }
     }
 
-    private class ReadRequestTest<Q, R>(ExternalRequest<Q, R> request, R? expectValue) : IRequestTest
+    private class ReadRequestTest<K, V>(ExternalRequest<K, V> request, V? expectValue) : IRequestTest where K : IRequestKey
     {
         public void AssertResult(ExternalBatchResponse batchResponse)
         {
-            ExternalResponse<R>? response = batchResponse.GetResponse(request);
+            ExternalResponse<V>? response = batchResponse.GetResponse(request);
             if (response == null)
             {
                 Assert.Fail();

@@ -3,20 +3,20 @@
 
 namespace ComicReader.SDK.Data.AutoProperty;
 
-internal class PropertyRequest<Q, R> : IPropertyRequest
+internal class PropertyRequest<K, V> : IPropertyRequest where K : IRequestKey
 {
     public long Id { get; }
     public RequestState State { get; set; } = RequestState.Requesting;
     public IProperty Sender { get; }
-    public IQRProperty<Q, R> Receiver { get; set; }
-    public PropertyRequestContent<Q> RequestContent { get; }
-    public PropertyResponseContent<R>? ResponseContent { get; set; }
-    public Action<long, PropertyResponseContent<R>> Handler { get; }
+    public IKVProperty<K, V> Receiver { get; set; }
+    public PropertyRequestContent<K, V> RequestContent { get; }
+    public PropertyResponseContent<V>? ResponseContent { get; set; }
+    public Action<long, PropertyResponseContent<V>> Handler { get; }
 
     IProperty IPropertyRequest.Sender => Sender;
     IProperty IPropertyRequest.Receiver => Receiver;
 
-    public PropertyRequest(long id, IProperty sender, IQRProperty<Q, R> receiver, PropertyRequestContent<Q> request, Action<long, PropertyResponseContent<R>> handler)
+    public PropertyRequest(long id, IProperty sender, IKVProperty<K, V> receiver, PropertyRequestContent<K, V> request, Action<long, PropertyResponseContent<V>> handler)
     {
         Id = id;
         Sender = sender;

@@ -3,6 +3,7 @@
 
 namespace ComicReader.SDK.Data.AutoProperty;
 
-public interface IQRProperty<Q, R> : IProperty
+public interface IKVProperty<K, V> : IProperty where K : IRequestKey
 {
+    LockResource GetLockResource(K key, LockType type);
 }

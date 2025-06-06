@@ -3,18 +3,18 @@
 
 namespace ComicReader.SDK.Data.AutoProperty;
 
-public abstract class AbsProperty<Q, R, M, E> : IQREProperty<Q, R, E> where E : IPropertyExtension
+public abstract class AbsProperty<K, V, M, E> : IKVEProperty<K, V, E> where K : IRequestKey where E : IPropertyExtension
 {
     public abstract M CreateModel();
 
-    public abstract List<IProperty> GetDependentProperties();
+    public abstract LockResource GetLockResource(K key, LockType type);
 
-    public abstract void RearrangeRequests(PropertyContext<Q, R, M, E> context);
+    public abstract void RearrangeRequests(PropertyContext<K, V, M, E> context);
 
-    public abstract void ProcessRequests(PropertyContext<Q, R, M, E> context, IProcessCallback callback);
+    public abstract void ProcessRequests(PropertyContext<K, V, M, E> context, IProcessCallback callback);
 
-    IPropertyContext IProperty.CreatePropertyContext(IServerContext context, DependencyToken dependency)
+    IPropertyContext IProperty.CreatePropertyContext(IServerContext context)
     {
-        return new PropertyContext<Q, R, M, E>(context, this, dependency);
+        return new PropertyContext<K, V, M, E>(context, this);
     }
 }

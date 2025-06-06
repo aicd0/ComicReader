@@ -3,23 +3,21 @@
 
 namespace ComicReader.SDK.Data.AutoProperty;
 
-public class ExternalRequest<Q, R> : IExternalRequest
+public class ExternalRequest<K, V> : IExternalRequest where K : IRequestKey
 {
     private BatchInfo? _batch;
-    private Action? _callback;
+    private LockToken? _lockToken;
 
     public RequestType Type { get; }
-    public IQRProperty<Q, R> Property { get; }
-    public string Key { get; }
-    public Q? Value { get; }
+    public IKVProperty<K, V> Property { get; }
+    public K Key { get; }
+    public V? Value { get; }
     public RequestOption Option { get; }
-    private ExternalRequest<Q, R> OriginalRequest { get; set; }
+    private ExternalRequest<K, V> OriginalRequest { get; set; }
 
     RequestType IReadonlyExternalRequest.Type => Type;
 
-    string IReadonlyExternalRequest.Key => Key;
-
-    private ExternalRequest(RequestType type, IQRProperty<Q, R> property, string key, Q? value, RequestOption? option, ExternalRequest<Q, R>? originalRequest)
+    private ExternalRequest(RequestType type, IKVProperty<K, V> property, K key, V? value, RequestOption? option, ExternalRequest<K, V>? originalRequest)
     {
         Type = type;
         Property = property;
@@ -29,23 +27,31 @@ public class ExternalRequest<Q, R> : IExternalRequest
         OriginalRequest = originalRequest ?? this;
     }
 
-    private void OnResponse(long id, PropertyResponseContent<R> response)
+    private void OnResponse(PropertyContext<VoidRequest, VoidType, VoidType, IPropertyExtension> context, long id, PropertyResponseContent<V> response)
     {
-        DispatchResult(new ExternalResponse<R>(response.Result, response.Value));
+        DispatchResult(new ExternalResponse<V>(response.Result, response.Value));
     }
 
-    private void DispatchResult(ExternalResponse<R> response)
+    private void DispatchResult(ExternalResponse<V> response)
     {
-        _batch!.Response.SetResponse(OriginalRequest, response);
-        _callback?.Invoke();
+        if (_lockToken is not null)
+        {
+            _lockToken.Release();
+            _lockToken = null;
+        }
+
+        if (_batch == null)
+        {
+            throw new InvalidOperationException("Request before activation.");
+        }
+        _batch.Response.SetResponse(OriginalRequest, response);
         _batch.CompleteOne();
         _batch = null;
-        _callback = null;
     }
 
     IExternalRequest IExternalRequest.Clone()
     {
-        return new ExternalRequest<Q, R>(Type, Property, Key, Value, Option, OriginalRequest);
+        return new ExternalRequest<K, V>(Type, Property, Key, Value, Option, OriginalRequest);
     }
 
     void IExternalRequest.Activate(BatchInfo batch)
@@ -55,18 +61,30 @@ public class ExternalRequest<Q, R> : IExternalRequest
 
     void IExternalRequest.SetFailedResult(string reason)
     {
-        DispatchResult(new ExternalResponse<R>(RequestResult.Failed, reason: reason));
+        DispatchResult(new ExternalResponse<V>(RequestResult.Failed, reason: reason));
     }
 
-    void IExternalRequest.Request(IServerContext context, IProperty sender, Action callback)
+    bool IExternalRequest.TryRequest(PropertyContext<VoidRequest, VoidType, VoidType, IPropertyExtension> context, LockManager lockManager)
     {
-        _callback = callback;
-        PropertyRequestContent<Q> requestContent = new(Type, Key, Value, Option);
-        SealedPropertyRequest<Q>? request = context.HandleRequest(sender, Property, requestContent, OnResponse);
+        LockResource lockResource = Type switch
+        {
+            RequestType.Read => Property.GetLockResource(Key, LockType.Read),
+            RequestType.Modify => Property.GetLockResource(Key, LockType.Write),
+            _ => Property.GetLockResource(Key, LockType.Write),
+        };
+        if (!lockManager.TryAcquireLock(lockResource, out LockToken? token))
+        {
+            return false;
+        }
+        _lockToken = token;
+
+        PropertyRequestContent<K, V> requestContent = new(Type, Key, Value, Option, token);
+        SealedPropertyRequest<K, V>? request = context.Request(Property, requestContent, OnResponse);
         if (request is null)
         {
-            DispatchResult(new ExternalResponse<R>(RequestResult.Failed));
+            DispatchResult(new ExternalResponse<V>(RequestResult.Failed));
         }
+        return true;
     }
 
     bool IReadonlyExternalRequest.IsNullValue()
@@ -74,12 +92,12 @@ public class ExternalRequest<Q, R> : IExternalRequest
         return Value is null;
     }
 
-    public class Builder(IQRProperty<Q, R> property)
+    public class Builder(IKVProperty<K, V> property, K key)
     {
-        private readonly IQRProperty<Q, R> _property = property;
+        private readonly IKVProperty<K, V> _property = property;
+        private readonly K _key = key;
         private RequestType _type = RequestType.Read;
-        private string _key = string.Empty;
-        private Q? _value;
+        private V? _value;
         private RequestOption? _option;
 
         public Builder SetRequestType(RequestType type)
@@ -88,13 +106,7 @@ public class ExternalRequest<Q, R> : IExternalRequest
             return this;
         }
 
-        public Builder SetKey(string key)
-        {
-            _key = key;
-            return this;
-        }
-
-        public Builder SetValue(Q? value)
+        public Builder SetValue(V? value)
         {
             _value = value;
             return this;
@@ -106,10 +118,10 @@ public class ExternalRequest<Q, R> : IExternalRequest
             return this;
         }
 
-        public ExternalRequest<Q, R> Build()
+        public ExternalRequest<K, V> Build()
         {
             ArgumentNullException.ThrowIfNull(_property);
-            return new ExternalRequest<Q, R>(_type, _property, _key, _value, _option, null);
+            return new ExternalRequest<K, V>(_type, _property, _key, _value, _option, null);
         }
     }
 }
