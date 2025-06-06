@@ -54,11 +54,11 @@ public class MultiSourceProperty<K, V>(List<IKVProperty<K, V>> sources) : AbsPro
             {
                 case RequestType.Read:
                     {
-                        if (cache.pendingRequests.Count == 0)
+                        cache.pendingRequests.Add(request.Id);
+                        if (cache.pendingRequests.Count == 1)
                         {
                             ContinueReadRequest(context, request, cache);
                         }
-                        cache.pendingRequests.Add(request.Id);
                     }
                     break;
                 case RequestType.Modify:
@@ -100,12 +100,8 @@ public class MultiSourceProperty<K, V>(List<IKVProperty<K, V>> sources) : AbsPro
     {
         SealedPropertyRequest<K, V>? subRequest = null;
         PropertyRequestContent<K, V> requestContent = request.RequestContent.WithLock(request.RequestContent.Lock.Readonly());
-        while (subRequest is null)
+        while (subRequest is null && cache.readIndex < _sources.Count)
         {
-            if (cache.readIndex >= _sources.Count)
-            {
-                break;
-            }
             subRequest = context.Request(_sources[cache.readIndex], requestContent, OnReadResponse);
             cache.readIndex++;
         }
@@ -116,6 +112,7 @@ public class MultiSourceProperty<K, V>(List<IKVProperty<K, V>> sources) : AbsPro
             {
                 context.Respond(pendingRequest, PropertyResponseContent<V>.NewFailedResponse());
             }
+            context.Model.cacheItems.Remove(request.RequestContent.Key);
             return;
         }
         MultiSourcePropertyModel<K, V>.OriginalRequestItem originalRequest = new(request);
@@ -159,7 +156,7 @@ public class MultiSourceProperty<K, V>(List<IKVProperty<K, V>> sources) : AbsPro
             }
             if (trackers.Count > 0)
             {
-                ResponseTracker tracker = context.TrackerManager.GetOrAddTracker(request.originalRequest.request.RequestContent.Key);
+                ResponseTracker tracker = context.TrackerManager.GetOrAddTracker(originalRequestContent.Key);
                 tracker.UpdateTrackers(trackers, version);
                 response = PropertyResponseContent<V>.NewSuccessfulResponse(response.Value, tracker, version);
             }
@@ -168,6 +165,7 @@ public class MultiSourceProperty<K, V>(List<IKVProperty<K, V>> sources) : AbsPro
         {
             context.Respond(pendingRequest, response);
         }
+        context.Model.cacheItems.Remove(originalRequestContent.Key);
     }
 
     private void OnWriteResponse(PropertyContext<K, V, MultiSourcePropertyModel<K, V>, IPropertyExtension> context, long id, PropertyResponseContent<V> response)
