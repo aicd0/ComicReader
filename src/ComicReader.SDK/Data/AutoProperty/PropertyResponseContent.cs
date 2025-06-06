@@ -47,4 +47,9 @@ public class PropertyResponseContent<V>
     {
         return new(RequestResult.Failed, default, null, 0);
     }
+
+    public static PropertyResponseContent<V> NewFailedResponse(IReadonlyResponseTracker? tracker, int version)
+    {
+        return new(RequestResult.Failed, default, tracker, version);
+    }
 }

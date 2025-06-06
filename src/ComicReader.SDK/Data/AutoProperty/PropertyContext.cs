@@ -1,6 +1,8 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Diagnostics.CodeAnalysis;
+
 using ComicReader.SDK.Common.DebugTools;
 
 namespace ComicReader.SDK.Data.AutoProperty;
@@ -74,6 +76,26 @@ public class PropertyContext<K, V, M, E> : IKVPropertyContext<K, V>, IEPropertyC
     {
         _ongoingRequests.Add(request.Id, request);
         _newRequests.Add(request);
+    }
+
+    bool IKVPropertyContext<K, V>.TryGetLockResource(IKVProperty<K, V> property, K key, RequestType type, [MaybeNullWhen(false)] out LockResource resource)
+    {
+        try
+        {
+            resource = type switch
+            {
+                RequestType.Read => property.GetLockResource(key, LockType.Read),
+                RequestType.Modify => property.GetLockResource(key, LockType.Write),
+                _ => property.GetLockResource(key, LockType.Write),
+            };
+            return true;
+        }
+        catch (Exception e)
+        {
+            Logger.AssertNotReachHere("989E9B8FB5D10683", e);
+            resource = null;
+            return false;
+        }
     }
 
     void IPropertyContext.RearrangeRequests()

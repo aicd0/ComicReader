@@ -11,6 +11,8 @@ internal class LockManager
     private readonly Dictionary<int, LockResource> _lockResources = [];
     private int _nextTokenId = 0;
 
+    public bool ServerInvalidated { get; set; } = false; // for server use
+
     /// <summary>
     /// Attempts to acquire a lock on the specified <paramref name="resource"/>.
     /// If the lock can be acquired (i.e., no conflicting locks exist), a new <see cref="LockToken"/> is returned via the <paramref name="token"/> out parameter.
@@ -83,6 +85,7 @@ internal class LockManager
             return;
         }
         ReleaseLock(_rootLock, token, resource);
+        ServerInvalidated = true;
     }
 
     private bool CanAcquireLock(LockInfo lockInfo, LockResource resource)

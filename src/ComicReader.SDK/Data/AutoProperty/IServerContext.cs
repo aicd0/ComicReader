@@ -1,6 +1,8 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace ComicReader.SDK.Data.AutoProperty;
 
 internal interface IServerContext
@@ -10,4 +12,6 @@ internal interface IServerContext
     void HandleRespond<K, V>(IKVProperty<K, V> receiver, long requestId, PropertyResponseContent<V> responseContent) where K : IRequestKey;
 
     bool HandleRedirect<K, V>(IKVProperty<K, V> oldReceiver, long requestId, IKVProperty<K, V> newReceiver) where K : IRequestKey;
+
+    bool TryGetLockResource<K, V>(IKVProperty<K, V> property, K key, RequestType type, [MaybeNullWhen(false)] out LockResource resource) where K : IRequestKey;
 }

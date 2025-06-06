@@ -108,8 +108,17 @@ public class MemoryCacheProperty<K, V>(IKVProperty<K, V> source) : AbsProperty<K
             Logger.AssertNotReachHere("438086EBB6951D9E");
             return;
         }
-        request.cache.response = PropertyResponseContent<V>.NewSuccessfulResponse(request.originalRequest.RequestContent.Value, response.Tracker, response.Version);
-        context.Respond(request.originalRequest.Id, response);
+        PropertyResponseContent<V> finalResponse;
+        if (response.Result == RequestResult.Failed)
+        {
+            finalResponse = PropertyResponseContent<V>.NewFailedResponse(response.Tracker, response.Version);
+        }
+        else
+        {
+            finalResponse = PropertyResponseContent<V>.NewSuccessfulResponse(request.originalRequest.RequestContent.Value, response.Tracker, response.Version);
+            OnValueUpdate(context, request.originalRequest.RequestContent.Key, finalResponse.Value);
+        }
+        context.Respond(request.originalRequest.Id, finalResponse);
     }
 
     private static void OnValueUpdate(PropertyContext<K, V, MemoryCachePropertyModel<K, V>, IValueObserverExtension<K, V>> context, K key, V? value)

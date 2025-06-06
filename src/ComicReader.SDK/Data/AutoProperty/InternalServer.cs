@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 
 using ComicReader.SDK.Common.DebugTools;
 using ComicReader.SDK.Common.Threading;
@@ -91,7 +92,7 @@ internal class InternalServer : IServerContext
             DequeueProcessCallbacks();
             DequeueBatches();
 
-            if (_delayedActions.Count == 0)
+            if (_delayedActions.Count == 0 && !_lockManager.ServerInvalidated)
             {
                 break;
             }
@@ -111,8 +112,6 @@ internal class InternalServer : IServerContext
 
     private void DequeueBatches()
     {
-        IKVPropertyContext<VoidRequest, VoidType> context = GetOrCreatePropertyContext<VoidRequest, VoidType>(_serverProperty);
-        bool hasRequest = false;
         while (_batchInfoQueue.TryDequeue(out BatchInfo? batchInfo))
         {
             List<IExternalRequest> requests = [.. batchInfo.Request.Requests];
@@ -132,16 +131,8 @@ internal class InternalServer : IServerContext
                     continue;
                 }
                 _serverProperty.EnqueueRequest(request);
-                hasRequest = true;
+                _lockManager.ServerInvalidated = true;
             }
-        }
-
-        if (hasRequest)
-        {
-            _delayedActions.Add((result) =>
-            {
-                result.RearrangingProperties.Add(context);
-            });
         }
     }
 
@@ -150,6 +141,11 @@ internal class InternalServer : IServerContext
         DelayActionResult delayActionResult = new();
         while (true)
         {
+            if (_lockManager.ServerInvalidated)
+            {
+                _lockManager.ServerInvalidated = false;
+                delayActionResult.RearrangingProperties.Add(GetOrCreatePropertyContext((IProperty)_serverProperty));
+            }
             foreach (Action<DelayActionResult> action in _delayedActions)
             {
                 action(delayActionResult);
@@ -203,12 +199,12 @@ internal class InternalServer : IServerContext
             return null;
         }
 
-        LockResource lockResource = requestContent.Type switch
+        IKVPropertyContext<K, V> receiverContext = GetOrCreatePropertyContext(receiver);
+        if (!receiverContext.TryGetLockResource(receiver, requestContent.Key, requestContent.Type, out LockResource? lockResource))
         {
-            RequestType.Read => receiver.GetLockResource(requestContent.Key, LockType.Read),
-            RequestType.Modify => receiver.GetLockResource(requestContent.Key, LockType.Write),
-            _ => receiver.GetLockResource(requestContent.Key, LockType.Write),
-        };
+            Logger.AssertNotReachHere("3C8498174D5FCAE5");
+            return null;
+        }
         if (!requestContent.Lock.TryAcquire(lockResource, out LockToken? lockToken))
         {
             Logger.AssertNotReachHere("0BE4547085684DD9");
@@ -227,7 +223,6 @@ internal class InternalServer : IServerContext
 
         _delayedActions.Add((result) =>
         {
-            IKVPropertyContext<K, V> receiverContext = GetOrCreatePropertyContext(receiver);
             receiverContext.AddNewRequest(sealedRequest);
             result.RearrangingProperties.Add(receiverContext);
         });
@@ -313,6 +308,12 @@ internal class InternalServer : IServerContext
             result.RearrangingProperties.Add(receiverContext);
         });
         return true;
+    }
+
+    public bool TryGetLockResource<K, V>(IKVProperty<K, V> property, K key, RequestType type, [MaybeNullWhen(false)] out LockResource resource) where K : IRequestKey
+    {
+        IKVPropertyContext<K, V> context = GetOrCreatePropertyContext(property);
+        return context.TryGetLockResource(property, key, type, out resource);
     }
 
     private IPropertyContext GetOrCreatePropertyContext(IProperty property)
@@ -422,14 +423,18 @@ internal class InternalServer : IServerContext
         {
             while (_requests.TryPeek(out IExternalRequest? request))
             {
-                if (request.TryRequest(context, server._lockManager))
+                if (!request.TryGetLockResource(server, out LockResource? lockResource))
                 {
                     _requests.Dequeue();
+                    request.SetFailedResult("Failed to get lock resource.");
+                    continue;
                 }
-                else
+                if (!server._lockManager.TryAcquireLock(lockResource, out LockToken? token))
                 {
                     break;
                 }
+                _requests.Dequeue();
+                request.Request(context, token);
             }
         }
 

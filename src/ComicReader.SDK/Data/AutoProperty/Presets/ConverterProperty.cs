@@ -5,7 +5,7 @@ using ComicReader.SDK.Common.DebugTools;
 
 namespace ComicReader.SDK.Data.AutoProperty.Presets;
 
-public class ConverterProperty<K, A, B, V>(IKVProperty<A, B> source, Func<K, A> requestConverter, Func<PropertyResponseContent<B>, PropertyResponseContent<V>> responseConverter) : AbsProperty<K, V, ConverterPropertyModel, IPropertyExtension> where K : IRequestKey where A : IRequestKey
+public class ConverterProperty<K, A, B, V>(IKVProperty<A, B> source, Func<K, A> keyConverter, Func<V?, B?> valueConverter, Func<PropertyResponseContent<B>, PropertyResponseContent<V>> responseConverter) : AbsProperty<K, V, ConverterPropertyModel, IPropertyExtension> where K : IRequestKey where A : IRequestKey
 {
     public override ConverterPropertyModel CreateModel()
     {
@@ -14,7 +14,7 @@ public class ConverterProperty<K, A, B, V>(IKVProperty<A, B> source, Func<K, A> 
 
     public override LockResource GetLockResource(K key, LockType type)
     {
-        return source.GetLockResource(requestConverter(key), type);
+        return source.GetLockResource(keyConverter(key), type);
     }
 
     public override void RearrangeRequests(PropertyContext<K, V, ConverterPropertyModel, IPropertyExtension> context)
@@ -25,7 +25,7 @@ public class ConverterProperty<K, A, B, V>(IKVProperty<A, B> source, Func<K, A> 
             A convertedKey;
             try
             {
-                convertedKey = requestConverter(serverRequest.RequestContent.Key);
+                convertedKey = keyConverter(serverRequest.RequestContent.Key);
             }
             catch (Exception e)
             {
@@ -33,7 +33,18 @@ public class ConverterProperty<K, A, B, V>(IKVProperty<A, B> source, Func<K, A> 
                 context.Respond(serverRequest.Id, PropertyResponseContent<V>.NewFailedResponse());
                 continue;
             }
-            PropertyRequestContent<A, B> convertedRequest = serverRequest.RequestContent.WithKeyAndValue<A, B>(convertedKey, default);
+            B? convertedValue;
+            try
+            {
+                convertedValue = valueConverter(serverRequest.RequestContent.Value);
+            }
+            catch (Exception e)
+            {
+                Logger.AssertNotReachHere("A2FEA00738EB0F32", e);
+                context.Respond(serverRequest.Id, PropertyResponseContent<V>.NewFailedResponse());
+                continue;
+            }
+            PropertyRequestContent<A, B> convertedRequest = serverRequest.RequestContent.WithKeyAndValue(convertedKey, convertedValue);
             SealedPropertyRequest<A, B>? subRequest = context.Request(source, convertedRequest, OnResponse);
             if (subRequest is null)
             {

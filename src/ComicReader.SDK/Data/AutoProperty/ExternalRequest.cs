@@ -1,12 +1,13 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace ComicReader.SDK.Data.AutoProperty;
 
 public class ExternalRequest<K, V> : IExternalRequest where K : IRequestKey
 {
     private BatchInfo? _batch;
-    private LockToken? _lockToken;
 
     public RequestType Type { get; }
     public IKVProperty<K, V> Property { get; }
@@ -34,12 +35,6 @@ public class ExternalRequest<K, V> : IExternalRequest where K : IRequestKey
 
     private void DispatchResult(ExternalResponse<V> response)
     {
-        if (_lockToken is not null)
-        {
-            _lockToken.Release();
-            _lockToken = null;
-        }
-
         if (_batch == null)
         {
             throw new InvalidOperationException("Request before activation.");
@@ -64,27 +59,19 @@ public class ExternalRequest<K, V> : IExternalRequest where K : IRequestKey
         DispatchResult(new ExternalResponse<V>(RequestResult.Failed, reason: reason));
     }
 
-    bool IExternalRequest.TryRequest(PropertyContext<VoidRequest, VoidType, VoidType, IPropertyExtension> context, LockManager lockManager)
+    bool IExternalRequest.TryGetLockResource(IServerContext server, [MaybeNullWhen(false)] out LockResource resource)
     {
-        LockResource lockResource = Type switch
-        {
-            RequestType.Read => Property.GetLockResource(Key, LockType.Read),
-            RequestType.Modify => Property.GetLockResource(Key, LockType.Write),
-            _ => Property.GetLockResource(Key, LockType.Write),
-        };
-        if (!lockManager.TryAcquireLock(lockResource, out LockToken? token))
-        {
-            return false;
-        }
-        _lockToken = token;
+        return server.TryGetLockResource(Property, Key, Type, out resource);
+    }
 
+    void IExternalRequest.Request(PropertyContext<VoidRequest, VoidType, VoidType, IPropertyExtension> context, LockToken token)
+    {
         PropertyRequestContent<K, V> requestContent = new(Type, Key, Value, Option, token);
         SealedPropertyRequest<K, V>? request = context.Request(Property, requestContent, OnResponse);
         if (request is null)
         {
             DispatchResult(new ExternalResponse<V>(RequestResult.Failed));
         }
-        return true;
     }
 
     bool IReadonlyExternalRequest.IsNullValue()

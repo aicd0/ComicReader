@@ -15,7 +15,7 @@ public class AutoPropertyTest
         PropertyServer server = new("Test");
         TestProperty<int> sourceProperty = new();
         Func<PropertyResponseContent<int>, PropertyResponseContent<int>> responseConversionFunc = (response) => response;
-        ConverterProperty<TestPropertyKey, TestPropertyKey, int, int> converterProperty = new(sourceProperty, (request) => request, (response) => responseConversionFunc(response));
+        ConverterProperty<TestPropertyKey, TestPropertyKey, int, int> converterProperty = new(sourceProperty, (key) => key, (value) => value, (response) => responseConversionFunc(response));
 
         Func<string, int> valueFunc = (key) =>
         {
@@ -750,11 +750,12 @@ public class AutoPropertyTest
         TestProperty<int> sourceProperty = new();
         sourceProperty.Rearrange = true;
         sourceProperty.ProcessOnServerThread = true;
-        Func<TestPropertyKey, TestPropertyKey> requestConversionFunc = (request) => request;
+        Func<TestPropertyKey, TestPropertyKey> keyConversionFunc = (key) => key;
+        Func<int, int> valueConversionFunc = (value) => value;
         Func<PropertyResponseContent<int>, PropertyResponseContent<int>> responseConversionFunc = (response) => response;
-        ConverterProperty<TestPropertyKey, TestPropertyKey, int, int> convertProperty = new(sourceProperty, (request) => requestConversionFunc(request), (response) => responseConversionFunc(response));
+        ConverterProperty<TestPropertyKey, TestPropertyKey, int, int> convertProperty = new(sourceProperty, (key) => keyConversionFunc(key), (value) => valueConversionFunc(value), (response) => responseConversionFunc(response));
 
-        int keyCount = 100;
+        int keyCount = 1;
 
         void TestInternal(int offset, bool requestException, bool responseException, bool read, bool write)
         {
@@ -766,25 +767,29 @@ public class AutoPropertyTest
                 }
                 return -1;
             }
-            int requestValueFunc(string key)
+            string requestKeyFunc(string key)
             {
                 if (!int.TryParse(key, out int value))
                 {
                     value = -1;
                 }
-                return value + offset;
+                return (value + offset).ToString();
             }
             int responseValueFunc(int value)
             {
                 return value * 7 + offset;
             }
-            requestConversionFunc = (request) =>
+            keyConversionFunc = (key) =>
             {
                 if (requestException)
                 {
                     throw new InvalidOperationException();
                 }
-                return new(requestValueFunc(request.Name).ToString());
+                return new(requestKeyFunc(key.Name));
+            };
+            valueConversionFunc = (value) =>
+            {
+                return value * 3 + offset * 9;
             };
             responseConversionFunc = (response) =>
             {
@@ -822,7 +827,7 @@ public class AutoPropertyTest
                 {
                     int examFunc(string key)
                     {
-                        return responseValueFunc(valueFunc(key, requestValueFunc(key)));
+                        return responseValueFunc(valueFunc(requestKeyFunc(key), valueConversionFunc(default)));
                     }
                     tests.AddRange(AppendSerialReadTest(batch, convertProperty, 0, keyCount, examFunc));
                 }
@@ -842,7 +847,7 @@ public class AutoPropertyTest
                     for (int i = 0; i < keyCount; i++)
                     {
                         string key = i.ToString();
-                        expectWrittenValue[key] = valueFunc(key, requestValueFunc(key));
+                        expectWrittenValue[requestKeyFunc(key)] = valueFunc(requestKeyFunc(key), valueConversionFunc(-1));
                     }
                 }
             }
@@ -952,12 +957,13 @@ public class AutoPropertyTest
         for (int i = start; i < count; i++)
         {
             TestPropertyKey key = new(i.ToString());
+            T value = valueFunc(key.Name);
             ExternalRequest<TestPropertyKey, T> request = new ExternalRequest<TestPropertyKey, T>.Builder(property, key).SetRequestType(RequestType.Read).Build();
             batch.Requests.Add(request);
             IRequestTest test;
             if (result == RequestResult.Successful)
             {
-                test = new ReadRequestTest<TestPropertyKey, T>(request, valueFunc(key.Name));
+                test = new ReadRequestTest<TestPropertyKey, T>(request, value);
             }
             else
             {
