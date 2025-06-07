@@ -256,7 +256,7 @@
     <value>Left to right</value>
   </data>
   <data name="LibraryEmptyPart1.Text" xml:space="preserve">
-    <value>Seems that your library is empty. Try</value>
+    <value>No results under current filter settings. Try</value>
   </data>
   <data name="LibraryEmptyPart2.Text" xml:space="preserve">
     <value>or</value>

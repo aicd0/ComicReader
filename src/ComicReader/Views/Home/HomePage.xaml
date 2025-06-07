@@ -143,7 +143,7 @@
                         <Grid
                             x:Name="SpLibraryEmpty"
                             Padding="0,30"
-                            Visibility="{x:Bind ViewModel.LibraryEmptyVisible}">
+                            Visibility="{x:Bind ViewModel.LibraryEmptyVisible, Mode=OneWay}">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="*" />

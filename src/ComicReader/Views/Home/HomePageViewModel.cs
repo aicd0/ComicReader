@@ -5,20 +5,18 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Common.Threading;
-using ComicReader.Data;
 using ComicReader.Data.Models;
 using ComicReader.Data.Models.Comic;
-using ComicReader.Data.Tables;
 using ComicReader.SDK.Common.Algorithm;
 using ComicReader.SDK.Common.DebugTools;
 using ComicReader.SDK.Common.Threading;
-using ComicReader.SDK.Data.SqlHelpers;
 using ComicReader.ViewModels;
 
 using Microsoft.UI.Xaml.Controls;
@@ -148,12 +146,12 @@ internal class HomePageViewModel : INotifyPropertyChanged
         }
     }
 
+    private readonly ComicSearchEngine _searchEngine = new();
     private ComicFilterModel.ExternalModel _filterModel = new();
     private readonly List<ComicItemViewModel> _comicItems = [];
     private readonly List<ComicItemViewModel> _selectedComicItems = [];
 
     private readonly ITaskDispatcher _sharedDispatcher = TaskDispatcher.DefaultQueue;
-    private int _updateLibrarySubmitted = 0;
     private int _updateFilterSubmitted = 0;
     private int _updateComicSubmitted = 0;
 
@@ -170,8 +168,9 @@ internal class HomePageViewModel : INotifyPropertyChanged
     /// </remarks>
     public void Initialize()
     {
+        _searchEngine.SetResultCallback(OnComicSearchResult);
+        _searchEngine.Update();
         ScheduleUpdateFilters(true);
-        ScheduleUpdateLibrary();
     }
 
     /// <summary>
@@ -482,6 +481,15 @@ internal class HomePageViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
+    /// Search the comics by keywords.
+    /// </summary>
+    /// <param name="searchText">The search text.</param>
+    public void SetSearchText(string searchText)
+    {
+        _searchEngine.SetSearchText(searchText);
+    }
+
+    /// <summary>
     /// Updates the comic library and refreshes the displayed items.
     /// </summary>
     /// <remarks>
@@ -489,7 +497,22 @@ internal class HomePageViewModel : INotifyPropertyChanged
     /// </remarks>
     public void UpdateLibrary()
     {
-        ScheduleUpdateLibrary();
+        _searchEngine.Update();
+    }
+
+    private void OnComicSearchResult(IReadOnlyList<ComicModel> items)
+    {
+        _sharedDispatcher.Submit("OnComicSearchResult", delegate
+        {
+            _comicItems.Clear();
+            foreach (ComicModel item in items)
+            {
+                var model = new ComicItemViewModel();
+                model.Update(item);
+                _comicItems.Add(model);
+            }
+            ScheduleUpdateComics();
+        });
     }
 
     private void UpdateCommandBarButtonsNoLock()
@@ -545,19 +568,6 @@ internal class HomePageViewModel : INotifyPropertyChanged
         });
     }
 
-    private void ScheduleUpdateLibrary()
-    {
-        if (Interlocked.CompareExchange(ref _updateLibrarySubmitted, 1, 0) == 1)
-        {
-            return;
-        }
-        _sharedDispatcher.Submit("UpdateLibrary", delegate
-        {
-            Interlocked.Exchange(ref _updateLibrarySubmitted, 0);
-            UpdateLibraryNoLock().Wait();
-        });
-    }
-
     private void ScheduleUpdateFilters(bool reloadFromDatabase)
     {
         if (Interlocked.CompareExchange(ref _updateFilterSubmitted, 1, 0) == 1)
@@ -582,47 +592,6 @@ internal class HomePageViewModel : INotifyPropertyChanged
             Interlocked.Exchange(ref _updateComicSubmitted, 0);
             UpdateComicsNoLock().Wait();
         });
-    }
-
-    private async Task UpdateLibraryNoLock()
-    {
-        Logger.I(TAG, "UpdateLibraryNoLock");
-
-        List<Tuple<long, DateTimeOffset>> records = [];
-        await ComicData.EnqueueCommand(delegate
-        {
-            var command = new SelectCommand<ComicTable>(ComicTable.Instance);
-            SelectCommand<ComicTable>.IToken<long> idToken = command.PutQueryInt64(ComicTable.ColumnId);
-            SelectCommand<ComicTable>.IToken<DateTimeOffset> lastVisitToken = command.PutQueryDateTimeOffset(ComicTable.ColumnLastVisit);
-            using SelectCommand<ComicTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
-
-            while (reader.Read())
-            {
-                records.Add(new Tuple<long, DateTimeOffset>
-                (
-                    idToken.GetValue(),
-                    lastVisitToken.GetValue()
-                ));
-            }
-        }, "HomeLoadLibrary");
-
-        var comicItems = new List<ComicItemViewModel>();
-        foreach (Tuple<long, DateTimeOffset> record in records)
-        {
-            ComicModel? comic = await ComicModel.FromId(record.Item1, "HomeLoadComic");
-            if (comic == null)
-            {
-                continue;
-            }
-            var model = new ComicItemViewModel();
-            model.Update(comic);
-            comicItems.Add(model);
-        }
-
-        _comicItems.Clear();
-        _comicItems.AddRange(comicItems);
-
-        ScheduleUpdateComics();
     }
 
     private async Task UpdateFiltersNoLock(bool reloadFromDatabase)
@@ -700,12 +669,16 @@ internal class HomePageViewModel : INotifyPropertyChanged
     {
         Logger.I(TAG, "UpdateComicsNoLock");
 
-        List<ComicItemViewModel> filteredItems = _comicItems.FindAll(x => !x.IsHide);
-        bool isEmpty = filteredItems.Count == 0;
+        IReadOnlyList<ComicItemViewModel> comicItems = _comicItems;
+        bool isEmpty = comicItems.Count == 0;
         List<ComicItemViewModel>? comicsUngrouped = null;
         List<ComicGroupViewModel>? comicsGrouped = null;
 
-        if (!isEmpty)
+        if (isEmpty)
+        {
+            comicsUngrouped = [];
+        }
+        else
         {
             ComicFilterModel.ExternalFilterModel filter = _filterModel.LastFilter ?? CreateDefaultFilter();
             ComicPropertyModel sortBy = filter.SortBy;
@@ -716,7 +689,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
             if (groupBy != null)
             {
                 Dictionary<string, List<ComicItemViewModel>> groupMap = [];
-                foreach (ComicItemViewModel item in filteredItems)
+                foreach (ComicItemViewModel item in comicItems)
                 {
                     string groupName = groupBy.GetPropertyAsGroupName(item.Comic);
                     if (!groupMap.TryGetValue(groupName, out List<ComicItemViewModel>? group))
@@ -744,7 +717,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
             }
             else
             {
-                comicsUngrouped = SortComicItemsByProerty(filteredItems, sortBy, sortByAscending);
+                comicsUngrouped = SortComicItemsByProerty(comicItems, sortBy, sortByAscending);
             }
         }
 
@@ -752,42 +725,41 @@ internal class HomePageViewModel : INotifyPropertyChanged
         {
             LibraryEmptyVisible = isEmpty;
 
-            if (!isEmpty)
+            Func<ComicItemViewModel, ComicItemViewModel, bool> comparer = (ComicItemViewModel x, ComicItemViewModel y) =>
+                x.Comic.Title == y.Comic.Title &&
+                x.Rating == y.Rating &&
+                x.Progress == y.Progress &&
+                x.IsFavorite == y.IsFavorite;
+            if (comicsGrouped != null)
             {
-                Func<ComicItemViewModel, ComicItemViewModel, bool> comparer = (ComicItemViewModel x, ComicItemViewModel y) =>
-                    x.Comic.Title == y.Comic.Title &&
-                    x.Rating == y.Rating &&
-                    x.Progress == y.Progress &&
-                    x.IsFavorite == y.IsFavorite;
-                if (comicsGrouped != null)
+                Dictionary<string, ComicGroupViewModel> groupMap = [];
+                foreach (ComicGroupViewModel item in comicsGrouped)
                 {
-                    Dictionary<string, ComicGroupViewModel> groupMap = [];
-                    foreach (ComicGroupViewModel item in comicsGrouped)
-                    {
-                        groupMap[item.GroupName] = item;
-                    }
-                    foreach (ComicGroupViewModel item in GroupedComicItems)
-                    {
-                        if (groupMap.TryGetValue(item.GroupName, out ComicGroupViewModel? group))
-                        {
-                            item.UpdateItems(group.Items, comparer);
-                        }
-                    }
-                    DiffUtils.UpdateCollection(GroupedComicItems, comicsGrouped, (ComicGroupViewModel x, ComicGroupViewModel y) => x.GroupName == y.GroupName);
-                    GroupingEnabledLiveData.Emit(true);
+                    groupMap[item.GroupName] = item;
                 }
-                else if (comicsUngrouped != null)
+                foreach (ComicGroupViewModel item in GroupedComicItems)
                 {
-                    DiffUtils.UpdateCollection(UngroupedComicItems, comicsUngrouped, comparer);
-                    GroupingEnabledLiveData.Emit(false);
+                    if (groupMap.TryGetValue(item.GroupName, out ComicGroupViewModel? group))
+                    {
+                        item.UpdateItems(group.Items, comparer);
+                    }
                 }
+                DiffUtils.UpdateCollection(GroupedComicItems, comicsGrouped, (ComicGroupViewModel x, ComicGroupViewModel y) => x.GroupName == y.GroupName);
+                GroupingEnabledLiveData.Emit(true);
+            }
+            else if (comicsUngrouped != null)
+            {
+                DiffUtils.UpdateCollection(UngroupedComicItems, comicsUngrouped, comparer);
+                GroupingEnabledLiveData.Emit(false);
             }
         });
     }
 
-    private List<ComicItemViewModel> SortComicItemsByProerty(List<ComicItemViewModel> items, ComicPropertyModel property, bool ascending)
+    private List<ComicItemViewModel> SortComicItemsByProerty(IReadOnlyList<ComicItemViewModel> items, ComicPropertyModel property, bool ascending)
     {
-        List<KeyValuePair<IComparable, ComicItemViewModel>> paired = items.ConvertAll(x => new KeyValuePair<IComparable, ComicItemViewModel>(property.GetPropertyAsComparable(x.Comic), x));
+        var paired = items
+            .Select(x => new KeyValuePair<IComparable, ComicItemViewModel>(property.GetPropertyAsComparable(x.Comic), x))
+            .ToList();
         if (ascending)
         {
             paired.Sort((x, y) => x.Key.CompareTo(y.Key));
@@ -796,7 +768,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
         {
             paired.Sort((x, y) => y.Key.CompareTo(x.Key));
         }
-        return paired.ConvertAll(x => x.Value);
+        return [.. paired.Select(x => x.Value)];
     }
 
     private ComicFilterModel.ExternalFilterModel EnsureLastFilterNoLock()

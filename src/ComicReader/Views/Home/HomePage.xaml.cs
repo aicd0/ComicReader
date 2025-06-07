@@ -15,6 +15,7 @@ using ComicReader.SDK.Common.DebugTools;
 using ComicReader.UserControls;
 using ComicReader.ViewModels;
 using ComicReader.Views.Main;
+using ComicReader.Views.Navigation;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -121,6 +122,7 @@ internal sealed partial class HomePage : BasePage
                     break;
             }
         });
+        GetNavigationPageAbility().RegisterSearchTextChangeHandler(this, ViewModel.SetSearchText);
     }
 
     //
@@ -417,7 +419,12 @@ internal sealed partial class HomePage : BasePage
 
     private IMainPageAbility GetMainPageAbility()
     {
-        return GetAbility<IMainPageAbility>();
+        return GetAbility<IMainPageAbility>()!;
+    }
+
+    private INavigationPageAbility GetNavigationPageAbility()
+    {
+        return GetAbility<INavigationPageAbility>()!;
     }
 
     private void OnComicDataUpdated()

@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
@@ -127,6 +128,16 @@ internal sealed class ComicModel
     private static readonly ConcurrentWeakPool<long, ComicModel> _idPool = new();
     private static readonly ConcurrentWeakPool<string, ComicModel> _locationPool = new();
 
+    private static bool TryGetExisting(long id, [MaybeNullWhen(false)] out ComicModel model)
+    {
+        return _idPool.TryGetValue(id, out model);
+    }
+
+    private static bool TryGetExisting(string location, [MaybeNullWhen(false)] out ComicModel model)
+    {
+        return _locationPool.TryGetValue(location, out model);
+    }
+
     private static ComicModel? ReplaceWithExisting(ComicData? comicData)
     {
         if (comicData == null)
@@ -152,12 +163,20 @@ internal sealed class ComicModel
 
     public static async Task<ComicModel?> FromId(long id, string taskName)
     {
+        if (TryGetExisting(id, out ComicModel? model))
+        {
+            return model;
+        }
         ComicData? comicData = await ComicData.FromId(id, taskName);
         return ReplaceWithExisting(comicData);
     }
 
     public static async Task<ComicModel?> FromLocation(string location, string taskName)
     {
+        if (TryGetExisting(location, out ComicModel? model))
+        {
+            return model;
+        }
         ComicData? comicData = await ComicData.FromLocation(location, taskName);
         return ReplaceWithExisting(comicData);
     }

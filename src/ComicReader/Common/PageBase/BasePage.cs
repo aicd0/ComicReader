@@ -1,8 +1,6 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-#nullable disable
-
 using ComicReader.Common.Lifecycle;
 using ComicReader.Helpers.Navigation;
 using ComicReader.SDK.Common.DebugTools;
@@ -19,8 +17,8 @@ internal abstract class BasePage : Page
 {
     protected int WindowId { get; private set; } = 0;
 
-    private PageCommunicator _communicator;
-    private PointerPoint _lastPointerPoint;
+    private PageCommunicator? _communicator = null;
+    private PointerPoint? _lastPointerPoint = null;
 
     private bool _isStarted = false;
     private bool _isResumed = false;
@@ -92,14 +90,14 @@ internal abstract class BasePage : Page
     {
     }
 
-    protected T GetAbility<T>() where T : class
+    protected T? GetAbility<T>() where T : class
     {
-        return _communicator.GetAbility<T>();
+        return _communicator?.GetAbility<T>();
     }
 
     protected EventBus GetEventBus()
     {
-        return App.WindowManager.GetEventBus(WindowId);
+        return App.WindowManager.GetEventBus(WindowId)!;
     }
 
     protected bool CanHandleTapped()
@@ -119,7 +117,7 @@ internal abstract class BasePage : Page
 
     private void OnLoadedInternal(object sender, RoutedEventArgs e)
     {
-        if (!(sender as Page).IsLoaded)
+        if (!((Page)sender).IsLoaded)
         {
             return;
         }
@@ -130,7 +128,7 @@ internal abstract class BasePage : Page
 
     private void OnUnloadedInternal(object sender, RoutedEventArgs e)
     {
-        if ((sender as Page).IsLoaded)
+        if (((Page)sender).IsLoaded)
         {
             return;
         }
@@ -165,7 +163,6 @@ internal abstract class BasePage : Page
         else
         {
             Logger.AssertNotReachHere("4E6487BEA8B0B06F");
-            OnStart(null);
         }
     }
 
@@ -206,7 +203,7 @@ internal abstract class BasePage : Page
         }
 
         _isStarted = false;
-        _communicator.GetAbility<ICommonPageAbility>()?.UnregisterPageStopHandler(_pageStopHandler);
+        _communicator?.GetAbility<ICommonPageAbility>()?.UnregisterPageStopHandler(_pageStopHandler);
         LogLifecycleEvent("Stop");
         OnStop();
     }

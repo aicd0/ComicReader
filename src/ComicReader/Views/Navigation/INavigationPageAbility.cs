@@ -13,6 +13,7 @@ internal interface INavigationPageAbility : IPageAbility
     public delegate void GridViewModeChangedEventHandler(bool enabled);
     public delegate void FavoriteChangedEventHandler(bool isFavorite);
     public delegate void ReaderSettingsChangedEventHandler(ReaderSettingDataModel settings);
+    public delegate void SearchTextChangeEventHandler(string text);
 
     void SetReaderSettings(ReaderSettingDataModel settings);
 
@@ -37,4 +38,6 @@ internal interface INavigationPageAbility : IPageAbility
     void RegisterReaderSettingsChangedEventHandler(Page owner, ReaderSettingsChangedEventHandler handler);
 
     void RegisterFavoriteChangedEventHandler(Page owner, FavoriteChangedEventHandler handler);
+
+    void RegisterSearchTextChangeHandler(Page owner, SearchTextChangeEventHandler handler);
 }

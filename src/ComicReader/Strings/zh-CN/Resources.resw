@@ -256,7 +256,7 @@
     <value>从左到右</value>
   </data>
   <data name="LibraryEmptyPart1.Text" xml:space="preserve">
-    <value>您的仓库似乎是空的，尝试</value>
+    <value>当前筛选条件下没有找到结果，尝试</value>
   </data>
   <data name="LibraryEmptyPart2.Text" xml:space="preserve">
     <value>或</value>

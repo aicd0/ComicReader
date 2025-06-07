@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Threading;
 
 using ComicReader.SDK.Common.DebugTools;
@@ -17,6 +18,20 @@ internal class ConcurrentWeakPool<K, V> where K : notnull where V : class
     private readonly ConcurrentDictionary<K, WeakReference<V>> _pool = new();
     private int _cleaning = 0;
     private long _lastCleanupTime = 0;
+
+    public bool TryGetValue(K key, [MaybeNullWhen(false)] out V value)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+
+        CleanupIfNeeded();
+
+        if (_pool.TryGetValue(key, out WeakReference<V>? valueRef) && valueRef.TryGetTarget(out value))
+        {
+            return true;
+        }
+        value = null;
+        return false;
+    }
 
     public V GetOrAdd(K key, V value)
     {
