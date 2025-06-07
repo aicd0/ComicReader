@@ -54,9 +54,9 @@ public class ExternalRequest<K, V> : IExternalRequest where K : IRequestKey
         _batch = batch;
     }
 
-    void IExternalRequest.SetFailedResult(string reason)
+    void IExternalRequest.SetResult(OperationResult result, string message)
     {
-        DispatchResult(new ExternalResponse<V>(RequestResult.Failed, reason: reason));
+        DispatchResult(new ExternalResponse<V>(result, message: message));
     }
 
     bool IExternalRequest.TryGetLockResource(IServerContext server, [MaybeNullWhen(false)] out LockResource resource)
@@ -67,10 +67,10 @@ public class ExternalRequest<K, V> : IExternalRequest where K : IRequestKey
     void IExternalRequest.Request(PropertyContext<VoidRequest, VoidType, VoidType, IPropertyExtension> context, LockToken token)
     {
         PropertyRequestContent<K, V> requestContent = new(Type, Key, Value, Option, token);
-        SealedPropertyRequest<K, V>? request = context.Request(Property, requestContent, OnResponse);
-        if (request is null)
+        OperationResult result = context.Request(Property, requestContent, OnResponse, out _);
+        if (result != OperationResult.Successful)
         {
-            DispatchResult(new ExternalResponse<V>(RequestResult.Failed));
+            DispatchResult(new ExternalResponse<V>(result));
         }
     }
 

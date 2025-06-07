@@ -46,7 +46,7 @@ public class SimplePropertyOperator<K, V> where K : IRequestKey
         batchRequest.Requests.Add(request);
         ExternalBatchResponse batchResponse = await _server.Request(batchRequest);
         ExternalResponse<V>? response = batchResponse.GetResponse(request);
-        if (response != null && response.Result == RequestResult.Successful)
+        if (response != null && response.Result == OperationResult.Successful)
         {
             _localCache[key] = response.Value;
             return response.Value;
@@ -67,7 +67,7 @@ public class SimplePropertyOperator<K, V> where K : IRequestKey
         batchRequest.Requests.Add(request);
         ExternalBatchResponse batchResponse = await _server.Request(batchRequest);
         ExternalResponse<V>? response = batchResponse.GetResponse(request);
-        return response != null && response.Result == RequestResult.Successful;
+        return response != null && response.Result == OperationResult.Successful;
     }
 
     private class CoreExtension : IValueObserverExtension<K, V>

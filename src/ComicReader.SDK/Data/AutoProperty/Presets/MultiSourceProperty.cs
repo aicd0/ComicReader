@@ -67,8 +67,8 @@ public class MultiSourceProperty<K, V>(List<IKVProperty<K, V>> sources) : AbsPro
                         MultiSourcePropertyModel<K, V>.OriginalRequestItem originalRequest = new(request);
                         foreach (IKVProperty<K, V> source in _sources)
                         {
-                            SealedPropertyRequest<K, V>? subRequest = context.Request(source, subRequestContent, OnWriteResponse);
-                            if (subRequest is null)
+                            OperationResult result = context.Request(source, subRequestContent, OnWriteResponse, out long requestId);
+                            if (result != OperationResult.Successful)
                             {
                                 if (!originalRequest.responded)
                                 {
@@ -77,7 +77,7 @@ public class MultiSourceProperty<K, V>(List<IKVProperty<K, V>> sources) : AbsPro
                                 }
                                 continue;
                             }
-                            context.Model.requests[subRequest.Id] = new(originalRequest, cache);
+                            context.Model.requests[requestId] = new(originalRequest, cache);
                             originalRequest.requesting++;
                         }
                         request.RequestContent.Lock.Release();
@@ -98,14 +98,15 @@ public class MultiSourceProperty<K, V>(List<IKVProperty<K, V>> sources) : AbsPro
 
     private void ContinueReadRequest(PropertyContext<K, V, MultiSourcePropertyModel<K, V>, IPropertyExtension> context, SealedPropertyRequest<K, V> request, MultiSourcePropertyModel<K, V>.CacheItem cache)
     {
-        SealedPropertyRequest<K, V>? subRequest = null;
+        long requestId = 0;
+        OperationResult result = OperationResult.PropertyError;
         PropertyRequestContent<K, V> requestContent = request.RequestContent.WithLock(request.RequestContent.Lock.Readonly());
-        while (subRequest is null && cache.readIndex < _sources.Count)
+        while (result != OperationResult.Successful && cache.readIndex < _sources.Count)
         {
-            subRequest = context.Request(_sources[cache.readIndex], requestContent, OnReadResponse);
+            result = context.Request(_sources[cache.readIndex], requestContent, OnReadResponse, out requestId);
             cache.readIndex++;
         }
-        if (subRequest is null)
+        if (result != OperationResult.Successful)
         {
             cache.readIndex = 0;
             foreach (long pendingRequest in cache.pendingRequests)
@@ -116,7 +117,7 @@ public class MultiSourceProperty<K, V>(List<IKVProperty<K, V>> sources) : AbsPro
             return;
         }
         MultiSourcePropertyModel<K, V>.OriginalRequestItem originalRequest = new(request);
-        context.Model.requests[subRequest.Id] = new(originalRequest, cache);
+        context.Model.requests[requestId] = new(originalRequest, cache);
     }
 
     private void OnReadResponse(PropertyContext<K, V, MultiSourcePropertyModel<K, V>, IPropertyExtension> context, long id, PropertyResponseContent<V> response)
@@ -128,7 +129,7 @@ public class MultiSourceProperty<K, V>(List<IKVProperty<K, V>> sources) : AbsPro
         }
 
         request.originalRequest.responses.Add(response);
-        if (response.Result != RequestResult.Successful)
+        if (response.Result != OperationResult.Successful)
         {
             ContinueReadRequest(context, request.originalRequest.request, request.cache);
             return;
@@ -138,7 +139,7 @@ public class MultiSourceProperty<K, V>(List<IKVProperty<K, V>> sources) : AbsPro
         PropertyRequestContent<K, V> compensationRequest = originalRequestContent.WithRequestTypeAndValueAndLock(RequestType.Modify, response.Value, originalRequestContent.Lock.Readonly());
         for (int i = request.cache.readIndex - 2; i >= 0; i--)
         {
-            context.Request(_sources[i], compensationRequest, OnCompensateResponse);
+            _ = context.Request(_sources[i], compensationRequest, OnCompensateResponse, out _);
         }
         originalRequestContent.Lock.Release();
 
@@ -182,7 +183,7 @@ public class MultiSourceProperty<K, V>(List<IKVProperty<K, V>> sources) : AbsPro
 
         if (!request.originalRequest.responded)
         {
-            if (response.Result == RequestResult.Failed)
+            if (response.Result != OperationResult.Successful)
             {
                 request.originalRequest.responded = true;
                 context.Respond(request.originalRequest.request.Id, PropertyResponseContent<V>.NewFailedResponse());

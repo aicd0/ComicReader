@@ -45,13 +45,13 @@ public class ConverterProperty<K, A, B, V>(IKVProperty<A, B> source, Func<K, A> 
                 continue;
             }
             PropertyRequestContent<A, B> convertedRequest = serverRequest.RequestContent.WithKeyAndValue(convertedKey, convertedValue);
-            SealedPropertyRequest<A, B>? subRequest = context.Request(source, convertedRequest, OnResponse);
-            if (subRequest is null)
+            OperationResult result = context.Request(source, convertedRequest, OnResponse, out long requestId);
+            if (result != OperationResult.Successful)
             {
                 context.Respond(serverRequest.Id, PropertyResponseContent<V>.NewFailedResponse());
                 continue;
             }
-            model.requests[subRequest.Id] = serverRequest.Id;
+            model.requests[requestId] = serverRequest.Id;
         }
     }
 

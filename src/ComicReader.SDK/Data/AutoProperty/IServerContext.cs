@@ -7,11 +7,11 @@ namespace ComicReader.SDK.Data.AutoProperty;
 
 internal interface IServerContext
 {
-    SealedPropertyRequest<K, V>? HandleRequest<K, V>(IProperty sender, IKVProperty<K, V> receiver, PropertyRequestContent<K, V> requestContent, Action<long, PropertyResponseContent<V>> handler) where K : IRequestKey;
+    OperationResult HandleRequest<K, V>(IProperty sender, IKVProperty<K, V> receiver, PropertyRequestContent<K, V> requestContent, Action<long, PropertyResponseContent<V>> handler, out long requestId) where K : IRequestKey;
 
-    void HandleRespond<K, V>(IKVProperty<K, V> receiver, long requestId, PropertyResponseContent<V> responseContent) where K : IRequestKey;
+    OperationResult HandleRespond<K, V>(IKVProperty<K, V> receiver, long requestId, PropertyResponseContent<V> responseContent) where K : IRequestKey;
 
-    bool HandleRedirect<K, V>(IKVProperty<K, V> oldReceiver, long requestId, IKVProperty<K, V> newReceiver) where K : IRequestKey;
+    OperationResult HandleRedirect<K, V>(IKVProperty<K, V> oldReceiver, long requestId, IKVProperty<K, V> newReceiver) where K : IRequestKey;
 
     bool TryGetLockResource<K, V>(IKVProperty<K, V> property, K key, RequestType type, [MaybeNullWhen(false)] out LockResource resource) where K : IRequestKey;
 }

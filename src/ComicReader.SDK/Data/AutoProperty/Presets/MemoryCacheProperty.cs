@@ -51,26 +51,26 @@ public class MemoryCacheProperty<K, V>(IKVProperty<K, V> source) : AbsProperty<K
                         }
                         if (cache.pendingRequests.Count == 0)
                         {
-                            SealedPropertyRequest<K, V>? subRequest = context.Request(source, request.RequestContent, OnReadResponse);
-                            if (subRequest is null)
+                            OperationResult result = context.Request(source, request.RequestContent, OnReadResponse, out long requestId);
+                            if (result != OperationResult.Successful)
                             {
                                 context.Respond(request.Id, PropertyResponseContent<V>.NewFailedResponse());
                                 break;
                             }
-                            context.Model.requests[subRequest.Id] = new(request, cache);
+                            context.Model.requests[requestId] = new(request, cache);
                         }
                         cache.pendingRequests.Add(request.Id);
                     }
                     break;
                 case RequestType.Modify:
                     {
-                        SealedPropertyRequest<K, V>? subRequest = context.Request(source, request.RequestContent, OnWriteResponse);
-                        if (subRequest is null)
+                        OperationResult result = context.Request(source, request.RequestContent, OnWriteResponse, out long requestId);
+                        if (result != OperationResult.Successful)
                         {
                             context.Respond(request.Id, PropertyResponseContent<V>.NewFailedResponse());
                             break;
                         }
-                        context.Model.requests[subRequest.Id] = new(request, cache);
+                        context.Model.requests[requestId] = new(request, cache);
                     }
                     break;
                 default:
@@ -109,7 +109,7 @@ public class MemoryCacheProperty<K, V>(IKVProperty<K, V> source) : AbsProperty<K
             return;
         }
         PropertyResponseContent<V> finalResponse;
-        if (response.Result == RequestResult.Failed)
+        if (response.Result != OperationResult.Successful)
         {
             finalResponse = PropertyResponseContent<V>.NewFailedResponse(response.Tracker, response.Version);
         }

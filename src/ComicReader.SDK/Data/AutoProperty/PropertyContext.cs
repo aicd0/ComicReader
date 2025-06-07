@@ -33,7 +33,7 @@ public class PropertyContext<K, V, M, E> : IKVPropertyContext<K, V>, IEPropertyC
         _model = property.CreateModel();
     }
 
-    public SealedPropertyRequest<A, B>? Request<A, B>(IKVProperty<A, B> target, PropertyRequestContent<A, B> request, Action<PropertyContext<K, V, M, E>, long, PropertyResponseContent<B>> handler) where A : IRequestKey
+    public OperationResult Request<A, B>(IKVProperty<A, B> target, PropertyRequestContent<A, B> request, Action<PropertyContext<K, V, M, E>, long, PropertyResponseContent<B>> handler, out long requestId) where A : IRequestKey
     {
         return _context.HandleRequest(_property, target, request, (p1, p2) =>
         {
@@ -46,25 +46,27 @@ public class PropertyContext<K, V, M, E> : IKVPropertyContext<K, V>, IEPropertyC
                 Logger.AssertNotReachHere("E8FC3756E7055FA8", e);
                 ResetProperty();
             }
-        });
+        }, out requestId);
     }
 
-    public void Respond(long requestId, PropertyResponseContent<V> response)
+    public OperationResult Respond(long requestId, PropertyResponseContent<V> response)
     {
         if (!_ongoingRequests.Remove(requestId, out SealedPropertyRequest<K, V>? _))
         {
             Logger.AssertNotReachHere("14672E06AAB0669E");
-            return;
+            return OperationResult.NoPermission;
         }
-        _context.HandleRespond(_property, requestId, response);
+        return _context.HandleRespond(_property, requestId, response);
     }
 
-    public void Redirect(long requestId, IKVProperty<K, V> target)
+    public OperationResult Redirect(long requestId, IKVProperty<K, V> target)
     {
-        if (_context.HandleRedirect(_property, requestId, target))
+        OperationResult result = _context.HandleRedirect(_property, requestId, target);
+        if (result == OperationResult.Successful)
         {
             _ongoingRequests.Remove(requestId);
         }
+        return result;
     }
 
     void IPropertyContext.ClearNewRequests()
@@ -140,7 +142,7 @@ public class PropertyContext<K, V, M, E> : IKVPropertyContext<K, V>, IEPropertyC
 
     void IPropertyContext.CancelRequest(long id)
     {
-        Respond(id, PropertyResponseContent<V>.NewFailedResponse());
+        Respond(id, PropertyResponseContent<V>.NewResponse(OperationResult.UnhandledRequest));
     }
 
     void IEPropertyContext<E>.RegisterExtension(E extension)
@@ -153,7 +155,7 @@ public class PropertyContext<K, V, M, E> : IKVPropertyContext<K, V>, IEPropertyC
         List<SealedPropertyRequest<K, V>> requests = [.. _ongoingRequests.Values];
         foreach (SealedPropertyRequest<K, V> request in requests)
         {
-            Respond(request.Id, PropertyResponseContent<V>.NewFailedResponse());
+            Respond(request.Id, PropertyResponseContent<V>.NewResponse(OperationResult.ExceptionInUserCode));
         }
         _model = _property.CreateModel();
         _newRequests.Clear();

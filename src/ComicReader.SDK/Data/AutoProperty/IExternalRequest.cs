@@ -11,7 +11,7 @@ public interface IExternalRequest : IReadonlyExternalRequest
 
     internal void Activate(BatchInfo batch);
 
-    internal void SetFailedResult(string reason);
+    internal void SetResult(OperationResult result, string message);
 
     internal bool TryGetLockResource(IServerContext server, [MaybeNullWhen(false)] out LockResource resource);
 

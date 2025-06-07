@@ -5,14 +5,14 @@ namespace ComicReader.SDK.Data.AutoProperty;
 
 public class ExternalResponse<V> : IExternalResponse
 {
-    public RequestResult Result { get; }
+    public OperationResult Result { get; }
     public V? Value { get; }
-    public string Reason { get; }
+    public string Message { get; }
 
-    internal ExternalResponse(RequestResult result, V? value = default, string reason = "")
+    internal ExternalResponse(OperationResult result, V? value = default, string message = "")
     {
         Result = result;
         Value = value;
-        Reason = reason;
+        Message = message;
     }
 }

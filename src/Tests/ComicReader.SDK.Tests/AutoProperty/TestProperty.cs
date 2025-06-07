@@ -82,7 +82,7 @@ internal class TestProperty<V> : AbsProperty<TestPropertyKey, V, TestPropertyMod
     {
         PropertyResponseContent<V> response = ServerFunc(request.RequestContent);
         ResponseTracker tracker = context.TrackerManager.GetOrAddTracker(request.RequestContent.Key);
-        if (request.RequestContent.Type == RequestType.Modify && response.Result == RequestResult.Successful)
+        if (request.RequestContent.Type == RequestType.Modify && response.Result == OperationResult.Successful)
         {
             context.TrackerManager.IncrementVersion(request.RequestContent.Key);
         }

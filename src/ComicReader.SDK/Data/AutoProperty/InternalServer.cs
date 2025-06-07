@@ -26,7 +26,7 @@ internal class InternalServer : IServerContext
     private readonly LockManager _lockManager = new();
     private readonly HashSet<ProcessCallback> _processCallbacks = [];
     private readonly Dictionary<IProperty, IPropertyContext> _propertyContextMap = [];
-    private int _nextRequestId = 0;
+    private int _nextRequestId = 1;
 
     private readonly List<Action<DelayActionResult>> _delayedActions = [];
 
@@ -127,7 +127,7 @@ internal class InternalServer : IServerContext
                 request.Activate(batchInfo);
                 if (request.Type == RequestType.Modify && request.IsNullValue())
                 {
-                    request.SetFailedResult("Value is null for modify request.");
+                    request.SetResult(OperationResult.InvalidArgument, "Value is null for modify request.");
                     continue;
                 }
                 _serverProperty.EnqueueRequest(request);
@@ -180,35 +180,41 @@ internal class InternalServer : IServerContext
         }
     }
 
-    public SealedPropertyRequest<K, V>? HandleRequest<K, V>(IProperty sender, IKVProperty<K, V> receiver, PropertyRequestContent<K, V> requestContent, Action<long, PropertyResponseContent<V>> handler) where K : IRequestKey
+    private bool HasOngoingRequests()
     {
+        return _requestManager.RequestCount > 0;
+    }
+
+    public OperationResult HandleRequest<K, V>(IProperty sender, IKVProperty<K, V> receiver, PropertyRequestContent<K, V> requestContent, Action<long, PropertyResponseContent<V>> handler, out long requestId) where K : IRequestKey
+    {
+        requestId = 0;
         if (!IsServerThread())
         {
             Logger.AssertNotReachHere("A063B60F57EBA565");
-            return null;
+            return OperationResult.OperateOnNonServerThread;
         }
 
         if (sender == receiver)
         {
             Logger.AssertNotReachHere("92922E47E55B3E4A");
-            return null;
+            return OperationResult.RecursiveRequest;
         }
         if (_requestManager.RequestCount >= MAX_REQUEST_COUNT)
         {
             Logger.AssertNotReachHere("EAD7677C9D9E84BE");
-            return null;
+            return OperationResult.ReachMaxRequests;
         }
 
         IKVPropertyContext<K, V> receiverContext = GetOrCreatePropertyContext(receiver);
         if (!receiverContext.TryGetLockResource(receiver, requestContent.Key, requestContent.Type, out LockResource? lockResource))
         {
             Logger.AssertNotReachHere("3C8498174D5FCAE5");
-            return null;
+            return OperationResult.GetLockResourceFail;
         }
         if (!requestContent.Lock.TryAcquire(lockResource, out LockToken? lockToken))
         {
             Logger.AssertNotReachHere("0BE4547085684DD9");
-            return null;
+            return OperationResult.AcquireLockFail;
         }
         if (requestContent.Lock.CanRelease)
         {
@@ -216,7 +222,7 @@ internal class InternalServer : IServerContext
         }
         requestContent = requestContent.WithLock(lockToken);
 
-        int requestId = _nextRequestId++;
+        requestId = _nextRequestId++;
         PropertyRequest<K, V> request = new(requestId, sender, receiver, requestContent, handler);
         _requestManager.AddRequest(request);
         var sealedRequest = new SealedPropertyRequest<K, V>(requestId, requestContent);
@@ -226,32 +232,32 @@ internal class InternalServer : IServerContext
             receiverContext.AddNewRequest(sealedRequest);
             result.RearrangingProperties.Add(receiverContext);
         });
-        return sealedRequest;
+        return OperationResult.Successful;
     }
 
-    public void HandleRespond<K, V>(IKVProperty<K, V> receiver, long requestId, PropertyResponseContent<V> responseContent) where K : IRequestKey
+    public OperationResult HandleRespond<K, V>(IKVProperty<K, V> receiver, long requestId, PropertyResponseContent<V> responseContent) where K : IRequestKey
     {
         if (!IsServerThread())
         {
             Logger.AssertNotReachHere("CAEA4B19F1AF8BFE");
-            return;
+            return OperationResult.OperateOnNonServerThread;
         }
 
         PropertyRequest<K, V> request = GetRequest<K, V>(requestId);
         if (request.State == RequestState.Completed)
         {
             Logger.AssertNotReachHere("08E129B618734844");
-            return;
+            return OperationResult.InvalidArgument;
         }
         if (request.ResponseContent != null)
         {
             Logger.AssertNotReachHere("D1873C6A32900151");
-            return;
+            return OperationResult.InvalidArgument;
         }
         if (request.Receiver != receiver)
         {
             Logger.AssertNotReachHere("167FF26E226CE99B");
-            return;
+            return OperationResult.InvalidArgument;
         }
         request.RequestContent.Lock.Release();
         request.ResponseContent = responseContent;
@@ -266,36 +272,37 @@ internal class InternalServer : IServerContext
                 request.Handler(request.Id, responseContent);
             });
         });
+        return OperationResult.Successful;
     }
 
-    public bool HandleRedirect<K, V>(IKVProperty<K, V> oldReceiver, long requestId, IKVProperty<K, V> newReceiver) where K : IRequestKey
+    public OperationResult HandleRedirect<K, V>(IKVProperty<K, V> oldReceiver, long requestId, IKVProperty<K, V> newReceiver) where K : IRequestKey
     {
         if (!IsServerThread())
         {
             Logger.AssertNotReachHere("9D3D2E0E9978756F");
-            return false;
+            return OperationResult.OperateOnNonServerThread;
         }
 
         PropertyRequest<K, V> request = GetRequest<K, V>(requestId);
         if (request.State == RequestState.Completed)
         {
             Logger.AssertNotReachHere("7D849855150D963C");
-            return false;
+            return OperationResult.InvalidArgument;
         }
         if (request.ResponseContent != null)
         {
             Logger.AssertNotReachHere("4F239172DE93AAE6");
-            return false;
+            return OperationResult.InvalidArgument;
         }
         if (request.Receiver != oldReceiver)
         {
             Logger.AssertNotReachHere("DB8810C2F9FD2A64");
-            return false;
+            return OperationResult.InvalidArgument;
         }
         if (oldReceiver == newReceiver)
         {
             Logger.AssertNotReachHere("1FDE7E144FF60CA5");
-            return false;
+            return OperationResult.RecursiveRequest;
         }
         _requestManager.RemoveRequest(requestId);
         request.Receiver = newReceiver;
@@ -307,7 +314,7 @@ internal class InternalServer : IServerContext
             receiverContext.AddNewRequest(new SealedPropertyRequest<K, V>(requestId, request.RequestContent));
             result.RearrangingProperties.Add(receiverContext);
         });
-        return true;
+        return OperationResult.Successful;
     }
 
     public bool TryGetLockResource<K, V>(IKVProperty<K, V> property, K key, RequestType type, [MaybeNullWhen(false)] out LockResource resource) where K : IRequestKey
@@ -426,11 +433,16 @@ internal class InternalServer : IServerContext
                 if (!request.TryGetLockResource(server, out LockResource? lockResource))
                 {
                     _requests.Dequeue();
-                    request.SetFailedResult("Failed to get lock resource.");
+                    request.SetResult(OperationResult.GetLockResourceFail, "");
                     continue;
                 }
                 if (!server._lockManager.TryAcquireLock(lockResource, out LockToken? token))
                 {
+                    if (!server.HasOngoingRequests())
+                    {
+                        _requests.Dequeue();
+                        request.SetResult(OperationResult.AcquireLockFail, "");
+                    }
                     break;
                 }
                 _requests.Dequeue();
