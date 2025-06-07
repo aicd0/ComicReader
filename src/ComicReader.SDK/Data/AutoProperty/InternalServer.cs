@@ -450,6 +450,7 @@ internal class InternalServer : IServerContext
                 {
                     if (!server.HasOngoingRequests())
                     {
+                        Logger.AssertNotReachHere("9575035B2AB12549");
                         _requests.Remove(nodeCopy);
                         request.SetResult(OperationResult.AcquireLockFail, "");
                         continue;

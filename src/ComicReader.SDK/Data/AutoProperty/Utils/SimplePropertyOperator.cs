@@ -21,7 +21,7 @@ public class SimplePropertyOperator<K, V> where K : IRequestKey
         server.RegisterExtension(property, _coreExtension);
     }
 
-    public V? LocalRead(K key)
+    public V? GetValue(K key)
     {
         if (_localCache.TryGetValue(key, out V? value))
         {
@@ -34,12 +34,12 @@ public class SimplePropertyOperator<K, V> where K : IRequestKey
         return default;
     }
 
-    public void LocalWrite(K key, V value)
+    public void SetValue(K key, V value)
     {
         _localCache[key] = value;
     }
 
-    public async Task<V?> Read(K key)
+    public async Task<bool> Read(K key)
     {
         ExternalBatchRequest batchRequest = new();
         ExternalRequest<K, V> request = new ExternalRequest<K, V>.Builder(_property, key).SetRequestType(RequestType.Read).Build();
@@ -49,25 +49,24 @@ public class SimplePropertyOperator<K, V> where K : IRequestKey
         if (response != null && response.Result == OperationResult.Successful)
         {
             _localCache[key] = response.Value;
-            return response.Value;
+            return true;
         }
-        return default;
+        return false;
     }
 
-    public async Task Write(K key, V value, RequestOption? option = null)
-    {
-        await WriteInternal(key, value, option);
-        _localCache.TryRemove(key, out _);
-    }
-
-    private async Task<bool> WriteInternal(K key, V value, RequestOption? option)
+    public async Task<bool> Write(K key, V value, RequestOption? option = null)
     {
         ExternalBatchRequest batchRequest = new();
         ExternalRequest<K, V> request = new ExternalRequest<K, V>.Builder(_property, key).SetRequestType(RequestType.Modify).SetValue(value).SetOption(option).Build();
         batchRequest.Requests.Add(request);
         ExternalBatchResponse batchResponse = await _server.Request(batchRequest);
         ExternalResponse<V>? response = batchResponse.GetResponse(request);
-        return response != null && response.Result == OperationResult.Successful;
+        if (response != null && response.Result == OperationResult.Successful)
+        {
+            _localCache.TryRemove(key, out _);
+            return true;
+        }
+        return false;
     }
 
     private class CoreExtension : IValueObserverExtension<K, V>
