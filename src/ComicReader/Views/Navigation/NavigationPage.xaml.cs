@@ -1,15 +1,17 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System;
 
 using ComicReader.Common;
-using ComicReader.Common.DebugTools;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Common.PageBase;
-using ComicReader.Common.Threading;
 using ComicReader.Data.Legacy;
 using ComicReader.Helpers.Navigation;
+using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Common.Threading;
 using ComicReader.Views.Main;
 
 using Microsoft.UI.Input;
@@ -161,7 +163,10 @@ internal sealed partial class NavigationPage : BasePage
         SearchBox.Text = keywords;
     }
 
-    private void OnSearchBoxTextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args) { }
+    private void OnSearchBoxTextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+    {
+        _ability.SendSearchTextChangeEvent(sender.Text);
+    }
 
     private void OnSearchBoxQuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
     {
@@ -321,6 +326,7 @@ internal sealed partial class NavigationPage : BasePage
         private const string EVENT_FAVORITE_CHANGED = "FavoriteChanged";
         private const string EVENT_GRID_VIEW_MODE_CHANGED = "GridViewModeChanged";
         private const string EVENT_READER_SETTINGS_CHANGED = "ReaderSettingsChanged";
+        private const string EVENT_SEARCH_TEXT_CHANGED = "SearchTextChanged";
 
         private readonly WeakReference<NavigationPage> _parent;
         private readonly EventBus _eventBus = new();
@@ -468,6 +474,19 @@ internal sealed partial class NavigationPage : BasePage
         public void SendReaderSettingsChangedEvent(ReaderSettingDataModel settings)
         {
             _eventBus.With<ReaderSettingDataModel>(EVENT_READER_SETTINGS_CHANGED).Emit(settings.Clone());
+        }
+
+        public void RegisterSearchTextChangeHandler(Page owner, INavigationPageAbility.SearchTextChangeEventHandler handler)
+        {
+            _eventBus.With<string>(EVENT_SEARCH_TEXT_CHANGED).Observe(owner, delegate (string text)
+            {
+                handler(text);
+            });
+        }
+
+        public void SendSearchTextChangeEvent(string text)
+        {
+            _eventBus.With<string>(EVENT_SEARCH_TEXT_CHANGED).Emit(text);
         }
     }
 }

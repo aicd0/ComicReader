@@ -1,6 +1,8 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
@@ -10,8 +12,6 @@ namespace ComicReader.Common;
 
 public sealed class ObservableCollectionPlus<T> : ObservableCollection<T> where T : INotifyPropertyChanged
 {
-    //public event PropertyChangedEventHandler CollectionItemChanged;
-
     public ObservableCollectionPlus()
     {
         CollectionChanged += FullObservableCollectionCollectionChanged;

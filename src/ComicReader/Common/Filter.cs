@@ -1,12 +1,14 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System.Collections.Generic;
 using System.Linq;
 
 using ComicReader.Data;
-using ComicReader.Data.Comic;
-using ComicReader.Data.SqlHelpers;
+using ComicReader.Data.Tables;
+using ComicReader.SDK.Data.SqlHelpers;
 
 using LiteDB;
 
@@ -554,7 +556,7 @@ public class SubFilterCategoryTag : SubFilter
                 .CollateNocase();
             SelectCommand<TagCategoryTable>.IToken<long> tagCateogryIdToken = command.PutQueryInt64(TagCategoryTable.ColumnId);
             SelectCommand<TagCategoryTable>.IToken<long> comicIdToken = command.PutQueryInt64(TagCategoryTable.ColumnComicId);
-            using SelectCommand<TagCategoryTable>.IReader reader = command.Execute();
+            using SelectCommand<TagCategoryTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 
             while (reader.Read())
             {
@@ -571,7 +573,7 @@ public class SubFilterCategoryTag : SubFilter
                 .AppendCondition(TagTable.ColumnContent, m_tag)
                 .CollateNocase();
             SelectCommand<TagTable>.IToken<long> categoryIdToken = command.PutQueryInt64(TagTable.ColumnTagCategoryId);
-            using SelectCommand<TagTable>.IReader reader = command.Execute();
+            using SelectCommand<TagTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 
             while (reader.Read())
             {
@@ -626,7 +628,7 @@ public class SubFilterDirectory : SubFilter
         SelectCommand<ComicTable> command = new SelectCommand<ComicTable>(ComicTable.Instance)
             .AppendCondition(new LikeCondition(ComicTable.ColumnLocation, m_directory + "%"));
         SelectCommand<ComicTable>.IToken<long> comicIdToken = command.PutQueryInt64(ComicTable.ColumnId);
-        using SelectCommand<ComicTable>.IReader reader = command.Execute();
+        using SelectCommand<ComicTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 
         while (reader.Read())
         {
@@ -649,7 +651,7 @@ public class SubFilterHidden : SubFilter
         SelectCommand<ComicTable> command = new SelectCommand<ComicTable>(ComicTable.Instance)
             .AppendCondition(ComicTable.ColumnHidden, true);
         SelectCommand<ComicTable>.IToken<long> comicIdToken = command.PutQueryInt64(ComicTable.ColumnId);
-        using SelectCommand<ComicTable>.IReader reader = command.Execute();
+        using SelectCommand<ComicTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 
         while (reader.Read())
         {
@@ -686,7 +688,7 @@ public class SubFilterId : SubFilter
             .AppendCondition(ComicTable.ColumnId, m_id)
             .Limit(1);
         SelectCommand<ComicTable>.IToken<long> comicIdToken = command.PutQueryInt64(ComicTable.ColumnId);
-        using SelectCommand<ComicTable>.IReader reader = command.Execute();
+        using SelectCommand<ComicTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 
         while (reader.Read())
         {
@@ -722,7 +724,7 @@ public class SubFilterRating : SubFilter
         SelectCommand<ComicTable> command = new SelectCommand<ComicTable>(ComicTable.Instance)
             .AppendCondition(ComicTable.ColumnRating, m_rating);
         SelectCommand<ComicTable>.IToken<long> comicIdToken = command.PutQueryInt64(ComicTable.ColumnId);
-        using SelectCommand<ComicTable>.IReader reader = command.Execute();
+        using SelectCommand<ComicTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 
         while (reader.Read())
         {
@@ -754,7 +756,7 @@ public class SubFilterTag : SubFilter
             .Distinct()
             .CollateNocase();
         SelectCommand<TagTable>.IToken<long> comicIdToken = command.PutQueryInt64(TagTable.ColumnComicId);
-        using SelectCommand<TagTable>.IReader reader = command.Execute();
+        using SelectCommand<TagTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 
         while (reader.Read())
         {

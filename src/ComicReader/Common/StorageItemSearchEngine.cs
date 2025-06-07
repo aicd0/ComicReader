@@ -1,11 +1,13 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
-using ComicReader.Common.DebugTools;
+using ComicReader.SDK.Common.DebugTools;
 
 namespace ComicReader.Common;
 

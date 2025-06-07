@@ -19,134 +19,260 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/Styles/AdaptiveGridView.xaml" />
+                <ResourceDictionary Source="/Styles/GridViewItem.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <cwm:AttachedCardShadow
-                x:Key="CommonShadow"
-                Opacity="0.1"
-                Offset="0" />
-
-            <Style x:Key="ComicItemContainerStyle" TargetType="GridViewItem">
-                <Setter Property="Margin" Value="6" />
-                <Setter Property="cw:Effects.Shadow" Value="{StaticResource CommonShadow}" />
+            <Style x:Key="ComicGroupHeaderContainerStyle" TargetType="GridViewHeaderItem">
+                <Setter Property="FontFamily" Value="{ThemeResource ContentControlThemeFontFamily}" />
+                <Setter Property="FontSize" Value="{ThemeResource GridViewHeaderItemThemeFontSize}" />
+                <Setter Property="Background" Value="{ThemeResource GridViewHeaderItemBackground}" />
+                <Setter Property="Margin" Value="0" />
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="VerticalContentAlignment" Value="Top" />
+                <Setter Property="MinHeight" Value="0" />
+                <Setter Property="UseSystemFocusVisuals" Value="{StaticResource UseSystemFocusVisuals}" />
                 <Setter Property="Template">
                     <Setter.Value>
-                        <ControlTemplate TargetType="GridViewItem">
-                            <ListViewItemPresenter
-                                x:Name="Root"
-                                HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
-                                CheckBoxBrush="{ThemeResource GridViewItemCheckBoxBrush}"
-                                CheckBrush="{ThemeResource GridViewItemCheckBrush}"
-                                CheckMode="{ThemeResource GridViewItemCheckMode}"
-                                ContentMargin="{TemplateBinding Padding}"
-                                ContentTransitions="{TemplateBinding ContentTransitions}"
-                                Control.IsTemplateFocusTarget="True"
-                                CornerRadius="6"
-                                DisabledOpacity="{ThemeResource ListViewItemDisabledThemeOpacity}"
-                                DragBackground="{ThemeResource GridViewItemDragBackground}"
-                                DragForeground="{ThemeResource GridViewItemDragForeground}"
-                                DragOpacity="{ThemeResource ListViewItemDragThemeOpacity}"
-                                FocusBorderBrush="{ThemeResource GridViewItemFocusBorderBrush}"
-                                FocusSecondaryBorderBrush="{ThemeResource GridViewItemFocusSecondaryBorderBrush}"
-                                FocusVisualMargin="{TemplateBinding FocusVisualMargin}"
-                                PlaceholderBackground="{ThemeResource GridViewItemPlaceholderBackground}"
-                                PressedBackground="{ThemeResource GridViewItemBackgroundPressed}"
-                                ReorderHintOffset="{ThemeResource GridViewItemReorderHintThemeOffset}"
-                                RevealBorderThickness="0"
-                                SelectedBackground="{ThemeResource GridViewItemBackgroundSelected}"
-                                SelectedForeground="{ThemeResource GridViewItemForegroundSelected}"
-                                SelectedPointerOverBackground="{ThemeResource GridViewItemBackgroundSelectedPointerOver}"
-                                SelectedPressedBackground="{ThemeResource GridViewItemBackgroundSelectedPressed}"
-                                SelectionCheckMarkVisualEnabled="{ThemeResource GridViewItemSelectionCheckMarkVisualEnabled}" />
+                        <ControlTemplate TargetType="GridViewHeaderItem">
+                            <StackPanel
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="{TemplateBinding CornerRadius}">
+                                <ContentPresenter
+                                    x:Name="ContentPresenter"
+                                    HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                    VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                    Content="{TemplateBinding Content}"
+                                    ContentTemplate="{TemplateBinding ContentTemplate}"
+                                    ContentTransitions="{TemplateBinding ContentTransitions}" />
+                            </StackPanel>
                         </ControlTemplate>
                     </Setter.Value>
                 </Setter>
             </Style>
 
+            <CollectionViewSource
+                x:Name="UngroupedComicItemSource"
+                IsSourceGrouped="False"
+                Source="{x:Bind ViewModel.UngroupedComicItems, Mode=OneWay}" />
+
+            <CollectionViewSource
+                x:Name="GroupedComicItemSource"
+                IsSourceGrouped="True"
+                ItemsPath="DisplayItems"
+                Source="{x:Bind ViewModel.GroupedComicItems, Mode=OneWay}" />
+
+            <DataTemplate x:Name="LargeComicItemTemplate" x:DataType="vm:ComicItemViewModel">
+                <controls:ComicItemVertical />
+            </DataTemplate>
+
+            <DataTemplate x:Name="MediumComicItemTemplate" x:DataType="vm:ComicItemViewModel">
+                <controls:ComicItemHorizontal />
+            </DataTemplate>
+
             <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
             <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
+            <converters:BooleanToCollapseGlyphConverter x:Key="BooleanToCollapseGlyphConverter" />
         </ResourceDictionary>
     </Page.Resources>
 
     <Grid>
-        <controls:AdaptiveGridView
-            Margin="0,0,-1,0"
-            Padding="35,10"
-            ContainerContentChanging="OnAdaptiveGridViewContainerContentChanging"
-            DesiredWidth="{StaticResource ComicItemVerticalDesiredWidth}"
-            ItemContainerStyle="{StaticResource ComicItemContainerStyle}"
-            ItemHeight="310"
-            ItemsSource="{x:Bind ComicItemSource}"
-            ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-            ScrollViewer.HorizontalScrollMode="Disabled"
-            StretchContentForSingleRow="False"
-            Style="{StaticResource HomePageAdaptiveGridViewStyle}">
-            <controls:AdaptiveGridView.ItemTemplate>
-                <DataTemplate x:DataType="vm:ComicItemViewModel">
-                    <home:ComicItemVertical DataContext="{x:Bind}" />
-                </DataTemplate>
-            </controls:AdaptiveGridView.ItemTemplate>
-            <controls:AdaptiveGridView.Header>
-                <StackPanel Orientation="Vertical">
-                    <Grid Height="10" />
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock
-                            x:Uid="LibraryHeader"
-                            Grid.Column="0"
-                            Margin="6,0,0,0"
-                            FontSize="22"
-                            FontWeight="SemiBold"
-                            Text="Library" />
-                        <StackPanel
-                            Grid.Column="1"
-                            Margin="0,0,10,0"
-                            VerticalAlignment="Bottom"
-                            Orientation="Horizontal"
-                            Spacing="5">
-                            <HyperlinkButton
-                                x:Name="HbShowAllButton"
-                                x:Uid="ShowAllButton"
-                                Click="OnSeeAllBtClicked" />
-                            <HyperlinkButton x:Uid="ShowHiddenButton" Click="OnSeeHiddenBtClick" />
-                        </StackPanel>
-                    </Grid>
-                    <Grid Height="10" />
-                    <Grid x:Name="SpLibraryEmpty" Padding="0,30">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <FontIcon
-                            Grid.Column="0"
-                            Margin="12,3,0,0"
-                            VerticalAlignment="Top"
-                            FontSize="14"
-                            Glyph="&#xE946;" />
-                        <RichTextBlock
-                            Grid.Column="1"
-                            Margin="6,0"
-                            VerticalAlignment="Center"
-                            IsTextSelectionEnabled="False">
-                            <Paragraph>
-                                <Run x:Uid="LibraryEmptyPart1" />
-                                <Hyperlink Click="AddFolderHyperlink_Click">
-                                    <Run x:Uid="AddFolderButton" />
-                                </Hyperlink>
-                                <Run x:Uid="LibraryEmptyPart2" />
-                                <Hyperlink Click="RefreshHyperlink_Click">
-                                    <Run x:Uid="HomePageRefreshButton" />
-                                </Hyperlink>
-                                <Run x:Uid="LibraryEmptyPart3" />
-                            </Paragraph>
-                        </RichTextBlock>
-                    </Grid>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <controls:AdaptiveGridView
+                x:Name="ComicGridView"
+                Grid.Row="0"
+                Margin="0,0,-1,0"
+                Padding="35,10"
+                ContainerContentChanging="OnAdaptiveGridViewContainerContentChanging"
+                Loaded="ComicGridView_Loaded"
+                ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                ScrollViewer.HorizontalScrollMode="Disabled"
+                SelectionChanged="ComicGridView_SelectionChanged"
+                SelectionMode="{x:Bind ViewModel.ComicItemSelectionMode, Mode=OneWay}"
+                StretchContentForSingleRow="False"
+                Style="{StaticResource HomePageAdaptiveGridViewStyle}"
+                Tapped="ComicGridView_Tapped"
+                Unloaded="ComicGridView_Unloaded">
+                <controls:AdaptiveGridView.GroupStyle>
+                    <GroupStyle HeaderContainerStyle="{StaticResource ComicGroupHeaderContainerStyle}">
+                        <GroupStyle.HeaderTemplate>
+                            <DataTemplate x:DataType="vm:ComicGroupViewModel">
+                                <Grid Margin="-29,0,8,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Button
+                                        Grid.Column="0"
+                                        Width="30"
+                                        Height="30"
+                                        Padding="0"
+                                        VerticalAlignment="Center"
+                                        Background="Transparent"
+                                        BorderBrush="Transparent"
+                                        Click="CollapseExpandGroupButton_Click">
+                                        <FontIcon FontSize="12" Glyph="{x:Bind Collapsed, Converter={StaticResource BooleanToCollapseGlyphConverter}, Mode=OneWay}" />
+                                    </Button>
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        Margin="5,0"
+                                        VerticalAlignment="Center"
+                                        FontSize="16"
+                                        FontWeight="SemiBold"
+                                        Text="{Binding GroupName}" />
+                                </Grid>
+                            </DataTemplate>
+                        </GroupStyle.HeaderTemplate>
+                    </GroupStyle>
+                </controls:AdaptiveGridView.GroupStyle>
+                <controls:AdaptiveGridView.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <ItemsWrapGrid AreStickyGroupHeadersEnabled="False" Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </controls:AdaptiveGridView.ItemsPanel>
+                <controls:AdaptiveGridView.Header>
+                    <StackPanel Orientation="Vertical">
+                        <Grid Height="52" />
+                        <Grid
+                            x:Name="SpLibraryEmpty"
+                            Padding="0,30"
+                            Visibility="{x:Bind ViewModel.LibraryEmptyVisible, Mode=OneWay}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <FontIcon
+                                Grid.Column="0"
+                                Margin="12,3,0,0"
+                                VerticalAlignment="Top"
+                                FontSize="14"
+                                Glyph="&#xE946;" />
+                            <RichTextBlock
+                                Grid.Column="1"
+                                Margin="6,0"
+                                VerticalAlignment="Center"
+                                IsTextSelectionEnabled="False">
+                                <Paragraph>
+                                    <Run x:Uid="LibraryEmptyPart1" />
+                                    <Hyperlink Click="AddFolderHyperlink_Click">
+                                        <Run x:Uid="AddFolderButton" />
+                                    </Hyperlink>
+                                    <Run x:Uid="LibraryEmptyPart2" />
+                                    <Hyperlink Click="RefreshHyperlink_Click">
+                                        <Run x:Uid="HomePageRefreshButton" />
+                                    </Hyperlink>
+                                    <Run x:Uid="LibraryEmptyPart3" />
+                                </Paragraph>
+                            </RichTextBlock>
+                        </Grid>
+                    </StackPanel>
+                </controls:AdaptiveGridView.Header>
+            </controls:AdaptiveGridView>
+
+            <!--  Command Bar  -->
+            <Grid
+                Grid.Row="1"
+                VerticalAlignment="Bottom"
+                Background="{ThemeResource CommandBarBackground}"
+                Visibility="{x:Bind ViewModel.IsSelectMode, Mode=OneWay}">
+                <StackPanel Margin="6,0" Orientation="Horizontal">
+                    <AppBarToggleButton
+                        x:Uid="SelectAllAppBarButton"
+                        Click="CommandBarSelectAllClicked"
+                        Icon="SelectAll"
+                        IsChecked="{x:Bind ViewModel.IsCommandBarSelectAllToggled, Mode=OneWay}" />
+                    <AppBarSeparator />
+                    <AppBarButton
+                        x:Uid="FavoriteAppBarButton"
+                        Click="CommandBarFavoriteClicked"
+                        Icon="Favorite"
+                        IsEnabled="{x:Bind ViewModel.IsCommandBarFavoriteEnabled, Mode=OneWay}" />
+                    <AppBarButton
+                        x:Uid="UnFavoriteAppBarButton"
+                        Click="CommandBarUnFavoriteClicked"
+                        Icon="UnFavorite"
+                        IsEnabled="{x:Bind ViewModel.IsCommandBarUnFavoriteEnabled, Mode=OneWay}" />
+                    <AppBarButton
+                        x:Uid="MarkAsReadAppBarButton"
+                        Click="CommandBarMarkAsReadClicked"
+                        IsEnabled="{x:Bind ViewModel.IsCommandBarMarkAsReadEnabled, Mode=OneWay}">
+                        <AppBarButton.Icon>
+                            <FontIcon Glyph="&#xE930;" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
+                    <AppBarButton
+                        x:Uid="MarkAsUnreadAppBarButton"
+                        Click="CommandBarMarkAsUnreadClicked"
+                        IsEnabled="{x:Bind ViewModel.IsCommandBarMarkAsUnreadEnabled, Mode=OneWay}">
+                        <AppBarButton.Icon>
+                            <FontIcon Glyph="&#xECCA;" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
+                    <AppBarButton
+                        x:Uid="HideAppBarButton"
+                        Click="CommandBarHideClicked"
+                        IsEnabled="{x:Bind ViewModel.IsCommandBarHideEnabled, Mode=OneWay}">
+                        <AppBarButton.Icon>
+                            <FontIcon Glyph="&#xE8FF;" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
+                    <AppBarButton
+                        x:Uid="UnhideAppBarButton"
+                        Click="CommandBarUnhideClicked"
+                        IsEnabled="{x:Bind ViewModel.IsCommandBarUnHideEnabled, Mode=OneWay}">
+                        <AppBarButton.Icon>
+                            <FontIcon Glyph="&#xE7B3;" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
                 </StackPanel>
-            </controls:AdaptiveGridView.Header>
-        </controls:AdaptiveGridView>
+                <Rectangle
+                    Height="1"
+                    VerticalAlignment="Top"
+                    Fill="{ThemeResource CommandBarBorderBrush}" />
+            </Grid>
+        </Grid>
+
+        <Grid VerticalAlignment="Top">
+            <Grid
+                x:Name="HeaderAreaBackgroundGrid"
+                Background="{ThemeResource HomeHeaderBackground}"
+                IsHitTestVisible="False"
+                Opacity="0" />
+            <Grid
+                x:Name="HeaderAreaGrid"
+                Padding="40,20,34,8"
+                VerticalAlignment="Top">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock
+                    x:Name="HeaderTextBlock"
+                    x:Uid="LibraryHeader"
+                    Grid.Column="0"
+                    FontSize="22"
+                    FontWeight="SemiBold"
+                    Text="Library" />
+                <StackPanel
+                    Grid.Column="1"
+                    Margin="0,0,8,0"
+                    VerticalAlignment="Bottom"
+                    Orientation="Horizontal"
+                    Spacing="5">
+                    <DropDownButton x:Name="ViewTypeDropDownButton" />
+                    <DropDownButton x:Name="SortByDropDownButton" />
+                    <DropDownButton x:Name="GroupByDropDownButton" />
+                    <DropDownButton x:Name="FilterPresetDropDownButton" />
+                    <Button Click="EditFilterButton_Click" Content="Edit preset" />
+                </StackPanel>
+            </Grid>
+        </Grid>
     </Grid>
 </base:BasePage>

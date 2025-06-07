@@ -256,7 +256,7 @@
     <value>从左到右</value>
   </data>
   <data name="LibraryEmptyPart1.Text" xml:space="preserve">
-    <value>您的仓库似乎是空的，尝试</value>
+    <value>当前筛选条件下没有找到结果，尝试</value>
   </data>
   <data name="LibraryEmptyPart2.Text" xml:space="preserve">
     <value>或</value>
@@ -362,12 +362,6 @@
   </data>
   <data name="Settings" xml:space="preserve">
     <value>设置</value>
-  </data>
-  <data name="ShowAllButton.Content" xml:space="preserve">
-    <value>显示全部</value>
-  </data>
-  <data name="ShowHiddenButton.Content" xml:space="preserve">
-    <value>显示隐藏项</value>
   </data>
   <data name="Statistics.Text" xml:space="preserve">
     <value>统计信息</value>
@@ -554,5 +548,8 @@
   </data>
   <data name="DebugInformation.Text" xml:space="preserve">
     <value>调试信息</value>
+  </data>
+  <data name="ShowHiddenComicButton.Content" xml:space="preserve">
+    <value>查看隐藏漫画</value>
   </data>
 </root>

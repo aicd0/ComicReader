@@ -3,232 +3,438 @@
 
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.Linq;
 
 using ComicReader.Common;
-using ComicReader.Common.Imaging;
 using ComicReader.Common.PageBase;
-using ComicReader.Common.Threading;
-using ComicReader.Data;
-using ComicReader.Data.Comic;
 using ComicReader.Data.Legacy;
-using ComicReader.Data.SqlHelpers;
-using ComicReader.Helpers.Imaging;
+using ComicReader.Data.Models;
+using ComicReader.Data.Models.Comic;
 using ComicReader.Helpers.Navigation;
+using ComicReader.SDK.Common.DebugTools;
+using ComicReader.UserControls;
 using ComicReader.ViewModels;
 using ComicReader.Views.Main;
+using ComicReader.Views.Navigation;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media.Imaging;
+using Microsoft.UI.Xaml.Media.Animation;
 
 namespace ComicReader.Views.Home;
 
 internal sealed partial class HomePage : BasePage
 {
-    private readonly ComicItemViewModel.IItemHandler _comicItemHandler;
-    private ObservableCollectionPlus<ComicItemViewModel> ComicItemSource { get; set; } = [];
+    private readonly HomePageViewModel ViewModel = new();
 
-    private readonly CancellationLock _updateLibraryLock = new();
-    private readonly CancellationSession _updateLibrarySession = new();
+    private ScrollViewer? _comicGridScrollViewer;
+
+    private ComicFilterModel.ViewTypeEnum? _viewType = null;
+    private bool? _usingGroupSource = null;
+    private readonly ComicItemViewModel.IItemHandler _comicItemHandler;
+    private Storyboard? _headerTextBlockAnimation = null;
+    private double _lastGridViewVerticalOffset = 0.0;
 
     public HomePage()
     {
-        _comicItemHandler = new ComicItemHandler(this);
         InitializeComponent();
+        _comicItemHandler = new ComicItemHandler(this);
+    }
+
+    //
+    // Lifecycle
+    //
+
+    protected override void OnStart(PageBundle bundle)
+    {
+        base.OnStart(bundle);
+        GetMainPageAbility().SetTitle(StringResourceProvider.GetResourceString("NewTab"));
+        GetMainPageAbility().SetIcon(new SymbolIconSource() { Symbol = Symbol.Document });
+        ViewModel.Initialize();
     }
 
     protected override void OnResume()
     {
         base.OnResume();
         ComicData.OnUpdated += OnComicDataUpdated;
-        GetMainPageAbility().SetTitle(StringResourceProvider.GetResourceString("NewTab"));
-        GetMainPageAbility().SetIcon(new SymbolIconSource() { Symbol = Symbol.Document });
-
-        C0.Run(async delegate
-        {
-            await Update();
-        });
+        ObserveData();
     }
 
     protected override void OnPause()
     {
         base.OnPause();
         ComicData.OnUpdated -= OnComicDataUpdated;
-        _updateLibrarySession.Next();
     }
 
-    // Utilities
-    private async Task Update()
+    private void ObserveData()
     {
-        await UpdateLibrary();
-    }
-
-    private IMainPageAbility GetMainPageAbility()
-    {
-        return GetAbility<IMainPageAbility>();
-    }
-
-    private async Task BindComicData(ComicItemViewModel model, ComicData comic)
-    {
-        model.Comic = comic;
-        model.Title = comic.Title;
-        model.Rating = comic.Rating;
-        model.UpdateProgress(true);
-        model.IsFavorite = await FavoriteModel.Instance.FromId(comic.Id) != null;
-        model.ItemHandler = _comicItemHandler;
-    }
-
-    private void OnComicDataUpdated()
-    {
-        MainThreadUtils.RunInMainThreadAsync(UpdateLibrary).Wait();
-    }
-
-    public async Task UpdateLibrary()
-    {
-        await _updateLibraryLock.LockAsync(async delegate (CancellationLock.Token token)
+        ViewModel.FilterLiveData.ObserveSticky(this, UpdateFilters);
+        ViewModel.GroupingEnabledLiveData.ObserveSticky(this, delegate (bool grouped)
         {
-            if (token.CancellationRequested)
+            if (_usingGroupSource == grouped)
             {
                 return;
             }
-
-            // Get recent visited comics.
-            List<Tuple<long, DateTimeOffset>> records = new();
-            await ComicData.EnqueueCommand(delegate
+            _usingGroupSource = grouped;
+            if (grouped)
             {
-                // Use ORDER BY here will cause a crash (especially for a large result set)
-                // due to https://github.com/dotnet/efcore/issues/20044.
-                // Switch from Microsoft.Data.Sqlite to SQLitePCLRaw.bundle_winsqlite3 will
-                // solve the issue but the app then cannot not be built in Release mode.
-                // (See https://github.com/ericsink/SQLitePCL.raw/issues/346)
-                // A workaround here is to sort the data manually.
-
-                // command.CommandText = "SELECT * FROM " + SqliteDatabaseManager.ComicTable +
-                //     " ORDER BY " + ComicData.Field.LastVisit + " DESC";
-
-                var command = new SelectCommand<ComicTable>(ComicTable.Instance);
-                SelectCommand<ComicTable>.IToken<long> idToken = command.PutQueryInt64(ComicTable.ColumnId);
-                SelectCommand<ComicTable>.IToken<DateTimeOffset> lastVisitToken = command.PutQueryDateTimeOffset(ComicTable.ColumnLastVisit);
-                using SelectCommand<ComicTable>.IReader reader = command.AppendCondition(ComicTable.ColumnHidden, false).Execute();
-
-                while (reader.Read())
+                ComicGridView.SetBinding(ItemsControl.ItemsSourceProperty, new Binding()
                 {
-                    records.Add(new Tuple<long, DateTimeOffset>
-                    (
-                        idToken.GetValue(),
-                        lastVisitToken.GetValue()
-                    ));
-                }
-            }, "HomeLoadLibrary");
-            records.Sort(delegate (Tuple<long, DateTimeOffset> x, Tuple<long, DateTimeOffset> y)
-            {
-                return y.Item2.CompareTo(x.Item2);
-            });
-
-            // Convert to view models.
-            var comic_items = new List<ComicItemViewModel>();
-
-            foreach (Tuple<long, DateTimeOffset> record in records)
-            {
-                ComicData comic = await ComicData.FromId(record.Item1, "HomeLoadComic");
-
-                if (comic == null)
-                {
-                    continue;
-                }
-
-                var model = new ComicItemViewModel();
-                await BindComicData(model, comic);
-                comic_items.Add(model);
+                    Source = GroupedComicItemSource,
+                    Mode = BindingMode.OneWay,
+                });
             }
-
-            // Save results.
-            C1<ComicItemViewModel>.UpdateCollection(ComicItemSource, comic_items,
-                (ComicItemViewModel x, ComicItemViewModel y) =>
-                x.Comic.Title == y.Comic.Title &&
-                x.Rating == y.Rating &&
-                x.Progress == y.Progress &&
-                x.IsFavorite == y.IsFavorite);
-            bool isEmpty = ComicItemSource.Count == 0;
-            HbShowAllButton.IsEnabled = !isEmpty;
-            SpLibraryEmpty.Visibility = isEmpty ? Visibility.Visible : Visibility.Collapsed;
+            else
+            {
+                ComicGridView.SetBinding(ItemsControl.ItemsSourceProperty, new Binding()
+                {
+                    Source = UngroupedComicItemSource,
+                    Mode = BindingMode.OneWay,
+                });
+            }
         });
+        ViewModel.ViewTypeLiveData.ObserveSticky(this, delegate (ComicFilterModel.ViewTypeEnum type)
+        {
+            if (_viewType == type)
+            {
+                return;
+            }
+            _viewType = type;
+            switch (type)
+            {
+                case ComicFilterModel.ViewTypeEnum.Large:
+                    ComicGridView.ItemTemplate = LargeComicItemTemplate;
+                    ComicGridView.ItemContainerStyle = (Style)Resources["VerticalComicItemContainerStyle"];
+                    ComicGridView.DesiredWidth = (double)Application.Current.Resources["ComicItemVerticalDesiredWidth"];
+                    ComicGridView.ItemHeight = (double)Application.Current.Resources["ComicItemVerticalDesiredHeight"];
+                    break;
+                case ComicFilterModel.ViewTypeEnum.Medium:
+                    ComicGridView.ItemTemplate = MediumComicItemTemplate;
+                    ComicGridView.ItemContainerStyle = (Style)Resources["SearchResultItemContainerExpandedStyle"];
+                    ComicGridView.DesiredWidth = (double)Application.Current.Resources["ComicItemHorizontalDesiredWidth"];
+                    ComicGridView.ItemHeight = (double)Application.Current.Resources["ComicItemHorizontalDesiredHeight"];
+                    break;
+                default:
+                    Logger.AssertNotReachHere("DBC3B0E205A8C333");
+                    break;
+            }
+        });
+        GetNavigationPageAbility().RegisterSearchTextChangeHandler(this, ViewModel.SetSearchText);
     }
 
-    private void LoadImage(ComicItemVertical viewHolder, ComicItemViewModel item)
-    {
-        double image_width = (double)Application.Current.Resources["ComicItemVerticalDesiredWidth"] - 40.0;
-        double image_height = (double)Application.Current.Resources["ComicItemVerticalImageHeight"];
-        var tokens = new List<SimpleImageLoader.Token>();
+    //
+    // GridView
+    //
 
-        if (item.Image.ImageSet)
+    private void ComicGridView_Loaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is not FrameworkElement element || !element.IsLoaded)
         {
             return;
         }
 
-        item.Image.ImageSet = true;
-        tokens.Add(new SimpleImageLoader.Token
+        ScrollViewer? scrollViewer = ComicGridView.ChildrenBreadthFirst().OfType<ScrollViewer>().FirstOrDefault();
+        if (scrollViewer != null)
         {
-            Width = image_width,
-            Height = image_height,
-            Multiplication = 1.4,
-            Source = new ComicCoverImageSource(item.Comic),
-            ImageResultHandler = new LoadImageCallback(viewHolder, item)
-        });
-
-        new SimpleImageLoader.Transaction(_updateLibrarySession.Token, tokens).Commit();
+            _comicGridScrollViewer = scrollViewer;
+            scrollViewer.ViewChanged += ComicGridScrollViewer_ViewChanged;
+        }
+        else
+        {
+            Logger.AssertNotReachHere("90801E4FD070C67A");
+        }
     }
 
-    private class LoadImageCallback : IImageResultHandler
+    private void ComicGridView_Unloaded(object sender, RoutedEventArgs e)
     {
-        private readonly ComicItemVertical _viewHolder;
-        private readonly ComicItemViewModel _viewModel;
-
-        public LoadImageCallback(ComicItemVertical viewHolder, ComicItemViewModel viewModel)
+        if (sender is not FrameworkElement element || element.IsLoaded)
         {
-            _viewHolder = viewHolder;
-            _viewModel = viewModel;
+            return;
         }
 
-        public void OnSuccess(BitmapImage image)
+        ScrollViewer? scrollViewer = _comicGridScrollViewer;
+        if (scrollViewer != null)
         {
-            _viewModel.Image.Image = image;
-            _viewHolder.CompareAndBind(_viewModel);
+            scrollViewer.ViewChanged -= ComicGridScrollViewer_ViewChanged;
         }
+        _comicGridScrollViewer = null;
     }
 
-    // Events
+    private void ComicGridScrollViewer_ViewChanged(object? sender, ScrollViewerViewChangedEventArgs e)
+    {
+        if (sender is not ScrollViewer sv)
+        {
+            return;
+        }
+
+        double verticalOffset = sv.VerticalOffset;
+
+        {
+            Thickness p = HeaderAreaGrid.Padding;
+            double newTop = Math.Max(20 - verticalOffset, 6);
+            if (p.Top != newTop)
+            {
+                p.Top = newTop;
+                HeaderAreaGrid.Padding = p;
+            }
+        }
+
+        {
+            double newOpacity = Math.Min(1.0, Math.Max(0, verticalOffset - 10) * 0.05);
+            if (HeaderAreaBackgroundGrid.Opacity != newOpacity)
+            {
+                HeaderAreaBackgroundGrid.Opacity = newOpacity;
+            }
+        }
+
+        if (verticalOffset > 20 && _lastGridViewVerticalOffset <= 20)
+        {
+            AnimateHeaderTextBlockOpacity(0.0);
+        }
+        else if (verticalOffset < 20 && _lastGridViewVerticalOffset >= 20)
+        {
+            AnimateHeaderTextBlockOpacity(1.0);
+        }
+
+        _lastGridViewVerticalOffset = verticalOffset;
+    }
+
     private void OnAdaptiveGridViewContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
     {
-        var item = args.Item as ComicItemViewModel;
-        var viewHolder = args.ItemContainer.ContentTemplateRoot as ComicItemVertical;
+        if (args.ItemContainer.ContentTemplateRoot is not IComicItemView viewHolder || args.Item is not ComicItemViewModel item)
+        {
+            return;
+        }
+
         if (args.InRecycleQueue)
         {
-            item.Image.ImageSet = false;
+            viewHolder.Unbind();
         }
-
-        viewHolder.Bind(item);
-        if (!args.InRecycleQueue)
+        else
         {
-            LoadImage(viewHolder, item);
+            item.ItemHandler = _comicItemHandler;
+            viewHolder.Bind(item);
         }
     }
 
-    private void OnSeeAllBtClicked(object sender, RoutedEventArgs e)
+    private void CollapseExpandGroupButton_Click(object sender, RoutedEventArgs e)
     {
-        Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_SEARCH)
-            .WithParam(RouterConstants.ARG_KEYWORD, "<all>");
-        GetMainPageAbility().OpenInCurrentTab(route);
+        var button = sender as Button;
+        if (button?.DataContext is ComicGroupViewModel group)
+        {
+            group.Collapsed = !group.Collapsed;
+        }
     }
 
-    private void OnSeeHiddenBtClick(object sender, RoutedEventArgs e)
+    private void ComicGridView_Tapped(object sender, TappedRoutedEventArgs e)
     {
-        Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_SEARCH)
-            .WithParam(RouterConstants.ARG_KEYWORD, "<hidden>");
-        GetMainPageAbility().OpenInCurrentTab(route);
+        ViewModel.SetSelectionMode(false);
     }
+
+    private void ComicGridView_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        List<ComicItemViewModel> selectedItems = [];
+        foreach (object? item in ComicGridView.SelectedItems)
+        {
+            if (item is ComicItemViewModel comicItem)
+            {
+                selectedItems.Add(comicItem);
+            }
+        }
+        ViewModel.SetSelection(selectedItems);
+    }
+
+    //
+    // Command Bar
+    //
+
+    private void CommandBarSelectAllClicked(object sender, RoutedEventArgs e)
+    {
+        var button = sender as AppBarToggleButton;
+        if (button == null)
+        {
+            return;
+        }
+        if (button.IsChecked == true)
+        {
+            ComicGridView.SelectAll();
+        }
+        else
+        {
+            ComicGridView.DeselectRange(new ItemIndexRange(0, (uint)ComicGridView.Items.Count));
+        }
+    }
+
+    private void CommandBarFavoriteClicked(object sender, RoutedEventArgs e)
+    {
+        ViewModel.ApplyOperationToSelection(HomePageViewModel.BatchOperationType.Favorite);
+    }
+
+    private void CommandBarUnFavoriteClicked(object sender, RoutedEventArgs e)
+    {
+        ViewModel.ApplyOperationToSelection(HomePageViewModel.BatchOperationType.UnFavorite);
+    }
+
+    private void CommandBarHideClicked(object sender, RoutedEventArgs e)
+    {
+        ViewModel.ApplyOperationToSelection(HomePageViewModel.BatchOperationType.Hide);
+    }
+
+    private void CommandBarUnhideClicked(object sender, RoutedEventArgs e)
+    {
+        ViewModel.ApplyOperationToSelection(HomePageViewModel.BatchOperationType.UnHide);
+    }
+
+    private void CommandBarMarkAsReadClicked(object sender, RoutedEventArgs e)
+    {
+        ViewModel.ApplyOperationToSelection(HomePageViewModel.BatchOperationType.MarkAsRead);
+    }
+
+    private void CommandBarMarkAsUnreadClicked(object sender, RoutedEventArgs e)
+    {
+        ViewModel.ApplyOperationToSelection(HomePageViewModel.BatchOperationType.MarkAsUnread);
+    }
+
+    //
+    // Animation
+    //
+
+    private void AnimateHeaderTextBlockOpacity(double to)
+    {
+        double from = HeaderTextBlock.Opacity;
+        if (_headerTextBlockAnimation != null)
+        {
+            _headerTextBlockAnimation.Stop();
+            _headerTextBlockAnimation = null;
+        }
+        var animation = new DoubleAnimation
+        {
+            From = from,
+            To = to,
+            Duration = new Duration(TimeSpan.FromSeconds(Math.Abs(to - from) * 0.2)),
+        };
+        Storyboard.SetTarget(animation, HeaderTextBlock);
+        Storyboard.SetTargetProperty(animation, "Opacity");
+        var storyboard = new Storyboard();
+        storyboard.Children.Add(animation);
+        storyboard.Begin();
+        _headerTextBlockAnimation = storyboard;
+    }
+
+    //
+    // Filters
+    //
+
+    private void UpdateFilters(HomePageViewModel.FilterModel model)
+    {
+        if (model == null)
+        {
+            return;
+        }
+
+        BindDropDownButton(ViewTypeDropDownButton, model.ViewTypeDropDown, ViewModel.SelectViewType);
+        BindDropDownButton(SortByDropDownButton, model.SortByDropDown, ViewModel.SelectSortBy);
+        BindDropDownButton(GroupByDropDownButton, model.GroupByDropDown, ViewModel.SelectGroupBy);
+        BindDropDownButton(FilterPresetDropDownButton, model.FilterPresetDropDown, ViewModel.SelectFilterPreset);
+    }
+
+    private void BindDropDownButton<T>(DropDownButton button, HomePageViewModel.DropDownButtonModel<T> model, Action<T?> clickHandler)
+    {
+        if (button == null)
+        {
+            return;
+        }
+
+        button.Content = model.Name;
+
+        FlyoutBase flyout = button.Flyout;
+        if (flyout is not MenuFlyout)
+        {
+            flyout = new MenuFlyout();
+            flyout.Placement = FlyoutPlacementMode.BottomEdgeAlignedRight;
+            button.Flyout = flyout;
+        }
+        var menuFlyout = (MenuFlyout)flyout;
+
+        menuFlyout.Items.Clear();
+        foreach (HomePageViewModel.MenuFlyoutItemModel<T> item in model.Items)
+        {
+            menuFlyout.Items.Add(CreateMenuFlyoutItem(item, clickHandler));
+        }
+    }
+
+    private MenuFlyoutItemBase CreateMenuFlyoutItem<T>(HomePageViewModel.MenuFlyoutItemModel<T> item, Action<T?> clickHandler)
+    {
+        MenuFlyoutItemBase menuItem;
+        if (item.IsSeperator)
+        {
+            menuItem = new MenuFlyoutSeparator();
+        }
+        else if (item.SubItems != null)
+        {
+            var actualMenuItem = new MenuFlyoutSubItem
+            {
+                Text = item.Name,
+            };
+            foreach (HomePageViewModel.MenuFlyoutItemModel<T> subItem in item.SubItems)
+            {
+                actualMenuItem.Items.Add(CreateMenuFlyoutItem(subItem, clickHandler));
+            }
+            menuItem = actualMenuItem;
+        }
+        else if (item.CanToggle)
+        {
+            var actualMenuItem = new ToggleMenuFlyoutItem
+            {
+                Text = item.Name,
+                IsChecked = item.Toggled,
+            };
+            actualMenuItem.Click += delegate (object sender, RoutedEventArgs e)
+            {
+                clickHandler(item.DataContext);
+            };
+            menuItem = actualMenuItem;
+        }
+        else
+        {
+            var actualMenuItem = new MenuFlyoutItem
+            {
+                Text = item.Name,
+            };
+            actualMenuItem.Click += delegate (object sender, RoutedEventArgs e)
+            {
+                clickHandler(item.DataContext);
+            };
+            menuItem = actualMenuItem;
+        }
+        return menuItem;
+    }
+
+    //
+    // Utilities
+    //
+
+    private IMainPageAbility GetMainPageAbility()
+    {
+        return GetAbility<IMainPageAbility>()!;
+    }
+
+    private INavigationPageAbility GetNavigationPageAbility()
+    {
+        return GetAbility<INavigationPageAbility>()!;
+    }
+
+    private void OnComicDataUpdated()
+    {
+        ViewModel.UpdateLibrary();
+    }
+
+    //
+    // Comic Item
+    //
 
     private void OnOpenInNewTabClicked(object sender, RoutedEventArgs e)
     {
@@ -240,7 +446,7 @@ internal sealed partial class HomePage : BasePage
 
     private void OnComicItemTapped(object sender, TappedRoutedEventArgs e)
     {
-        if (!CanHandleTapped())
+        if (!CanHandleTapped() || ViewModel.IsSelectMode)
         {
             return;
         }
@@ -262,7 +468,7 @@ internal sealed partial class HomePage : BasePage
             item.Comic.SetAsUnread();
         }
 
-        _ = BindComicData(item, item.Comic);
+        item.UpdateProgress(true);
     }
 
     private void OnAddToFavoritesClicked(object sender, RoutedEventArgs e)
@@ -291,8 +497,17 @@ internal sealed partial class HomePage : BasePage
         {
             var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
             await item.Comic.SaveHiddenAsync(true);
-            ComicItemSource.Remove(item);
-            await UpdateLibrary();
+            ViewModel.UpdateLibrary();
+        });
+    }
+
+    private void EditFilterButton_Click(object sender, RoutedEventArgs e)
+    {
+        C0.Run(async delegate
+        {
+            var dialog = new EditFilterDialog(await ViewModel.GetFilter());
+            _ = await C0.ShowDialogAsync(dialog, XamlRoot);
+            ViewModel.UpdateFilters();
         });
     }
 
@@ -305,7 +520,7 @@ internal sealed partial class HomePage : BasePage
                 return;
             }
 
-            ComicData.UpdateAllComics("HomePage#AddNewFolder", lazy: true);
+            ComicModel.UpdateAllComics("HomePage#AddNewFolder", lazy: true);
         });
     }
 
@@ -316,66 +531,71 @@ internal sealed partial class HomePage : BasePage
 
     private void RefreshHyperlink_Click(Microsoft.UI.Xaml.Documents.Hyperlink sender, Microsoft.UI.Xaml.Documents.HyperlinkClickEventArgs args)
     {
-        RefreshPage();
+        ComicModel.UpdateAllComics("RefreshPage", lazy: true);
     }
 
-    public static void RefreshPage()
-    {
-        ComicData.UpdateAllComics("RefreshPage", lazy: true);
-    }
+    //
+    // Helper Class
+    //
 
     private class ComicItemHandler : ComicItemViewModel.IItemHandler
     {
-        private readonly HomePage _page;
+        private readonly WeakReference<HomePage> _pageRef;
 
         public ComicItemHandler(HomePage page)
         {
-            _page = page;
+            _pageRef = new WeakReference<HomePage>(page);
         }
 
         public void OnAddToFavoritesClicked(object sender, RoutedEventArgs e)
         {
-            _page.OnAddToFavoritesClicked(sender, e);
+            GetPage()?.OnAddToFavoritesClicked(sender, e);
         }
 
         public void OnHideClicked(object sender, RoutedEventArgs e)
         {
-            _page.OnHideComicClicked(sender, e);
+            GetPage()?.OnHideComicClicked(sender, e);
         }
 
         public void OnItemTapped(object sender, TappedRoutedEventArgs e)
         {
-            _page.OnComicItemTapped(sender, e);
+            GetPage()?.OnComicItemTapped(sender, e);
         }
 
         public void OnMarkAsReadClicked(object sender, RoutedEventArgs e)
         {
             var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-            _page.MarkAsReadOrUnread(item, true);
+            GetPage()?.MarkAsReadOrUnread(item, true);
         }
 
         public void OnMarkAsUnreadClicked(object sender, RoutedEventArgs e)
         {
             var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-            _page.MarkAsReadOrUnread(item, false);
+            GetPage()?.MarkAsReadOrUnread(item, false);
         }
 
         public void OnOpenInNewTabClicked(object sender, RoutedEventArgs e)
         {
-            _page.OnOpenInNewTabClicked(sender, e);
+            GetPage()?.OnOpenInNewTabClicked(sender, e);
         }
 
         public void OnRemoveFromFavoritesClicked(object sender, RoutedEventArgs e)
         {
-            _page.OnRemoveFromFavoritesClicked(sender, e);
+            GetPage()?.OnRemoveFromFavoritesClicked(sender, e);
         }
 
         public void OnSelectClicked(object sender, RoutedEventArgs e)
         {
+            GetPage()?.ViewModel?.SetSelectionMode(true);
         }
 
         public void OnUnhideClicked(object sender, RoutedEventArgs e)
         {
+        }
+
+        private HomePage? GetPage()
+        {
+            return _pageRef.TryGetTarget(out HomePage? page) ? page : null;
         }
     }
 }

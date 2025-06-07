@@ -1,6 +1,8 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -9,7 +11,8 @@ using System.Xml.Serialization;
 
 using ComicReader.Common;
 using ComicReader.Common.Lifecycle;
-using ComicReader.Common.Threading;
+using ComicReader.Data.Models;
+using ComicReader.SDK.Common.Threading;
 
 namespace ComicReader.Data.Legacy;
 

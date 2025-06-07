@@ -1,14 +1,16 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 
 using ComicReader.Common;
-using ComicReader.Common.DebugTools;
 using ComicReader.Common.Imaging;
-using ComicReader.Common.Threading;
+using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Common.Threading;
 
 using Microsoft.UI.Xaml.Media.Imaging;
 

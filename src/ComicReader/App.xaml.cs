@@ -7,9 +7,12 @@ using System.Threading.Tasks;
 using ComicReader.Common;
 using ComicReader.Common.AppEnvironment;
 using ComicReader.Common.DebugTools;
+using ComicReader.Common.Services;
 using ComicReader.Data;
-using ComicReader.Data.Comic;
 using ComicReader.Data.Legacy;
+using ComicReader.Data.Models.Comic;
+using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Common.ServiceManagement;
 
 using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppLifecycle;
@@ -21,13 +24,13 @@ namespace ComicReader;
 
 public partial class App : Application
 {
+    private const string TAG = nameof(App);
+
     internal static readonly WindowManager<MainWindow> WindowManager = new();
 
     public App()
     {
-        UnhandledException += CrashHandler.OnUnhandledException;
-        EnvironmentProvider.Instance.Initialize();
-        ApplyAppTheme();
+        InitializationBeforeCreate();
         InitializeComponent();
     }
 
@@ -50,7 +53,7 @@ public partial class App : Application
             return;
         }
 
-        await PerformInitialization();
+        await InitializationOnLaunch();
 
         // Initialize MainWindow here
         var window = new MainWindow("");
@@ -60,12 +63,44 @@ public partial class App : Application
         OnActivated(null, activatedEventArgs);
     }
 
-    private void OnActivated(object sender, AppActivationArguments e)
+    private void OnActivated(object? sender, AppActivationArguments e)
     {
         if (e.Kind == ExtendedActivationKind.File)
         {
-            WindowManager.GetAnyWindow().OnFileActivated((FileActivatedEventArgs)e.Data);
+            MainWindow? window = WindowManager.GetAnyWindow();
+            if (window != null)
+            {
+                window.OnFileActivated((FileActivatedEventArgs)e.Data);
+            }
+            else
+            {
+                Logger.F(TAG, "Failed to perform file activation, no window is found.");
+            }
         }
+    }
+
+    private void InitializationBeforeCreate()
+    {
+        UnhandledException += (_, e) =>
+        {
+            CrashHandler.OnUnhandledException(e.Exception);
+        };
+
+        ServiceManager.RegisterService<IApplicationService>(new ApplicationService());
+
+        EnvironmentProvider.Instance.Initialize();
+
+        ApplyAppTheme();
+    }
+
+    private async Task InitializationOnLaunch()
+    {
+        DebugSwitches.Instance.Initialize();
+        Logger.Initialize();
+        await XmlDatabaseManager.Initialize();
+        await DatabaseUpgradeManager.Instance.UpgradeDatabase();
+        await SqlDatabaseManager.Initialize(XmlDatabase.Settings.DatabaseVersion);
+        ComicModel.UpdateAllComics("DatabaseManager#init", lazy: true);
     }
 
     private void ApplyAppTheme()
@@ -77,12 +112,4 @@ public partial class App : Application
         }
     }
 
-    private async Task PerformInitialization()
-    {
-        Logger.Initialize();
-        await XmlDatabaseManager.Initialize();
-        await DatabaseUpgradeManager.Instance.UpgradeDatabase();
-        await SqliteDatabaseManager.Initialize(XmlDatabase.Settings.DatabaseVersion);
-        ComicData.UpdateAllComics("DatabaseManager#init", lazy: true);
-    }
 }

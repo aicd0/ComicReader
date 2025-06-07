@@ -1,6 +1,8 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System;
 using System.IO;
 using System.Threading;
@@ -8,7 +10,7 @@ using System.Threading.Tasks;
 using System.Xml.Serialization;
 
 using ComicReader.Common;
-using ComicReader.Common.DebugTools;
+using ComicReader.SDK.Common.DebugTools;
 
 using Windows.Storage;
 using Windows.Storage.Streams;

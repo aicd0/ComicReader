@@ -1,6 +1,8 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -12,15 +14,20 @@ using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Common.AppEnvironment;
-using ComicReader.Common.DebugTools;
 using ComicReader.Common.PageBase;
 using ComicReader.Common.Threading;
 using ComicReader.Data;
-using ComicReader.Data.Comic;
 using ComicReader.Data.Legacy;
+using ComicReader.Data.Models;
+using ComicReader.Data.Models.Comic;
+using ComicReader.Data.Tables;
+using ComicReader.Helpers.Navigation;
+using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Common.Threading;
+using ComicReader.SDK.Common.Utils;
+using ComicReader.SDK.Data.SqlHelpers;
 using ComicReader.Views.Main;
 
-using Microsoft.Data.Sqlite;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
@@ -388,10 +395,17 @@ internal sealed partial class SettingsPage : BasePage
         });
     }
 
+    private void ShowHiddenComicButton_Click(object sender, RoutedEventArgs e)
+    {
+        Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_SEARCH)
+            .WithParam(RouterConstants.ARG_KEYWORD, "<hidden>");
+        GetMainPageAbility().OpenInNewTab(route);
+    }
+
     private void OnRescanFilesClicked(object sender, RoutedEventArgs e)
     {
         ViewModel.IsRescanning = true;
-        ComicData.UpdateAllComics("OnRescanFilesClicked", lazy: false);
+        ComicModel.UpdateAllComics("OnRescanFilesClicked", lazy: false);
     }
 
     private void OnClearCacheClick(object sender, RoutedEventArgs e)
@@ -485,13 +499,13 @@ internal sealed partial class SettingsPage : BasePage
         C0.Run(async delegate
         {
             long comicCount = 0;
-            await ComicData.CommandBlock2(async delegate (SqliteCommand command)
+            SelectCommand<ComicTable> command = new(ComicTable.Instance);
+            SelectCommand<ComicTable>.IToken<long> comicCountToken = command.PutQueryCountAll();
+            using SelectCommand<ComicTable>.IReader reader = await command.ExecuteAsync(SqlDatabaseManager.MainDatabase);
+            if (await reader.ReadAsync())
             {
-#pragma warning disable CA2100 // Review SQL queries for security vulnerabilities
-                command.CommandText = "SELECT COUNT(*) FROM " + ComicTable.Instance.GetTableName();
-#pragma warning restore CA2100 // Review SQL queries for security vulnerabilities
-                comicCount = (long)await command.ExecuteScalarAsync();
-            }, "SettingUpdateStatistics");
+                comicCount = comicCountToken.GetValue();
+            }
             string total_comic_string = StringResourceProvider.GetResourceString("TotalComics");
             StatisticsTextBlock.Text = total_comic_string +
                 comicCount.ToString("#,#0", CultureInfo.InvariantCulture);

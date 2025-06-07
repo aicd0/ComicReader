@@ -1,6 +1,8 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -9,17 +11,18 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
-using ComicReader.Common.DebugTools;
 using ComicReader.Common.Imaging;
-using ComicReader.Common.KVStorage;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Common.PageBase;
 using ComicReader.Common.Threading;
-using ComicReader.Data;
-using ComicReader.Data.Comic;
 using ComicReader.Data.Legacy;
+using ComicReader.Data.Models;
+using ComicReader.Data.Models.Comic;
 using ComicReader.Helpers.Imaging;
 using ComicReader.Helpers.Navigation;
+using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Common.KVStorage;
+using ComicReader.SDK.Common.Threading;
 using ComicReader.ViewModels;
 using ComicReader.Views.Main;
 using ComicReader.Views.Navigation;
@@ -150,7 +153,7 @@ internal sealed partial class ReaderPage : BasePage
     //
 
     private bool? _isFavorite = null;
-    private ComicData _comic;
+    private ComicModel _comic;
     private IComicConnection _comicConnection;
     private volatile bool _updatingProgress = false;
 
@@ -249,7 +252,7 @@ internal sealed partial class ReaderPage : BasePage
             }
 
             long comic_id = bundle.GetLong(RouterConstants.ARG_COMIC_ID, -1);
-            ComicData comic = await ComicData.FromId(comic_id, "ReaderGetComic");
+            ComicModel comic = await ComicModel.FromId(comic_id, "ReaderGetComic");
             if (comic == null)
             {
                 string token = bundle.GetString(RouterConstants.ARG_COMIC_TOKEN, "");
@@ -281,7 +284,7 @@ internal sealed partial class ReaderPage : BasePage
         GetNavigationPageAbility().SetReaderSettings(GetReaderSettingModel());
         UpdateReaderUI();
 
-        ComicData comic = _comic;
+        ComicModel comic = _comic;
         if (comic != null && !comic.IsExternal)
         {
             AppModel.SetReadingComic(comic.Id);
@@ -375,7 +378,7 @@ internal sealed partial class ReaderPage : BasePage
     // Loader
     //
 
-    public async Task LoadComic(ComicData comic)
+    public async Task LoadComic(ComicModel comic)
     {
         if (comic == _comic)
         {
@@ -475,7 +478,7 @@ internal sealed partial class ReaderPage : BasePage
 
         LoadDescription(_comic.Description);
         ViewModel.ComicDir = _comic.Location;
-        ViewModel.CanDirOpenInFileExplorer = _comic is ComicFolderData;
+        ViewModel.CanDirOpenInFileExplorer = _comic.IsDirectory;
         ViewModel.IsEditable = _comic.IsEditable;
 
         LoadComicTag();
@@ -708,7 +711,7 @@ internal sealed partial class ReaderPage : BasePage
     {
         C0.Run(async delegate
         {
-            ComicData comic = _comic;
+            ComicModel comic = _comic;
 
             StorageFolder folder = await Storage.TryGetFolder(comic.Location);
 
@@ -731,7 +734,7 @@ internal sealed partial class ReaderPage : BasePage
     {
         C0.Run(async delegate
         {
-            ComicData comic = _comic;
+            ComicModel comic = _comic;
             if (comic == null)
             {
                 return;

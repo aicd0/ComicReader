@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 
 using ComicReader.Data.Legacy;
+using ComicReader.Data.Models;
 
 namespace ComicReader.Data;
 

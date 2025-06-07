@@ -15,13 +15,12 @@ internal class PageCommunicator
         _abilities[typeof(T)] = ability;
     }
 
-    public T GetAbility<T>() where T : class
+    public T? GetAbility<T>() where T : class
     {
-        if (_abilities.TryGetValue(typeof(T), out IPageAbility value))
+        if (_abilities.TryGetValue(typeof(T), out IPageAbility? value))
         {
             return (T)value;
         }
-
         return null;
     }
 }

@@ -1,11 +1,14 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System;
 using System.ComponentModel;
 
 using ComicReader.Common;
-using ComicReader.Data.Comic;
+using ComicReader.Data.Models;
+using ComicReader.Data.Models.Comic;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
@@ -24,7 +27,7 @@ internal class ComicItemViewModel : INotifyPropertyChanged
     // properties
     //
 
-    public ComicData Comic;
+    public ComicModel Comic;
     public string Title { get; set; }
     public string Detail { get; set; }
     public int Rating { get; set; } = -1;
@@ -59,20 +62,27 @@ internal class ComicItemViewModel : INotifyPropertyChanged
     public bool IsRead => Comic.IsRead;
     public bool IsUnread => Comic.IsUnread;
 
-    private bool m_IsSelectMode = false;
-    public bool IsSelectMode
-    {
-        get => m_IsSelectMode;
-        set
-        {
-            m_IsSelectMode = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsSelectMode"));
-        }
-    }
-
     //
     // functions
     //
+
+    public void Update(ComicModel comic)
+    {
+        Comic = comic;
+        Title = Comic.Title;
+        Rating = comic.Rating;
+        UpdateProgress(true);
+
+        C0.Run(async delegate
+        {
+            bool isFavorite = await FavoriteModel.Instance.FromId(comic.Id) != null;
+            if (comic != Comic)
+            {
+                return;
+            }
+            IsFavorite = isFavorite;
+        });
+    }
 
     public void UpdateProgress(bool compat)
     {

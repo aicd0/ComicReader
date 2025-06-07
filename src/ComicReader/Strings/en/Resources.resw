@@ -256,7 +256,7 @@
     <value>Left to right</value>
   </data>
   <data name="LibraryEmptyPart1.Text" xml:space="preserve">
-    <value>Seems that your library is empty. Try</value>
+    <value>No results under current filter settings. Try</value>
   </data>
   <data name="LibraryEmptyPart2.Text" xml:space="preserve">
     <value>or</value>
@@ -362,12 +362,6 @@
   </data>
   <data name="Settings" xml:space="preserve">
     <value>Settings</value>
-  </data>
-  <data name="ShowAllButton.Content" xml:space="preserve">
-    <value>Show all</value>
-  </data>
-  <data name="ShowHiddenButton.Content" xml:space="preserve">
-    <value>Show hidden</value>
   </data>
   <data name="Statistics.Text" xml:space="preserve">
     <value>Statistics</value>
@@ -554,5 +548,8 @@ Category2: tag4/tag5
   </data>
   <data name="DebugInformation.Text" xml:space="preserve">
     <value>Debug information</value>
+  </data>
+  <data name="ShowHiddenComicButton.Content" xml:space="preserve">
+    <value>Show hidden comics</value>
   </data>
 </root>

@@ -1,17 +1,20 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
-using ComicReader.Common.DebugTools;
 using ComicReader.Common.Imaging;
 using ComicReader.Common.Threading;
-using ComicReader.Data;
 using ComicReader.Data.Legacy;
+using ComicReader.Data.Models;
+using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Common.Threading;
 
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
@@ -1602,8 +1605,7 @@ internal partial class ReaderView : UserControl
             zoom *= zoomCoefficientNew.Max() / zoomCoefficientNew.Min();
         }
 
-        double maxZoom = Math.Max(MAX_ZOOM, 100 * zoomCoefficientNew.Max() / zoomCoefficientNew.Min());
-        zoom = Math.Min(zoom, maxZoom);
+        zoom = Math.Min(zoom, MAX_ZOOM * zoomCoefficientNew.Max() / zoomCoefficientNew.Min());
         zoom = Math.Max(zoom, MIN_ZOOM);
         context.ZoomPercentage = (float)zoom;
 
@@ -2097,7 +2099,7 @@ internal partial class ReaderView : UserControl
 
     private void Log(string tag, string message)
     {
-        Logger.I(LogTag.N($"ReaderView", tag), message);
+        Logger.I(LogTag.N(TAG, tag), message);
     }
 
     private static void PostToCurrentThread(Action<Task> action)

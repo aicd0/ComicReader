@@ -7,8 +7,8 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
-using ComicReader.Common.DebugTools;
 using ComicReader.Common.Native;
+using ComicReader.SDK.Common.DebugTools;
 
 using Microsoft.Win32.SafeHandles;
 
