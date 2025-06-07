@@ -414,7 +414,7 @@ internal class InternalServer : IServerContext
 
     private class ServerProperty(InternalServer server) : AbsProperty<VoidRequest, VoidType, VoidType, IPropertyExtension>
     {
-        private readonly Queue<IExternalRequest> _requests = [];
+        private readonly LinkedList<IExternalRequest> _requests = [];
 
         public override VoidType CreateModel()
         {
@@ -428,25 +428,37 @@ internal class InternalServer : IServerContext
 
         public override void RearrangeRequests(PropertyContext<VoidRequest, VoidType, VoidType, IPropertyExtension> context)
         {
-            while (_requests.TryPeek(out IExternalRequest? request))
+            LockResource barrier = new();
+            for (LinkedListNode<IExternalRequest>? node = _requests.First; node != null;)
             {
+                LinkedListNode<IExternalRequest> nodeCopy = node;
+                node = node.Next;
+
+                IExternalRequest request = nodeCopy.Value;
                 if (!request.TryGetLockResource(server, out LockResource? lockResource))
                 {
-                    _requests.Dequeue();
+                    _requests.Remove(nodeCopy);
                     request.SetResult(OperationResult.GetLockResourceFail, "");
+                    continue;
+                }
+                if (barrier.Conflicts(lockResource))
+                {
+                    barrier.Merge(lockResource);
                     continue;
                 }
                 if (!server._lockManager.TryAcquireLock(lockResource, out LockToken? token))
                 {
                     if (!server.HasOngoingRequests())
                     {
-                        _requests.Dequeue();
+                        _requests.Remove(nodeCopy);
                         request.SetResult(OperationResult.AcquireLockFail, "");
+                        continue;
                     }
-                    break;
+                    barrier.Merge(lockResource);
+                    continue;
                 }
-                _requests.Dequeue();
                 request.Request(context, token);
+                _requests.Remove(nodeCopy);
             }
         }
 
@@ -457,7 +469,7 @@ internal class InternalServer : IServerContext
 
         public void EnqueueRequest(IExternalRequest request)
         {
-            _requests.Enqueue(request);
+            _requests.AddLast(request);
         }
     }
 }

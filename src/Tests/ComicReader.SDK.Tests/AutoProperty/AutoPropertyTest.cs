@@ -164,43 +164,180 @@ public class AutoPropertyTest
         TestInternal(1);
     }
 
-    //[Test]
-    //public void TestRequestLock()
-    //{
-    //    PropertyServer server = new("Test");
-    //    TestProperty<int> sourceProperty = new();
-    //    MemoryCacheProperty<TestPropertyKey, int> cacheProperty1 = new(sourceProperty);
-    //    MemoryCacheProperty<TestPropertyKey, int> cacheProperty2 = new(sourceProperty);
+    [Test]
+    public void TestRequestLock()
+    {
+        PropertyServer server = new("Test");
+        TestProperty<int> sourceProperty = new();
+        MemoryCacheProperty<TestPropertyKey, int> cacheProperty1 = new(sourceProperty);
+        MemoryCacheProperty<TestPropertyKey, int> cacheProperty2 = new(sourceProperty);
+        MultiSourceProperty<TestPropertyKey, int> multiSourceProperty = new([cacheProperty1, cacheProperty2]);
 
-    //    Dictionary<string, int> writtenValues = [];
-    //    sourceProperty.ServerFunc = (request) =>
-    //    {
-    //        if (request.Type == RequestType.Read)
-    //        {
-    //            if (writtenValues.TryGetValue(request.Key.Name, out int value))
-    //            {
-    //                return PropertyResponseContent<int>.NewSuccessfulResponse(value);
-    //            }
-    //            return PropertyResponseContent<int>.NewFailedResponse();
-    //        }
-    //        else if (request.Type == RequestType.Modify)
-    //        {
-    //            writtenValues[request.Key.Name] = request.Value;
-    //            return PropertyResponseContent<int>.NewSuccessfulResponse();
-    //        }
-    //        else
-    //        {
-    //            throw new InvalidOperationException();
-    //        }
-    //    };
+        int keyCount = 2;
+        Func<string, int> valueFunc = (key) =>
+        {
+            return -1;
+        };
+        List<int> expectRequestsCounts = [];
+        List<int> requestCounts = [];
+        Dictionary<string, int> writtenValues = [];
+        sourceProperty.BatchServerFunc = (requests) =>
+        {
+            requestCounts.Add(requests.Count);
+            List<PropertyResponseContent<int>> responses = [];
+            foreach (PropertyRequestContent<TestPropertyKey, int> request in requests)
+            {
+                if (request.Type == RequestType.Read)
+                {
+                    if (writtenValues.TryGetValue(request.Key.Name, out int value))
+                    {
+                        responses.Add(PropertyResponseContent<int>.NewSuccessfulResponse(value));
+                    }
+                    else
+                    {
+                        responses.Add(PropertyResponseContent<int>.NewFailedResponse());
+                    }
+                }
+                else if (request.Type == RequestType.Modify)
+                {
+                    writtenValues[request.Key.Name] = request.Value;
+                    responses.Add(PropertyResponseContent<int>.NewSuccessfulResponse());
+                }
+                else
+                {
+                    throw new InvalidOperationException();
+                }
+            }
+            return responses;
+        };
 
-    //    void TestInternal(bool rearrange, bool processOnServerThread)
-    //    {
-    //        sourceProperty.Rearrange = rearrange;
-    //        sourceProperty.ProcessOnServerThread = processOnServerThread;
+        void AppendTestCase(List<IRequestTest> tests, ExternalBatchRequest batch, int start, int end, bool delay = false)
+        {
+            valueFunc = (key) =>
+            {
+                if (int.TryParse(key, out int value))
+                {
+                    return value;
+                }
+                return -1;
+            };
+            tests.AddRange(AppendSerialWriteTest(batch, cacheProperty1, start, end, valueFunc));
+            tests.AddRange(AppendSerialReadTest(batch, cacheProperty1, start, end, valueFunc));
+            tests.AddRange(AppendSerialReadTest(batch, cacheProperty1, start, end, valueFunc));
+            valueFunc = (key) =>
+            {
+                if (int.TryParse(key, out int value))
+                {
+                    return value + 100;
+                }
+                return -1;
+            };
+            tests.AddRange(AppendSerialWriteTest(batch, cacheProperty1, start, end, valueFunc));
+            tests.AddRange(AppendSerialReadTest(batch, cacheProperty2, start, end, valueFunc));
+            valueFunc = (key) =>
+            {
+                if (int.TryParse(key, out int value))
+                {
+                    return value + 200;
+                }
+                return -1;
+            };
+            tests.AddRange(AppendSerialWriteTest(batch, cacheProperty1, start, end, valueFunc));
+            valueFunc = (key) =>
+            {
+                if (int.TryParse(key, out int value))
+                {
+                    return value + 300;
+                }
+                return -1;
+            };
+            tests.AddRange(AppendSerialWriteTest(batch, cacheProperty2, start, end, valueFunc));
+            tests.AddRange(AppendSerialReadTest(batch, cacheProperty1, start, end, valueFunc));
+            valueFunc = (key) =>
+            {
+                if (int.TryParse(key, out int value))
+                {
+                    return value + 400;
+                }
+                return -1;
+            };
+            tests.AddRange(AppendSerialWriteTest(batch, sourceProperty, start, end, valueFunc));
+            tests.AddRange(AppendSerialReadTest(batch, cacheProperty1, start, end, valueFunc));
+            tests.AddRange(AppendSerialReadTest(batch, cacheProperty2, start, end, valueFunc));
+            valueFunc = (key) =>
+            {
+                if (int.TryParse(key, out int value))
+                {
+                    return value + 500;
+                }
+                return -1;
+            };
+            tests.AddRange(AppendSerialWriteTest(batch, multiSourceProperty, start, end, valueFunc));
+            tests.AddRange(AppendSerialReadTest(batch, sourceProperty, start, end, valueFunc));
+            tests.AddRange(AppendSerialReadTest(batch, cacheProperty1, start, end, valueFunc));
+            tests.AddRange(AppendSerialReadTest(batch, cacheProperty2, start, end, valueFunc));
+            valueFunc = (key) =>
+            {
+                if (int.TryParse(key, out int value))
+                {
+                    return value + 600;
+                }
+                return -1;
+            };
+            tests.AddRange(AppendSerialWriteTest(batch, sourceProperty, start, end, valueFunc));
+            tests.AddRange(AppendSerialWriteTest(batch, multiSourceProperty, start, end, valueFunc));
+            tests.AddRange(AppendSerialReadTest(batch, cacheProperty1, start, end, valueFunc));
+            tests.AddRange(AppendSerialReadTest(batch, cacheProperty2, start, end, valueFunc));
+            tests.AddRange(AppendSerialReadTest(batch, sourceProperty, start, end, valueFunc));
+        }
 
-    //    }
-    //}
+        void TestInternal(bool rearrange, bool processOnServerThread)
+        {
+            requestCounts.Clear();
+            expectRequestsCounts.Clear();
+            sourceProperty.Rearrange = rearrange;
+            sourceProperty.ProcessOnServerThread = processOnServerThread;
+            ExternalBatchRequest batch = new();
+            List<IRequestTest> tests = [];
+            List<int> requestCountHelper = [1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 3, 1, 2, 3];
+
+            AppendTestCase(tests, batch, 0, keyCount);
+            foreach (int i in requestCountHelper)
+            {
+                expectRequestsCounts.Add(i * keyCount);
+            }
+
+            for (int i = 0; i < keyCount; i++)
+            {
+                AppendTestCase(tests, batch, i, i + 1);
+            }
+            foreach (int i in requestCountHelper)
+            {
+                expectRequestsCounts.Add(i * keyCount);
+            }
+
+            AppendTestCase(tests, batch, 0, keyCount, delay: true);
+            foreach (int i in requestCountHelper)
+            {
+                expectRequestsCounts.Add(i * keyCount);
+            }
+
+            ExternalBatchResponse response = server.Request(batch).Result;
+            foreach (IRequestTest test in tests)
+            {
+                test.AssertResult(response);
+            }
+            if (!rearrange)
+            {
+                AssertListEqual(requestCounts, expectRequestsCounts);
+            }
+        }
+
+        for (int i = 0; i < 1 << 2; i++)
+        {
+            TestInternal((i & 0x01) != 0, (i & 0x02) != 0);
+        }
+    }
 
     [Test]
     public void TestMemoryCacheProperty()
@@ -214,9 +351,9 @@ public class AutoPropertyTest
             sourceProperty.ProcessOnServerThread = processOnServerThread;
 
             Func<string, int> valueFunc = (key) =>
-                {
-                    return -1;
-                };
+            {
+                return -1;
+            };
             int keyCount = 100;
 
             {
@@ -550,9 +687,10 @@ public class AutoPropertyTest
             }
         }
 
-        TestInternal(true, true);
-        TestInternal(false, true);
-        TestInternal(false, false);
+        for (int i = 0; i < 1 << 2; i++)
+        {
+            TestInternal((i & 0x01) != 0, (i & 0x02) != 0);
+        }
     }
 
     [Test]
@@ -1006,6 +1144,18 @@ public class AutoPropertyTest
             tests.Add(test);
         }
         return tests;
+    }
+
+    private static void AssertListEqual<T>(List<T> actual, List<T> expected)
+    {
+        Assert.Multiple(() =>
+        {
+            Assert.That(actual, Has.Count.EqualTo(expected.Count));
+            for (int i = 0; i < expected.Count; i++)
+            {
+                Assert.That(actual[i], Is.EqualTo(expected[i]));
+            }
+        });
     }
 
     private static void AssertDictionaryEqual<A, B>(Dictionary<A, B> actual, Dictionary<A, B> expected) where A : notnull

@@ -39,4 +39,23 @@ public class LockResource
             }
         }
     }
+
+    public bool Conflicts(LockResource other)
+    {
+        if ((Type == LockType.Write && other.Type != LockType.None) || (other.Type == LockType.Write && Type != LockType.None))
+        {
+            return true;
+        }
+        foreach (KeyValuePair<string, LockResource> otherChild in other.Children)
+        {
+            if (Children.TryGetValue(otherChild.Key, out LockResource? child))
+            {
+                if (child.Conflicts(otherChild.Value))
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 }

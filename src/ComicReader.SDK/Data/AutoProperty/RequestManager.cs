@@ -50,7 +50,14 @@ internal class RequestManager
         {
             if (_senders.TryGetValue(request.Sender, out HashSet<IPropertyRequest>? requests))
             {
-                if (!requests.Remove(request))
+                if (requests.Remove(request))
+                {
+                    if (requests.Count == 0)
+                    {
+                        _senders.Remove(request.Sender);
+                    }
+                }
+                else
                 {
                     Logger.AssertNotReachHere("BE1CE5E44D831EFC");
                 }
@@ -64,7 +71,14 @@ internal class RequestManager
         {
             if (_receivers.TryGetValue(request.Receiver, out HashSet<IPropertyRequest>? requests))
             {
-                if (!requests.Remove(request))
+                if (requests.Remove(request))
+                {
+                    if (requests.Count == 0)
+                    {
+                        _receivers.Remove(request.Receiver);
+                    }
+                }
+                else
                 {
                     Logger.AssertNotReachHere("88BB49A5FFBE5DE4");
                 }

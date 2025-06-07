@@ -8,14 +8,13 @@ namespace ComicReader.SDK.Tests.AutoProperty;
 
 internal class TestProperty<V> : AbsProperty<TestPropertyKey, V, TestPropertyModel<V>, IPropertyExtension>
 {
-    public volatile Func<PropertyRequestContent<TestPropertyKey, V>, PropertyResponseContent<V>> ServerFunc = (request) =>
-    {
-        return PropertyResponseContent<V>.NewFailedResponse();
-    };
-
+    public volatile Func<List<PropertyRequestContent<TestPropertyKey, V>>, List<PropertyResponseContent<V>>>? BatchServerFunc = null;
+    public volatile Func<PropertyRequestContent<TestPropertyKey, V>, PropertyResponseContent<V>>? ServerFunc = null;
     public volatile bool Hang = false;
     public volatile bool Rearrange = true;
     public volatile bool ProcessOnServerThread = true;
+
+    private readonly ITaskDispatcher _dispatcher = TaskDispatcher.Factory.NewThreadPool("Test");
 
     public override TestPropertyModel<V> CreateModel()
     {
@@ -42,14 +41,12 @@ internal class TestProperty<V> : AbsProperty<TestPropertyKey, V, TestPropertyMod
 
         foreach (SealedPropertyRequest<TestPropertyKey, V> serverRequest in context.NewRequests)
         {
-            if (Rearrange)
-            {
-                Respond(context, serverRequest);
-            }
-            else
-            {
-                model.requests.Enqueue(serverRequest);
-            }
+            model.requests.Enqueue(serverRequest);
+        }
+
+        if (Rearrange)
+        {
+            Respond(context);
         }
     }
 
@@ -57,30 +54,47 @@ internal class TestProperty<V> : AbsProperty<TestPropertyKey, V, TestPropertyMod
     {
         if (ProcessOnServerThread)
         {
-            while (context.Model.requests.TryDequeue(out SealedPropertyRequest<TestPropertyKey, V>? request))
-            {
-                Respond(context, request);
-            }
+            Respond(context);
             callback.PostCompletion(null);
         }
         else
         {
-            TaskDispatcher.DefaultQueue.Submit("TestProperty", () =>
+            _dispatcher.Submit("TestProperty", () =>
             {
+                Thread.Sleep(Random.Shared.Next(1, 100));
                 callback.PostCompletion(() =>
                 {
-                    while (context.Model.requests.TryDequeue(out SealedPropertyRequest<TestPropertyKey, V>? request))
-                    {
-                        Respond(context, request);
-                    }
+                    Respond(context);
                 });
             });
         }
     }
 
-    private void Respond(PropertyContext<TestPropertyKey, V, TestPropertyModel<V>, IPropertyExtension> context, SealedPropertyRequest<TestPropertyKey, V> request)
+    private void Respond(PropertyContext<TestPropertyKey, V, TestPropertyModel<V>, IPropertyExtension> context)
     {
-        PropertyResponseContent<V> response = ServerFunc(request.RequestContent);
+        List<SealedPropertyRequest<TestPropertyKey, V>> batchRequests = [];
+        while (context.Model.requests.TryDequeue(out SealedPropertyRequest<TestPropertyKey, V>? request))
+        {
+            batchRequests.Add(request);
+        }
+        List<PropertyResponseContent<V>> batchResponses = BatchServerFunc?.Invoke(batchRequests.ConvertAll(x => x.RequestContent)) ?? [];
+        int responseCount = Math.Min(batchResponses.Count, batchRequests.Count);
+        for (int i = 0; i < responseCount; i++)
+        {
+            SealedPropertyRequest<TestPropertyKey, V> request = batchRequests[i];
+            PropertyResponseContent<V> response = batchResponses[i];
+            Respond(context, request, response);
+        }
+        for (int i = responseCount; i < batchRequests.Count; i++)
+        {
+            SealedPropertyRequest<TestPropertyKey, V> request = batchRequests[i];
+            PropertyResponseContent<V> response = ServerFunc?.Invoke(request.RequestContent) ?? PropertyResponseContent<V>.NewFailedResponse();
+            Respond(context, request, response);
+        }
+    }
+
+    private void Respond(PropertyContext<TestPropertyKey, V, TestPropertyModel<V>, IPropertyExtension> context, SealedPropertyRequest<TestPropertyKey, V> request, PropertyResponseContent<V> response)
+    {
         ResponseTracker tracker = context.TrackerManager.GetOrAddTracker(request.RequestContent.Key);
         if (request.RequestContent.Type == RequestType.Modify && response.Result == OperationResult.Successful)
         {
