@@ -363,12 +363,6 @@
   <data name="Settings" xml:space="preserve">
     <value>设置</value>
   </data>
-  <data name="ShowAllButton.Content" xml:space="preserve">
-    <value>显示全部</value>
-  </data>
-  <data name="ShowHiddenButton.Content" xml:space="preserve">
-    <value>显示隐藏项</value>
-  </data>
   <data name="Statistics.Text" xml:space="preserve">
     <value>统计信息</value>
   </data>
@@ -554,5 +548,8 @@
   </data>
   <data name="DebugInformation.Text" xml:space="preserve">
     <value>调试信息</value>
+  </data>
+  <data name="ShowHiddenComicButton.Content" xml:space="preserve">
+    <value>查看隐藏漫画</value>
   </data>
 </root>

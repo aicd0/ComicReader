@@ -33,29 +33,32 @@
             IsIndeterminate="True" />
 
         <!--  Search Results  -->
-        <GridView
+        <controls:AdaptiveGridView
             x:Name="SearchResultGridView"
             Padding="15,15,15,0"
             ContainerContentChanging="OnGridViewContainerContentChanging"
+            DesiredWidth="{StaticResource ComicItemHorizontalDesiredWidth}"
             ItemContainerStyle="{StaticResource SearchResultItemContainerExpandedStyle}"
+            ItemHeight="{StaticResource ComicItemHorizontalDesiredHeight}"
             ItemsSource="{x:Bind ViewModel.SearchResults}"
             SelectionChanged="OnGridViewSelectionChanged"
             SelectionMode="{x:Bind ViewModel.ComicItemSelectionMode, Mode=OneWay}"
+            StretchContentForSingleRow="False"
             Tapped="OnScrollViewerTapped">
-            <GridView.ItemsPanel>
+            <controls:AdaptiveGridView.ItemsPanel>
                 <ItemsPanelTemplate>
                     <ItemsWrapGrid
                         Margin="0,0,0,10"
                         HorizontalAlignment="Center"
                         Orientation="Horizontal" />
                 </ItemsPanelTemplate>
-            </GridView.ItemsPanel>
-            <GridView.ItemTemplate>
+            </controls:AdaptiveGridView.ItemsPanel>
+            <controls:AdaptiveGridView.ItemTemplate>
                 <DataTemplate x:DataType="vm:ComicItemViewModel">
                     <controls:ComicItemHorizontal />
                 </DataTemplate>
-            </GridView.ItemTemplate>
-            <GridView.Header>
+            </controls:AdaptiveGridView.ItemTemplate>
+            <controls:AdaptiveGridView.Header>
                 <StackPanel Margin="15,0,0,16" Orientation="Vertical">
                     <TextBlock
                         FontSize="28"
@@ -71,11 +74,11 @@
                         TextWrapping="Wrap"
                         Visibility="{x:Bind ViewModel.FilterDetailsVisible, Mode=OneWay}" />
                 </StackPanel>
-            </GridView.Header>
-            <GridView.Footer>
+            </controls:AdaptiveGridView.Header>
+            <controls:AdaptiveGridView.Footer>
                 <Grid Height="60" Visibility="{x:Bind ViewModel.IsSelectMode, Mode=OneWay}" />
-            </GridView.Footer>
-        </GridView>
+            </controls:AdaptiveGridView.Footer>
+        </controls:AdaptiveGridView>
 
         <!--  No Results  -->
         <StackPanel

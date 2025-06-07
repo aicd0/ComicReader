@@ -21,6 +21,7 @@ using ComicReader.Data.Legacy;
 using ComicReader.Data.Models;
 using ComicReader.Data.Models.Comic;
 using ComicReader.Data.Tables;
+using ComicReader.Helpers.Navigation;
 using ComicReader.SDK.Common.DebugTools;
 using ComicReader.SDK.Common.Threading;
 using ComicReader.SDK.Common.Utils;
@@ -392,6 +393,13 @@ internal sealed partial class SettingsPage : BasePage
             var uri = new Uri(@"https://github.com/aicd0/ComicReader/issues/new/choose");
             await Windows.System.Launcher.LaunchUriAsync(uri);
         });
+    }
+
+    private void ShowHiddenComicButton_Click(object sender, RoutedEventArgs e)
+    {
+        Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_SEARCH)
+            .WithParam(RouterConstants.ARG_KEYWORD, "<hidden>");
+        GetMainPageAbility().OpenInNewTab(route);
     }
 
     private void OnRescanFilesClicked(object sender, RoutedEventArgs e)
