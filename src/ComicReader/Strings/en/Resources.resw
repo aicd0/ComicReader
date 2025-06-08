@@ -552,4 +552,7 @@ Category2: tag4/tag5
   <data name="ShowHiddenComicButton.Content" xml:space="preserve">
     <value>Show hidden comics</value>
   </data>
+  <data name="RemoveUnreachableCheckBox.Content" xml:space="preserve">
+    <value>Automatically remove unreachable comics</value>
+  </data>
 </root>

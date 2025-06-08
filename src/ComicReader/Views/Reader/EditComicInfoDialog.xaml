@@ -15,7 +15,7 @@
     SecondaryButtonText="Cancel"
     mc:Ignorable="d">
 
-    <Grid>
+    <Grid Width="500">
         <StackPanel Orientation="Vertical">
             <TextBlock x:Uid="Title1" />
             <TextBox

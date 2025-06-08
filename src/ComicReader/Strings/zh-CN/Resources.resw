@@ -552,4 +552,7 @@
   <data name="ShowHiddenComicButton.Content" xml:space="preserve">
     <value>查看隐藏漫画</value>
   </data>
+  <data name="RemoveUnreachableCheckBox.Content" xml:space="preserve">
+    <value>自动移除不可访问的漫画</value>
+  </data>
 </root>

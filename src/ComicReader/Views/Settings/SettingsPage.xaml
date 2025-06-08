@@ -68,6 +68,11 @@
                             <StackPanel Orientation="Vertical">
                                 <Button x:Uid="ChooseLocationButton" Click="ChooseLocationsClick" />
                                 <Grid Height="12" />
+                                <CheckBox
+                                    x:Uid="RemoveUnreachableCheckBox"
+                                    Click="RemoveUnreachableCheckBox_Click"
+                                    IsChecked="{x:Bind ViewModel.RemoveUnreachableComics, Mode=OneWay}" />
+                                <Grid Height="12" />
                                 <Button x:Uid="ShowHiddenComicButton" Click="ShowHiddenComicButton_Click" />
                                 <Grid Height="12" />
                                 <TextBlock x:Uid="ArchiveEncoding" Style="{StaticResource SettingsPageBodyTextBlock}" />

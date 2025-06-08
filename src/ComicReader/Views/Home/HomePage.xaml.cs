@@ -335,26 +335,28 @@ internal sealed partial class HomePage : BasePage
             return;
         }
 
-        BindDropDownButton(ViewTypeDropDownButton, model.ViewTypeDropDown, ViewModel.SelectViewType);
-        BindDropDownButton(SortByDropDownButton, model.SortByDropDown, ViewModel.SelectSortBy);
-        BindDropDownButton(GroupByDropDownButton, model.GroupByDropDown, ViewModel.SelectGroupBy);
-        BindDropDownButton(FilterPresetDropDownButton, model.FilterPresetDropDown, ViewModel.SelectFilterPreset);
+        BindDropDownButton(ViewTypeDropDownButton, ViewTypeDropDownButtonText, model.ViewTypeDropDown, ViewModel.SelectViewType);
+        BindDropDownButton(SortByDropDownButton, SortByDropDownButtonText, model.SortByDropDown, ViewModel.SelectSortBy);
+        BindDropDownButton(GroupByDropDownButton, GroupByDropDownButtonText, model.GroupByDropDown, ViewModel.SelectGroupBy);
+        BindDropDownButton(FilterPresetDropDownButton, FilterPresetDropDownButtonText, model.FilterPresetDropDown, ViewModel.SelectFilterPreset);
     }
 
-    private void BindDropDownButton<T>(DropDownButton button, HomePageViewModel.DropDownButtonModel<T> model, Action<T?> clickHandler)
+    private void BindDropDownButton<T>(DropDownButton button, TextBlock buttonText, HomePageViewModel.DropDownButtonModel<T> model, Action<T?> clickHandler)
     {
         if (button == null)
         {
             return;
         }
 
-        button.Content = model.Name;
+        buttonText.Text = model.Name;
 
         FlyoutBase flyout = button.Flyout;
         if (flyout is not MenuFlyout)
         {
-            flyout = new MenuFlyout();
-            flyout.Placement = FlyoutPlacementMode.BottomEdgeAlignedRight;
+            flyout = new MenuFlyout
+            {
+                Placement = FlyoutPlacementMode.BottomEdgeAlignedRight
+            };
             button.Flyout = flyout;
         }
         var menuFlyout = (MenuFlyout)flyout;

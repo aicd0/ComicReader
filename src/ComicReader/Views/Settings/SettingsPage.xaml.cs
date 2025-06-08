@@ -1,8 +1,6 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-#nullable disable
-
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -43,18 +41,14 @@ public enum AppearanceSetting
     None
 }
 
-public class SettingsPageViewModel : INotifyPropertyChanged
+public partial class SettingsPageViewModel : INotifyPropertyChanged
 {
-    public event PropertyChangedEventHandler PropertyChanged;
+    public event PropertyChangedEventHandler? PropertyChanged;
 
+    private AppSettingsModel.ExternalModel? _settingsModel;
     private AppearanceSetting _initialAppearance = AppearanceSetting.None;
 
     public bool Updating { get; set; } = false;
-
-    public void Initialize()
-    {
-        InitializeAppearance();
-    }
 
     private List<Tuple<string, int>> _encodings = [];
     public List<Tuple<string, int>> Encodings
@@ -64,6 +58,17 @@ public class SettingsPageViewModel : INotifyPropertyChanged
         {
             _encodings = value;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Encodings)));
+        }
+    }
+
+    private bool _removeUnreachableComics = true;
+    public bool RemoveUnreachableComics
+    {
+        get => _removeUnreachableComics;
+        set
+        {
+            _removeUnreachableComics = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(RemoveUnreachableComics)));
         }
     }
 
@@ -254,6 +259,43 @@ public class SettingsPageViewModel : INotifyPropertyChanged
         }
     }
 
+    public void Initialize()
+    {
+        C0.Run(async () =>
+        {
+            ApplySettingsModel(await GetSettingsModelAsync());
+            InitializeAppearance();
+        });
+    }
+
+    public void SetRemoveUnreachableComics(bool removeUnreachableComics)
+    {
+        C0.Run(async () =>
+        {
+            _removeUnreachableComics = removeUnreachableComics;
+            AppSettingsModel.ExternalModel model = await GetSettingsModelAsync();
+            model.RemoveUnreachableComics = removeUnreachableComics;
+            await AppSettingsModel.Instance.UpdateModel(model);
+        });
+    }
+
+    private async Task<AppSettingsModel.ExternalModel> GetSettingsModelAsync()
+    {
+        AppSettingsModel.ExternalModel? model = _settingsModel;
+        if (model != null)
+        {
+            return model;
+        }
+        model = await AppSettingsModel.Instance.GetModel();
+        _settingsModel = model;
+        return model;
+    }
+
+    private void ApplySettingsModel(AppSettingsModel.ExternalModel model)
+    {
+        RemoveUnreachableComics = model.RemoveUnreachableComics;
+    }
+
     private void InitializeAppearance()
     {
         object appearanceSetting = ApplicationData.Current.LocalSettings.Values[GlobalConstants.LOCAL_SETTINGS_KEY_APPEARANCE];
@@ -400,6 +442,13 @@ internal sealed partial class SettingsPage : BasePage
         Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_SEARCH)
             .WithParam(RouterConstants.ARG_KEYWORD, "<hidden>");
         GetMainPageAbility().OpenInNewTab(route);
+    }
+
+    private void RemoveUnreachableCheckBox_Click(object sender, RoutedEventArgs e)
+    {
+        var checkbox = (CheckBox)sender;
+        bool isChecked = checkbox.IsChecked ?? false;
+        ViewModel.SetRemoveUnreachableComics(isChecked);
     }
 
     private void OnRescanFilesClicked(object sender, RoutedEventArgs e)
@@ -562,7 +611,7 @@ internal sealed partial class SettingsPage : BasePage
 
     private IMainPageAbility GetMainPageAbility()
     {
-        return GetAbility<IMainPageAbility>();
+        return GetAbility<IMainPageAbility>()!;
     }
 
     private static void ClearCache()

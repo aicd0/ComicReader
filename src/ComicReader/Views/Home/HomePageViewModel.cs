@@ -848,17 +848,20 @@ internal class HomePageViewModel : INotifyPropertyChanged
                 SubItems = subItems,
             });
         }
-        items.Add(CreateSeperatorMenuFlyoutItem<SortByUIModel>());
-        items.Add(CreateToggleMenuFlyoutItem("Ascending", ascending, new SortByUIModel
+        if (selectedProperty != null)
         {
-            IsProperty = false,
-            IsAscending = true,
-        }));
-        items.Add(CreateToggleMenuFlyoutItem("Descending", !ascending, new SortByUIModel
-        {
-            IsProperty = false,
-            IsAscending = false,
-        }));
+            items.Add(CreateSeperatorMenuFlyoutItem<SortByUIModel>());
+            items.Add(CreateToggleMenuFlyoutItem("Ascending", ascending, new SortByUIModel
+            {
+                IsProperty = false,
+                IsAscending = true,
+            }));
+            items.Add(CreateToggleMenuFlyoutItem("Descending", !ascending, new SortByUIModel
+            {
+                IsProperty = false,
+                IsAscending = false,
+            }));
+        }
         return items;
     }
 
