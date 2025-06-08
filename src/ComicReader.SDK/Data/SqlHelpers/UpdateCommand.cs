@@ -20,14 +20,14 @@ public class UpdateCommand<T> where T : ITable
         _table = table;
     }
 
-    public UpdateCommand<T> AppendColumn<U>(Column column, U value)
+    public UpdateCommand<T> AppendColumn<U>(IColumn<U> column, U value)
     {
         var token = new Token<U>(column, value);
         _tokens[column.Name] = token;
         return this;
     }
 
-    public UpdateCommand<T> AppendCondition<U>(Column column, U value)
+    public UpdateCommand<T> AppendCondition<U>(IColumn<U> column, U value)
     {
         return AppendCondition(new EqualityCondition<U>(column, value));
     }
@@ -84,10 +84,10 @@ public class UpdateCommand<T> where T : ITable
 
     private class Token<U> : IToken
     {
-        private readonly Column _column;
+        private readonly IColumn<U> _column;
         private readonly U _value;
 
-        public Token(Column column, U value)
+        public Token(IColumn<U> column, U value)
         {
             _column = column;
             _value = value;

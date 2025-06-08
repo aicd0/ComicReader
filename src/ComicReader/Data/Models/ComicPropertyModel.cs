@@ -177,7 +177,7 @@ internal class ComicPropertyModel
         {
             HashSet<string> tags = [];
             var command = new SelectCommand<TagCategoryTable>(TagCategoryTable.Instance);
-            SelectCommand<TagCategoryTable>.IToken<string> nameToken = command.PutQueryString(TagCategoryTable.ColumnName);
+            IReaderToken<string> nameToken = command.PutQueryString(TagCategoryTable.ColumnName);
             using SelectCommand<TagCategoryTable>.IReader reader = await command.ExecuteAsync(SqlDatabaseManager.MainDatabase);
             while (reader.Read())
             {

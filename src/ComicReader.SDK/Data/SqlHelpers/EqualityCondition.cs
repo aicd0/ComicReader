@@ -10,7 +10,7 @@ public class EqualityCondition<T> : ICondition
     private readonly string _columnName;
     private readonly T _value;
 
-    public EqualityCondition(Column column, T value)
+    public EqualityCondition(IColumn<T> column, T value)
     {
         _columnName = column.Name;
         _value = value;

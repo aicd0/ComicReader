@@ -135,7 +135,7 @@ internal abstract class ComicData
         SaveNoLock(delegate
         {
             new UpdateCommand<ComicTable>(ComicTable.Instance)
-                .AppendColumn(ComicTable.ColumnType, ValueType)
+                .AppendColumn(ComicTable.ColumnType, (long)ValueType)
                 .AppendColumn(ComicTable.ColumnLocation, ValueLocation)
                 .AppendColumn(ComicTable.ColumnTitle1, ValueTitle1)
                 .AppendColumn(ComicTable.ColumnTitle2, ValueTitle2)
@@ -160,7 +160,7 @@ internal abstract class ComicData
             return SaveNoLock(delegate
             {
                 new UpdateCommand<ComicTable>(ComicTable.Instance)
-                    .AppendColumn(ComicTable.ColumnType, ValueType)
+                    .AppendColumn(ComicTable.ColumnType, (long)ValueType)
                     .AppendColumn(ComicTable.ColumnLocation, ValueLocation)
                     .AppendColumn(ComicTable.ColumnTitle1, ValueTitle1)
                     .AppendColumn(ComicTable.ColumnTitle2, ValueTitle2)
@@ -564,17 +564,17 @@ internal abstract class ComicData
             SelectCommand<ComicTable> command = new SelectCommand<ComicTable>(ComicTable.Instance)
                 .AppendCondition(ComicTable.ColumnId, id)
                 .Limit(1);
-            SelectCommand<ComicTable>.IToken<long> typeToken = command.PutQueryInt64(ComicTable.ColumnType);
-            SelectCommand<ComicTable>.IToken<string> locationToken = command.PutQueryString(ComicTable.ColumnLocation);
-            SelectCommand<ComicTable>.IToken<string> title1Token = command.PutQueryString(ComicTable.ColumnTitle1);
-            SelectCommand<ComicTable>.IToken<string> title2Token = command.PutQueryString(ComicTable.ColumnTitle2);
-            SelectCommand<ComicTable>.IToken<bool> hiddenToken = command.PutQueryBoolean(ComicTable.ColumnHidden);
-            SelectCommand<ComicTable>.IToken<int> ratingToken = command.PutQueryInt32(ComicTable.ColumnRating);
-            SelectCommand<ComicTable>.IToken<int> progressToken = command.PutQueryInt32(ComicTable.ColumnProgress);
-            SelectCommand<ComicTable>.IToken<DateTimeOffset> lastVisitToken = command.PutQueryDateTimeOffset(ComicTable.ColumnLastVisit);
-            SelectCommand<ComicTable>.IToken<double> lastPositionToken = command.PutQueryDouble(ComicTable.ColumnLastPosition);
-            SelectCommand<ComicTable>.IToken<string> coverCacheKeyToken = command.PutQueryString(ComicTable.ColumnCoverCacheKey);
-            SelectCommand<ComicTable>.IToken<string> descriptionToken = command.PutQueryString(ComicTable.ColumnDescription);
+            IReaderToken<long> typeToken = command.PutQueryInt64(ComicTable.ColumnType);
+            IReaderToken<string> locationToken = command.PutQueryString(ComicTable.ColumnLocation);
+            IReaderToken<string> title1Token = command.PutQueryString(ComicTable.ColumnTitle1);
+            IReaderToken<string> title2Token = command.PutQueryString(ComicTable.ColumnTitle2);
+            IReaderToken<bool> hiddenToken = command.PutQueryBoolean(ComicTable.ColumnHidden);
+            IReaderToken<int> ratingToken = command.PutQueryInt32(ComicTable.ColumnRating);
+            IReaderToken<int> progressToken = command.PutQueryInt32(ComicTable.ColumnProgress);
+            IReaderToken<DateTimeOffset> lastVisitToken = command.PutQueryDateTimeOffset(ComicTable.ColumnLastVisit);
+            IReaderToken<double> lastPositionToken = command.PutQueryDouble(ComicTable.ColumnLastPosition);
+            IReaderToken<string> coverCacheKeyToken = command.PutQueryString(ComicTable.ColumnCoverCacheKey);
+            IReaderToken<string> descriptionToken = command.PutQueryString(ComicTable.ColumnDescription);
             using SelectCommand<ComicTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 
             if (!reader.Read())
@@ -601,8 +601,8 @@ internal abstract class ComicData
         {
             SelectCommand<TagCategoryTable> command = new SelectCommand<TagCategoryTable>(TagCategoryTable.Instance)
                 .AppendCondition(TagCategoryTable.ColumnComicId, id);
-            SelectCommand<TagCategoryTable>.IToken<long> tagCategoryIdToken = command.PutQueryInt64(TagCategoryTable.ColumnId);
-            SelectCommand<TagCategoryTable>.IToken<string> nameToken = command.PutQueryString(TagCategoryTable.ColumnName);
+            IReaderToken<long> tagCategoryIdToken = command.PutQueryInt64(TagCategoryTable.ColumnId);
+            IReaderToken<string> nameToken = command.PutQueryString(TagCategoryTable.ColumnName);
             using SelectCommand<TagCategoryTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 
             while (reader.Read())
@@ -624,7 +624,7 @@ internal abstract class ComicData
         {
             SelectCommand<TagTable> command = new SelectCommand<TagTable>(TagTable.Instance)
                 .AppendCondition(TagTable.ColumnTagCategoryId, tagCategoryIds[i]);
-            SelectCommand<TagTable>.IToken<string> tagToken = command.PutQueryString(TagTable.ColumnContent);
+            IReaderToken<string> tagToken = command.PutQueryString(TagTable.ColumnContent);
             using SelectCommand<TagTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 
             while (reader.Read())
@@ -726,7 +726,7 @@ internal abstract class ComicData
     private void InternalInsertNoLock()
     {
         Id = new InsertCommand<ComicTable>(ComicTable.Instance)
-            .AppendColumn(ComicTable.ColumnType, ValueType)
+            .AppendColumn(ComicTable.ColumnType, (long)ValueType)
             .AppendColumn(ComicTable.ColumnLocation, ValueLocation)
             .AppendColumn(ComicTable.ColumnTitle1, ValueTitle1)
             .AppendColumn(ComicTable.ColumnTitle2, ValueTitle2)
@@ -802,7 +802,7 @@ internal abstract class ComicData
         SelectCommand<ComicTable> command = new SelectCommand<ComicTable>(ComicTable.Instance)
             .AppendCondition(ComicTable.ColumnLocation, location)
             .Limit(1);
-        SelectCommand<ComicTable>.IToken<long> comicIdToken = command.PutQueryInt64(ComicTable.ColumnId);
+        IReaderToken<long> comicIdToken = command.PutQueryInt64(ComicTable.ColumnId);
         using SelectCommand<ComicTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 
         if (!reader.Read())
@@ -830,7 +830,7 @@ internal abstract class ComicData
         await Enqueue(delegate
         {
             var command = new SelectCommand<ComicTable>(ComicTable.Instance);
-            SelectCommand<ComicTable>.IToken<string> locationToken = command.PutQueryString(ComicTable.ColumnLocation);
+            IReaderToken<string> locationToken = command.PutQueryString(ComicTable.ColumnLocation);
             using SelectCommand<ComicTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
             while (reader.Read())
             {

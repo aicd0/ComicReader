@@ -19,7 +19,7 @@ public class InsertCommand<T> where T : ITable
         _table = table;
     }
 
-    public InsertCommand<T> AppendColumn<U>(Column column, U value)
+    public InsertCommand<T> AppendColumn<U>(IColumn<U> column, U value)
     {
         var token = new Token<U>(column, value);
         _tokens[column.Name] = token;
@@ -79,10 +79,10 @@ public class InsertCommand<T> where T : ITable
 
     private class Token<U> : IToken
     {
-        private readonly Column _column;
+        private readonly IColumn<U> _column;
         private readonly U _value;
 
-        public Token(Column column, U value)
+        public Token(IColumn<U> column, U value)
         {
             _column = column;
             _value = value;

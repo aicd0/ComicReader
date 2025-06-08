@@ -104,8 +104,8 @@ internal class ComicSearchEngine
         await ComicData.EnqueueCommand(delegate
         {
             SelectCommand<ComicTable> command = new SelectCommand<ComicTable>(ComicTable.Instance).AppendCondition(new EqualityCondition<bool>(ComicTable.ColumnHidden, false));
-            SelectCommand<ComicTable>.IToken<long> idToken = command.PutQueryInt64(ComicTable.ColumnId);
-            SelectCommand<ComicTable>.IToken<DateTimeOffset> lastVisitToken = command.PutQueryDateTimeOffset(ComicTable.ColumnLastVisit);
+            IReaderToken<long> idToken = command.PutQueryInt64(ComicTable.ColumnId);
+            IReaderToken<DateTimeOffset> lastVisitToken = command.PutQueryDateTimeOffset(ComicTable.ColumnLastVisit);
             using SelectCommand<ComicTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 
             while (reader.Read())
@@ -184,9 +184,9 @@ internal class ComicSearchEngine
         await ComicData.EnqueueCommand(delegate
         {
             var command = new SelectCommand<ComicTable>(ComicTable.Instance);
-            SelectCommand<ComicTable>.IToken<long> idToken = command.PutQueryInt64(ComicTable.ColumnId);
-            SelectCommand<ComicTable>.IToken<string> title1Token = command.PutQueryString(ComicTable.ColumnTitle1);
-            SelectCommand<ComicTable>.IToken<string> title2Token = command.PutQueryString(ComicTable.ColumnTitle2);
+            IReaderToken<long> idToken = command.PutQueryInt64(ComicTable.ColumnId);
+            IReaderToken<string> title1Token = command.PutQueryString(ComicTable.ColumnTitle1);
+            IReaderToken<string> title2Token = command.PutQueryString(ComicTable.ColumnTitle2);
             using SelectCommand<ComicTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 
             while (reader.Read())

@@ -549,7 +549,7 @@ internal sealed partial class SettingsPage : BasePage
         {
             long comicCount = 0;
             SelectCommand<ComicTable> command = new(ComicTable.Instance);
-            SelectCommand<ComicTable>.IToken<long> comicCountToken = command.PutQueryCountAll();
+            IReaderToken<long> comicCountToken = command.PutQueryCountAll();
             using SelectCommand<ComicTable>.IReader reader = await command.ExecuteAsync(SqlDatabaseManager.MainDatabase);
             if (await reader.ReadAsync())
             {

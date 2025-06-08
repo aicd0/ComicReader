@@ -7,10 +7,14 @@ namespace ComicReader.SDK.Data.SqlHelpers;
 
 public class SqlDatabase
 {
+    private readonly string _filePath;
     private readonly SqliteConnection _connection;
+
+    public string UniqueId => _filePath;
 
     public SqlDatabase(string filePath)
     {
+        _filePath = filePath;
         if (!File.Exists(filePath))
         {
             File.Create(filePath).Dispose();

@@ -43,42 +43,42 @@ public class SelectCommand<T> where T : ITable
         return this;
     }
 
-    public IToken<long> PutQueryCountAll()
+    public IReaderToken<long> PutQueryCountAll()
     {
         return PutToken(new GeneralToken<long>("COUNT(*)", delegate (SqliteDataReader reader, int ordinal) { return reader.GetInt64(ordinal); }));
     }
 
-    public IToken<int> PutQueryInt32(Column column)
+    public IReaderToken<int> PutQueryInt32(IColumn<int> column)
     {
         return PutToken(new ColumnToken<int>(column, delegate (SqliteDataReader reader, int ordinal) { return reader.GetInt32(ordinal); }));
     }
 
-    public IToken<long> PutQueryInt64(Column column)
+    public IReaderToken<long> PutQueryInt64(IColumn<long> column)
     {
         return PutToken(new ColumnToken<long>(column, delegate (SqliteDataReader reader, int ordinal) { return reader.GetInt64(ordinal); }));
     }
 
-    public IToken<string> PutQueryString(Column column)
+    public IReaderToken<string> PutQueryString(IColumn<string> column)
     {
         return PutToken(new ColumnToken<string>(column, delegate (SqliteDataReader reader, int ordinal) { return reader.GetString(ordinal); }));
     }
 
-    public IToken<bool> PutQueryBoolean(Column column)
+    public IReaderToken<bool> PutQueryBoolean(IColumn<bool> column)
     {
         return PutToken(new ColumnToken<bool>(column, delegate (SqliteDataReader reader, int ordinal) { return reader.GetBoolean(ordinal); }));
     }
 
-    public IToken<double> PutQueryDouble(Column column)
+    public IReaderToken<double> PutQueryDouble(IColumn<double> column)
     {
         return PutToken(new ColumnToken<double>(column, delegate (SqliteDataReader reader, int ordinal) { return reader.GetDouble(ordinal); }));
     }
 
-    public IToken<DateTimeOffset> PutQueryDateTimeOffset(Column column)
+    public IReaderToken<DateTimeOffset> PutQueryDateTimeOffset(IColumn<DateTimeOffset> column)
     {
         return PutToken(new ColumnToken<DateTimeOffset>(column, delegate (SqliteDataReader reader, int ordinal) { return reader.GetDateTimeOffset(ordinal); }));
     }
 
-    public SelectCommand<T> AppendCondition<U>(Column column, U value)
+    public SelectCommand<T> AppendCondition<U>(IColumn<U> column, U value)
     {
         return AppendCondition(new EqualityCondition<U>(column, value));
     }
@@ -232,7 +232,7 @@ public class SelectCommand<T> where T : ITable
         }
     }
 
-    private abstract class Token<V> : IToken<V>, ITokenInternal
+    private abstract class Token<V> : IReaderToken<V>, ITokenInternal
     {
         private readonly Func<SqliteDataReader, int, V> _getter;
         private bool _valueSet = false;
@@ -279,9 +279,9 @@ public class SelectCommand<T> where T : ITable
 
     private class ColumnToken<V> : Token<V>
     {
-        private readonly Column _column;
+        private readonly IColumn<V> _column;
 
-        public ColumnToken(Column column, Func<SqliteDataReader, int, V> getter) : base(getter)
+        public ColumnToken(IColumn<V> column, Func<SqliteDataReader, int, V> getter) : base(getter)
         {
             _column = column;
         }
@@ -304,10 +304,5 @@ public class SelectCommand<T> where T : ITable
         string GetQueryExpression();
 
         void UpdateValue(SqliteDataReader reader, int ordinal);
-    }
-
-    public interface IToken<U>
-    {
-        U GetValue();
     }
 }

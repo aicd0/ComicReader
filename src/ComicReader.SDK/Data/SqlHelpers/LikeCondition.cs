@@ -8,7 +8,7 @@ public class LikeCondition : ICondition
     private readonly string _columnName;
     private readonly string _pattern;
 
-    public LikeCondition(Column column, string pattern)
+    public LikeCondition(IColumn<string> column, string pattern)
     {
         _columnName = column.Name;
         _pattern = pattern;

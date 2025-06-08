@@ -17,7 +17,7 @@ public class DeleteCommand<T> where T : ITable
         _table = table;
     }
 
-    public DeleteCommand<T> AppendCondition<U>(Column column, U value)
+    public DeleteCommand<T> AppendCondition<U>(IColumn<U> column, U value)
     {
         return AppendCondition(new EqualityCondition<U>(column, value));
     }
