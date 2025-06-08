@@ -59,8 +59,8 @@ internal class ComicItemViewModel : INotifyPropertyChanged
 
     public bool IsRatingVisible => Rating != -1;
     public bool IsHide => Comic.Hidden;
-    public bool IsRead => Comic.IsRead;
-    public bool IsUnread => Comic.IsUnread;
+    public bool IsRead => Comic.CompletionState == ComicData.CompletionStateEnum.Completed;
+    public bool IsUnread => Comic.CompletionState == ComicData.CompletionStateEnum.NotStarted;
 
     //
     // functions
@@ -86,11 +86,11 @@ internal class ComicItemViewModel : INotifyPropertyChanged
 
     public void UpdateProgress(bool compat)
     {
-        if (Comic.IsUnread)
+        if (Comic.CompletionState == ComicData.CompletionStateEnum.NotStarted)
         {
             Progress = StringResourceProvider.GetResourceString("Unread");
         }
-        else if (Comic.IsRead)
+        else if (Comic.CompletionState == ComicData.CompletionStateEnum.Completed)
         {
             Progress = StringResourceProvider.GetResourceString("Finished");
         }

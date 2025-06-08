@@ -409,7 +409,7 @@ internal sealed partial class ReaderPage : BasePage
 
         if (!_comic.IsExternal)
         {
-            _comic.SetAsStarted();
+            await _comic.SetCompletionStateToAtLeastStarted();
             await HistoryDataManager.Add(_comic.Id, _comic.Title1, true);
 
             TaskException result = await _comic.ReloadImageFiles();
@@ -639,14 +639,11 @@ internal sealed partial class ReaderPage : BasePage
     public void UpdateProgress(ReaderView reader, bool save)
     {
         double page = reader.CurrentPage;
-
         if (page <= 0.0)
         {
             return;
         }
-
         int progress;
-
         if (reader.PageCount <= 0)
         {
             progress = 0;
@@ -659,7 +656,6 @@ internal sealed partial class ReaderPage : BasePage
         {
             progress = (int)((float)page / reader.PageCount * 100);
         }
-
         progress = Math.Min(progress, 100);
 
         if (save)
@@ -668,7 +664,6 @@ internal sealed partial class ReaderPage : BasePage
             {
                 return;
             }
-
             _updatingProgress = true;
             Task.Run(delegate
             {

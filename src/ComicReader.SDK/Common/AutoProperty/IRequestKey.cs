@@ -5,4 +5,9 @@ namespace ComicReader.SDK.Common.AutoProperty;
 
 public interface IRequestKey
 {
+    string ToString();
+
+    bool Equals(object? obj);
+
+    int GetHashCode();
 }

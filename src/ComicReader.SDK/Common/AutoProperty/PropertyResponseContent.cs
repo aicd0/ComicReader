@@ -18,6 +18,11 @@ public class PropertyResponseContent<V>
         Version = version;
     }
 
+    public PropertyResponseContent<A> WithValue<A>(A? value)
+    {
+        return new PropertyResponseContent<A>(Result, value, Tracker, Version);
+    }
+
     public PropertyResponseContent<V> WithTracker(IReadonlyResponseTracker? tracker, int version)
     {
         return new PropertyResponseContent<V>(Result, Value, tracker, version);

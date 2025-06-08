@@ -56,7 +56,7 @@ public sealed class SqlProperty<T, K, V>(ITaskDispatcher dispatcher, SqlDatabase
             ModifySqlOperation modifyOperation = new();
             var operations = new List<ISqlOperation>();
             Dictionary<long, PropertyResponseContent<V>> responses = [];
-            foreach (SealedPropertyRequest<SqlPropertyKey<K, V>, V> request in context.Model.requests)
+            foreach (SealedPropertyRequest<SqlPropertyKey<K, V>, V> request in requests)
             {
                 PropertyRequestContent<SqlPropertyKey<K, V>, V> requestContent = request.RequestContent;
                 SqlPropertyKey<K, V> key = requestContent.Key;
@@ -80,6 +80,11 @@ public sealed class SqlProperty<T, K, V>(ITaskDispatcher dispatcher, SqlDatabase
                         break;
                     case RequestType.Modify:
                         {
+                            if (!requestContent.Option.Persistent)
+                            {
+                                responses[request.Id] = PropertyResponseContent<V>.NewSuccessfulResponse();
+                                break;
+                            }
                             if (requestContent.Value is null)
                             {
                                 Logger.AssertNotReachHere("DC62E07E0415FDBE");

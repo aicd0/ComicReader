@@ -3,10 +3,7 @@
 
 using System;
 using System.IO;
-using System.Threading.Tasks;
 
-using ComicReader.Common;
-using ComicReader.Data.Legacy;
 using ComicReader.Data.Tables;
 using ComicReader.SDK.Common.DebugTools;
 using ComicReader.SDK.Data.SqlHelpers;
@@ -33,7 +30,7 @@ public class SqlDatabaseManager
         }
     }
 
-    public static async Task Initialize(int databaseVersion)
+    public static void Initialize()
     {
         if (_mainDatabase != null)
         {
@@ -61,6 +58,7 @@ public class SqlDatabaseManager
             "," + ComicTable.ColumnLastPosition.Name + " REAL NOT NULL" +
             "," + ComicTable.ColumnCoverCacheKey.Name + " TEXT" +
             "," + ComicTable.ColumnDescription.Name + " TEXT" +
+            "," + ComicTable.ColumnCompletionState.Name + " INTEGER NOT NULL" +
             ")");
 
         ExecuteCommand("CREATE TABLE IF NOT EXISTS " + tagCategoryTable + " (" +
@@ -74,12 +72,11 @@ public class SqlDatabaseManager
             "," + TagTable.ColumnComicId.Name + " INTEGER NOT NULL" +
             "," + TagTable.ColumnTagCategoryId.Name + " INTEGER REFERENCES " + tagCategoryTable + "(" + TagCategoryTable.ColumnId.Name + ") ON DELETE CASCADE" +
             ")");
-
-        await UpdateDatabase(databaseVersion);
     }
 
-    private static async Task<TaskException> UpdateDatabase(int databaseVersion)
+    public static void UpdateDatabase(int databaseVersion)
     {
+        string tableName = ComicTable.Instance.GetTableName();
         switch (databaseVersion)
         {
             case -1:
@@ -88,20 +85,22 @@ public class SqlDatabaseManager
                 goto case 3;
             case 2:
                 {
-                    string comicTable = ComicTable.Instance.GetTableName();
-                    ExecuteCommand($"ALTER TABLE {comicTable} DROP COLUMN image_aspect_ratios");
-                    ExecuteCommand($"ALTER TABLE {comicTable} DROP COLUMN cover_file_name");
-                    ExecuteCommand($"ALTER TABLE {comicTable} ADD COLUMN {ComicTable.ColumnCoverCacheKey.Name} TEXT DEFAULT ''");
-                    ExecuteCommand($"ALTER TABLE {comicTable} ADD COLUMN {ComicTable.ColumnDescription.Name} TEXT DEFAULT ''");
+                    ExecuteCommand($"ALTER TABLE {tableName} DROP COLUMN image_aspect_ratios");
+                    ExecuteCommand($"ALTER TABLE {tableName} DROP COLUMN cover_file_name");
+                    ExecuteCommand($"ALTER TABLE {tableName} ADD COLUMN {ComicTable.ColumnCoverCacheKey.Name} TEXT DEFAULT ''");
+                    ExecuteCommand($"ALTER TABLE {tableName} ADD COLUMN {ComicTable.ColumnDescription.Name} TEXT DEFAULT ''");
                 }
                 goto case 3;
             case 3:
-                XmlDatabase.Settings.DatabaseVersion = 3;
-                await XmlDatabaseManager.SaveUnsealed(XmlDatabaseItem.Settings);
-                return TaskException.Success;
+                {
+                    ExecuteCommand($"ALTER TABLE {tableName} ADD COLUMN {ComicTable.ColumnCompletionState.Name} INTEGER NOT NULL DEFAULT 0");
+                }
+                goto case 4;
+            case 4:
+                break;
             default:
                 Logger.AssertNotReachHere("A39EA189ED8BB40B");
-                return TaskException.UnknownEnum;
+                break;
         }
     }
 

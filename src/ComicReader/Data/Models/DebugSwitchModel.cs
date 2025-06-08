@@ -4,27 +4,20 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 
+using ComicReader.Common;
 using ComicReader.SDK.Common.DebugTools;
 using ComicReader.SDK.Common.KVStorage;
+using ComicReader.SDK.Data;
 
-namespace ComicReader.Common.DebugTools;
+namespace ComicReader.Data.Models;
 
-internal class DebugSwitches
+internal class DebugSwitchModel : JsonDatabase<DebugSwitchModel.JsonModel>
 {
     private const string KEY_DEBUG_MODE = "debug_mode";
 
-    public static readonly DebugSwitches Instance = new();
-
-    private CommonConfig? _config;
-    private LogTag? _consoleWhitelist;
-
-    private readonly JsonSerializerOptions _serializeOption = new()
-    {
-        WriteIndented = true,
-    };
-
-    private DebugSwitches() { }
+    public static readonly DebugSwitchModel Instance = new();
 
     private static bool? _debugMode = null;
     public static bool DebugMode
@@ -45,13 +38,22 @@ internal class DebugSwitches
         }
     }
 
+    private JsonModel? _config;
+    private LogTag? _consoleWhitelist;
+
+    private readonly JsonSerializerOptions _serializeOption = new()
+    {
+        WriteIndented = true,
+    };
+
     private bool ConsoleEnabled
     {
         get => DebugUtils.DebugBuild && GetConfig().ConsoleEnabled;
         set
         {
-            GetConfig().ConsoleEnabled = value;
-            SaveConfig();
+            JsonModel model = GetConfig();
+            model.ConsoleEnabled = value;
+            _ = UpdateModel(model);
         }
     }
 
@@ -60,9 +62,15 @@ internal class DebugSwitches
         get => DebugUtils.DebugBuild && GetConfig().LogTreeEnabled;
         set
         {
-            GetConfig().LogTreeEnabled = value;
-            SaveConfig();
+            JsonModel model = GetConfig();
+            model.LogTreeEnabled = value;
+            _ = UpdateModel(model);
         }
+    }
+
+    public bool SqliteLogEnabled
+    {
+        get => DebugUtils.DebugMode && GetConfig().SqliteLogEnabled;
     }
 
     private LogTag? ConsoleWhitelist
@@ -85,10 +93,18 @@ internal class DebugSwitches
         }
     }
 
-    public void Initialize()
+    private DebugSwitchModel() : base("debug.json") { }
+
+    protected override JsonModel CreateModel()
+    {
+        return new();
+    }
+
+    public async Task Initialize()
     {
         DebugUtils.DebugMode = DebugMode;
-        ApplyCommonConfigs();
+        JsonModel model = await Read((m) => m);
+        UpdateConfig(model);
     }
 
     public string SerializeToJson()
@@ -96,42 +112,32 @@ internal class DebugSwitches
         return JsonSerializer.Serialize(GetConfig(), _serializeOption);
     }
 
-    public void SaveConfig(string json)
+    public async Task SaveConfig(string json)
     {
-        _config = JsonSerializer.Deserialize<CommonConfig>(json) ?? new();
-        InvalidateCache();
-        SaveConfig();
+        JsonModel config = JsonSerializer.Deserialize<JsonModel>(json) ?? new();
+        UpdateConfig(config);
+        await UpdateModel(config);
     }
 
-    private CommonConfig GetConfig()
+    private JsonModel GetConfig()
     {
-        CommonConfig? config = _config;
+        JsonModel? config = _config;
         if (config != null)
         {
             return config;
         }
-        config = ReadConfig() ?? new();
-        _config = config;
-        InvalidateCache();
+        config = new();
+        UpdateConfig(config);
         return config;
     }
 
-    private CommonConfig ReadConfig()
+    private void UpdateConfig(JsonModel model)
     {
-        string json = KVDatabase.GetDefaultMethod().GetString(GlobalConstants.KV_DB_DEV_TOOLS, "debug_switches", string.Empty);
-        CommonConfig? config = null;
-        if (!string.IsNullOrEmpty(json))
-        {
-            try
-            {
-                config = JsonSerializer.Deserialize<CommonConfig>(json);
-            }
-            catch (JsonException ex)
-            {
-                Logger.F("DebugSwitches", nameof(_config), ex);
-            }
-        }
-        return config ?? new();
+        _config = model;
+        InvalidateCache();
+        Logger.SetConsoleEnabled(ConsoleEnabled);
+        Logger.SetConsoleWhitelist(ConsoleWhitelist);
+        Logger.SetLogTreeEnabled(LogTreeEnabled);
     }
 
     private void InvalidateCache()
@@ -139,37 +145,24 @@ internal class DebugSwitches
         _consoleWhitelist = null;
     }
 
-    private void SaveConfig()
+    private async Task UpdateModel(JsonModel model)
     {
-        if (_config == null)
-        {
-            return;
-        }
-        string json = JsonSerializer.Serialize(_config);
-        KVDatabase.GetDefaultMethod().SetString(GlobalConstants.KV_DB_DEV_TOOLS, "debug_switches", json);
-        ApplyCommonConfigs();
+        await Write(model);
+        await Save();
     }
 
-    private void ApplyCommonConfigs()
+    public class JsonModel
     {
-        Logger.SetConsoleEnabled(ConsoleEnabled);
-        Logger.SetConsoleWhitelist(ConsoleWhitelist);
-        Logger.SetLogTreeEnabled(LogTreeEnabled);
-    }
-
-    //
-    // Classes
-    //
-
-    public class CommonConfig
-    {
-        [JsonPropertyName("console_enabled")]
+        [JsonPropertyName("ConsoleEnabled")]
         public bool ConsoleEnabled { get; set; }
 
-        [JsonPropertyName("console_whitelist")]
+        [JsonPropertyName("ConsoleWhitelist")]
         public JsonObject? ConsoleWhitelist { get; set; }
 
-        [JsonPropertyName("log_tree_enabled")]
+        [JsonPropertyName("LogTreeEnabled")]
         public bool LogTreeEnabled { get; set; }
+
+        [JsonPropertyName("SqliteLogEnabled")]
+        public bool SqliteLogEnabled { get; set; }
     }
 }

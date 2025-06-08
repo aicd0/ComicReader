@@ -897,7 +897,7 @@ internal partial class ReaderView : UserControl
             UpdateImages("ViewChanged");
         }
 
-        ReaderEventPageChanged?.Invoke(this, final);
+        ReaderEventPageChanged?.Invoke(this, !final);
     }
 
     //

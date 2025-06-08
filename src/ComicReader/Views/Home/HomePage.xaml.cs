@@ -461,16 +461,18 @@ internal sealed partial class HomePage : BasePage
 
     private void MarkAsReadOrUnread(ComicItemViewModel item, bool read)
     {
-        if (read)
+        C0.Run(async () =>
         {
-            item.Comic.SetAsRead();
-        }
-        else
-        {
-            item.Comic.SetAsUnread();
-        }
-
-        item.UpdateProgress(true);
+            if (read)
+            {
+                await item.Comic.SetCompletionStateToCompleted();
+            }
+            else
+            {
+                await item.Comic.SetCompletionStateToNotStarted();
+            }
+            item.UpdateProgress(true);
+        });
     }
 
     private void OnAddToFavoritesClicked(object sender, RoutedEventArgs e)

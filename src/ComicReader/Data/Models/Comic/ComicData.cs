@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using ComicReader.Common;
 using ComicReader.Data.Legacy;
 using ComicReader.Data.Tables;
+using ComicReader.SDK.Common.AutoProperty;
 using ComicReader.SDK.Common.DebugTools;
 using ComicReader.SDK.Common.Threading;
 using ComicReader.SDK.Data.SqlHelpers;
@@ -47,7 +48,6 @@ internal abstract class ComicData
         }
     }
 
-    private static readonly ITaskDispatcher _tableQueue = TaskDispatcher.Factory.NewQueue("ComicDataQueue");
     private static int _pendingUpdateTaskCount = 0;
 
     private bool _imageUpdated = false;
@@ -69,6 +69,7 @@ internal abstract class ComicData
 
     public long Id { get; private set; } = -1;
     private ComicType Type { get; set; }
+    public CompletionStateEnum CompletionState { get; private set; }
     public string Location { get; protected set; } = "";
     public string Title1 { get; protected set; } = "";
     public string Title2 { get; protected set; } = "";
@@ -109,8 +110,6 @@ internal abstract class ComicData
     }
 
     public bool IsExternal { get; private set; }
-    public bool IsRead => Progress >= 100;
-    public bool IsUnread => Progress < 0;
     public abstract bool IsEditable { get; }
     protected StorageFolder CacheFolder => ApplicationData.Current.LocalCacheFolder;
 
@@ -193,6 +192,12 @@ internal abstract class ComicData
                     .Execute(SqlDatabaseManager.MainDatabase);
             });
         }, "SaveHiddenAsync");
+    }
+
+    public Task SaveCompletionState(CompletionStateEnum completionState)
+    {
+        CompletionState = completionState;
+        return ComicPropertyRepository.Instance.CompletionStateOperator.Write(Id, completionState, CreateRequestOption());
     }
 
     public void SaveRating(int rating)
@@ -559,7 +564,7 @@ internal abstract class ComicData
         double lastPosition;
         string coverCacheKey;
         string description;
-
+        CompletionStateEnum completionState;
         {
             SelectCommand<ComicTable> command = new SelectCommand<ComicTable>(ComicTable.Instance)
                 .AppendCondition(ComicTable.ColumnId, id)
@@ -575,13 +580,12 @@ internal abstract class ComicData
             IReaderToken<double> lastPositionToken = command.PutQueryDouble(ComicTable.ColumnLastPosition);
             IReaderToken<string> coverCacheKeyToken = command.PutQueryString(ComicTable.ColumnCoverCacheKey);
             IReaderToken<string> descriptionToken = command.PutQueryString(ComicTable.ColumnDescription);
+            IReaderToken<int> completionStateToken = command.PutQueryInt32(ComicTable.ColumnCompletionState);
             using SelectCommand<ComicTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
-
             if (!reader.Read())
             {
                 return null;
             }
-
             type = (ComicType)typeToken.GetValue();
             location = locationToken.GetValue();
             title1 = title1Token.GetValue();
@@ -593,28 +597,25 @@ internal abstract class ComicData
             lastPosition = lastPositionToken.GetValue();
             coverCacheKey = coverCacheKeyToken.GetValue();
             description = descriptionToken.GetValue();
+            completionState = ComicPropertyRepository.ParseCompletionState(completionStateToken.GetValue());
         }
 
         var tags = new List<TagData>();
         var tagCategoryIds = new List<long>();
-
         {
             SelectCommand<TagCategoryTable> command = new SelectCommand<TagCategoryTable>(TagCategoryTable.Instance)
                 .AppendCondition(TagCategoryTable.ColumnComicId, id);
             IReaderToken<long> tagCategoryIdToken = command.PutQueryInt64(TagCategoryTable.ColumnId);
             IReaderToken<string> nameToken = command.PutQueryString(TagCategoryTable.ColumnName);
             using SelectCommand<TagCategoryTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
-
             while (reader.Read())
             {
                 long tagCategoryId = tagCategoryIdToken.GetValue();
                 string name = nameToken.GetValue();
-
                 var tagData = new TagData
                 {
                     Name = name
                 };
-
                 tags.Add(tagData);
                 tagCategoryIds.Add(tagCategoryId);
             }
@@ -626,7 +627,6 @@ internal abstract class ComicData
                 .AppendCondition(TagTable.ColumnTagCategoryId, tagCategoryIds[i]);
             IReaderToken<string> tagToken = command.PutQueryString(TagTable.ColumnContent);
             using SelectCommand<TagTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
-
             while (reader.Read())
             {
                 string tag = tagToken.GetValue();
@@ -639,9 +639,18 @@ internal abstract class ComicData
         {
             return null;
         }
-
-        comic.From(id, title1, title2, hidden, rating, progress,
-            lastVisit, lastPosition, coverCacheKey, description, tags);
+        comic.Id = id;
+        comic.Title1 = title1;
+        comic.Title2 = title2;
+        comic.Hidden = hidden;
+        comic.Rating = rating;
+        comic.Progress = progress;
+        comic.LastVisit = lastVisit;
+        comic.LastPosition = lastPosition;
+        comic.CoverCacheKey = coverCacheKey;
+        comic.Description = description;
+        comic.Tags = tags;
+        comic.CompletionState = completionState;
         return comic;
     }
 
@@ -677,23 +686,6 @@ internal abstract class ComicData
             comic.SetAsDefaultInfo();
             comic.SaveAllNoLock();
         }
-    }
-
-    private void From(long id, string title1, string title2, bool hidden,
-        int rating, int progress, DateTimeOffset lastVisit, double lastPosition,
-        string coverCacheKey, string description, List<TagData> tags)
-    {
-        Id = id;
-        Title1 = title1;
-        Title2 = title2;
-        Hidden = hidden;
-        Rating = rating;
-        Progress = progress;
-        LastVisit = lastVisit;
-        LastPosition = lastPosition;
-        CoverCacheKey = coverCacheKey;
-        Description = description;
-        Tags = tags;
     }
 
     private void InternalSaveTagsNoLock(bool removeOld = true)
@@ -778,7 +770,7 @@ internal abstract class ComicData
     private static async Task<T> Enqueue<T>(Func<T> op, string taskName)
     {
         var taskResult = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
-        _tableQueue.Submit($"{TAG}#Enqueue#{taskName}", delegate
+        ComicPropertyRepository.Instance.GetDatabaseDispatcher().Submit($"{TAG}#Enqueue#{taskName}", delegate
         {
             taskResult.SetResult(op());
         });
@@ -1038,6 +1030,11 @@ internal abstract class ComicData
         return result;
     }
 
+    private RequestOption CreateRequestOption()
+    {
+        return new(!IsExternal);
+    }
+
     //
     // Classes
     //
@@ -1062,10 +1059,21 @@ internal abstract class ComicData
         public HashSet<string> Tags = new();
     };
 
+    //
+    // Enums
+    //
+
     internal enum ComicType : int
     {
         Folder = 1,
         Archive = 2,
         PDF = 3,
+    }
+
+    public enum CompletionStateEnum
+    {
+        NotStarted = 0,
+        Started = 1,
+        Completed = 2,
     }
 };

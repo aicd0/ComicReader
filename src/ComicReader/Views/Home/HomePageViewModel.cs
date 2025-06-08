@@ -446,7 +446,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
                         List<ComicItemViewModel> items = _selectedComicItems.FindAll(x => !x.IsRead);
                         foreach (ComicItemViewModel item in items)
                         {
-                            item.Comic.SetAsRead();
+                            item.Comic.SetCompletionStateToCompleted().Wait();
                         }
                         _ = MainThreadUtils.RunInMainThread(delegate
                         {
@@ -462,7 +462,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
                         List<ComicItemViewModel> items = _selectedComicItems.FindAll(x => !x.IsUnread);
                         foreach (ComicItemViewModel item in items)
                         {
-                            item.Comic.SetAsUnread();
+                            item.Comic.SetCompletionStateToNotStarted().Wait();
                         }
                         _ = MainThreadUtils.RunInMainThread(delegate
                         {

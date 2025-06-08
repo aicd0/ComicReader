@@ -1,12 +1,11 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-using ComicReader.SDK.Common.AutoProperty.Extension;
 using ComicReader.SDK.Common.DebugTools;
 
 namespace ComicReader.SDK.Common.AutoProperty.Presets;
 
-public class MemoryCacheProperty<K, V>(IKVProperty<K, V> source) : AbsProperty<K, V, MemoryCachePropertyModel<K, V>, IValueObserverExtension<K, V>> where K : IRequestKey
+public class MemoryCacheProperty<K, V>(IKVProperty<K, V> source) : AbsProperty<K, V, MemoryCachePropertyModel<K, V>, IPropertyExtension> where K : IRequestKey
 {
     public override MemoryCachePropertyModel<K, V> CreateModel()
     {
@@ -18,7 +17,7 @@ public class MemoryCacheProperty<K, V>(IKVProperty<K, V> source) : AbsProperty<K
         return source.GetLockResource(key, type);
     }
 
-    public override void RearrangeRequests(PropertyContext<K, V, MemoryCachePropertyModel<K, V>, IValueObserverExtension<K, V>> context)
+    public override void RearrangeRequests(PropertyContext<K, V, MemoryCachePropertyModel<K, V>, IPropertyExtension> context)
     {
         MemoryCachePropertyModel<K, V> model = context.Model;
         foreach (SealedPropertyRequest<K, V> request in context.NewRequests)
@@ -45,7 +44,6 @@ public class MemoryCacheProperty<K, V>(IKVProperty<K, V> source) : AbsProperty<K
                         PropertyResponseContent<V>? response = cache.response;
                         if (response is not null)
                         {
-                            MemoryCacheProperty<K, V>.OnValueUpdate(context, request.RequestContent.Key, response.Value);
                             context.Respond(request.Id, response);
                             break;
                         }
@@ -81,12 +79,12 @@ public class MemoryCacheProperty<K, V>(IKVProperty<K, V> source) : AbsProperty<K
         }
     }
 
-    public override void ProcessRequests(PropertyContext<K, V, MemoryCachePropertyModel<K, V>, IValueObserverExtension<K, V>> context, IProcessCallback callback)
+    public override void ProcessRequests(PropertyContext<K, V, MemoryCachePropertyModel<K, V>, IPropertyExtension> context, IProcessCallback callback)
     {
         callback.PostOnServerThread(true, null);
     }
 
-    private void OnReadResponse(PropertyContext<K, V, MemoryCachePropertyModel<K, V>, IValueObserverExtension<K, V>> context, long id, PropertyResponseContent<V> response)
+    private void OnReadResponse(PropertyContext<K, V, MemoryCachePropertyModel<K, V>, IPropertyExtension> context, long id, PropertyResponseContent<V> response)
     {
         if (!context.Model.requests.Remove(id, out MemoryCachePropertyModel<K, V>.RequestItem? request))
         {
@@ -101,7 +99,7 @@ public class MemoryCacheProperty<K, V>(IKVProperty<K, V> source) : AbsProperty<K
         request.cache.pendingRequests.Clear();
     }
 
-    private void OnWriteResponse(PropertyContext<K, V, MemoryCachePropertyModel<K, V>, IValueObserverExtension<K, V>> context, long id, PropertyResponseContent<V> response)
+    private void OnWriteResponse(PropertyContext<K, V, MemoryCachePropertyModel<K, V>, IPropertyExtension> context, long id, PropertyResponseContent<V> response)
     {
         if (!context.Model.requests.Remove(id, out MemoryCachePropertyModel<K, V>.RequestItem? request))
         {
@@ -116,20 +114,7 @@ public class MemoryCacheProperty<K, V>(IKVProperty<K, V> source) : AbsProperty<K
         else
         {
             finalResponse = PropertyResponseContent<V>.NewSuccessfulResponse(request.originalRequest.RequestContent.Value, response.Tracker, response.Version);
-            OnValueUpdate(context, request.originalRequest.RequestContent.Key, finalResponse.Value);
         }
         context.Respond(request.originalRequest.Id, finalResponse);
-    }
-
-    private static void OnValueUpdate(PropertyContext<K, V, MemoryCachePropertyModel<K, V>, IValueObserverExtension<K, V>> context, K key, V? value)
-    {
-        if (value is null)
-        {
-            Logger.AssertNotReachHere("5F1124DE08843941");
-        }
-        foreach (IValueObserverExtension<K, V> extension in context.Extensions)
-        {
-            extension.UpdateValue(key, value);
-        }
     }
 }

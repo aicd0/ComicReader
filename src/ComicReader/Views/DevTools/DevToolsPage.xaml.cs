@@ -5,8 +5,9 @@
 
 using System;
 
-using ComicReader.Common.DebugTools;
+using ComicReader.Common;
 using ComicReader.Common.PageBase;
+using ComicReader.Data.Models;
 using ComicReader.Views.Main;
 
 using Microsoft.UI.Xaml.Controls;
@@ -54,19 +55,21 @@ internal sealed partial class DevToolsPage : BasePage
 
     private void OnCommonConfigsApplyClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        string configs = TbCommonConfigs.Text;
-        try
+        C0.Run(async () =>
         {
-            DebugSwitches.Instance.SaveConfig(configs);
-        }
-        catch (Exception ex)
-        {
-            SetResult(ex.ToString());
-            return;
-        }
-
-        SetResult("Successfully applied");
-        RestoreConfig();
+            string configs = TbCommonConfigs.Text;
+            try
+            {
+                await DebugSwitchModel.Instance.SaveConfig(configs);
+            }
+            catch (Exception ex)
+            {
+                SetResult(ex.ToString());
+                return;
+            }
+            SetResult("Successfully applied");
+            RestoreConfig();
+        });
     }
 
     private void OnCommonConfigsRestoreClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
@@ -95,6 +98,6 @@ internal sealed partial class DevToolsPage : BasePage
 
     private void RestoreConfig()
     {
-        TbCommonConfigs.Text = DebugSwitches.Instance.SerializeToJson();
+        TbCommonConfigs.Text = DebugSwitchModel.Instance.SerializeToJson();
     }
 }

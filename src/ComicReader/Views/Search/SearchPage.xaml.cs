@@ -374,11 +374,11 @@ internal sealed partial class SearchPage : BasePage
         {
             if (read)
             {
-                item.Comic.SetAsRead();
+                await item.Comic.SetCompletionStateToCompleted();
             }
             else
             {
-                item.Comic.SetAsUnread();
+                await item.Comic.SetCompletionStateToNotStarted();
             }
             await BindComicData(item, item.Comic);
         });

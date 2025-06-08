@@ -36,8 +36,6 @@ internal sealed class ComicModel
     public bool IsDirectory => _internalModel is ComicFolderData;
     public bool IsEditable => _internalModel.IsEditable;
     public bool IsExternal => _internalModel.IsExternal;
-    public bool IsRead => _internalModel.IsRead;
-    public bool IsUnread => _internalModel.IsUnread;
     public double LastPosition => _internalModel.LastPosition;
     public string Location => _internalModel.Location;
     public int Progress => _internalModel.Progress;
@@ -47,6 +45,7 @@ internal sealed class ComicModel
     public string Title => _internalModel.Title;
     public string Title1 => _internalModel.Title1;
     public string Title2 => _internalModel.Title2;
+    public CompletionStateEnum CompletionState => _internalModel.CompletionState;
 
     public string GetImageCacheKey(int index)
     {
@@ -72,9 +71,25 @@ internal sealed class ComicModel
         _internalModel.SaveBasic();
     }
 
-    public void SetAsStarted()
+    public async Task SetCompletionStateToNotStarted()
+    {
+        _internalModel.SetAsUnread();
+        await _internalModel.SaveCompletionState(CompletionStateEnum.NotStarted);
+    }
+
+    public async Task SetCompletionStateToAtLeastStarted()
     {
         _internalModel.SetAsStarted();
+        if (CompletionState == CompletionStateEnum.NotStarted)
+        {
+            await _internalModel.SaveCompletionState(CompletionStateEnum.Started);
+        }
+    }
+
+    public async Task SetCompletionStateToCompleted()
+    {
+        _internalModel.SetAsRead();
+        await _internalModel.SaveCompletionState(CompletionStateEnum.Completed);
     }
 
     public Task SaveProgressAsync(int progress, double lastPosition)
@@ -85,16 +100,6 @@ internal sealed class ComicModel
     public void SaveRating(int rating)
     {
         _internalModel.SaveRating(rating);
-    }
-
-    public void SetAsRead()
-    {
-        _internalModel.SetAsRead();
-    }
-
-    public void SetAsUnread()
-    {
-        _internalModel.SetAsUnread();
     }
 
     public Task SaveHiddenAsync(bool hidden)

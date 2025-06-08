@@ -5,7 +5,7 @@ using ComicReader.SDK.Common.AutoProperty;
 
 namespace ComicReader.SDK.Data.SqlHelpers;
 
-public class SqlPropertyModel<K, V>
+public class SqlPropertyModel<K, V> where K : notnull
 {
     internal readonly List<SealedPropertyRequest<SqlPropertyKey<K, V>, V>> requests = [];
 }

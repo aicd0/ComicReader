@@ -24,6 +24,8 @@ class DatabaseUpgradeManager
             return;
         }
         List<Func<DatabaseVersionModel.JsonModel, bool>> tasks = [
+            UpgradeDatabaseVersions,
+            UpgradeComicDatabase,
             UpgradeFavorites,
         ];
         foreach (Func<DatabaseVersionModel.JsonModel, bool> task in tasks)
@@ -33,6 +35,30 @@ class DatabaseUpgradeManager
                 await DatabaseVersionModel.Instance.UpdateModel(databaseVersions);
             }
         }
+    }
+
+    private bool UpgradeDatabaseVersions(DatabaseVersionModel.JsonModel versions)
+    {
+        if (versions.DatabaseVersionsVersion >= 1)
+        {
+            return false;
+        }
+
+        versions.ComicDatabaseVersion = XmlDatabase.Settings.DatabaseVersion;
+        versions.DatabaseVersionsVersion = 1;
+        return true;
+    }
+
+    private bool UpgradeComicDatabase(DatabaseVersionModel.JsonModel versions)
+    {
+        if (versions.ComicDatabaseVersion >= 4)
+        {
+            return false;
+        }
+
+        SqlDatabaseManager.UpdateDatabase(versions.ComicDatabaseVersion);
+        versions.ComicDatabaseVersion = 4;
+        return true;
     }
 
     private bool UpgradeFavorites(DatabaseVersionModel.JsonModel versions)
@@ -65,7 +91,6 @@ class DatabaseUpgradeManager
             FavoriteModel.Instance.UpdateModel(newData).Wait();
         }
         versions.FavoritesVersion = 1;
-
         return true;
     }
 }
