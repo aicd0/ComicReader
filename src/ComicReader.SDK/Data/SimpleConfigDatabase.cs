@@ -47,8 +47,9 @@ internal class SimpleConfigDatabase
         string value;
         try
         {
-            await reader.LoadAsync((uint)stream.Size);
-            IBuffer buffer = reader.ReadBuffer((uint)stream.Size);
+            uint streamSize = (uint)stream.Size;
+            await reader.LoadAsync(streamSize);
+            IBuffer buffer = reader.ReadBuffer(streamSize);
             value = CryptographicBuffer.ConvertBinaryToString(BinaryStringEncoding.Utf8, buffer);
         }
         catch (Exception ex)

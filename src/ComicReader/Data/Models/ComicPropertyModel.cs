@@ -23,10 +23,12 @@ internal class ComicPropertyModel
     private const string PROP_TYPE_TITLE = "Title";
     private const string PROP_TYPE_PROGRESS = "Progress";
     private const string PROP_TYPE_TAG = "Tag";
+    private const string PROP_TYPE_RATING = "Rating";
 
     private static readonly List<PropertyTypeEnum> _properties = [
         PropertyTypeEnum.Title,
         PropertyTypeEnum.Progress,
+        PropertyTypeEnum.Rating,
     ];
 
     private PropertyTypeEnum Type { get; set; } = PropertyTypeEnum.Title;
@@ -34,15 +36,16 @@ internal class ComicPropertyModel
 
     public string DisplayGroupName => Type switch
     {
-        PropertyTypeEnum.Tag => "Tag",
+        PropertyTypeEnum.Tag => StringResourceProvider.Tag,
         _ => "",
     };
 
     public string DisplayName => Type switch
     {
-        PropertyTypeEnum.Title => "Title",
-        PropertyTypeEnum.Progress => "Progress",
+        PropertyTypeEnum.Title => StringResourceProvider.Title,
+        PropertyTypeEnum.Progress => StringResourceProvider.Progress,
         PropertyTypeEnum.Tag => Name,
+        PropertyTypeEnum.Rating => StringResourceProvider.Rating,
         _ => "",
     };
 
@@ -84,6 +87,7 @@ internal class ComicPropertyModel
             PropertyTypeEnum.Title => comic.Title ?? StringResourceProvider.Untitled,
             PropertyTypeEnum.Progress => comic.Progress,
             PropertyTypeEnum.Tag => GetConcatenatedTag(),
+            PropertyTypeEnum.Rating => comic.Rating,
             _ => comic.Id
         };
     }
@@ -129,11 +133,26 @@ internal class ComicPropertyModel
             return tagData.Tags;
         }
 
+        IEnumerable<string> GetRatingGroups()
+        {
+            int rating = comic.Rating;
+            if (rating >= 5)
+            {
+                return ["5"];
+            }
+            if (rating <= 0)
+            {
+                return [StringResourceProvider.NoRating];
+            }
+            return [rating.ToString()];
+        }
+
         return Type switch
         {
             PropertyTypeEnum.Title => GetTitleGroups(comic.Title),
             PropertyTypeEnum.Progress => GetProgressGroups(comic.Progress),
             PropertyTypeEnum.Tag => GetTagGroups(),
+            PropertyTypeEnum.Rating => GetRatingGroups(),
             _ => [StringResourceProvider.Ungrouped]
         };
     }
@@ -183,6 +202,7 @@ internal class ComicPropertyModel
             PropertyTypeEnum.Title => PROP_TYPE_TITLE,
             PropertyTypeEnum.Progress => PROP_TYPE_PROGRESS,
             PropertyTypeEnum.Tag => PROP_TYPE_TAG,
+            PropertyTypeEnum.Rating => PROP_TYPE_RATING,
             _ => PROP_TYPE_TITLE,
         };
     }
@@ -199,6 +219,7 @@ internal class ComicPropertyModel
             PROP_TYPE_TITLE => PropertyTypeEnum.Title,
             PROP_TYPE_PROGRESS => PropertyTypeEnum.Progress,
             PROP_TYPE_TAG => PropertyTypeEnum.Tag,
+            PROP_TYPE_RATING => PropertyTypeEnum.Rating,
             _ => PropertyTypeEnum.Title,
         };
     }
@@ -248,8 +269,9 @@ internal class ComicPropertyModel
 
     private enum PropertyTypeEnum
     {
-        Title,
         Progress,
+        Rating,
         Tag,
+        Title,
     }
 }

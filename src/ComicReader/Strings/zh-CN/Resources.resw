@@ -558,4 +558,19 @@
   <data name="Ungrouped" xml:space="preserve">
     <value>无分组</value>
   </data>
+  <data name="NoRating" xml:space="preserve">
+    <value>无评分</value>
+  </data>
+  <data name="Tag" xml:space="preserve">
+    <value>标签</value>
+  </data>
+  <data name="Title" xml:space="preserve">
+    <value>标题</value>
+  </data>
+  <data name="Rating" xml:space="preserve">
+    <value>评分</value>
+  </data>
+  <data name="Progress" xml:space="preserve">
+    <value>进度</value>
+  </data>
 </root>
