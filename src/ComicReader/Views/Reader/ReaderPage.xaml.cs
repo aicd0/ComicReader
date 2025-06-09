@@ -364,8 +364,8 @@ internal sealed partial class ReaderPage : BasePage
             string readerStatusText = "";
             readerStatusText = status switch
             {
-                ReaderStatusEnum.Loading => StringResourceProvider.GetResourceString("ReaderStatusLoading"),
-                ReaderStatusEnum.Error => StringResourceProvider.GetResourceString("ReaderStatusError"),
+                ReaderStatusEnum.Loading => StringResourceProvider.ReaderStatusLoading,
+                ReaderStatusEnum.Error => StringResourceProvider.ReaderStatusError,
                 _ => "",
             };
             TbReaderStatus.Text = readerStatusText;

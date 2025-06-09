@@ -417,8 +417,8 @@ Category2: tag4/tag5
   <data name="DebugMode.Text" xml:space="preserve">
     <value>Debug mode</value>
   </data>
-  <data name="UntitledCollection" xml:space="preserve">
-    <value>Untitled Collection</value>
+  <data name="Untitled" xml:space="preserve">
+    <value>Untitled</value>
   </data>
   <data name="PrivacyPolicy.Text" xml:space="preserve">
     <value>Privacy Policy</value>
@@ -554,5 +554,8 @@ Category2: tag4/tag5
   </data>
   <data name="RemoveUnreachableCheckBox.Content" xml:space="preserve">
     <value>Automatically remove unreachable comics</value>
+  </data>
+  <data name="Ungrouped" xml:space="preserve">
+    <value>Ungrouped</value>
   </data>
 </root>

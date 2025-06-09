@@ -3,11 +3,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
+using ComicReader.Common;
 using ComicReader.Data.Models.Comic;
 using ComicReader.Data.Tables;
 using ComicReader.SDK.Common.DebugTools;
@@ -64,37 +66,75 @@ internal class ComicPropertyModel
         {
             return "";
         }
+
+        string GetConcatenatedTag()
+        {
+            ComicData.TagData? tagData = comic.Tags.FirstOrDefault(tag => tag.Name == Name);
+            if (tagData == null)
+            {
+                return string.Empty;
+            }
+            List<string> tags = [.. tagData.Tags];
+            tags.Sort(StringComparer.OrdinalIgnoreCase);
+            return string.Join(',', tags);
+        }
+
         return Type switch
         {
-            PropertyTypeEnum.Title => comic.Title ?? "",
+            PropertyTypeEnum.Title => comic.Title ?? StringResourceProvider.Untitled,
             PropertyTypeEnum.Progress => comic.Progress,
+            PropertyTypeEnum.Tag => GetConcatenatedTag(),
             _ => comic.Id
         };
     }
 
-    public string GetPropertyAsGroupName(ComicModel? comic)
+    public IEnumerable<string> GetPropertyAsGroupNames(ComicModel? comic)
     {
         if (comic == null)
         {
-            return "";
+            return [];
         }
 
-        string GetFirstLetter(string? value)
+        IEnumerable<string> GetTitleGroups(string title)
         {
-            value ??= string.Empty;
-            value = value.TrimStart();
-            if (string.IsNullOrEmpty(value))
+            title = title.TrimStart();
+            if (string.IsNullOrEmpty(title))
             {
-                return "";
+                return [StringResourceProvider.Untitled];
             }
-            return value.ToUpper()[0].ToString();
+            return [title[0].ToString().ToUpper()];
+        }
+
+        IEnumerable<string> GetProgressGroups(int progress)
+        {
+            progress = Math.Min(Math.Max(progress, 0), 100);
+            if (progress < 10)
+            {
+                return ["<10%"];
+            }
+            if (progress >= 100)
+            {
+                return ["100%"];
+            }
+            return [$"{progress / 10 * 10}%"];
+        }
+
+        IEnumerable<string> GetTagGroups()
+        {
+            ComicData.TagData? tagData = comic.Tags.FirstOrDefault(tag => tag.Name == Name);
+            if (tagData == null || tagData.Tags.Count == 0)
+            {
+                return [StringResourceProvider.Ungrouped];
+            }
+            return tagData.Tags;
         }
 
         return Type switch
         {
-            PropertyTypeEnum.Title => GetFirstLetter(comic.Title),
-            PropertyTypeEnum.Progress => (comic.Progress / 10 * 10).ToString(),
-            _ => ""
+            PropertyTypeEnum.Title => GetTitleGroups(comic.Title),
+            PropertyTypeEnum.Progress => GetProgressGroups(comic.Progress),
+            PropertyTypeEnum.Tag => GetTagGroups(),
+            _ => [StringResourceProvider.Ungrouped]
         };
     }
 

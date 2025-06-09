@@ -31,16 +31,16 @@ public class Filter
 
         if (unique_string == "<~hidden>")
         {
-            return StringResourceProvider.GetResourceString("AllComics");
+            return StringResourceProvider.AllComics;
         }
         else if (unique_string == "<hidden>")
         {
-            return StringResourceProvider.GetResourceString("AllHidden");
+            return StringResourceProvider.AllHidden;
         }
         else if (m_subfilters.Count == 2 && m_subfilters[0] is SubFilterDirectory && m_subfilters[1].UniqueString == "~hidden")
         {
             string dir = (m_subfilters[0] as SubFilterDirectory).Directory;
-            string format_string = StringResourceProvider.GetResourceString("AllComicsIn");
+            string format_string = StringResourceProvider.AllComicsIn;
             format_string = format_string.Replace("$path", dir);
             return format_string;
         }
@@ -63,7 +63,7 @@ public class Filter
             return "";
         }
 
-        string format_string = StringResourceProvider.GetResourceString("FilteredBy");
+        string format_string = StringResourceProvider.FilteredBy;
         format_string = format_string.Replace("$count", cpy.Count.ToString());
         string res = format_string + ": ";
 

@@ -691,13 +691,16 @@ internal class HomePageViewModel : INotifyPropertyChanged
                 Dictionary<string, List<ComicItemViewModel>> groupMap = [];
                 foreach (ComicItemViewModel item in comicItems)
                 {
-                    string groupName = groupBy.GetPropertyAsGroupName(item.Comic);
-                    if (!groupMap.TryGetValue(groupName, out List<ComicItemViewModel>? group))
+                    IEnumerable<string> groupNames = groupBy.GetPropertyAsGroupNames(item.Comic);
+                    foreach (string groupName in groupNames)
                     {
-                        group = [];
-                        groupMap[groupName] = group;
+                        if (!groupMap.TryGetValue(groupName, out List<ComicItemViewModel>? group))
+                        {
+                            group = [];
+                            groupMap[groupName] = group;
+                        }
+                        group.Add(item);
                     }
-                    group.Add(item);
                 }
                 comicsGrouped = [];
                 foreach (KeyValuePair<string, List<ComicItemViewModel>> p in groupMap)

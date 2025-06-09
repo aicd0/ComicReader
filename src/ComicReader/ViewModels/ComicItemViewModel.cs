@@ -88,11 +88,11 @@ internal class ComicItemViewModel : INotifyPropertyChanged
     {
         if (Comic.CompletionState == ComicData.CompletionStateEnum.NotStarted)
         {
-            Progress = StringResourceProvider.GetResourceString("Unread");
+            Progress = StringResourceProvider.Unread;
         }
         else if (Comic.CompletionState == ComicData.CompletionStateEnum.Completed)
         {
-            Progress = StringResourceProvider.GetResourceString("Finished");
+            Progress = StringResourceProvider.Finished;
         }
         else
         {
@@ -102,7 +102,7 @@ internal class ComicItemViewModel : INotifyPropertyChanged
             }
             else
             {
-                Progress = StringResourceProvider.GetResourceString("FinishPercentage")
+                Progress = StringResourceProvider.FinishPercentage
                     .Replace("$percentage", Comic.Progress.ToString());
             }
         }

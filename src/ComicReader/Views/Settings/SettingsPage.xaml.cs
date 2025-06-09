@@ -248,10 +248,10 @@ public partial class SettingsPageViewModel : INotifyPropertyChanged
         }
     }
 
-    private string _cacheSize = StringResourceProvider.GetResourceString("Calculating");
+    private string _cacheSize = StringResourceProvider.Calculating;
     public string CacheSize
     {
-        get => StringResourceProvider.GetResourceString("ClearCacheDetail").Replace("$size", _cacheSize);
+        get => StringResourceProvider.ClearCacheDetail.Replace("$size", _cacheSize);
         set
         {
             _cacheSize = value;
@@ -353,7 +353,7 @@ internal sealed partial class SettingsPage : BasePage
     protected override void OnStart(PageBundle bundle)
     {
         base.OnStart(bundle);
-        GetMainPageAbility().SetTitle(StringResourceProvider.GetResourceString("Settings"));
+        GetMainPageAbility().SetTitle(StringResourceProvider.Settings);
         GetMainPageAbility().SetIcon(new SymbolIconSource() { Symbol = Symbol.Setting });
     }
 
@@ -391,10 +391,10 @@ internal sealed partial class SettingsPage : BasePage
             {
                 var dialog = new ContentDialog
                 {
-                    Title = StringResourceProvider.GetResourceString("Warning"),
-                    Content = StringResourceProvider.GetResourceString("DebugModeWarning"),
-                    PrimaryButtonText = StringResourceProvider.GetResourceString("Proceed"),
-                    CloseButtonText = StringResourceProvider.GetResourceString("Cancel"),
+                    Title = StringResourceProvider.Warning,
+                    Content = StringResourceProvider.DebugModeWarning,
+                    PrimaryButtonText = StringResourceProvider.Proceed,
+                    CloseButtonText = StringResourceProvider.Cancel,
                     XamlRoot = XamlRoot
                 };
                 ContentDialogResult result = await dialog.ShowAsync();
@@ -517,7 +517,7 @@ internal sealed partial class SettingsPage : BasePage
             ReadOnlyDictionary<int, Encoding> supportedEncodings = await AppInfoProvider.GetSupportedEncodings();
             var encodings = new List<Tuple<string, int>>
             {
-                new(StringResourceProvider.GetResourceString("Default"), -1)
+                new(StringResourceProvider.Default, -1)
             };
 
             int defaultCodePage = AppModel.DefaultArchiveCodePage;
@@ -555,7 +555,7 @@ internal sealed partial class SettingsPage : BasePage
             {
                 comicCount = comicCountToken.GetValue();
             }
-            string total_comic_string = StringResourceProvider.GetResourceString("TotalComics");
+            string total_comic_string = StringResourceProvider.TotalComics;
             StatisticsTextBlock.Text = total_comic_string +
                 comicCount.ToString("#,#0", CultureInfo.InvariantCulture);
         });
@@ -568,20 +568,20 @@ internal sealed partial class SettingsPage : BasePage
 
     private void UpdateFeedback()
     {
-        string appName = StringResourceProvider.GetResourceString("AppDisplayName");
-        string contributionBeforeLink = StringResourceProvider.GetResourceString("ContributionRunBeforeLink");
+        string appName = StringResourceProvider.AppDisplayName;
+        string contributionBeforeLink = StringResourceProvider.ContributionRunBeforeLink;
         contributionBeforeLink = contributionBeforeLink.Replace("$appname", appName);
         ContributionRunBeforeLink.Text = contributionBeforeLink;
-        ContributionRunAfterLink.Text = StringResourceProvider.GetResourceString("ContributionRunAfterLink");
+        ContributionRunAfterLink.Text = StringResourceProvider.ContributionRunAfterLink;
     }
 
     private void UpdateAbout()
     {
-        string appName = StringResourceProvider.GetResourceString("AppDisplayName");
+        string appName = StringResourceProvider.AppDisplayName;
         AboutBuildVersionControl.Text = appName + " " + EnvironmentProvider.Instance.GetVersionName();
 
         string author = "aicd0";
-        string aboutCopyright = StringResourceProvider.GetResourceString("AboutCopyright");
+        string aboutCopyright = StringResourceProvider.AboutCopyright;
         aboutCopyright = aboutCopyright.Replace("$author", author);
         AboutCopyrightControl.Text = aboutCopyright;
     }

@@ -111,7 +111,7 @@ internal sealed partial class SearchPage : BasePage
             {
                 string keyword_combined = StringUtils.Join(" ", keywords);
                 title_text = "\"" + keyword_combined + "\"";
-                tab_title = StringResourceProvider.GetResourceString("SearchResultsOf");
+                tab_title = StringResourceProvider.SearchResultsOf;
                 tab_title = tab_title.Replace("$keyword", keyword_combined);
             }
             else if (filter_brief.Length != 0)
@@ -122,8 +122,8 @@ internal sealed partial class SearchPage : BasePage
             }
             else
             {
-                title_text = StringResourceProvider.GetResourceString("AllMatchedResults");
-                tab_title = StringResourceProvider.GetResourceString("SearchResults");
+                title_text = StringResourceProvider.AllMatchedResults;
+                tab_title = StringResourceProvider.SearchResults;
             }
 
             // update tab header
@@ -141,7 +141,7 @@ internal sealed partial class SearchPage : BasePage
             ViewModel.Title = title_text;
             ViewModel.FilterDetails = filter_details;
 
-            string no_results = StringResourceProvider.GetResourceString("NoResults");
+            string no_results = StringResourceProvider.NoResults;
             no_results = no_results.Replace("$keyword", keyword);
 
             ViewModel.NoResultText = no_results;
