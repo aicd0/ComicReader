@@ -100,35 +100,18 @@ internal class ComicSearchEngine
 
     private async Task<List<ComicModel>> SearchAll()
     {
-        List<Tuple<long, DateTimeOffset>> records = [];
+        List<long> ids = [];
         await ComicData.EnqueueCommand(delegate
         {
             SelectCommand<ComicTable> command = new SelectCommand<ComicTable>(ComicTable.Instance).AppendCondition(new EqualityCondition<bool>(ComicTable.ColumnHidden, false));
             IReaderToken<long> idToken = command.PutQueryInt64(ComicTable.ColumnId);
-            IReaderToken<DateTimeOffset> lastVisitToken = command.PutQueryDateTimeOffset(ComicTable.ColumnLastVisit);
             using SelectCommand<ComicTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
-
             while (reader.Read())
             {
-                records.Add(new Tuple<long, DateTimeOffset>
-                (
-                    idToken.GetValue(),
-                    lastVisitToken.GetValue()
-                ));
+                ids.Add(idToken.GetValue());
             }
         }, "HomeLoadLibrary");
-
-        var comicItems = new List<ComicModel>();
-        foreach (Tuple<long, DateTimeOffset> record in records)
-        {
-            ComicModel? comic = await ComicModel.FromId(record.Item1, "HomeLoadComic");
-            if (comic == null)
-            {
-                continue;
-            }
-            comicItems.Add(comic);
-        }
-        return comicItems;
+        return await ComicModel.BatchFromId(ids, "HomeLoadComic");
     }
 
     private async Task<List<ComicModel>> SearchByKeywords(string searchText)

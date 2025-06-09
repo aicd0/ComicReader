@@ -143,12 +143,8 @@ internal sealed class ComicModel
         return _locationPool.TryGetValue(location, out model);
     }
 
-    private static ComicModel? ReplaceWithExisting(ComicData? comicData)
+    private static ComicModel ReplaceWithExisting(ComicData comicData)
     {
-        if (comicData == null)
-        {
-            return null;
-        }
         var model = new ComicModel(comicData);
         if (comicData.Id >= 0)
         {
@@ -173,6 +169,10 @@ internal sealed class ComicModel
             return model;
         }
         ComicData? comicData = await ComicData.FromId(id, taskName);
+        if (comicData == null)
+        {
+            return null;
+        }
         return ReplaceWithExisting(comicData);
     }
 
@@ -183,6 +183,10 @@ internal sealed class ComicModel
             return model;
         }
         ComicData? comicData = await ComicData.FromLocation(location, taskName);
+        if (comicData == null)
+        {
+            return null;
+        }
         return ReplaceWithExisting(comicData);
     }
 
@@ -209,6 +213,10 @@ internal sealed class ComicModel
             comic = await ComicData.FromLocation(file.Path, "ComicModelFromFileArchive");
             comic ??= await ComicArchiveData.FromExternal(file);
         }
+        if (comic == null)
+        {
+            return null;
+        }
         return ReplaceWithExisting(comic);
     }
 
@@ -216,6 +224,30 @@ internal sealed class ComicModel
     {
         ComicData? comic = await ComicFolderData.FromExternal(directory, imageFiles, infoFile);
         return ReplaceWithExisting(comic);
+    }
+
+    public static async Task<List<ComicModel>> BatchFromId(IEnumerable<long> ids, string taskName)
+    {
+        HashSet<long> idsUnique = [.. ids];
+        List<ComicModel> results = [];
+        List<long> requestingIds = [];
+        foreach (long id in idsUnique)
+        {
+            if (TryGetExisting(id, out ComicModel? model))
+            {
+                results.Add(model);
+            }
+            else
+            {
+                requestingIds.Add(id);
+            }
+        }
+        List<ComicData> requestResults = await ComicData.BatchFromId(requestingIds, taskName);
+        foreach (ComicData result in requestResults)
+        {
+            results.Add(ReplaceWithExisting(result));
+        }
+        return results;
     }
 
     //
