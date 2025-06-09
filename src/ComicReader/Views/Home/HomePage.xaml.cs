@@ -123,6 +123,7 @@ internal sealed partial class HomePage : BasePage
             }
         });
         GetNavigationPageAbility().RegisterSearchTextChangeHandler(this, ViewModel.SetSearchText);
+        GetNavigationPageAbility().RegisterRefreshHandler(this, ViewModel.UpdateLibrary);
     }
 
     //
@@ -461,48 +462,33 @@ internal sealed partial class HomePage : BasePage
 
     private void MarkAsReadOrUnread(ComicItemViewModel item, bool read)
     {
-        C0.Run(async () =>
+        if (read)
         {
-            if (read)
-            {
-                await item.Comic.SetCompletionStateToCompleted();
-            }
-            else
-            {
-                await item.Comic.SetCompletionStateToNotStarted();
-            }
-            item.UpdateProgress(true);
-        });
+            ViewModel.ApplyOperationToComic(HomePageViewModel.BatchOperationType.MarkAsRead, item);
+        }
+        else
+        {
+            ViewModel.ApplyOperationToComic(HomePageViewModel.BatchOperationType.MarkAsUnread, item);
+        }
+        item.UpdateProgress(true);
     }
 
     private void OnAddToFavoritesClicked(object sender, RoutedEventArgs e)
     {
-        C0.Run(async delegate
-        {
-            var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-            item.IsFavorite = true;
-            await FavoriteModel.Instance.Add(item.Comic.Id, item.Title, true);
-        });
+        var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
+        ViewModel.ApplyOperationToComic(HomePageViewModel.BatchOperationType.Favorite, item);
     }
 
     private void OnRemoveFromFavoritesClicked(object sender, RoutedEventArgs e)
     {
-        C0.Run(async delegate
-        {
-            var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-            item.IsFavorite = false;
-            await FavoriteModel.Instance.RemoveWithId(item.Comic.Id, true);
-        });
+        var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
+        ViewModel.ApplyOperationToComic(HomePageViewModel.BatchOperationType.UnFavorite, item);
     }
 
     private void OnHideComicClicked(object sender, RoutedEventArgs e)
     {
-        C0.Run(async delegate
-        {
-            var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-            await item.Comic.SaveHiddenAsync(true);
-            ViewModel.UpdateLibrary();
-        });
+        var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
+        ViewModel.ApplyOperationToComic(HomePageViewModel.BatchOperationType.Hide, item);
     }
 
     private void EditFilterButton_Click(object sender, RoutedEventArgs e)

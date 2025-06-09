@@ -31,6 +31,8 @@ internal interface INavigationPageAbility : IPageAbility
 
     void RegisterLeavingHandler(Page owner, CommonEventHandler handler);
 
+    void RegisterRefreshHandler(Page owner, CommonEventHandler handler);
+
     void RegisterExpandInfoPaneHandler(Page owner, CommonEventHandler handler);
 
     void RegisterGridViewModeChangedHandler(Page owner, GridViewModeChangedEventHandler handler);

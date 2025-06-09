@@ -199,7 +199,7 @@ internal sealed partial class NavigationPage : BasePage
 
     private void OnRefreshClick(object sender, RoutedEventArgs e)
     {
-        // TODO implement refresh feature
+        _ability.SendRefreshEvent();
     }
 
     private void OnFavoritesClick(object sender, RoutedEventArgs e)
@@ -322,6 +322,7 @@ internal sealed partial class NavigationPage : BasePage
     private class NavigationPageAbility : INavigationPageAbility
     {
         private const string EVENT_LEAVING = "Leaving";
+        private const string EVENT_REFRESH = "Refresh";
         private const string EVENT_EXPAND_INFO_PANE = "ExpandInfoPane";
         private const string EVENT_FAVORITE_CHANGED = "FavoriteChanged";
         private const string EVENT_GRID_VIEW_MODE_CHANGED = "GridViewModeChanged";
@@ -422,6 +423,19 @@ internal sealed partial class NavigationPage : BasePage
         public void SendLeavingEvent()
         {
             _eventBus.With<bool>(EVENT_LEAVING).Emit(true);
+        }
+
+        public void RegisterRefreshHandler(Page owner, INavigationPageAbility.CommonEventHandler handler)
+        {
+            _eventBus.With<bool>(EVENT_REFRESH).Observe(owner, delegate
+            {
+                handler();
+            });
+        }
+
+        public void SendRefreshEvent()
+        {
+            _eventBus.With<bool>(EVENT_REFRESH).Emit(true);
         }
 
         public void RegisterExpandInfoPaneHandler(Page owner, INavigationPageAbility.CommonEventHandler handler)
