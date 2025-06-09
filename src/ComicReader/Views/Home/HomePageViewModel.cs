@@ -713,17 +713,19 @@ internal class HomePageViewModel : INotifyPropertyChanged
             if (groupBy != null)
             {
                 Dictionary<string, List<ComicItemViewModel>> groupMap = [];
+                Dictionary<string, ComicPropertyModel.IGroupInfo> groupInfoMap = [];
                 foreach (ComicItemViewModel item in comicItems)
                 {
-                    IEnumerable<string> groupNames = groupBy.GetPropertyAsGroupNames(item.Comic);
-                    foreach (string groupName in groupNames)
+                    IEnumerable<ComicPropertyModel.IGroupInfo> groupInfos = groupBy.GetPropertyAsGroupInfos(item.Comic);
+                    foreach (ComicPropertyModel.IGroupInfo groupInfo in groupInfos)
                     {
-                        if (!groupMap.TryGetValue(groupName, out List<ComicItemViewModel>? group))
+                        if (!groupMap.TryGetValue(groupInfo.Name, out List<ComicItemViewModel>? group))
                         {
                             group = [];
-                            groupMap[groupName] = group;
+                            groupMap[groupInfo.Name] = group;
                         }
                         group.Add(item);
+                        groupInfoMap[groupInfo.Name] = groupInfo;
                     }
                 }
                 comicsGrouped = [];
@@ -735,11 +737,11 @@ internal class HomePageViewModel : INotifyPropertyChanged
                 }
                 if (groupByAscending)
                 {
-                    comicsGrouped.Sort((x, y) => x.GroupName.CompareTo(y.GroupName));
+                    comicsGrouped.Sort((x, y) => groupInfoMap[x.GroupName].SortKey.CompareTo(groupInfoMap[y.GroupName].SortKey));
                 }
                 else
                 {
-                    comicsGrouped.Sort((x, y) => y.GroupName.CompareTo(x.GroupName));
+                    comicsGrouped.Sort((y, x) => groupInfoMap[x.GroupName].SortKey.CompareTo(groupInfoMap[y.GroupName].SortKey));
                 }
             }
             else
