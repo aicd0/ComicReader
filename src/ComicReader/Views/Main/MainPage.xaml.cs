@@ -41,6 +41,7 @@ internal sealed partial class MainPage : BasePage
     private readonly List<TabInfo> _tabs = new();
     private TabInfo _currentTab;
     private int _nextTabId = 0;
+    private bool _isFullscreen = false;
 
     private double _rootTabHeight = 0;
     private double _navigationBarHeight = 0;
@@ -549,12 +550,27 @@ internal sealed partial class MainPage : BasePage
         _tabContentPresenter = sender as ContentPresenter;
     }
 
+    //
+    // Size Change Events
+    //
+
     private void OnTabContainerGridSizeChanged(object sender, SizeChangedEventArgs e)
     {
         GetEventBus().With<double>(EventId.RootTabHeightChange).Emit(e.NewSize.Height);
     }
 
-    // Keys
+    private void OnRootGridSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (!IsFullScreen())
+        {
+            DispatchFullscreenChangeEvent(false);
+        }
+    }
+
+    //
+    // Key Events
+    //
+
     private void OnKeyDown(object sender, KeyRoutedEventArgs e)
     {
         bool handled;
@@ -575,7 +591,10 @@ internal sealed partial class MainPage : BasePage
         }
     }
 
+    //
     // Fullscreen
+    //
+
     private void EnterFullscreen()
     {
         if (IsFullScreen())
@@ -584,11 +603,7 @@ internal sealed partial class MainPage : BasePage
         }
 
         App.WindowManager.GetWindow(WindowId).AppWindow.SetPresenter(AppWindowPresenterKind.FullScreen);
-
-        DispatchToAllTabs(delegate (MainPageAbility ability)
-        {
-            ability.SendFullscreenChangedEvent(true);
-        });
+        DispatchFullscreenChangeEvent(true);
     }
 
     private void ExitFullscreen()
@@ -599,12 +614,31 @@ internal sealed partial class MainPage : BasePage
         }
 
         App.WindowManager.GetWindow(WindowId).AppWindow.SetPresenter(AppWindowPresenterKind.Default);
+        DispatchFullscreenChangeEvent(false);
+    }
+
+    private void DispatchFullscreenChangeEvent(bool isFullscreen)
+    {
+        if (_isFullscreen == isFullscreen)
+        {
+            return;
+        }
+        _isFullscreen = isFullscreen;
 
         DispatchToAllTabs(delegate (MainPageAbility ability)
         {
-            ability.SendFullscreenChangedEvent(false);
+            ability.SendFullscreenChangedEvent(isFullscreen);
         });
     }
+
+    private bool IsFullScreen()
+    {
+        return App.WindowManager.GetWindow(WindowId).AppWindow.Presenter.Kind == AppWindowPresenterKind.FullScreen;
+    }
+
+    //
+    // Utilities
+    //
 
     private void DispatchToTab(TabInfo tab, Action<MainPageAbility> action)
     {
@@ -617,19 +651,6 @@ internal sealed partial class MainPage : BasePage
         {
             DispatchToTab(tab, action);
         }
-    }
-
-    private void OnRootGridSizeChanged(object sender, SizeChangedEventArgs e)
-    {
-        if (!IsFullScreen())
-        {
-            ExitFullscreen();
-        }
-    }
-
-    private bool IsFullScreen()
-    {
-        return App.WindowManager.GetWindow(WindowId).AppWindow.Presenter.Kind == AppWindowPresenterKind.FullScreen;
     }
 
     private static void RegisterPageAbility(PageCommunicator communicator, MainPageAbility ability)
