@@ -28,6 +28,7 @@ class StringResourceProvider
     public static string FilteredBy => GetResourceString("FilteredBy");
     public static string Finished => GetResourceString("Finished");
     public static string FinishPercentage => GetResourceString("FinishPercentage");
+    public static string LastReadTime => GetResourceString("LastReadTime");
     public static string NewFolder => GetResourceString("NewFolder");
     public static string NewTab => GetResourceString("NewTab");
     public static string NoRating => GetResourceString("NoRating");

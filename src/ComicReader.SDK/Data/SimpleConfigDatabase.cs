@@ -47,9 +47,13 @@ internal class SimpleConfigDatabase
         string value;
         try
         {
-            uint streamSize = (uint)stream.Size;
-            await reader.LoadAsync(streamSize);
-            IBuffer buffer = reader.ReadBuffer(streamSize);
+            uint bytesLoaded = await reader.LoadAsync((uint)stream.Size);
+            if (bytesLoaded == 0)
+            {
+                Logger.AssertNotReachHere("7EFEE0FD9C031188");
+                return null;
+            }
+            IBuffer buffer = reader.ReadBuffer(bytesLoaded);
             value = CryptographicBuffer.ConvertBinaryToString(BinaryStringEncoding.Utf8, buffer);
         }
         catch (Exception ex)
@@ -72,6 +76,7 @@ internal class SimpleConfigDatabase
         using ILRUInputStream stream = _lruCache.Put(key);
         if (stream == null)
         {
+            Logger.AssertNotReachHere("F36118EDF506473B");
             return;
         }
 

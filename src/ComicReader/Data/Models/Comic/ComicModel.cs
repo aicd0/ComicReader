@@ -1,6 +1,7 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
@@ -39,6 +40,7 @@ internal sealed class ComicModel
     public double LastPosition => _internalModel.LastPosition;
     public string Location => _internalModel.Location;
     public int Progress => _internalModel.Progress;
+    public DateTimeOffset LastVisit => _internalModel.LastVisit;
     public int Rating => _internalModel.Rating;
     public string ReadableTags => _internalModel.TagString();
     public IReadOnlyList<TagData> Tags => _internalModel.Tags;

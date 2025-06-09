@@ -25,12 +25,14 @@ internal class ComicPropertyModel
     private const string PROP_TYPE_TAG = "Tag";
     private const string PROP_TYPE_RATING = "Rating";
     private const string PROP_TYPE_COMPLETION_STATE = "CompletionState";
+    private const string PROP_TYPE_LAST_READ_TIME = "LastReadTime";
 
     private static readonly List<PropertyTypeEnum> _properties = [
         PropertyTypeEnum.Title,
         PropertyTypeEnum.Progress,
         PropertyTypeEnum.Rating,
         PropertyTypeEnum.CompletionState,
+        PropertyTypeEnum.LastReadTime,
     ];
 
     private PropertyTypeEnum Type { get; set; } = PropertyTypeEnum.Title;
@@ -49,6 +51,7 @@ internal class ComicPropertyModel
         PropertyTypeEnum.Tag => Name,
         PropertyTypeEnum.Rating => StringResourceProvider.Rating,
         PropertyTypeEnum.CompletionState => StringResourceProvider.CompletionState,
+        PropertyTypeEnum.LastReadTime => StringResourceProvider.LastReadTime,
         _ => "",
     };
 
@@ -103,6 +106,7 @@ internal class ComicPropertyModel
             PropertyTypeEnum.Tag => GetConcatenatedTag(),
             PropertyTypeEnum.Rating => comic.Rating,
             PropertyTypeEnum.CompletionState => CompletionStateToComparable(comic.CompletionState),
+            PropertyTypeEnum.LastReadTime => comic.LastVisit.Ticks,
             _ => comic.Id
         };
     }
@@ -173,6 +177,15 @@ internal class ComicPropertyModel
             }];
         }
 
+        IEnumerable<string> GetLastReadTimeGroups(DateTimeOffset lastReadTime)
+        {
+            if (lastReadTime == DateTimeOffset.MinValue)
+            {
+                return [StringResourceProvider.Ungrouped];
+            }
+            return [lastReadTime.ToString("yyyy/MM/dd")];
+        }
+
         return Type switch
         {
             PropertyTypeEnum.Title => GetTitleGroups(comic.Title),
@@ -180,6 +193,7 @@ internal class ComicPropertyModel
             PropertyTypeEnum.Tag => GetTagGroups(),
             PropertyTypeEnum.Rating => GetRatingGroups(),
             PropertyTypeEnum.CompletionState => GetCompletionStateGroups(comic.CompletionState),
+            PropertyTypeEnum.LastReadTime => GetLastReadTimeGroups(comic.LastVisit),
             _ => [StringResourceProvider.Ungrouped]
         };
     }
@@ -231,6 +245,7 @@ internal class ComicPropertyModel
             PropertyTypeEnum.Tag => PROP_TYPE_TAG,
             PropertyTypeEnum.Rating => PROP_TYPE_RATING,
             PropertyTypeEnum.CompletionState => PROP_TYPE_COMPLETION_STATE,
+            PropertyTypeEnum.LastReadTime => PROP_TYPE_LAST_READ_TIME,
             _ => PROP_TYPE_TITLE,
         };
     }
@@ -249,6 +264,7 @@ internal class ComicPropertyModel
             PROP_TYPE_TAG => PropertyTypeEnum.Tag,
             PROP_TYPE_RATING => PropertyTypeEnum.Rating,
             PROP_TYPE_COMPLETION_STATE => PropertyTypeEnum.CompletionState,
+            PROP_TYPE_LAST_READ_TIME => PropertyTypeEnum.LastReadTime,
             _ => PropertyTypeEnum.Title,
         };
     }
@@ -303,5 +319,6 @@ internal class ComicPropertyModel
         Rating,
         Tag,
         Title,
+        LastReadTime,
     }
 }

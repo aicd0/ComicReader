@@ -226,14 +226,13 @@ public class LRUCache
         return folder;
     }
 
-    private class CacheEntry : IDisposable
+    private class CacheEntry
     {
         private readonly ReaderWriterLock _lock = new();
         private readonly LRUCache _cache;
         private readonly string _key;
         private Status _status;
         private int _readerCount = 0;
-        private LRUOutputStream _outputStream;
 
         public CacheEntry(LRUCache cache, string key)
         {
@@ -344,47 +343,38 @@ public class LRUCache
                     return null;
                 }
 
-                if (_outputStream == null)
+                string cleanFileName = GetCleanFileName(_key);
+                StorageFile file = null;
+                try
                 {
-                    string cleanFileName = GetCleanFileName(_key);
-                    StorageFile file = null;
-                    try
-                    {
-                        file = _cache.GetFolder().GetFileAsync(cleanFileName).AsTask().Result;
-                    }
-                    catch (Exception e)
-                    {
-                        Logger.E(TAG, "StartRead", e);
-                    }
-                    if (file == null)
-                    {
-                        return null;
-                    }
-
-                    IRandomAccessStream stream = null;
-                    try
-                    {
-                        stream = file.OpenAsync(FileAccessMode.Read).AsTask().Result;
-                    }
-                    catch (Exception e)
-                    {
-                        Logger.F(TAG, "StartRead", e);
-                    }
-                    if (stream == null)
-                    {
-                        return null;
-                    }
-
-                    _outputStream = new LRUOutputStream(this, stream);
-                    _status = Status.Clean;
+                    file = _cache.GetFolder().GetFileAsync(cleanFileName).AsTask().Result;
                 }
-                else
+                catch (Exception e)
                 {
-                    Logger.Assert(_status == Status.Clean, "255E7E1F0632BC05");
+                    Logger.E(TAG, "StartRead", e);
+                }
+                if (file == null)
+                {
+                    return null;
                 }
 
+                IRandomAccessStream stream = null;
+                try
+                {
+                    stream = file.OpenAsync(FileAccessMode.Read).AsTask().Result;
+                }
+                catch (Exception e)
+                {
+                    Logger.F(TAG, "StartRead", e);
+                }
+                if (stream == null)
+                {
+                    return null;
+                }
+
+                _status = Status.Clean;
                 _readerCount++;
-                return _outputStream;
+                return new LRUOutputStream(this, stream);
             }
             finally
             {
@@ -392,7 +382,7 @@ public class LRUCache
             }
         }
 
-        public bool EndRead()
+        public void EndRead()
         {
             _lock.AcquireWriterLock(-1);
             try
@@ -402,20 +392,9 @@ public class LRUCache
 
                 if (_readerCount <= 0)
                 {
-                    return false;
+                    return;
                 }
-
-                if (_readerCount == 1)
-                {
-                    Logger.Assert(_outputStream != null, "0F7DECDC1B3B8B15");
-
-                    _readerCount = 0;
-                    _outputStream = null;
-                    return true;
-                }
-
                 _readerCount--;
-                return false;
             }
             finally
             {
@@ -434,12 +413,6 @@ public class LRUCache
             {
                 _lock.ReleaseWriterLock();
             }
-        }
-
-        public void Dispose()
-        {
-            _outputStream?.Dispose();
-            _outputStream = null;
         }
 
         private enum Status
@@ -485,10 +458,8 @@ public class LRUCache
 
         public void Dispose()
         {
-            if (entry.EndRead())
-            {
-                stream.Dispose();
-            }
+            entry.EndRead();
+            stream.Dispose();
         }
 
         public IAsyncOperation<bool> FlushAsync()

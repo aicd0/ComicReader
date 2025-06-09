@@ -579,4 +579,7 @@ Category2: tag4/tag5
   <data name="Reading" xml:space="preserve">
     <value>Reading</value>
   </data>
+  <data name="LastReadTime" xml:space="preserve">
+    <value>Last read time</value>
+  </data>
 </root>

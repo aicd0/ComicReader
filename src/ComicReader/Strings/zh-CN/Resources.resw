@@ -579,4 +579,7 @@
   <data name="Reading" xml:space="preserve">
     <value>阅读中</value>
   </data>
+  <data name="LastReadTime" xml:space="preserve">
+    <value>上次阅读时间</value>
+  </data>
 </root>
