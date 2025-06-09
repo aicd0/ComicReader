@@ -19,6 +19,7 @@ class StringResourceProvider
     public static string Calculating => GetResourceString("Calculating");
     public static string Cancel => GetResourceString("Cancel");
     public static string ClearCacheDetail => GetResourceString("ClearCacheDetail");
+    public static string CompletionState => GetResourceString("CompletionState");
     public static string ContributionRunBeforeLink => GetResourceString("ContributionRunBeforeLink");
     public static string ContributionRunAfterLink => GetResourceString("ContributionRunAfterLink");
     public static string DebugModeWarning => GetResourceString("DebugModeWarning");
@@ -36,6 +37,7 @@ class StringResourceProvider
     public static string Rating => GetResourceString("Rating");
     public static string ReaderStatusError => GetResourceString("ReaderStatusError");
     public static string ReaderStatusLoading => GetResourceString("ReaderStatusLoading");
+    public static string Reading => GetResourceString("Reading");
     public static string RemoveFromFavorites => GetResourceString("RemoveFromFavorites");
     public static string SearchResults => GetResourceString("SearchResults");
     public static string SearchResultsOf => GetResourceString("SearchResultsOf");

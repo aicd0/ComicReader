@@ -24,11 +24,13 @@ internal class ComicPropertyModel
     private const string PROP_TYPE_PROGRESS = "Progress";
     private const string PROP_TYPE_TAG = "Tag";
     private const string PROP_TYPE_RATING = "Rating";
+    private const string PROP_TYPE_COMPLETION_STATE = "CompletionState";
 
     private static readonly List<PropertyTypeEnum> _properties = [
         PropertyTypeEnum.Title,
         PropertyTypeEnum.Progress,
         PropertyTypeEnum.Rating,
+        PropertyTypeEnum.CompletionState,
     ];
 
     private PropertyTypeEnum Type { get; set; } = PropertyTypeEnum.Title;
@@ -46,6 +48,7 @@ internal class ComicPropertyModel
         PropertyTypeEnum.Progress => StringResourceProvider.Progress,
         PropertyTypeEnum.Tag => Name,
         PropertyTypeEnum.Rating => StringResourceProvider.Rating,
+        PropertyTypeEnum.CompletionState => StringResourceProvider.CompletionState,
         _ => "",
     };
 
@@ -82,12 +85,24 @@ internal class ComicPropertyModel
             return string.Join(',', tags);
         }
 
+        int CompletionStateToComparable(ComicData.CompletionStateEnum state)
+        {
+            return state switch
+            {
+                ComicData.CompletionStateEnum.Completed => 100,
+                ComicData.CompletionStateEnum.Started => 50,
+                ComicData.CompletionStateEnum.NotStarted => 0,
+                _ => -1, // Unknown state
+            };
+        }
+
         return Type switch
         {
             PropertyTypeEnum.Title => comic.Title ?? StringResourceProvider.Untitled,
             PropertyTypeEnum.Progress => comic.Progress,
             PropertyTypeEnum.Tag => GetConcatenatedTag(),
             PropertyTypeEnum.Rating => comic.Rating,
+            PropertyTypeEnum.CompletionState => CompletionStateToComparable(comic.CompletionState),
             _ => comic.Id
         };
     }
@@ -147,12 +162,24 @@ internal class ComicPropertyModel
             return [rating.ToString()];
         }
 
+        IEnumerable<string> GetCompletionStateGroups(ComicData.CompletionStateEnum state)
+        {
+            return [state switch
+            {
+                ComicData.CompletionStateEnum.Completed => StringResourceProvider.Finished,
+                ComicData.CompletionStateEnum.Started => StringResourceProvider.Reading,
+                ComicData.CompletionStateEnum.NotStarted => StringResourceProvider.Unread,
+                _ => StringResourceProvider.Ungrouped, // Unknown state
+            }];
+        }
+
         return Type switch
         {
             PropertyTypeEnum.Title => GetTitleGroups(comic.Title),
             PropertyTypeEnum.Progress => GetProgressGroups(comic.Progress),
             PropertyTypeEnum.Tag => GetTagGroups(),
             PropertyTypeEnum.Rating => GetRatingGroups(),
+            PropertyTypeEnum.CompletionState => GetCompletionStateGroups(comic.CompletionState),
             _ => [StringResourceProvider.Ungrouped]
         };
     }
@@ -203,6 +230,7 @@ internal class ComicPropertyModel
             PropertyTypeEnum.Progress => PROP_TYPE_PROGRESS,
             PropertyTypeEnum.Tag => PROP_TYPE_TAG,
             PropertyTypeEnum.Rating => PROP_TYPE_RATING,
+            PropertyTypeEnum.CompletionState => PROP_TYPE_COMPLETION_STATE,
             _ => PROP_TYPE_TITLE,
         };
     }
@@ -220,6 +248,7 @@ internal class ComicPropertyModel
             PROP_TYPE_PROGRESS => PropertyTypeEnum.Progress,
             PROP_TYPE_TAG => PropertyTypeEnum.Tag,
             PROP_TYPE_RATING => PropertyTypeEnum.Rating,
+            PROP_TYPE_COMPLETION_STATE => PropertyTypeEnum.CompletionState,
             _ => PropertyTypeEnum.Title,
         };
     }
@@ -269,6 +298,7 @@ internal class ComicPropertyModel
 
     private enum PropertyTypeEnum
     {
+        CompletionState,
         Progress,
         Rating,
         Tag,

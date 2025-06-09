@@ -573,4 +573,10 @@
   <data name="Progress" xml:space="preserve">
     <value>进度</value>
   </data>
+  <data name="CompletionState" xml:space="preserve">
+    <value>完成状态</value>
+  </data>
+  <data name="Reading" xml:space="preserve">
+    <value>阅读中</value>
+  </data>
 </root>

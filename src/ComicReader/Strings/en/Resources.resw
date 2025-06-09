@@ -573,4 +573,10 @@ Category2: tag4/tag5
   <data name="Progress" xml:space="preserve">
     <value>Progress</value>
   </data>
+  <data name="CompletionState" xml:space="preserve">
+    <value>Completion state</value>
+  </data>
+  <data name="Reading" xml:space="preserve">
+    <value>Reading</value>
+  </data>
 </root>
