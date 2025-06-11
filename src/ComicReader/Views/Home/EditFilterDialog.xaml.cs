@@ -28,6 +28,22 @@ internal sealed partial class EditFilterDialog : ContentDialog
         {
             NameTextBox.Text = text ?? "";
         });
+        ViewModel.ExpressionLiveData.ObserveSticky(this, delegate (string text)
+        {
+            ExpressionTextBox.Text = text ?? "";
+        });
+        ViewModel.ParseResultLiveData.ObserveSticky(this, delegate (string text)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                ParseResultTextBlock.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+            }
+            else
+            {
+                ParseResultTextBlock.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
+                ParseResultTextBlock.Text = text ?? "";
+            }
+        });
         ViewModel.SaveEnableLiveData.ObserveSticky(this, delegate (bool enabled)
         {
             SaveButton.IsEnabled = enabled;
@@ -65,8 +81,18 @@ internal sealed partial class EditFilterDialog : ContentDialog
         Hide();
     }
 
+    private void ExpressionTipButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        ThirdPartyLauncher.StartTemporaryTextFile("expression_reference.txt", "12345\n67890");
+    }
+
     private void NameTextBox_TextChanged(object sender, TextChangedEventArgs e)
     {
-        ViewModel.UpdateName(NameTextBox.Text);
+        ViewModel.UpdateName(NameTextBox.Text ?? "");
+    }
+
+    private void ExpressionTextBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        ViewModel.UpdateExpression(ExpressionTextBox.Text ?? "");
     }
 }

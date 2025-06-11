@@ -1,24 +1,45 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-#nullable disable
-
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Threading.Tasks;
 
+using ComicReader.Common.Expression;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Data.Models;
+using ComicReader.ViewModels;
 
 namespace ComicReader.Views.Home;
 
-internal class EditFilterDialogViewModel
+internal partial class EditFilterDialogViewModel : INotifyPropertyChanged
 {
+    public event PropertyChangedEventHandler? PropertyChanged;
+
     public MutableLiveData<string> NameLiveData = new();
+    public MutableLiveData<string> ExpressionLiveData = new();
+    public MutableLiveData<string> ParseResultLiveData = new();
     public MutableLiveData<bool> SaveEnableLiveData = new();
     public MutableLiveData<bool> SaveAsNewEnableLiveData = new();
 
-    private ComicFilterModel.ExternalModel _filterModel;
-    private ComicFilterModel.ExternalFilterModel _filter;
-    private string _inputName;
+    private ComicFilterModel.ExternalModel? _filterModel;
+    private ComicFilterModel.ExternalFilterModel? _filter;
+    private string _name = "";
+    private string _expression = "";
+    private bool _isNameValid = false;
+    private bool _isNameExists = false;
+    private bool _isExpressionValid = false;
+
+    private ObservableCollection<TagViewModel> _expressionButtons = [];
+    public ObservableCollection<TagViewModel> ExpressionButtons
+    {
+        get => _expressionButtons;
+        set
+        {
+            _expressionButtons = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ExpressionButtons)));
+        }
+    }
 
     public void Initialize(ComicFilterModel.ExternalFilterModel filter)
     {
@@ -27,78 +48,156 @@ internal class EditFilterDialogViewModel
 
     public void UpdateName(string name)
     {
-        name ??= string.Empty;
         name = name.Trim();
-        if (name == _inputName)
+        if (name == _name)
         {
             return;
         }
-        _inputName = name;
+        _name = name;
 
-        ComicFilterModel.ExternalFilterModel filter = FindFilter(name);
-        bool isValid = name.Length > 0;
-        SaveEnableLiveData.Emit(isValid);
-        SaveAsNewEnableLiveData.Emit(isValid && filter == null);
+        _isNameValid = name.Length > 0;
+        _isNameExists = FindFilter(name) != null;
+        UpdateButtonStates();
+    }
+
+    public void UpdateExpression(string expression)
+    {
+        if (expression == _expression)
+        {
+            return;
+        }
+        _expression = expression;
+
+        ComicFilterModel.ExternalFilterModel? filter = _filter;
+        if (filter == null)
+        {
+            return;
+        }
+
+        ExpressionToken token;
+        try
+        {
+            token = ExpressionParser.Parse(expression);
+        }
+        catch (ExpressionException e)
+        {
+            _isExpressionValid = false;
+            ParseResultLiveData.Emit(e.Message);
+            UpdateButtonStates();
+            return;
+        }
+
+        _isExpressionValid = true;
+        ParseResultLiveData.Emit(token.ToString());
+        filter.Expression = expression;
+        UpdateButtonStates();
     }
 
     public void Save()
     {
-        ComicFilterModel.ExternalFilterModel filter = _filter;
+        ComicFilterModel.ExternalFilterModel? filter = _filter;
         if (filter == null)
         {
             return;
         }
         RemoveFilter(filter.Name);
-        filter.Name = _inputName;
+        filter.Name = _name;
         OverwriteFilter(filter);
-        _filterModel.LastFilterModified = false;
-        _filterModel.LastFilter = filter.Clone();
-        _ = ComicFilterModel.Instance.UpdateModel(_filterModel);
+
+        ComicFilterModel.ExternalModel? model = _filterModel;
+        if (model == null)
+        {
+            return;
+        }
+        model.LastFilterModified = false;
+        model.LastFilter = filter.Clone();
+        _ = ComicFilterModel.Instance.UpdateModel(model);
     }
 
     public void SaveAsNew()
     {
-        ComicFilterModel.ExternalFilterModel filter = _filter;
+        ComicFilterModel.ExternalFilterModel? filter = _filter;
         if (filter == null)
         {
             return;
         }
         filter = filter.Clone();
-        filter.Name = _inputName;
+        filter.Name = _name;
         OverwriteFilter(filter);
-        _filterModel.LastFilterModified = false;
-        _filterModel.LastFilter = filter.Clone();
-        _ = ComicFilterModel.Instance.UpdateModel(_filterModel);
+
+        ComicFilterModel.ExternalModel? model = _filterModel;
+        if (model == null)
+        {
+            return;
+        }
+        model.LastFilterModified = false;
+        model.LastFilter = filter.Clone();
+        _ = ComicFilterModel.Instance.UpdateModel(model);
     }
 
     public void Delete()
     {
-        ComicFilterModel.ExternalFilterModel filter = _filter;
+        ComicFilterModel.ExternalFilterModel? filter = _filter;
         if (filter == null)
         {
             return;
         }
         RemoveFilter(filter.Name);
-        _filterModel.LastFilterModified = false;
-        _filterModel.LastFilter = null;
-        _ = ComicFilterModel.Instance.UpdateModel(_filterModel);
+
+        ComicFilterModel.ExternalModel? model = _filterModel;
+        if (model == null)
+        {
+            return;
+        }
+        model.LastFilterModified = false;
+        model.LastFilter = null;
+        _ = ComicFilterModel.Instance.UpdateModel(model);
     }
 
     private async Task InitializeAsync(ComicFilterModel.ExternalFilterModel filter)
     {
-        ComicFilterModel.ExternalModel filterModel = await ComicFilterModel.Instance.GetModel();
+        {
+            ObservableCollection<TagViewModel> buttons = [];
+            buttons.Add(new() { Tag = "AND" });
+            buttons.Add(new() { Tag = "OR" });
+            buttons.Add(new() { Tag = "NOT" });
+            buttons.Add(new() { Tag = "=" });
+            buttons.Add(new() { Tag = ">" });
+            buttons.Add(new() { Tag = "<" });
+            buttons.Add(new() { Tag = ">=" });
+            buttons.Add(new() { Tag = "<=" });
+            buttons.Add(new() { Tag = "()" });
+            buttons.Add(new() { Tag = "IN" });
+            buttons.Add(new() { Tag = "Title" });
+            buttons.Add(new() { Tag = "Rating" });
+            buttons.Add(new() { Tag = "Tag" });
+            buttons.Add(new() { Tag = "Last read time" });
+            buttons.Add(new() { Tag = "Completion state" });
+            ExpressionButtons = buttons;
+        }
+
+        ComicFilterModel.ExternalModel? filterModel = await ComicFilterModel.Instance.GetModel();
         _filterModel = filterModel;
         _filter = filter;
         if (filter != null)
         {
             UpdateName(filter.Name);
             NameLiveData.Emit(filter.Name);
+            UpdateExpression(filter.Expression);
+            ExpressionLiveData.Emit(filter.Expression);
         }
     }
 
-    private ComicFilterModel.ExternalFilterModel FindFilter(string name)
+    private void UpdateButtonStates()
     {
-        ComicFilterModel.ExternalModel filterModel = _filterModel;
+        bool isInputValid = _isNameValid && _isExpressionValid;
+        SaveEnableLiveData.Emit(isInputValid);
+        SaveAsNewEnableLiveData.Emit(isInputValid && !_isNameExists);
+    }
+
+    private ComicFilterModel.ExternalFilterModel? FindFilter(string name)
+    {
+        ComicFilterModel.ExternalModel? filterModel = _filterModel;
         if (filterModel == null)
         {
             return null;
@@ -108,7 +207,7 @@ internal class EditFilterDialogViewModel
 
     private void OverwriteFilter(ComicFilterModel.ExternalFilterModel filter)
     {
-        ComicFilterModel.ExternalModel filterModel = _filterModel;
+        ComicFilterModel.ExternalModel? filterModel = _filterModel;
         if (filterModel == null)
         {
             return;
@@ -119,12 +218,12 @@ internal class EditFilterDialogViewModel
 
     private void RemoveFilter(string name)
     {
-        ComicFilterModel.ExternalModel filterModel = _filterModel;
+        ComicFilterModel.ExternalModel? filterModel = _filterModel;
         if (filterModel == null)
         {
             return;
         }
-        ComicFilterModel.ExternalFilterModel oldFilter = filterModel.Filters.Find(x => x.Name == name);
+        ComicFilterModel.ExternalFilterModel? oldFilter = filterModel.Filters.Find(x => x.Name == name);
         if (oldFilter != null)
         {
             filterModel.Filters.Remove(oldFilter);

@@ -16,7 +16,6 @@ public class TagViewModel
 {
     public string Tag { get; set; }
 
-    // handlers
     private WeakReference<IItemHandler> _itemHandler;
     public IItemHandler ItemHandler
     {

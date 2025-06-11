@@ -1,5 +1,5 @@
 <UserControl
-    x:Class="ComicReader.Views.Reader.TagButton"
+    x:Class="ComicReader.UserControls.TagButton"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -16,13 +16,14 @@
         VerticalAlignment="Center"
         Background="{ThemeResource TagButtonBackground}"
         BorderThickness="1.5"
-        Click="{x:Bind Ctx.ItemHandler.OnClicked}"
+        Click="{x:Bind ViewModel.ItemHandler.OnClicked}"
         CornerRadius="13"
         FontSize="13"
         FontWeight="Bold"
         Style="{StaticResource ButtonRevealStyle}">
         <Button.Content>
-            <TextBlock Text="{x:Bind Ctx.Tag}" TextTrimming="CharacterEllipsis" />
+            <TextBlock Text="{x:Bind ViewModel.Tag}" TextTrimming="CharacterEllipsis" />
         </Button.Content>
     </Button>
+
 </UserControl>

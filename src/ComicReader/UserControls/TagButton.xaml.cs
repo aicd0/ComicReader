@@ -7,11 +7,11 @@ using ComicReader.ViewModels;
 
 using Microsoft.UI.Xaml.Controls;
 
-namespace ComicReader.Views.Reader;
+namespace ComicReader.UserControls;
 
 public sealed partial class TagButton : UserControl
 {
-    public TagViewModel Ctx => DataContext as TagViewModel;
+    public TagViewModel ViewModel => DataContext as TagViewModel;
 
     public TagButton()
     {
