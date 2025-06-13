@@ -24,6 +24,8 @@ public class ComparisonCondition : ICondition
         _left.AppendToCommand(sb, command);
         string operatorString = _type switch
         {
+            TypeEnum.Is => "IS",
+            TypeEnum.IsNot => "IS NOT",
             TypeEnum.NotEqual => "<>",
             TypeEnum.GreaterThan => ">",
             TypeEnum.LessThan => "<",
@@ -38,6 +40,8 @@ public class ComparisonCondition : ICondition
 
     public enum TypeEnum
     {
+        Is,
+        IsNot,
         Equal,
         NotEqual,
         GreaterThan,

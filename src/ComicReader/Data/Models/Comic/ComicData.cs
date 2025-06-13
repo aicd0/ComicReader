@@ -88,10 +88,23 @@ internal abstract class ComicData
 
     private static List<ComicData> BatchFromIdNoLock(IEnumerable<long> ids)
     {
+        {
+            bool isEmpty = true;
+            foreach (long _ in ids)
+            {
+                isEmpty = false;
+                break;
+            }
+            if (isEmpty)
+            {
+                return [];
+            }
+        }
+
         Dictionary<long, ComicData> comics = new(ids.Count());
         {
             SelectCommand command = new SelectCommand(ComicTable.Instance)
-                .AppendCondition(new InCondition(new(ComicTable.ColumnId), ids.Select<long, ColumnOrValue>(x => new(x))));
+                .AppendCondition(new InCondition(ColumnOrValue.FromColumn(ComicTable.ColumnId), ids.Select(x => ColumnOrValue.FromValue(x))));
             IReaderToken<long> idToken = command.PutQueryInt64(ComicTable.ColumnId);
             IReaderToken<long> typeToken = command.PutQueryInt64(ComicTable.ColumnType);
             IReaderToken<string> locationToken = command.PutQueryString(ComicTable.ColumnLocation);
@@ -148,7 +161,7 @@ internal abstract class ComicData
         Dictionary<long, TagData> tagCategories = new(comics.Count);
         {
             SelectCommand command = new SelectCommand(TagCategoryTable.Instance)
-                .AppendCondition(new InCondition(new(TagCategoryTable.ColumnComicId), comics.Keys.Select<long, ColumnOrValue>(x => new(x))));
+                .AppendCondition(new InCondition(ColumnOrValue.FromColumn(TagCategoryTable.ColumnComicId), comics.Keys.Select(x => ColumnOrValue.FromValue(x))));
             IReaderToken<long> comicIdToken = command.PutQueryInt64(TagCategoryTable.ColumnComicId);
             IReaderToken<long> tagCategoryIdToken = command.PutQueryInt64(TagCategoryTable.ColumnId);
             IReaderToken<string> nameToken = command.PutQueryString(TagCategoryTable.ColumnName);
@@ -173,7 +186,7 @@ internal abstract class ComicData
 
         {
             SelectCommand command = new SelectCommand(TagTable.Instance)
-                .AppendCondition(new InCondition(new(TagTable.ColumnTagCategoryId), tagCategories.Keys.Select<long, ColumnOrValue>(x => new(x))));
+                .AppendCondition(new InCondition(ColumnOrValue.FromColumn(TagTable.ColumnTagCategoryId), tagCategories.Keys.Select(x => ColumnOrValue.FromValue(x))));
             IReaderToken<long> tagCategoryIdToken = command.PutQueryInt64(TagTable.ColumnTagCategoryId);
             IReaderToken<string> tagToken = command.PutQueryString(TagTable.ColumnContent);
             using SelectCommand.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);

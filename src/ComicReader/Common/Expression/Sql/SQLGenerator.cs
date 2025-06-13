@@ -9,17 +9,14 @@ using ComicReader.SDK.Data.SqlHelpers;
 
 namespace ComicReader.Common.Expression.Sql;
 
-internal class SQLGenerator<K> where K : notnull
+internal class SQLGenerator
 {
-    public static SelectCommand CreateSQLQuery(ExpressionToken token, ISQLCommandProvider<K> commandProvider)
+    public static ICondition CreateQuery(ExpressionToken token, ISQLCommandProvider commandProvider)
     {
-        ICondition condition = CreateQueryCondition(token, commandProvider);
-        SelectCommand selectCommand = new(commandProvider.GetTable());
-        selectCommand.AppendCondition(condition);
-        return selectCommand;
+        return CreateQueryCondition(token, commandProvider);
     }
 
-    private static ICondition CreateQueryCondition(ExpressionToken token, ISQLCommandProvider<K> commandProvider)
+    private static ICondition CreateQueryCondition(ExpressionToken token, ISQLCommandProvider commandProvider)
     {
         if (token.Level != ExpressionToken.LEVEL_FINAL)
         {
@@ -50,7 +47,7 @@ internal class SQLGenerator<K> where K : notnull
         throw new ExpressionException($"Cannot create a value node from token: {token}.");
     }
 
-    private static ICondition CreateListCondition(ExpressionToken token, ISQLCommandProvider<K> commandProvider)
+    private static ICondition CreateListCondition(ExpressionToken token, ISQLCommandProvider commandProvider)
     {
         List<VariableOrValue> items = [];
         foreach (ExpressionToken expression in token.FinalListTokenExtra.Expressions)
@@ -60,12 +57,12 @@ internal class SQLGenerator<K> where K : notnull
         return commandProvider.CreateListCondition(items);
     }
 
-    private static ICondition CreateVariableCondition(ExpressionToken token, ISQLCommandProvider<K> commandProvider)
+    private static ICondition CreateVariableCondition(ExpressionToken token, ISQLCommandProvider commandProvider)
     {
         return commandProvider.CreateVariableCondition(token.FinalVariableExtra.Path);
     }
 
-    private static ICondition CreateFunctionCondition(ExpressionToken token, ISQLCommandProvider<K> commandProvider)
+    private static ICondition CreateFunctionCondition(ExpressionToken token, ISQLCommandProvider commandProvider)
     {
         FinalFuncTokenExtra extra = token.FinalFuncTokenExtra;
         return extra.Name switch
@@ -73,17 +70,17 @@ internal class SQLGenerator<K> where K : notnull
             CompilerConstants.KEYWORD_NOT => CreateFuncNotCondition(extra.Parameters, commandProvider),
             CompilerConstants.KEYWORD_AND => CreateFuncAndCondition(extra.Parameters, commandProvider),
             CompilerConstants.KEYWORD_OR => CreateFuncOrCondition(extra.Parameters, commandProvider),
-            CompilerConstants.OPERATOR_EQUAL => CreateFuncComparisonCondition(extra.Parameters, ComparisonCondition.TypeEnum.Equal, commandProvider),
-            CompilerConstants.OPERATOR_GREATER_THAN => CreateFuncComparisonCondition(extra.Parameters, ComparisonCondition.TypeEnum.GreaterThan, commandProvider),
-            CompilerConstants.OPERATOR_GREATER_THAN_OR_EQUAL => CreateFuncComparisonCondition(extra.Parameters, ComparisonCondition.TypeEnum.GreaterThanOrEqual, commandProvider),
-            CompilerConstants.OPERATOR_LESS_THAN => CreateFuncComparisonCondition(extra.Parameters, ComparisonCondition.TypeEnum.LessThan, commandProvider),
-            CompilerConstants.OPERATOR_LESS_THAN_OR_EQUAL => CreateFuncComparisonCondition(extra.Parameters, ComparisonCondition.TypeEnum.LessThanOrEqual, commandProvider),
+            CompilerConstants.OPERATOR_EQUAL => CreateFuncComparisonCondition(extra.Parameters, ComparisonTypeEnum.Equal, commandProvider),
+            CompilerConstants.OPERATOR_GREATER_THAN => CreateFuncComparisonCondition(extra.Parameters, ComparisonTypeEnum.GreaterThan, commandProvider),
+            CompilerConstants.OPERATOR_GREATER_THAN_OR_EQUAL => CreateFuncComparisonCondition(extra.Parameters, ComparisonTypeEnum.GreaterThanOrEqual, commandProvider),
+            CompilerConstants.OPERATOR_LESS_THAN => CreateFuncComparisonCondition(extra.Parameters, ComparisonTypeEnum.LessThan, commandProvider),
+            CompilerConstants.OPERATOR_LESS_THAN_OR_EQUAL => CreateFuncComparisonCondition(extra.Parameters, ComparisonTypeEnum.LessThanOrEqual, commandProvider),
             CompilerConstants.KEYWORD_IN => CreateFuncInCondition(extra.Parameters, commandProvider),
             _ => throw new ExpressionException($"Unknown function '{extra.Name}'."),
         };
     }
 
-    private static ICondition CreateFuncNotCondition(IReadOnlyList<ExpressionToken> parameters, ISQLCommandProvider<K> commandProvider)
+    private static ICondition CreateFuncNotCondition(IReadOnlyList<ExpressionToken> parameters, ISQLCommandProvider commandProvider)
     {
         if (parameters.Count != 1)
         {
@@ -93,7 +90,7 @@ internal class SQLGenerator<K> where K : notnull
         return new NotCondition(child);
     }
 
-    private static ICondition CreateFuncAndCondition(IReadOnlyList<ExpressionToken> parameters, ISQLCommandProvider<K> commandProvider)
+    private static ICondition CreateFuncAndCondition(IReadOnlyList<ExpressionToken> parameters, ISQLCommandProvider commandProvider)
     {
         if (parameters.Count == 0)
         {
@@ -107,7 +104,7 @@ internal class SQLGenerator<K> where K : notnull
         return new AndCondition(children);
     }
 
-    private static ICondition CreateFuncOrCondition(IReadOnlyList<ExpressionToken> parameters, ISQLCommandProvider<K> commandProvider)
+    private static ICondition CreateFuncOrCondition(IReadOnlyList<ExpressionToken> parameters, ISQLCommandProvider commandProvider)
     {
         if (parameters.Count == 0)
         {
@@ -121,7 +118,7 @@ internal class SQLGenerator<K> where K : notnull
         return new OrCondition(children);
     }
 
-    private static ICondition CreateFuncComparisonCondition(IReadOnlyList<ExpressionToken> parameters, ComparisonCondition.TypeEnum comparisonType, ISQLCommandProvider<K> commandProvider)
+    private static ICondition CreateFuncComparisonCondition(IReadOnlyList<ExpressionToken> parameters, ComparisonTypeEnum comparisonType, ISQLCommandProvider commandProvider)
     {
         if (parameters.Count != 2)
         {
@@ -130,7 +127,7 @@ internal class SQLGenerator<K> where K : notnull
         return commandProvider.CreateComparisonCondition(new(parameters[0]), new(parameters[1]), comparisonType);
     }
 
-    private static ICondition CreateFuncInCondition(IReadOnlyList<ExpressionToken> parameters, ISQLCommandProvider<K> commandProvider)
+    private static ICondition CreateFuncInCondition(IReadOnlyList<ExpressionToken> parameters, ISQLCommandProvider commandProvider)
     {
         if (parameters.Count != 2)
         {

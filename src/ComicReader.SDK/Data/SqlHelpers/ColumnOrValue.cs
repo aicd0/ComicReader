@@ -8,17 +8,11 @@ namespace ComicReader.SDK.Data.SqlHelpers;
 public class ColumnOrValue
 {
     public readonly IColumnTypeless? Column;
-    public readonly object Value;
+    public readonly object? Value;
 
-    public ColumnOrValue(IColumnTypeless column)
+    private ColumnOrValue(IColumnTypeless? column, object? value)
     {
         Column = column;
-        Value = 0;
-    }
-
-    public ColumnOrValue(object value)
-    {
-        Column = null;
         Value = value;
     }
 
@@ -26,12 +20,29 @@ public class ColumnOrValue
     {
         if (Column is null)
         {
-            string parameterName = command.AppendParameter(Value);
-            sb.Append(parameterName);
+            if (Value is null)
+            {
+                sb.Append("NULL");
+            }
+            else
+            {
+                string parameterName = command.AppendParameter(Value);
+                sb.Append(parameterName);
+            }
         }
         else
         {
             sb.Append(Column.Name);
         }
+    }
+
+    public static ColumnOrValue FromColumn(IColumnTypeless column)
+    {
+        return new ColumnOrValue(column, null);
+    }
+
+    public static ColumnOrValue FromValue(object? value)
+    {
+        return new ColumnOrValue(null, value);
     }
 }

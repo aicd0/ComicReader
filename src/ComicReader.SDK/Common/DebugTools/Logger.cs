@@ -92,16 +92,6 @@ public static class Logger
         Log(LEVEL_WARN, tag, message, null);
     }
 
-    public static void W(string? tag, string? message, Exception? exception)
-    {
-        Log(LEVEL_WARN, LogTag.N(tag), message, exception);
-    }
-
-    public static void W(LogTag? tag, string? message, Exception? exception)
-    {
-        Log(LEVEL_WARN, tag, message, exception);
-    }
-
     public static void E(string? tag, string? message)
     {
         Log(LEVEL_ERROR, LogTag.N(tag), message, null);
@@ -110,6 +100,16 @@ public static class Logger
     public static void E(LogTag? tag, string? message)
     {
         Log(LEVEL_ERROR, tag, message, null);
+    }
+
+    public static void E(string? tag, Exception? exception)
+    {
+        Log(LEVEL_ERROR, LogTag.N(tag), null, exception);
+    }
+
+    public static void E(LogTag? tag, Exception? exception)
+    {
+        Log(LEVEL_ERROR, tag, null, exception);
     }
 
     public static void E(string? tag, string? message, Exception? exception)
@@ -133,6 +133,20 @@ public static class Logger
     {
         Exception exceptionNotNull = new(message);
         Log(LEVEL_FATAL, tag, message, exceptionNotNull);
+        FailOnDebug(exceptionNotNull);
+    }
+
+    public static void F(string? tag, Exception? exception)
+    {
+        Exception exceptionNotNull = exception ?? new();
+        Log(LEVEL_FATAL, LogTag.N(tag), null, exceptionNotNull);
+        FailOnDebug(exceptionNotNull);
+    }
+
+    public static void F(LogTag? tag, Exception? exception)
+    {
+        Exception exceptionNotNull = exception ?? new();
+        Log(LEVEL_FATAL, tag, null, exceptionNotNull);
         FailOnDebug(exceptionNotNull);
     }
 

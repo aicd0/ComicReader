@@ -645,6 +645,12 @@ internal class HomePageViewModel : INotifyPropertyChanged
         ComicPropertyModel? groupBy = lastFilter.GroupBy;
         _ = ComicFilterModel.Instance.UpdateModel(_filterModel);
 
+        // Update library in case expression has changed
+        if (reloadFromDatabase)
+        {
+            _searchEngine.SetFilterExpresssion(lastFilter.Expression);
+        }
+
         // Update UI
         var viewTypeDropDown = new DropDownButtonModel<ComicFilterModel.ViewTypeEnum>
         {

@@ -1,8 +1,6 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-#nullable disable
-
 using System.Text;
 
 using Microsoft.Data.Sqlite;
@@ -80,7 +78,7 @@ public class SelectCommand
 
     public SelectCommand AppendCondition(IColumnTypeless column, object value)
     {
-        return AppendCondition(new ComparisonCondition(new(column), new(value)));
+        return AppendCondition(new ComparisonCondition(ColumnOrValue.FromColumn(column), ColumnOrValue.FromValue(value)));
     }
 
     public SelectCommand AppendCondition(ICondition condition)
@@ -259,7 +257,7 @@ public class SelectCommand
     {
         private readonly Func<SqliteDataReader, int, V> _getter;
         private bool _valueSet = false;
-        private V _value = default;
+        private V? _value = default;
 
         public Token(Func<SqliteDataReader, int, V> getter)
         {
@@ -274,8 +272,7 @@ public class SelectCommand
             {
                 throw new InvalidOperationException("Value is not set.");
             }
-
-            return _value;
+            return _value!;
         }
 
         public void UpdateValue(SqliteDataReader reader, int ordinal)

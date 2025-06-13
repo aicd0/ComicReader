@@ -7,15 +7,13 @@ using ComicReader.SDK.Data.SqlHelpers;
 
 namespace ComicReader.Common.Expression.Sql;
 
-internal interface ISQLCommandProvider<K>
+internal interface ISQLCommandProvider
 {
-    ITable GetTable();
-
     ICondition CreateVariableCondition(IReadOnlyList<string> path);
 
     ICondition CreateListCondition(List<VariableOrValue> path);
 
-    ICondition CreateComparisonCondition(VariableOrValue left, VariableOrValue right, ComparisonCondition.TypeEnum comparisonType);
+    ICondition CreateComparisonCondition(VariableOrValue left, VariableOrValue right, ComparisonTypeEnum comparisonType);
 
     ICondition CreateInCondition(List<VariableOrValue> left, List<VariableOrValue> right);
 }

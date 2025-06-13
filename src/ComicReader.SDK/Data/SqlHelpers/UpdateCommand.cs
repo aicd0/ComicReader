@@ -29,7 +29,7 @@ public class UpdateCommand
 
     public UpdateCommand AppendCondition(IColumnTypeless column, object value)
     {
-        return AppendCondition(new ComparisonCondition(new(column), new(value)));
+        return AppendCondition(new ComparisonCondition(ColumnOrValue.FromColumn(column), ColumnOrValue.FromValue(value)));
     }
 
     public UpdateCommand AppendCondition(ICondition condition)

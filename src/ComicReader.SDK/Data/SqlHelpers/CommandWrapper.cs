@@ -68,7 +68,7 @@ public sealed class CommandWrapper : ICommandContext
         StringBuilder sb = new(_commandText);
         foreach (KeyValuePair<string, object> parameter in _parameters)
         {
-            sb.Replace(parameter.Key, parameter.Value?.ToString() ?? "NULL");
+            sb.Replace(parameter.Key, ValueToStringRepresentation(parameter.Value));
         }
         return sb.ToString();
     }
@@ -94,5 +94,18 @@ public sealed class CommandWrapper : ICommandContext
             return;
         }
         Logger.I("SQLCommand", ToString());
+    }
+
+    private static string ValueToStringRepresentation(object value)
+    {
+        if (value is bool booleanValue)
+        {
+            return booleanValue ? "TRUE" : "FALSE";
+        }
+        if (value is string stringValue)
+        {
+            return "\"" + stringValue.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
+        }
+        return value.ToString() ?? "NULL";
     }
 }

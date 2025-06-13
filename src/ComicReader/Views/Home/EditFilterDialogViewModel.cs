@@ -96,17 +96,20 @@ internal partial class EditFilterDialogViewModel : INotifyPropertyChanged
             return;
         }
 
-        SelectCommand command;
+        ICondition condition;
         try
         {
-            command = SQLGenerator<long>.CreateSQLQuery(token, new ComicSQLCommandProvider());
+            condition = SQLGenerator.CreateQuery(token, new ComicSQLCommandProvider());
         }
         catch (ExpressionException e)
         {
             onExpressionInvalid(e.Message);
             return;
         }
+
+        SelectCommand command = new(ComicTable.Instance);
         command.PutQueryInt64(ComicTable.ColumnId);
+        command.AppendCondition(condition);
 
         _isExpressionValid = true;
         ParseResultLiveData.Emit(command.ToString());

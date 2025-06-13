@@ -244,10 +244,13 @@ internal sealed class ComicModel
                 requestingIds.Add(id);
             }
         }
-        List<ComicData> requestResults = await ComicData.BatchFromId(requestingIds, taskName);
-        foreach (ComicData result in requestResults)
+        if (requestingIds.Count > 0)
         {
-            results.Add(ReplaceWithExisting(result));
+            List<ComicData> requestResults = await ComicData.BatchFromId(requestingIds, taskName);
+            foreach (ComicData result in requestResults)
+            {
+                results.Add(ReplaceWithExisting(result));
+            }
         }
         return results;
     }
