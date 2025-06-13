@@ -548,9 +548,9 @@ internal sealed partial class SettingsPage : BasePage
         C0.Run(async delegate
         {
             long comicCount = 0;
-            SelectCommand<ComicTable> command = new(ComicTable.Instance);
+            SelectCommand command = new(ComicTable.Instance);
             IReaderToken<long> comicCountToken = command.PutQueryCountAll();
-            using SelectCommand<ComicTable>.IReader reader = await command.ExecuteAsync(SqlDatabaseManager.MainDatabase);
+            using SelectCommand.IReader reader = await command.ExecuteAsync(SqlDatabaseManager.MainDatabase);
             if (await reader.ReadAsync())
             {
                 comicCount = comicCountToken.GetValue();

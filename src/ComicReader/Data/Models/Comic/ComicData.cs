@@ -90,8 +90,8 @@ internal abstract class ComicData
     {
         Dictionary<long, ComicData> comics = new(ids.Count());
         {
-            SelectCommand<ComicTable> command = new SelectCommand<ComicTable>(ComicTable.Instance)
-                .AppendCondition(new InCondition<long>(ComicTable.ColumnId, ids));
+            SelectCommand command = new SelectCommand(ComicTable.Instance)
+                .AppendCondition(new InCondition(new(ComicTable.ColumnId), ids.Select<long, ColumnOrValue>(x => new(x))));
             IReaderToken<long> idToken = command.PutQueryInt64(ComicTable.ColumnId);
             IReaderToken<long> typeToken = command.PutQueryInt64(ComicTable.ColumnType);
             IReaderToken<string> locationToken = command.PutQueryString(ComicTable.ColumnLocation);
@@ -105,7 +105,7 @@ internal abstract class ComicData
             IReaderToken<string> coverCacheKeyToken = command.PutQueryString(ComicTable.ColumnCoverCacheKey);
             IReaderToken<string> descriptionToken = command.PutQueryString(ComicTable.ColumnDescription);
             IReaderToken<int> completionStateToken = command.PutQueryInt32(ComicTable.ColumnCompletionState);
-            using SelectCommand<ComicTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
+            using SelectCommand.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 
             while (reader.Read())
             {
@@ -147,12 +147,12 @@ internal abstract class ComicData
 
         Dictionary<long, TagData> tagCategories = new(comics.Count);
         {
-            SelectCommand<TagCategoryTable> command = new SelectCommand<TagCategoryTable>(TagCategoryTable.Instance)
-                .AppendCondition(new InCondition<long>(TagCategoryTable.ColumnComicId, comics.Keys));
+            SelectCommand command = new SelectCommand(TagCategoryTable.Instance)
+                .AppendCondition(new InCondition(new(TagCategoryTable.ColumnComicId), comics.Keys.Select<long, ColumnOrValue>(x => new(x))));
             IReaderToken<long> comicIdToken = command.PutQueryInt64(TagCategoryTable.ColumnComicId);
             IReaderToken<long> tagCategoryIdToken = command.PutQueryInt64(TagCategoryTable.ColumnId);
             IReaderToken<string> nameToken = command.PutQueryString(TagCategoryTable.ColumnName);
-            using SelectCommand<TagCategoryTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
+            using SelectCommand.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 
             while (reader.Read())
             {
@@ -172,11 +172,11 @@ internal abstract class ComicData
         }
 
         {
-            SelectCommand<TagTable> command = new SelectCommand<TagTable>(TagTable.Instance)
-                .AppendCondition(new InCondition<long>(TagTable.ColumnTagCategoryId, tagCategories.Keys));
+            SelectCommand command = new SelectCommand(TagTable.Instance)
+                .AppendCondition(new InCondition(new(TagTable.ColumnTagCategoryId), tagCategories.Keys.Select<long, ColumnOrValue>(x => new(x))));
             IReaderToken<long> tagCategoryIdToken = command.PutQueryInt64(TagTable.ColumnTagCategoryId);
             IReaderToken<string> tagToken = command.PutQueryString(TagTable.ColumnContent);
-            using SelectCommand<TagTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
+            using SelectCommand.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 
             while (reader.Read())
             {
@@ -194,11 +194,11 @@ internal abstract class ComicData
 
     private static ComicData? FromLocationNoLock(string location)
     {
-        SelectCommand<ComicTable> command = new SelectCommand<ComicTable>(ComicTable.Instance)
+        SelectCommand command = new SelectCommand(ComicTable.Instance)
             .AppendCondition(ComicTable.ColumnLocation, location)
             .Limit(1);
         IReaderToken<long> comicIdToken = command.PutQueryInt64(ComicTable.ColumnId);
-        using SelectCommand<ComicTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
+        using SelectCommand.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 
         if (!reader.Read())
         {
@@ -331,7 +331,7 @@ internal abstract class ComicData
     {
         SaveNoLock(delegate
         {
-            new UpdateCommand<ComicTable>(ComicTable.Instance)
+            new UpdateCommand(ComicTable.Instance)
                 .AppendColumn(ComicTable.ColumnType, (long)ValueType)
                 .AppendColumn(ComicTable.ColumnLocation, ValueLocation)
                 .AppendColumn(ComicTable.ColumnTitle1, ValueTitle1)
@@ -356,7 +356,7 @@ internal abstract class ComicData
         {
             return SaveNoLock(delegate
             {
-                new UpdateCommand<ComicTable>(ComicTable.Instance)
+                new UpdateCommand(ComicTable.Instance)
                     .AppendColumn(ComicTable.ColumnType, (long)ValueType)
                     .AppendColumn(ComicTable.ColumnLocation, ValueLocation)
                     .AppendColumn(ComicTable.ColumnTitle1, ValueTitle1)
@@ -384,7 +384,7 @@ internal abstract class ComicData
         {
             return SaveNoLock(delegate
             {
-                new UpdateCommand<ComicTable>(ComicTable.Instance)
+                new UpdateCommand(ComicTable.Instance)
                     .AppendColumn(ComicTable.ColumnHidden, ValueHidden)
                     .AppendCondition(ComicTable.ColumnId, Id)
                     .Execute(SqlDatabaseManager.MainDatabase);
@@ -406,7 +406,7 @@ internal abstract class ComicData
         {
             return SaveNoLock(delegate
             {
-                new UpdateCommand<ComicTable>(ComicTable.Instance)
+                new UpdateCommand(ComicTable.Instance)
                     .AppendColumn(ComicTable.ColumnRating, ValueRating)
                     .AppendCondition(ComicTable.ColumnId, Id)
                     .Execute(SqlDatabaseManager.MainDatabase);
@@ -423,7 +423,7 @@ internal abstract class ComicData
         {
             return SaveNoLock(delegate
             {
-                new UpdateCommand<ComicTable>(ComicTable.Instance)
+                new UpdateCommand(ComicTable.Instance)
                     .AppendColumn(ComicTable.ColumnProgress, ValueProgress)
                     .AppendColumn(ComicTable.ColumnLastPosition, ValueLastPosition)
                     .AppendCondition(ComicTable.ColumnId, Id)
@@ -451,7 +451,7 @@ internal abstract class ComicData
         {
             return SaveNoLock(delegate
             {
-                new UpdateCommand<ComicTable>(ComicTable.Instance)
+                new UpdateCommand(ComicTable.Instance)
                     .AppendColumn(ComicTable.ColumnProgress, ValueProgress)
                     .AppendColumn(ComicTable.ColumnLastVisit, ValueLastVisit)
                     .AppendCondition(ComicTable.ColumnId, Id)
@@ -468,7 +468,7 @@ internal abstract class ComicData
         {
             return SaveNoLock(delegate
             {
-                new UpdateCommand<ComicTable>(ComicTable.Instance)
+                new UpdateCommand(ComicTable.Instance)
                     .AppendColumn(ComicTable.ColumnCoverCacheKey, ValueCoverCacheKey)
                     .AppendCondition(ComicTable.ColumnId, Id)
                     .Execute(SqlDatabaseManager.MainDatabase);
@@ -754,21 +754,21 @@ internal abstract class ComicData
     {
         if (removeOld)
         {
-            new DeleteCommand<TagCategoryTable>(TagCategoryTable.Instance)
+            new DeleteCommand(TagCategoryTable.Instance)
                 .AppendCondition(TagCategoryTable.ColumnComicId, Id)
                 .Execute(SqlDatabaseManager.MainDatabase);
         }
 
         foreach (TagData category in Tags)
         {
-            long tagCategoryId = new InsertCommand<TagCategoryTable>(TagCategoryTable.Instance)
+            long tagCategoryId = new InsertCommand(TagCategoryTable.Instance)
                 .AppendColumn(TagCategoryTable.ColumnName, category.Name)
                 .AppendColumn(TagCategoryTable.ColumnComicId, Id)
                 .Execute(SqlDatabaseManager.MainDatabase);
 
             foreach (string tag in category.Tags)
             {
-                new InsertCommand<TagTable>(TagTable.Instance)
+                new InsertCommand(TagTable.Instance)
                     .AppendColumn(TagTable.ColumnContent, tag)
                     .AppendColumn(TagTable.ColumnComicId, Id)
                     .AppendColumn(TagTable.ColumnTagCategoryId, tagCategoryId)
@@ -779,7 +779,7 @@ internal abstract class ComicData
 
     private void InternalInsertNoLock()
     {
-        Id = new InsertCommand<ComicTable>(ComicTable.Instance)
+        Id = new InsertCommand(ComicTable.Instance)
             .AppendColumn(ComicTable.ColumnType, (long)ValueType)
             .AppendColumn(ComicTable.ColumnLocation, ValueLocation)
             .AppendColumn(ComicTable.ColumnTitle1, ValueTitle1)
@@ -827,7 +827,7 @@ internal abstract class ComicData
 
     private static void RemoveWithLocationNoLock(string location)
     {
-        new DeleteCommand<ComicTable>(ComicTable.Instance)
+        new DeleteCommand(ComicTable.Instance)
             .AppendCondition(new LikeCondition(ComicTable.ColumnLocation, location + "%"))
             .Execute(SqlDatabaseManager.MainDatabase);
     }
@@ -840,9 +840,9 @@ internal abstract class ComicData
         var locExist = new List<string>();
         await Enqueue(delegate
         {
-            var command = new SelectCommand<ComicTable>(ComicTable.Instance);
+            var command = new SelectCommand(ComicTable.Instance);
             IReaderToken<string> locationToken = command.PutQueryString(ComicTable.ColumnLocation);
-            using SelectCommand<ComicTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
+            using SelectCommand.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
             while (reader.Read())
             {
                 locExist.Add(locationToken.GetValue());

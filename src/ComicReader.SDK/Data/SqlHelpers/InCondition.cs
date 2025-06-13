@@ -5,23 +5,44 @@ using System.Text;
 
 namespace ComicReader.SDK.Data.SqlHelpers;
 
-public class InCondition<T>(IColumn<T> column, IEnumerable<T> values) : ICondition where T : notnull
+public class InCondition : ICondition
 {
-    private readonly string _columnName = column.Name;
-    private readonly List<T> _values = [.. values];
+    private readonly SelectCommand? _subquery;
+    private readonly ColumnOrValue _source;
+    private readonly List<ColumnOrValue> _values;
+
+    public InCondition(ColumnOrValue source, IEnumerable<ColumnOrValue> values)
+    {
+        _source = source;
+        _values = [.. values];
+    }
+
+    public InCondition(ColumnOrValue source, SelectCommand subquery)
+    {
+        _source = source;
+        _subquery = subquery;
+        _values = [];
+    }
 
     string ICondition.GetExpression(ICommandContext command)
     {
         StringBuilder sb = new();
-        sb.Append(_columnName).Append(" IN (");
-        for (int i = 0; i < _values.Count; i++)
+        _source.AppendToCommand(sb, command);
+        sb.Append(" IN (");
+        if (_subquery != null)
         {
-            if (i > 0)
+            sb.Append(_subquery.ToSubquery(command));
+        }
+        else
+        {
+            for (int i = 0; i < _values.Count; i++)
             {
-                sb.Append(',');
+                if (i > 0)
+                {
+                    sb.Append(',');
+                }
+                _values[i].AppendToCommand(sb, command);
             }
-            string parameterName = command.AppendParameter(_values[i]);
-            sb.Append(parameterName);
         }
         sb.Append(')');
         return sb.ToString();

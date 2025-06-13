@@ -1,16 +1,24 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Collections.Generic;
 using System.Text;
 
 namespace ComicReader.Common.Expression.Tokens;
 
-class FinalVariableTokenExtra(string path) : ITokenExtra
+class FinalVariableTokenExtra(IEnumerable<string> path) : ITokenExtra
 {
-    public readonly string Path = path;
+    public readonly IReadOnlyList<string> Path = [.. path];
 
     public void ToString(StringBuilder stringBuilder)
     {
-        stringBuilder.Append(Path);
+        for (int i = 0; i < Path.Count; i++)
+        {
+            if (i > 0)
+            {
+                stringBuilder.Append('.');
+            }
+            stringBuilder.Append(Path[i]);
+        }
     }
 }

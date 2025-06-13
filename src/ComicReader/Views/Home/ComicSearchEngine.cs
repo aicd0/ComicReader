@@ -103,9 +103,9 @@ internal class ComicSearchEngine
         List<long> ids = [];
         await ComicData.EnqueueCommand(delegate
         {
-            SelectCommand<ComicTable> command = new SelectCommand<ComicTable>(ComicTable.Instance).AppendCondition(new EqualityCondition<bool>(ComicTable.ColumnHidden, false));
+            SelectCommand command = new SelectCommand(ComicTable.Instance).AppendCondition(new ComparisonCondition(new(ComicTable.ColumnHidden), new(false)));
             IReaderToken<long> idToken = command.PutQueryInt64(ComicTable.ColumnId);
-            using SelectCommand<ComicTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
+            using SelectCommand.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
             while (reader.Read())
             {
                 ids.Add(idToken.GetValue());
@@ -166,11 +166,11 @@ internal class ComicSearchEngine
 
         await ComicData.EnqueueCommand(delegate
         {
-            var command = new SelectCommand<ComicTable>(ComicTable.Instance);
+            var command = new SelectCommand(ComicTable.Instance);
             IReaderToken<long> idToken = command.PutQueryInt64(ComicTable.ColumnId);
             IReaderToken<string> title1Token = command.PutQueryString(ComicTable.ColumnTitle1);
             IReaderToken<string> title2Token = command.PutQueryString(ComicTable.ColumnTitle2);
-            using SelectCommand<ComicTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
+            using SelectCommand.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 
             while (reader.Read())
             {

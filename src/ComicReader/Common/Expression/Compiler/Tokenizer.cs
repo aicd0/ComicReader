@@ -4,7 +4,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace ComicReader.Common.Expression;
+namespace ComicReader.Common.Expression.Compiler;
 
 class Tokenizer
 {
@@ -40,10 +40,10 @@ class Tokenizer
                     index++;
                     continue;
                 case '"':
-                    ParseQuatedString(expression, tokens, ref index);
+                    tokens.AddLast(ParseQuatedString(expression, ref index));
                     continue;
                 case '%':
-                    ParsePercentSign(expression, tokens, ref index);
+                    tokens.AddLast(ParseVariable(expression, ref index));
                     continue;
                 case ',':
                 case '=':
@@ -73,7 +73,7 @@ class Tokenizer
                 {
                     throw new ExpressionException("Unexpected end of expression while parsing identifier.");
                 }
-                tokens.AddLast(ExpressionToken.CreateRawKeyword(nameBuilder.ToString()));
+                tokens.AddLast(ExpressionToken.CreateRawName(nameBuilder.ToString()));
                 break;
             }
             char currentChar = expression[index];
@@ -90,9 +90,9 @@ class Tokenizer
                     else if (currentChar == '(')
                     {
                         string name = nameBuilder.ToString();
-                        if (IsKeyword(name))
+                        if (CompilerConstants.IsKeyword(name))
                         {
-                            tokens.AddLast(ExpressionToken.CreateRawKeyword(name));
+                            tokens.AddLast(ExpressionToken.CreateRawName(name));
                         }
                         else
                         {
@@ -103,14 +103,7 @@ class Tokenizer
                     else
                     {
                         string name = nameBuilder.ToString();
-                        if (IsKeyword(name))
-                        {
-                            tokens.AddLast(ExpressionToken.CreateRawKeyword(name));
-                        }
-                        else
-                        {
-                            throw new ExpressionException($"Unknown identifier '{name}'.");
-                        }
+                        tokens.AddLast(ExpressionToken.CreateRawName(name));
                         return;
                     }
                 default:
@@ -133,7 +126,14 @@ class Tokenizer
                 {
                     throw new ExpressionException("Unexpected end of expression while parsing number.");
                 }
-                tokens.AddLast(ExpressionToken.CreateFinalNumberLiteral(numberBuilder.ToString()));
+                if (state == 1)
+                {
+                    tokens.AddLast(ExpressionToken.CreateFinalNumberLiteralInteger(numberBuilder.ToString()));
+                }
+                else
+                {
+                    tokens.AddLast(ExpressionToken.CreateFinalNumberLiteralDecimal(numberBuilder.ToString()));
+                }
                 break;
             }
             char currentChar = expression[index];
@@ -154,7 +154,7 @@ class Tokenizer
                     }
                     else
                     {
-                        tokens.AddLast(ExpressionToken.CreateFinalNumberLiteral(numberBuilder.ToString()));
+                        tokens.AddLast(ExpressionToken.CreateFinalNumberLiteralInteger(numberBuilder.ToString()));
                         return;
                     }
                 case 2:
@@ -168,7 +168,7 @@ class Tokenizer
                     }
                     else
                     {
-                        tokens.AddLast(ExpressionToken.CreateFinalNumberLiteral(numberBuilder.ToString()));
+                        tokens.AddLast(ExpressionToken.CreateFinalNumberLiteralDecimal(numberBuilder.ToString()));
                         return;
                     }
                 default:
@@ -179,7 +179,7 @@ class Tokenizer
         }
     }
 
-    private static void ParseQuatedString(string expression, LinkedList<ExpressionToken> tokens, ref int index)
+    private static ExpressionToken ParseQuatedString(string expression, ref int index)
     {
         int state = 0;
         StringBuilder stringBuilder = new();
@@ -196,9 +196,8 @@ class Tokenizer
                 case 0:
                     if (currentChar == '"')
                     {
-                        tokens.AddLast(ExpressionToken.CreateFinalStringLiteral(stringBuilder.ToString()));
-                        index++; // Skip the closing quote
-                        return;
+                        index++;
+                        return ExpressionToken.CreateFinalStringLiteral(stringBuilder.ToString());
                     }
                     else if (currentChar == '\\')
                     {
@@ -263,10 +262,11 @@ class Tokenizer
         }
     }
 
-    private static void ParsePercentSign(string expression, LinkedList<ExpressionToken> tokens, ref int index)
+    private static ExpressionToken ParseVariable(string expression, ref int index)
     {
         int state = 0;
-        StringBuilder variableBuilder = new();
+        List<string> pathList = [];
+        StringBuilder nameBuilder = new();
         index++;
         while (true)
         {
@@ -276,8 +276,11 @@ class Tokenizer
                 {
                     throw new ExpressionException("Unexpected end of expression while parsing variable.");
                 }
-                tokens.AddLast(ExpressionToken.CreateFinalVariable(variableBuilder.ToString()));
-                break;
+                if (state == 1)
+                {
+                    pathList.Add(nameBuilder.ToString());
+                }
+                return ExpressionToken.CreateFinalVariable(pathList);
             }
             char currentChar = expression[index];
             switch (state)
@@ -285,8 +288,15 @@ class Tokenizer
                 case 0:
                     if (IsNamingCharacter(currentChar))
                     {
-                        variableBuilder.Append(currentChar);
+                        nameBuilder.Append(currentChar);
                         state = 1;
+                    }
+                    else if (currentChar == '"')
+                    {
+                        ExpressionToken stringToken = ParseQuatedString(expression, ref index);
+                        pathList.Add(stringToken.FinalValueExtra.Value);
+                        state = 2;
+                        continue;
                     }
                     else
                     {
@@ -296,17 +306,32 @@ class Tokenizer
                 case 1:
                     if (IsNamingCharacter(currentChar) || IsDigit(currentChar))
                     {
-                        variableBuilder.Append(currentChar);
+                        nameBuilder.Append(currentChar);
                     }
                     else if (currentChar == '.')
                     {
-                        state = 0; // Allow dot for path-like variables
-                        variableBuilder.Append(currentChar);
+                        state = 0;
+                        pathList.Add(nameBuilder.ToString());
+                        nameBuilder.Clear();
                     }
                     else
                     {
-                        tokens.AddLast(ExpressionToken.CreateFinalVariable(variableBuilder.ToString()));
-                        return;
+                        pathList.Add(nameBuilder.ToString());
+                        return ExpressionToken.CreateFinalVariable(pathList);
+                    }
+                    break;
+                case 2:
+                    if (currentChar == '.')
+                    {
+                        state = 0;
+                    }
+                    else if (IsNamingCharacter(currentChar) || IsDigit(currentChar))
+                    {
+                        throw new ExpressionException($"Unexpected character '{currentChar}' after '\"'.");
+                    }
+                    else
+                    {
+                        return ExpressionToken.CreateFinalVariable(pathList);
                     }
                     break;
                 default:
@@ -329,14 +354,5 @@ class Tokenizer
     private static bool IsDigit(char c)
     {
         return char.IsDigit(c);
-    }
-
-    private static bool IsKeyword(string name)
-    {
-        return name.ToUpper() switch
-        {
-            "IN" or "NOT" or "AND" or "OR" or "TRUE" or "FALSE" => true,
-            _ => false,
-        };
     }
 }

@@ -17,8 +17,10 @@ class FinalValueTokenExtra(FinalValueTokenExtra.TypeEnum type, string value) : I
 
     public enum TypeEnum
     {
-        Keyword,
+        True,
+        False,
         StringLiteral,
-        NumberLiteral,
+        NumberLiteralInteger,
+        NumberLiteralDecimal,
     }
 }

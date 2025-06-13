@@ -5,9 +5,9 @@ using System.Text;
 
 namespace ComicReader.Common.Expression.Tokens;
 
-class RawKeywordTokenExtra(string name) : ITokenExtra
+class RawNameTokenExtra(string name) : ITokenExtra
 {
-    public readonly string Name = name.ToUpper();
+    public readonly string Name = name;
 
     public void ToString(StringBuilder stringBuilder)
     {

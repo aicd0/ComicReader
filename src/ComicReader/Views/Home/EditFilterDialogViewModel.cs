@@ -6,8 +6,12 @@ using System.ComponentModel;
 using System.Threading.Tasks;
 
 using ComicReader.Common.Expression;
+using ComicReader.Common.Expression.Sql;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Data.Models;
+using ComicReader.Data.Models.Comic;
+using ComicReader.Data.Tables;
+using ComicReader.SDK.Data.SqlHelpers;
 using ComicReader.ViewModels;
 
 namespace ComicReader.Views.Home;
@@ -74,6 +78,13 @@ internal partial class EditFilterDialogViewModel : INotifyPropertyChanged
             return;
         }
 
+        void onExpressionInvalid(string message)
+        {
+            _isExpressionValid = false;
+            ParseResultLiveData.Emit(message);
+            UpdateButtonStates();
+        }
+
         ExpressionToken token;
         try
         {
@@ -81,14 +92,24 @@ internal partial class EditFilterDialogViewModel : INotifyPropertyChanged
         }
         catch (ExpressionException e)
         {
-            _isExpressionValid = false;
-            ParseResultLiveData.Emit(e.Message);
-            UpdateButtonStates();
+            onExpressionInvalid(e.Message);
             return;
         }
 
+        SelectCommand command;
+        try
+        {
+            command = SQLGenerator<long>.CreateSQLQuery(token, new ComicSQLCommandProvider());
+        }
+        catch (ExpressionException e)
+        {
+            onExpressionInvalid(e.Message);
+            return;
+        }
+        command.PutQueryInt64(ComicTable.ColumnId);
+
         _isExpressionValid = true;
-        ParseResultLiveData.Emit(token.ToString());
+        ParseResultLiveData.Emit(command.ToString());
         filter.Expression = expression;
         UpdateButtonStates();
     }

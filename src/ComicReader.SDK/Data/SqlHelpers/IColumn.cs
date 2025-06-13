@@ -3,18 +3,21 @@
 
 namespace ComicReader.SDK.Data.SqlHelpers;
 
-public interface IColumn<T>
+public interface IColumnTypeless
 {
     string Name { get; }
+}
 
-    IReaderToken<T> PutQuery<U>(SelectCommand<U> command) where U : ITable;
+public interface IColumn<T> : IColumnTypeless
+{
+    IReaderToken<T> PutQuery(SelectCommand command);
 }
 
 public class Int32Column(string name) : IColumn<int>
 {
     public string Name => name;
 
-    public IReaderToken<int> PutQuery<U>(SelectCommand<U> command) where U : ITable
+    public IReaderToken<int> PutQuery(SelectCommand command)
     {
         return command.PutQueryInt32(this);
     }
@@ -24,7 +27,7 @@ public class Int64Column(string name) : IColumn<long>
 {
     public string Name => name;
 
-    public IReaderToken<long> PutQuery<U>(SelectCommand<U> command) where U : ITable
+    public IReaderToken<long> PutQuery(SelectCommand command)
     {
         return command.PutQueryInt64(this);
     }
@@ -34,7 +37,7 @@ public class StringColumn(string name) : IColumn<string>
 {
     public string Name => name;
 
-    public IReaderToken<string> PutQuery<U>(SelectCommand<U> command) where U : ITable
+    public IReaderToken<string> PutQuery(SelectCommand command)
     {
         return command.PutQueryString(this);
     }
@@ -44,7 +47,7 @@ public class BooleanColumn(string name) : IColumn<bool>
 {
     public string Name => name;
 
-    public IReaderToken<bool> PutQuery<U>(SelectCommand<U> command) where U : ITable
+    public IReaderToken<bool> PutQuery(SelectCommand command)
     {
         return command.PutQueryBoolean(this);
     }
@@ -54,7 +57,7 @@ public class DoubleColumn(string name) : IColumn<double>
 {
     public string Name => name;
 
-    public IReaderToken<double> PutQuery<U>(SelectCommand<U> command) where U : ITable
+    public IReaderToken<double> PutQuery(SelectCommand command)
     {
         return command.PutQueryDouble(this);
     }
@@ -64,7 +67,7 @@ public class DateTimeOffsetColumn(string name) : IColumn<DateTimeOffset>
 {
     public string Name => name;
 
-    public IReaderToken<DateTimeOffset> PutQuery<U>(SelectCommand<U> command) where U : ITable
+    public IReaderToken<DateTimeOffset> PutQuery(SelectCommand command)
     {
         return command.PutQueryDateTimeOffset(this);
     }

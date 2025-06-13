@@ -7,21 +7,21 @@ using System.Text;
 
 namespace ComicReader.SDK.Data.SqlHelpers;
 
-public class InsertCommand<T> where T : ITable
+public class InsertCommand
 {
-    private readonly T _table;
+    private readonly ITable _table;
     private readonly Dictionary<string, IToken> _tokens = [];
 
     private bool _executed = false;
 
-    public InsertCommand(T table)
+    public InsertCommand(ITable table)
     {
         _table = table;
     }
 
-    public InsertCommand<T> AppendColumn<U>(IColumn<U> column, U value)
+    public InsertCommand AppendColumn(IColumnTypeless column, object value)
     {
-        var token = new Token<U>(column, value);
+        var token = new Token(column, value);
         _tokens[column.Name] = token;
         return this;
     }
@@ -39,7 +39,7 @@ public class InsertCommand<T> where T : ITable
             throw new ArgumentException("Empty tokens.");
         }
 
-        using CommandWrapper command = new(database);
+        CommandWrapper command = new();
 
         StringBuilder sb = new("INSERT INTO ");
         sb.Append(_table.GetTableName());
@@ -74,15 +74,15 @@ public class InsertCommand<T> where T : ITable
         sb.Append(");SELECT LAST_INSERT_ROWID();");
 
         command.SetCommandText(sb.ToString());
-        return (long)command.ExecuteScalar();
+        return (long)command.ExecuteScalar(database);
     }
 
-    private class Token<U> : IToken
+    private class Token : IToken
     {
-        private readonly IColumn<U> _column;
-        private readonly U _value;
+        private readonly IColumnTypeless _column;
+        private readonly object _value;
 
-        public Token(IColumn<U> column, U value)
+        public Token(IColumnTypeless column, object value)
         {
             _column = column;
             _value = value;
