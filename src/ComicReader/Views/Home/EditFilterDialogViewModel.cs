@@ -1,11 +1,14 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Threading.Tasks;
 
+using ComicReader.Common;
 using ComicReader.Common.Expression;
+using ComicReader.Common.Expression.Compiler;
 using ComicReader.Common.Expression.Sql;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Data.Models;
@@ -13,6 +16,8 @@ using ComicReader.Data.Models.Comic;
 using ComicReader.Data.Tables;
 using ComicReader.SDK.Data.SqlHelpers;
 using ComicReader.ViewModels;
+
+using Microsoft.UI.Xaml;
 
 namespace ComicReader.Views.Home;
 
@@ -25,11 +30,12 @@ internal partial class EditFilterDialogViewModel : INotifyPropertyChanged
     public MutableLiveData<string> ParseResultLiveData = new();
     public MutableLiveData<bool> SaveEnableLiveData = new();
     public MutableLiveData<bool> SaveAsNewEnableLiveData = new();
+    public MutableLiveData<ExpressionTokenInfo> AppendToExpressionLiveData = new();
 
     private ComicFilterModel.ExternalModel? _filterModel;
     private ComicFilterModel.ExternalFilterModel? _filter;
-    private string _name = "";
-    private string _expression = "";
+    private string? _name;
+    private string? _expression;
     private bool _isNameValid = false;
     private bool _isNameExists = false;
     private bool _isExpressionValid = false;
@@ -81,7 +87,8 @@ internal partial class EditFilterDialogViewModel : INotifyPropertyChanged
         void onExpressionInvalid(string message)
         {
             _isExpressionValid = false;
-            ParseResultLiveData.Emit(message);
+            string hintMessage = StringResourceProvider.ExpressionInvalid.Replace("$reason", message);
+            ParseResultLiveData.Emit(hintMessage);
             UpdateButtonStates();
         }
 
@@ -112,7 +119,8 @@ internal partial class EditFilterDialogViewModel : INotifyPropertyChanged
         command.AppendCondition(condition);
 
         _isExpressionValid = true;
-        ParseResultLiveData.Emit(command.ToString());
+        string hintMessage = StringResourceProvider.ExpressionValid.Replace("$query", command.ToString());
+        ParseResultLiveData.Emit(hintMessage);
         filter.Expression = expression;
         UpdateButtonStates();
     }
@@ -125,7 +133,7 @@ internal partial class EditFilterDialogViewModel : INotifyPropertyChanged
             return;
         }
         RemoveFilter(filter.Name);
-        filter.Name = _name;
+        filter.Name = _name ?? "";
         OverwriteFilter(filter);
 
         ComicFilterModel.ExternalModel? model = _filterModel;
@@ -146,7 +154,7 @@ internal partial class EditFilterDialogViewModel : INotifyPropertyChanged
             return;
         }
         filter = filter.Clone();
-        filter.Name = _name;
+        filter.Name = _name ?? "";
         OverwriteFilter(filter);
 
         ComicFilterModel.ExternalModel? model = _filterModel;
@@ -182,21 +190,29 @@ internal partial class EditFilterDialogViewModel : INotifyPropertyChanged
     {
         {
             ObservableCollection<TagViewModel> buttons = [];
-            buttons.Add(new() { Tag = "AND" });
-            buttons.Add(new() { Tag = "OR" });
-            buttons.Add(new() { Tag = "NOT" });
-            buttons.Add(new() { Tag = "=" });
-            buttons.Add(new() { Tag = ">" });
-            buttons.Add(new() { Tag = "<" });
-            buttons.Add(new() { Tag = ">=" });
-            buttons.Add(new() { Tag = "<=" });
-            buttons.Add(new() { Tag = "()" });
-            buttons.Add(new() { Tag = "IN" });
-            buttons.Add(new() { Tag = "Title" });
-            buttons.Add(new() { Tag = "Rating" });
-            buttons.Add(new() { Tag = "Tag" });
-            buttons.Add(new() { Tag = "Last read time" });
-            buttons.Add(new() { Tag = "Completion state" });
+            buttons.Add(new() { Tag = "and", ItemHandler = CreateExpressionButtonHandler("and ") });
+            buttons.Add(new() { Tag = "or", ItemHandler = CreateExpressionButtonHandler("or ") });
+            buttons.Add(new() { Tag = "not", ItemHandler = CreateExpressionButtonHandler("not ") });
+            buttons.Add(new() { Tag = "=", ItemHandler = CreateExpressionButtonHandler("= ") });
+            buttons.Add(new() { Tag = ">", ItemHandler = CreateExpressionButtonHandler("> ") });
+            buttons.Add(new() { Tag = "<", ItemHandler = CreateExpressionButtonHandler("< ") });
+            buttons.Add(new() { Tag = ">=", ItemHandler = CreateExpressionButtonHandler(">= ") });
+            buttons.Add(new() { Tag = "<=", ItemHandler = CreateExpressionButtonHandler("<= ") });
+            buttons.Add(new() { Tag = "in", ItemHandler = CreateExpressionButtonHandler("in ()", -2) });
+            buttons.Add(new() { Tag = "Title", ItemHandler = CreateExpressionButtonHandler("%title") });
+            buttons.Add(new() { Tag = "Rating", ItemHandler = CreateExpressionButtonHandler("%rating") });
+            buttons.Add(new() { Tag = "Unread", ItemHandler = CreateExpressionButtonHandler($"%completion_state = {(int)ComicData.CompletionStateEnum.NotStarted}") });
+            buttons.Add(new() { Tag = "Reading", ItemHandler = CreateExpressionButtonHandler($"%completion_state = {(int)ComicData.CompletionStateEnum.Started}") });
+            buttons.Add(new() { Tag = "Completed", ItemHandler = CreateExpressionButtonHandler($"%completion_state = {(int)ComicData.CompletionStateEnum.Completed}") });
+            buttons.Add(new() { Tag = "Progress", ItemHandler = CreateExpressionButtonHandler("%progress") });
+            buttons.Add(new() { Tag = "Title 1", ItemHandler = CreateExpressionButtonHandler("%title1") });
+            buttons.Add(new() { Tag = "Title 2", ItemHandler = CreateExpressionButtonHandler("%title2") });
+            buttons.Add(new() { Tag = "Tag", ItemHandler = CreateExpressionButtonHandler("%tag") });
+            List<string> tagCategories = await ComicModel.GetAllTagCategories();
+            foreach (string category in tagCategories)
+            {
+                buttons.Add(new() { Tag = $"Tag.{category}", ItemHandler = CreateExpressionButtonHandler($"%tag.\"{ParserUtils.EscapeString(category)}\"") });
+            }
             ExpressionButtons = buttons;
         }
 
@@ -252,5 +268,28 @@ internal partial class EditFilterDialogViewModel : INotifyPropertyChanged
         {
             filterModel.Filters.Remove(oldFilter);
         }
+    }
+
+    private ExpressionButtonClickHandler CreateExpressionButtonHandler(string text, int cursorPosition = -1)
+    {
+        return new ExpressionButtonClickHandler(this, new ExpressionTokenInfo()
+        {
+            Text = text,
+            CursorPosition = cursorPosition
+        });
+    }
+
+    private class ExpressionButtonClickHandler(EditFilterDialogViewModel viewModel, ExpressionTokenInfo info) : TagViewModel.IItemHandler
+    {
+        public void OnClicked(object sender, RoutedEventArgs e)
+        {
+            viewModel.AppendToExpressionLiveData.Emit(info);
+        }
+    }
+
+    public struct ExpressionTokenInfo
+    {
+        public string Text;
+        public int CursorPosition;
     }
 }

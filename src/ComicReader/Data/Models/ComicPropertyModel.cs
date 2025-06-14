@@ -11,9 +11,7 @@ using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Data.Models.Comic;
-using ComicReader.Data.Tables;
 using ComicReader.SDK.Common.DebugTools;
-using ComicReader.SDK.Data.SqlHelpers;
 
 namespace ComicReader.Data.Models;
 
@@ -286,17 +284,8 @@ internal class ComicPropertyModel
         }
 
         {
-            HashSet<string> tags = [];
-            var command = new SelectCommand(TagCategoryTable.Instance);
-            IReaderToken<string> nameToken = command.PutQueryString(TagCategoryTable.ColumnName);
-            command.Distinct();
-            using SelectCommand.IReader reader = await command.ExecuteAsync(SqlDatabaseManager.MainDatabase);
-            while (reader.Read())
-            {
-                string name = nameToken.GetValue();
-                tags.Add(name);
-            }
-            foreach (string tag in tags)
+            List<string> tagCategories = await ComicModel.GetAllTagCategories();
+            foreach (string tag in tagCategories)
             {
                 properties.Add(new ComicPropertyModel
                 {

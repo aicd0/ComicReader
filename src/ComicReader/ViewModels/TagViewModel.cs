@@ -1,12 +1,7 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-#nullable disable
-
-using System;
 using System.Collections.Generic;
-
-using ComicReader.Common;
 
 using Microsoft.UI.Xaml;
 
@@ -14,18 +9,18 @@ namespace ComicReader.ViewModels;
 
 public class TagViewModel
 {
-    public string Tag { get; set; }
+    public string Tag { get; set; } = string.Empty;
 
-    private WeakReference<IItemHandler> _itemHandler;
+    private IItemHandler? _itemHandler;
     public IItemHandler ItemHandler
     {
         get
         {
-            return _itemHandler?.Get() ?? EmptyItemHandler.Instance;
+            return _itemHandler ?? EmptyItemHandler.Instance;
         }
         set
         {
-            _itemHandler = new WeakReference<IItemHandler>(value);
+            _itemHandler = value;
         }
     }
 
@@ -38,15 +33,7 @@ public class TagViewModel
     {
         private EmptyItemHandler() { }
 
-        private static IItemHandler _instance;
-        public static IItemHandler Instance
-        {
-            get
-            {
-                _instance ??= new EmptyItemHandler();
-                return _instance;
-            }
-        }
+        public static EmptyItemHandler Instance = new();
 
         public void OnClicked(object sender, RoutedEventArgs e)
         {

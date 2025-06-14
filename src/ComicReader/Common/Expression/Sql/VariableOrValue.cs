@@ -37,7 +37,7 @@ internal class VariableOrValue
                             }
                             else
                             {
-                                throw new ExpressionException($"Unable to parse number {token.FinalValueExtra.Value}.");
+                                throw new ExpressionException($"Unable to parse number '{token.FinalValueExtra.Value}'");
                             }
                         }
                         break;
@@ -49,12 +49,12 @@ internal class VariableOrValue
                             }
                             else
                             {
-                                throw new ExpressionException($"Unable to parse number {token.FinalValueExtra.Value}.");
+                                throw new ExpressionException($"Unable to parse number '{token.FinalValueExtra.Value}'");
                             }
                         }
                         break;
                     default:
-                        throw new ExpressionException("Unknown value type.");
+                        throw new ExpressionException($"Unknown value type {token.FinalValueExtra.Type}");
                 }
                 return;
             case ExpressionToken.TYPE_FINAL_VARIABLE:
@@ -62,7 +62,7 @@ internal class VariableOrValue
                 Value = 0;
                 return;
             default:
-                throw new ExpressionException("Unexpected parameter type for comparison.");
+                throw new ExpressionException($"Unexpected parameter type {token.Type} for comparison");
         }
     }
 }

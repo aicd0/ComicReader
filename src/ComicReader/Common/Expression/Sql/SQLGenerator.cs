@@ -44,7 +44,7 @@ internal class SQLGenerator
         {
             return new BooleanCondition(false);
         }
-        throw new ExpressionException($"Cannot create a value node from token: {token}.");
+        throw new ExpressionException($"Cannot create a value node from token '{token}'");
     }
 
     private static ICondition CreateListCondition(ExpressionToken token, ISQLCommandProvider commandProvider)
@@ -67,15 +67,15 @@ internal class SQLGenerator
         FinalFuncTokenExtra extra = token.FinalFuncTokenExtra;
         return extra.Name switch
         {
-            CompilerConstants.KEYWORD_NOT => CreateFuncNotCondition(extra.Parameters, commandProvider),
-            CompilerConstants.KEYWORD_AND => CreateFuncAndCondition(extra.Parameters, commandProvider),
-            CompilerConstants.KEYWORD_OR => CreateFuncOrCondition(extra.Parameters, commandProvider),
-            CompilerConstants.OPERATOR_EQUAL => CreateFuncComparisonCondition(extra.Parameters, ComparisonTypeEnum.Equal, commandProvider),
-            CompilerConstants.OPERATOR_GREATER_THAN => CreateFuncComparisonCondition(extra.Parameters, ComparisonTypeEnum.GreaterThan, commandProvider),
-            CompilerConstants.OPERATOR_GREATER_THAN_OR_EQUAL => CreateFuncComparisonCondition(extra.Parameters, ComparisonTypeEnum.GreaterThanOrEqual, commandProvider),
-            CompilerConstants.OPERATOR_LESS_THAN => CreateFuncComparisonCondition(extra.Parameters, ComparisonTypeEnum.LessThan, commandProvider),
-            CompilerConstants.OPERATOR_LESS_THAN_OR_EQUAL => CreateFuncComparisonCondition(extra.Parameters, ComparisonTypeEnum.LessThanOrEqual, commandProvider),
-            CompilerConstants.KEYWORD_IN => CreateFuncInCondition(extra.Parameters, commandProvider),
+            ParserUtils.KEYWORD_NOT => CreateFuncNotCondition(extra.Parameters, commandProvider),
+            ParserUtils.KEYWORD_AND => CreateFuncAndCondition(extra.Parameters, commandProvider),
+            ParserUtils.KEYWORD_OR => CreateFuncOrCondition(extra.Parameters, commandProvider),
+            ParserUtils.OPERATOR_EQUAL => CreateFuncComparisonCondition(extra.Parameters, ComparisonTypeEnum.Equal, commandProvider),
+            ParserUtils.OPERATOR_GREATER_THAN => CreateFuncComparisonCondition(extra.Parameters, ComparisonTypeEnum.GreaterThan, commandProvider),
+            ParserUtils.OPERATOR_GREATER_THAN_OR_EQUAL => CreateFuncComparisonCondition(extra.Parameters, ComparisonTypeEnum.GreaterThanOrEqual, commandProvider),
+            ParserUtils.OPERATOR_LESS_THAN => CreateFuncComparisonCondition(extra.Parameters, ComparisonTypeEnum.LessThan, commandProvider),
+            ParserUtils.OPERATOR_LESS_THAN_OR_EQUAL => CreateFuncComparisonCondition(extra.Parameters, ComparisonTypeEnum.LessThanOrEqual, commandProvider),
+            ParserUtils.KEYWORD_IN => CreateFuncInCondition(extra.Parameters, commandProvider),
             _ => throw new ExpressionException($"Unknown function '{extra.Name}'."),
         };
     }
@@ -84,7 +84,7 @@ internal class SQLGenerator
     {
         if (parameters.Count != 1)
         {
-            throw new ExpressionException($"The 'NOT' function must have exactly one parameter, but got {parameters.Count}.");
+            throw new ExpressionException($"'NOT' function must have exactly one parameter, but got {parameters.Count}");
         }
         ICondition child = CreateQueryCondition(parameters[0], commandProvider);
         return new NotCondition(child);
@@ -122,7 +122,7 @@ internal class SQLGenerator
     {
         if (parameters.Count != 2)
         {
-            throw new ExpressionException($"The '{comparisonType}' function must have exactly 2 parameters, but got {parameters.Count}.");
+            throw new ExpressionException($"'{comparisonType}' function must have exactly 2 parameters, but got {parameters.Count}");
         }
         return commandProvider.CreateComparisonCondition(new(parameters[0]), new(parameters[1]), comparisonType);
     }
@@ -131,7 +131,7 @@ internal class SQLGenerator
     {
         if (parameters.Count != 2)
         {
-            throw new ExpressionException("The 'IN' function must have exactly 2 parameters.");
+            throw new ExpressionException("'IN' function must have exactly 2 parameters");
         }
         ExpressionToken leftToken = parameters[0];
         ExpressionToken rightToken = parameters[1];

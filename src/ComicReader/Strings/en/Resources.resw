@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='UTF-8'?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -59,46 +59,46 @@
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
-  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
-    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+  <xsd:schema xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace"/>
     <xsd:element name="root" msdata:IsDataSet="true">
       <xsd:complexType>
         <xsd:choice maxOccurs="unbounded">
           <xsd:element name="metadata">
             <xsd:complexType>
               <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+                <xsd:element name="value" type="xsd:string" minOccurs="0"/>
               </xsd:sequence>
-              <xsd:attribute name="name" use="required" type="xsd:string" />
-              <xsd:attribute name="type" type="xsd:string" />
-              <xsd:attribute name="mimetype" type="xsd:string" />
-              <xsd:attribute ref="xml:space" />
+              <xsd:attribute name="name" use="required" type="xsd:string"/>
+              <xsd:attribute name="type" type="xsd:string"/>
+              <xsd:attribute name="mimetype" type="xsd:string"/>
+              <xsd:attribute ref="xml:space"/>
             </xsd:complexType>
           </xsd:element>
           <xsd:element name="assembly">
             <xsd:complexType>
-              <xsd:attribute name="alias" type="xsd:string" />
-              <xsd:attribute name="name" type="xsd:string" />
+              <xsd:attribute name="alias" type="xsd:string"/>
+              <xsd:attribute name="name" type="xsd:string"/>
             </xsd:complexType>
           </xsd:element>
           <xsd:element name="data">
             <xsd:complexType>
               <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1"/>
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2"/>
               </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
-              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
-              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
-              <xsd:attribute ref="xml:space" />
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1"/>
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3"/>
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4"/>
+              <xsd:attribute ref="xml:space"/>
             </xsd:complexType>
           </xsd:element>
           <xsd:element name="resheader">
             <xsd:complexType>
               <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1"/>
               </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" use="required" />
+              <xsd:attribute name="name" type="xsd:string" use="required"/>
             </xsd:complexType>
           </xsd:element>
         </xsd:choice>
@@ -138,6 +138,9 @@
   <data name="AddToFavorites" xml:space="preserve">
     <value>Add to favorites</value>
   </data>
+  <data name="AdvancedExpander.Detail" xml:space="preserve">
+    <value>Rescan files, developer settings</value>
+  </data>
   <data name="AdvancedExpander.Header" xml:space="preserve">
     <value>Advanced</value>
   </data>
@@ -156,17 +159,38 @@
   <data name="AllPagesButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>All pages</value>
   </data>
+  <data name="AntiAliasingFilter.Text" xml:space="preserve">
+    <value>Anti-aliasing filter (experimental)</value>
+  </data>
+  <data name="AppDescription" xml:space="preserve">
+    <value>Comic Reader</value>
+  </data>
+  <data name="AppDisplayName" xml:space="preserve">
+    <value>Comic Reader</value>
+  </data>
+  <data name="AppStoreName" xml:space="preserve">
+    <value>Comic Reader UWP</value>
+  </data>
+  <data name="AppearanceExpander.Detail" xml:space="preserve">
+    <value>Select which app theme to display</value>
+  </data>
   <data name="AppearanceExpander.Header" xml:space="preserve">
     <value>Appearance</value>
   </data>
   <data name="ApplyOnNextLaunch.Text" xml:space="preserve">
     <value>You'll see your change the next time you start the app</value>
   </data>
-  <data name="AppDisplayName" xml:space="preserve">
-    <value>Comic Reader</value>
+  <data name="ArchiveEncoding.Text" xml:space="preserve">
+    <value>Archive encoding</value>
   </data>
   <data name="BackButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>Go back</value>
+  </data>
+  <data name="Calculating" xml:space="preserve">
+    <value>Calculating...</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
   </data>
   <data name="ChooseLocationButton.Content" xml:space="preserve">
     <value>Choose where we look for images</value>
@@ -180,17 +204,53 @@
   <data name="ClearAllHistoryButton.Content" xml:space="preserve">
     <value>Clear all history</value>
   </data>
+  <data name="ClearCacheButton.Content" xml:space="preserve">
+    <value>Clear cache</value>
+  </data>
+  <data name="ClearCacheDetail" xml:space="preserve">
+    <value>Cache size: $size</value>
+  </data>
+  <data name="ComicInfoButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Comic information</value>
+  </data>
+  <data name="CompletionState" xml:space="preserve">
+    <value>Completion state</value>
+  </data>
+  <data name="ContinuousButton.Label" xml:space="preserve">
+    <value>Continuous</value>
+  </data>
   <data name="ContributionRunAfterLink" xml:space="preserve">
     <value> to learn how you can contribute to this app.</value>
   </data>
   <data name="ContributionRunBeforeLink" xml:space="preserve">
     <value>$appname is an open source project. Check out on </value>
   </data>
+  <data name="DebugInformation.Text" xml:space="preserve">
+    <value>Debug information</value>
+  </data>
+  <data name="DebugMode.Text" xml:space="preserve">
+    <value>Debug mode</value>
+  </data>
+  <data name="DebugModeWarning" xml:space="preserve">
+    <value>Turning on debug mode can render the app unstable, proceed?</value>
+  </data>
+  <data name="Default" xml:space="preserve">
+    <value>Default</value>
+  </data>
   <data name="DefaultTags" xml:space="preserve">
     <value>Default tags</value>
   </data>
+  <data name="Description.Text" xml:space="preserve">
+    <value>Description:</value>
+  </data>
+  <data name="DevAppDisplayName" xml:space="preserve">
+    <value>Comic Reader [Dev]</value>
+  </data>
   <data name="Disclaimer.Text" xml:space="preserve">
     <value>Disclaimer</value>
+  </data>
+  <data name="DiscreteButton.Label" xml:space="preserve">
+    <value>Separate</value>
   </data>
   <data name="EditComicInfoDialog.PrimaryButtonText" xml:space="preserve">
     <value>Done</value>
@@ -204,14 +264,20 @@
   <data name="EditInfoButton.Label" xml:space="preserve">
     <value>Edit</value>
   </data>
+  <data name="ExpressionInvalid" xml:space="preserve">
+    <value>The expression is invalid ($reason)</value>
+  </data>
+<data name="ExpressionValid" xml:space="preserve">
+    <value>SQL query: $query</value>
+  </data>
   <data name="FavoriteAppBarButton.Label" xml:space="preserve">
+    <value>Favorite</value>
+  </data>
+  <data name="FavoriteToggleButton.Label" xml:space="preserve">
     <value>Favorite</value>
   </data>
   <data name="FavoritesButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>Favorites and history</value>
-  </data>
-  <data name="FavoriteToggleButton.Label" xml:space="preserve">
-    <value>Favorite</value>
   </data>
   <data name="Feedback.Text" xml:space="preserve">
     <value>Feedback</value>
@@ -222,11 +288,11 @@
   <data name="FilteredBy" xml:space="preserve">
     <value>$count filter(s) applied</value>
   </data>
-  <data name="Finished" xml:space="preserve">
-    <value>Finished</value>
-  </data>
   <data name="FinishPercentage" xml:space="preserve">
     <value>$percentage% Completed</value>
+  </data>
+  <data name="Finished" xml:space="preserve">
+    <value>Finished</value>
   </data>
   <data name="FoldersHeader.Text" xml:space="preserve">
     <value>Folders</value>
@@ -240,6 +306,9 @@
   <data name="HideAppBarButton.Label" xml:space="preserve">
     <value>Hide</value>
   </data>
+  <data name="HistoryExpander.Detail" xml:space="preserve">
+    <value>Clear history, enable or disable history</value>
+  </data>
   <data name="HistoryExpander.Header" xml:space="preserve">
     <value>History</value>
   </data>
@@ -249,11 +318,41 @@
   <data name="HomePageRefreshButton.Text" xml:space="preserve">
     <value>refresh</value>
   </data>
+  <data name="HorizontalButton.Label" xml:space="preserve">
+    <value>Horizontal</value>
+  </data>
+  <data name="HotkeyFirstPage.Header" xml:space="preserve">
+    <value>Go to first page</value>
+  </data>
+  <data name="HotkeyLastPage.Header" xml:space="preserve">
+    <value>Go to last page</value>
+  </data>
+  <data name="HotkeyNextPage.Header" xml:space="preserve">
+    <value>Go to next page</value>
+  </data>
+  <data name="HotkeyPreviousPage.Header" xml:space="preserve">
+    <value>Go to previous page</value>
+  </data>
+  <data name="ImageLocationExpander.Detail" xml:space="preserve">
+    <value>Choose where we look for images</value>
+  </data>
   <data name="ImageLocationExpander.Header" xml:space="preserve">
     <value>Images on this device</value>
   </data>
+  <data name="KeyboardShortcutsExpander.Detail" xml:space="preserve">
+    <value>Check out all keyboard shortcuts</value>
+  </data>
+  <data name="KeyboardShortcutsExpander.Header" xml:space="preserve">
+    <value>Keyboard shortcuts</value>
+  </data>
+  <data name="LastReadTime" xml:space="preserve">
+    <value>Last read time</value>
+  </data>
   <data name="LeftToRight.Text" xml:space="preserve">
     <value>Left to right</value>
+  </data>
+  <data name="LeftToRightButton.Label" xml:space="preserve">
+    <value>L to R</value>
   </data>
   <data name="LibraryEmptyPart1.Text" xml:space="preserve">
     <value>No results under current filter settings. Try</value>
@@ -266,6 +365,12 @@
   </data>
   <data name="LibraryHeader.Text" xml:space="preserve">
     <value>Library</value>
+  </data>
+  <data name="MarkAsReadAppBarButton.Label" xml:space="preserve">
+    <value>Mark as finished</value>
+  </data>
+  <data name="MarkAsUnreadAppBarButton.Label" xml:space="preserve">
+    <value>Mark as unread</value>
   </data>
   <data name="MenuFlyoutAddToFavorites.Text" xml:space="preserve">
     <value>Add to favorites</value>
@@ -281,6 +386,12 @@
   </data>
   <data name="MenuFlyoutHide.Text" xml:space="preserve">
     <value>Hide</value>
+  </data>
+  <data name="MenuFlyoutMarkAsRead.Text" xml:space="preserve">
+    <value>Mark as finished</value>
+  </data>
+  <data name="MenuFlyoutMarkAsUnread.Text" xml:space="preserve">
+    <value>Mark as unread</value>
   </data>
   <data name="MenuFlyoutOpenInNewTab.Text" xml:space="preserve">
     <value>Open in new tab</value>
@@ -321,14 +432,53 @@
   <data name="NoHistory.Text" xml:space="preserve">
     <value>Your browsing history appears here</value>
   </data>
+  <data name="NoRating" xml:space="preserve">
+    <value>No rating</value>
+  </data>
   <data name="NoResults" xml:space="preserve">
     <value>No results for "$keyword"</value>
   </data>
   <data name="NoResultsDetail.Text" xml:space="preserve">
     <value>Try searching with different keywords</value>
   </data>
+  <data name="OpenInFileExplorer.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Open in File Explorer</value>
+  </data>
+  <data name="PrivacyPolicy.Text" xml:space="preserve">
+    <value>Privacy Policy</value>
+  </data>
+  <data name="Proceed" xml:space="preserve">
+    <value>Proceed</value>
+  </data>
+  <data name="Progress" xml:space="preserve">
+    <value>Progress</value>
+  </data>
+  <data name="Rating" xml:space="preserve">
+    <value>Rating</value>
+  </data>
+  <data name="ReaderExpander.Detail" xml:space="preserve">
+    <value>Customize your reader</value>
+  </data>
   <data name="ReaderExpander.Header" xml:space="preserve">
     <value>Reader</value>
+  </data>
+  <data name="ReaderSettingButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Reader settings</value>
+  </data>
+  <data name="ReaderStatusError" xml:space="preserve">
+    <value>An error occured while loading</value>
+  </data>
+  <data name="ReaderStatusLoading" xml:space="preserve">
+    <value>The reader is loading</value>
+  </data>
+  <data name="ReaderTip.Message" xml:space="preserve">
+    <value>Double tap to fit width/height</value>
+  </data>
+  <data name="ReaderTip.Title" xml:space="preserve">
+    <value>Tip</value>
+  </data>
+  <data name="Reading" xml:space="preserve">
+    <value>Reading</value>
   </data>
   <data name="RefreshButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>Refresh</value>
@@ -339,8 +489,14 @@
   <data name="RemoveLocationButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>Remove this folder from the list</value>
   </data>
+  <data name="RemoveUnreachableCheckBox.Content" xml:space="preserve">
+    <value>Automatically remove unreachable comics</value>
+  </data>
   <data name="RescanFilesButton.Content" xml:space="preserve">
     <value>Rescan files</value>
+  </data>
+  <data name="RightToLeftButton.Label" xml:space="preserve">
+    <value>R to L</value>
   </data>
   <data name="SaveHistory.Text" xml:space="preserve">
     <value>Save browsing history</value>
@@ -363,8 +519,14 @@
   <data name="Settings" xml:space="preserve">
     <value>Settings</value>
   </data>
+  <data name="ShowHiddenComicButton.Content" xml:space="preserve">
+    <value>Show hidden comics</value>
+  </data>
   <data name="Statistics.Text" xml:space="preserve">
     <value>Statistics</value>
+  </data>
+  <data name="Tag" xml:space="preserve">
+    <value>Tag</value>
   </data>
   <data name="TagIntroduction.Message" xml:space="preserve">
     <value>Using tags properly can make your library easier to get organized. Basic usage:
@@ -387,6 +549,9 @@ Category2: tag4/tag5
   <data name="ThemeUseSystemSetting.Content" xml:space="preserve">
     <value>Use system setting</value>
   </data>
+  <data name="Title" xml:space="preserve">
+    <value>Title</value>
+  </data>
   <data name="Title1.Text" xml:space="preserve">
     <value>Title 1:</value>
   </data>
@@ -396,8 +561,14 @@ Category2: tag4/tag5
   <data name="TotalComics" xml:space="preserve">
     <value>Total comics: </value>
   </data>
+  <data name="TransitionAnimation.Text" xml:space="preserve">
+    <value>Transition animation</value>
+  </data>
   <data name="UnFavoriteAppBarButton.Label" xml:space="preserve">
     <value>UnFavorite</value>
+  </data>
+  <data name="Ungrouped" xml:space="preserve">
+    <value>Ungrouped</value>
   </data>
   <data name="UnhideAppBarButton.Label" xml:space="preserve">
     <value>Unhide</value>
@@ -405,181 +576,16 @@ Category2: tag4/tag5
   <data name="Unread" xml:space="preserve">
     <value>Unread</value>
   </data>
-  <data name="WatchingFolders.Text" xml:space="preserve">
-    <value>Right now, we're watching these folders:</value>
-  </data>
-  <data name="AppDescription" xml:space="preserve">
-    <value>Comic Reader</value>
-  </data>
-  <data name="ReaderStatusLoading" xml:space="preserve">
-    <value>The reader is loading</value>
-  </data>
-  <data name="DebugMode.Text" xml:space="preserve">
-    <value>Debug mode</value>
-  </data>
   <data name="Untitled" xml:space="preserve">
     <value>Untitled</value>
-  </data>
-  <data name="PrivacyPolicy.Text" xml:space="preserve">
-    <value>Privacy Policy</value>
-  </data>
-  <data name="AdvancedExpander.Detail" xml:space="preserve">
-    <value>Rescan files, developer settings</value>
-  </data>
-  <data name="AppearanceExpander.Detail" xml:space="preserve">
-    <value>Select which app theme to display</value>
-  </data>
-  <data name="HistoryExpander.Detail" xml:space="preserve">
-    <value>Clear history, enable or disable history</value>
-  </data>
-  <data name="ImageLocationExpander.Detail" xml:space="preserve">
-    <value>Choose where we look for images</value>
-  </data>
-  <data name="ReaderExpander.Detail" xml:space="preserve">
-    <value>Customize your reader</value>
-  </data>
-  <data name="HotkeyPreviousPage.Header" xml:space="preserve">
-    <value>Go to previous page</value>
-  </data>
-  <data name="HotkeyNextPage.Header" xml:space="preserve">
-    <value>Go to next page</value>
-  </data>
-  <data name="KeyboardShortcutsExpander.Detail" xml:space="preserve">
-    <value>Check out all keyboard shortcuts</value>
-  </data>
-  <data name="KeyboardShortcutsExpander.Header" xml:space="preserve">
-    <value>Keyboard shortcuts</value>
-  </data>
-  <data name="HotkeyFirstPage.Header" xml:space="preserve">
-    <value>Go to first page</value>
-  </data>
-  <data name="HotkeyLastPage.Header" xml:space="preserve">
-    <value>Go to last page</value>
-  </data>
-  <data name="ReaderStatusError" xml:space="preserve">
-    <value>An error occured while loading</value>
-  </data>
-  <data name="AppStoreName" xml:space="preserve">
-    <value>Comic Reader UWP</value>
-  </data>
-  <data name="ContinuousButton.Label" xml:space="preserve">
-    <value>Continuous</value>
-  </data>
-  <data name="HorizontalButton.Label" xml:space="preserve">
-    <value>Horizontal</value>
-  </data>
-  <data name="LeftToRightButton.Label" xml:space="preserve">
-    <value>L to R</value>
-  </data>
-  <data name="RightToLeftButton.Label" xml:space="preserve">
-    <value>R to L</value>
   </data>
   <data name="VerticalButton.Label" xml:space="preserve">
     <value>Vertical</value>
   </data>
-  <data name="ArchiveEncoding.Text" xml:space="preserve">
-    <value>Archive encoding</value>
-  </data>
-  <data name="Default" xml:space="preserve">
-    <value>Default</value>
-  </data>
-  <data name="TransitionAnimation.Text" xml:space="preserve">
-    <value>Transition animation</value>
-  </data>
-  <data name="ReaderSettingButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>Reader settings</value>
-  </data>
-  <data name="ComicInfoButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>Comic information</value>
-  </data>
-  <data name="DiscreteButton.Label" xml:space="preserve">
-    <value>Separate</value>
-  </data>
-  <data name="OpenInFileExplorer.ToolTipService.ToolTip" xml:space="preserve">
-    <value>Open in File Explorer</value>
-  </data>
-  <data name="ReaderTip.Message" xml:space="preserve">
-    <value>Double tap to fit width/height</value>
-  </data>
-  <data name="ReaderTip.Title" xml:space="preserve">
-    <value>Tip</value>
-  </data>
-  <data name="MenuFlyoutMarkAsRead.Text" xml:space="preserve">
-    <value>Mark as finished</value>
-  </data>
-  <data name="MenuFlyoutMarkAsUnread.Text" xml:space="preserve">
-    <value>Mark as unread</value>
-  </data>
-  <data name="MarkAsReadAppBarButton.Label" xml:space="preserve">
-    <value>Mark as finished</value>
-  </data>
-  <data name="MarkAsUnreadAppBarButton.Label" xml:space="preserve">
-    <value>Mark as unread</value>
-  </data>
-  <data name="DevAppDisplayName" xml:space="preserve">
-    <value>Comic Reader [Dev]</value>
-  </data>
-  <data name="ClearCacheButton.Content" xml:space="preserve">
-    <value>Clear cache</value>
-  </data>
-  <data name="ClearCacheDetail" xml:space="preserve">
-    <value>Cache size: $size</value>
-  </data>
-  <data name="Calculating" xml:space="preserve">
-    <value>Calculating...</value>
-  </data>
-  <data name="AntiAliasingFilter.Text" xml:space="preserve">
-    <value>Anti-aliasing filter (experimental)</value>
-  </data>
   <data name="Warning" xml:space="preserve">
     <value>Warning</value>
   </data>
-  <data name="DebugModeWarning" xml:space="preserve">
-    <value>Turning on debug mode can render the app unstable, proceed?</value>
+  <data name="WatchingFolders.Text" xml:space="preserve">
+    <value>Right now, we're watching these folders:</value>
   </data>
-  <data name="Cancel" xml:space="preserve">
-    <value>Cancel</value>
-  </data>
-  <data name="Proceed" xml:space="preserve">
-    <value>Proceed</value>
-  </data>
-  <data name="Description.Text" xml:space="preserve">
-    <value>Description:</value>
-  </data>
-  <data name="DebugInformation.Text" xml:space="preserve">
-    <value>Debug information</value>
-  </data>
-  <data name="ShowHiddenComicButton.Content" xml:space="preserve">
-    <value>Show hidden comics</value>
-  </data>
-  <data name="RemoveUnreachableCheckBox.Content" xml:space="preserve">
-    <value>Automatically remove unreachable comics</value>
-  </data>
-  <data name="Ungrouped" xml:space="preserve">
-    <value>Ungrouped</value>
-  </data>
-  <data name="NoRating" xml:space="preserve">
-    <value>No rating</value>
-  </data>
-  <data name="Tag" xml:space="preserve">
-    <value>Tag</value>
-  </data>
-  <data name="Title" xml:space="preserve">
-    <value>Title</value>
-  </data>
-  <data name="Rating" xml:space="preserve">
-    <value>Rating</value>
-  </data>
-  <data name="Progress" xml:space="preserve">
-    <value>Progress</value>
-  </data>
-  <data name="CompletionState" xml:space="preserve">
-    <value>Completion state</value>
-  </data>
-  <data name="Reading" xml:space="preserve">
-    <value>Reading</value>
-  </data>
-  <data name="LastReadTime" xml:space="preserve">
-    <value>Last read time</value>
-  </data>
-</root>
+  </root>

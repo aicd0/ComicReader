@@ -14,7 +14,7 @@ internal class Evaluator
         ExpressionToken token = EvaluateParenthses(tokens);
         if (token.Level != ExpressionToken.LEVEL_FINAL)
         {
-            throw new ExpressionException("Expression is invalid.");
+            throw new ExpressionException("Unknown error");
         }
         return token;
     }
@@ -37,7 +37,7 @@ internal class Evaluator
             {
                 if (parenthesesStack.Count == 0)
                 {
-                    throw new ExpressionException("Unmatched right parenthesis.");
+                    throw new ExpressionException("Unmatched right parenthesis ')'");
                 }
                 ExpressionToken evaluated = EvaluateParenthsesLess(currentTokens);
                 currentTokens = parenthesesStack.Pop();
@@ -50,7 +50,7 @@ internal class Evaluator
         }
         if (parenthesesStack.Count > 0)
         {
-            throw new ExpressionException("Unmatched left parenthesis.");
+            throw new ExpressionException("Unmatched left parenthesis '('");
         }
         return EvaluateParenthsesLess(currentTokens);
     }
@@ -69,7 +69,7 @@ internal class Evaluator
             {
                 nextNode = node.Next;
                 ExpressionToken token = node.Value;
-                if (token.Level == ExpressionToken.LEVEL_RAW && token.Type == ExpressionToken.TYPE_RAW_NAME && !CompilerConstants.IsKeyword(token.RawNameExtra.Name))
+                if (token.Level == ExpressionToken.LEVEL_RAW && token.Type == ExpressionToken.TYPE_RAW_NAME && !ParserUtils.IsKeyword(token.RawNameExtra.Name))
                 {
                     LinkedListNode<ExpressionToken> newNode = tokens.AddBefore(node, ExpressionToken.CreateFinalStringLiteral(token.RawNameExtra.Name));
                     tokens.Remove(node);
@@ -91,10 +91,10 @@ internal class Evaluator
                     FinalValueTokenExtra.TypeEnum type;
                     switch (token.RawNameExtra.Name.ToUpper())
                     {
-                        case CompilerConstants.KEYWORD_FALSE:
+                        case ParserUtils.KEYWORD_FALSE:
                             type = FinalValueTokenExtra.TypeEnum.False;
                             break;
-                        case CompilerConstants.KEYWORD_TRUE:
+                        case ParserUtils.KEYWORD_TRUE:
                             type = FinalValueTokenExtra.TypeEnum.True;
                             break;
                         default:
@@ -119,7 +119,7 @@ internal class Evaluator
                 {
                     if (nextNode == null)
                     {
-                        throw new ExpressionException("Function call must be followed by a left parenthesis.");
+                        throw new ExpressionException("Function call must be followed by a left parenthesis '('");
                     }
                     string functionName = token.RawFuncExtra.Name.ToUpper();
                     ExpressionToken nextToken = nextNode.Value;
@@ -135,7 +135,7 @@ internal class Evaluator
                         }
                         else
                         {
-                            throw new ExpressionException($"Unexpected token after function name: {nextToken}.");
+                            throw new ExpressionException($"Unexpected token after function name: {nextToken}");
                         }
                     }
                     else if (nextToken.Level == ExpressionToken.LEVEL_FINAL)
@@ -159,7 +159,7 @@ internal class Evaluator
                     }
                     else
                     {
-                        throw new ExpressionException($"Unexpected token after function name: {nextToken}.");
+                        throw new ExpressionException($"Unexpected token after function name: {nextToken}");
                     }
                 }
             }
@@ -194,13 +194,13 @@ internal class Evaluator
                     LinkedListNode<ExpressionToken>? previousNode = node.Previous;
                     if (previousNode == null || nextNode == null)
                     {
-                        throw new ExpressionException($"Operator '{token.RawOperatorExtra.Name}' must be surrounded by tokens on both sides.");
+                        throw new ExpressionException($"Operator '{token.RawOperatorExtra.Name}' must be surrounded by tokens on both sides");
                     }
                     ExpressionToken previousToken = previousNode.Value;
                     ExpressionToken nextToken = nextNode.Value;
                     if (!IsScalarReturnValueToken(previousToken) || !IsScalarReturnValueToken(nextToken))
                     {
-                        throw new ExpressionException($"Operator '{token.RawOperatorExtra.Name}' must be surrounded by valid tokens on both sides.");
+                        throw new ExpressionException($"Operator '{token.RawOperatorExtra.Name}' must be surrounded by valid tokens on both sides");
                     }
                     LinkedListNode<ExpressionToken> newNode = tokens.AddBefore(previousNode, ExpressionToken.CreateFinalFunction(token.RawOperatorExtra.Name, [previousToken, nextToken]));
                     tokens.Remove(previousNode);
@@ -224,7 +224,7 @@ internal class Evaluator
                     string functionName = token.RawNameExtra.Name.ToUpper();
                     switch (functionName)
                     {
-                        case CompilerConstants.KEYWORD_IN:
+                        case ParserUtils.KEYWORD_IN:
                             break;
                         default:
                             continue;
@@ -232,7 +232,7 @@ internal class Evaluator
                     LinkedListNode<ExpressionToken>? previousNode = node.Previous;
                     if (previousNode == null || nextNode == null)
                     {
-                        throw new ExpressionException($"Keyword '{functionName}' must be surrounded by tokens on both sides.");
+                        throw new ExpressionException($"Keyword '{functionName}' must be surrounded by tokens on both sides");
                     }
                     ExpressionToken previousToken = previousNode.Value;
                     ExpressionToken nextToken = nextNode.Value;
@@ -244,16 +244,20 @@ internal class Evaluator
                     }
                     else
                     {
-                        throw new ExpressionException($"Keyword '{functionName}' must be preceded by a valid token.");
+                        throw new ExpressionException($"Keyword '{functionName}' must be preceded by a valid token");
                     }
 
                     if (nextToken.Level == ExpressionToken.LEVEL_FINAL && nextToken.Type == ExpressionToken.TYPE_FINAL_LIST)
                     {
                         parameters.Add(nextToken);
                     }
+                    else if (IsScalarReturnValueToken(nextToken))
+                    {
+                        parameters.Add(ExpressionToken.CreateFinalList([nextToken]));
+                    }
                     else
                     {
-                        throw new ExpressionException($"Unexpected token after keyword '{functionName}': {nextToken}.");
+                        throw new ExpressionException($"Unexpected token after keyword '{functionName}': {nextToken}");
                     }
 
                     LinkedListNode<ExpressionToken> newNode = tokens.AddBefore(previousNode, ExpressionToken.CreateFinalFunction(functionName, parameters));
@@ -278,12 +282,12 @@ internal class Evaluator
                     string functionName = token.RawNameExtra.Name.ToUpper();
                     switch (functionName)
                     {
-                        case CompilerConstants.KEYWORD_NOT:
+                        case ParserUtils.KEYWORD_NOT:
                             break;
                         default:
                             continue;
                     }
-                    LinkedListNode<ExpressionToken>? nextNode = node.Next ?? throw new ExpressionException($"Keyword '{functionName}' must be followed by a valid token.");
+                    LinkedListNode<ExpressionToken>? nextNode = node.Next ?? throw new ExpressionException($"Keyword '{functionName}' must be followed by a valid token");
                     ExpressionToken nextToken = nextNode.Value;
                     if (IsScalarReturnValueToken(nextToken))
                     {
@@ -295,7 +299,7 @@ internal class Evaluator
                     }
                     else
                     {
-                        throw new ExpressionException($"Unexpected token after keyword '{functionName}': {nextToken}.");
+                        throw new ExpressionException($"Unexpected token after keyword '{functionName}': {nextToken}");
                     }
                 }
             }
@@ -313,8 +317,8 @@ internal class Evaluator
                     string functionName = token.RawNameExtra.Name.ToUpper();
                     switch (functionName)
                     {
-                        case CompilerConstants.KEYWORD_AND:
-                        case CompilerConstants.KEYWORD_OR:
+                        case ParserUtils.KEYWORD_AND:
+                        case ParserUtils.KEYWORD_OR:
                             break;
                         default:
                             continue;
@@ -322,13 +326,13 @@ internal class Evaluator
                     LinkedListNode<ExpressionToken>? previousNode = node.Previous;
                     if (previousNode == null || nextNode == null)
                     {
-                        throw new ExpressionException($"Keyword '{functionName}' must be surrounded by tokens on both sides.");
+                        throw new ExpressionException($"Keyword '{functionName}' must be surrounded by tokens on both sides");
                     }
                     ExpressionToken previousToken = previousNode.Value;
                     ExpressionToken nextToken = nextNode.Value;
                     if (!IsScalarReturnValueToken(previousToken) || !IsScalarReturnValueToken(nextToken))
                     {
-                        throw new ExpressionException($"Keyword '{functionName}' must be surrounded by final tokens on both sides.");
+                        throw new ExpressionException($"Keyword '{functionName}' must be surrounded by final tokens on both sides");
                     }
                     LinkedListNode<ExpressionToken> newNode = tokens.AddBefore(previousNode, ExpressionToken.CreateFinalFunction(functionName, [previousToken, nextToken]));
                     tokens.Remove(previousNode);
@@ -352,7 +356,7 @@ internal class Evaluator
                     LinkedListNode<ExpressionToken>? previousNode = node.Previous;
                     if (previousNode == null || nextNode == null)
                     {
-                        throw new ExpressionException($"Operator '{token.RawOperatorExtra.Name}' must be surrounded by tokens on both sides.");
+                        throw new ExpressionException($"Operator '{token.RawOperatorExtra.Name}' must be surrounded by tokens on both sides");
                     }
                     ExpressionToken previousToken = previousNode.Value;
                     ExpressionToken nextToken = nextNode.Value;
@@ -368,7 +372,7 @@ internal class Evaluator
                     }
                     else
                     {
-                        throw new ExpressionException($"Operator '{token.RawOperatorExtra.Name}' must be preceded by a valid token.");
+                        throw new ExpressionException($"Operator '{token.RawOperatorExtra.Name}' must be preceded by a valid token");
                     }
 
                     if (IsScalarReturnValueToken(nextToken))
@@ -381,7 +385,7 @@ internal class Evaluator
                     }
                     else
                     {
-                        throw new ExpressionException($"Operator '{token.RawOperatorExtra.Name}' must be followed by a valid token.");
+                        throw new ExpressionException($"Operator '{token.RawOperatorExtra.Name}' must be followed by a valid token");
                     }
 
                     LinkedListNode<ExpressionToken> newNode = tokens.AddBefore(previousNode, ExpressionToken.CreateIntermediateExpressionList(expressions));
@@ -402,7 +406,7 @@ internal class Evaluator
 
         if (tokens.Count != 1)
         {
-            throw new ExpressionException("Expression must be reduced to a single token.");
+            throw new ExpressionException("Expression cannot be reduced to a single token");
         }
 
         return firstNode.Value;
@@ -410,11 +414,11 @@ internal class Evaluator
 
     private static bool IsComparisonOperator(string name)
     {
-        return name == CompilerConstants.OPERATOR_EQUAL ||
-               name == CompilerConstants.OPERATOR_LESS_THAN ||
-               name == CompilerConstants.OPERATOR_LESS_THAN_OR_EQUAL ||
-               name == CompilerConstants.OPERATOR_GREATER_THAN ||
-               name == CompilerConstants.OPERATOR_GREATER_THAN_OR_EQUAL;
+        return name == ParserUtils.OPERATOR_EQUAL ||
+               name == ParserUtils.OPERATOR_LESS_THAN ||
+               name == ParserUtils.OPERATOR_LESS_THAN_OR_EQUAL ||
+               name == ParserUtils.OPERATOR_GREATER_THAN ||
+               name == ParserUtils.OPERATOR_GREATER_THAN_OR_EQUAL;
     }
 
     private static bool IsReturnValueToken(ExpressionToken token)

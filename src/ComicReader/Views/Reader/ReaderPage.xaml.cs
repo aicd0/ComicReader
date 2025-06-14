@@ -61,7 +61,6 @@ internal sealed partial class ReaderPage : BasePage
     private DateTimeOffset _buttomTileHideRequestTime = DateTimeOffset.Now;
 
     private readonly ITaskDispatcher _loadPreviewDispatcher = TaskDispatcher.Factory.NewQueue("ReaderLoadPreview");
-    private readonly TagItemHandler _tagItemHandler;
 
     private MutableLiveData<ReaderStatusEnum> ReaderStatusLiveData { get; } = new(ReaderStatusEnum.Loading);
 
@@ -89,8 +88,6 @@ internal sealed partial class ReaderPage : BasePage
     public ReaderPage()
     {
         InitializeComponent();
-
-        _tagItemHandler = new TagItemHandler(this);
 
         ViewModel.ComicTitle1 = "";
         ViewModel.ComicTitle2 = "";
@@ -204,6 +201,13 @@ internal sealed partial class ReaderPage : BasePage
     {
         GetMainPageAbility().RegisterTabUnselectedHandler(this, AppModel.UnsetReadingComic);
         GetNavigationPageAbility().RegisterLeavingHandler(this, AppModel.UnsetReadingComic);
+
+        ViewModel.TagClickLiveData.Observe(this, (string tag) =>
+        {
+            Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_SEARCH)
+                .WithParam(RouterConstants.ARG_KEYWORD, "<tag: " + tag + ">");
+            GetMainPageAbility().OpenInNewTab(route);
+        });
 
         GetNavigationPageAbility().RegisterGridViewModeChangedHandler(this, delegate (bool enabled)
         {
@@ -482,7 +486,7 @@ internal sealed partial class ReaderPage : BasePage
                 var tag_model = new TagViewModel
                 {
                     Tag = tag,
-                    ItemHandler = _tagItemHandler
+                    ItemHandler = ViewModel._tagItemHandler,
                 };
                 tags_model.Tags.Add(tag_model);
             }
@@ -613,14 +617,6 @@ internal sealed partial class ReaderPage : BasePage
                 _ = await Launcher.LaunchFolderAsync(folder);
             }
         });
-    }
-
-    private void OnInfoPaneTagClicked(object sender, RoutedEventArgs e)
-    {
-        var ctx = (TagViewModel)((Button)sender).DataContext;
-        Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_SEARCH)
-            .WithParam(RouterConstants.ARG_KEYWORD, "<tag: " + ctx.Tag + ">");
-        GetMainPageAbility().OpenInNewTab(route);
     }
 
     private void OnEditInfoClick(object sender, RoutedEventArgs e)
@@ -829,21 +825,6 @@ internal sealed partial class ReaderPage : BasePage
     //
     // Classes
     //
-
-    public class TagItemHandler : TagViewModel.IItemHandler
-    {
-        private readonly ReaderPage _page;
-
-        public TagItemHandler(ReaderPage page)
-        {
-            _page = page;
-        }
-
-        public void OnClicked(object sender, RoutedEventArgs e)
-        {
-            _page.OnInfoPaneTagClicked(sender, e);
-        }
-    }
 
     public enum ReaderStatusEnum
     {

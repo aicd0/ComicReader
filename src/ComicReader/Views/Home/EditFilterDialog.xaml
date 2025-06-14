@@ -50,6 +50,8 @@
                 x:Name="ExpressionTextBox"
                 Grid.Row="2"
                 Grid.Column="2"
+                IsSpellCheckEnabled="False"
+                IsTextPredictionEnabled="False"
                 TextChanged="ExpressionTextBox_TextChanged"
                 TextWrapping="Wrap" />
             <Button

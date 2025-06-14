@@ -7,7 +7,9 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
+using ComicReader.Data.Tables;
 using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Data.SqlHelpers;
 
 using Windows.Storage;
 
@@ -256,11 +258,26 @@ internal sealed class ComicModel
     }
 
     //
-    // Scanner
+    // Utilities
     //
 
     public static void UpdateAllComics(string reason, bool lazy)
     {
         ComicData.UpdateAllComics(reason, lazy);
+    }
+
+    public static async Task<List<string>> GetAllTagCategories()
+    {
+        HashSet<string> tags = [];
+        var command = new SelectCommand(TagCategoryTable.Instance);
+        IReaderToken<string> nameToken = command.PutQueryString(TagCategoryTable.ColumnName);
+        command.Distinct();
+        using SelectCommand.IReader reader = await command.ExecuteAsync(SqlDatabaseManager.MainDatabase);
+        while (reader.Read())
+        {
+            string name = nameToken.GetValue();
+            tags.Add(name);
+        }
+        return [.. tags];
     }
 }

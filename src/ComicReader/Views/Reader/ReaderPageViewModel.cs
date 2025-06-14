@@ -4,13 +4,26 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 
+using ComicReader.Common.Lifecycle;
 using ComicReader.ViewModels;
+
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 
 namespace ComicReader.Views.Reader;
 
 internal partial class ReaderPageViewModel : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    public readonly MutableLiveData<string> TagClickLiveData = new();
+
+    public readonly TagItemHandler _tagItemHandler;
+
+    public ReaderPageViewModel()
+    {
+        _tagItemHandler = new(this);
+    }
 
     private string _comicTitle1 = "";
     public string ComicTitle1
@@ -107,4 +120,13 @@ internal partial class ReaderPageViewModel : INotifyPropertyChanged
     }
 
     public ObservableCollection<ReaderImagePreviewViewModel> PreviewDataSource { get; set; } = [];
+
+    public class TagItemHandler(ReaderPageViewModel viewModel) : TagViewModel.IItemHandler
+    {
+        public void OnClicked(object sender, RoutedEventArgs e)
+        {
+            var ctx = (TagViewModel)((Button)sender).DataContext;
+            viewModel.TagClickLiveData.Emit(ctx.Tag);
+        }
+    }
 }

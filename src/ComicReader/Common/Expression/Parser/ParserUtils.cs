@@ -3,7 +3,7 @@
 
 namespace ComicReader.Common.Expression.Compiler;
 
-internal class CompilerConstants
+internal class ParserUtils
 {
     public const string KEYWORD_IN = "IN";
     public const string KEYWORD_NOT = "NOT";
@@ -30,5 +30,10 @@ internal class CompilerConstants
             KEYWORD_FALSE => true,
             _ => false,
         };
+    }
+
+    public static string EscapeString(string str)
+    {
+        return str.Replace("\\", "\\\\").Replace("\"", "\\\"");
     }
 }

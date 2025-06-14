@@ -18,7 +18,7 @@ internal class Optimizer
     {
         if (token.Level != ExpressionToken.LEVEL_FINAL)
         {
-            throw new ExpressionException("The token must be at the final level.");
+            throw new ExpressionException("The token must be at the final level");
         }
 
         return token.Type switch
@@ -38,7 +38,7 @@ internal class Optimizer
         }
         switch (extra.Name)
         {
-            case CompilerConstants.KEYWORD_AND:
+            case ParserUtils.KEYWORD_AND:
                 {
                     List<ExpressionToken> expressions = [];
                     foreach (ExpressionToken parameter in parameters)
@@ -51,7 +51,7 @@ internal class Optimizer
                         {
                             return ExpressionToken.CreateFinalValue(FinalValueTokenExtra.TypeEnum.False);
                         }
-                        if (IsFuncToken(parameter, CompilerConstants.KEYWORD_AND))
+                        if (IsFuncToken(parameter, ParserUtils.KEYWORD_AND))
                         {
                             expressions.AddRange(parameter.FinalFuncTokenExtra.Parameters);
                         }
@@ -68,9 +68,9 @@ internal class Optimizer
                     {
                         return expressions[0];
                     }
-                    return ExpressionToken.CreateFinalFunction(CompilerConstants.KEYWORD_AND, expressions);
+                    return ExpressionToken.CreateFinalFunction(ParserUtils.KEYWORD_AND, expressions);
                 }
-            case CompilerConstants.KEYWORD_OR:
+            case ParserUtils.KEYWORD_OR:
                 {
                     List<ExpressionToken> expressions = [];
                     foreach (ExpressionToken parameter in parameters)
@@ -83,7 +83,7 @@ internal class Optimizer
                         {
                             return ExpressionToken.CreateFinalValue(FinalValueTokenExtra.TypeEnum.True);
                         }
-                        if (IsFuncToken(parameter, CompilerConstants.KEYWORD_OR))
+                        if (IsFuncToken(parameter, ParserUtils.KEYWORD_OR))
                         {
                             expressions.AddRange(parameter.FinalFuncTokenExtra.Parameters);
                         }
@@ -100,12 +100,12 @@ internal class Optimizer
                     {
                         return expressions[0];
                     }
-                    return ExpressionToken.CreateFinalFunction(CompilerConstants.KEYWORD_OR, expressions);
+                    return ExpressionToken.CreateFinalFunction(ParserUtils.KEYWORD_OR, expressions);
                 }
-            case CompilerConstants.KEYWORD_NOT:
+            case ParserUtils.KEYWORD_NOT:
                 if (parameters.Count != 1)
                 {
-                    throw new ExpressionException("NOT function must have exactly one parameter.");
+                    throw new ExpressionException("'NOT' function must have exactly one parameter");
                 }
                 if (IsBooleanValueToken(parameters[0], true))
                 {
@@ -115,7 +115,7 @@ internal class Optimizer
                 {
                     return ExpressionToken.CreateFinalValue(FinalValueTokenExtra.TypeEnum.True);
                 }
-                if (IsFuncToken(parameters[0], CompilerConstants.KEYWORD_NOT))
+                if (IsFuncToken(parameters[0], ParserUtils.KEYWORD_NOT))
                 {
                     return parameters[0].FinalFuncTokenExtra.Parameters[0];
                 }

@@ -25,6 +25,8 @@ class StringResourceProvider
     public static string DebugModeWarning => GetResourceString("DebugModeWarning");
     public static string Default => GetResourceString("Default");
     public static string DefaultTags => GetResourceString("DefaultTags");
+    public static string ExpressionValid => GetResourceString("ExpressionValid");
+    public static string ExpressionInvalid => GetResourceString("ExpressionInvalid");
     public static string FilteredBy => GetResourceString("FilteredBy");
     public static string Finished => GetResourceString("Finished");
     public static string FinishPercentage => GetResourceString("FinishPercentage");

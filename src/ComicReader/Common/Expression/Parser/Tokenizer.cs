@@ -57,7 +57,7 @@ class Tokenizer
                 default:
                     break;
             }
-            throw new ExpressionException($"Unexpected character '{currentChar}' at position {index}.");
+            throw new ExpressionException($"Unexpected character '{currentChar}' at position {index}");
         }
     }
 
@@ -71,7 +71,7 @@ class Tokenizer
             {
                 if (state == 0)
                 {
-                    throw new ExpressionException("Unexpected end of expression while parsing identifier.");
+                    throw new ExpressionException($"Unexpected end of expression while parsing '{nameBuilder}'");
                 }
                 tokens.AddLast(ExpressionToken.CreateRawName(nameBuilder.ToString()));
                 break;
@@ -90,7 +90,7 @@ class Tokenizer
                     else if (currentChar == '(')
                     {
                         string name = nameBuilder.ToString();
-                        if (CompilerConstants.IsKeyword(name))
+                        if (ParserUtils.IsKeyword(name))
                         {
                             tokens.AddLast(ExpressionToken.CreateRawName(name));
                         }
@@ -107,7 +107,7 @@ class Tokenizer
                         return;
                     }
                 default:
-                    throw new ExpressionException($"Invalid state {state} while parsing identifier.");
+                    throw new ExpressionException($"Invalid state {state} while parsing '{nameBuilder}'");
             }
             nameBuilder.Append(currentChar);
             index++;
@@ -124,7 +124,7 @@ class Tokenizer
             {
                 if (state == 0)
                 {
-                    throw new ExpressionException("Unexpected end of expression while parsing number.");
+                    throw new ExpressionException($"Unexpected end of expression while parsing '{numberBuilder}'");
                 }
                 if (state == 1)
                 {
@@ -152,10 +152,14 @@ class Tokenizer
                         state = 2;
                         break;
                     }
-                    else
+                    else if (!IsNamingCharacter(currentChar))
                     {
                         tokens.AddLast(ExpressionToken.CreateFinalNumberLiteralInteger(numberBuilder.ToString()));
                         return;
+                    }
+                    else
+                    {
+                        throw new ExpressionException($"Unexpected character '{currentChar}' after '{numberBuilder}'");
                     }
                 case 2:
                     if (IsDigit(currentChar))
@@ -164,15 +168,19 @@ class Tokenizer
                     }
                     else if (currentChar == '.')
                     {
-                        throw new ExpressionException($"Unexpected character '{currentChar}' after decimal point in number.");
+                        throw new ExpressionException($"Unexpected character '{currentChar}' after '{numberBuilder}'");
                     }
-                    else
+                    else if (!IsNamingCharacter(currentChar))
                     {
                         tokens.AddLast(ExpressionToken.CreateFinalNumberLiteralDecimal(numberBuilder.ToString()));
                         return;
                     }
+                    else
+                    {
+                        throw new ExpressionException($"Unexpected character '{currentChar}' after '{numberBuilder}'");
+                    }
                 default:
-                    throw new ExpressionException($"Invalid state {state} while parsing number.");
+                    throw new ExpressionException($"Invalid state {state} while parsing '{numberBuilder}'");
             }
             numberBuilder.Append(currentChar);
             index++;
@@ -188,7 +196,7 @@ class Tokenizer
         {
             if (index >= expression.Length)
             {
-                throw new ExpressionException("Unexpected end of expression while parsing quoted string.");
+                throw new ExpressionException($"Unexpected end of expression while parsing quoted string '{stringBuilder}'");
             }
             char currentChar = expression[index];
             switch (state)
@@ -213,7 +221,7 @@ class Tokenizer
                     state = 0; // Reset to normal state
                     break;
                 default:
-                    throw new ExpressionException($"Invalid state {state} while parsing quoted string.");
+                    throw new ExpressionException($"Invalid state {state} while parsing quoted string '{stringBuilder}'");
             }
             index++;
         }
@@ -229,7 +237,7 @@ class Tokenizer
             {
                 if (state == 0)
                 {
-                    throw new ExpressionException("Unexpected end of expression while parsing angled quote.");
+                    throw new ExpressionException($"Unexpected end of expression while parsing '{nameBuilder}'");
                 }
                 tokens.AddLast(ExpressionToken.CreateRawOperator(nameBuilder.ToString()));
                 break;
@@ -255,7 +263,7 @@ class Tokenizer
                     tokens.AddLast(ExpressionToken.CreateRawOperator(nameBuilder.ToString()));
                     return;
                 default:
-                    throw new ExpressionException($"Invalid state {state} while parsing angled quoted string.");
+                    throw new ExpressionException($"Invalid state {state} while parsing '{nameBuilder}'");
             }
             nameBuilder.Append(currentChar);
             index++;
@@ -274,7 +282,7 @@ class Tokenizer
             {
                 if (state == 0)
                 {
-                    throw new ExpressionException("Unexpected end of expression while parsing variable.");
+                    throw new ExpressionException($"Unexpected end of expression while parsing variable '{nameBuilder}'");
                 }
                 if (state == 1)
                 {
@@ -300,7 +308,7 @@ class Tokenizer
                     }
                     else
                     {
-                        throw new ExpressionException($"Unexpected character '{currentChar}' after '%'.");
+                        throw new ExpressionException($"Unexpected character '{currentChar}' after '{nameBuilder}'");
                     }
                     break;
                 case 1:
@@ -327,7 +335,7 @@ class Tokenizer
                     }
                     else if (IsNamingCharacter(currentChar) || IsDigit(currentChar))
                     {
-                        throw new ExpressionException($"Unexpected character '{currentChar}' after '\"'.");
+                        throw new ExpressionException($"Unexpected character '{currentChar}' after '{nameBuilder}.'");
                     }
                     else
                     {
@@ -335,7 +343,7 @@ class Tokenizer
                     }
                     break;
                 default:
-                    throw new ExpressionException($"Invalid state {state} while parsing variable.");
+                    throw new ExpressionException($"Invalid state {state} while parsing variable '{nameBuilder}'");
             }
             index++;
         }
