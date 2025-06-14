@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -23,22 +24,31 @@ internal class EnvironmentProvider
         _launchTime = DateTimeOffset.Now;
     }
 
-    public void Initialize()
+    public void AppendEnvironmentTags(Dictionary<string, string> tags)
     {
+        tags["version-name"] = GetVersionName();
+        tags["os-build"] = DeviceInformationHelper.Instance.GetOsBuild();
+        tags["os-version"] = DeviceInformationHelper.Instance.GetOsVersion();
+        tags["lang-installed"] = CultureInfo.InstalledUICulture.Name;
+        tags["lang-current"] = CultureInfo.CurrentUICulture.Name;
+        tags["device-model"] = DeviceInformationHelper.Instance.GetDeviceModel();
+        tags["oem-name"] = DeviceInformationHelper.Instance.GetDeviceOemName();
+        tags["screen-size"] = DeviceInformationHelper.Instance.GetScreenSize();
+        tags["processor-count"] = Environment.ProcessorCount.ToString();
     }
 
     public void AppendDebugText(StringBuilder sb)
     {
-        sb.SafeAppend("OS build", () => DeviceInformationHelper.Instance.GetOsBuild());
-        sb.SafeAppend("OS version", () => DeviceInformationHelper.Instance.GetOsVersion());
+        sb.SafeAppend("OS build", DeviceInformationHelper.Instance.GetOsBuild);
+        sb.SafeAppend("OS version", DeviceInformationHelper.Instance.GetOsVersion);
         sb.SafeAppend("OS architecture", () => RuntimeInformation.OSArchitecture);
         sb.SafeAppend("Installed language", () => CultureInfo.InstalledUICulture.Name);
         sb.SafeAppend("Current language", () => CultureInfo.CurrentUICulture.Name);
         sb.SafeAppend("Machine name", () => Environment.MachineName);
-        sb.SafeAppend("Device model", () => DeviceInformationHelper.Instance.GetDeviceModel());
-        sb.SafeAppend("OEM name", () => DeviceInformationHelper.Instance.GetDeviceOemName());
+        sb.SafeAppend("Device model", DeviceInformationHelper.Instance.GetDeviceModel);
+        sb.SafeAppend("OEM name", DeviceInformationHelper.Instance.GetDeviceOemName);
         sb.SafeAppend("Processor count", () => Environment.ProcessorCount);
-        sb.SafeAppend("Screen size", () => DeviceInformationHelper.Instance.GetScreenSize());
+        sb.SafeAppend("Screen size", DeviceInformationHelper.Instance.GetScreenSize);
         sb.SafeAppend("Version name", GetVersionName);
         sb.SafeAppend("Build type", () => DebugUtils.DebugBuild ? "Debug" : "Release");
         sb.SafeAppend("Process architecture", () => RuntimeInformation.ProcessArchitecture);
