@@ -618,7 +618,7 @@
   <data name="Title2String" xml:space="preserve">
     <value>标题 2</value>
   </data>
-<data name="TotalComics" xml:space="preserve">
+  <data name="TotalComics" xml:space="preserve">
     <value>漫画总数：</value>
   </data>
   <data name="TransitionAnimation.Text" xml:space="preserve">

@@ -310,7 +310,7 @@
                                 IsCompact="False"
                                 Unchecked="OnFavoritesUnchecked">
                                 <AppBarToggleButton.Content>
-                                    <FontIcon Glyph="&#xE735;" />
+                                    <FontIcon Glyph="&#xE734;" />
                                 </AppBarToggleButton.Content>
                             </AppBarToggleButton>
                         </StackPanel>

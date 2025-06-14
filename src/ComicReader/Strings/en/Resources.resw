@@ -618,7 +618,7 @@ Category2: tag4/tag5
   <data name="Title2String" xml:space="preserve">
     <value>Title 2</value>
   </data>
-<data name="TotalComics" xml:space="preserve">
+  <data name="TotalComics" xml:space="preserve">
     <value>Total comics: </value>
   </data>
   <data name="TransitionAnimation.Text" xml:space="preserve">
