@@ -53,6 +53,11 @@ internal sealed partial class DevToolsPage : BasePage
         _ = Launcher.LaunchFolderAsync(ApplicationData.Current.LocalFolder);
     }
 
+    private void CrashAppButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        throw new InvalidOperationException();
+    }
+
     private void OnCommonConfigsApplyClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
         C0.Run(async () =>

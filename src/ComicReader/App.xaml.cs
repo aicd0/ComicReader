@@ -17,6 +17,8 @@ using ComicReader.SDK.Common.ServiceManagement;
 using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppLifecycle;
 
+using Sentry;
+
 using Windows.ApplicationModel.Activation;
 using Windows.Storage;
 
@@ -30,7 +32,7 @@ public partial class App : Application
 
     public App()
     {
-        InitializationBeforeCreate();
+        InitializeBeforeAppCreate();
         InitializeComponent();
     }
 
@@ -53,7 +55,7 @@ public partial class App : Application
             return;
         }
 
-        await InitializationOnLaunch();
+        await InitializeOnAppLaunch();
 
         // Initialize MainWindow here
         var window = new MainWindow("");
@@ -79,28 +81,50 @@ public partial class App : Application
         }
     }
 
-    private void InitializationBeforeCreate()
+    private void InitializeBeforeAppCreate()
     {
+        // Initialize crash handler
         UnhandledException += (_, e) =>
         {
+            if (Properties.SentryDsn.Length > 0)
+            {
+                SentrySdk.CaptureException(e.Exception);
+            }
             CrashHandler.OnUnhandledException(e.Exception);
         };
 
+        // Initialize Sentry
+        if (Properties.SentryDsn.Length > 0)
+        {
+            SentrySdk.Init(o =>
+            {
+                o.Dsn = Properties.SentryDsn;
+                EnvironmentProvider.Instance.AppendEnvironmentTags(o.DefaultTags);
+            });
+        }
+
+        // Register services
         ServiceManager.RegisterService<IApplicationService>(new ApplicationService());
         ServiceManager.RegisterService<IDebugService>(new DebugService());
 
-        EnvironmentProvider.Instance.Initialize();
-
+        // Apply the app theme
         ApplyAppTheme();
     }
 
-    private async Task InitializationOnLaunch()
+    private async Task InitializeOnAppLaunch()
     {
+        // Initialize debug switches
         await DebugSwitchModel.Instance.Initialize();
+
+        // Initialize logger
         Logger.Initialize();
+
+        // Initialize databases
         await XmlDatabaseManager.Initialize();
         SqlDatabaseManager.Initialize();
         await DatabaseUpgradeManager.Instance.UpgradeDatabase();
+
+        // Update comic library
         ComicModel.UpdateAllComics("DatabaseManager#init", lazy: true);
     }
 
@@ -112,5 +136,4 @@ public partial class App : Application
             Current.RequestedTheme = (ApplicationTheme)(int)appearanceSetting;
         }
     }
-
 }
