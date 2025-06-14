@@ -183,6 +183,9 @@
   <data name="ArchiveEncoding.Text" xml:space="preserve">
     <value>Archive encoding</value>
   </data>
+  <data name="Ascending" xml:space="preserve">
+    <value>Ascending</value>
+  </data>
   <data name="BackButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>Go back</value>
   </data>
@@ -190,6 +193,9 @@
     <value>Calculating...</value>
   </data>
   <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="CancelButton.Content" xml:space="preserve">
     <value>Cancel</value>
   </data>
   <data name="ChooseLocationButton.Content" xml:space="preserve">
@@ -240,6 +246,12 @@
   <data name="DefaultTags" xml:space="preserve">
     <value>Default tags</value>
   </data>
+  <data name="DeleteButton.Content" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="Descending" xml:space="preserve">
+    <value>Descending</value>
+  </data>
   <data name="Description.Text" xml:space="preserve">
     <value>Description:</value>
   </data>
@@ -264,8 +276,23 @@
   <data name="EditInfoButton.Label" xml:space="preserve">
     <value>Edit</value>
   </data>
+  <data name="ExpressionAnd" xml:space="preserve">
+    <value>And</value>
+  </data>
+  <data name="ExpressionIn" xml:space="preserve">
+    <value>Contained by</value>
+  </data>
   <data name="ExpressionInvalid" xml:space="preserve">
     <value>The expression is invalid ($reason)</value>
+  </data>
+  <data name="ExpressionNot" xml:space="preserve">
+    <value>Not</value>
+  </data>
+  <data name="ExpressionOr" xml:space="preserve">
+    <value>Or</value>
+  </data>
+  <data name="ExpressionTextBlock.Text" xml:space="preserve">
+    <value>Expression</value>
   </data>
   <data name="ExpressionValid" xml:space="preserve">
     <value>SQL query: $query</value>
@@ -285,6 +312,12 @@
   <data name="FeedbackIntroduction.Text" xml:space="preserve">
     <value>Use the button below to send us suggestions or issue a bug on GitHub.</value>
   </data>
+  <data name="FilterSettingsButton.Text" xml:space="preserve">
+    <value>Filter settings</value>
+  </data>
+  <data name="FilterSettingsDialog.Title" xml:space="preserve">
+    <value>Filter settings</value>
+  </data>
   <data name="FilteredBy" xml:space="preserve">
     <value>$count filter(s) applied</value>
   </data>
@@ -299,6 +332,9 @@
   </data>
   <data name="ForwardButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>Go forward</value>
+  </data>
+  <data name="Group" xml:space="preserve">
+    <value>Group</value>
   </data>
   <data name="Help" xml:space="preserve">
     <value>Help</value>
@@ -344,6 +380,12 @@
   </data>
   <data name="KeyboardShortcutsExpander.Header" xml:space="preserve">
     <value>Keyboard shortcuts</value>
+  </data>
+  <data name="LanguageExpander.Detail" xml:space="preserve">
+    <value>Select which language for the app to display</value>
+  </data>
+  <data name="LanguageExpander.Header" xml:space="preserve">
+    <value>Language</value>
   </data>
   <data name="LastReadTime" xml:space="preserve">
     <value>Last read time</value>
@@ -419,6 +461,9 @@
   </data>
   <data name="MoreButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>More</value>
+  </data>
+  <data name="NameTextBlock.Text" xml:space="preserve">
+    <value>Name</value>
   </data>
   <data name="NewFolder" xml:space="preserve">
     <value>New folder</value>
@@ -498,6 +543,12 @@
   <data name="RightToLeftButton.Label" xml:space="preserve">
     <value>R to L</value>
   </data>
+  <data name="SaveAsNewButton.Content" xml:space="preserve">
+    <value>Save as new</value>
+  </data>
+  <data name="SaveButton.Content" xml:space="preserve">
+    <value>Save</value>
+  </data>
   <data name="SaveHistory.Text" xml:space="preserve">
     <value>Save browsing history</value>
   </data>
@@ -521,6 +572,9 @@
   </data>
   <data name="ShowHiddenComicButton.Content" xml:space="preserve">
     <value>Show hidden comics</value>
+  </data>
+  <data name="Sort" xml:space="preserve">
+    <value>Sort</value>
   </data>
   <data name="Statistics.Text" xml:space="preserve">
     <value>Statistics</value>
@@ -555,10 +609,16 @@ Category2: tag4/tag5
   <data name="Title1.Text" xml:space="preserve">
     <value>Title 1:</value>
   </data>
+  <data name="Title1String" xml:space="preserve">
+    <value>Title 1</value>
+  </data>
   <data name="Title2.Text" xml:space="preserve">
     <value>Title 2:</value>
   </data>
-  <data name="TotalComics" xml:space="preserve">
+  <data name="Title2String" xml:space="preserve">
+    <value>Title 2</value>
+  </data>
+<data name="TotalComics" xml:space="preserve">
     <value>Total comics: </value>
   </data>
   <data name="TransitionAnimation.Text" xml:space="preserve">
@@ -579,19 +639,25 @@ Category2: tag4/tag5
   <data name="Untitled" xml:space="preserve">
     <value>Untitled</value>
   </data>
+  <data name="UseSystemLanguage" xml:space="preserve">
+    <value>Use system language</value>
+  </data>
   <data name="VerticalButton.Label" xml:space="preserve">
     <value>Vertical</value>
+  </data>
+  <data name="ViewType" xml:space="preserve">
+    <value>View</value>
+  </data>
+  <data name="ViewTypeLarge" xml:space="preserve">
+    <value>Large</value>
+  </data>
+  <data name="ViewTypeMedium" xml:space="preserve">
+    <value>Medium</value>
   </data>
   <data name="Warning" xml:space="preserve">
     <value>Warning</value>
   </data>
   <data name="WatchingFolders.Text" xml:space="preserve">
     <value>Right now, we're watching these folders:</value>
-  </data>
-  <data name="LanguageExpander.Header" xml:space="preserve">
-    <value>Language</value>
-  </data>
-  <data name="LanguageExpander.Detail" xml:space="preserve">
-    <value>Select which language for the app to display</value>
   </data>
 </root>

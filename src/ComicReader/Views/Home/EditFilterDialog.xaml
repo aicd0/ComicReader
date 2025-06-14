@@ -8,7 +8,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
     xmlns:vm="using:ComicReader.ViewModels"
-    Title="Filter settings"
+    x:Uid="FilterSettingsDialog"
     Loaded="ContentDialog_Loaded"
     mc:Ignorable="d">
 
@@ -27,12 +27,12 @@
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
             <TextBlock
+                x:Uid="NameTextBlock"
                 Grid.Row="0"
                 Grid.Column="0"
                 Margin="0,7,0,0"
                 HorizontalAlignment="Right"
-                VerticalAlignment="Top"
-                Text="Name" />
+                VerticalAlignment="Top" />
             <TextBox
                 x:Name="NameTextBox"
                 Grid.Row="0"
@@ -40,12 +40,12 @@
                 TextChanged="NameTextBox_TextChanged"
                 TextWrapping="Wrap" />
             <TextBlock
+                x:Uid="ExpressionTextBlock"
                 Grid.Row="2"
                 Grid.Column="0"
                 Margin="0,7,0,0"
                 HorizontalAlignment="Right"
-                VerticalAlignment="Top"
-                Text="Expression" />
+                VerticalAlignment="Top" />
             <TextBox
                 x:Name="ExpressionTextBox"
                 Grid.Row="2"
@@ -100,23 +100,27 @@
             </Grid.ColumnDefinitions>
             <Button
                 x:Name="SaveButton"
+                x:Uid="SaveButton"
                 Grid.Column="0"
                 HorizontalAlignment="Stretch"
                 Click="SaveButton_Click"
                 Content="Save" />
             <Button
                 x:Name="SaveAsNewButton"
+                x:Uid="SaveAsNewButton"
                 Grid.Column="2"
                 HorizontalAlignment="Stretch"
                 Click="SaveAsNewButton_Click"
                 Content="Save as new" />
             <Button
                 x:Name="DeleteButton"
+                x:Uid="DeleteButton"
                 Grid.Column="4"
                 HorizontalAlignment="Stretch"
                 Click="DeleteButton_Click"
                 Content="Delete" />
             <Button
+                x:Uid="CancelButton"
                 Grid.Column="6"
                 HorizontalAlignment="Stretch"
                 Click="CancelButton_Click"

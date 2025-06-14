@@ -375,7 +375,7 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
         {
             string currentLanguage = model.Language;
             List<Tuple<string, string>> languages = [
-                new("Use system language", ""),
+                new(StringResourceProvider.UseSystemLanguage, ""),
                 new("English", "en"),
                 new("简体中文", "zh-CN"),
             ];

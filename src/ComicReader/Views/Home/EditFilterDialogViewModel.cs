@@ -190,28 +190,28 @@ internal partial class EditFilterDialogViewModel : INotifyPropertyChanged
     {
         {
             ObservableCollection<TagViewModel> buttons = [];
-            buttons.Add(new() { Tag = "and", ItemHandler = CreateExpressionButtonHandler("and ") });
-            buttons.Add(new() { Tag = "or", ItemHandler = CreateExpressionButtonHandler("or ") });
-            buttons.Add(new() { Tag = "not", ItemHandler = CreateExpressionButtonHandler("not ") });
+            buttons.Add(new() { Tag = StringResourceProvider.ExpressionAnd, ItemHandler = CreateExpressionButtonHandler("and ") });
+            buttons.Add(new() { Tag = StringResourceProvider.ExpressionOr, ItemHandler = CreateExpressionButtonHandler("or ") });
+            buttons.Add(new() { Tag = StringResourceProvider.ExpressionNot, ItemHandler = CreateExpressionButtonHandler("not ") });
             buttons.Add(new() { Tag = "=", ItemHandler = CreateExpressionButtonHandler("= ") });
             buttons.Add(new() { Tag = ">", ItemHandler = CreateExpressionButtonHandler("> ") });
             buttons.Add(new() { Tag = "<", ItemHandler = CreateExpressionButtonHandler("< ") });
             buttons.Add(new() { Tag = ">=", ItemHandler = CreateExpressionButtonHandler(">= ") });
             buttons.Add(new() { Tag = "<=", ItemHandler = CreateExpressionButtonHandler("<= ") });
-            buttons.Add(new() { Tag = "in", ItemHandler = CreateExpressionButtonHandler("in ()", -2) });
-            buttons.Add(new() { Tag = "Title", ItemHandler = CreateExpressionButtonHandler("%title") });
-            buttons.Add(new() { Tag = "Rating", ItemHandler = CreateExpressionButtonHandler("%rating") });
-            buttons.Add(new() { Tag = "Unread", ItemHandler = CreateExpressionButtonHandler($"%completion_state = {(int)ComicData.CompletionStateEnum.NotStarted}") });
-            buttons.Add(new() { Tag = "Reading", ItemHandler = CreateExpressionButtonHandler($"%completion_state = {(int)ComicData.CompletionStateEnum.Started}") });
-            buttons.Add(new() { Tag = "Completed", ItemHandler = CreateExpressionButtonHandler($"%completion_state = {(int)ComicData.CompletionStateEnum.Completed}") });
-            buttons.Add(new() { Tag = "Progress", ItemHandler = CreateExpressionButtonHandler("%progress") });
-            buttons.Add(new() { Tag = "Title 1", ItemHandler = CreateExpressionButtonHandler("%title1") });
-            buttons.Add(new() { Tag = "Title 2", ItemHandler = CreateExpressionButtonHandler("%title2") });
-            buttons.Add(new() { Tag = "Tag", ItemHandler = CreateExpressionButtonHandler("%tag") });
+            buttons.Add(new() { Tag = StringResourceProvider.ExpressionIn, ItemHandler = CreateExpressionButtonHandler("in ()", -2) });
+            buttons.Add(new() { Tag = StringResourceProvider.Title, ItemHandler = CreateExpressionButtonHandler("%title") });
+            buttons.Add(new() { Tag = StringResourceProvider.Rating, ItemHandler = CreateExpressionButtonHandler("%rating") });
+            buttons.Add(new() { Tag = StringResourceProvider.Unread, ItemHandler = CreateExpressionButtonHandler($"%completion_state = {(int)ComicData.CompletionStateEnum.NotStarted}") });
+            buttons.Add(new() { Tag = StringResourceProvider.Reading, ItemHandler = CreateExpressionButtonHandler($"%completion_state = {(int)ComicData.CompletionStateEnum.Started}") });
+            buttons.Add(new() { Tag = StringResourceProvider.Finished, ItemHandler = CreateExpressionButtonHandler($"%completion_state = {(int)ComicData.CompletionStateEnum.Completed}") });
+            buttons.Add(new() { Tag = StringResourceProvider.Progress, ItemHandler = CreateExpressionButtonHandler("%progress") });
+            buttons.Add(new() { Tag = StringResourceProvider.Title1, ItemHandler = CreateExpressionButtonHandler("%title1") });
+            buttons.Add(new() { Tag = StringResourceProvider.Title2, ItemHandler = CreateExpressionButtonHandler("%title2") });
+            buttons.Add(new() { Tag = StringResourceProvider.Tag, ItemHandler = CreateExpressionButtonHandler("%tag") });
             List<string> tagCategories = await ComicModel.GetAllTagCategories();
             foreach (string category in tagCategories)
             {
-                buttons.Add(new() { Tag = $"Tag.{category}", ItemHandler = CreateExpressionButtonHandler($"%tag.\"{ParserUtils.EscapeString(category)}\"") });
+                buttons.Add(new() { Tag = $"{StringResourceProvider.Tag}.{category}", ItemHandler = CreateExpressionButtonHandler($"%tag.\"{ParserUtils.EscapeString(category)}\"") });
             }
             ExpressionButtons = buttons;
         }

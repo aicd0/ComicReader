@@ -183,6 +183,9 @@
   <data name="ArchiveEncoding.Text" xml:space="preserve">
     <value>压缩文件编码</value>
   </data>
+  <data name="Ascending" xml:space="preserve">
+    <value>升序</value>
+  </data>
   <data name="BackButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>返回</value>
   </data>
@@ -190,6 +193,9 @@
     <value>计算中...</value>
   </data>
   <data name="Cancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
+  <data name="CancelButton.Content" xml:space="preserve">
     <value>取消</value>
   </data>
   <data name="ChooseLocationButton.Content" xml:space="preserve">
@@ -240,6 +246,12 @@
   <data name="DefaultTags" xml:space="preserve">
     <value>默认标签</value>
   </data>
+  <data name="DeleteButton.Content" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="Descending" xml:space="preserve">
+    <value>降序</value>
+  </data>
   <data name="Description.Text" xml:space="preserve">
     <value>描述：</value>
   </data>
@@ -264,8 +276,23 @@
   <data name="EditInfoButton.Label" xml:space="preserve">
     <value>编辑</value>
   </data>
+  <data name="ExpressionAnd" xml:space="preserve">
+    <value>与</value>
+  </data>
+  <data name="ExpressionIn" xml:space="preserve">
+    <value>包含于</value>
+  </data>
   <data name="ExpressionInvalid" xml:space="preserve">
     <value>表达式不合法（$reason）</value>
+  </data>
+  <data name="ExpressionNot" xml:space="preserve">
+    <value>非</value>
+  </data>
+  <data name="ExpressionOr" xml:space="preserve">
+    <value>或</value>
+  </data>
+  <data name="ExpressionTextBlock.Text" xml:space="preserve">
+    <value>表达式</value>
   </data>
   <data name="ExpressionValid" xml:space="preserve">
     <value>SQL查询语句：$query</value>
@@ -285,6 +312,12 @@
   <data name="FeedbackIntroduction.Text" xml:space="preserve">
     <value>您可以通过以下按钮在GitHub上向我们提交建议或报告问题。</value>
   </data>
+  <data name="FilterSettingsButton.Text" xml:space="preserve">
+    <value>过滤器设置</value>
+  </data>
+  <data name="FilterSettingsDialog.Title" xml:space="preserve">
+    <value>过滤器设置</value>
+  </data>
   <data name="FilteredBy" xml:space="preserve">
     <value>$count个过滤条件</value>
   </data>
@@ -299,6 +332,9 @@
   </data>
   <data name="ForwardButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>前进</value>
+  </data>
+  <data name="Group" xml:space="preserve">
+    <value>分组</value>
   </data>
   <data name="Help" xml:space="preserve">
     <value>帮助</value>
@@ -344,6 +380,12 @@
   </data>
   <data name="KeyboardShortcutsExpander.Header" xml:space="preserve">
     <value>热键</value>
+  </data>
+  <data name="LanguageExpander.Detail" xml:space="preserve">
+    <value>选择应用显示的语言</value>
+  </data>
+  <data name="LanguageExpander.Header" xml:space="preserve">
+    <value>语言</value>
   </data>
   <data name="LastReadTime" xml:space="preserve">
     <value>上次阅读时间</value>
@@ -419,6 +461,9 @@
   </data>
   <data name="MoreButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>更多</value>
+  </data>
+  <data name="NameTextBlock.Text" xml:space="preserve">
+    <value>名称</value>
   </data>
   <data name="NewFolder" xml:space="preserve">
     <value>新文件夹</value>
@@ -498,6 +543,12 @@
   <data name="RightToLeftButton.Label" xml:space="preserve">
     <value>自右向左</value>
   </data>
+  <data name="SaveAsNewButton.Content" xml:space="preserve">
+    <value>保存为新配置</value>
+  </data>
+  <data name="SaveButton.Content" xml:space="preserve">
+    <value>保存</value>
+  </data>
   <data name="SaveHistory.Text" xml:space="preserve">
     <value>记录您的浏览历史</value>
   </data>
@@ -521,6 +572,9 @@
   </data>
   <data name="ShowHiddenComicButton.Content" xml:space="preserve">
     <value>查看隐藏漫画</value>
+  </data>
+  <data name="Sort" xml:space="preserve">
+    <value>排序</value>
   </data>
   <data name="Statistics.Text" xml:space="preserve">
     <value>统计信息</value>
@@ -555,10 +609,16 @@
   <data name="Title1.Text" xml:space="preserve">
     <value>标题 1:</value>
   </data>
+  <data name="Title1String" xml:space="preserve">
+    <value>标题 1</value>
+  </data>
   <data name="Title2.Text" xml:space="preserve">
     <value>标题 2:</value>
   </data>
-  <data name="TotalComics" xml:space="preserve">
+  <data name="Title2String" xml:space="preserve">
+    <value>标题 2</value>
+  </data>
+<data name="TotalComics" xml:space="preserve">
     <value>漫画总数：</value>
   </data>
   <data name="TransitionAnimation.Text" xml:space="preserve">
@@ -579,19 +639,25 @@
   <data name="Untitled" xml:space="preserve">
     <value>未命名</value>
   </data>
+  <data name="UseSystemLanguage" xml:space="preserve">
+    <value>使用系统语言</value>
+  </data>
   <data name="VerticalButton.Label" xml:space="preserve">
     <value>纵向</value>
+  </data>
+  <data name="ViewType" xml:space="preserve">
+    <value>视图</value>
+  </data>
+  <data name="ViewTypeLarge" xml:space="preserve">
+    <value>较大</value>
+  </data>
+  <data name="ViewTypeMedium" xml:space="preserve">
+    <value>适中</value>
   </data>
   <data name="Warning" xml:space="preserve">
     <value>警告</value>
   </data>
   <data name="WatchingFolders.Text" xml:space="preserve">
     <value>目前，您的仓库包含如下文件夹：</value>
-  </data>
-  <data name="LanguageExpander.Header" xml:space="preserve">
-    <value>语言</value>
-  </data>
-  <data name="LanguageExpander.Detail" xml:space="preserve">
-    <value>选择应用显示的语言</value>
   </data>
 </root>
