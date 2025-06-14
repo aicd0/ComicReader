@@ -1,48 +1,34 @@
-// Copyright (c) aicd0. All rights reserved.
+﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Globalization;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
-using ComicReader.Common.AppEnvironment;
-using ComicReader.Common.PageBase;
 using ComicReader.Common.Threading;
-using ComicReader.Data;
 using ComicReader.Data.Legacy;
 using ComicReader.Data.Models;
 using ComicReader.Data.Models.Comic;
-using ComicReader.Data.Tables;
-using ComicReader.Helpers.Navigation;
 using ComicReader.SDK.Common.DebugTools;
 using ComicReader.SDK.Common.Threading;
 using ComicReader.SDK.Common.Utils;
-using ComicReader.SDK.Data.SqlHelpers;
-using ComicReader.Views.Main;
 
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 
+using Windows.Globalization;
 using Windows.Storage;
 
 namespace ComicReader.Views.Settings;
 
-public enum AppearanceSetting
+public partial class SettingPageViewModel : INotifyPropertyChanged
 {
-    Light,
-    Dark,
-    UseSystemSetting,
-    None
-}
+    private const string TAG = nameof(SettingPageViewModel);
 
-public partial class SettingsPageViewModel : INotifyPropertyChanged
-{
     public event PropertyChangedEventHandler? PropertyChanged;
 
     private AppSettingsModel.ExternalModel? _settingsModel;
@@ -89,6 +75,28 @@ public partial class SettingsPageViewModel : INotifyPropertyChanged
                     AppModel.DefaultArchiveCodePage = Encodings[selectedIndex].Item2;
                 }
             }
+        }
+    }
+
+    private List<Tuple<string, string>> _languages = [];
+    public List<Tuple<string, string>> Languages
+    {
+        get => _languages;
+        set
+        {
+            _languages = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Languages)));
+        }
+    }
+
+    private int _languageIndex = 0;
+    public int LanguageIndex
+    {
+        get => _languageIndex;
+        set
+        {
+            _languageIndex = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LanguageIndex)));
         }
     }
 
@@ -210,19 +218,25 @@ public partial class SettingsPageViewModel : INotifyPropertyChanged
         }
     }
 
-    private bool _advancedDebugMode;
-    public bool AdvancedDebugMode
+    private bool _languageChanged;
+    public bool LanguageChanged
     {
-        get => _advancedDebugMode;
+        get => _languageChanged;
         set
         {
-            _advancedDebugMode = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(AdvancedDebugMode)));
+            _languageChanged = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LanguageChanged)));
+        }
+    }
 
-            if (!Updating)
-            {
-                DebugUtils.DebugMode = value;
-            }
+    private bool _debugMode;
+    public bool DebugMode
+    {
+        get => _debugMode;
+        set
+        {
+            _debugMode = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DebugMode)));
         }
     }
 
@@ -263,8 +277,24 @@ public partial class SettingsPageViewModel : INotifyPropertyChanged
     {
         C0.Run(async () =>
         {
+            Updating = true;
+
+            await XmlDatabaseManager.WaitLock();
+            IsClearHistoryEnabled = XmlDatabase.History.Items.Count > 0;
+            XmlDatabaseManager.ReleaseLock();
+
+            TransitionAnimation = AppModel.TransitionAnimation;
+            HistorySaveBrowsingHistory = AppModel.SaveBrowsingHistory;
+            AntiAliasingEnabled = AppModel.AntiAliasingEnabled;
+            DebugMode = DebugUtils.DebugMode;
+
             ApplySettingsModel(await GetSettingsModelAsync());
-            InitializeAppearance();
+            UpdateAppearance();
+            await UpdateEncodings();
+            UpdateCacheSize();
+            UpdateRescanStatus();
+
+            Updating = false;
         });
     }
 
@@ -276,6 +306,53 @@ public partial class SettingsPageViewModel : INotifyPropertyChanged
             AppSettingsModel.ExternalModel model = await GetSettingsModelAsync();
             model.RemoveUnreachableComics = removeUnreachableComics;
             await AppSettingsModel.Instance.UpdateModel(model);
+        });
+    }
+
+    public void SelectLanguage(int index)
+    {
+        if (index == _languageIndex)
+        {
+            return;
+        }
+        if (index >= Languages.Count)
+        {
+            Logger.AssertNotReachHere("B1015E06897635CE");
+            return;
+        }
+        string selectedLanguage = Languages[index].Item2;
+        _languageIndex = index;
+        LanguageChanged = true;
+
+        try
+        {
+            ApplicationLanguages.PrimaryLanguageOverride = selectedLanguage;
+        }
+        catch (Exception ex)
+        {
+            Logger.F(TAG, ex);
+        }
+
+        C0.Run(async () =>
+        {
+            AppSettingsModel.ExternalModel model = await GetSettingsModelAsync();
+            model.Language = selectedLanguage;
+            await AppSettingsModel.Instance.UpdateModel(model);
+        });
+    }
+
+    public void ClearCache()
+    {
+        IsClearingCache = true;
+        TaskDispatcher.DefaultQueue.Submit("ClearCache", delegate
+        {
+            ClearCacheInternal();
+            string size = GetCacheSize();
+            _ = MainThreadUtils.RunInMainThread(() =>
+            {
+                IsClearingCache = false;
+                CacheSize = size;
+            });
         });
     }
 
@@ -294,9 +371,34 @@ public partial class SettingsPageViewModel : INotifyPropertyChanged
     private void ApplySettingsModel(AppSettingsModel.ExternalModel model)
     {
         RemoveUnreachableComics = model.RemoveUnreachableComics;
+
+        {
+            string currentLanguage = model.Language;
+            List<Tuple<string, string>> languages = [
+                new("Use system language", ""),
+                new("English", "en"),
+                new("简体中文", "zh-CN"),
+            ];
+            languages.Sort((x, y) => x.Item2.CompareTo(y.Item2));
+            int selectedIndex = -1;
+            for (int i = 0; i < languages.Count; i++)
+            {
+                if (currentLanguage == languages[i].Item2)
+                {
+                    selectedIndex = i;
+                    break;
+                }
+            }
+            if (selectedIndex < 0)
+            {
+                selectedIndex = 0;
+            }
+            Languages = languages;
+            LanguageIndex = selectedIndex;
+        }
     }
 
-    private void InitializeAppearance()
+    private void UpdateAppearance()
     {
         object appearanceSetting = ApplicationData.Current.LocalSettings.Values[GlobalConstants.LOCAL_SETTINGS_KEY_APPEARANCE];
         AppearanceSetting appearance;
@@ -321,6 +423,53 @@ public partial class SettingsPageViewModel : INotifyPropertyChanged
         AppearanceUseSystemSettingChecked = appearance == AppearanceSetting.UseSystemSetting;
     }
 
+    private async Task UpdateEncodings()
+    {
+        ReadOnlyDictionary<int, Encoding> supportedEncodings = await AppInfoProvider.GetSupportedEncodings();
+        var encodings = new List<Tuple<string, int>>
+            {
+                new(StringResourceProvider.Default, -1)
+            };
+
+        int defaultCodePage = AppModel.DefaultArchiveCodePage;
+        int selectedIndex = 0;
+        foreach (Encoding info in supportedEncodings.Values)
+        {
+            string title = info.EncodingName + " [" + info.CodePage.ToString() + "]";
+            encodings.Add(new Tuple<string, int>(title, info.CodePage));
+            if (defaultCodePage == info.CodePage)
+            {
+                selectedIndex = encodings.Count - 1;
+            }
+        }
+        Encodings = encodings;
+
+        if (!supportedEncodings.ContainsKey(defaultCodePage))
+        {
+            AppModel.DefaultArchiveCodePage = -1;
+            selectedIndex = 0;
+        }
+
+        DefaultArchiveCodePageIndex = selectedIndex;
+    }
+
+    public void UpdateRescanStatus()
+    {
+        IsRescanning = ComicData.IsRescanning;
+    }
+
+    private void UpdateCacheSize()
+    {
+        TaskDispatcher.DefaultQueue.Submit("CalculateCacheSize", delegate
+        {
+            string size = GetCacheSize();
+            _ = MainThreadUtils.RunInMainThread(() =>
+            {
+                CacheSize = size;
+            });
+        });
+    }
+
     private void SaveAppearance(AppearanceSetting appearance)
     {
         AppearanceChanged = appearance != _initialAppearance;
@@ -335,316 +484,6 @@ public partial class SettingsPageViewModel : INotifyPropertyChanged
             case AppearanceSetting.UseSystemSetting:
                 ApplicationData.Current.LocalSettings.Values.Remove(appearanceKey);
                 break;
-        }
-    }
-}
-
-internal sealed partial class SettingsPage : BasePage
-{
-    private const string TAG = "SettingsPage";
-
-    private SettingsPageViewModel ViewModel { get; } = new SettingsPageViewModel();
-
-    public SettingsPage()
-    {
-        InitializeComponent();
-    }
-
-    protected override void OnStart(PageBundle bundle)
-    {
-        base.OnStart(bundle);
-        GetMainPageAbility().SetTitle(StringResourceProvider.Settings);
-        GetMainPageAbility().SetIcon(new SymbolIconSource() { Symbol = Symbol.Setting });
-    }
-
-    protected override void OnResume()
-    {
-        base.OnResume();
-        ComicData.OnUpdated += OnComicDataUpdated;
-
-        C0.Run(async delegate
-        {
-            await Update();
-        });
-    }
-
-    protected override void OnPause()
-    {
-        base.OnPause();
-        ComicData.OnUpdated -= OnComicDataUpdated;
-    }
-
-    //
-    // Events
-    //
-
-    private void OnDebugModeToggled(object sender, RoutedEventArgs e)
-    {
-        if (ViewModel.Updating)
-        {
-            return;
-        }
-
-        C0.Run(async delegate
-        {
-            if (TsDebugMode.IsOn)
-            {
-                var dialog = new ContentDialog
-                {
-                    Title = StringResourceProvider.Warning,
-                    Content = StringResourceProvider.DebugModeWarning,
-                    PrimaryButtonText = StringResourceProvider.Proceed,
-                    CloseButtonText = StringResourceProvider.Cancel,
-                    XamlRoot = XamlRoot
-                };
-                ContentDialogResult result = await dialog.ShowAsync();
-
-                if (result == ContentDialogResult.None)
-                {
-                    ViewModel.AdvancedDebugMode = false;
-                    return;
-                }
-            }
-
-            ViewModel.AdvancedDebugMode = TsDebugMode.IsOn;
-        });
-    }
-
-    private void ChooseLocationsClick(object sender, RoutedEventArgs e)
-    {
-        C0.Run(async delegate
-        {
-            var dialog = new ChooseLocationsDialog(WindowId);
-            await C0.ShowDialogAsync(dialog, XamlRoot);
-        });
-    }
-
-    private void OnHistoryClearAllClicked(object sender, RoutedEventArgs e)
-    {
-        C0.Run(async delegate
-        {
-            await HistoryDataManager.Clear(true);
-            ViewModel.IsClearHistoryEnabled = false;
-        });
-    }
-
-    private void OnSendFeedbackButtonClicked(object sender, RoutedEventArgs e)
-    {
-        C0.Run(async delegate
-        {
-            var uri = new Uri(@"https://github.com/aicd0/ComicReader/issues/new/choose");
-            await Windows.System.Launcher.LaunchUriAsync(uri);
-        });
-    }
-
-    private void ShowHiddenComicButton_Click(object sender, RoutedEventArgs e)
-    {
-        Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_SEARCH)
-            .WithParam(RouterConstants.ARG_KEYWORD, "<hidden>");
-        GetMainPageAbility().OpenInNewTab(route);
-    }
-
-    private void RemoveUnreachableCheckBox_Click(object sender, RoutedEventArgs e)
-    {
-        var checkbox = (CheckBox)sender;
-        bool isChecked = checkbox.IsChecked ?? false;
-        ViewModel.SetRemoveUnreachableComics(isChecked);
-    }
-
-    private void OnRescanFilesClicked(object sender, RoutedEventArgs e)
-    {
-        ViewModel.IsRescanning = true;
-        ComicModel.UpdateAllComics("OnRescanFilesClicked", lazy: false);
-    }
-
-    private void OnClearCacheClick(object sender, RoutedEventArgs e)
-    {
-        ViewModel.IsClearingCache = true;
-        TaskDispatcher.DefaultQueue.Submit("ClearCache", delegate
-        {
-            ClearCache();
-            string size = GetCacheSize();
-            _ = MainThreadUtils.RunInMainThread(() =>
-            {
-                ViewModel.IsClearingCache = false;
-                ViewModel.CacheSize = size;
-            });
-        });
-    }
-
-    //
-    // Data Update
-    //
-
-    private async Task Update()
-    {
-        ViewModel.Updating = true;
-
-        await XmlDatabaseManager.WaitLock();
-        ViewModel.IsClearHistoryEnabled = XmlDatabase.History.Items.Count > 0;
-        XmlDatabaseManager.ReleaseLock();
-
-        ViewModel.TransitionAnimation = AppModel.TransitionAnimation;
-        ViewModel.HistorySaveBrowsingHistory = AppModel.SaveBrowsingHistory;
-        ViewModel.AntiAliasingEnabled = AppModel.AntiAliasingEnabled;
-        ViewModel.AdvancedDebugMode = DebugUtils.DebugMode;
-
-        ViewModel.Initialize();
-        UpdateCodePages();
-        UpdateCacheSize();
-        UpdateRescanStatus();
-        UpdateStatistis();
-        UpdateFeedback();
-        UpdateAbout();
-        UpdateDebugInformation();
-
-        ViewModel.Updating = false;
-    }
-
-    private void OnComicDataUpdated()
-    {
-        _ = MainThreadUtils.RunInMainThread(delegate
-        {
-            UpdateRescanStatus();
-            UpdateStatistis();
-        });
-    }
-
-    private void UpdateCodePages()
-    {
-        C0.Run(async delegate
-        {
-            ReadOnlyDictionary<int, Encoding> supportedEncodings = await AppInfoProvider.GetSupportedEncodings();
-            var encodings = new List<Tuple<string, int>>
-            {
-                new(StringResourceProvider.Default, -1)
-            };
-
-            int defaultCodePage = AppModel.DefaultArchiveCodePage;
-            int selectedIndex = 0;
-            foreach (Encoding info in supportedEncodings.Values)
-            {
-                string title = info.EncodingName + " [" + info.CodePage.ToString() + "]";
-                encodings.Add(new Tuple<string, int>(title, info.CodePage));
-                if (defaultCodePage == info.CodePage)
-                {
-                    selectedIndex = encodings.Count - 1;
-                }
-            }
-            ViewModel.Encodings = encodings;
-
-            if (!supportedEncodings.ContainsKey(defaultCodePage))
-            {
-                AppModel.DefaultArchiveCodePage = -1;
-                selectedIndex = 0;
-            }
-
-            ViewModel.DefaultArchiveCodePageIndex = selectedIndex;
-        });
-    }
-
-    private void UpdateStatistis()
-    {
-        C0.Run(async delegate
-        {
-            long comicCount = 0;
-            SelectCommand command = new(ComicTable.Instance);
-            IReaderToken<long> comicCountToken = command.PutQueryCountAll();
-            using SelectCommand.IReader reader = await command.ExecuteAsync(SqlDatabaseManager.MainDatabase);
-            if (await reader.ReadAsync())
-            {
-                comicCount = comicCountToken.GetValue();
-            }
-            string total_comic_string = StringResourceProvider.TotalComics;
-            StatisticsTextBlock.Text = total_comic_string +
-                comicCount.ToString("#,#0", CultureInfo.InvariantCulture);
-        });
-    }
-
-    private void UpdateRescanStatus()
-    {
-        ViewModel.IsRescanning = ComicData.IsRescanning;
-    }
-
-    private void UpdateFeedback()
-    {
-        string appName = StringResourceProvider.AppDisplayName;
-        string contributionBeforeLink = StringResourceProvider.ContributionRunBeforeLink;
-        contributionBeforeLink = contributionBeforeLink.Replace("$appname", appName);
-        ContributionRunBeforeLink.Text = contributionBeforeLink;
-        ContributionRunAfterLink.Text = StringResourceProvider.ContributionRunAfterLink;
-    }
-
-    private void UpdateAbout()
-    {
-        string appName = StringResourceProvider.AppDisplayName;
-        AboutBuildVersionControl.Text = appName + " " + EnvironmentProvider.Instance.GetVersionName();
-
-        string author = "aicd0";
-        string aboutCopyright = StringResourceProvider.AboutCopyright;
-        aboutCopyright = aboutCopyright.Replace("$author", author);
-        AboutCopyrightControl.Text = aboutCopyright;
-    }
-
-    private void UpdateDebugInformation()
-    {
-        StringBuilder sb = new();
-        EnvironmentProvider.Instance.AppendDebugText(sb);
-        TbDebugInformation.Text = sb.ToString();
-    }
-
-    private void UpdateCacheSize()
-    {
-        TaskDispatcher.DefaultQueue.Submit("CalculateCacheSize", delegate
-        {
-            string size = GetCacheSize();
-            _ = MainThreadUtils.RunInMainThread(() =>
-            {
-                ViewModel.CacheSize = size;
-            });
-        });
-    }
-
-    //
-    // Utilities
-    //
-
-    private IMainPageAbility GetMainPageAbility()
-    {
-        return GetAbility<IMainPageAbility>()!;
-    }
-
-    private static void ClearCache()
-    {
-        var cacheDir = new DirectoryInfo(ApplicationData.Current.LocalCacheFolder.Path);
-
-        foreach (FileInfo file in cacheDir.GetFiles())
-        {
-            try
-            {
-                file.Delete();
-            }
-            catch (IOException e)
-            {
-                Logger.E(TAG, "ClearCache", e);
-            }
-        }
-
-        foreach (DirectoryInfo dir in cacheDir.GetDirectories())
-        {
-            if (dir.Name == "Local")
-            {
-                continue;
-            }
-
-            try
-            {
-                dir.Delete(true);
-            }
-            catch (IOException e)
-            {
-                Logger.E(TAG, "ClearCache", e);
-            }
         }
     }
 
@@ -717,5 +556,47 @@ internal sealed partial class SettingsPage : BasePage
         }
 
         return size;
+    }
+
+    private static void ClearCacheInternal()
+    {
+        var cacheDir = new DirectoryInfo(ApplicationData.Current.LocalCacheFolder.Path);
+
+        foreach (FileInfo file in cacheDir.GetFiles())
+        {
+            try
+            {
+                file.Delete();
+            }
+            catch (IOException e)
+            {
+                Logger.E(TAG, "ClearCache", e);
+            }
+        }
+
+        foreach (DirectoryInfo dir in cacheDir.GetDirectories())
+        {
+            if (dir.Name == "Local")
+            {
+                continue;
+            }
+
+            try
+            {
+                dir.Delete(true);
+            }
+            catch (IOException e)
+            {
+                Logger.E(TAG, "ClearCache", e);
+            }
+        }
+    }
+
+    public enum AppearanceSetting
+    {
+        Light,
+        Dark,
+        UseSystemSetting,
+        None
     }
 }

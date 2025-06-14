@@ -107,18 +107,18 @@ public partial class App : Application
         ServiceManager.RegisterService<IApplicationService>(new ApplicationService());
         ServiceManager.RegisterService<IDebugService>(new DebugService());
 
-        // Apply the app theme
+        // Initialize debug switches
+        DebugSwitchModel.Instance.Initialize().Wait();
+
+        // Initialize logger
+        Logger.Initialize();
+
+        // Apply app theme
         ApplyAppTheme();
     }
 
     private async Task InitializeOnAppLaunch()
     {
-        // Initialize debug switches
-        await DebugSwitchModel.Instance.Initialize();
-
-        // Initialize logger
-        Logger.Initialize();
-
         // Initialize databases
         await XmlDatabaseManager.Initialize();
         SqlDatabaseManager.Initialize();
