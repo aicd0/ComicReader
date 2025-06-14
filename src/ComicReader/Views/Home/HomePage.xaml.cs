@@ -51,7 +51,7 @@ internal sealed partial class HomePage : BasePage
     protected override void OnStart(PageBundle bundle)
     {
         base.OnStart(bundle);
-        GetMainPageAbility().SetTitle(StringResourceProvider.GetResourceString("NewTab"));
+        GetMainPageAbility().SetTitle(StringResourceProvider.NewTab);
         GetMainPageAbility().SetIcon(new SymbolIconSource() { Symbol = Symbol.Document });
         ViewModel.Initialize();
     }
@@ -123,6 +123,7 @@ internal sealed partial class HomePage : BasePage
             }
         });
         GetNavigationPageAbility().RegisterSearchTextChangeHandler(this, ViewModel.SetSearchText);
+        GetNavigationPageAbility().RegisterRefreshHandler(this, ViewModel.UpdateLibrary);
     }
 
     //
@@ -335,26 +336,28 @@ internal sealed partial class HomePage : BasePage
             return;
         }
 
-        BindDropDownButton(ViewTypeDropDownButton, model.ViewTypeDropDown, ViewModel.SelectViewType);
-        BindDropDownButton(SortByDropDownButton, model.SortByDropDown, ViewModel.SelectSortBy);
-        BindDropDownButton(GroupByDropDownButton, model.GroupByDropDown, ViewModel.SelectGroupBy);
-        BindDropDownButton(FilterPresetDropDownButton, model.FilterPresetDropDown, ViewModel.SelectFilterPreset);
+        BindDropDownButton(ViewTypeDropDownButton, ViewTypeDropDownButtonText, model.ViewTypeDropDown, ViewModel.SelectViewType);
+        BindDropDownButton(SortByDropDownButton, SortByDropDownButtonText, model.SortByDropDown, ViewModel.SelectSortBy);
+        BindDropDownButton(GroupByDropDownButton, GroupByDropDownButtonText, model.GroupByDropDown, ViewModel.SelectGroupBy);
+        BindDropDownButton(FilterPresetDropDownButton, FilterPresetDropDownButtonText, model.FilterPresetDropDown, ViewModel.SelectFilterPreset);
     }
 
-    private void BindDropDownButton<T>(DropDownButton button, HomePageViewModel.DropDownButtonModel<T> model, Action<T?> clickHandler)
+    private void BindDropDownButton<T>(DropDownButton button, TextBlock buttonText, HomePageViewModel.DropDownButtonModel<T> model, Action<T?> clickHandler)
     {
         if (button == null)
         {
             return;
         }
 
-        button.Content = model.Name;
+        buttonText.Text = model.Name;
 
         FlyoutBase flyout = button.Flyout;
         if (flyout is not MenuFlyout)
         {
-            flyout = new MenuFlyout();
-            flyout.Placement = FlyoutPlacementMode.BottomEdgeAlignedRight;
+            flyout = new MenuFlyout
+            {
+                Placement = FlyoutPlacementMode.BottomEdgeAlignedRight
+            };
             button.Flyout = flyout;
         }
         var menuFlyout = (MenuFlyout)flyout;
@@ -461,44 +464,31 @@ internal sealed partial class HomePage : BasePage
     {
         if (read)
         {
-            item.Comic.SetAsRead();
+            ViewModel.ApplyOperationToComic(HomePageViewModel.BatchOperationType.MarkAsRead, item);
         }
         else
         {
-            item.Comic.SetAsUnread();
+            ViewModel.ApplyOperationToComic(HomePageViewModel.BatchOperationType.MarkAsUnread, item);
         }
-
         item.UpdateProgress(true);
     }
 
     private void OnAddToFavoritesClicked(object sender, RoutedEventArgs e)
     {
-        C0.Run(async delegate
-        {
-            var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-            item.IsFavorite = true;
-            await FavoriteModel.Instance.Add(item.Comic.Id, item.Title, true);
-        });
+        var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
+        ViewModel.ApplyOperationToComic(HomePageViewModel.BatchOperationType.Favorite, item);
     }
 
     private void OnRemoveFromFavoritesClicked(object sender, RoutedEventArgs e)
     {
-        C0.Run(async delegate
-        {
-            var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-            item.IsFavorite = false;
-            await FavoriteModel.Instance.RemoveWithId(item.Comic.Id, true);
-        });
+        var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
+        ViewModel.ApplyOperationToComic(HomePageViewModel.BatchOperationType.UnFavorite, item);
     }
 
     private void OnHideComicClicked(object sender, RoutedEventArgs e)
     {
-        C0.Run(async delegate
-        {
-            var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-            await item.Comic.SaveHiddenAsync(true);
-            ViewModel.UpdateLibrary();
-        });
+        var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
+        ViewModel.ApplyOperationToComic(HomePageViewModel.BatchOperationType.Hide, item);
     }
 
     private void EditFilterButton_Click(object sender, RoutedEventArgs e)

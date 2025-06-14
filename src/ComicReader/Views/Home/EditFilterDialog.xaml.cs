@@ -1,9 +1,13 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Text;
+
 using ComicReader.Data.Models;
 
 using Microsoft.UI.Xaml.Controls;
+
+using static ComicReader.Views.Home.EditFilterDialogViewModel;
 
 namespace ComicReader.Views.Home;
 
@@ -28,6 +32,22 @@ internal sealed partial class EditFilterDialog : ContentDialog
         {
             NameTextBox.Text = text ?? "";
         });
+        ViewModel.ExpressionLiveData.ObserveSticky(this, delegate (string text)
+        {
+            ExpressionTextBox.Text = text ?? "";
+        });
+        ViewModel.ParseResultLiveData.ObserveSticky(this, delegate (string text)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                ParseResultTextBlock.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+            }
+            else
+            {
+                ParseResultTextBlock.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
+                ParseResultTextBlock.Text = text ?? "";
+            }
+        });
         ViewModel.SaveEnableLiveData.ObserveSticky(this, delegate (bool enabled)
         {
             SaveButton.IsEnabled = enabled;
@@ -35,6 +55,28 @@ internal sealed partial class EditFilterDialog : ContentDialog
         ViewModel.SaveAsNewEnableLiveData.ObserveSticky(this, delegate (bool enabled)
         {
             SaveAsNewButton.IsEnabled = enabled;
+        });
+        ViewModel.AppendToExpressionLiveData.Observe(this, (ExpressionTokenInfo info) =>
+        {
+            string existingText = ExpressionTextBox.Text;
+            int selectionStart = ExpressionTextBox.SelectionStart;
+            int selectionLength = ExpressionTextBox.SelectionLength;
+            StringBuilder newText = new(existingText);
+            if (existingText.Length > 0 && selectionStart > 0 && !char.IsWhiteSpace(existingText[selectionStart - 1]))
+            {
+                newText.Insert(selectionStart, ' ');
+                selectionStart++;
+            }
+            newText.Remove(selectionStart, selectionLength);
+            newText.Insert(selectionStart, info.Text);
+            int selectionEnd = selectionStart + info.Text.Length;
+            if (info.Text.Length > 0 && !char.IsWhiteSpace(info.Text[^1]) && selectionEnd < newText.Length && !char.IsWhiteSpace(newText[selectionEnd]))
+            {
+                newText.Insert(selectionEnd, ' ');
+            }
+            ExpressionTextBox.Text = newText.ToString();
+            ExpressionTextBox.Focus(Microsoft.UI.Xaml.FocusState.Programmatic);
+            ExpressionTextBox.SelectionStart = selectionStart + (info.CursorPosition >= 0 ? info.CursorPosition : info.Text.Length + info.CursorPosition + 1);
         });
     }
 
@@ -65,8 +107,18 @@ internal sealed partial class EditFilterDialog : ContentDialog
         Hide();
     }
 
+    private void ExpressionTipButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        ThirdPartyLauncher.StartTemporaryTextFile("expression_reference.txt", "12345\n67890");
+    }
+
     private void NameTextBox_TextChanged(object sender, TextChangedEventArgs e)
     {
-        ViewModel.UpdateName(NameTextBox.Text);
+        ViewModel.UpdateName(NameTextBox.Text ?? "");
+    }
+
+    private void ExpressionTextBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        ViewModel.UpdateExpression(ExpressionTextBox.Text ?? "");
     }
 }

@@ -5,24 +5,24 @@ using System.Text;
 
 namespace ComicReader.SDK.Data.SqlHelpers;
 
-public class DeleteCommand<T> where T : ITable
+public class DeleteCommand
 {
-    private readonly T _table;
+    private readonly ITable _table;
     private readonly List<ICondition> _conditions = [];
 
     private bool _executed = false;
 
-    public DeleteCommand(T table)
+    public DeleteCommand(ITable table)
     {
         _table = table;
     }
 
-    public DeleteCommand<T> AppendCondition<U>(Column column, U value)
+    public DeleteCommand AppendCondition(IColumnTypeless column, object value)
     {
-        return AppendCondition(new EqualityCondition<U>(column, value));
+        return AppendCondition(new ComparisonCondition(ColumnOrValue.FromColumn(column), ColumnOrValue.FromValue(value)));
     }
 
-    public DeleteCommand<T> AppendCondition(ICondition condition)
+    public DeleteCommand AppendCondition(ICondition condition)
     {
         _conditions.Add(condition);
         return this;
@@ -36,8 +36,8 @@ public class DeleteCommand<T> where T : ITable
         }
         _executed = true;
 
-        using CommandWrapper command = GenerateCommand(database);
-        command.ExecuteNonQuery();
+        CommandWrapper command = GenerateCommand();
+        command.ExecuteNonQuery(database);
     }
 
     public async Task ExecuteAsync(SqlDatabase database)
@@ -48,22 +48,28 @@ public class DeleteCommand<T> where T : ITable
         }
         _executed = true;
 
-        using CommandWrapper command = GenerateCommand(database);
-        await command.ExecuteNonQueryAsync();
+        CommandWrapper command = GenerateCommand();
+        await command.ExecuteNonQueryAsync(database);
     }
 
-    private CommandWrapper GenerateCommand(SqlDatabase database)
+    private CommandWrapper GenerateCommand()
     {
-        CommandWrapper command = new(database);
+        CommandWrapper command = new();
 
         StringBuilder sb = new("DELETE FROM ");
         sb.Append(_table.GetTableName());
-        sb.Append(" WHERE TRUE");
 
-        foreach (ICondition condition in _conditions)
+        if (_conditions.Count > 0)
         {
-            sb.Append(" AND ");
-            sb.Append(condition.GetExpression(command));
+            sb.Append(" WHERE ");
+            for (int i = 0; i < _conditions.Count; i++)
+            {
+                if (i > 0)
+                {
+                    sb.Append(" AND ");
+                }
+                sb.Append('(').Append(_conditions[i].GetExpression(command)).Append(')');
+            }
         }
 
         command.SetCommandText(sb.ToString());

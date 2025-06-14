@@ -3,6 +3,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:base="using:ComicReader.Common.PageBase"
+    xmlns:controls="using:ComicReader.UserControls"
     xmlns:converters="using:ComicReader.Converters"
     xmlns:cw="using:CommunityToolkit.WinUI"
     xmlns:cwc="using:CommunityToolkit.WinUI.Controls"
@@ -159,6 +160,7 @@
             <SplitView
                 x:Name="InfoPane"
                 Grid.Row="1"
+                Margin="0,0,-2,0"
                 DisplayMode="Overlay"
                 PaneBackground="{ThemeResource SidePaneBackground}"
                 PanePlacement="Right">
@@ -272,7 +274,7 @@
                                                 <muxc:ItemsRepeater ItemsSource="{x:Bind Tags}">
                                                     <muxc:ItemsRepeater.ItemTemplate>
                                                         <DataTemplate x:DataType="vm:TagViewModel">
-                                                            <reader:TagButton DataContext="{x:Bind}" />
+                                                            <controls:TagButton DataContext="{x:Bind}" />
                                                         </DataTemplate>
                                                     </muxc:ItemsRepeater.ItemTemplate>
                                                     <muxc:ItemsRepeater.Layout>

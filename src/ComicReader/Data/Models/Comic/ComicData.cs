@@ -1,8 +1,6 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-#nullable disable
-
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -14,6 +12,7 @@ using System.Threading.Tasks;
 using ComicReader.Common;
 using ComicReader.Data.Legacy;
 using ComicReader.Data.Tables;
+using ComicReader.SDK.Common.AutoProperty;
 using ComicReader.SDK.Common.DebugTools;
 using ComicReader.SDK.Common.Threading;
 using ComicReader.SDK.Data.SqlHelpers;
@@ -34,41 +33,239 @@ internal abstract class ComicData
     public const string COMIC_INFO_FILE_NAME = "info.txt";
 
     //
-    // Variables
+    // Static Variables
     //
 
-    private static string _defaultTagsString = null;
+    private static string? _defaultTagsString = null;
     private static string DefaultTagsString
     {
         get
         {
-            _defaultTagsString ??= StringResourceProvider.GetResourceString("DefaultTags");
+            _defaultTagsString ??= StringResourceProvider.DefaultTags;
             return _defaultTagsString;
         }
     }
 
-    private static readonly ITaskDispatcher _tableQueue = TaskDispatcher.Factory.NewQueue("ComicDataQueue");
     private static int _pendingUpdateTaskCount = 0;
+
+    //
+    // Static Methods
+    //
+
+    public static async Task<ComicData?> FromId(long id, string taskName)
+    {
+        return await Enqueue(delegate
+        {
+            return FromIdNoLock(id);
+        }, taskName);
+    }
+
+    public static async Task<ComicData?> FromLocation(string location, string taskName)
+    {
+        return await Enqueue(delegate
+        {
+            return FromLocationNoLock(location);
+        }, taskName);
+    }
+
+    public static async Task<List<ComicData>> BatchFromId(IEnumerable<long> ids, string taskName)
+    {
+        return await Enqueue(delegate
+        {
+            return BatchFromIdNoLock(ids);
+        }, taskName);
+    }
+
+    private static ComicData? FromIdNoLock(long id)
+    {
+        List<ComicData> result = BatchFromIdNoLock([id]);
+        if (result.Count == 0)
+        {
+            return null;
+        }
+        return result[0];
+    }
+
+    private static List<ComicData> BatchFromIdNoLock(IEnumerable<long> ids)
+    {
+        {
+            bool isEmpty = true;
+            foreach (long _ in ids)
+            {
+                isEmpty = false;
+                break;
+            }
+            if (isEmpty)
+            {
+                return [];
+            }
+        }
+
+        Dictionary<long, ComicData> comics = new(ids.Count());
+        {
+            SelectCommand command = new SelectCommand(ComicTable.Instance)
+                .AppendCondition(new InCondition(ColumnOrValue.FromColumn(ComicTable.ColumnId), ids.Select(x => ColumnOrValue.FromValue(x))));
+            IReaderToken<long> idToken = command.PutQueryInt64(ComicTable.ColumnId);
+            IReaderToken<long> typeToken = command.PutQueryInt64(ComicTable.ColumnType);
+            IReaderToken<string> locationToken = command.PutQueryString(ComicTable.ColumnLocation);
+            IReaderToken<string> title1Token = command.PutQueryString(ComicTable.ColumnTitle1);
+            IReaderToken<string> title2Token = command.PutQueryString(ComicTable.ColumnTitle2);
+            IReaderToken<bool> hiddenToken = command.PutQueryBoolean(ComicTable.ColumnHidden);
+            IReaderToken<int> ratingToken = command.PutQueryInt32(ComicTable.ColumnRating);
+            IReaderToken<int> progressToken = command.PutQueryInt32(ComicTable.ColumnProgress);
+            IReaderToken<DateTimeOffset> lastVisitToken = command.PutQueryDateTimeOffset(ComicTable.ColumnLastVisit);
+            IReaderToken<double> lastPositionToken = command.PutQueryDouble(ComicTable.ColumnLastPosition);
+            IReaderToken<string> coverCacheKeyToken = command.PutQueryString(ComicTable.ColumnCoverCacheKey);
+            IReaderToken<string> descriptionToken = command.PutQueryString(ComicTable.ColumnDescription);
+            IReaderToken<int> completionStateToken = command.PutQueryInt32(ComicTable.ColumnCompletionState);
+            using SelectCommand.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
+
+            while (reader.Read())
+            {
+                long id = idToken.GetValue();
+                var type = (ComicType)typeToken.GetValue();
+                string location = locationToken.GetValue();
+                string title1 = title1Token.GetValue();
+                string title2 = title2Token.GetValue();
+                bool hidden = hiddenToken.GetValue();
+                int rating = ratingToken.GetValue();
+                int progress = progressToken.GetValue();
+                DateTimeOffset lastVisit = lastVisitToken.GetValue();
+                double lastPosition = lastPositionToken.GetValue();
+                string coverCacheKey = coverCacheKeyToken.GetValue();
+                string description = descriptionToken.GetValue();
+                CompletionStateEnum completionState = ComicPropertyRepository.ParseCompletionState(completionStateToken.GetValue());
+
+                ComicData? comic = FromDatabase(type, location);
+                if (comic == null)
+                {
+                    continue;
+                }
+
+                comic.Id = id;
+                comic.Title1 = title1;
+                comic.Title2 = title2;
+                comic.Hidden = hidden;
+                comic.Rating = rating;
+                comic.Progress = progress;
+                comic.LastVisit = lastVisit;
+                comic.LastPosition = lastPosition;
+                comic.CoverCacheKey = coverCacheKey;
+                comic.Description = description;
+                comic.Tags = [];
+                comic.CompletionState = completionState;
+                comics[id] = comic;
+            }
+        }
+
+        Dictionary<long, TagData> tagCategories = new(comics.Count);
+        {
+            SelectCommand command = new SelectCommand(TagCategoryTable.Instance)
+                .AppendCondition(new InCondition(ColumnOrValue.FromColumn(TagCategoryTable.ColumnComicId), comics.Keys.Select(x => ColumnOrValue.FromValue(x))));
+            IReaderToken<long> comicIdToken = command.PutQueryInt64(TagCategoryTable.ColumnComicId);
+            IReaderToken<long> tagCategoryIdToken = command.PutQueryInt64(TagCategoryTable.ColumnId);
+            IReaderToken<string> nameToken = command.PutQueryString(TagCategoryTable.ColumnName);
+            using SelectCommand.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
+
+            while (reader.Read())
+            {
+                long comicId = comicIdToken.GetValue();
+                if (comics.TryGetValue(comicId, out ComicData? comic))
+                {
+                    long tagCategoryId = tagCategoryIdToken.GetValue();
+                    string name = nameToken.GetValue();
+                    var tagData = new TagData
+                    {
+                        Name = name
+                    };
+                    comic.Tags.Add(tagData);
+                    tagCategories[tagCategoryId] = tagData;
+                }
+            }
+        }
+
+        {
+            SelectCommand command = new SelectCommand(TagTable.Instance)
+                .AppendCondition(new InCondition(ColumnOrValue.FromColumn(TagTable.ColumnTagCategoryId), tagCategories.Keys.Select(x => ColumnOrValue.FromValue(x))));
+            IReaderToken<long> tagCategoryIdToken = command.PutQueryInt64(TagTable.ColumnTagCategoryId);
+            IReaderToken<string> tagToken = command.PutQueryString(TagTable.ColumnContent);
+            using SelectCommand.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
+
+            while (reader.Read())
+            {
+                long tagCategoryId = tagCategoryIdToken.GetValue();
+                if (tagCategories.TryGetValue(tagCategoryId, out TagData? tagData))
+                {
+                    string tag = tagToken.GetValue();
+                    tagData.Tags.Add(tag);
+                }
+            }
+        }
+
+        return [.. comics.Values];
+    }
+
+    private static ComicData? FromLocationNoLock(string location)
+    {
+        SelectCommand command = new SelectCommand(ComicTable.Instance)
+            .AppendCondition(ComicTable.ColumnLocation, location)
+            .Limit(1);
+        IReaderToken<long> comicIdToken = command.PutQueryInt64(ComicTable.ColumnId);
+        using SelectCommand.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
+
+        if (!reader.Read())
+        {
+            return null;
+        }
+
+        long comicId = comicIdToken.GetValue();
+        return FromIdNoLock(comicId);
+    }
+
+    private static ComicData? FromDatabase(ComicType type, string location)
+    {
+        switch (type)
+        {
+            case ComicType.Folder:
+                return ComicFolderData.FromDatabase(location);
+            case ComicType.Archive:
+                return ComicArchiveData.FromDatabase(location);
+            case ComicType.PDF:
+                return ComicPdfData.FromDatabase(location);
+            default:
+                Logger.AssertNotReachHere("419CBCB3E803A525");
+                return null;
+        }
+    }
+
+    private static async Task<T> Enqueue<T>(Func<T> op, string taskName)
+    {
+        var taskResult = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
+        ComicPropertyRepository.Instance.GetDatabaseDispatcher().Submit($"{TAG}#Enqueue#{taskName}", delegate
+        {
+            taskResult.SetResult(op());
+        });
+        return await taskResult.Task;
+    }
+
+    protected static void Log(string message)
+    {
+        Logger.I("ComicData", message);
+    }
+
+    //
+    // Member Variables
+    //
 
     private bool _imageUpdated = false;
 
     //
-    // Constructor
-    //
-
-    protected ComicData(ComicType type, bool is_external)
-    {
-        Id = -1;
-        Type = type;
-        IsExternal = is_external;
-    }
-
-    //
-    // Public Interfaces
+    // Properties
     //
 
     public long Id { get; private set; } = -1;
     private ComicType Type { get; set; }
+    public CompletionStateEnum CompletionState { get; private set; }
     public string Location { get; protected set; } = "";
     public string Title1 { get; protected set; } = "";
     public string Title2 { get; protected set; } = "";
@@ -90,7 +287,7 @@ internal abstract class ComicData
             {
                 if (Title2.Length == 0)
                 {
-                    return StringResourceProvider.GetResourceString("UntitledCollection");
+                    return StringResourceProvider.Untitled;
                 }
                 else
                 {
@@ -109,8 +306,6 @@ internal abstract class ComicData
     }
 
     public bool IsExternal { get; private set; }
-    public bool IsRead => Progress >= 100;
-    public bool IsUnread => Progress < 0;
     public abstract bool IsEditable { get; }
     protected StorageFolder CacheFolder => ApplicationData.Current.LocalCacheFolder;
 
@@ -126,16 +321,31 @@ internal abstract class ComicData
     private string ValueCoverCacheKey => CoverCacheKey;
     private string ValueDescription => Description;
 
-    public static Action OnUpdated { get; set; }
+    public static Action? OnUpdated { get; set; }
 
     public static bool IsRescanning { get; private set; } = false;
+
+    //
+    // Constructor
+    //
+
+    protected ComicData(ComicType type, bool is_external)
+    {
+        Id = -1;
+        Type = type;
+        IsExternal = is_external;
+    }
+
+    //
+    // Unsorted
+    //
 
     private void SaveAllNoLock()
     {
         SaveNoLock(delegate
         {
-            new UpdateCommand<ComicTable>(ComicTable.Instance)
-                .AppendColumn(ComicTable.ColumnType, ValueType)
+            new UpdateCommand(ComicTable.Instance)
+                .AppendColumn(ComicTable.ColumnType, (long)ValueType)
                 .AppendColumn(ComicTable.ColumnLocation, ValueLocation)
                 .AppendColumn(ComicTable.ColumnTitle1, ValueTitle1)
                 .AppendColumn(ComicTable.ColumnTitle2, ValueTitle2)
@@ -159,8 +369,8 @@ internal abstract class ComicData
         {
             return SaveNoLock(delegate
             {
-                new UpdateCommand<ComicTable>(ComicTable.Instance)
-                    .AppendColumn(ComicTable.ColumnType, ValueType)
+                new UpdateCommand(ComicTable.Instance)
+                    .AppendColumn(ComicTable.ColumnType, (long)ValueType)
                     .AppendColumn(ComicTable.ColumnLocation, ValueLocation)
                     .AppendColumn(ComicTable.ColumnTitle1, ValueTitle1)
                     .AppendColumn(ComicTable.ColumnTitle2, ValueTitle2)
@@ -187,12 +397,18 @@ internal abstract class ComicData
         {
             return SaveNoLock(delegate
             {
-                new UpdateCommand<ComicTable>(ComicTable.Instance)
+                new UpdateCommand(ComicTable.Instance)
                     .AppendColumn(ComicTable.ColumnHidden, ValueHidden)
                     .AppendCondition(ComicTable.ColumnId, Id)
                     .Execute(SqlDatabaseManager.MainDatabase);
             });
         }, "SaveHiddenAsync");
+    }
+
+    public Task SaveCompletionState(CompletionStateEnum completionState)
+    {
+        CompletionState = completionState;
+        return ComicPropertyRepository.Instance.CompletionStateOperator.Write(Id, completionState, CreateRequestOption());
     }
 
     public void SaveRating(int rating)
@@ -203,7 +419,7 @@ internal abstract class ComicData
         {
             return SaveNoLock(delegate
             {
-                new UpdateCommand<ComicTable>(ComicTable.Instance)
+                new UpdateCommand(ComicTable.Instance)
                     .AppendColumn(ComicTable.ColumnRating, ValueRating)
                     .AppendCondition(ComicTable.ColumnId, Id)
                     .Execute(SqlDatabaseManager.MainDatabase);
@@ -220,7 +436,7 @@ internal abstract class ComicData
         {
             return SaveNoLock(delegate
             {
-                new UpdateCommand<ComicTable>(ComicTable.Instance)
+                new UpdateCommand(ComicTable.Instance)
                     .AppendColumn(ComicTable.ColumnProgress, ValueProgress)
                     .AppendColumn(ComicTable.ColumnLastPosition, ValueLastPosition)
                     .AppendCondition(ComicTable.ColumnId, Id)
@@ -248,7 +464,7 @@ internal abstract class ComicData
         {
             return SaveNoLock(delegate
             {
-                new UpdateCommand<ComicTable>(ComicTable.Instance)
+                new UpdateCommand(ComicTable.Instance)
                     .AppendColumn(ComicTable.ColumnProgress, ValueProgress)
                     .AppendColumn(ComicTable.ColumnLastVisit, ValueLastVisit)
                     .AppendCondition(ComicTable.ColumnId, Id)
@@ -265,7 +481,7 @@ internal abstract class ComicData
         {
             return SaveNoLock(delegate
             {
-                new UpdateCommand<ComicTable>(ComicTable.Instance)
+                new UpdateCommand(ComicTable.Instance)
                     .AppendColumn(ComicTable.ColumnCoverCacheKey, ValueCoverCacheKey)
                     .AppendCondition(ComicTable.ColumnId, Id)
                     .Execute(SqlDatabaseManager.MainDatabase);
@@ -362,7 +578,7 @@ internal abstract class ComicData
 
         foreach (string property in properties)
         {
-            ParsePropertyResult parseResult = ParseProperty(property);
+            ParsePropertyResult? parseResult = ParseProperty(property);
 
             if (parseResult == null)
             {
@@ -452,14 +668,6 @@ internal abstract class ComicData
 
     public abstract Task<TaskException> LoadFromInfoFile();
 
-    public static async Task<ComicData> FromId(long id, string taskName)
-    {
-        return await Enqueue(delegate
-        {
-            return FromIdNoLock(id);
-        }, taskName);
-    }
-
     public string GetCoverImageCacheKey()
     {
         string coverCacheKey = CoverCacheKey;
@@ -470,7 +678,7 @@ internal abstract class ComicData
 
         if (!LoadImageFiles().Result.Successful())
         {
-            return null;
+            return "";
         }
         coverCacheKey = GetImageCacheKey(0);
         SetCoverCacheKey(coverCacheKey);
@@ -483,14 +691,6 @@ internal abstract class ComicData
         {
             op();
             return true;
-        }, taskName);
-    }
-
-    public static async Task<ComicData> FromLocation(string location, string taskName)
-    {
-        return await Enqueue(delegate
-        {
-            return FromLocationNoLock(location);
         }, taskName);
     }
 
@@ -519,10 +719,6 @@ internal abstract class ComicData
         });
     }
 
-    //
-    // Abstract Methods
-    //
-
     public abstract string GetImageCacheKey(int index);
 
     public abstract int GetImageSignature(int index);
@@ -533,124 +729,12 @@ internal abstract class ComicData
 
     public abstract Task<TaskException> SaveToInfoFile();
 
-    //
-    // Protected Methods
-    //
-
-    protected static void Log(string message)
-    {
-        Logger.I("ComicData", message);
-    }
-
-    //
-    // Private Methods
-    //
-
-    private static ComicData FromIdNoLock(long id)
-    {
-        ComicType type;
-        string location;
-        string title1;
-        string title2;
-        bool hidden;
-        int rating;
-        int progress;
-        DateTimeOffset lastVisit;
-        double lastPosition;
-        string coverCacheKey;
-        string description;
-
-        {
-            SelectCommand<ComicTable> command = new SelectCommand<ComicTable>(ComicTable.Instance)
-                .AppendCondition(ComicTable.ColumnId, id)
-                .Limit(1);
-            SelectCommand<ComicTable>.IToken<long> typeToken = command.PutQueryInt64(ComicTable.ColumnType);
-            SelectCommand<ComicTable>.IToken<string> locationToken = command.PutQueryString(ComicTable.ColumnLocation);
-            SelectCommand<ComicTable>.IToken<string> title1Token = command.PutQueryString(ComicTable.ColumnTitle1);
-            SelectCommand<ComicTable>.IToken<string> title2Token = command.PutQueryString(ComicTable.ColumnTitle2);
-            SelectCommand<ComicTable>.IToken<bool> hiddenToken = command.PutQueryBoolean(ComicTable.ColumnHidden);
-            SelectCommand<ComicTable>.IToken<int> ratingToken = command.PutQueryInt32(ComicTable.ColumnRating);
-            SelectCommand<ComicTable>.IToken<int> progressToken = command.PutQueryInt32(ComicTable.ColumnProgress);
-            SelectCommand<ComicTable>.IToken<DateTimeOffset> lastVisitToken = command.PutQueryDateTimeOffset(ComicTable.ColumnLastVisit);
-            SelectCommand<ComicTable>.IToken<double> lastPositionToken = command.PutQueryDouble(ComicTable.ColumnLastPosition);
-            SelectCommand<ComicTable>.IToken<string> coverCacheKeyToken = command.PutQueryString(ComicTable.ColumnCoverCacheKey);
-            SelectCommand<ComicTable>.IToken<string> descriptionToken = command.PutQueryString(ComicTable.ColumnDescription);
-            using SelectCommand<ComicTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
-
-            if (!reader.Read())
-            {
-                return null;
-            }
-
-            type = (ComicType)typeToken.GetValue();
-            location = locationToken.GetValue();
-            title1 = title1Token.GetValue();
-            title2 = title2Token.GetValue();
-            hidden = hiddenToken.GetValue();
-            rating = ratingToken.GetValue();
-            progress = progressToken.GetValue();
-            lastVisit = lastVisitToken.GetValue();
-            lastPosition = lastPositionToken.GetValue();
-            coverCacheKey = coverCacheKeyToken.GetValue();
-            description = descriptionToken.GetValue();
-        }
-
-        var tags = new List<TagData>();
-        var tagCategoryIds = new List<long>();
-
-        {
-            SelectCommand<TagCategoryTable> command = new SelectCommand<TagCategoryTable>(TagCategoryTable.Instance)
-                .AppendCondition(TagCategoryTable.ColumnComicId, id);
-            SelectCommand<TagCategoryTable>.IToken<long> tagCategoryIdToken = command.PutQueryInt64(TagCategoryTable.ColumnId);
-            SelectCommand<TagCategoryTable>.IToken<string> nameToken = command.PutQueryString(TagCategoryTable.ColumnName);
-            using SelectCommand<TagCategoryTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
-
-            while (reader.Read())
-            {
-                long tagCategoryId = tagCategoryIdToken.GetValue();
-                string name = nameToken.GetValue();
-
-                var tagData = new TagData
-                {
-                    Name = name
-                };
-
-                tags.Add(tagData);
-                tagCategoryIds.Add(tagCategoryId);
-            }
-        }
-
-        for (int i = 0; i < tags.Count; ++i)
-        {
-            SelectCommand<TagTable> command = new SelectCommand<TagTable>(TagTable.Instance)
-                .AppendCondition(TagTable.ColumnTagCategoryId, tagCategoryIds[i]);
-            SelectCommand<TagTable>.IToken<string> tagToken = command.PutQueryString(TagTable.ColumnContent);
-            using SelectCommand<TagTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
-
-            while (reader.Read())
-            {
-                string tag = tagToken.GetValue();
-                _ = tags[i].Tags.Add(tag);
-            }
-        }
-
-        ComicData comic = FromDatabase(type, location);
-        if (comic == null)
-        {
-            return null;
-        }
-
-        comic.From(id, title1, title2, hidden, rating, progress,
-            lastVisit, lastPosition, coverCacheKey, description, tags);
-        return comic;
-    }
-
     private static async Task UpdateComicNoLock(string location, ComicType type, bool is_exist)
     {
         Log((is_exist ? "Updat" : "Add") + "ing comic '" + location + "'");
 
         // Update or create a new one.
-        ComicData comic;
+        ComicData? comic;
 
         if (is_exist)
         {
@@ -679,42 +763,25 @@ internal abstract class ComicData
         }
     }
 
-    private void From(long id, string title1, string title2, bool hidden,
-        int rating, int progress, DateTimeOffset lastVisit, double lastPosition,
-        string coverCacheKey, string description, List<TagData> tags)
-    {
-        Id = id;
-        Title1 = title1;
-        Title2 = title2;
-        Hidden = hidden;
-        Rating = rating;
-        Progress = progress;
-        LastVisit = lastVisit;
-        LastPosition = lastPosition;
-        CoverCacheKey = coverCacheKey;
-        Description = description;
-        Tags = tags;
-    }
-
     private void InternalSaveTagsNoLock(bool removeOld = true)
     {
         if (removeOld)
         {
-            new DeleteCommand<TagCategoryTable>(TagCategoryTable.Instance)
+            new DeleteCommand(TagCategoryTable.Instance)
                 .AppendCondition(TagCategoryTable.ColumnComicId, Id)
                 .Execute(SqlDatabaseManager.MainDatabase);
         }
 
         foreach (TagData category in Tags)
         {
-            long tagCategoryId = new InsertCommand<TagCategoryTable>(TagCategoryTable.Instance)
+            long tagCategoryId = new InsertCommand(TagCategoryTable.Instance)
                 .AppendColumn(TagCategoryTable.ColumnName, category.Name)
                 .AppendColumn(TagCategoryTable.ColumnComicId, Id)
                 .Execute(SqlDatabaseManager.MainDatabase);
 
             foreach (string tag in category.Tags)
             {
-                new InsertCommand<TagTable>(TagTable.Instance)
+                new InsertCommand(TagTable.Instance)
                     .AppendColumn(TagTable.ColumnContent, tag)
                     .AppendColumn(TagTable.ColumnComicId, Id)
                     .AppendColumn(TagTable.ColumnTagCategoryId, tagCategoryId)
@@ -725,8 +792,8 @@ internal abstract class ComicData
 
     private void InternalInsertNoLock()
     {
-        Id = new InsertCommand<ComicTable>(ComicTable.Instance)
-            .AppendColumn(ComicTable.ColumnType, ValueType)
+        Id = new InsertCommand(ComicTable.Instance)
+            .AppendColumn(ComicTable.ColumnType, (long)ValueType)
             .AppendColumn(ComicTable.ColumnLocation, ValueLocation)
             .AppendColumn(ComicTable.ColumnTitle1, ValueTitle1)
             .AppendColumn(ComicTable.ColumnTitle2, ValueTitle2)
@@ -759,32 +826,6 @@ internal abstract class ComicData
         return TaskException.Success;
     }
 
-    private static ComicData FromDatabase(ComicType type, string location)
-    {
-        switch (type)
-        {
-            case ComicType.Folder:
-                return ComicFolderData.FromDatabase(location);
-            case ComicType.Archive:
-                return ComicArchiveData.FromDatabase(location);
-            case ComicType.PDF:
-                return ComicPdfData.FromDatabase(location);
-            default:
-                Logger.AssertNotReachHere("419CBCB3E803A525");
-                return null;
-        }
-    }
-
-    private static async Task<T> Enqueue<T>(Func<T> op, string taskName)
-    {
-        var taskResult = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
-        _tableQueue.Submit($"{TAG}#Enqueue#{taskName}", delegate
-        {
-            taskResult.SetResult(op());
-        });
-        return await taskResult.Task;
-    }
-
     private static async Task TransactionBlock(Func<Task> op, string taskName)
     {
         await Enqueue(delegate
@@ -797,92 +838,68 @@ internal abstract class ComicData
         }, taskName);
     }
 
-    private static ComicData FromLocationNoLock(string location)
-    {
-        SelectCommand<ComicTable> command = new SelectCommand<ComicTable>(ComicTable.Instance)
-            .AppendCondition(ComicTable.ColumnLocation, location)
-            .Limit(1);
-        SelectCommand<ComicTable>.IToken<long> comicIdToken = command.PutQueryInt64(ComicTable.ColumnId);
-        using SelectCommand<ComicTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
-
-        if (!reader.Read())
-        {
-            return null;
-        }
-
-        long comicId = comicIdToken.GetValue();
-        return FromIdNoLock(comicId);
-    }
-
     private static void RemoveWithLocationNoLock(string location)
     {
-        new DeleteCommand<ComicTable>(ComicTable.Instance)
+        new DeleteCommand(ComicTable.Instance)
             .AppendCondition(new LikeCondition(ComicTable.ColumnLocation, location + "%"))
             .Execute(SqlDatabaseManager.MainDatabase);
     }
 
     private static async Task<TaskException> UpdateAllComicsInternal(bool lazy)
     {
-        // Fetch all locations in the database.
-        var locExist = new List<string>();
+        AppSettingsModel.ExternalModel appSettings = await AppSettingsModel.Instance.GetModel();
 
+        // Fetch all locations in the database
+        var locExist = new List<string>();
         await Enqueue(delegate
         {
-            var command = new SelectCommand<ComicTable>(ComicTable.Instance);
-            SelectCommand<ComicTable>.IToken<string> locationToken = command.PutQueryString(ComicTable.ColumnLocation);
-            using SelectCommand<ComicTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
-
+            var command = new SelectCommand(ComicTable.Instance);
+            IReaderToken<string> locationToken = command.PutQueryString(ComicTable.ColumnLocation);
+            using SelectCommand.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
             while (reader.Read())
             {
                 locExist.Add(locationToken.GetValue());
             }
-
             return true;
         }, "GetLocationsFromDatabase");
 
-        // Get all root folders from setting.
-        var root_folders = new List<string>(XmlDatabase.Settings.ComicFolders.Count);
-
+        // Get all root folders from setting
+        var rootFolders = new List<string>(XmlDatabase.Settings.ComicFolders.Count);
         await XmlDatabaseManager.WaitLock();
         foreach (string folder_path in XmlDatabase.Settings.ComicFolders)
         {
-            root_folders.Add(folder_path);
+            rootFolders.Add(folder_path);
         }
-
         XmlDatabaseManager.ReleaseLock();
 
-        // Get all subfolders in root folders.
-        var loc_in_lib = new List<string>();
-        var loc_ignore = new List<string>();
+        // Get all subfolders in root folders
+        var locInLib = new List<string>();
+        var locIgnore = new List<string>();
         var watch = new Stopwatch();
         watch.Start();
 
-        foreach (string folderPath in root_folders)
+        foreach (string folderPath in rootFolders)
         {
             Log("Scanning folder '" + folderPath + "'");
 
-            // Remove unreachable folders from database.
+            // Skip unreachable folders from database
             if (!Directory.Exists(folderPath))
             {
                 Log("Failed to reach folder '" + folderPath + "', skipped");
-                await XmlDatabaseManager.WaitLock();
-                XmlDatabase.Settings.ComicFolders.Remove(folderPath);
-                XmlDatabaseManager.ReleaseLock();
                 continue;
             }
 
             var ctx = new SearchContext(folderPath, PathType.Folder);
-
             while (await ctx.Search(1024))
             {
-                // Cancel this task if more requests have come in.
+                // Cancel this task if more requests have come in
                 if (_pendingUpdateTaskCount > 0)
                 {
                     return TaskException.Cancellation;
                 }
 
                 Log("Scanning " + ctx.ItemFound.ToString() + " items.");
-                var loc_scanned_dict = new Dictionary<string, ComicType>();
+                var locScannedDict = new Dictionary<string, ComicType>();
 
                 foreach (string file_path in ctx.Files)
                 {
@@ -893,9 +910,9 @@ internal abstract class ComicData
                     {
                         string loc = StringUtils.ParentLocationFromLocation(file_path);
 
-                        if (!loc_scanned_dict.ContainsKey(loc))
+                        if (!locScannedDict.ContainsKey(loc))
                         {
-                            loc_scanned_dict[loc] =
+                            locScannedDict[loc] =
                                 ArchiveAccess.IsArchivePath(file_path) ?
                                 ComicType.Archive : ComicType.Folder;
                         }
@@ -905,7 +922,7 @@ internal abstract class ComicData
                         switch (extension)
                         {
                             case ".pdf":
-                                loc_scanned_dict[file_path] = ComicType.PDF;
+                                locScannedDict[file_path] = ComicType.PDF;
                                 break;
                             default:
                                 break;
@@ -913,52 +930,49 @@ internal abstract class ComicData
                     }
                 }
 
-                var loc_scanned = new List<string>();
-
-                foreach (KeyValuePair<string, ComicType> item in loc_scanned_dict)
+                var locScanned = new List<string>();
+                foreach (KeyValuePair<string, ComicType> item in locScannedDict)
                 {
-                    loc_scanned.Add(item.Key);
+                    locScanned.Add(item.Key);
                 }
-
-                loc_in_lib.AddRange(loc_scanned);
-
+                locInLib.AddRange(locScanned);
                 foreach (string dir in ctx.NoAccessItems)
                 {
-                    loc_ignore.Add(dir);
+                    locIgnore.Add(dir);
                 }
 
-                // Generate a task queue for updating.
+                // Generate a task queue for updating
                 var queue = new List<UpdateItemInfo>();
 
-                // Get folders added.
-                var loc_added = C3<string, string, string>.Except(
-                    loc_scanned, locExist,
+                // Get folders added
+                var locAdded = C3<string, string, string>.Except(
+                    locScanned, locExist,
                     StringUtils.UniquePath, StringUtils.UniquePath,
                     new C1<string>.DefaultEqualityComparer()).ToList();
 
-                foreach (string loc in loc_added)
+                foreach (string loc in locAdded)
                 {
                     queue.Add(new UpdateItemInfo
                     {
                         Location = loc,
-                        ItemType = loc_scanned_dict[loc],
+                        ItemType = locScannedDict[loc],
                         IsExist = false,
                     });
                 }
 
                 if (!lazy)
                 {
-                    var loc_kept = C3<string, string, string>.Intersect(
-                        loc_scanned, locExist,
+                    var locKept = C3<string, string, string>.Intersect(
+                        locScanned, locExist,
                         StringUtils.UniquePath, StringUtils.UniquePath,
                         new C1<string>.DefaultEqualityComparer()).ToList();
 
-                    foreach (string loc in loc_kept)
+                    foreach (string loc in locKept)
                     {
                         queue.Add(new UpdateItemInfo
                         {
                             Location = loc,
-                            ItemType = loc_scanned_dict[loc],
+                            ItemType = locScannedDict[loc],
                             IsExist = true,
                         });
                     }
@@ -980,45 +994,45 @@ internal abstract class ComicData
             }
         }
 
-        // Get removed folders.
-        var loc_removed = C3<string, string, string>.Except(locExist, loc_in_lib,
-            StringUtils.UniquePath, StringUtils.UniquePath,
-            new C1<string>.DefaultEqualityComparer()).ToList();
-
-        await TransactionBlock(delegate
+        if (appSettings.RemoveUnreachableComics)
         {
-            // Remove folders from database.
-            foreach (string loc in loc_removed)
+            // Get removed folders
+            var locRemoved = C3<string, string, string>.Except(locExist, locInLib,
+                StringUtils.UniquePath, StringUtils.UniquePath,
+                new C1<string>.DefaultEqualityComparer()).ToList();
+
+            await TransactionBlock(delegate
             {
-                // Skip directories in ignoring list.
-                bool ignore = false;
-
-                foreach (string base_loc in loc_ignore)
+                // Remove folders from database
+                foreach (string loc in locRemoved)
                 {
-                    if (StringUtils.FolderContain(base_loc, loc))
+                    // Skip directories in ignoring list
+                    bool ignore = false;
+                    foreach (string base_loc in locIgnore)
                     {
-                        ignore = true;
-                        break;
+                        if (StringUtils.FolderContain(base_loc, loc))
+                        {
+                            ignore = true;
+                            break;
+                        }
                     }
+                    if (ignore)
+                    {
+                        continue;
+                    }
+
+                    // Remove.
+                    Log("Removing item '" + loc + "'");
+                    RemoveWithLocationNoLock(loc);
                 }
-
-                if (ignore)
-                {
-                    continue;
-                }
-
-                // Remove.
-                Log("Removing item '" + loc + "'");
-                RemoveWithLocationNoLock(loc);
-            }
-
-            return Task.CompletedTask;
-        }, "RemoveLocationsFromDatabase");
+                return Task.CompletedTask;
+            }, "RemoveLocationsFromDatabase");
+        }
 
         return TaskException.Success;
     }
 
-    private static ParsePropertyResult ParseProperty(string src)
+    private static ParsePropertyResult? ParseProperty(string src)
     {
         string[] pieces = src.Split(":", 2, StringSplitOptions.RemoveEmptyEntries);
 
@@ -1048,8 +1062,13 @@ internal abstract class ComicData
         return result;
     }
 
+    private RequestOption CreateRequestOption()
+    {
+        return new(!IsExternal);
+    }
+
     //
-    // Classes
+    // Types
     //
 
     private struct UpdateItemInfo
@@ -1061,21 +1080,32 @@ internal abstract class ComicData
 
     internal class TagData
     {
-        public string Name;
-        public HashSet<string> Tags = new();
+        public string Name = "";
+        public HashSet<string> Tags = [];
     };
 
     internal class ParsePropertyResult
     {
-        public string Name;
-        public string Content;
-        public HashSet<string> Tags = new();
+        public string Name = "";
+        public string Content = "";
+        public HashSet<string> Tags = [];
     };
+
+    //
+    // Enums
+    //
 
     internal enum ComicType : int
     {
         Folder = 1,
         Archive = 2,
         PDF = 3,
+    }
+
+    public enum CompletionStateEnum
+    {
+        NotStarted = 0,
+        Started = 1,
+        Completed = 2,
     }
 };

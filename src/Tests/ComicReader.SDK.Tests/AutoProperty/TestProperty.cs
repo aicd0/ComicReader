@@ -1,8 +1,8 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+using ComicReader.SDK.Common.AutoProperty;
 using ComicReader.SDK.Common.Threading;
-using ComicReader.SDK.Data.AutoProperty;
 
 namespace ComicReader.SDK.Tests.AutoProperty;
 
@@ -55,14 +55,14 @@ internal class TestProperty<V> : AbsProperty<TestPropertyKey, V, TestPropertyMod
         if (ProcessOnServerThread)
         {
             Respond(context);
-            callback.PostCompletion(null);
+            callback.PostOnServerThread(true, null);
         }
         else
         {
             _dispatcher.Submit("TestProperty", () =>
             {
                 Thread.Sleep(Random.Shared.Next(1, 100));
-                callback.PostCompletion(() =>
+                callback.PostOnServerThread(true, () =>
                 {
                     Respond(context);
                 });

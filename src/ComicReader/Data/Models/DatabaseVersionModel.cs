@@ -14,6 +14,12 @@ class DatabaseVersionModel : JsonDatabase<DatabaseVersionModel.JsonModel>
 {
     public class JsonModel
     {
+        [JsonPropertyName("database_versions_version")]
+        public int DatabaseVersionsVersion { get; set; } = 0;
+
+        [JsonPropertyName("comic_database_version")]
+        public int ComicDatabaseVersion { get; set; } = 0;
+
         [JsonPropertyName("favorites_version")]
         public int FavoritesVersion { get; set; } = 0;
     }

@@ -22,8 +22,8 @@ public class UnsafeCommand
         }
         _executed = true;
 
-        using CommandWrapper command = GenerateCommand(database);
-        command.ExecuteNonQuery();
+        CommandWrapper command = GenerateCommand();
+        command.ExecuteNonQuery(database);
     }
 
     public async Task ExecuteAsync(SqlDatabase database)
@@ -34,13 +34,13 @@ public class UnsafeCommand
         }
         _executed = true;
 
-        using CommandWrapper command = GenerateCommand(database);
-        await command.ExecuteNonQueryAsync();
+        CommandWrapper command = GenerateCommand();
+        await command.ExecuteNonQueryAsync(database);
     }
 
-    private CommandWrapper GenerateCommand(SqlDatabase database)
+    private CommandWrapper GenerateCommand()
     {
-        CommandWrapper command = new(database);
+        CommandWrapper command = new();
         command.SetCommandText(_command);
         return command;
     }

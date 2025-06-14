@@ -1,15 +1,13 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-#nullable disable
-
 using System.ComponentModel;
 
 namespace ComicReader.Views.Reader;
 
-internal class EditComicInfoDialogViewModel : INotifyPropertyChanged
+internal partial class EditComicInfoDialogViewModel : INotifyPropertyChanged
 {
-    public event PropertyChangedEventHandler PropertyChanged;
+    public event PropertyChangedEventHandler? PropertyChanged;
 
     private bool _isTagInfoBarOpen = false;
     public bool IsTagInfoBarOpen

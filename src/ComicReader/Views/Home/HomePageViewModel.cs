@@ -379,6 +379,23 @@ internal class HomePageViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
+    /// Applies an operation to a specific comic item.
+    /// </summary>
+    /// <param name="operationType">The operation type.</param>
+    /// <param name="comic">The comic item to operate.</param>
+    /// <remarks>
+    /// Must be called on the UI thread.
+    /// </remarks>
+    public void ApplyOperationToComic(BatchOperationType operationType, ComicItemViewModel comic)
+    {
+        _sharedDispatcher.Submit("ApplyOperationToSelection", delegate
+        {
+            BatchApplyOperation(operationType, [comic]);
+            UpdateCommandBarButtonsNoLock();
+        });
+    }
+
+    /// <summary>
     /// Applies a batch operation to the selected comic items.
     /// </summary>
     /// <param name="operationType">The operation type.</param>
@@ -389,93 +406,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
     {
         _sharedDispatcher.Submit("ApplyOperationToSelection", delegate
         {
-            switch (operationType)
-            {
-                case BatchOperationType.Favorite:
-                    {
-                        List<ComicItemViewModel> items = _selectedComicItems.FindAll(x => !x.IsFavorite);
-                        FavoriteModel.Instance.BatchAdd(items.ConvertAll(x => new FavoriteModel.FavoriteItem
-                        {
-                            Id = x.Comic.Id,
-                            Title = x.Comic.Title,
-                        })).Wait();
-                        _ = MainThreadUtils.RunInMainThread(delegate
-                        {
-                            foreach (ComicItemViewModel item in items)
-                            {
-                                item.IsFavorite = true;
-                            }
-                        });
-                    }
-                    break;
-                case BatchOperationType.UnFavorite:
-                    {
-                        List<ComicItemViewModel> items = _selectedComicItems.FindAll(x => x.IsFavorite);
-                        FavoriteModel.Instance.BatchRemoveWithId(items.ConvertAll(x => x.Comic.Id)).Wait();
-                        _ = MainThreadUtils.RunInMainThread(delegate
-                        {
-                            foreach (ComicItemViewModel item in items)
-                            {
-                                item.IsFavorite = false;
-                            }
-                        });
-                    }
-                    break;
-                case BatchOperationType.Hide:
-                    {
-                        List<ComicItemViewModel> items = _selectedComicItems.FindAll(x => !x.IsHide);
-                        foreach (ComicItemViewModel item in items)
-                        {
-                            item.Comic.SaveHiddenAsync(true).Wait();
-                        }
-                        ScheduleUpdateComics();
-                    }
-                    break;
-                case BatchOperationType.UnHide:
-                    {
-                        List<ComicItemViewModel> items = _selectedComicItems.FindAll(x => x.IsHide);
-                        foreach (ComicItemViewModel item in items)
-                        {
-                            item.Comic.SaveHiddenAsync(false).Wait();
-                        }
-                        ScheduleUpdateComics();
-                    }
-                    break;
-                case BatchOperationType.MarkAsRead:
-                    {
-                        List<ComicItemViewModel> items = _selectedComicItems.FindAll(x => !x.IsRead);
-                        foreach (ComicItemViewModel item in items)
-                        {
-                            item.Comic.SetAsRead();
-                        }
-                        _ = MainThreadUtils.RunInMainThread(delegate
-                        {
-                            foreach (ComicItemViewModel item in items)
-                            {
-                                item.UpdateProgress(true);
-                            }
-                        });
-                    }
-                    break;
-                case BatchOperationType.MarkAsUnread:
-                    {
-                        List<ComicItemViewModel> items = _selectedComicItems.FindAll(x => !x.IsUnread);
-                        foreach (ComicItemViewModel item in items)
-                        {
-                            item.Comic.SetAsUnread();
-                        }
-                        _ = MainThreadUtils.RunInMainThread(delegate
-                        {
-                            foreach (ComicItemViewModel item in items)
-                            {
-                                item.UpdateProgress(true);
-                            }
-                        });
-                    }
-                    break;
-                default:
-                    break;
-            }
+            BatchApplyOperation(operationType, _selectedComicItems);
             UpdateCommandBarButtonsNoLock();
         });
     }
@@ -513,6 +444,99 @@ internal class HomePageViewModel : INotifyPropertyChanged
             }
             ScheduleUpdateComics();
         });
+    }
+
+    private void BatchApplyOperation(BatchOperationType operationType, List<ComicItemViewModel> models)
+    {
+        switch (operationType)
+        {
+            case BatchOperationType.Favorite:
+                {
+                    List<ComicItemViewModel> items = models.FindAll(x => !x.IsFavorite);
+                    FavoriteModel.Instance.BatchAdd(items.ConvertAll(x => new FavoriteModel.FavoriteItem
+                    {
+                        Id = x.Comic.Id,
+                        Title = x.Comic.Title,
+                    })).Wait();
+                    _ = MainThreadUtils.RunInMainThread(delegate
+                    {
+                        foreach (ComicItemViewModel item in items)
+                        {
+                            item.IsFavorite = true;
+                        }
+                    });
+                }
+                break;
+            case BatchOperationType.UnFavorite:
+                {
+                    List<ComicItemViewModel> items = models.FindAll(x => x.IsFavorite);
+                    FavoriteModel.Instance.BatchRemoveWithId(items.ConvertAll(x => x.Comic.Id)).Wait();
+                    _ = MainThreadUtils.RunInMainThread(delegate
+                    {
+                        foreach (ComicItemViewModel item in items)
+                        {
+                            item.IsFavorite = false;
+                        }
+                    });
+                }
+                break;
+            case BatchOperationType.Hide:
+                {
+                    List<ComicItemViewModel> items = models.FindAll(x => !x.IsHide);
+                    foreach (ComicItemViewModel item in items)
+                    {
+                        item.Comic.SaveHiddenAsync(true).Wait();
+                    }
+                    ScheduleUpdateComics();
+                }
+                break;
+            case BatchOperationType.UnHide:
+                {
+                    List<ComicItemViewModel> items = models.FindAll(x => x.IsHide);
+                    foreach (ComicItemViewModel item in items)
+                    {
+                        item.Comic.SaveHiddenAsync(false).Wait();
+                    }
+                    ScheduleUpdateComics();
+                }
+                break;
+            case BatchOperationType.MarkAsRead:
+                {
+                    List<ComicItemViewModel> items = models.FindAll(x => !x.IsRead);
+                    foreach (ComicItemViewModel item in items)
+                    {
+                        item.Comic.SetCompletionStateToCompleted().Wait();
+                    }
+                    _ = MainThreadUtils.RunInMainThread(delegate
+                    {
+                        foreach (ComicItemViewModel item in items)
+                        {
+                            item.UpdateProgress(true);
+                        }
+                    });
+                    ScheduleUpdateComics();
+                }
+                break;
+            case BatchOperationType.MarkAsUnread:
+                {
+                    List<ComicItemViewModel> items = models.FindAll(x => !x.IsUnread);
+                    foreach (ComicItemViewModel item in items)
+                    {
+                        item.Comic.SetCompletionStateToNotStarted().Wait();
+                    }
+                    _ = MainThreadUtils.RunInMainThread(delegate
+                    {
+                        foreach (ComicItemViewModel item in items)
+                        {
+                            item.UpdateProgress(true);
+                        }
+                    });
+                    ScheduleUpdateComics();
+                }
+                break;
+            default:
+                break;
+        }
     }
 
     private void UpdateCommandBarButtonsNoLock()
@@ -621,6 +645,9 @@ internal class HomePageViewModel : INotifyPropertyChanged
         ComicPropertyModel? groupBy = lastFilter.GroupBy;
         _ = ComicFilterModel.Instance.UpdateModel(_filterModel);
 
+        // Update expression
+        _searchEngine.SetFilterExpresssion(lastFilter.Expression);
+
         // Update UI
         var viewTypeDropDown = new DropDownButtonModel<ComicFilterModel.ViewTypeEnum>
         {
@@ -689,15 +716,20 @@ internal class HomePageViewModel : INotifyPropertyChanged
             if (groupBy != null)
             {
                 Dictionary<string, List<ComicItemViewModel>> groupMap = [];
+                Dictionary<string, ComicPropertyModel.IGroupInfo> groupInfoMap = [];
                 foreach (ComicItemViewModel item in comicItems)
                 {
-                    string groupName = groupBy.GetPropertyAsGroupName(item.Comic);
-                    if (!groupMap.TryGetValue(groupName, out List<ComicItemViewModel>? group))
+                    IEnumerable<ComicPropertyModel.IGroupInfo> groupInfos = groupBy.GetPropertyAsGroupInfos(item.Comic);
+                    foreach (ComicPropertyModel.IGroupInfo groupInfo in groupInfos)
                     {
-                        group = [];
-                        groupMap[groupName] = group;
+                        if (!groupMap.TryGetValue(groupInfo.Name, out List<ComicItemViewModel>? group))
+                        {
+                            group = [];
+                            groupMap[groupInfo.Name] = group;
+                        }
+                        group.Add(item);
+                        groupInfoMap[groupInfo.Name] = groupInfo;
                     }
-                    group.Add(item);
                 }
                 comicsGrouped = [];
                 foreach (KeyValuePair<string, List<ComicItemViewModel>> p in groupMap)
@@ -708,11 +740,11 @@ internal class HomePageViewModel : INotifyPropertyChanged
                 }
                 if (groupByAscending)
                 {
-                    comicsGrouped.Sort((x, y) => x.GroupName.CompareTo(y.GroupName));
+                    comicsGrouped.Sort((x, y) => groupInfoMap[x.GroupName].SortKey.CompareTo(groupInfoMap[y.GroupName].SortKey));
                 }
                 else
                 {
-                    comicsGrouped.Sort((x, y) => y.GroupName.CompareTo(x.GroupName));
+                    comicsGrouped.Sort((y, x) => groupInfoMap[x.GroupName].SortKey.CompareTo(groupInfoMap[y.GroupName].SortKey));
                 }
             }
             else
@@ -788,7 +820,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
             SortByAscending = true,
             GroupBy = null,
             GroupByAscending = true,
-            Expression = "TRUE",
+            Expression = "",
         };
     }
 
@@ -848,17 +880,20 @@ internal class HomePageViewModel : INotifyPropertyChanged
                 SubItems = subItems,
             });
         }
-        items.Add(CreateSeperatorMenuFlyoutItem<SortByUIModel>());
-        items.Add(CreateToggleMenuFlyoutItem("Ascending", ascending, new SortByUIModel
+        if (selectedProperty != null)
         {
-            IsProperty = false,
-            IsAscending = true,
-        }));
-        items.Add(CreateToggleMenuFlyoutItem("Descending", !ascending, new SortByUIModel
-        {
-            IsProperty = false,
-            IsAscending = false,
-        }));
+            items.Add(CreateSeperatorMenuFlyoutItem<SortByUIModel>());
+            items.Add(CreateToggleMenuFlyoutItem("Ascending", ascending, new SortByUIModel
+            {
+                IsProperty = false,
+                IsAscending = true,
+            }));
+            items.Add(CreateToggleMenuFlyoutItem("Descending", !ascending, new SortByUIModel
+            {
+                IsProperty = false,
+                IsAscending = false,
+            }));
+        }
         return items;
     }
 

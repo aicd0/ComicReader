@@ -1,62 +1,111 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Text;
+
+using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Common.ServiceManagement;
+
 using Microsoft.Data.Sqlite;
 
 namespace ComicReader.SDK.Data.SqlHelpers;
 
-public sealed class CommandWrapper : ICommandContext, IDisposable
+public sealed class CommandWrapper : ICommandContext
 {
-    private readonly SqliteCommand _command;
     private int _parameterIndex = 0;
-
-    public CommandWrapper(SqlDatabase database)
-    {
-        _command = database.NewCommand();
-        _command.CommandType = System.Data.CommandType.Text;
-    }
+    private readonly Dictionary<string, object> _parameters = [];
+    private string _commandText = string.Empty;
 
     public string AppendParameter(object value)
     {
         string parameterName = $"@param{_parameterIndex++}";
-        _command.Parameters.AddWithValue(parameterName, value);
+        _parameters.Add(parameterName, value);
         return parameterName;
-    }
-
-    public void Dispose()
-    {
-        _command.Dispose();
     }
 
     public void SetCommandText(string commandText)
     {
+        _commandText = commandText;
+    }
+
+    public int ExecuteNonQuery(SqlDatabase database)
+    {
+        LogCommand();
+        SqliteCommand command = CreateCommand(database);
+        return command.ExecuteNonQuery();
+    }
+
+    public async Task<int> ExecuteNonQueryAsync(SqlDatabase database)
+    {
+        LogCommand();
+        SqliteCommand command = CreateCommand(database);
+        return await command.ExecuteNonQueryAsync();
+    }
+
+    public object? ExecuteScalar(SqlDatabase database)
+    {
+        LogCommand();
+        SqliteCommand command = CreateCommand(database);
+        return command.ExecuteScalar();
+    }
+
+    public SqliteDataReader ExecuteReader(SqlDatabase database)
+    {
+        LogCommand();
+        SqliteCommand command = CreateCommand(database);
+        return command.ExecuteReader();
+    }
+
+    public async Task<SqliteDataReader> ExecuteReaderAsync(SqlDatabase database)
+    {
+        LogCommand();
+        SqliteCommand command = CreateCommand(database);
+        return await command.ExecuteReaderAsync();
+    }
+
+    public override string ToString()
+    {
+        StringBuilder sb = new(_commandText);
+        foreach (KeyValuePair<string, object> parameter in _parameters)
+        {
+            sb.Replace(parameter.Key, ValueToStringRepresentation(parameter.Value));
+        }
+        return sb.ToString();
+    }
+
+    private SqliteCommand CreateCommand(SqlDatabase database)
+    {
+        SqliteCommand command = database.NewCommand();
+        command.CommandType = System.Data.CommandType.Text;
 #pragma warning disable CA2100
-        _command.CommandText = commandText;
+        command.CommandText = _commandText;
 #pragma warning restore CA2100
+        foreach (KeyValuePair<string, object> parameter in _parameters)
+        {
+            command.Parameters.AddWithValue(parameter.Key, parameter.Value);
+        }
+        return command;
     }
 
-    public int ExecuteNonQuery()
+    private void LogCommand()
     {
-        return _command.ExecuteNonQuery();
+        if (!ServiceManager.GetService<IDebugService>().EnableSqliteDatabaseLog())
+        {
+            return;
+        }
+        Logger.I("SQLCommand", ToString());
     }
 
-    public async Task<int> ExecuteNonQueryAsync()
+    private static string ValueToStringRepresentation(object value)
     {
-        return await _command.ExecuteNonQueryAsync();
-    }
-
-    public object? ExecuteScalar()
-    {
-        return _command.ExecuteScalar();
-    }
-
-    public SqliteDataReader ExecuteReader()
-    {
-        return _command.ExecuteReader();
-    }
-
-    public async Task<SqliteDataReader> ExecuteReaderAsync()
-    {
-        return await _command.ExecuteReaderAsync();
+        if (value is bool booleanValue)
+        {
+            return booleanValue ? "TRUE" : "FALSE";
+        }
+        if (value is string stringValue)
+        {
+            return "\"" + stringValue.Replace("\\", "\\\\").Replace("\"", "\\\"") + "\"";
+        }
+        return value.ToString() ?? "NULL";
     }
 }

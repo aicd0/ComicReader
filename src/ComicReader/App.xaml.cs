@@ -6,10 +6,10 @@ using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Common.AppEnvironment;
-using ComicReader.Common.DebugTools;
 using ComicReader.Common.Services;
 using ComicReader.Data;
 using ComicReader.Data.Legacy;
+using ComicReader.Data.Models;
 using ComicReader.Data.Models.Comic;
 using ComicReader.SDK.Common.DebugTools;
 using ComicReader.SDK.Common.ServiceManagement;
@@ -87,6 +87,7 @@ public partial class App : Application
         };
 
         ServiceManager.RegisterService<IApplicationService>(new ApplicationService());
+        ServiceManager.RegisterService<IDebugService>(new DebugService());
 
         EnvironmentProvider.Instance.Initialize();
 
@@ -95,11 +96,11 @@ public partial class App : Application
 
     private async Task InitializationOnLaunch()
     {
-        DebugSwitches.Instance.Initialize();
+        await DebugSwitchModel.Instance.Initialize();
         Logger.Initialize();
         await XmlDatabaseManager.Initialize();
+        SqlDatabaseManager.Initialize();
         await DatabaseUpgradeManager.Instance.UpgradeDatabase();
-        await SqlDatabaseManager.Initialize(XmlDatabase.Settings.DatabaseVersion);
         ComicModel.UpdateAllComics("DatabaseManager#init", lazy: true);
     }
 

@@ -140,6 +140,7 @@ class ComicFilterModel : JsonDatabase<ComicFilterModel.JsonModel>
                 SortBy = SortBy.ToJson(),
                 SortByAscending = SortByAscending,
                 GroupBy = GroupBy?.ToJson(),
+                GroupByAscending = GroupByAscending,
                 ViewType = ViewTypeToString(ViewType),
                 Expression = Expression,
             };

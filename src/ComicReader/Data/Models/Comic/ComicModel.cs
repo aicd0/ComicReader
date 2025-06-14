@@ -1,12 +1,15 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
+using ComicReader.Data.Tables;
 using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Data.SqlHelpers;
 
 using Windows.Storage;
 
@@ -36,17 +39,17 @@ internal sealed class ComicModel
     public bool IsDirectory => _internalModel is ComicFolderData;
     public bool IsEditable => _internalModel.IsEditable;
     public bool IsExternal => _internalModel.IsExternal;
-    public bool IsRead => _internalModel.IsRead;
-    public bool IsUnread => _internalModel.IsUnread;
     public double LastPosition => _internalModel.LastPosition;
     public string Location => _internalModel.Location;
     public int Progress => _internalModel.Progress;
+    public DateTimeOffset LastVisit => _internalModel.LastVisit;
     public int Rating => _internalModel.Rating;
     public string ReadableTags => _internalModel.TagString();
     public IReadOnlyList<TagData> Tags => _internalModel.Tags;
     public string Title => _internalModel.Title;
     public string Title1 => _internalModel.Title1;
     public string Title2 => _internalModel.Title2;
+    public CompletionStateEnum CompletionState => _internalModel.CompletionState;
 
     public string GetImageCacheKey(int index)
     {
@@ -72,9 +75,25 @@ internal sealed class ComicModel
         _internalModel.SaveBasic();
     }
 
-    public void SetAsStarted()
+    public async Task SetCompletionStateToNotStarted()
+    {
+        _internalModel.SetAsUnread();
+        await _internalModel.SaveCompletionState(CompletionStateEnum.NotStarted);
+    }
+
+    public async Task SetCompletionStateToAtLeastStarted()
     {
         _internalModel.SetAsStarted();
+        if (CompletionState == CompletionStateEnum.NotStarted)
+        {
+            await _internalModel.SaveCompletionState(CompletionStateEnum.Started);
+        }
+    }
+
+    public async Task SetCompletionStateToCompleted()
+    {
+        _internalModel.SetAsRead();
+        await _internalModel.SaveCompletionState(CompletionStateEnum.Completed);
     }
 
     public Task SaveProgressAsync(int progress, double lastPosition)
@@ -85,16 +104,6 @@ internal sealed class ComicModel
     public void SaveRating(int rating)
     {
         _internalModel.SaveRating(rating);
-    }
-
-    public void SetAsRead()
-    {
-        _internalModel.SetAsRead();
-    }
-
-    public void SetAsUnread()
-    {
-        _internalModel.SetAsUnread();
     }
 
     public Task SaveHiddenAsync(bool hidden)
@@ -138,12 +147,8 @@ internal sealed class ComicModel
         return _locationPool.TryGetValue(location, out model);
     }
 
-    private static ComicModel? ReplaceWithExisting(ComicData? comicData)
+    private static ComicModel ReplaceWithExisting(ComicData comicData)
     {
-        if (comicData == null)
-        {
-            return null;
-        }
         var model = new ComicModel(comicData);
         if (comicData.Id >= 0)
         {
@@ -168,6 +173,10 @@ internal sealed class ComicModel
             return model;
         }
         ComicData? comicData = await ComicData.FromId(id, taskName);
+        if (comicData == null)
+        {
+            return null;
+        }
         return ReplaceWithExisting(comicData);
     }
 
@@ -178,6 +187,10 @@ internal sealed class ComicModel
             return model;
         }
         ComicData? comicData = await ComicData.FromLocation(location, taskName);
+        if (comicData == null)
+        {
+            return null;
+        }
         return ReplaceWithExisting(comicData);
     }
 
@@ -204,6 +217,10 @@ internal sealed class ComicModel
             comic = await ComicData.FromLocation(file.Path, "ComicModelFromFileArchive");
             comic ??= await ComicArchiveData.FromExternal(file);
         }
+        if (comic == null)
+        {
+            return null;
+        }
         return ReplaceWithExisting(comic);
     }
 
@@ -213,12 +230,54 @@ internal sealed class ComicModel
         return ReplaceWithExisting(comic);
     }
 
+    public static async Task<List<ComicModel>> BatchFromId(IEnumerable<long> ids, string taskName)
+    {
+        HashSet<long> idsUnique = [.. ids];
+        List<ComicModel> results = [];
+        List<long> requestingIds = [];
+        foreach (long id in idsUnique)
+        {
+            if (TryGetExisting(id, out ComicModel? model))
+            {
+                results.Add(model);
+            }
+            else
+            {
+                requestingIds.Add(id);
+            }
+        }
+        if (requestingIds.Count > 0)
+        {
+            List<ComicData> requestResults = await ComicData.BatchFromId(requestingIds, taskName);
+            foreach (ComicData result in requestResults)
+            {
+                results.Add(ReplaceWithExisting(result));
+            }
+        }
+        return results;
+    }
+
     //
-    // Scanner
+    // Utilities
     //
 
     public static void UpdateAllComics(string reason, bool lazy)
     {
         ComicData.UpdateAllComics(reason, lazy);
+    }
+
+    public static async Task<List<string>> GetAllTagCategories()
+    {
+        HashSet<string> tags = [];
+        var command = new SelectCommand(TagCategoryTable.Instance);
+        IReaderToken<string> nameToken = command.PutQueryString(TagCategoryTable.ColumnName);
+        command.Distinct();
+        using SelectCommand.IReader reader = await command.ExecuteAsync(SqlDatabaseManager.MainDatabase);
+        while (reader.Read())
+        {
+            string name = nameToken.GetValue();
+            tags.Add(name);
+        }
+        return [.. tags];
     }
 }

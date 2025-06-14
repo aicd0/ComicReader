@@ -8,6 +8,8 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
+using ComicReader.Common.Expression;
+using ComicReader.Common.Expression.Sql;
 using ComicReader.Data;
 using ComicReader.Data.Models.Comic;
 using ComicReader.Data.Tables;
@@ -28,6 +30,7 @@ internal class ComicSearchEngine
     private readonly List<ComicModel> _comicItems = [];
     private volatile string _searchText = "";
     private long _lastSearchTime = 0;
+    private volatile string _expression = "";
 
     public void SetResultCallback(Action<IReadOnlyList<ComicModel>>? callback)
     {
@@ -36,6 +39,16 @@ internal class ComicSearchEngine
 
     public void Update()
     {
+        ScheduleUpdate();
+    }
+
+    public void SetFilterExpresssion(string expression)
+    {
+        if (expression == _expression)
+        {
+            return;
+        }
+        _expression = expression;
         ScheduleUpdate();
     }
 
@@ -83,55 +96,72 @@ internal class ComicSearchEngine
         Logger.I(TAG, "UpdateNoLock");
 
         string searchText = _searchText;
-        List<ComicModel> comicItems;
+        string expression = _expression;
+        ICondition? expressionCondition = ParseExpression(expression);
+
+        List<long> ids;
         if (string.IsNullOrWhiteSpace(searchText))
         {
-            comicItems = await SearchAll();
+            ids = await SearchAll(expressionCondition);
         }
         else
         {
-            comicItems = await SearchByKeywords(searchText);
+            ids = await SearchByKeywords(searchText, expressionCondition);
         }
+        List<ComicModel> comicItems = await ComicModel.BatchFromId(ids, "HomeLoadComic");
 
         _comicItems.Clear();
         _comicItems.AddRange(comicItems);
         _callback?.Invoke(comicItems);
     }
 
-    private async Task<List<ComicModel>> SearchAll()
+    private ICondition? ParseExpression(string expression)
     {
-        List<Tuple<long, DateTimeOffset>> records = [];
-        await ComicData.EnqueueCommand(delegate
+        ExpressionToken token;
+        try
         {
-            SelectCommand<ComicTable> command = new SelectCommand<ComicTable>(ComicTable.Instance).AppendCondition(new EqualityCondition<bool>(ComicTable.ColumnHidden, false));
-            SelectCommand<ComicTable>.IToken<long> idToken = command.PutQueryInt64(ComicTable.ColumnId);
-            SelectCommand<ComicTable>.IToken<DateTimeOffset> lastVisitToken = command.PutQueryDateTimeOffset(ComicTable.ColumnLastVisit);
-            using SelectCommand<ComicTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
-
-            while (reader.Read())
-            {
-                records.Add(new Tuple<long, DateTimeOffset>
-                (
-                    idToken.GetValue(),
-                    lastVisitToken.GetValue()
-                ));
-            }
-        }, "HomeLoadLibrary");
-
-        var comicItems = new List<ComicModel>();
-        foreach (Tuple<long, DateTimeOffset> record in records)
-        {
-            ComicModel? comic = await ComicModel.FromId(record.Item1, "HomeLoadComic");
-            if (comic == null)
-            {
-                continue;
-            }
-            comicItems.Add(comic);
+            token = ExpressionParser.Parse(expression);
         }
-        return comicItems;
+        catch (Exception ex)
+        {
+            Logger.E(TAG, ex);
+            return null;
+        }
+        ICondition condition;
+        try
+        {
+            condition = SQLGenerator.CreateQuery(token, new ComicSQLCommandProvider());
+        }
+        catch (Exception ex)
+        {
+            Logger.E(TAG, ex);
+            return null;
+        }
+        return condition;
     }
 
-    private async Task<List<ComicModel>> SearchByKeywords(string searchText)
+    private async Task<List<long>> SearchAll(ICondition? additionalCondition)
+    {
+        List<long> ids = [];
+        await ComicData.EnqueueCommand(delegate
+        {
+            var command = new SelectCommand(ComicTable.Instance);
+            command.AppendCondition(new ComparisonCondition(ColumnOrValue.FromColumn(ComicTable.ColumnHidden), ColumnOrValue.FromValue(false)));
+            if (additionalCondition is not null)
+            {
+                command.AppendCondition(additionalCondition);
+            }
+            IReaderToken<long> idToken = command.PutQueryInt64(ComicTable.ColumnId);
+            using SelectCommand.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
+            while (reader.Read())
+            {
+                ids.Add(idToken.GetValue());
+            }
+        }, "HomeLoadLibrary");
+        return ids;
+    }
+
+    private async Task<List<long>> SearchByKeywords(string searchText, ICondition? additionalCondition)
     {
         string keyword = searchText;
 
@@ -158,7 +188,7 @@ internal class ComicSearchEngine
         {
             string keyword_combined = StringUtils.Join(" ", keywords);
             title_text = "\"" + keyword_combined + "\"";
-            tab_title = StringResourceProvider.GetResourceString("SearchResultsOf");
+            tab_title = StringResourceProvider.SearchResultsOf;
             tab_title = tab_title.Replace("$keyword", keyword_combined);
         }
         else if (filter_brief.Length != 0)
@@ -169,8 +199,8 @@ internal class ComicSearchEngine
         }
         else
         {
-            title_text = StringResourceProvider.GetResourceString("AllMatchedResults");
-            tab_title = StringResourceProvider.GetResourceString("SearchResults");
+            title_text = StringResourceProvider.AllMatchedResults;
+            tab_title = StringResourceProvider.SearchResults;
         }
 
         for (int i = 0; i < keywords.Count; ++i)
@@ -183,11 +213,15 @@ internal class ComicSearchEngine
 
         await ComicData.EnqueueCommand(delegate
         {
-            var command = new SelectCommand<ComicTable>(ComicTable.Instance);
-            SelectCommand<ComicTable>.IToken<long> idToken = command.PutQueryInt64(ComicTable.ColumnId);
-            SelectCommand<ComicTable>.IToken<string> title1Token = command.PutQueryString(ComicTable.ColumnTitle1);
-            SelectCommand<ComicTable>.IToken<string> title2Token = command.PutQueryString(ComicTable.ColumnTitle2);
-            using SelectCommand<ComicTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
+            var command = new SelectCommand(ComicTable.Instance);
+            IReaderToken<long> idToken = command.PutQueryInt64(ComicTable.ColumnId);
+            IReaderToken<string> title1Token = command.PutQueryString(ComicTable.ColumnTitle1);
+            IReaderToken<string> title2Token = command.PutQueryString(ComicTable.ColumnTitle2);
+            if (additionalCondition is not null)
+            {
+                command.AppendCondition(additionalCondition);
+            }
+            using SelectCommand.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 
             while (reader.Read())
             {
@@ -231,18 +265,12 @@ internal class ComicSearchEngine
             (Match x) => x.Id, (long x) => x,
             new C1<long>.DefaultEqualityComparer()).ToList();
 
-        // Convert to ComicModel.
-        var comicItems = new List<ComicModel>(matches.Count);
+        List<long> ids = new(matches.Count);
         foreach (Match match in matches)
         {
-            ComicModel? comic = await ComicModel.FromId(match.Id, "SearchComic");
-            if (comic == null)
-            {
-                continue;
-            }
-            comicItems.Add(comic);
+            ids.Add(match.Id);
         }
-        return comicItems;
+        return ids;
     }
 
     private static long GetTick()

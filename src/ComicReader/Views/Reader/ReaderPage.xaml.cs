@@ -6,7 +6,6 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -38,107 +37,6 @@ using Windows.System;
 
 namespace ComicReader.Views.Reader;
 
-internal class ReaderPageViewModel : INotifyPropertyChanged
-{
-    public event PropertyChangedEventHandler PropertyChanged;
-
-    private string _comicTitle1;
-    public string ComicTitle1
-    {
-        get => _comicTitle1;
-        set
-        {
-            _comicTitle1 = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ComicTitle1)));
-        }
-    }
-
-    private string _comicTitle2;
-    public string ComicTitle2
-    {
-        get => _comicTitle2;
-        set
-        {
-            _comicTitle2 = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ComicTitle2)));
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsComicTitle2Visible)));
-        }
-    }
-
-    public bool IsComicTitle2Visible => ComicTitle2.Length > 0;
-
-    private string _comicDir;
-    public string ComicDir
-    {
-        get => _comicDir;
-        set
-        {
-            _comicDir = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ComicDir)));
-        }
-    }
-
-    private bool _canDirOpenInFileExplorer = false;
-    public bool CanDirOpenInFileExplorer
-    {
-        get => _canDirOpenInFileExplorer;
-        set
-        {
-            _canDirOpenInFileExplorer = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CanDirOpenInFileExplorer)));
-        }
-    }
-
-    private ObservableCollection<TagCollectionViewModel> _comicTags;
-    public ObservableCollection<TagCollectionViewModel> ComicTags
-    {
-        get => _comicTags;
-        set
-        {
-            _comicTags = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ComicTags)));
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsComicTagsVisible)));
-        }
-    }
-
-    public bool IsComicTagsVisible => ComicTags != null && ComicTags.Count > 0;
-
-    private bool _isEditable;
-    public bool IsEditable
-    {
-        get => _isEditable;
-        set
-        {
-            _isEditable = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsEditable)));
-        }
-    }
-
-    private double _rating;
-    public double Rating
-    {
-        get => _rating;
-        set
-        {
-            _rating = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Rating)));
-        }
-    }
-
-    private bool _isFullscreen = false;
-    public bool IsFullscreen
-    {
-        get => _isFullscreen;
-        set
-        {
-            _isFullscreen = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsFullscreen)));
-        }
-    }
-
-    public ObservableCollection<ReaderImagePreviewViewModel> PreviewDataSource { get; set; }
-}
-
 internal sealed partial class ReaderPage : BasePage
 {
     //
@@ -163,7 +61,6 @@ internal sealed partial class ReaderPage : BasePage
     private DateTimeOffset _buttomTileHideRequestTime = DateTimeOffset.Now;
 
     private readonly ITaskDispatcher _loadPreviewDispatcher = TaskDispatcher.Factory.NewQueue("ReaderLoadPreview");
-    private readonly TagItemHandler _tagItemHandler;
 
     private MutableLiveData<ReaderStatusEnum> ReaderStatusLiveData { get; } = new(ReaderStatusEnum.Loading);
 
@@ -191,8 +88,6 @@ internal sealed partial class ReaderPage : BasePage
     public ReaderPage()
     {
         InitializeComponent();
-
-        _tagItemHandler = new TagItemHandler(this);
 
         ViewModel.ComicTitle1 = "";
         ViewModel.ComicTitle2 = "";
@@ -307,6 +202,13 @@ internal sealed partial class ReaderPage : BasePage
         GetMainPageAbility().RegisterTabUnselectedHandler(this, AppModel.UnsetReadingComic);
         GetNavigationPageAbility().RegisterLeavingHandler(this, AppModel.UnsetReadingComic);
 
+        ViewModel.TagClickLiveData.Observe(this, (string tag) =>
+        {
+            Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_SEARCH)
+                .WithParam(RouterConstants.ARG_KEYWORD, "<tag: " + tag + ">");
+            GetMainPageAbility().OpenInNewTab(route);
+        });
+
         GetNavigationPageAbility().RegisterGridViewModeChangedHandler(this, delegate (bool enabled)
         {
             GridViewModeEnabled = enabled;
@@ -364,8 +266,8 @@ internal sealed partial class ReaderPage : BasePage
             string readerStatusText = "";
             readerStatusText = status switch
             {
-                ReaderStatusEnum.Loading => StringResourceProvider.GetResourceString("ReaderStatusLoading"),
-                ReaderStatusEnum.Error => StringResourceProvider.GetResourceString("ReaderStatusError"),
+                ReaderStatusEnum.Loading => StringResourceProvider.ReaderStatusLoading,
+                ReaderStatusEnum.Error => StringResourceProvider.ReaderStatusError,
                 _ => "",
             };
             TbReaderStatus.Text = readerStatusText;
@@ -409,7 +311,7 @@ internal sealed partial class ReaderPage : BasePage
 
         if (!_comic.IsExternal)
         {
-            _comic.SetAsStarted();
+            await _comic.SetCompletionStateToAtLeastStarted();
             await HistoryDataManager.Add(_comic.Id, _comic.Title1, true);
 
             TaskException result = await _comic.ReloadImageFiles();
@@ -584,7 +486,7 @@ internal sealed partial class ReaderPage : BasePage
                 var tag_model = new TagViewModel
                 {
                     Tag = tag,
-                    ItemHandler = _tagItemHandler
+                    ItemHandler = ViewModel._tagItemHandler,
                 };
                 tags_model.Tags.Add(tag_model);
             }
@@ -639,14 +541,11 @@ internal sealed partial class ReaderPage : BasePage
     public void UpdateProgress(ReaderView reader, bool save)
     {
         double page = reader.CurrentPage;
-
         if (page <= 0.0)
         {
             return;
         }
-
         int progress;
-
         if (reader.PageCount <= 0)
         {
             progress = 0;
@@ -659,7 +558,6 @@ internal sealed partial class ReaderPage : BasePage
         {
             progress = (int)((float)page / reader.PageCount * 100);
         }
-
         progress = Math.Min(progress, 100);
 
         if (save)
@@ -668,7 +566,6 @@ internal sealed partial class ReaderPage : BasePage
             {
                 return;
             }
-
             _updatingProgress = true;
             Task.Run(delegate
             {
@@ -720,14 +617,6 @@ internal sealed partial class ReaderPage : BasePage
                 _ = await Launcher.LaunchFolderAsync(folder);
             }
         });
-    }
-
-    private void OnInfoPaneTagClicked(object sender, RoutedEventArgs e)
-    {
-        var ctx = (TagViewModel)((Button)sender).DataContext;
-        Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_SEARCH)
-            .WithParam(RouterConstants.ARG_KEYWORD, "<tag: " + ctx.Tag + ">");
-        GetMainPageAbility().OpenInNewTab(route);
     }
 
     private void OnEditInfoClick(object sender, RoutedEventArgs e)
@@ -936,21 +825,6 @@ internal sealed partial class ReaderPage : BasePage
     //
     // Classes
     //
-
-    public class TagItemHandler : TagViewModel.IItemHandler
-    {
-        private readonly ReaderPage _page;
-
-        public TagItemHandler(ReaderPage page)
-        {
-            _page = page;
-        }
-
-        public void OnClicked(object sender, RoutedEventArgs e)
-        {
-            _page.OnInfoPaneTagClicked(sender, e);
-        }
-    }
 
     public enum ReaderStatusEnum
     {

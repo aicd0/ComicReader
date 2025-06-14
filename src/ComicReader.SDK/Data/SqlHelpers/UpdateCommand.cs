@@ -7,32 +7,32 @@ using System.Text;
 
 namespace ComicReader.SDK.Data.SqlHelpers;
 
-public class UpdateCommand<T> where T : ITable
+public class UpdateCommand
 {
-    private readonly T _table;
+    private readonly ITable _table;
     private readonly Dictionary<string, IToken> _tokens = [];
     private readonly List<ICondition> _conditions = [];
 
     private bool _executed = false;
 
-    public UpdateCommand(T table)
+    public UpdateCommand(ITable table)
     {
         _table = table;
     }
 
-    public UpdateCommand<T> AppendColumn<U>(Column column, U value)
+    public UpdateCommand AppendColumn(IColumnTypeless column, object value)
     {
-        var token = new Token<U>(column, value);
+        var token = new Token(column, value);
         _tokens[column.Name] = token;
         return this;
     }
 
-    public UpdateCommand<T> AppendCondition<U>(Column column, U value)
+    public UpdateCommand AppendCondition(IColumnTypeless column, object value)
     {
-        return AppendCondition(new EqualityCondition<U>(column, value));
+        return AppendCondition(new ComparisonCondition(ColumnOrValue.FromColumn(column), ColumnOrValue.FromValue(value)));
     }
 
-    public UpdateCommand<T> AppendCondition(ICondition condition)
+    public UpdateCommand AppendCondition(ICondition condition)
     {
         _conditions.Add(condition);
         return this;
@@ -51,7 +51,7 @@ public class UpdateCommand<T> where T : ITable
             return;
         }
 
-        using CommandWrapper command = new(database);
+        CommandWrapper command = new();
 
         StringBuilder sb = new($"UPDATE {_table.GetTableName()} SET ");
 
@@ -70,24 +70,29 @@ public class UpdateCommand<T> where T : ITable
             sb.Append(parameterKey);
         }
 
-        sb.Append(" WHERE TRUE");
-
-        foreach (ICondition condition in _conditions)
+        if (_conditions.Count > 0)
         {
-            sb.Append(" AND ");
-            sb.Append(condition.GetExpression(command));
+            sb.Append(" WHERE ");
+            for (int i = 0; i < _conditions.Count; i++)
+            {
+                if (i > 0)
+                {
+                    sb.Append(" AND ");
+                }
+                sb.Append('(').Append(_conditions[i].GetExpression(command)).Append(')');
+            }
         }
 
         command.SetCommandText(sb.ToString());
-        command.ExecuteNonQuery();
+        command.ExecuteNonQuery(database);
     }
 
-    private class Token<U> : IToken
+    private class Token : IToken
     {
-        private readonly Column _column;
-        private readonly U _value;
+        private readonly IColumnTypeless _column;
+        private readonly object _value;
 
-        public Token(Column column, U value)
+        public Token(IColumnTypeless column, object value)
         {
             _column = column;
             _value = value;

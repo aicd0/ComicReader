@@ -111,7 +111,7 @@ internal sealed partial class SearchPage : BasePage
             {
                 string keyword_combined = StringUtils.Join(" ", keywords);
                 title_text = "\"" + keyword_combined + "\"";
-                tab_title = StringResourceProvider.GetResourceString("SearchResultsOf");
+                tab_title = StringResourceProvider.SearchResultsOf;
                 tab_title = tab_title.Replace("$keyword", keyword_combined);
             }
             else if (filter_brief.Length != 0)
@@ -122,8 +122,8 @@ internal sealed partial class SearchPage : BasePage
             }
             else
             {
-                title_text = StringResourceProvider.GetResourceString("AllMatchedResults");
-                tab_title = StringResourceProvider.GetResourceString("SearchResults");
+                title_text = StringResourceProvider.AllMatchedResults;
+                tab_title = StringResourceProvider.SearchResults;
             }
 
             // update tab header
@@ -141,7 +141,7 @@ internal sealed partial class SearchPage : BasePage
             ViewModel.Title = title_text;
             ViewModel.FilterDetails = filter_details;
 
-            string no_results = StringResourceProvider.GetResourceString("NoResults");
+            string no_results = StringResourceProvider.NoResults;
             no_results = no_results.Replace("$keyword", keyword);
 
             ViewModel.NoResultText = no_results;
@@ -170,11 +170,11 @@ internal sealed partial class SearchPage : BasePage
 
         await ComicData.EnqueueCommand(delegate
         {
-            var command = new SelectCommand<ComicTable>(ComicTable.Instance);
-            SelectCommand<ComicTable>.IToken<long> idToken = command.PutQueryInt64(ComicTable.ColumnId);
-            SelectCommand<ComicTable>.IToken<string> title1Token = command.PutQueryString(ComicTable.ColumnTitle1);
-            SelectCommand<ComicTable>.IToken<string> title2Token = command.PutQueryString(ComicTable.ColumnTitle2);
-            using SelectCommand<ComicTable>.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
+            var command = new SelectCommand(ComicTable.Instance);
+            IReaderToken<long> idToken = command.PutQueryInt64(ComicTable.ColumnId);
+            IReaderToken<string> title1Token = command.PutQueryString(ComicTable.ColumnTitle1);
+            IReaderToken<string> title2Token = command.PutQueryString(ComicTable.ColumnTitle2);
+            using SelectCommand.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 
             while (reader.Read())
             {
@@ -374,11 +374,11 @@ internal sealed partial class SearchPage : BasePage
         {
             if (read)
             {
-                item.Comic.SetAsRead();
+                await item.Comic.SetCompletionStateToCompleted();
             }
             else
             {
-                item.Comic.SetAsUnread();
+                await item.Comic.SetCompletionStateToNotStarted();
             }
             await BindComicData(item, item.Comic);
         });

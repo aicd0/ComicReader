@@ -64,6 +64,7 @@ internal partial class ReaderView : UserControl
     private bool _isFirstFrameActionPerformed = false;
     private bool _isInitialFrameLoaded = false;
     private bool _isInitialFrameActionPerformed = false;
+    private bool _isInitialFrameJumped = false;
     private bool _isLastFrameLoaded = false;
     private bool _isLastFrameActionPerformed = false;
 
@@ -367,6 +368,7 @@ internal partial class ReaderView : UserControl
             PostToCurrentThread(delegate
             {
                 ScrollResult scrollResult = SetScrollViewer2(_zoom, InitialPage, true, "JumpToInitialPage");
+                _isInitialFrameJumped = true;
                 Log("Load", $"InitialFrameScroll (result={scrollResult})");
                 if (scrollResult == ScrollResult.TooClose)
                 {
@@ -472,7 +474,10 @@ internal partial class ReaderView : UserControl
 
         if (needReload && _originalDataModel != null)
         {
-            _initialPage = CurrentPage;
+            if (_isInitialFrameJumped)
+            {
+                _initialPage = CurrentPage;
+            }
             Reload(_originalDataModel, false);
         }
     }
@@ -897,7 +902,7 @@ internal partial class ReaderView : UserControl
             UpdateImages("ViewChanged");
         }
 
-        ReaderEventPageChanged?.Invoke(this, final);
+        ReaderEventPageChanged?.Invoke(this, !final);
     }
 
     //

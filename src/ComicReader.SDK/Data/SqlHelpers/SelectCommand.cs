@@ -1,17 +1,15 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-#nullable disable
-
 using System.Text;
 
 using Microsoft.Data.Sqlite;
 
 namespace ComicReader.SDK.Data.SqlHelpers;
 
-public class SelectCommand<T> where T : ITable
+public class SelectCommand
 {
-    private readonly T _table;
+    private readonly ITable _table;
     private readonly Dictionary<string, ITokenInternal> _tokens = [];
     private readonly List<ICondition> _conditions = [];
 
@@ -20,70 +18,70 @@ public class SelectCommand<T> where T : ITable
     private int _limit = 0;
     private bool _executed = false;
 
-    public SelectCommand(T table)
+    public SelectCommand(ITable table)
     {
         _table = table;
     }
 
-    public SelectCommand<T> Distinct()
+    public SelectCommand Distinct()
     {
         _distinct = true;
         return this;
     }
 
-    public SelectCommand<T> CollateNocase()
+    public SelectCommand CollateNocase()
     {
         _collateNocase = true;
         return this;
     }
 
-    public SelectCommand<T> Limit(int limit)
+    public SelectCommand Limit(int limit)
     {
         _limit = limit;
         return this;
     }
 
-    public IToken<long> PutQueryCountAll()
+    public IReaderToken<long> PutQueryCountAll()
     {
         return PutToken(new GeneralToken<long>("COUNT(*)", delegate (SqliteDataReader reader, int ordinal) { return reader.GetInt64(ordinal); }));
     }
 
-    public IToken<int> PutQueryInt32(Column column)
+    public IReaderToken<int> PutQueryInt32(IColumn<int> column)
     {
         return PutToken(new ColumnToken<int>(column, delegate (SqliteDataReader reader, int ordinal) { return reader.GetInt32(ordinal); }));
     }
 
-    public IToken<long> PutQueryInt64(Column column)
+    public IReaderToken<long> PutQueryInt64(IColumn<long> column)
     {
         return PutToken(new ColumnToken<long>(column, delegate (SqliteDataReader reader, int ordinal) { return reader.GetInt64(ordinal); }));
     }
 
-    public IToken<string> PutQueryString(Column column)
+    public IReaderToken<string> PutQueryString(IColumn<string> column)
     {
         return PutToken(new ColumnToken<string>(column, delegate (SqliteDataReader reader, int ordinal) { return reader.GetString(ordinal); }));
     }
 
-    public IToken<bool> PutQueryBoolean(Column column)
+    public IReaderToken<bool> PutQueryBoolean(IColumn<bool> column)
     {
         return PutToken(new ColumnToken<bool>(column, delegate (SqliteDataReader reader, int ordinal) { return reader.GetBoolean(ordinal); }));
     }
 
-    public IToken<double> PutQueryDouble(Column column)
+    public IReaderToken<double> PutQueryDouble(IColumn<double> column)
     {
         return PutToken(new ColumnToken<double>(column, delegate (SqliteDataReader reader, int ordinal) { return reader.GetDouble(ordinal); }));
     }
 
-    public IToken<DateTimeOffset> PutQueryDateTimeOffset(Column column)
+    public IReaderToken<DateTimeOffset> PutQueryDateTimeOffset(IColumn<DateTimeOffset> column)
     {
         return PutToken(new ColumnToken<DateTimeOffset>(column, delegate (SqliteDataReader reader, int ordinal) { return reader.GetDateTimeOffset(ordinal); }));
     }
 
-    public SelectCommand<T> AppendCondition<U>(Column column, U value)
+    public SelectCommand AppendCondition(IColumnTypeless column, object value)
     {
-        return AppendCondition(new EqualityCondition<U>(column, value));
+        return AppendCondition(new ComparisonCondition(ColumnOrValue.FromColumn(column), ColumnOrValue.FromValue(value)));
     }
 
-    public SelectCommand<T> AppendCondition(ICondition condition)
+    public SelectCommand AppendCondition(ICondition condition)
     {
         _conditions.Add(condition);
         return this;
@@ -103,8 +101,8 @@ public class SelectCommand<T> where T : ITable
         }
 
         var tokens = new List<ITokenInternal>(_tokens.Values);
-        CommandWrapper command = GenerateCommand(database, tokens);
-        return new Reader(command, command.ExecuteReader(), tokens);
+        CommandWrapper command = GenerateCommand(tokens);
+        return new Reader(command.ExecuteReader(database), tokens);
     }
 
     public async Task<IReader> ExecuteAsync(SqlDatabase database)
@@ -121,14 +119,33 @@ public class SelectCommand<T> where T : ITable
         }
 
         var tokens = new List<ITokenInternal>(_tokens.Values);
-        CommandWrapper command = GenerateCommand(database, tokens);
-        return new Reader(command, await command.ExecuteReaderAsync(), tokens);
+        CommandWrapper command = GenerateCommand(tokens);
+        return new Reader(await command.ExecuteReaderAsync(database), tokens);
     }
 
-    private CommandWrapper GenerateCommand(SqlDatabase database, List<ITokenInternal> tokens)
+    public override string ToString()
     {
-        CommandWrapper command = new(database);
+        var tokens = new List<ITokenInternal>(_tokens.Values);
+        CommandWrapper command = GenerateCommand(tokens);
+        return command.ToString();
+    }
 
+    internal string ToSubquery(ICommandContext command)
+    {
+        var tokens = new List<ITokenInternal>(_tokens.Values);
+        return GetQueryText(command, tokens);
+    }
+
+    private CommandWrapper GenerateCommand(List<ITokenInternal> tokens)
+    {
+        CommandWrapper command = new();
+        string commandText = GetQueryText(command, tokens);
+        command.SetCommandText(commandText);
+        return command;
+    }
+
+    private string GetQueryText(ICommandContext command, List<ITokenInternal> tokens)
+    {
         StringBuilder sb = new($"SELECT ");
 
         if (_distinct)
@@ -149,12 +166,18 @@ public class SelectCommand<T> where T : ITable
 
         sb.Append(" FROM ");
         sb.Append(_table.GetTableName());
-        sb.Append(" WHERE TRUE");
 
-        foreach (ICondition condition in _conditions)
+        if (_conditions.Count > 0)
         {
-            sb.Append(" AND ");
-            sb.Append(condition.GetExpression(command));
+            sb.Append(" WHERE ");
+            for (int i = 0; i < _conditions.Count; i++)
+            {
+                if (i > 0)
+                {
+                    sb.Append(" AND ");
+                }
+                sb.Append('(').Append(_conditions[i].GetExpression(command)).Append(')');
+            }
         }
 
         if (_collateNocase)
@@ -168,8 +191,7 @@ public class SelectCommand<T> where T : ITable
             sb.Append(_limit);
         }
 
-        command.SetCommandText(sb.ToString());
-        return command;
+        return sb.ToString();
     }
 
     private Token<V> PutToken<V>(Token<V> token)
@@ -178,12 +200,11 @@ public class SelectCommand<T> where T : ITable
         return token;
     }
 
-    private class Reader(CommandWrapper command, SqliteDataReader reader, List<ITokenInternal> tokens) : IReader
+    private class Reader(SqliteDataReader reader, List<ITokenInternal> tokens) : IReader
     {
         public void Dispose()
         {
             reader?.Dispose();
-            command?.Dispose();
         }
 
         public bool Read()
@@ -232,11 +253,11 @@ public class SelectCommand<T> where T : ITable
         }
     }
 
-    private abstract class Token<V> : IToken<V>, ITokenInternal
+    private abstract class Token<V> : IReaderToken<V>, ITokenInternal
     {
         private readonly Func<SqliteDataReader, int, V> _getter;
         private bool _valueSet = false;
-        private V _value = default;
+        private V? _value = default;
 
         public Token(Func<SqliteDataReader, int, V> getter)
         {
@@ -251,8 +272,7 @@ public class SelectCommand<T> where T : ITable
             {
                 throw new InvalidOperationException("Value is not set.");
             }
-
-            return _value;
+            return _value!;
         }
 
         public void UpdateValue(SqliteDataReader reader, int ordinal)
@@ -279,9 +299,9 @@ public class SelectCommand<T> where T : ITable
 
     private class ColumnToken<V> : Token<V>
     {
-        private readonly Column _column;
+        private readonly IColumn<V> _column;
 
-        public ColumnToken(Column column, Func<SqliteDataReader, int, V> getter) : base(getter)
+        public ColumnToken(IColumn<V> column, Func<SqliteDataReader, int, V> getter) : base(getter)
         {
             _column = column;
         }
@@ -304,10 +324,5 @@ public class SelectCommand<T> where T : ITable
         string GetQueryExpression();
 
         void UpdateValue(SqliteDataReader reader, int ordinal);
-    }
-
-    public interface IToken<U>
-    {
-        U GetValue();
     }
 }
