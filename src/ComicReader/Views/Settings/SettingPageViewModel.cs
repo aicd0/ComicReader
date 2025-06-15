@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
+using ComicReader.Common.AppEnvironment;
 using ComicReader.Common.Threading;
 using ComicReader.Data.Legacy;
 using ComicReader.Data.Models;
@@ -33,6 +34,7 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
 
     private AppSettingsModel.ExternalModel? _settingsModel;
     private AppearanceSetting _initialAppearance = AppearanceSetting.None;
+    private bool _languageChanged = false;
 
     public bool Updating { get; set; } = false;
 
@@ -78,8 +80,8 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
         }
     }
 
-    private List<Tuple<string, string>> _languages = [];
-    public List<Tuple<string, string>> Languages
+    private List<LanguageEntry> _languages = [];
+    public List<LanguageEntry> Languages
     {
         get => _languages;
         set
@@ -218,14 +220,14 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
         }
     }
 
-    private bool _languageChanged;
-    public bool LanguageChanged
+    private string _languageDescription = "";
+    public string LanguageDescription
     {
-        get => _languageChanged;
+        get => _languageDescription;
         set
         {
-            _languageChanged = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LanguageChanged)));
+            _languageDescription = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(LanguageDescription)));
         }
     }
 
@@ -262,10 +264,10 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
         }
     }
 
-    private string _cacheSize = StringResourceProvider.Calculating;
+    private string _cacheSize = StringResourceProvider.Instance.Calculating;
     public string CacheSize
     {
-        get => StringResourceProvider.ClearCacheDetail.Replace("$size", _cacheSize);
+        get => StringResourceProvider.Instance.ClearCacheDetail.Replace("$size", _cacheSize);
         set
         {
             _cacheSize = value;
@@ -320,13 +322,14 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
             Logger.AssertNotReachHere("B1015E06897635CE");
             return;
         }
-        string selectedLanguage = Languages[index].Item2;
+        LanguageEntry selectedLanguage = Languages[index];
         _languageIndex = index;
-        LanguageChanged = true;
+        _languageChanged = true;
+        UpdateLanguageDescription(selectedLanguage.Description);
 
         try
         {
-            ApplicationLanguages.PrimaryLanguageOverride = selectedLanguage;
+            ApplicationLanguages.PrimaryLanguageOverride = selectedLanguage.Identifier;
         }
         catch (Exception ex)
         {
@@ -336,7 +339,7 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
         C0.Run(async () =>
         {
             AppSettingsModel.ExternalModel model = await GetSettingsModelAsync();
-            model.Language = selectedLanguage;
+            model.Language = selectedLanguage.Identifier;
             await AppSettingsModel.Instance.UpdateModel(model);
         });
     }
@@ -374,18 +377,23 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
 
         {
             string currentLanguage = model.Language;
-            List<Tuple<string, string>> languages = [
-                new(StringResourceProvider.UseSystemLanguage, ""),
-                new("English", "en"),
-                new("简体中文", "zh-CN"),
+            List<LanguageEntry> languages = [
+                new("English", "en", ""),
+                new("简体中文", "zh-CN", ""),
+                new("繁體中文", "zh-TW", "部分文字使用了機器翻譯"),
+                new("日本語", "ja-JP", "一部のテキストは機械翻訳されています"),
             ];
-            languages.Sort((x, y) => x.Item2.CompareTo(y.Item2));
+            languages.Sort((x, y) => x.Identifier.CompareTo(y.Identifier));
+            LanguageEntry useSystemLanguage = new(StringResourceProvider.Instance.UseSystemLanguage, "", GetLanguageDescriptionOfSystemLanguage(languages));
+            languages.Insert(0, useSystemLanguage);
             int selectedIndex = -1;
+            string languageDescription = "";
             for (int i = 0; i < languages.Count; i++)
             {
-                if (currentLanguage == languages[i].Item2)
+                if (currentLanguage == languages[i].Identifier)
                 {
                     selectedIndex = i;
+                    languageDescription = languages[i].Description;
                     break;
                 }
             }
@@ -395,6 +403,7 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
             }
             Languages = languages;
             LanguageIndex = selectedIndex;
+            UpdateLanguageDescription(languageDescription);
         }
     }
 
@@ -423,12 +432,28 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
         AppearanceUseSystemSettingChecked = appearance == AppearanceSetting.UseSystemSetting;
     }
 
+    private void UpdateLanguageDescription(string description)
+    {
+        if (_languageChanged)
+        {
+            if (description.Length == 0)
+            {
+                description = StringResourceProvider.Instance.ApplyOnNextLaunch;
+            }
+            else
+            {
+                description += "\n" + StringResourceProvider.Instance.ApplyOnNextLaunch;
+            }
+        }
+        LanguageDescription = description;
+    }
+
     private async Task UpdateEncodings()
     {
         ReadOnlyDictionary<int, Encoding> supportedEncodings = await AppInfoProvider.GetSupportedEncodings();
         var encodings = new List<Tuple<string, int>>
             {
-                new(StringResourceProvider.Default, -1)
+                new(StringResourceProvider.Instance.Default, -1)
             };
 
         int defaultCodePage = AppModel.DefaultArchiveCodePage;
@@ -592,11 +617,40 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
         }
     }
 
+    private static string GetLanguageDescriptionOfSystemLanguage(List<LanguageEntry> entries)
+    {
+        string systemLanguage = EnvironmentProvider.Instance.GetCurrentSystemLanguage();
+        foreach (LanguageEntry entry in entries)
+        {
+            if (entry.Identifier == systemLanguage)
+            {
+                return entry.Description;
+            }
+        }
+        systemLanguage = systemLanguage.Split('-')[0];
+        foreach (LanguageEntry entry in entries)
+        {
+            string neutralTag = entry.Identifier.Split('-')[0];
+            if (neutralTag == systemLanguage)
+            {
+                return entry.Description;
+            }
+        }
+        return "";
+    }
+
     public enum AppearanceSetting
     {
         Light,
         Dark,
         UseSystemSetting,
         None
+    }
+
+    public class LanguageEntry(string name, string identifier, string description)
+    {
+        public string Name { get; set; } = name;
+        public string Identifier { get; set; } = identifier;
+        public string Description { get; set; } = description;
     }
 }

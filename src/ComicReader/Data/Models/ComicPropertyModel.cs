@@ -38,18 +38,18 @@ internal class ComicPropertyModel
 
     public string DisplayGroupName => Type switch
     {
-        PropertyTypeEnum.Tag => StringResourceProvider.Tag,
+        PropertyTypeEnum.Tag => StringResourceProvider.Instance.Tag,
         _ => "",
     };
 
     public string DisplayName => Type switch
     {
-        PropertyTypeEnum.Title => StringResourceProvider.Title,
-        PropertyTypeEnum.Progress => StringResourceProvider.Progress,
+        PropertyTypeEnum.Title => StringResourceProvider.Instance.Title,
+        PropertyTypeEnum.Progress => StringResourceProvider.Instance.Progress,
         PropertyTypeEnum.Tag => Name,
-        PropertyTypeEnum.Rating => StringResourceProvider.Rating,
-        PropertyTypeEnum.CompletionState => StringResourceProvider.CompletionState,
-        PropertyTypeEnum.LastReadTime => StringResourceProvider.LastReadTime,
+        PropertyTypeEnum.Rating => StringResourceProvider.Instance.Rating,
+        PropertyTypeEnum.CompletionState => StringResourceProvider.Instance.CompletionState,
+        PropertyTypeEnum.LastReadTime => StringResourceProvider.Instance.LastReadTime,
         _ => "",
     };
 
@@ -99,7 +99,7 @@ internal class ComicPropertyModel
 
         return Type switch
         {
-            PropertyTypeEnum.Title => comic.Title ?? StringResourceProvider.Untitled,
+            PropertyTypeEnum.Title => comic.Title ?? StringResourceProvider.Instance.Untitled,
             PropertyTypeEnum.Progress => comic.Progress,
             PropertyTypeEnum.Tag => GetConcatenatedTag(),
             PropertyTypeEnum.Rating => comic.Rating,
@@ -121,7 +121,7 @@ internal class ComicPropertyModel
             title = title.TrimStart();
             if (string.IsNullOrEmpty(title))
             {
-                return GroupInfo<string>.New(StringResourceProvider.Untitled);
+                return GroupInfo<string>.New(StringResourceProvider.Instance.Untitled);
             }
             return GroupInfo<string>.New(title[0].ToString().ToUpper());
         }
@@ -145,7 +145,7 @@ internal class ComicPropertyModel
             ComicData.TagData? tagData = comic.Tags.FirstOrDefault(tag => tag.Name == Name);
             if (tagData == null || tagData.Tags.Count == 0)
             {
-                return [GroupInfo<string>.New(StringResourceProvider.Ungrouped)];
+                return [GroupInfo<string>.New(StringResourceProvider.Instance.Ungrouped)];
             }
             List<GroupInfo<string>> groups = new(tagData.Tags.Count);
             foreach (string tag in tagData.Tags)
@@ -164,7 +164,7 @@ internal class ComicPropertyModel
             }
             if (rating <= 0)
             {
-                return GroupInfo<int>.New(StringResourceProvider.NoRating, 0);
+                return GroupInfo<int>.New(StringResourceProvider.Instance.NoRating, 0);
             }
             return GroupInfo<int>.New(rating.ToString(), rating);
         }
@@ -173,10 +173,10 @@ internal class ComicPropertyModel
         {
             return state switch
             {
-                ComicData.CompletionStateEnum.Completed => GroupInfo<int>.New(StringResourceProvider.Finished, 3),
-                ComicData.CompletionStateEnum.Started => GroupInfo<int>.New(StringResourceProvider.Reading, 2),
-                ComicData.CompletionStateEnum.NotStarted => GroupInfo<int>.New(StringResourceProvider.Unread, 1),
-                _ => GroupInfo<int>.New(StringResourceProvider.Ungrouped, 0), // Unknown state
+                ComicData.CompletionStateEnum.Completed => GroupInfo<int>.New(StringResourceProvider.Instance.Finished, 3),
+                ComicData.CompletionStateEnum.Started => GroupInfo<int>.New(StringResourceProvider.Instance.Reading, 2),
+                ComicData.CompletionStateEnum.NotStarted => GroupInfo<int>.New(StringResourceProvider.Instance.Unread, 1),
+                _ => GroupInfo<int>.New(StringResourceProvider.Instance.Ungrouped, 0), // Unknown state
             };
         }
 
@@ -184,7 +184,7 @@ internal class ComicPropertyModel
         {
             if (lastReadTime == DateTimeOffset.MinValue)
             {
-                return GroupInfo<long>.New(StringResourceProvider.Ungrouped, 0L);
+                return GroupInfo<long>.New(StringResourceProvider.Instance.Ungrouped, 0L);
             }
             return GroupInfo<long>.New(lastReadTime.ToString("D"), lastReadTime.Ticks);
         }
@@ -197,7 +197,7 @@ internal class ComicPropertyModel
             PropertyTypeEnum.Rating => [GetRatingGroup()],
             PropertyTypeEnum.CompletionState => [GetCompletionStateGroup(comic.CompletionState)],
             PropertyTypeEnum.LastReadTime => [GetLastReadTimeGroup(comic.LastVisit)],
-            _ => [GroupInfo<string>.New(StringResourceProvider.Ungrouped)]
+            _ => [GroupInfo<string>.New(StringResourceProvider.Instance.Ungrouped)]
         };
     }
 

@@ -177,7 +177,7 @@
   <data name="AppearanceExpander.Header" xml:space="preserve">
     <value>外观</value>
   </data>
-  <data name="ApplyOnNextLaunch.Text" xml:space="preserve">
+  <data name="ApplyOnNextLaunch" xml:space="preserve">
     <value>您将在下次应用启动时看到您的更改</value>
   </data>
   <data name="ArchiveEncoding.Text" xml:space="preserve">

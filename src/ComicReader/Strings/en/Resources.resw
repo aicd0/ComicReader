@@ -177,7 +177,7 @@
   <data name="AppearanceExpander.Header" xml:space="preserve">
     <value>Appearance</value>
   </data>
-  <data name="ApplyOnNextLaunch.Text" xml:space="preserve">
+  <data name="ApplyOnNextLaunch" xml:space="preserve">
     <value>You'll see your change the next time you start the app</value>
   </data>
   <data name="ArchiveEncoding.Text" xml:space="preserve">

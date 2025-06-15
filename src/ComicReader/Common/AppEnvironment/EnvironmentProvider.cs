@@ -10,6 +10,7 @@ using System.Text;
 using ComicReader.SDK.Common.DebugTools;
 
 using Windows.ApplicationModel;
+using Windows.System.UserProfile;
 
 namespace ComicReader.Common.AppEnvironment;
 
@@ -42,8 +43,9 @@ internal class EnvironmentProvider
         sb.SafeAppend("OS build", DeviceInformationHelper.Instance.GetOsBuild);
         sb.SafeAppend("OS version", DeviceInformationHelper.Instance.GetOsVersion);
         sb.SafeAppend("OS architecture", () => RuntimeInformation.OSArchitecture);
-        sb.SafeAppend("Installed language", () => CultureInfo.InstalledUICulture.Name);
-        sb.SafeAppend("Current language", () => CultureInfo.CurrentUICulture.Name);
+        sb.SafeAppend("Installed system language", () => CultureInfo.InstalledUICulture.Name);
+        sb.SafeAppend("Current system language", GetCurrentSystemLanguage);
+        sb.SafeAppend("Current app language", () => CultureInfo.CurrentUICulture.Name);
         sb.SafeAppend("Machine name", () => Environment.MachineName);
         sb.SafeAppend("Device model", DeviceInformationHelper.Instance.GetDeviceModel);
         sb.SafeAppend("OEM name", DeviceInformationHelper.Instance.GetDeviceOemName);
@@ -67,6 +69,11 @@ internal class EnvironmentProvider
     {
         PackageVersion version = Package.Current.Id.Version;
         return version.Major + "." + version.Minor + "." + version.Build + "." + version.Revision;
+    }
+
+    public string GetCurrentSystemLanguage()
+    {
+        return GlobalizationPreferences.Languages[0];
     }
 
     public DateTimeOffset GetLaunchTime()

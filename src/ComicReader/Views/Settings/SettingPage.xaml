@@ -19,6 +19,7 @@
 
             <!--  Converters  -->
             <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
+            <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
         </ResourceDictionary>
     </Page.Resources>
 
@@ -128,9 +129,9 @@
                         <settings:SettingExpander.InnerContent>
                             <StackPanel Orientation="Vertical">
                                 <TextBlock
-                                    x:Uid="ApplyOnNextLaunch"
                                     Margin="0,0,0,7"
                                     Style="{StaticResource SettingsPageBodyTextBlock}"
+                                    Text="{x:Bind StringResource.ApplyOnNextLaunch}"
                                     Visibility="{x:Bind ViewModel.AppearanceChanged, Mode=OneWay}" />
                                 <muxc:RadioButtons Margin="0,-7,0,0">
                                     <RadioButton x:Uid="ThemeLight" IsChecked="{x:Bind ViewModel.AppearanceLightChecked, Mode=TwoWay}" />
@@ -149,13 +150,13 @@
                         <settings:SettingExpander.InnerContent>
                             <StackPanel Orientation="Vertical">
                                 <TextBlock
-                                    x:Uid="ApplyOnNextLaunch"
                                     Margin="0,0,0,12"
                                     Style="{StaticResource SettingsPageBodyTextBlock}"
-                                    Visibility="{x:Bind ViewModel.LanguageChanged, Mode=OneWay}" />
+                                    Text="{x:Bind ViewModel.LanguageDescription, Mode=OneWay}"
+                                    Visibility="{x:Bind ViewModel.LanguageDescription, Mode=OneWay, Converter={StaticResource StringToVisibilityConverter}}" />
                                 <ComboBox
                                     MinWidth="200"
-                                    DisplayMemberPath="Item1"
+                                    DisplayMemberPath="Name"
                                     ItemsSource="{x:Bind ViewModel.Languages, Mode=OneWay}"
                                     SelectedIndex="{x:Bind ViewModel.LanguageIndex, Mode=OneWay}"
                                     SelectionChanged="LanguageComboBox_SelectionChanged" />

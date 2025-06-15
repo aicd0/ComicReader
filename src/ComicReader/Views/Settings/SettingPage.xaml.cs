@@ -39,7 +39,7 @@ internal sealed partial class SettingPage : BasePage
     protected override void OnStart(PageBundle bundle)
     {
         base.OnStart(bundle);
-        GetMainPageAbility().SetTitle(StringResourceProvider.Settings);
+        GetMainPageAbility().SetTitle(StringResourceProvider.Instance.Settings);
         GetMainPageAbility().SetIcon(new SymbolIconSource() { Symbol = Symbol.Setting });
 
         ViewModel.Initialize();
@@ -79,10 +79,10 @@ internal sealed partial class SettingPage : BasePage
             {
                 var dialog = new ContentDialog
                 {
-                    Title = StringResourceProvider.Warning,
-                    Content = StringResourceProvider.DebugModeWarning,
-                    PrimaryButtonText = StringResourceProvider.Proceed,
-                    CloseButtonText = StringResourceProvider.Cancel,
+                    Title = StringResourceProvider.Instance.Warning,
+                    Content = StringResourceProvider.Instance.DebugModeWarning,
+                    PrimaryButtonText = StringResourceProvider.Instance.Proceed,
+                    CloseButtonText = StringResourceProvider.Instance.Cancel,
                     XamlRoot = XamlRoot
                 };
                 ContentDialogResult result = await dialog.ShowAsync();
@@ -181,7 +181,7 @@ internal sealed partial class SettingPage : BasePage
             {
                 comicCount = comicCountToken.GetValue();
             }
-            string total_comic_string = StringResourceProvider.TotalComics;
+            string total_comic_string = StringResourceProvider.Instance.TotalComics;
             StatisticsTextBlock.Text = total_comic_string +
                 comicCount.ToString("#,#0", CultureInfo.InvariantCulture);
         });
@@ -189,20 +189,20 @@ internal sealed partial class SettingPage : BasePage
 
     private void UpdateFeedback()
     {
-        string appName = StringResourceProvider.AppDisplayName;
-        string contributionBeforeLink = StringResourceProvider.ContributionRunBeforeLink;
+        string appName = StringResourceProvider.Instance.AppDisplayName;
+        string contributionBeforeLink = StringResourceProvider.Instance.ContributionRunBeforeLink;
         contributionBeforeLink = contributionBeforeLink.Replace("$appname", appName);
         ContributionRunBeforeLink.Text = contributionBeforeLink;
-        ContributionRunAfterLink.Text = StringResourceProvider.ContributionRunAfterLink;
+        ContributionRunAfterLink.Text = StringResourceProvider.Instance.ContributionRunAfterLink;
     }
 
     private void UpdateAbout()
     {
-        string appName = StringResourceProvider.AppDisplayName;
+        string appName = StringResourceProvider.Instance.AppDisplayName;
         AboutBuildVersionControl.Text = appName + " " + EnvironmentProvider.Instance.GetVersionName();
 
         string author = "aicd0";
-        string aboutCopyright = StringResourceProvider.AboutCopyright;
+        string aboutCopyright = StringResourceProvider.Instance.AboutCopyright;
         aboutCopyright = aboutCopyright.Replace("$author", author);
         AboutCopyrightControl.Text = aboutCopyright;
     }

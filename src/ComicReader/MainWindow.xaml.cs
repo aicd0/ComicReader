@@ -52,7 +52,7 @@ public sealed partial class MainWindow : Window
         WindowId = App.WindowManager.RegisterWindow(this);
         WindowHandle = WindowNative.GetWindowHandle(this);
 
-        Title = StringResourceProvider.AppDisplayName;
+        Title = StringResourceProvider.Instance.AppDisplayName;
         ExtendsContentIntoTitleBar = true;
         TrySetAcrylicBackdrop();
     }

@@ -51,7 +51,7 @@ internal sealed partial class HomePage : BasePage
     protected override void OnStart(PageBundle bundle)
     {
         base.OnStart(bundle);
-        GetMainPageAbility().SetTitle(StringResourceProvider.NewTab);
+        GetMainPageAbility().SetTitle(StringResourceProvider.Instance.NewTab);
         GetMainPageAbility().SetIcon(new SymbolIconSource() { Symbol = Symbol.Document });
         ViewModel.Initialize();
     }
