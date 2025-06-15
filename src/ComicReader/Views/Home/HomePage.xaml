@@ -162,7 +162,7 @@
                                 <Paragraph>
                                     <Run x:Uid="LibraryEmptyPart1" />
                                     <Hyperlink Click="AddFolderHyperlink_Click">
-                                        <Run x:Uid="AddFolderButton" />
+                                        <Run Text="{x:Bind StringResource.AddFolder}" />
                                     </Hyperlink>
                                     <Run x:Uid="LibraryEmptyPart2" />
                                     <Hyperlink Click="RefreshHyperlink_Click">

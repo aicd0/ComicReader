@@ -5,12 +5,14 @@
 
 using System;
 
+using ComicReader.Common.PageBase;
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
 
 namespace ComicReader.ViewModels;
 
-public class FolderItemViewModel
+public class FolderItemViewModel : BaseViewModel
 {
     public string Folder { get; set; }
     public string Path { get; set; }

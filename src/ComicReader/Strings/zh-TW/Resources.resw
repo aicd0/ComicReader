@@ -120,4 +120,70 @@
   <data name="About.Text" xml:space="preserve">
     <value>關於</value>
   </data>
+  <data name="AboutCopyright" xml:space="preserve">
+    <value>© 2025 $author。保留所有權利。</value>
+  </data>
+  <data name="AddFolder" xml:space="preserve">
+    <value>新增資料夾</value>
+  </data>
+  <data name="AddToFavorites" xml:space="preserve">
+    <value>加入收藏夾</value>
+  </data>
+  <data name="AdvancedExpander.Detail" xml:space="preserve">
+    <value>非常用設定</value>
+  </data>
+  <data name="AdvancedExpander.Header" xml:space="preserve">
+    <value>進階</value>
+  </data>
+  <data name="AllComics" xml:space="preserve">
+    <value>所有漫畫</value>
+  </data>
+  <data name="AllComicsIn" xml:space="preserve">
+    <value>所有位於 $path 的漫畫</value>
+  </data>
+  <data name="AllHidden" xml:space="preserve">
+    <value>所有隱藏項</value>
+  </data>
+  <data name="AllMatchedResults" xml:space="preserve">
+    <value>所有匹配結果</value>
+  </data>
+  <data name="AllPagesButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>所有頁面</value>
+  </data>
+  <data name="AntiAliasingFilter.Text" xml:space="preserve">
+    <value>抗混疊濾波器（實驗性）</value>
+  </data>
+  <data name="AppDescription" xml:space="preserve">
+    <value>漫畫閱讀器 UWP</value>
+  </data>
+  <data name="AppDisplayName" xml:space="preserve">
+    <value>漫畫閱讀器 UWP</value>
+  </data>
+  <data name="AppStoreName" xml:space="preserve">
+    <value>漫畫閱讀器 UWP</value>
+  </data>
+  <data name="AppearanceExpander.Detail" xml:space="preserve">
+    <value>選擇要顯示的應用程式主題</value>
+  </data>
+  <data name="AppearanceExpander.Header" xml:space="preserve">
+    <value>外觀</value>
+  </data>
+  <data name="ApplyOnNextLaunch" xml:space="preserve">
+    <value>您將在下次應用程式啟動時看到您的更改</value>
+  </data>
+  <data name="ArchiveEncoding.Text" xml:space="preserve">
+    <value>壓縮檔案編碼</value>
+  </data>
+  <data name="Ascending" xml:space="preserve">
+    <value>升序</value>
+  </data>
+  <data name="BackButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>返回</value>
+  </data>
+  <data name="Calculating" xml:space="preserve">
+    <value>計算中...</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>取消</value>
+  </data>
 </root>

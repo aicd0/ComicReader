@@ -5,13 +5,14 @@ using Microsoft.Windows.ApplicationModel.Resources;
 
 namespace ComicReader.Common;
 
-class StringResourceProvider
+public class StringResourceProvider
 {
     private static readonly ResourceLoader sResourceLoader = new();
 
     public static StringResourceProvider Instance = new();
 
     public string AboutCopyright => GetResourceString("AboutCopyright");
+    public string AddFolder => GetResourceString("AddFolder");
     public string AddToFavorites => GetResourceString("AddToFavorites");
     public string AllComics => GetResourceString("AllComics");
     public string AllComicsIn => GetResourceString("AllComicsIn");

@@ -1,7 +1,8 @@
-﻿<ContentDialog
+﻿<base:BaseContentDialog
     x:Class="ComicReader.Views.Home.EditFilterDialog"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:base="using:ComicReader.Common.PageBase"
     xmlns:controls="using:ComicReader.UserControls"
     xmlns:cwc="using:CommunityToolkit.WinUI.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -103,28 +104,24 @@
                 x:Uid="SaveButton"
                 Grid.Column="0"
                 HorizontalAlignment="Stretch"
-                Click="SaveButton_Click"
-                Content="Save" />
+                Click="SaveButton_Click" />
             <Button
                 x:Name="SaveAsNewButton"
                 x:Uid="SaveAsNewButton"
                 Grid.Column="2"
                 HorizontalAlignment="Stretch"
-                Click="SaveAsNewButton_Click"
-                Content="Save as new" />
+                Click="SaveAsNewButton_Click" />
             <Button
                 x:Name="DeleteButton"
                 x:Uid="DeleteButton"
                 Grid.Column="4"
                 HorizontalAlignment="Stretch"
-                Click="DeleteButton_Click"
-                Content="Delete" />
+                Click="DeleteButton_Click" />
             <Button
-                x:Uid="CancelButton"
                 Grid.Column="6"
                 HorizontalAlignment="Stretch"
                 Click="CancelButton_Click"
-                Content="Cancel" />
+                Content="{x:Bind StringResource.Cancel}" />
         </Grid>
     </StackPanel>
-</ContentDialog>
+</base:BaseContentDialog>

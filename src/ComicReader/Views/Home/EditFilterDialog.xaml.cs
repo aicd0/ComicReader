@@ -3,6 +3,7 @@
 
 using System.Text;
 
+using ComicReader.Common.PageBase;
 using ComicReader.Data.Models;
 
 using Microsoft.UI.Xaml.Controls;
@@ -11,7 +12,7 @@ using static ComicReader.Views.Home.EditFilterDialogViewModel;
 
 namespace ComicReader.Views.Home;
 
-internal sealed partial class EditFilterDialog : ContentDialog
+internal sealed partial class EditFilterDialog : BaseContentDialog
 {
     public EditFilterDialogViewModel ViewModel = new();
 

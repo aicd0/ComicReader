@@ -123,16 +123,7 @@
   <data name="AboutCopyright" xml:space="preserve">
     <value>© 2025 $author. All rights reserved.</value>
   </data>
-  <data name="AddFolderButton.Text" xml:space="preserve">
-    <value>add a folder</value>
-  </data>
-  <data name="AddFolderControl.Detail" xml:space="preserve">
-    <value>Include more folders in your collection</value>
-  </data>
-  <data name="AddFolderControl.Title" xml:space="preserve">
-    <value>Add a folder</value>
-  </data>
-  <data name="AddLocationButton.ToolTipService.ToolTip" xml:space="preserve">
+  <data name="AddFolder" xml:space="preserve">
     <value>Add a folder</value>
   </data>
   <data name="AddToFavorites" xml:space="preserve">
@@ -163,10 +154,10 @@
     <value>Anti-aliasing filter (experimental)</value>
   </data>
   <data name="AppDescription" xml:space="preserve">
-    <value>Comic Reader</value>
+    <value>Comic Reader UWP</value>
   </data>
   <data name="AppDisplayName" xml:space="preserve">
-    <value>Comic Reader</value>
+    <value>Comic Reader UWP</value>
   </data>
   <data name="AppStoreName" xml:space="preserve">
     <value>Comic Reader UWP</value>
@@ -193,9 +184,6 @@
     <value>Calculating...</value>
   </data>
   <data name="Cancel" xml:space="preserve">
-    <value>Cancel</value>
-  </data>
-  <data name="CancelButton.Content" xml:space="preserve">
     <value>Cancel</value>
   </data>
   <data name="ChooseLocationButton.Content" xml:space="preserve">
