@@ -9,7 +9,7 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace ComicReader.Views.Navigation;
 
-internal sealed partial class SidePane : UserControl
+internal sealed partial class SidePane : BaseUserControl
 {
     public delegate void SelectionChangedEventHandler(SidePane sender, string item);
     public event SelectionChangedEventHandler SelectionChanged;

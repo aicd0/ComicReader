@@ -32,9 +32,9 @@
         <StackPanel Grid.Row="0" Orientation="Horizontal">
             <FontIcon Margin="25,6,10,0" Glyph="&#xE713;" />
             <TextBlock
-                x:Uid="SettingHeader"
                 FontSize="32"
-                FontWeight="Light" />
+                FontWeight="Light"
+                Text="{x:Bind StringResource.Settings}" />
         </StackPanel>
 
         <ScrollViewer
@@ -107,6 +107,7 @@
                     <settings:SettingExpander
                         x:Uid="HistoryExpander"
                         Glyph="&#xE81C;"
+                        Header="{x:Bind StringResource.History}"
                         IsExpanded="True">
                         <settings:SettingExpander.InnerContent>
                             <StackPanel Orientation="Vertical">
@@ -238,7 +239,7 @@
                     Grid.Column="2"
                     Orientation="Vertical">
                     <!--  Statistics  -->
-                    <TextBlock x:Uid="Statistics" Style="{StaticResource SettingsPageSubTitleTextBlock}" />
+                    <TextBlock Style="{StaticResource SettingsPageSubTitleTextBlock}" Text="{x:Bind StringResource.Statistics}" />
                     <TextBlock
                         x:Name="StatisticsTextBlock"
                         Style="{StaticResource SettingsPageBodyTextBlock}"
@@ -262,7 +263,7 @@
                     </RichTextBlock>
 
                     <!--  About  -->
-                    <TextBlock x:Uid="About" Style="{StaticResource SettingsPageSubTitleTextBlock}" />
+                    <TextBlock Style="{StaticResource SettingsPageSubTitleTextBlock}" Text="{x:Bind StringResource.About}" />
                     <TextBlock
                         x:Name="AboutBuildVersionControl"
                         Style="{StaticResource SettingsPageBodyTextBlock}"

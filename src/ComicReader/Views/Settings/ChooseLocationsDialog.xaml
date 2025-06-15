@@ -9,6 +9,7 @@
     xmlns:vm="using:ComicReader.ViewModels"
     x:Uid="ChooseLocationDialog"
     PrimaryButtonClick="ContentDialogPrimaryButtonClick"
+    PrimaryButtonText="{x:Bind StringResource.Done}"
     mc:Ignorable="d">
 
     <base:BaseContentDialog.Resources>

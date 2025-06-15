@@ -6,6 +6,8 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 
+using ComicReader.Common.PageBase;
+
 namespace ComicReader.ViewModels;
 
 public enum FavoriteNodeType
@@ -14,7 +16,7 @@ public enum FavoriteNodeType
     Filter
 };
 
-public class FavoriteItemViewModel : INotifyPropertyChanged
+public class FavoriteItemViewModel : BaseViewModel, INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler PropertyChanged;
 

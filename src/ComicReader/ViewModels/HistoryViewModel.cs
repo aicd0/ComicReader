@@ -5,9 +5,11 @@
 
 using System.Collections.ObjectModel;
 
+using ComicReader.Common.PageBase;
+
 namespace ComicReader.ViewModels;
 
-public class HistoryItemViewModel
+public class HistoryItemViewModel : BaseViewModel
 {
     public long Id { get; set; }
     public string Time { get; set; }

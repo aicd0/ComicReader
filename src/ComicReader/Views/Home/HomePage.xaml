@@ -166,7 +166,7 @@
                                     </Hyperlink>
                                     <Run x:Uid="LibraryEmptyPart2" />
                                     <Hyperlink Click="RefreshHyperlink_Click">
-                                        <Run x:Uid="HomePageRefreshButton" />
+                                        <Run Text="{x:Bind StringResource.Refresh}" />
                                     </Hyperlink>
                                     <Run x:Uid="LibraryEmptyPart3" />
                                 </Paragraph>
@@ -190,43 +190,43 @@
                         IsChecked="{x:Bind ViewModel.IsCommandBarSelectAllToggled, Mode=OneWay}" />
                     <AppBarSeparator />
                     <AppBarButton
-                        x:Uid="FavoriteAppBarButton"
                         Click="CommandBarFavoriteClicked"
                         Icon="Favorite"
-                        IsEnabled="{x:Bind ViewModel.IsCommandBarFavoriteEnabled, Mode=OneWay}" />
+                        IsEnabled="{x:Bind ViewModel.IsCommandBarFavoriteEnabled, Mode=OneWay}"
+                        Label="{x:Bind StringResource.Favorite}" />
                     <AppBarButton
-                        x:Uid="UnFavoriteAppBarButton"
                         Click="CommandBarUnFavoriteClicked"
                         Icon="UnFavorite"
-                        IsEnabled="{x:Bind ViewModel.IsCommandBarUnFavoriteEnabled, Mode=OneWay}" />
+                        IsEnabled="{x:Bind ViewModel.IsCommandBarUnFavoriteEnabled, Mode=OneWay}"
+                        Label="{x:Bind StringResource.Unfavorite}" />
                     <AppBarButton
-                        x:Uid="MarkAsReadAppBarButton"
                         Click="CommandBarMarkAsReadClicked"
-                        IsEnabled="{x:Bind ViewModel.IsCommandBarMarkAsReadEnabled, Mode=OneWay}">
+                        IsEnabled="{x:Bind ViewModel.IsCommandBarMarkAsReadEnabled, Mode=OneWay}"
+                        Label="{x:Bind StringResource.MarkAsRead}">
                         <AppBarButton.Icon>
                             <FontIcon Glyph="&#xE930;" />
                         </AppBarButton.Icon>
                     </AppBarButton>
                     <AppBarButton
-                        x:Uid="MarkAsUnreadAppBarButton"
                         Click="CommandBarMarkAsUnreadClicked"
-                        IsEnabled="{x:Bind ViewModel.IsCommandBarMarkAsUnreadEnabled, Mode=OneWay}">
+                        IsEnabled="{x:Bind ViewModel.IsCommandBarMarkAsUnreadEnabled, Mode=OneWay}"
+                        Label="{x:Bind StringResource.MarkAsUnread}">
                         <AppBarButton.Icon>
                             <FontIcon Glyph="&#xECCA;" />
                         </AppBarButton.Icon>
                     </AppBarButton>
                     <AppBarButton
-                        x:Uid="HideAppBarButton"
                         Click="CommandBarHideClicked"
-                        IsEnabled="{x:Bind ViewModel.IsCommandBarHideEnabled, Mode=OneWay}">
+                        IsEnabled="{x:Bind ViewModel.IsCommandBarHideEnabled, Mode=OneWay}"
+                        Label="{x:Bind StringResource.Hide}">
                         <AppBarButton.Icon>
                             <FontIcon Glyph="&#xE8FF;" />
                         </AppBarButton.Icon>
                     </AppBarButton>
                     <AppBarButton
-                        x:Uid="UnhideAppBarButton"
                         Click="CommandBarUnhideClicked"
-                        IsEnabled="{x:Bind ViewModel.IsCommandBarUnHideEnabled, Mode=OneWay}">
+                        IsEnabled="{x:Bind ViewModel.IsCommandBarUnHideEnabled, Mode=OneWay}"
+                        Label="{x:Bind StringResource.Unhide}">
                         <AppBarButton.Icon>
                             <FontIcon Glyph="&#xE7B3;" />
                         </AppBarButton.Icon>
@@ -302,7 +302,7 @@
                         <Button.Content>
                             <StackPanel Orientation="Horizontal" Spacing="8">
                                 <FontIcon FontSize="16" Glyph="&#xE70f;" />
-                                <TextBlock x:Uid="FilterSettingsButton" />
+                                <TextBlock Text="{x:Bind StringResource.FilterSettings}" />
                             </StackPanel>
                         </Button.Content>
                     </Button>

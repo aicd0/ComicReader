@@ -295,19 +295,19 @@
                             HorizontalAlignment="Right"
                             Orientation="Horizontal">
                             <AppBarButton
-                                x:Uid="EditInfoButton"
                                 Width="68"
                                 Click="OnEditInfoClick"
                                 Icon="Edit"
                                 IsCompact="False"
-                                IsEnabled="{x:Bind ViewModel.IsEditable, Mode=OneWay}" />
+                                IsEnabled="{x:Bind ViewModel.IsEditable, Mode=OneWay}"
+                                Label="{x:Bind StringResource.Edit}" />
                             <AppBarToggleButton
                                 x:Name="FavoriteBt"
-                                x:Uid="FavoriteToggleButton"
                                 Width="68"
                                 Margin="2,0,0,0"
                                 Checked="OnFavoritesChecked"
                                 IsCompact="False"
+                                Label="{x:Bind StringResource.Favorite}"
                                 Unchecked="OnFavoritesUnchecked">
                                 <AppBarToggleButton.Content>
                                     <FontIcon Glyph="&#xE734;" />

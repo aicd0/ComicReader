@@ -117,9 +117,6 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="About.Text" xml:space="preserve">
-    <value>About</value>
-  </data>
   <data name="AboutCopyright" xml:space="preserve">
     <value>© 2025 $author. All rights reserved.</value>
   </data>
@@ -147,7 +144,7 @@
   <data name="AllMatchedResults" xml:space="preserve">
     <value>All matched results</value>
   </data>
-  <data name="AllPagesButton.ToolTipService.ToolTip" xml:space="preserve">
+  <data name="AllPages" xml:space="preserve">
     <value>All pages</value>
   </data>
   <data name="AntiAliasingFilter.Text" xml:space="preserve">
@@ -177,7 +174,7 @@
   <data name="Ascending" xml:space="preserve">
     <value>Ascending</value>
   </data>
-  <data name="BackButton.ToolTipService.ToolTip" xml:space="preserve">
+  <data name="GoBack" xml:space="preserve">
     <value>Go back</value>
   </data>
   <data name="Calculating" xml:space="preserve">
@@ -189,7 +186,7 @@
   <data name="ChooseLocationButton.Content" xml:space="preserve">
     <value>Choose where we look for images</value>
   </data>
-  <data name="ChooseLocationDialog.PrimaryButtonText" xml:space="preserve">
+  <data name="Done" xml:space="preserve">
     <value>Done</value>
   </data>
   <data name="ChooseLocationDialog.Title" xml:space="preserve">
@@ -204,7 +201,7 @@
   <data name="ClearCacheDetail" xml:space="preserve">
     <value>Cache size: $size</value>
   </data>
-  <data name="ComicInfoButton.ToolTipService.ToolTip" xml:space="preserve">
+  <data name="ComicInfo" xml:space="preserve">
     <value>Comic information</value>
   </data>
   <data name="CompletionState" xml:space="preserve">
@@ -234,7 +231,7 @@
   <data name="DefaultTags" xml:space="preserve">
     <value>Default tags</value>
   </data>
-  <data name="DeleteButton.Content" xml:space="preserve">
+  <data name="Delete" xml:space="preserve">
     <value>Delete</value>
   </data>
   <data name="Descending" xml:space="preserve">
@@ -244,7 +241,7 @@
     <value>Description:</value>
   </data>
   <data name="DevAppDisplayName" xml:space="preserve">
-    <value>Comic Reader [Dev]</value>
+    <value>Comic Reader UWP [Dev]</value>
   </data>
   <data name="Disclaimer.Text" xml:space="preserve">
     <value>Disclaimer</value>
@@ -252,16 +249,7 @@
   <data name="DiscreteButton.Label" xml:space="preserve">
     <value>Separate</value>
   </data>
-  <data name="EditComicInfoDialog.PrimaryButtonText" xml:space="preserve">
-    <value>Done</value>
-  </data>
-  <data name="EditComicInfoDialog.SecondaryButtonText" xml:space="preserve">
-    <value>Cancel</value>
-  </data>
-  <data name="EditComicInfoDialog.Title" xml:space="preserve">
-    <value>Comic information</value>
-  </data>
-  <data name="EditInfoButton.Label" xml:space="preserve">
+  <data name="Edit" xml:space="preserve">
     <value>Edit</value>
   </data>
   <data name="ExpressionAnd" xml:space="preserve">
@@ -285,10 +273,7 @@
   <data name="ExpressionValid" xml:space="preserve">
     <value>SQL query: $query</value>
   </data>
-  <data name="FavoriteAppBarButton.Label" xml:space="preserve">
-    <value>Favorite</value>
-  </data>
-  <data name="FavoriteToggleButton.Label" xml:space="preserve">
+  <data name="Favorite" xml:space="preserve">
     <value>Favorite</value>
   </data>
   <data name="FavoritesButton.ToolTipService.ToolTip" xml:space="preserve">
@@ -300,10 +285,7 @@
   <data name="FeedbackIntroduction.Text" xml:space="preserve">
     <value>Use the button below to send us suggestions or issue a bug on GitHub.</value>
   </data>
-  <data name="FilterSettingsButton.Text" xml:space="preserve">
-    <value>Filter settings</value>
-  </data>
-  <data name="FilterSettingsDialog.Title" xml:space="preserve">
+  <data name="FilterSettings" xml:space="preserve">
     <value>Filter settings</value>
   </data>
   <data name="FilteredBy" xml:space="preserve">
@@ -318,7 +300,7 @@
   <data name="FoldersHeader.Text" xml:space="preserve">
     <value>Folders</value>
   </data>
-  <data name="ForwardButton.ToolTipService.ToolTip" xml:space="preserve">
+  <data name="GoForward" xml:space="preserve">
     <value>Go forward</value>
   </data>
   <data name="Group" xml:space="preserve">
@@ -327,19 +309,16 @@
   <data name="Help" xml:space="preserve">
     <value>Help</value>
   </data>
-  <data name="HideAppBarButton.Label" xml:space="preserve">
-    <value>Hide</value>
-  </data>
   <data name="HistoryExpander.Detail" xml:space="preserve">
     <value>Clear history, enable or disable history</value>
   </data>
-  <data name="HistoryExpander.Header" xml:space="preserve">
+  <data name="History" xml:space="preserve">
     <value>History</value>
   </data>
   <data name="HomeButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>Home</value>
   </data>
-  <data name="HomePageRefreshButton.Text" xml:space="preserve">
+  <data name="Refresh" xml:space="preserve">
     <value>refresh</value>
   </data>
   <data name="HorizontalButton.Label" xml:space="preserve">
@@ -378,9 +357,6 @@
   <data name="LastReadTime" xml:space="preserve">
     <value>Last read time</value>
   </data>
-  <data name="LeftToRight.Text" xml:space="preserve">
-    <value>Left to right</value>
-  </data>
   <data name="LeftToRightButton.Label" xml:space="preserve">
     <value>L to R</value>
   </data>
@@ -396,37 +372,22 @@
   <data name="LibraryHeader.Text" xml:space="preserve">
     <value>Library</value>
   </data>
-  <data name="MarkAsReadAppBarButton.Label" xml:space="preserve">
+  <data name="MarkAsRead" xml:space="preserve">
     <value>Mark as finished</value>
   </data>
-  <data name="MarkAsUnreadAppBarButton.Label" xml:space="preserve">
+  <data name="MarkAsUnread" xml:space="preserve">
     <value>Mark as unread</value>
-  </data>
-  <data name="MenuFlyoutAddToFavorites.Text" xml:space="preserve">
-    <value>Add to favorites</value>
-  </data>
-  <data name="MenuFlyoutComicInfo.Text" xml:space="preserve">
-    <value>Comic info</value>
   </data>
   <data name="MenuFlyoutCreateNewFolder.Text" xml:space="preserve">
     <value>Create new folder</value>
   </data>
-  <data name="MenuFlyoutDelete.Text" xml:space="preserve">
-    <value>Delete</value>
-  </data>
-  <data name="MenuFlyoutHide.Text" xml:space="preserve">
-    <value>Hide</value>
-  </data>
-  <data name="MenuFlyoutMarkAsRead.Text" xml:space="preserve">
-    <value>Mark as finished</value>
-  </data>
-  <data name="MenuFlyoutMarkAsUnread.Text" xml:space="preserve">
-    <value>Mark as unread</value>
-  </data>
   <data name="MenuFlyoutOpenInNewTab.Text" xml:space="preserve">
     <value>Open in new tab</value>
   </data>
-  <data name="MenuFlyoutRemoveFromFavorites.Text" xml:space="preserve">
+  <data name="Unfavorite" xml:space="preserve">
+    <value>Unfavorite</value>
+  </data>
+  <data name="RemoveFromFavorites" xml:space="preserve">
     <value>Remove from favorites</value>
   </data>
   <data name="MenuFlyoutRemoveFromList.Text" xml:space="preserve">
@@ -438,13 +399,10 @@
   <data name="MenuFlyoutSelect.Text" xml:space="preserve">
     <value>Select</value>
   </data>
-  <data name="MenuFlyoutSettings.Text" xml:space="preserve">
-    <value>Settings</value>
-  </data>
   <data name="MenuFlyoutSortByName.Text" xml:space="preserve">
     <value>Sort by name</value>
   </data>
-  <data name="MenuFlyoutUnhide.Text" xml:space="preserve">
+  <data name="Unhide" xml:space="preserve">
     <value>Unhide</value>
   </data>
   <data name="MoreButton.ToolTipService.ToolTip" xml:space="preserve">
@@ -490,7 +448,7 @@
     <value>Rating</value>
   </data>
   <data name="ReaderExpander.Detail" xml:space="preserve">
-    <value>Customize your reader</value>
+    <value>Customize the reader</value>
   </data>
   <data name="ReaderExpander.Header" xml:space="preserve">
     <value>Reader</value>
@@ -512,12 +470,6 @@
   </data>
   <data name="Reading" xml:space="preserve">
     <value>Reading</value>
-  </data>
-  <data name="RefreshButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>Refresh</value>
-  </data>
-  <data name="RemoveFromFavorites" xml:space="preserve">
-    <value>Remove from favorites</value>
   </data>
   <data name="RemoveLocationButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>Remove this folder from the list</value>
@@ -552,9 +504,6 @@
   <data name="SendFeedbackButton.Content" xml:space="preserve">
     <value>Send feedback</value>
   </data>
-  <data name="SettingHeader.Text" xml:space="preserve">
-    <value>Settings</value>
-  </data>
   <data name="Settings" xml:space="preserve">
     <value>Settings</value>
   </data>
@@ -564,7 +513,7 @@
   <data name="Sort" xml:space="preserve">
     <value>Sort</value>
   </data>
-  <data name="Statistics.Text" xml:space="preserve">
+  <data name="Statistics" xml:space="preserve">
     <value>Statistics</value>
   </data>
   <data name="Tag" xml:space="preserve">
@@ -576,10 +525,7 @@ Category1: tag1/tag2/tag3
 Category2: tag4/tag5
 ...</value>
   </data>
-  <data name="TagIntroduction.Title" xml:space="preserve">
-    <value>Tags</value>
-  </data>
-  <data name="Tags.Text" xml:space="preserve">
+  <data name="TagsColon" xml:space="preserve">
     <value>Tags:</value>
   </data>
   <data name="ThemeDark.Content" xml:space="preserve">
@@ -594,16 +540,16 @@ Category2: tag4/tag5
   <data name="Title" xml:space="preserve">
     <value>Title</value>
   </data>
-  <data name="Title1.Text" xml:space="preserve">
+  <data name="Title1Colon" xml:space="preserve">
     <value>Title 1:</value>
   </data>
-  <data name="Title1String" xml:space="preserve">
+  <data name="Title1" xml:space="preserve">
     <value>Title 1</value>
   </data>
-  <data name="Title2.Text" xml:space="preserve">
+  <data name="Title2Colon" xml:space="preserve">
     <value>Title 2:</value>
   </data>
-  <data name="Title2String" xml:space="preserve">
+  <data name="Title2" xml:space="preserve">
     <value>Title 2</value>
   </data>
   <data name="TotalComics" xml:space="preserve">
@@ -612,14 +558,8 @@ Category2: tag4/tag5
   <data name="TransitionAnimation.Text" xml:space="preserve">
     <value>Transition animation</value>
   </data>
-  <data name="UnFavoriteAppBarButton.Label" xml:space="preserve">
-    <value>UnFavorite</value>
-  </data>
   <data name="Ungrouped" xml:space="preserve">
     <value>Ungrouped</value>
-  </data>
-  <data name="UnhideAppBarButton.Label" xml:space="preserve">
-    <value>Unhide</value>
   </data>
   <data name="Unread" xml:space="preserve">
     <value>Unread</value>
@@ -647,5 +587,17 @@ Category2: tag4/tag5
   </data>
   <data name="WatchingFolders.Text" xml:space="preserve">
     <value>Right now, we're watching these folders:</value>
+  </data>
+  <data name="Hide" xml:space="preserve">
+    <value>Hide</value>
+  </data>
+  <data name="Tags" xml:space="preserve">
+    <value>Tags</value>
+  </data>
+  <data name="Favorites" xml:space="preserve">
+    <value>Favorites</value>
+  </data>
+  <data name="About" xml:space="preserve">
+    <value>About</value>
   </data>
 </root>

@@ -55,9 +55,9 @@
                                     Icon="Document" />
                                 <MenuFlyoutSeparator />
                                 <MenuFlyoutItem
-                                    x:Uid="MenuFlyoutDelete"
                                     Click="OnDeleteItemClicked"
-                                    Icon="Delete" />
+                                    Icon="Delete"
+                                    Text="{x:Bind StringResource.Delete}" />
                             </MenuFlyout>
                         </Grid.ContextFlyout>
 

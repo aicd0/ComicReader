@@ -1,6 +1,7 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+using ComicReader.Common.PageBase;
 using ComicReader.Data.Models.Comic;
 using ComicReader.SDK.Common.Threading;
 
@@ -9,7 +10,7 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace ComicReader.Views.Reader;
 
-internal sealed partial class EditComicInfoDialog : ContentDialog
+internal sealed partial class EditComicInfoDialog : BaseContentDialog
 {
     public EditComicInfoDialogViewModel ViewModel = new();
 
