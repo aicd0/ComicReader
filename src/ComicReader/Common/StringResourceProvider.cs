@@ -35,12 +35,14 @@ public class StringResourceProvider
     public string DefaultTags => GetResourceString("DefaultTags");
     public string Delete => GetResourceString("Delete");
     public string Descending => GetResourceString("Descending");
+    public string DescriptionColon => GetResourceString("DescriptionColon");
     public string Done => GetResourceString("Done");
     public string Edit => GetResourceString("Edit");
     public string ExpressionAnd => GetResourceString("ExpressionAnd");
     public string ExpressionIn => GetResourceString("ExpressionIn");
     public string ExpressionNot => GetResourceString("ExpressionNot");
     public string ExpressionOr => GetResourceString("ExpressionOr");
+    public string ExpressionReference => GetResourceString("ExpressionReference");
     public string ExpressionValid => GetResourceString("ExpressionValid");
     public string ExpressionInvalid => GetResourceString("ExpressionInvalid");
     public string Favorite => GetResourceString("Favorite");

@@ -117,6 +117,9 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="About" xml:space="preserve">
+    <value>About</value>
+  </data>
   <data name="AboutCopyright" xml:space="preserve">
     <value>© 2025 $author. All rights reserved.</value>
   </data>
@@ -174,9 +177,6 @@
   <data name="Ascending" xml:space="preserve">
     <value>Ascending</value>
   </data>
-  <data name="GoBack" xml:space="preserve">
-    <value>Go back</value>
-  </data>
   <data name="Calculating" xml:space="preserve">
     <value>Calculating...</value>
   </data>
@@ -185,9 +185,6 @@
   </data>
   <data name="ChooseLocationButton.Content" xml:space="preserve">
     <value>Choose where we look for images</value>
-  </data>
-  <data name="Done" xml:space="preserve">
-    <value>Done</value>
   </data>
   <data name="ChooseLocationDialog.Title" xml:space="preserve">
     <value>Build your collections from your local files</value>
@@ -237,7 +234,7 @@
   <data name="Descending" xml:space="preserve">
     <value>Descending</value>
   </data>
-  <data name="Description.Text" xml:space="preserve">
+  <data name="DescriptionColon" xml:space="preserve">
     <value>Description:</value>
   </data>
   <data name="DevAppDisplayName" xml:space="preserve">
@@ -248,6 +245,9 @@
   </data>
   <data name="DiscreteButton.Label" xml:space="preserve">
     <value>Separate</value>
+  </data>
+  <data name="Done" xml:space="preserve">
+    <value>Done</value>
   </data>
   <data name="Edit" xml:space="preserve">
     <value>Edit</value>
@@ -267,6 +267,60 @@
   <data name="ExpressionOr" xml:space="preserve">
     <value>Or</value>
   </data>
+  <data name="ExpressionReference" xml:space="preserve">
+    <value>(This document might be machine translated)
+
+Expression Reference
+
+1. Variables
+
+%tag                - Match all tags in a comic.
+%title              - Match title 1 or title 2.
+%title1             - Match title 1.
+%title2             - Match title 2.
+%rating             - Match rating. For example: 4 represents 4 stars, 0 represents
+                      no rating.
+%completion_state   - Comic completion state (0 - Unread, 1 - Reading, 2 - Completed).
+%progress           - reading progress, in percentage. For example: 50 represents 50%.
+
+2. Variable operators
+
+=                   - Equal. For example: %title = "This is a title"
+&gt;                   - Greater than. For example: %rating &gt; 3
+&gt;=                  - Greater than or equal.
+&lt;                   - Less than.
+&lt;=                  - Less than or equal.
+... IN (...)        - Contained by. For example:
+                          %rating in (3, 4, 5) - Match those comics whose ratings are
+                      within 3, 4 and 5.
+                          %tag.language in (languageA, languageB) - Match those comics
+                      whose "language" tag category contains "languageA" or "languageB".
+                          (authorA, authorB) in %tag.authors - Match those comics whose
+                      "authors" tag category contains both "authorA" and "authorB".
+                          apple in %tag - Match those comics which contains tag "apple".
+
+3. Logic operators
+
+AND                 - Logic and. For example:
+                          %tag.fruit = apple AND %title = "I have an apple"
+OR                  - Logic or. For example:
+                          %title1 = "Apple is OK" OR %title2 = "Orange is also OK"
+NOT                 - Logic not. For example: NOT %tag = "hide this"
+
+4. Parentheses
+
+By default, operators will be evaluated from left to right. Use (...) to elevate the
+priority of included expression. For example:
+
+    %tag.author = abc AND (%tag.language = langA OR NOT %tag.lang = langB)
+
+The evaluation will be performed in the following order:
+
+    1. NOT %tag.lang = langB  ==&gt;  Result1
+    2. %tag.language = langA OR Result1  ==&gt;  Result2
+    3. %tag.author = abc AND Result2  ==&gt;  Result3
+</value>
+  </data>
   <data name="ExpressionTextBlock.Text" xml:space="preserve">
     <value>Expression</value>
   </data>
@@ -275,6 +329,9 @@
   </data>
   <data name="Favorite" xml:space="preserve">
     <value>Favorite</value>
+  </data>
+  <data name="Favorites" xml:space="preserve">
+    <value>Favorites</value>
   </data>
   <data name="FavoritesButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>Favorites and history</value>
@@ -300,6 +357,9 @@
   <data name="FoldersHeader.Text" xml:space="preserve">
     <value>Folders</value>
   </data>
+  <data name="GoBack" xml:space="preserve">
+    <value>Go back</value>
+  </data>
   <data name="GoForward" xml:space="preserve">
     <value>Go forward</value>
   </data>
@@ -309,17 +369,17 @@
   <data name="Help" xml:space="preserve">
     <value>Help</value>
   </data>
-  <data name="HistoryExpander.Detail" xml:space="preserve">
-    <value>Clear history, enable or disable history</value>
+  <data name="Hide" xml:space="preserve">
+    <value>Hide</value>
   </data>
   <data name="History" xml:space="preserve">
     <value>History</value>
   </data>
+  <data name="HistoryExpander.Detail" xml:space="preserve">
+    <value>Clear history, enable or disable history</value>
+  </data>
   <data name="HomeButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>Home</value>
-  </data>
-  <data name="Refresh" xml:space="preserve">
-    <value>refresh</value>
   </data>
   <data name="HorizontalButton.Label" xml:space="preserve">
     <value>Horizontal</value>
@@ -384,12 +444,6 @@
   <data name="MenuFlyoutOpenInNewTab.Text" xml:space="preserve">
     <value>Open in new tab</value>
   </data>
-  <data name="Unfavorite" xml:space="preserve">
-    <value>Unfavorite</value>
-  </data>
-  <data name="RemoveFromFavorites" xml:space="preserve">
-    <value>Remove from favorites</value>
-  </data>
   <data name="MenuFlyoutRemoveFromList.Text" xml:space="preserve">
     <value>Remove from list</value>
   </data>
@@ -401,9 +455,6 @@
   </data>
   <data name="MenuFlyoutSortByName.Text" xml:space="preserve">
     <value>Sort by name</value>
-  </data>
-  <data name="Unhide" xml:space="preserve">
-    <value>Unhide</value>
   </data>
   <data name="MoreButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>More</value>
@@ -471,6 +522,12 @@
   <data name="Reading" xml:space="preserve">
     <value>Reading</value>
   </data>
+  <data name="Refresh" xml:space="preserve">
+    <value>refresh</value>
+  </data>
+  <data name="RemoveFromFavorites" xml:space="preserve">
+    <value>Remove from favorites</value>
+  </data>
   <data name="RemoveLocationButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>Remove this folder from the list</value>
   </data>
@@ -525,6 +582,9 @@ Category1: tag1/tag2/tag3
 Category2: tag4/tag5
 ...</value>
   </data>
+  <data name="Tags" xml:space="preserve">
+    <value>Tags</value>
+  </data>
   <data name="TagsColon" xml:space="preserve">
     <value>Tags:</value>
   </data>
@@ -540,17 +600,17 @@ Category2: tag4/tag5
   <data name="Title" xml:space="preserve">
     <value>Title</value>
   </data>
-  <data name="Title1Colon" xml:space="preserve">
-    <value>Title 1:</value>
-  </data>
   <data name="Title1" xml:space="preserve">
     <value>Title 1</value>
   </data>
-  <data name="Title2Colon" xml:space="preserve">
-    <value>Title 2:</value>
+  <data name="Title1Colon" xml:space="preserve">
+    <value>Title 1:</value>
   </data>
   <data name="Title2" xml:space="preserve">
     <value>Title 2</value>
+  </data>
+  <data name="Title2Colon" xml:space="preserve">
+    <value>Title 2:</value>
   </data>
   <data name="TotalComics" xml:space="preserve">
     <value>Total comics: </value>
@@ -558,8 +618,14 @@ Category2: tag4/tag5
   <data name="TransitionAnimation.Text" xml:space="preserve">
     <value>Transition animation</value>
   </data>
+  <data name="Unfavorite" xml:space="preserve">
+    <value>Unfavorite</value>
+  </data>
   <data name="Ungrouped" xml:space="preserve">
     <value>Ungrouped</value>
+  </data>
+  <data name="Unhide" xml:space="preserve">
+    <value>Unhide</value>
   </data>
   <data name="Unread" xml:space="preserve">
     <value>Unread</value>
@@ -587,17 +653,5 @@ Category2: tag4/tag5
   </data>
   <data name="WatchingFolders.Text" xml:space="preserve">
     <value>Right now, we're watching these folders:</value>
-  </data>
-  <data name="Hide" xml:space="preserve">
-    <value>Hide</value>
-  </data>
-  <data name="Tags" xml:space="preserve">
-    <value>Tags</value>
-  </data>
-  <data name="Favorites" xml:space="preserve">
-    <value>Favorites</value>
-  </data>
-  <data name="About" xml:space="preserve">
-    <value>About</value>
   </data>
 </root>

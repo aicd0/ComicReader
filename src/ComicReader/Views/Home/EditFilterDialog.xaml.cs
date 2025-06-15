@@ -110,7 +110,7 @@ internal sealed partial class EditFilterDialog : BaseContentDialog
 
     private void ExpressionTipButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        ThirdPartyLauncher.StartTemporaryTextFile("expression_reference.txt", "12345\n67890");
+        ThirdPartyLauncher.StartTemporaryTextFile("expression_reference.txt", StringResource.ExpressionReference);
     }
 
     private void NameTextBox_TextChanged(object sender, TextChangedEventArgs e)

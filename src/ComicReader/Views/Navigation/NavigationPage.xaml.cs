@@ -231,7 +231,7 @@ internal sealed partial class NavigationPage : BasePage
         _isFavorite = isFavorite;
         FiFavoriteFilled.Visibility = isFavorite ? Visibility.Visible : Visibility.Collapsed;
         FiFavoriteUnfilled.Visibility = isFavorite ? Visibility.Collapsed : Visibility.Visible;
-        string toolTip = isFavorite ? StringResourceProvider.Instance.Unfavorite :
+        string toolTip = isFavorite ? StringResourceProvider.Instance.RemoveFromFavorites :
             StringResourceProvider.Instance.AddToFavorites;
         ToolTipService.SetToolTip(AbbAddToFavorite, toolTip);
         _ability.SendFavoriteChangedEvent(isFavorite);

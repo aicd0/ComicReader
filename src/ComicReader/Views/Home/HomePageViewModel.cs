@@ -487,7 +487,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
                     {
                         item.Comic.SaveHiddenAsync(true).Wait();
                     }
-                    ScheduleUpdateComics();
+                    _searchEngine.Update();
                 }
                 break;
             case BatchOperationType.UnHide:
@@ -497,7 +497,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
                     {
                         item.Comic.SaveHiddenAsync(false).Wait();
                     }
-                    ScheduleUpdateComics();
+                    _searchEngine.Update();
                 }
                 break;
             case BatchOperationType.MarkAsRead:

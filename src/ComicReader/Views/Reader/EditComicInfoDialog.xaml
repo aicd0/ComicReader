@@ -27,7 +27,7 @@
                 x:Name="Title2TextBox"
                 Margin="0,6,0,0"
                 TextWrapping="Wrap" />
-            <TextBlock x:Uid="Description" Margin="0,8,0,0" />
+            <TextBlock Margin="0,8,0,0" Text="{x:Bind StringResource.DescriptionColon}" />
             <TextBox
                 x:Name="DescriptionTextBox"
                 Margin="0,6,0,0"

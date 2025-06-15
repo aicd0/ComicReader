@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -117,6 +117,9 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="About" xml:space="preserve">
+    <value>關於</value>
+  </data>
   <data name="AboutCopyright" xml:space="preserve">
     <value>© 2025 $author。保留所有權利。</value>
   </data>
@@ -174,9 +177,6 @@
   <data name="Ascending" xml:space="preserve">
     <value>升序</value>
   </data>
-  <data name="GoBack" xml:space="preserve">
-    <value>返回</value>
-  </data>
   <data name="Calculating" xml:space="preserve">
     <value>計算中...</value>
   </data>
@@ -185,9 +185,6 @@
   </data>
   <data name="ChooseLocationButton.Content" xml:space="preserve">
     <value>新增或修改圖片位置</value>
-  </data>
-  <data name="Done" xml:space="preserve">
-    <value>完成</value>
   </data>
   <data name="ChooseLocationDialog.Title" xml:space="preserve">
     <value>從以下位置掃描圖片</value>
@@ -237,7 +234,7 @@
   <data name="Descending" xml:space="preserve">
     <value>降序</value>
   </data>
-  <data name="Description.Text" xml:space="preserve">
+  <data name="DescriptionColon" xml:space="preserve">
     <value>描述：</value>
   </data>
   <data name="DevAppDisplayName" xml:space="preserve">
@@ -248,6 +245,9 @@
   </data>
   <data name="DiscreteButton.Label" xml:space="preserve">
     <value>分割</value>
+  </data>
+  <data name="Done" xml:space="preserve">
+    <value>完成</value>
   </data>
   <data name="Edit" xml:space="preserve">
     <value>編輯</value>
@@ -267,6 +267,54 @@
   <data name="ExpressionOr" xml:space="preserve">
     <value>或</value>
   </data>
+  <data name="ExpressionReference" xml:space="preserve">
+    <value>（本文檔可能為機器翻譯）
+
+表達式參考
+
+1. 變數
+
+%tag - 匹配漫畫中的所有標籤。
+%title - 匹配標題 1 或標題 2。
+%title1 - 匹配標題 1。
+%title2 - 匹配標題 2。
+%rating - 匹配評分。例如：4 代表 4 顆星，0 代表無評分。
+%completion_state - 漫畫完成狀態（0 - 未讀，1 - 正在閱讀，2 - 已完成）。
+%progress - 閱讀進度，以百分比表示。例如：50 代表 50%。
+
+2. 變數運算符
+
+= - 等於。例如：%title = "This is a title"
+&gt; - 大於。例如：%rating &gt; 3
+&gt;= - 大於等於。
+&lt; - 小於。
+&lt;= - 小於等於。
+... IN (...) - 包含於。例如：
+%rating in (3, 4, 5) - 配對評分在 3、4 和 5 之間的漫畫。
+%tag.language in (languageA, languageB) - 符合「language」標籤類別包含「languageA」或「languageB」的漫畫。
+(authorA, authorB) in %tag.authors - 匹配「authors」標籤類別同時包含「authorA」和「authorB」的漫畫。
+apple in %tag - 匹配包含標籤「apple」的漫畫。
+
+3. 邏輯運算符
+
+AND - 邏輯與。例如：
+%tag.fruit = apple AND %title = "我有一個蘋果"
+OR - 邏輯或。例如：
+%title1 = "蘋果還可以" OR %title2 = "橘子也可以"
+NOT - 邏輯非。例如：NOT %tag = "hide this"
+
+4. 括號
+
+預設情況下，運算子將從左到右進行求值。使用 (...) 可提高所包含表達式的優先權。例如：
+
+%tag.author = abc AND (%tag.language = langA OR NOT %tag.lang = langB)
+
+求值將以以下順序進行：
+
+1. NOT %tag.lang = langB ==&gt; 結果 1
+2. %tag.language = langA OR 結果 1 ==&gt; 結果 2
+3. %tag.author = abc AND 結果 2 ==&gt; 結果 3</value>
+  </data>
   <data name="ExpressionTextBlock.Text" xml:space="preserve">
     <value>表達式</value>
   </data>
@@ -275,6 +323,9 @@
   </data>
   <data name="Favorite" xml:space="preserve">
     <value>收藏</value>
+  </data>
+  <data name="Favorites" xml:space="preserve">
+    <value>收藏夾</value>
   </data>
   <data name="FavoritesButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>收藏及歷史記錄</value>
@@ -300,6 +351,9 @@
   <data name="FoldersHeader.Text" xml:space="preserve">
     <value>資料夾</value>
   </data>
+  <data name="GoBack" xml:space="preserve">
+    <value>返回</value>
+  </data>
   <data name="GoForward" xml:space="preserve">
     <value>前進</value>
   </data>
@@ -309,17 +363,17 @@
   <data name="Help" xml:space="preserve">
     <value>幫助</value>
   </data>
-  <data name="HistoryExpander.Detail" xml:space="preserve">
-    <value>清除歷史記錄、啟用或停用歷史記錄</value>
+  <data name="Hide" xml:space="preserve">
+    <value>隱藏</value>
   </data>
   <data name="History" xml:space="preserve">
     <value>歷史記錄</value>
   </data>
+  <data name="HistoryExpander.Detail" xml:space="preserve">
+    <value>清除歷史記錄、啟用或停用歷史記錄</value>
+  </data>
   <data name="HomeButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>首頁</value>
-  </data>
-  <data name="Refresh" xml:space="preserve">
-    <value>重新整理</value>
   </data>
   <data name="HorizontalButton.Label" xml:space="preserve">
     <value>橫向</value>
@@ -384,12 +438,6 @@
   <data name="MenuFlyoutOpenInNewTab.Text" xml:space="preserve">
     <value>在新分頁中開啟</value>
   </data>
-  <data name="Unfavorite" xml:space="preserve">
-    <value>取消收藏</value>
-  </data>
-  <data name="RemoveFromFavorites" xml:space="preserve">
-    <value>取消收藏</value>
-  </data>
   <data name="MenuFlyoutRemoveFromList.Text" xml:space="preserve">
     <value>從清單中移除</value>
   </data>
@@ -401,9 +449,6 @@
   </data>
   <data name="MenuFlyoutSortByName.Text" xml:space="preserve">
     <value>按名稱排序</value>
-  </data>
-  <data name="Unhide" xml:space="preserve">
-    <value>取消隱藏</value>
   </data>
   <data name="MoreButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>更多</value>
@@ -471,6 +516,12 @@
   <data name="Reading" xml:space="preserve">
     <value>閱讀中</value>
   </data>
+  <data name="Refresh" xml:space="preserve">
+    <value>重新整理</value>
+  </data>
+  <data name="RemoveFromFavorites" xml:space="preserve">
+    <value>取消收藏</value>
+  </data>
   <data name="RemoveLocationButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>從清單中移除目前資料夾</value>
   </data>
@@ -525,6 +576,9 @@
 類別2: 標籤4/標籤5
 …</value>
   </data>
+  <data name="Tags" xml:space="preserve">
+    <value>標籤</value>
+  </data>
   <data name="TagsColon" xml:space="preserve">
     <value>標籤：</value>
   </data>
@@ -540,17 +594,17 @@
   <data name="Title" xml:space="preserve">
     <value>標題</value>
   </data>
-  <data name="Title1Colon" xml:space="preserve">
-    <value>標題 1：</value>
-  </data>
   <data name="Title1" xml:space="preserve">
     <value>標題 1</value>
   </data>
-  <data name="Title2Colon" xml:space="preserve">
-    <value>標題 2：</value>
+  <data name="Title1Colon" xml:space="preserve">
+    <value>標題 1：</value>
   </data>
   <data name="Title2" xml:space="preserve">
     <value>標題 2</value>
+  </data>
+  <data name="Title2Colon" xml:space="preserve">
+    <value>標題 2：</value>
   </data>
   <data name="TotalComics" xml:space="preserve">
     <value>漫畫總數：</value>
@@ -558,8 +612,14 @@
   <data name="TransitionAnimation.Text" xml:space="preserve">
     <value>翻頁動畫</value>
   </data>
+  <data name="Unfavorite" xml:space="preserve">
+    <value>取消收藏</value>
+  </data>
   <data name="Ungrouped" xml:space="preserve">
     <value>無分組</value>
+  </data>
+  <data name="Unhide" xml:space="preserve">
+    <value>取消隱藏</value>
   </data>
   <data name="Unread" xml:space="preserve">
     <value>未閱讀</value>
@@ -587,17 +647,5 @@
   </data>
   <data name="WatchingFolders.Text" xml:space="preserve">
     <value>目前，您的倉庫包含以下資料夾：</value>
-  </data>
-  <data name="Hide" xml:space="preserve">
-    <value>隱藏</value>
-  </data>
-  <data name="Tags" xml:space="preserve">
-    <value>標籤</value>
-  </data>
-  <data name="Favorites" xml:space="preserve">
-    <value>收藏夾</value>
-  </data>
-  <data name="About" xml:space="preserve">
-    <value>關於</value>
   </data>
 </root>
