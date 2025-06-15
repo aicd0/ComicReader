@@ -3,6 +3,7 @@
 
 using System.Text;
 
+using ComicReader.Common.PageBase;
 using ComicReader.Data.Models;
 
 using Microsoft.UI.Xaml.Controls;
@@ -11,7 +12,7 @@ using static ComicReader.Views.Home.EditFilterDialogViewModel;
 
 namespace ComicReader.Views.Home;
 
-internal sealed partial class EditFilterDialog : ContentDialog
+internal sealed partial class EditFilterDialog : BaseContentDialog
 {
     public EditFilterDialogViewModel ViewModel = new();
 
@@ -109,7 +110,7 @@ internal sealed partial class EditFilterDialog : ContentDialog
 
     private void ExpressionTipButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        ThirdPartyLauncher.StartTemporaryTextFile("expression_reference.txt", "12345\n67890");
+        ThirdPartyLauncher.StartTemporaryTextFile("expression_reference.txt", StringResource.ExpressionReference);
     }
 
     private void NameTextBox_TextChanged(object sender, TextChangedEventArgs e)

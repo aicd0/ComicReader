@@ -38,23 +38,29 @@ class AppSettingsModel : JsonDatabase<AppSettingsModel.JsonModel>
     {
         [JsonPropertyName("RemoveUnreachableComics")]
         public bool? RemoveUnreachableComics { get; set; }
+
+        [JsonPropertyName("Language")]
+        public string? Language { get; set; }
     }
 
     public class ExternalModel
     {
         public bool RemoveUnreachableComics { get; set; }
+        public string Language { get; set; } = "";
 
         public static ExternalModel From(JsonModel model)
         {
             return new ExternalModel
             {
-                RemoveUnreachableComics = model.RemoveUnreachableComics ?? true
+                RemoveUnreachableComics = model.RemoveUnreachableComics ?? true,
+                Language = model.Language ?? "",
             };
         }
 
         public void To(JsonModel model)
         {
             model.RemoveUnreachableComics = RemoveUnreachableComics;
+            model.Language = Language;
         }
     }
 }

@@ -188,7 +188,7 @@ internal class ComicSearchEngine
         {
             string keyword_combined = StringUtils.Join(" ", keywords);
             title_text = "\"" + keyword_combined + "\"";
-            tab_title = StringResourceProvider.SearchResultsOf;
+            tab_title = StringResourceProvider.Instance.SearchResultsOf;
             tab_title = tab_title.Replace("$keyword", keyword_combined);
         }
         else if (filter_brief.Length != 0)
@@ -199,8 +199,8 @@ internal class ComicSearchEngine
         }
         else
         {
-            title_text = StringResourceProvider.AllMatchedResults;
-            tab_title = StringResourceProvider.SearchResults;
+            title_text = StringResourceProvider.Instance.AllMatchedResults;
+            tab_title = StringResourceProvider.Instance.SearchResults;
         }
 
         for (int i = 0; i < keywords.Count; ++i)

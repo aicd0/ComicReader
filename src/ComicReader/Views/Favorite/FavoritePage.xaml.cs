@@ -192,7 +192,7 @@ internal sealed partial class FavoritePage : BasePage
     private void CreateNewFolder(ObservableCollection<FavoriteItemViewModel> folder, FavoriteItemViewModel parent)
     {
         string folderName;
-        string new_folder_string = StringResourceProvider.NewFolder;
+        string new_folder_string = StringResourceProvider.Instance.NewFolder;
 
         for (int folderIndex = 1; folderIndex < 65536; ++folderIndex)
         {

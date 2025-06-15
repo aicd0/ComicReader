@@ -1,33 +1,33 @@
-﻿<ContentDialog
+﻿<base:BaseContentDialog
     x:Class="ComicReader.Views.Reader.EditComicInfoDialog"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:base="using:ComicReader.Common.PageBase"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
-    x:Uid="EditComicInfoDialog"
-    Title="Collection information"
+    Title="{x:Bind StringResource.ComicInfo}"
     DefaultButton="Primary"
     Loaded="OnLoaded"
     PrimaryButtonClick="ContentDialogPrimaryButtonClick"
-    PrimaryButtonText="Done"
+    PrimaryButtonText="{x:Bind StringResource.Done}"
     SecondaryButtonClick="ContentDialogSecondaryButtonClick"
-    SecondaryButtonText="Cancel"
+    SecondaryButtonText="{x:Bind StringResource.Cancel}"
     mc:Ignorable="d">
 
     <Grid Width="500">
         <StackPanel Orientation="Vertical">
-            <TextBlock x:Uid="Title1" />
+            <TextBlock Text="{x:Bind StringResource.Title1Colon}" />
             <TextBox
                 x:Name="Title1TextBox"
                 Margin="0,6,0,0"
                 TextWrapping="Wrap" />
-            <TextBlock x:Uid="Title2" Margin="0,8,0,0" />
+            <TextBlock Margin="0,8,0,0" Text="{x:Bind StringResource.Title2Colon}" />
             <TextBox
                 x:Name="Title2TextBox"
                 Margin="0,6,0,0"
                 TextWrapping="Wrap" />
-            <TextBlock x:Uid="Description" Margin="0,8,0,0" />
+            <TextBlock Margin="0,8,0,0" Text="{x:Bind StringResource.DescriptionColon}" />
             <TextBox
                 x:Name="DescriptionTextBox"
                 Margin="0,6,0,0"
@@ -35,7 +35,7 @@
                 TextWrapping="Wrap" />
             <StackPanel Margin="0,8,0,0">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock x:Uid="Tags" />
+                    <TextBlock Text="{x:Bind StringResource.TagsColon}" />
                     <Button
                         Margin="20,0,0,2"
                         Padding="0"
@@ -51,6 +51,7 @@
                 <Grid Height="8" Visibility="{x:Bind ViewModel.IsTagInfoBarOpen, Mode=OneWay}" />
                 <muxc:InfoBar
                     x:Uid="TagIntroduction"
+                    Title="{x:Bind StringResource.Tags}"
                     CloseButtonClick="OnTagInfoBarCloseButtonClicked"
                     IsOpen="{x:Bind ViewModel.IsTagInfoBarOpen, Mode=OneWay}"
                     Severity="Informational" />
@@ -64,4 +65,4 @@
                 TextWrapping="Wrap" />
         </StackPanel>
     </Grid>
-</ContentDialog>
+</base:BaseContentDialog>

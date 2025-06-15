@@ -27,6 +27,8 @@ internal abstract class BasePage : Page
 
     private readonly PageStopEventHandler _pageStopHandler;
 
+    public StringResourceProvider StringResource { get; } = StringResourceProvider.Instance;
+
     public BasePage()
     {
         _pageStopHandler = delegate

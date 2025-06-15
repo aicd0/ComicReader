@@ -1,7 +1,8 @@
-﻿<UserControl
+﻿<base:BaseUserControl
     x:Class="ComicReader.Views.Navigation.SidePane"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:base="using:ComicReader.Common.PageBase"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
@@ -19,12 +20,15 @@
             SelectionChanged="OnNavPaneSelectionChanged">
             <Frame x:Name="ContentFrame" Background="#01FFFFFF" />
             <muxc:NavigationView.MenuItems>
-                <muxc:NavigationViewItem Content="Favorites" IsSelected="True">
+                <muxc:NavigationViewItem
+                    Content="Favorites"
+                    IsSelected="True"
+                    ToolTipService.ToolTip="{x:Bind StringResource.Favorites}">
                     <muxc:NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE728;" />
                     </muxc:NavigationViewItem.Icon>
                 </muxc:NavigationViewItem>
-                <muxc:NavigationViewItem Content="History">
+                <muxc:NavigationViewItem Content="History" ToolTipService.ToolTip="{x:Bind StringResource.History}">
                     <muxc:NavigationViewItem.Icon>
                         <FontIcon Glyph="&#xE81C;" />
                     </muxc:NavigationViewItem.Icon>
@@ -38,4 +42,4 @@
             HorizontalAlignment="Left"
             Fill="{ThemeResource SidePaneBorderBrush}" />
     </Grid>
-</UserControl>
+</base:BaseUserControl>

@@ -487,7 +487,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
                     {
                         item.Comic.SaveHiddenAsync(true).Wait();
                     }
-                    ScheduleUpdateComics();
+                    _searchEngine.Update();
                 }
                 break;
             case BatchOperationType.UnHide:
@@ -497,7 +497,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
                     {
                         item.Comic.SaveHiddenAsync(false).Wait();
                     }
-                    ScheduleUpdateComics();
+                    _searchEngine.Update();
                 }
                 break;
             case BatchOperationType.MarkAsRead:
@@ -651,20 +651,20 @@ internal class HomePageViewModel : INotifyPropertyChanged
         // Update UI
         var viewTypeDropDown = new DropDownButtonModel<ComicFilterModel.ViewTypeEnum>
         {
-            Name = "View",
+            Name = StringResourceProvider.Instance.ViewType,
             Items = _viewTypes.ConvertAll(x => CreateToggleMenuFlyoutItem(ViewTypeToDisplayName(x), x == lastFilter.ViewType, x)),
         };
 
         List<ComicPropertyModel> properties = await ComicPropertyModel.GetProperties();
         var sortByDropDown = new DropDownButtonModel<SortByUIModel>
         {
-            Name = "Sort",
+            Name = StringResourceProvider.Instance.Sort,
             Items = CreateSortByMenuItems(properties, lastFilter.SortBy, lastFilter.SortByAscending),
         };
 
         var groupByDropDown = new DropDownButtonModel<SortByUIModel>
         {
-            Name = "Group",
+            Name = StringResourceProvider.Instance.Group,
             Items = CreateSortByMenuItems(properties, lastFilter.GroupBy, lastFilter.GroupByAscending),
         };
 
@@ -814,7 +814,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
     {
         return new ComicFilterModel.ExternalFilterModel
         {
-            Name = "Default",
+            Name = StringResourceProvider.Instance.Default,
             ViewType = ComicFilterModel.ViewTypeEnum.Large,
             SortBy = new(),
             SortByAscending = true,
@@ -883,12 +883,12 @@ internal class HomePageViewModel : INotifyPropertyChanged
         if (selectedProperty != null)
         {
             items.Add(CreateSeperatorMenuFlyoutItem<SortByUIModel>());
-            items.Add(CreateToggleMenuFlyoutItem("Ascending", ascending, new SortByUIModel
+            items.Add(CreateToggleMenuFlyoutItem(StringResourceProvider.Instance.Ascending, ascending, new SortByUIModel
             {
                 IsProperty = false,
                 IsAscending = true,
             }));
-            items.Add(CreateToggleMenuFlyoutItem("Descending", !ascending, new SortByUIModel
+            items.Add(CreateToggleMenuFlyoutItem(StringResourceProvider.Instance.Descending, !ascending, new SortByUIModel
             {
                 IsProperty = false,
                 IsAscending = false,
@@ -929,8 +929,8 @@ internal class HomePageViewModel : INotifyPropertyChanged
     {
         return viewType switch
         {
-            ComicFilterModel.ViewTypeEnum.Large => "Large",
-            ComicFilterModel.ViewTypeEnum.Medium => "Medium",
+            ComicFilterModel.ViewTypeEnum.Large => StringResourceProvider.Instance.ViewTypeLarge,
+            ComicFilterModel.ViewTypeEnum.Medium => StringResourceProvider.Instance.ViewTypeMedium,
             _ => "Unknown"
         };
     }

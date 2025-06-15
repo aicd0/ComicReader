@@ -4,9 +4,9 @@
 #nullable disable
 
 using System;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 
+using ComicReader.Common;
 using ComicReader.ViewModels;
 
 using Microsoft.UI.Xaml.Controls;
@@ -29,7 +29,7 @@ internal class SearchPageViewModel : INotifyPropertyChanged
     }
 
     // UI elements
-    public ObservableCollection<ComicItemViewModel> SearchResults = [];
+    public ObservableCollectionPlus<ComicItemViewModel> SearchResults = [];
 
     private bool m_IsLoadingRingVisible;
     public bool IsLoadingRingVisible
@@ -38,7 +38,7 @@ internal class SearchPageViewModel : INotifyPropertyChanged
         set
         {
             m_IsLoadingRingVisible = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsLoadingRingVisible"));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsLoadingRingVisible)));
         }
     }
 
@@ -49,7 +49,7 @@ internal class SearchPageViewModel : INotifyPropertyChanged
         set
         {
             _title = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Title"));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Title)));
         }
     }
 
@@ -60,8 +60,8 @@ internal class SearchPageViewModel : INotifyPropertyChanged
         set
         {
             _filterDetails = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("FilterDetails"));
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("FilterDetailsVisible"));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(FilterDetails)));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(FilterDetailsVisible)));
         }
     }
     public bool FilterDetailsVisible => FilterDetails.Length > 0;
@@ -73,7 +73,7 @@ internal class SearchPageViewModel : INotifyPropertyChanged
         set
         {
             m_IsResultGridVisible = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsResultGridVisible"));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsResultGridVisible)));
         }
     }
 
@@ -84,7 +84,7 @@ internal class SearchPageViewModel : INotifyPropertyChanged
         set
         {
             m_NoResultText = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("NoResultText"));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(NoResultText)));
         }
     }
 
@@ -95,7 +95,7 @@ internal class SearchPageViewModel : INotifyPropertyChanged
         set
         {
             m_IsNoResultTextVisible = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsNoResultTextVisible"));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsNoResultTextVisible)));
         }
     }
 
@@ -136,7 +136,7 @@ internal class SearchPageViewModel : INotifyPropertyChanged
                 }
 
                 m_IsCommandBarSelectAllToggled = value;
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsCommandBarSelectAllToggled"));
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsCommandBarSelectAllToggled)));
             }
 
             CommandBarSelectAllToggleOmitOnce = false;
@@ -150,7 +150,7 @@ internal class SearchPageViewModel : INotifyPropertyChanged
         set
         {
             m_IsCommandBarFavoriteEnabled = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsCommandBarFavoriteEnabled"));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsCommandBarFavoriteEnabled)));
         }
     }
 
@@ -161,7 +161,7 @@ internal class SearchPageViewModel : INotifyPropertyChanged
         set
         {
             m_IsCommandBarUnFavoriteEnabled = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsCommandBarUnFavoriteEnabled"));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsCommandBarUnFavoriteEnabled)));
         }
     }
 
@@ -172,7 +172,7 @@ internal class SearchPageViewModel : INotifyPropertyChanged
         set
         {
             m_IsCommandBarHideEnabled = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsCommandBarHideEnabled"));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsCommandBarHideEnabled)));
         }
     }
 
@@ -183,7 +183,7 @@ internal class SearchPageViewModel : INotifyPropertyChanged
         set
         {
             m_IsCommandBarUnHideEnabled = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsCommandBarUnHideEnabled"));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsCommandBarUnHideEnabled)));
         }
     }
 
@@ -194,7 +194,7 @@ internal class SearchPageViewModel : INotifyPropertyChanged
         set
         {
             _isCommandBarMarkAsReadEnabled = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsCommandBarMarkAsReadEnabled"));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsCommandBarMarkAsReadEnabled)));
         }
     }
 
@@ -205,7 +205,7 @@ internal class SearchPageViewModel : INotifyPropertyChanged
         set
         {
             _isCommandBarMarkAsUnreadEnabled = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsCommandBarMarkAsUnreadEnabled"));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsCommandBarMarkAsUnreadEnabled)));
         }
     }
 

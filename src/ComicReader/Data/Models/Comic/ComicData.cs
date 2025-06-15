@@ -41,7 +41,7 @@ internal abstract class ComicData
     {
         get
         {
-            _defaultTagsString ??= StringResourceProvider.DefaultTags;
+            _defaultTagsString ??= StringResourceProvider.Instance.DefaultTags;
             return _defaultTagsString;
         }
     }
@@ -287,7 +287,7 @@ internal abstract class ComicData
             {
                 if (Title2.Length == 0)
                 {
-                    return StringResourceProvider.Untitled;
+                    return StringResourceProvider.Instance.Untitled;
                 }
                 else
                 {

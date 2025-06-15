@@ -5,17 +5,17 @@ using System.Collections.Generic;
 
 using ComicReader.Common;
 using ComicReader.Common.Imaging;
+using ComicReader.Common.PageBase;
 using ComicReader.Helpers.Imaging;
 using ComicReader.ViewModels;
 
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace ComicReader.UserControls;
 
-internal sealed partial class ComicItemVertical : UserControl, IComicItemView
+internal sealed partial class ComicItemVertical : BaseUserControl, IComicItemView
 {
     private readonly CancellationSession _loadImageToken = new();
 

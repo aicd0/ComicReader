@@ -34,7 +34,7 @@
                         <MenuFlyoutItem x:Uid="MenuFlyoutSortByName" Click="SortByNameClick" />
                         <MenuFlyoutItem x:Uid="MenuFlyoutRename" Click="RenameClick" />
                         <MenuFlyoutSeparator />
-                        <MenuFlyoutItem x:Uid="MenuFlyoutDelete" Click="DeleteClick" />
+                        <MenuFlyoutItem Click="DeleteClick" Text="{x:Bind StringResource.Delete}" />
                     </MenuFlyout>
                 </muxc:TreeViewItem.ContextFlyout>
                 <Grid>

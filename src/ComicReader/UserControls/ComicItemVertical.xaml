@@ -1,7 +1,8 @@
-<UserControl
+<base:BaseUserControl
     x:Class="ComicReader.UserControls.ComicItemVertical"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:base="using:ComicReader.Common.PageBase"
     xmlns:controls="using:ComicReader.UserControls"
     xmlns:converters="using:ComicReader.Converters"
     xmlns:cw="using:CommunityToolkit.WinUI"
@@ -17,7 +18,7 @@
     Unloaded="UserControl_Unloaded"
     mc:Ignorable="d">
 
-    <UserControl.Resources>
+    <base:BaseUserControl.Resources>
         <ResourceDictionary>
             <!--  Converters  -->
             <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
@@ -29,7 +30,7 @@
                 Opacity="0.1"
                 Offset="0" />
         </ResourceDictionary>
-    </UserControl.Resources>
+    </base:BaseUserControl.Resources>
 
     <Grid
         x:Name="Root"
@@ -49,34 +50,34 @@
                     Click="{x:Bind Ctx.ItemHandler.OnOpenInNewTabClicked}"
                     Icon="Document" />
                 <MenuFlyoutItem
-                    x:Uid="MenuFlyoutAddToFavorites"
                     Click="{x:Bind Ctx.ItemHandler.OnAddToFavoritesClicked}"
                     Icon="Favorite"
+                    Text="{x:Bind StringResource.AddToFavorites}"
                     Visibility="{x:Bind Ctx.IsFavorite, Converter={StaticResource BooleanToVisibilityNegationConverter}}" />
                 <MenuFlyoutItem
-                    x:Uid="MenuFlyoutRemoveFromFavorites"
                     Click="{x:Bind Ctx.ItemHandler.OnRemoveFromFavoritesClicked}"
                     Icon="Unfavorite"
+                    Text="{x:Bind StringResource.RemoveFromFavorites}"
                     Visibility="{x:Bind Ctx.IsFavorite}" />
                 <MenuFlyoutItem
-                    x:Uid="MenuFlyoutMarkAsRead"
                     Click="{x:Bind Ctx.ItemHandler.OnMarkAsReadClicked}"
+                    Text="{x:Bind StringResource.MarkAsRead}"
                     Visibility="{x:Bind Ctx.IsRead, Converter={StaticResource BooleanToVisibilityNegationConverter}}">
                     <MenuFlyoutItem.Icon>
                         <FontIcon Glyph="&#xE930;" />
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
                 <MenuFlyoutItem
-                    x:Uid="MenuFlyoutMarkAsUnread"
                     Click="{x:Bind Ctx.ItemHandler.OnMarkAsUnreadClicked}"
+                    Text="{x:Bind StringResource.MarkAsUnread}"
                     Visibility="{x:Bind Ctx.IsUnread, Converter={StaticResource BooleanToVisibilityNegationConverter}}">
                     <MenuFlyoutItem.Icon>
                         <FontIcon Glyph="&#xECCA;" />
                     </MenuFlyoutItem.Icon>
                 </MenuFlyoutItem>
                 <MenuFlyoutItem
-                    x:Uid="MenuFlyoutHide"
                     Click="{x:Bind Ctx.ItemHandler.OnHideClicked}"
+                    Text="{x:Bind StringResource.Hide}"
                     Visibility="{x:Bind Ctx.IsHide, Converter={StaticResource BooleanToVisibilityNegationConverter}}">
                     <MenuFlyoutItem.Icon>
                         <FontIcon Glyph="&#xE8FF;" />
@@ -159,4 +160,4 @@
             </VisualStateGroup>
         </VisualStateManager.VisualStateGroups>
     </Grid>
-</UserControl>
+</base:BaseUserControl>

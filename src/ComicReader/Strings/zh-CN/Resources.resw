@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='UTF-8'?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -59,46 +59,46 @@
             : using a System.ComponentModel.TypeConverter
             : and then encoded with base64 encoding.
     -->
-  <xsd:schema xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" id="root">
-    <xsd:import namespace="http://www.w3.org/XML/1998/namespace"/>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
     <xsd:element name="root" msdata:IsDataSet="true">
       <xsd:complexType>
         <xsd:choice maxOccurs="unbounded">
           <xsd:element name="metadata">
             <xsd:complexType>
               <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0"/>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
               </xsd:sequence>
-              <xsd:attribute name="name" use="required" type="xsd:string"/>
-              <xsd:attribute name="type" type="xsd:string"/>
-              <xsd:attribute name="mimetype" type="xsd:string"/>
-              <xsd:attribute ref="xml:space"/>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
             </xsd:complexType>
           </xsd:element>
           <xsd:element name="assembly">
             <xsd:complexType>
-              <xsd:attribute name="alias" type="xsd:string"/>
-              <xsd:attribute name="name" type="xsd:string"/>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
             </xsd:complexType>
           </xsd:element>
           <xsd:element name="data">
             <xsd:complexType>
               <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1"/>
-                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2"/>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
               </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1"/>
-              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3"/>
-              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4"/>
-              <xsd:attribute ref="xml:space"/>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
             </xsd:complexType>
           </xsd:element>
           <xsd:element name="resheader">
             <xsd:complexType>
               <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1"/>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
               </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" use="required"/>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
             </xsd:complexType>
           </xsd:element>
         </xsd:choice>
@@ -117,29 +117,20 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="About.Text" xml:space="preserve">
+  <data name="About" xml:space="preserve">
     <value>关于</value>
   </data>
   <data name="AboutCopyright" xml:space="preserve">
     <value>© 2025 $author。保留所有权利。</value>
   </data>
-  <data name="AddFolderButton.Text" xml:space="preserve">
+  <data name="AddFolder" xml:space="preserve">
     <value>添加文件夹</value>
-  </data>
-  <data name="AddFolderControl.Detail" xml:space="preserve">
-    <value>在仓库中添加更多文件夹</value>
-  </data>
-  <data name="AddFolderControl.Title" xml:space="preserve">
-    <value>添加文件夹</value>
-  </data>
-  <data name="AddLocationButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>添加位置</value>
   </data>
   <data name="AddToFavorites" xml:space="preserve">
     <value>添加收藏</value>
   </data>
   <data name="AdvancedExpander.Detail" xml:space="preserve">
-    <value>重新扫描文件，开发者选项</value>
+    <value>非常用设置</value>
   </data>
   <data name="AdvancedExpander.Header" xml:space="preserve">
     <value>高级</value>
@@ -154,19 +145,19 @@
     <value>所有隐藏项</value>
   </data>
   <data name="AllMatchedResults" xml:space="preserve">
-    <value>所有搜索结果</value>
+    <value>所有匹配项</value>
   </data>
-  <data name="AllPagesButton.ToolTipService.ToolTip" xml:space="preserve">
+  <data name="AllPages" xml:space="preserve">
     <value>所有页面</value>
   </data>
   <data name="AntiAliasingFilter.Text" xml:space="preserve">
     <value>抗混叠滤波器（实验性）</value>
   </data>
   <data name="AppDescription" xml:space="preserve">
-    <value>漫画阅读器</value>
+    <value>漫画阅读器 UWP</value>
   </data>
   <data name="AppDisplayName" xml:space="preserve">
-    <value>漫画阅读器</value>
+    <value>漫画阅读器 UWP</value>
   </data>
   <data name="AppStoreName" xml:space="preserve">
     <value>漫画阅读器 UWP</value>
@@ -177,14 +168,14 @@
   <data name="AppearanceExpander.Header" xml:space="preserve">
     <value>外观</value>
   </data>
-  <data name="ApplyOnNextLaunch.Text" xml:space="preserve">
+  <data name="ApplyOnNextLaunch" xml:space="preserve">
     <value>您将在下次应用启动时看到您的更改</value>
   </data>
   <data name="ArchiveEncoding.Text" xml:space="preserve">
     <value>压缩文件编码</value>
   </data>
-  <data name="BackButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>返回</value>
+  <data name="Ascending" xml:space="preserve">
+    <value>升序</value>
   </data>
   <data name="Calculating" xml:space="preserve">
     <value>计算中...</value>
@@ -194,9 +185,6 @@
   </data>
   <data name="ChooseLocationButton.Content" xml:space="preserve">
     <value>添加或修改图片位置</value>
-  </data>
-  <data name="ChooseLocationDialog.PrimaryButtonText" xml:space="preserve">
-    <value>完成</value>
   </data>
   <data name="ChooseLocationDialog.Title" xml:space="preserve">
     <value>从以下位置扫描图片</value>
@@ -210,7 +198,7 @@
   <data name="ClearCacheDetail" xml:space="preserve">
     <value>缓存大小：$size</value>
   </data>
-  <data name="ComicInfoButton.ToolTipService.ToolTip" xml:space="preserve">
+  <data name="ComicInfo" xml:space="preserve">
     <value>漫画信息</value>
   </data>
   <data name="CompletionState" xml:space="preserve">
@@ -240,11 +228,17 @@
   <data name="DefaultTags" xml:space="preserve">
     <value>默认标签</value>
   </data>
-  <data name="Description.Text" xml:space="preserve">
+  <data name="Delete" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="Descending" xml:space="preserve">
+    <value>降序</value>
+  </data>
+  <data name="DescriptionColon" xml:space="preserve">
     <value>描述：</value>
   </data>
   <data name="DevAppDisplayName" xml:space="preserve">
-    <value>漫画阅读器 [Dev]</value>
+    <value>漫画阅读器 UWP [Dev]</value>
   </data>
   <data name="Disclaimer.Text" xml:space="preserve">
     <value>免责声明</value>
@@ -252,29 +246,86 @@
   <data name="DiscreteButton.Label" xml:space="preserve">
     <value>拆分</value>
   </data>
-  <data name="EditComicInfoDialog.PrimaryButtonText" xml:space="preserve">
+  <data name="Done" xml:space="preserve">
     <value>完成</value>
   </data>
-  <data name="EditComicInfoDialog.SecondaryButtonText" xml:space="preserve">
-    <value>取消</value>
-  </data>
-  <data name="EditComicInfoDialog.Title" xml:space="preserve">
-    <value>漫画信息</value>
-  </data>
-  <data name="EditInfoButton.Label" xml:space="preserve">
+  <data name="Edit" xml:space="preserve">
     <value>编辑</value>
+  </data>
+  <data name="ExpressionAnd" xml:space="preserve">
+    <value>与</value>
+  </data>
+  <data name="ExpressionIn" xml:space="preserve">
+    <value>包含于</value>
   </data>
   <data name="ExpressionInvalid" xml:space="preserve">
     <value>表达式不合法（$reason）</value>
   </data>
-<data name="ExpressionValid" xml:space="preserve">
+  <data name="ExpressionNot" xml:space="preserve">
+    <value>非</value>
+  </data>
+  <data name="ExpressionOr" xml:space="preserve">
+    <value>或</value>
+  </data>
+  <data name="ExpressionReference" xml:space="preserve">
+    <value>（本文档可能为机器翻译）
+
+表达式参考
+
+1. 变量
+
+%tag - 匹配漫画中的所有标签。
+%title - 匹配标题 1 或标题 2。
+%title1 - 匹配标题 1。
+%title2 - 匹配标题 2。
+%rating - 匹配评分。例如：4 代表 4 星，0 代表无评分。
+%completion_state - 漫画完成状态（0 - 未读，1 - 正在阅读，2 - 已完成）。
+%progress - 阅读进度，以百分比表示。例如：50 代表 50%。
+
+2. 变量运算符
+
+= - 等于。例如：%title = "This is a title"
+&gt; - 大于。例如：%rating &gt; 3
+&gt;= - 大于等于。
+&lt; - 小于。
+&lt;= - 小于等于。
+... IN (...) - 包含于。例如：
+%rating in (3, 4, 5) - 匹配评分在 3、4 和 5 之间的漫画。
+%tag.language in (languageA, languageB) - 匹配“language”标签类别包含“languageA”或“languageB”的漫画。
+(authorA, authorB) in %tag.authors - 匹配“authors”标签类别同时包含“authorA”和“authorB”的漫画。
+apple in %tag - 匹配包含标签“apple”的漫画。
+
+3. 逻辑运算符
+
+AND - 逻辑与。例如：
+%tag.fruit = apple AND %title = "我有一个苹果"
+OR - 逻辑或。例如：
+%title1 = "苹果还可以" OR %title2 = "橙子也可以"
+NOT - 逻辑非。例如：NOT %tag = "hide this"
+
+4. 括号
+
+默认情况下，运算符将从左到右进行求值。使用 (...) 可提高所包含表达式的优先级。例如：
+
+%tag.author = abc AND (%tag.language = langA OR NOT %tag.lang = langB)
+
+求值将按以下顺序进行：
+
+1. NOT %tag.lang = langB ==&gt; 结果 1
+2. %tag.language = langA OR 结果 1 ==&gt; 结果 2
+3. %tag.author = abc AND 结果 2 ==&gt; 结果 3</value>
+  </data>
+  <data name="ExpressionTextBlock.Text" xml:space="preserve">
+    <value>表达式</value>
+  </data>
+  <data name="ExpressionValid" xml:space="preserve">
     <value>SQL查询语句：$query</value>
   </data>
-  <data name="FavoriteAppBarButton.Label" xml:space="preserve">
+  <data name="Favorite" xml:space="preserve">
     <value>收藏</value>
   </data>
-  <data name="FavoriteToggleButton.Label" xml:space="preserve">
-    <value>收藏</value>
+  <data name="Favorites" xml:space="preserve">
+    <value>收藏夹</value>
   </data>
   <data name="FavoritesButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>收藏夹及历史记录</value>
@@ -284,6 +335,9 @@
   </data>
   <data name="FeedbackIntroduction.Text" xml:space="preserve">
     <value>您可以通过以下按钮在GitHub上向我们提交建议或报告问题。</value>
+  </data>
+  <data name="FilterSettings" xml:space="preserve">
+    <value>过滤器设置</value>
   </data>
   <data name="FilteredBy" xml:space="preserve">
     <value>$count个过滤条件</value>
@@ -297,26 +351,29 @@
   <data name="FoldersHeader.Text" xml:space="preserve">
     <value>文件夹</value>
   </data>
-  <data name="ForwardButton.ToolTipService.ToolTip" xml:space="preserve">
+  <data name="GoBack" xml:space="preserve">
+    <value>返回</value>
+  </data>
+  <data name="GoForward" xml:space="preserve">
     <value>前进</value>
+  </data>
+  <data name="Group" xml:space="preserve">
+    <value>分组</value>
   </data>
   <data name="Help" xml:space="preserve">
     <value>帮助</value>
   </data>
-  <data name="HideAppBarButton.Label" xml:space="preserve">
+  <data name="Hide" xml:space="preserve">
     <value>隐藏</value>
   </data>
-  <data name="HistoryExpander.Detail" xml:space="preserve">
-    <value>清空历史记录，选择是否储存您的浏览历史</value>
-  </data>
-  <data name="HistoryExpander.Header" xml:space="preserve">
+  <data name="History" xml:space="preserve">
     <value>历史记录</value>
+  </data>
+  <data name="HistoryExpander.Detail" xml:space="preserve">
+    <value>清空历史记录，启用或停用历史记录</value>
   </data>
   <data name="HomeButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>主页</value>
-  </data>
-  <data name="HomePageRefreshButton.Text" xml:space="preserve">
-    <value>刷新</value>
   </data>
   <data name="HorizontalButton.Label" xml:space="preserve">
     <value>横向</value>
@@ -345,11 +402,14 @@
   <data name="KeyboardShortcutsExpander.Header" xml:space="preserve">
     <value>热键</value>
   </data>
+  <data name="LanguageExpander.Detail" xml:space="preserve">
+    <value>选择应用显示的语言</value>
+  </data>
+  <data name="LanguageExpander.Header" xml:space="preserve">
+    <value>语言</value>
+  </data>
   <data name="LastReadTime" xml:space="preserve">
     <value>上次阅读时间</value>
-  </data>
-  <data name="LeftToRight.Text" xml:space="preserve">
-    <value>从左到右</value>
   </data>
   <data name="LeftToRightButton.Label" xml:space="preserve">
     <value>自左向右</value>
@@ -366,38 +426,17 @@
   <data name="LibraryHeader.Text" xml:space="preserve">
     <value>库</value>
   </data>
-  <data name="MarkAsReadAppBarButton.Label" xml:space="preserve">
+  <data name="MarkAsRead" xml:space="preserve">
     <value>标记为完成</value>
   </data>
-  <data name="MarkAsUnreadAppBarButton.Label" xml:space="preserve">
+  <data name="MarkAsUnread" xml:space="preserve">
     <value>标记为未读</value>
-  </data>
-  <data name="MenuFlyoutAddToFavorites.Text" xml:space="preserve">
-    <value>添加收藏</value>
-  </data>
-  <data name="MenuFlyoutComicInfo.Text" xml:space="preserve">
-    <value>漫画信息</value>
   </data>
   <data name="MenuFlyoutCreateNewFolder.Text" xml:space="preserve">
     <value>新建文件夹</value>
   </data>
-  <data name="MenuFlyoutDelete.Text" xml:space="preserve">
-    <value>删除</value>
-  </data>
-  <data name="MenuFlyoutHide.Text" xml:space="preserve">
-    <value>隐藏</value>
-  </data>
-  <data name="MenuFlyoutMarkAsRead.Text" xml:space="preserve">
-    <value>标记为完成</value>
-  </data>
-  <data name="MenuFlyoutMarkAsUnread.Text" xml:space="preserve">
-    <value>标记为未读</value>
-  </data>
   <data name="MenuFlyoutOpenInNewTab.Text" xml:space="preserve">
     <value>在新选项卡中打开</value>
-  </data>
-  <data name="MenuFlyoutRemoveFromFavorites.Text" xml:space="preserve">
-    <value>取消收藏</value>
   </data>
   <data name="MenuFlyoutRemoveFromList.Text" xml:space="preserve">
     <value>从列表中移除</value>
@@ -408,17 +447,14 @@
   <data name="MenuFlyoutSelect.Text" xml:space="preserve">
     <value>选择</value>
   </data>
-  <data name="MenuFlyoutSettings.Text" xml:space="preserve">
-    <value>设置</value>
-  </data>
   <data name="MenuFlyoutSortByName.Text" xml:space="preserve">
     <value>按名称排序</value>
   </data>
-  <data name="MenuFlyoutUnhide.Text" xml:space="preserve">
-    <value>取消隐藏</value>
-  </data>
   <data name="MoreButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>更多</value>
+  </data>
+  <data name="NameTextBlock.Text" xml:space="preserve">
+    <value>名称</value>
   </data>
   <data name="NewFolder" xml:space="preserve">
     <value>新文件夹</value>
@@ -480,14 +516,14 @@
   <data name="Reading" xml:space="preserve">
     <value>阅读中</value>
   </data>
-  <data name="RefreshButton.ToolTipService.ToolTip" xml:space="preserve">
+  <data name="Refresh" xml:space="preserve">
     <value>刷新</value>
   </data>
   <data name="RemoveFromFavorites" xml:space="preserve">
     <value>取消收藏</value>
   </data>
   <data name="RemoveLocationButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>从列表中移除当前位置</value>
+    <value>从列表中移除当前文件夹</value>
   </data>
   <data name="RemoveUnreachableCheckBox.Content" xml:space="preserve">
     <value>自动移除不可访问的漫画</value>
@@ -497,6 +533,12 @@
   </data>
   <data name="RightToLeftButton.Label" xml:space="preserve">
     <value>自右向左</value>
+  </data>
+  <data name="SaveAsNewButton.Content" xml:space="preserve">
+    <value>保存为新配置</value>
+  </data>
+  <data name="SaveButton.Content" xml:space="preserve">
+    <value>保存</value>
   </data>
   <data name="SaveHistory.Text" xml:space="preserve">
     <value>记录您的浏览历史</value>
@@ -513,16 +555,16 @@
   <data name="SendFeedbackButton.Content" xml:space="preserve">
     <value>发送反馈</value>
   </data>
-  <data name="SettingHeader.Text" xml:space="preserve">
-    <value>设置</value>
-  </data>
   <data name="Settings" xml:space="preserve">
     <value>设置</value>
   </data>
   <data name="ShowHiddenComicButton.Content" xml:space="preserve">
     <value>查看隐藏漫画</value>
   </data>
-  <data name="Statistics.Text" xml:space="preserve">
+  <data name="Sort" xml:space="preserve">
+    <value>排序</value>
+  </data>
+  <data name="Statistics" xml:space="preserve">
     <value>统计信息</value>
   </data>
   <data name="Tag" xml:space="preserve">
@@ -534,11 +576,11 @@
 类别2: 标签4/标签5
 ...</value>
   </data>
-  <data name="TagIntroduction.Title" xml:space="preserve">
+  <data name="Tags" xml:space="preserve">
     <value>标签</value>
   </data>
-  <data name="Tags.Text" xml:space="preserve">
-    <value>标签:</value>
+  <data name="TagsColon" xml:space="preserve">
+    <value>标签：</value>
   </data>
   <data name="ThemeDark.Content" xml:space="preserve">
     <value>深色</value>
@@ -552,11 +594,17 @@
   <data name="Title" xml:space="preserve">
     <value>标题</value>
   </data>
-  <data name="Title1.Text" xml:space="preserve">
-    <value>标题 1:</value>
+  <data name="Title1" xml:space="preserve">
+    <value>标题 1</value>
   </data>
-  <data name="Title2.Text" xml:space="preserve">
-    <value>标题 2:</value>
+  <data name="Title1Colon" xml:space="preserve">
+    <value>标题 1：</value>
+  </data>
+  <data name="Title2" xml:space="preserve">
+    <value>标题 2</value>
+  </data>
+  <data name="Title2Colon" xml:space="preserve">
+    <value>标题 2：</value>
   </data>
   <data name="TotalComics" xml:space="preserve">
     <value>漫画总数：</value>
@@ -564,13 +612,13 @@
   <data name="TransitionAnimation.Text" xml:space="preserve">
     <value>翻页动画</value>
   </data>
-  <data name="UnFavoriteAppBarButton.Label" xml:space="preserve">
+  <data name="Unfavorite" xml:space="preserve">
     <value>取消收藏</value>
   </data>
   <data name="Ungrouped" xml:space="preserve">
     <value>无分组</value>
   </data>
-  <data name="UnhideAppBarButton.Label" xml:space="preserve">
+  <data name="Unhide" xml:space="preserve">
     <value>取消隐藏</value>
   </data>
   <data name="Unread" xml:space="preserve">
@@ -579,8 +627,20 @@
   <data name="Untitled" xml:space="preserve">
     <value>未命名</value>
   </data>
+  <data name="UseSystemLanguage" xml:space="preserve">
+    <value>使用系统语言</value>
+  </data>
   <data name="VerticalButton.Label" xml:space="preserve">
     <value>纵向</value>
+  </data>
+  <data name="ViewType" xml:space="preserve">
+    <value>视图</value>
+  </data>
+  <data name="ViewTypeLarge" xml:space="preserve">
+    <value>较大</value>
+  </data>
+  <data name="ViewTypeMedium" xml:space="preserve">
+    <value>适中</value>
   </data>
   <data name="Warning" xml:space="preserve">
     <value>警告</value>
@@ -588,4 +648,4 @@
   <data name="WatchingFolders.Text" xml:space="preserve">
     <value>目前，您的仓库包含如下文件夹：</value>
   </data>
-  </root>
+</root>

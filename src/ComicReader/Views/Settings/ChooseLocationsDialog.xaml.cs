@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
+using ComicReader.Common.PageBase;
 using ComicReader.Data.Legacy;
 using ComicReader.Data.Models.Comic;
 using ComicReader.ViewModels;
@@ -15,7 +16,7 @@ using Microsoft.UI.Xaml.Input;
 
 namespace ComicReader.Views.Settings;
 
-public sealed partial class ChooseLocationsDialog : ContentDialog
+public sealed partial class ChooseLocationsDialog : BaseContentDialog
 {
     public ObservableCollection<FolderItemViewModel> FolderItemDataSource { get; set; }
 

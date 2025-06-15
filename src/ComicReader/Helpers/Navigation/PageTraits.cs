@@ -173,7 +173,7 @@ internal class SettingPageTrait : IPageTrait
 
     public Type GetPageType()
     {
-        return typeof(SettingsPage);
+        return typeof(SettingPage);
     }
 
     public bool HasNavigationBar()

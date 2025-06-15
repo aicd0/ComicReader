@@ -63,17 +63,17 @@
                         VerticalAlignment="Center"
                         Orientation="Horizontal">
                         <AppBarButton
-                            x:Uid="BackButton"
                             Click="OnGoBackClick"
                             Icon="Back"
                             IsEnabled="{x:Bind ContentFrame.CanGoBack, Mode=OneWay}"
-                            Style="{StaticResource NavigationPageTopTileAppBarButton}" />
+                            Style="{StaticResource NavigationPageTopTileAppBarButton}"
+                            ToolTipService.ToolTip="{x:Bind StringResource.GoBack}" />
                         <AppBarButton
-                            x:Uid="ForwardButton"
                             Click="OnGoForwardClick"
                             Icon="Forward"
                             IsEnabled="{x:Bind ContentFrame.CanGoForward, Mode=OneWay}"
-                            Style="{StaticResource NavigationPageTopTileAppBarButton}" />
+                            Style="{StaticResource NavigationPageTopTileAppBarButton}"
+                            ToolTipService.ToolTip="{x:Bind StringResource.GoForward}" />
                         <AppBarButton
                             x:Name="AbbHomeButton"
                             x:Uid="HomeButton"
@@ -82,10 +82,10 @@
                             Style="{StaticResource NavigationPageTopTileAppBarButton}" />
                         <AppBarButton
                             x:Name="AbbRefreshButton"
-                            x:Uid="RefreshButton"
                             Click="OnRefreshClick"
                             Icon="Refresh"
-                            Style="{StaticResource NavigationPageTopTileAppBarButton}" />
+                            Style="{StaticResource NavigationPageTopTileAppBarButton}"
+                            ToolTipService.ToolTip="{x:Bind StringResource.Refresh}" />
                     </StackPanel>
                     <!--  Search box  -->
                     <controls:ExtendedSearchBox
@@ -120,9 +120,9 @@
                             <AppBarButton.Flyout>
                                 <MenuFlyout Placement="BottomEdgeAlignedRight">
                                     <MenuFlyoutItem
-                                        x:Uid="MenuFlyoutSettings"
                                         Click="OnMoreSettingsClick"
-                                        Icon="Setting" />
+                                        Icon="Setting"
+                                        Text="{x:Bind StringResource.Settings}" />
                                     <MenuFlyoutItem
                                         Click="OnDevToolsClick"
                                         Icon="Repair"
@@ -158,9 +158,9 @@
                     <!--  Reader grid preview toggle  -->
                     <AppBarToggleButton
                         x:Name="AbtbPreviewButton"
-                        x:Uid="AllPagesButton"
                         Checked="AbtbPreviewButton_Checked"
                         Style="{StaticResource NavigationPageTopTileAppBarToggleButton}"
+                        ToolTipService.ToolTip="{x:Bind StringResource.AllPages}"
                         Unchecked="AbtbPreviewButton_Unchecked">
                         <AppBarToggleButton.Content>
                             <FontIcon Glyph="&#xF0E2;" />
@@ -185,9 +185,9 @@
                     </AppBarButton>
                     <!--  Comic info  -->
                     <AppBarButton
-                        x:Uid="ComicInfoButton"
                         Click="OnComicInfoClick"
-                        Style="{StaticResource NavigationPageTopTileAppBarButton}">
+                        Style="{StaticResource NavigationPageTopTileAppBarButton}"
+                        ToolTipService.ToolTip="{x:Bind StringResource.ComicInfo}">
                         <AppBarButton.Content>
                             <FontIcon Glyph="&#xE946;" />
                         </AppBarButton.Content>
