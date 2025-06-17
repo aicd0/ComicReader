@@ -4,8 +4,7 @@
 using System.Text;
 
 using ComicReader.SDK.Common.ServiceManagement;
-
-using Windows.Storage;
+using ComicReader.SDK.Common.Storage;
 
 namespace ComicReader.SDK.Common.DebugTools;
 
@@ -38,7 +37,7 @@ public static class CrashHandler
             }
 
             string fileName = $"crash_report_{DateTimeOffset.Now:yyyyMMddHHmmss}_{RandomString(4)}.txt";
-            string filePath = ApplicationData.Current.LocalCacheFolder.Path + "\\" + fileName;
+            string filePath = StorageLocation.GetLocalCacheFolderPath() + "\\" + fileName;
             using StreamWriter writer = new(filePath, true, Encoding.UTF8);
             writer.Write(sb.ToString());
         }

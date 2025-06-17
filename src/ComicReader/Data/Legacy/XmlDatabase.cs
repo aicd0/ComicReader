@@ -11,6 +11,7 @@ using System.Xml.Serialization;
 
 using ComicReader.Common;
 using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Common.Storage;
 
 using Windows.Storage;
 using Windows.Storage.Streams;
@@ -45,7 +46,7 @@ internal class XmlDatabaseManager
 {
     private const string TAG = "XmlDatabaseManager";
 
-    private static StorageFolder DatabaseFolder => ApplicationData.Current.LocalFolder;
+    private static string DatabaseFolderPath => StorageLocation.GetLocalFolderPath();
 
     private static bool m_database_ready = false;
     private static readonly SemaphoreSlim m_database_lock = new(1);
@@ -73,13 +74,19 @@ internal class XmlDatabaseManager
 
     private static async Task<TaskException> Load(XmlData obj)
     {
-        object file = await Storage.TryGetFile(DatabaseFolder, obj.FileName);
+        StorageFolder folder = await Storage.TryGetFolder(DatabaseFolderPath);
+        if (folder == null)
+        {
+            Logger.AssertNotReachHere("27EF5890495546BE");
+            return TaskException.Failure;
+        }
+        StorageFile file = await Storage.TryGetFile(folder, obj.FileName);
         if (file == null)
         {
             return TaskException.FileNotFound;
         }
 
-        IRandomAccessStream stream = await (file as StorageFile).OpenAsync(FileAccessMode.Read);
+        IRandomAccessStream stream = await file.OpenAsync(FileAccessMode.Read);
         var serializer = new XmlSerializer(obj.GetType());
         serializer.UnknownAttribute += (x, y) => Log("UnknownAttribute: " + y.ToString());
         serializer.UnknownElement += (x, y) => Log("UnknownElement: " + y.ToString());
@@ -127,8 +134,14 @@ internal class XmlDatabaseManager
 
     private static async Task Save(XmlData obj)
     {
+        StorageFolder folder = await Storage.TryGetFolder(DatabaseFolderPath);
+        if (folder == null)
+        {
+            Logger.AssertNotReachHere("1379ACEA3277A4C8");
+            return;
+        }
         await WaitLock();
-        StorageFile file = await DatabaseFolder.CreateFileAsync(
+        StorageFile file = await folder.CreateFileAsync(
             obj.FileName, CreationCollisionOption.ReplaceExisting);
         IRandomAccessStream stream = await file.OpenAsync(
             FileAccessMode.ReadWrite);

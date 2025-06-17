@@ -4,10 +4,12 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 
 using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Common.ServiceManagement;
 
 using Windows.ApplicationModel;
 using Windows.System.UserProfile;
@@ -28,14 +30,7 @@ internal class EnvironmentProvider
     public void AppendEnvironmentTags(Dictionary<string, string> tags)
     {
         tags["version-name"] = GetVersionName();
-        tags["os-build"] = DeviceInformationHelper.Instance.GetOsBuild();
-        tags["os-version"] = DeviceInformationHelper.Instance.GetOsVersion();
-        tags["lang-installed"] = CultureInfo.InstalledUICulture.Name;
-        tags["lang-current"] = CultureInfo.CurrentUICulture.Name;
-        tags["device-model"] = DeviceInformationHelper.Instance.GetDeviceModel();
-        tags["oem-name"] = DeviceInformationHelper.Instance.GetDeviceOemName();
-        tags["screen-size"] = DeviceInformationHelper.Instance.GetScreenSize();
-        tags["processor-count"] = Environment.ProcessorCount.ToString();
+        tags["portable"] = IsPortable().ToString();
     }
 
     public void AppendDebugText(StringBuilder sb)
@@ -53,6 +48,7 @@ internal class EnvironmentProvider
         sb.SafeAppend("Screen size", DeviceInformationHelper.Instance.GetScreenSize);
         sb.SafeAppend("Version name", GetVersionName);
         sb.SafeAppend("Build type", () => DebugUtils.DebugBuild ? "Debug" : "Release");
+        sb.SafeAppend("Portable", () => IsPortable());
         sb.SafeAppend("Process architecture", () => RuntimeInformation.ProcessArchitecture);
         sb.SafeAppend("Launch time", () => GetLaunchTime());
         sb.SafeAppend("Awake time", () => GetAwakeTime());
@@ -67,8 +63,20 @@ internal class EnvironmentProvider
 
     public string GetVersionName()
     {
-        PackageVersion version = Package.Current.Id.Version;
-        return version.Major + "." + version.Minor + "." + version.Build + "." + version.Revision;
+        if (IsPortable())
+        {
+            Version? version = Assembly.GetEntryAssembly()?.GetName().Version;
+            if (version == null)
+            {
+                return "0.0.0.0";
+            }
+            return $"{version.Major}.{version.Minor}.{version.Build}.{version.Revision}";
+        }
+        else
+        {
+            PackageVersion version = Package.Current.Id.Version;
+            return $"{version.Major}.{version.Minor}.{version.Build}.{version.Revision}";
+        }
     }
 
     public string GetCurrentSystemLanguage()
@@ -84,5 +92,10 @@ internal class EnvironmentProvider
     public TimeSpan GetAwakeTime()
     {
         return DateTimeOffset.Now - _launchTime;
+    }
+
+    public static bool IsPortable()
+    {
+        return ServiceManager.GetService<IApplicationService>().IsPortableBuild();
     }
 }

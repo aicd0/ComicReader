@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 using ComicReader.Common.Threading;
 using ComicReader.SDK.Common.Caching;
 using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Common.Storage;
 using ComicReader.SDK.Common.Threading;
 
 using Microsoft.UI.Dispatching;
@@ -22,7 +23,6 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 
-using Windows.Storage;
 using Windows.Storage.Streams;
 
 namespace ComicReader.Common.Imaging;
@@ -33,20 +33,11 @@ internal static class ImageCacheManager
     private const string CACHE_FOLDER = "images";
     private const long MAX_CACHE_SIZE = 1024 * 1024 * 1024;
 
+    private static readonly object sLock = new();
+    private static volatile LRUCache sImageCache;
+
     private static int sPostMainThreadTask = 0;
     private static readonly ConcurrentQueue<RenderItem> sRenderQueue = new();
-
-    private static readonly Lazy<LRUCache> sImageCache = new(delegate
-    {
-        StorageFolder cacheFolder = ApplicationData.Current.LocalCacheFolder;
-        StorageFolder imageFolder = cacheFolder.CreateFolderAsync(CACHE_FOLDER, CreationCollisionOption.OpenIfExists).AsTask().Result;
-        LRUCache cache = new(imageFolder.Path, MAX_CACHE_SIZE);
-        TaskDispatcher.LongRunningThreadPool.Submit("CleanImageCache", delegate
-        {
-            cache.Clean();
-        });
-        return cache;
-    });
 
     public static void LoadImage(CancellationSession.IToken token,
         IImageSource source, double frameWidth, double frameHeight, StretchModeEnum stretchMode,
@@ -69,11 +60,11 @@ internal static class ImageCacheManager
             return;
         }
 
+        LRUCache imageCache = GetImageLRUCache();
         IRandomAccessStream thumbnailStream = null;
         bool requireThumbnail = true;
         ImageCacheDatabase.CacheRecord cacheRecord = ImageCacheDatabase.GetCacheRecord(source);
-
-        if (cacheRecord != null)
+        if (imageCache != null && cacheRecord != null)
         {
             requireThumbnail = false;
             CalculateDesiredDimension(frameWidth, frameHeight, stretchMode, cacheRecord.Width, cacheRecord.Height, out int desiredWidth, out int desiredHeight);
@@ -84,7 +75,7 @@ internal static class ImageCacheManager
                 string entry = cacheRecord.GetEntry(cacheEntryKey);
                 if (entry.Length > 0)
                 {
-                    thumbnailStream = sImageCache.Value.Get(entry);
+                    thumbnailStream = imageCache.Get(entry);
                 }
                 if (thumbnailStream != null)
                 {
@@ -94,11 +85,9 @@ internal static class ImageCacheManager
         }
 
         IRandomAccessStream sourceStream = null;
-
         if (thumbnailStream == null && requireThumbnail)
         {
             sourceStream = TryOpenImageStreamAsync(source).Result;
-
             if (sourceStream == null)
             {
                 Logger.E(TAG, "sourceStream is null");
@@ -216,6 +205,12 @@ internal static class ImageCacheManager
     private static IRandomAccessStream TryCreateThumbnail(ImageCacheDatabase.CacheRecord cacheRecord, IRandomAccessStream sourceStream,
         double frameWidth, double frameHeight, StretchModeEnum stretchMode, string cacheKey, int sourceSignature)
     {
+        LRUCache imageCache = GetImageLRUCache();
+        if (imageCache == null)
+        {
+            return null;
+        }
+
         sourceStream.Seek(0);
         Image image = null;
         try
@@ -256,7 +251,7 @@ internal static class ImageCacheManager
                         byte[] outByteArray = new byte[cacheStream.Length];
                         cacheStream.Read(outByteArray, 0, outByteArray.Length);
                         string tempEntry = StringUtils.RandomFileName(16);
-                        using ILRUInputStream cacheFileStream = sImageCache.Value.Put(tempEntry);
+                        using ILRUInputStream cacheFileStream = imageCache.Put(tempEntry);
                         if (cacheFileStream == null)
                         {
                             Logger.F(TAG, "TryCreateImageCache cacheFileStream is null");
@@ -412,6 +407,44 @@ internal static class ImageCacheManager
 
         desiredWidth = (int)desiredWidthRaw;
         desiredHeight = (int)desiredHeightRaw;
+    }
+
+    private static LRUCache GetImageLRUCache()
+    {
+        {
+            LRUCache cache = sImageCache;
+            if (cache != null)
+            {
+                return cache;
+            }
+        }
+
+        lock (sLock)
+        {
+            LRUCache cache = sImageCache;
+            if (cache != null)
+            {
+                return cache;
+            }
+
+            string cacheFolderPath = Path.Combine(StorageLocation.GetLocalCacheFolderPath(), CACHE_FOLDER);
+            try
+            {
+                Directory.CreateDirectory(cacheFolderPath);
+            }
+            catch (Exception e)
+            {
+                Logger.AssertNotReachHere("266A35BFD509B7A0", e);
+                return null;
+            }
+            cache = new(cacheFolderPath, MAX_CACHE_SIZE);
+            sImageCache = cache;
+            TaskDispatcher.LongRunningThreadPool.Submit("CleanImageCache", delegate
+            {
+                cache.Clean();
+            });
+            return cache;
+        }
     }
 
     private static long GetCurrentTick()

@@ -19,8 +19,6 @@ using ComicReader.SDK.Data.SqlHelpers;
 
 using LiteDB;
 
-using Windows.Storage;
-
 namespace ComicReader.Data.Models.Comic;
 
 internal abstract class ComicData
@@ -307,7 +305,6 @@ internal abstract class ComicData
 
     public bool IsExternal { get; private set; }
     public abstract bool IsEditable { get; }
-    protected StorageFolder CacheFolder => ApplicationData.Current.LocalCacheFolder;
 
     private ComicType ValueType => Type;
     private string ValueLocation => Location;
@@ -804,6 +801,7 @@ internal abstract class ComicData
             .AppendColumn(ComicTable.ColumnLastPosition, ValueLastPosition)
             .AppendColumn(ComicTable.ColumnCoverCacheKey, CoverCacheKey)
             .AppendColumn(ComicTable.ColumnDescription, Description)
+            .AppendColumn(ComicTable.ColumnCompletionState, CompletionState)
             .Execute(SqlDatabaseManager.MainDatabase);
 
         InternalSaveTagsNoLock(removeOld: false);

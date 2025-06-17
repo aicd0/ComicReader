@@ -6,9 +6,8 @@ using System.IO;
 
 using ComicReader.Data.Tables;
 using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Common.Storage;
 using ComicReader.SDK.Data.SqlHelpers;
-
-using Windows.Storage;
 
 namespace ComicReader.Data;
 
@@ -16,9 +15,9 @@ public class SqlDatabaseManager
 {
     private const string TAG = nameof(SqlDatabaseManager);
 
-    private static StorageFolder DatabaseFolder => ApplicationData.Current.LocalFolder;
+    private static string DatabaseFolderPath => StorageLocation.GetLocalFolderPath();
     private static string DatabaseFileName => "database.db";
-    private static string DatabasePath => Path.Combine(DatabaseFolder.Path, DatabaseFileName);
+    private static string DatabasePath => Path.Combine(DatabaseFolderPath, DatabaseFileName);
 
     private static volatile SqlDatabase? _mainDatabase = null;
 
@@ -82,7 +81,7 @@ public class SqlDatabaseManager
             case -1:
             case 0:
             case 1:
-                goto case 3;
+                goto case 4;
             case 2:
                 {
                     ExecuteCommand($"ALTER TABLE {tableName} DROP COLUMN image_aspect_ratios");

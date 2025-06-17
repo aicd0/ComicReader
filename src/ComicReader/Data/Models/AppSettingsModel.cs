@@ -1,6 +1,7 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
@@ -41,26 +42,55 @@ class AppSettingsModel : JsonDatabase<AppSettingsModel.JsonModel>
 
         [JsonPropertyName("Language")]
         public string? Language { get; set; }
+
+        [JsonPropertyName("Theme")]
+        public int? Theme { get; set; }
     }
 
     public class ExternalModel
     {
         public bool RemoveUnreachableComics { get; set; }
         public string Language { get; set; } = "";
+        public AppearanceSetting Theme { get; set; } = AppearanceSetting.UseSystemSetting;
 
         public static ExternalModel From(JsonModel model)
         {
-            return new ExternalModel
+            ExternalModel externalModel = new()
             {
                 RemoveUnreachableComics = model.RemoveUnreachableComics ?? true,
-                Language = model.Language ?? "",
+                Language = model.Language ?? ""
             };
+
+            int? theme = model.Theme;
+            if (theme is null)
+            {
+                externalModel.Theme = AppearanceSetting.UseSystemSetting;
+            }
+            else if (Enum.IsDefined(typeof(AppearanceSetting), theme))
+            {
+                externalModel.Theme = (AppearanceSetting)theme;
+            }
+            else
+            {
+                externalModel.Theme = AppearanceSetting.UseSystemSetting;
+            }
+
+            return externalModel;
         }
 
         public void To(JsonModel model)
         {
             model.RemoveUnreachableComics = RemoveUnreachableComics;
             model.Language = Language;
+            model.Theme = (int)Theme;
         }
+    }
+
+    public enum AppearanceSetting
+    {
+        Light,
+        Dark,
+        UseSystemSetting,
+        None
     }
 }

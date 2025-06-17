@@ -1,8 +1,6 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-#nullable disable
-
 using System;
 using System.Threading.Tasks;
 
@@ -14,7 +12,7 @@ namespace ComicReader.Common;
 
 internal static class Storage
 {
-    public static async Task<StorageFolder> TryGetFolder(string path)
+    public static async Task<StorageFolder?> TryGetFolder(string path)
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
         try
@@ -28,7 +26,7 @@ internal static class Storage
         return null;
     }
 
-    public static async Task<StorageFile> TryGetFile(string path)
+    public static async Task<StorageFile?> TryGetFile(string path)
     {
         ArgumentException.ThrowIfNullOrEmpty(path);
         try
@@ -42,7 +40,7 @@ internal static class Storage
         return null;
     }
 
-    public static async Task<object> TryGetFile(StorageFolder folder, string name)
+    public static async Task<StorageFile?> TryGetFile(StorageFolder folder, string name)
     {
         IStorageItem item = await folder.TryGetItemAsync(name);
 

@@ -6,8 +6,7 @@ using System.Diagnostics;
 using System.IO;
 
 using ComicReader.SDK.Common.DebugTools;
-
-using Windows.Storage;
+using ComicReader.SDK.Common.Storage;
 
 namespace ComicReader.Views.Home;
 
@@ -17,7 +16,7 @@ internal class ThirdPartyLauncher
 
     public static void StartTemporaryTextFile(string filename, string text)
     {
-        string directoryPath = ApplicationData.Current.TemporaryFolder.Path;
+        string directoryPath = StorageLocation.GetTemporaryFolderPath();
         try
         {
             Directory.CreateDirectory(directoryPath);
