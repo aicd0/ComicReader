@@ -14,6 +14,7 @@ using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Common.Storage;
 
 using Microsoft.Data.Sqlite;
 
@@ -46,7 +47,13 @@ internal static class ImageCacheDatabase
         {
             if (_databaseFolder == null)
             {
-                StorageFolder databaseFolder = ApplicationData.Current.LocalCacheFolder;
+                string folderPath = StorageLocation.GetLocalCacheFolderPath();
+                StorageFolder databaseFolder = Storage.TryGetFolder(folderPath).Result;
+                if (databaseFolder == null)
+                {
+                    Logger.AssertNotReachHere("C337BD5DF4FAE670");
+                    return null;
+                }
                 _databaseFolder = databaseFolder.CreateFolderAsync("database", CreationCollisionOption.OpenIfExists).Get();
             }
             return _databaseFolder;
@@ -205,7 +212,13 @@ internal static class ImageCacheDatabase
 
     private static async Task<SqliteConnection> CreateConnection(bool clear)
     {
-        StorageFile databaseFile = await DatabaseFolder.CreateFileAsync(DATABASE_FILE_NAME,
+        StorageFolder databaseFolder = DatabaseFolder;
+        if (databaseFolder == null)
+        {
+            Logger.AssertNotReachHere("DD5103C3E794B6A6");
+            return null;
+        }
+        StorageFile databaseFile = await databaseFolder.CreateFileAsync(DATABASE_FILE_NAME,
             clear ? CreationCollisionOption.ReplaceExisting : CreationCollisionOption.OpenIfExists);
         var connection = new SqliteConnection($"Filename={databaseFile.Path}");
         connection.Open();

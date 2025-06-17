@@ -5,5 +5,7 @@ namespace ComicReader.SDK.Common.ServiceManagement;
 
 public interface IApplicationService : IService
 {
+    bool IsPortableBuild();
+
     string GetEnvironmentDebugInfo();
 }

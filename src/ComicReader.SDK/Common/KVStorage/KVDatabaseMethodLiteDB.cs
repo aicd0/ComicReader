@@ -3,9 +3,9 @@
 
 using System.Collections.Concurrent;
 
-using LiteDB;
+using ComicReader.SDK.Common.Storage;
 
-using Windows.Storage;
+using LiteDB;
 
 namespace ComicReader.SDK.Common.KVStorage;
 
@@ -100,7 +100,7 @@ internal class KVDatabaseMethodLiteDB : KVDatabaseMethod, IDisposable
                 return db;
             }
 
-            string databaseFolder = Path.Combine(ApplicationData.Current.LocalFolder.Path, "database_kv");
+            string databaseFolder = Path.Combine(StorageLocation.GetLocalFolderPath(), "database_kv");
             string databasePath = Path.Combine(databaseFolder, $"lib_{lib}.db");
             Directory.CreateDirectory(databaseFolder);
             db = new LiteDatabase(databasePath);

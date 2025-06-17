@@ -16,13 +16,11 @@ using ComicReader.Data.Legacy;
 using ComicReader.Data.Models;
 using ComicReader.Data.Models.Comic;
 using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Common.Storage;
 using ComicReader.SDK.Common.Threading;
 using ComicReader.SDK.Common.Utils;
 
-using Microsoft.UI.Xaml;
-
 using Windows.Globalization;
-using Windows.Storage;
 
 namespace ComicReader.Views.Settings;
 
@@ -33,7 +31,7 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
 
     private AppSettingsModel.ExternalModel? _settingsModel;
-    private AppearanceSetting _initialAppearance = AppearanceSetting.None;
+    private AppSettingsModel.AppearanceSetting _initialAppearance = AppSettingsModel.AppearanceSetting.None;
     private bool _languageChanged = false;
 
     public bool Updating { get; set; } = false;
@@ -172,7 +170,7 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
 
             if (!Updating && value)
             {
-                SaveAppearance(AppearanceSetting.Light);
+                SaveAppearance(AppSettingsModel.AppearanceSetting.Light);
             }
         }
     }
@@ -188,7 +186,7 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
 
             if (!Updating && value)
             {
-                SaveAppearance(AppearanceSetting.Dark);
+                SaveAppearance(AppSettingsModel.AppearanceSetting.Dark);
             }
         }
     }
@@ -204,7 +202,7 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
 
             if (!Updating && value)
             {
-                SaveAppearance(AppearanceSetting.UseSystemSetting);
+                SaveAppearance(AppSettingsModel.AppearanceSetting.UseSystemSetting);
             }
         }
     }
@@ -291,7 +289,6 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
             DebugMode = DebugUtils.DebugMode;
 
             ApplySettingsModel(await GetSettingsModelAsync());
-            UpdateAppearance();
             await UpdateEncodings();
             UpdateCacheSize();
             UpdateRescanStatus();
@@ -327,13 +324,16 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
         _languageChanged = true;
         UpdateLanguageDescription(selectedLanguage.Description);
 
-        try
+        if (!EnvironmentProvider.IsPortable())
         {
-            ApplicationLanguages.PrimaryLanguageOverride = selectedLanguage.Identifier;
-        }
-        catch (Exception ex)
-        {
-            Logger.F(TAG, ex);
+            try
+            {
+                ApplicationLanguages.PrimaryLanguageOverride = selectedLanguage.Identifier;
+            }
+            catch (Exception ex)
+            {
+                Logger.F(TAG, ex);
+            }
         }
 
         C0.Run(async () =>
@@ -405,31 +405,19 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
             LanguageIndex = selectedIndex;
             UpdateLanguageDescription(languageDescription);
         }
-    }
 
-    private void UpdateAppearance()
-    {
-        object appearanceSetting = ApplicationData.Current.LocalSettings.Values[GlobalConstants.LOCAL_SETTINGS_KEY_APPEARANCE];
-        AppearanceSetting appearance;
-        if (appearanceSetting == null)
         {
-            appearance = AppearanceSetting.UseSystemSetting;
-        }
-        else
-        {
-            var appTheme = (ApplicationTheme)(int)appearanceSetting;
-            appearance = appTheme switch
+            AppSettingsModel.AppearanceSetting appearance = model.Theme;
+            if (!Enum.IsDefined(appearance))
             {
-                ApplicationTheme.Light => AppearanceSetting.Light,
-                ApplicationTheme.Dark => AppearanceSetting.Dark,
-                _ => AppearanceSetting.UseSystemSetting,
-            };
-        }
+                appearance = AppSettingsModel.AppearanceSetting.UseSystemSetting;
+            }
 
-        _initialAppearance = appearance;
-        AppearanceLightChecked = appearance == AppearanceSetting.Light;
-        AppearanceDarkChecked = appearance == AppearanceSetting.Dark;
-        AppearanceUseSystemSettingChecked = appearance == AppearanceSetting.UseSystemSetting;
+            _initialAppearance = appearance;
+            AppearanceLightChecked = appearance == AppSettingsModel.AppearanceSetting.Light;
+            AppearanceDarkChecked = appearance == AppSettingsModel.AppearanceSetting.Dark;
+            AppearanceUseSystemSettingChecked = appearance == AppSettingsModel.AppearanceSetting.UseSystemSetting;
+        }
     }
 
     private void UpdateLanguageDescription(string description)
@@ -495,26 +483,21 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
         });
     }
 
-    private void SaveAppearance(AppearanceSetting appearance)
+    private void SaveAppearance(AppSettingsModel.AppearanceSetting appearance)
     {
         AppearanceChanged = appearance != _initialAppearance;
 
-        string appearanceKey = GlobalConstants.LOCAL_SETTINGS_KEY_APPEARANCE;
-        switch (appearance)
+        C0.Run(async () =>
         {
-            case AppearanceSetting.Light:
-            case AppearanceSetting.Dark:
-                ApplicationData.Current.LocalSettings.Values[GlobalConstants.LOCAL_SETTINGS_KEY_APPEARANCE] = (int)appearance;
-                break;
-            case AppearanceSetting.UseSystemSetting:
-                ApplicationData.Current.LocalSettings.Values.Remove(appearanceKey);
-                break;
-        }
+            AppSettingsModel.ExternalModel model = await GetSettingsModelAsync();
+            model.Theme = appearance;
+            await AppSettingsModel.Instance.UpdateModel(model);
+        });
     }
 
     private static string GetCacheSize()
     {
-        var d = new DirectoryInfo(ApplicationData.Current.LocalCacheFolder.Path);
+        var d = new DirectoryInfo(StorageLocation.GetLocalCacheFolderPath());
         long size = GetCacheSize(d);
         string[] sizes = ["B", "KB", "MB", "GB", "TB"];
         int order = 0;
@@ -585,7 +568,7 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
 
     private static void ClearCacheInternal()
     {
-        var cacheDir = new DirectoryInfo(ApplicationData.Current.LocalCacheFolder.Path);
+        var cacheDir = new DirectoryInfo(StorageLocation.GetLocalCacheFolderPath());
 
         foreach (FileInfo file in cacheDir.GetFiles())
         {
@@ -637,14 +620,6 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
             }
         }
         return "";
-    }
-
-    public enum AppearanceSetting
-    {
-        Light,
-        Dark,
-        UseSystemSetting,
-        None
     }
 
     public class LanguageEntry(string name, string identifier, string description)

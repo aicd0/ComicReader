@@ -5,9 +5,9 @@
 
 using ComicReader.SDK.Common.Caching;
 using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Common.Storage;
 
 using Windows.Security.Cryptography;
-using Windows.Storage;
 using Windows.Storage.Streams;
 
 namespace ComicReader.SDK.Data;
@@ -16,7 +16,7 @@ internal class SimpleConfigDatabase
 {
     private const string TAG = nameof(SimpleConfigDatabase);
 
-    private static readonly SimpleConfigDatabase sInstance = new(ApplicationData.Current.LocalFolder.Path, "database_common");
+    private static readonly SimpleConfigDatabase sInstance = new(StorageLocation.GetLocalFolderPath(), "database_common");
 
     public static SimpleConfigDatabase Instance => sInstance;
 

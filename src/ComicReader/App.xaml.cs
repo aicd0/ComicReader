@@ -16,11 +16,11 @@ using ComicReader.SDK.Common.ServiceManagement;
 
 using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppLifecycle;
+using Microsoft.Windows.Globalization;
 
 using Sentry;
 
 using Windows.ApplicationModel.Activation;
-using Windows.Storage;
 
 namespace ComicReader;
 
@@ -93,6 +93,10 @@ public partial class App : Application
             CrashHandler.OnUnhandledException(e.Exception);
         };
 
+        // Register services
+        ServiceManager.RegisterService<IApplicationService>(new ApplicationService());
+        ServiceManager.RegisterService<IDebugService>(new DebugService());
+
         // Initialize Sentry
         if (Properties.SentryDsn.Length > 0)
         {
@@ -103,22 +107,50 @@ public partial class App : Application
             });
         }
 
-        // Register services
-        ServiceManager.RegisterService<IApplicationService>(new ApplicationService());
-        ServiceManager.RegisterService<IDebugService>(new DebugService());
+        // Initialize app language
+        InitializeAppLanguage();
 
+        // Initialize app theme
+        InitializeAppTheme();
+    }
+
+    private void InitializeAppTheme()
+    {
+        AppSettingsModel.AppearanceSetting themeSetting = AppSettingsModel.Instance.GetModel().Result.Theme;
+        switch (themeSetting)
+        {
+            case AppSettingsModel.AppearanceSetting.Light:
+                Current.RequestedTheme = ApplicationTheme.Light;
+                break;
+            case AppSettingsModel.AppearanceSetting.Dark:
+                Current.RequestedTheme = ApplicationTheme.Dark;
+                break;
+            default:
+                break;
+        }
+    }
+
+    private void InitializeAppLanguage()
+    {
+        if (EnvironmentProvider.IsPortable())
+        {
+            string languageTag = AppSettingsModel.Instance.GetModel().Result.Language;
+            if (string.IsNullOrEmpty(languageTag))
+            {
+                languageTag = EnvironmentProvider.Instance.GetCurrentSystemLanguage();
+            }
+            ApplicationLanguages.PrimaryLanguageOverride = languageTag;
+        }
+    }
+
+    private async Task InitializeOnAppLaunch()
+    {
         // Initialize debug switches
         DebugSwitchModel.Instance.Initialize().Wait();
 
         // Initialize logger
         Logger.Initialize();
 
-        // Apply app theme
-        ApplyAppTheme();
-    }
-
-    private async Task InitializeOnAppLaunch()
-    {
         // Initialize databases
         await XmlDatabaseManager.Initialize();
         SqlDatabaseManager.Initialize();
@@ -126,14 +158,5 @@ public partial class App : Application
 
         // Update comic library
         ComicModel.UpdateAllComics("DatabaseManager#init", lazy: true);
-    }
-
-    private void ApplyAppTheme()
-    {
-        object appearanceSetting = ApplicationData.Current.LocalSettings.Values[GlobalConstants.LOCAL_SETTINGS_KEY_APPEARANCE];
-        if (appearanceSetting != null)
-        {
-            Current.RequestedTheme = (ApplicationTheme)(int)appearanceSetting;
-        }
     }
 }

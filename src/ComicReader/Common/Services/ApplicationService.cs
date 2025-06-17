@@ -10,6 +10,15 @@ namespace ComicReader.Common.Services;
 
 internal class ApplicationService : IApplicationService
 {
+    public bool IsPortableBuild()
+    {
+#if PORTABLE
+        return true;
+#else
+        return false;
+#endif
+    }
+
     public string GetEnvironmentDebugInfo()
     {
         StringBuilder sb = new();

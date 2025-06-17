@@ -4,7 +4,7 @@
 using System.Collections.Concurrent;
 using System.Text;
 
-using Windows.Storage;
+using ComicReader.SDK.Common.Storage;
 
 namespace ComicReader.SDK.Common.DebugTools;
 
@@ -34,7 +34,7 @@ public static class Logger
             return;
         }
 
-        sLogFolderPath = ApplicationData.Current.LocalCacheFolder.Path + "\\logs\\";
+        sLogFolderPath = StorageLocation.GetLocalCacheFolderPath() + "\\logs\\";
 
         Thread logThread = new(LogThreadMain);
         logThread.IsBackground = true;

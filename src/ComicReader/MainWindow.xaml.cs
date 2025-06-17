@@ -13,6 +13,7 @@ using ComicReader.Common.Native;
 using ComicReader.Data.Models;
 using ComicReader.Data.Models.Comic;
 using ComicReader.Helpers.Navigation;
+using ComicReader.SDK.Common.KVStorage;
 using ComicReader.Views.Main;
 
 using Microsoft.UI.Composition.SystemBackdrops;
@@ -86,7 +87,7 @@ public sealed partial class MainWindow : Window
         var placement = new NativeModels.WindowPlacement();
         NativeMethods.GetWindowPlacement(WindowHandle, out placement);
         string serialized = JsonSerializer.Serialize(placement);
-        ApplicationData.Current.LocalSettings.Values[GlobalConstants.LOCAL_SETTINGS_KEY_WINDOW_STATES] = serialized;
+        KVDatabase.GetDefaultMethod().With(GlobalConstants.KV_DB_APP).SetString(GlobalConstants.LOCAL_SETTINGS_KEY_WINDOW_STATES, serialized);
     }
 
     private void OnPageFrameLoaded(object sender, RoutedEventArgs e)
@@ -214,16 +215,11 @@ public sealed partial class MainWindow : Window
 
     private void TryRecoverWindowStates()
     {
-        object windowStates = ApplicationData.Current.LocalSettings.Values[GlobalConstants.LOCAL_SETTINGS_KEY_WINDOW_STATES];
-        if (windowStates is not string windowStatesJson)
-        {
-            return;
-        }
-
+        string windowStates = KVDatabase.GetDefaultMethod().GetString(GlobalConstants.KV_DB_APP, GlobalConstants.LOCAL_SETTINGS_KEY_WINDOW_STATES);
         NativeModels.WindowPlacement windowPlacement;
         try
         {
-            windowPlacement = JsonSerializer.Deserialize<NativeModels.WindowPlacement>(windowStatesJson);
+            windowPlacement = JsonSerializer.Deserialize<NativeModels.WindowPlacement>(windowStates);
         }
         catch (Exception)
         {

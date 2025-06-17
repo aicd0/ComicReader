@@ -5,7 +5,6 @@ namespace ComicReader.Common;
 
 internal static class GlobalConstants
 {
-    public const string LOCAL_SETTINGS_KEY_APPEARANCE = "Appearance";
     public const string LOCAL_SETTINGS_KEY_WINDOW_STATES = "WindowStates";
 
     public const string KV_DB_APP = "app";
