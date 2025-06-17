@@ -16,7 +16,9 @@ using ComicReader.Helpers.Navigation;
 using ComicReader.SDK.Common.KVStorage;
 using ComicReader.Views.Main;
 
+using Microsoft.UI;
 using Microsoft.UI.Composition.SystemBackdrops;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 
@@ -56,6 +58,8 @@ public sealed partial class MainWindow : Window
         Title = StringResourceProvider.Instance.AppDisplayName;
         ExtendsContentIntoTitleBar = true;
         TrySetAcrylicBackdrop();
+
+        SetWindowIcon();
     }
 
     //
@@ -227,5 +231,13 @@ public sealed partial class MainWindow : Window
         }
 
         NativeMethods.SetWindowPlacement(WindowHandle, ref windowPlacement);
+    }
+
+    private void SetWindowIcon()
+    {
+        nint hwnd = WindowNative.GetWindowHandle(this);
+        WindowId windowId = Win32Interop.GetWindowIdFromWindow(hwnd);
+        var appWindow = AppWindow.GetFromWindowId(windowId);
+        appWindow.SetIcon(@"Assets\AppIcon.ico");
     }
 }
