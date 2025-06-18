@@ -118,532 +118,532 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="About" xml:space="preserve">
-    <value>について</value>
+    <value>À propos</value>
   </data>
   <data name="AboutCopyright" xml:space="preserve">
-    <value>© 2025 $author. 無断複写・転載を禁じます。</value>
+    <value>© 2025 $author. Tous droits réservés.</value>
   </data>
   <data name="AddFolder" xml:space="preserve">
-    <value>フォルダを追加する</value>
+    <value>Ajouter un dossier</value>
   </data>
   <data name="AddToFavorites" xml:space="preserve">
-    <value>お気に入りに追加</value>
+    <value>Ajouter aux favoris</value>
   </data>
   <data name="AdvancedExpander.Detail" xml:space="preserve">
-    <value>珍しい設定</value>
+    <value>Paramètres inhabituels</value>
   </data>
   <data name="AdvancedExpander.Header" xml:space="preserve">
-    <value>高度な</value>
+    <value>Avancé</value>
   </data>
   <data name="AllComics" xml:space="preserve">
-    <value>すべてのコミック</value>
+    <value>Toutes les bandes dessinées</value>
   </data>
   <data name="AllComicsIn" xml:space="preserve">
-    <value>$path内のすべてのコミック</value>
+    <value>Toutes les bandes dessinées dans $path</value>
   </data>
   <data name="AllHidden" xml:space="preserve">
-    <value>すべての非表示アイテム</value>
+    <value>Tous les objets cachés</value>
   </data>
   <data name="AllMatchedResults" xml:space="preserve">
-    <value>一致したすべての結果</value>
+    <value>Tous les résultats correspondants</value>
   </data>
   <data name="AllPages" xml:space="preserve">
-    <value>すべてのページ</value>
+    <value>Toutes les pages</value>
   </data>
   <data name="AntiAliasingFilter.Text" xml:space="preserve">
-    <value>アンチエイリアシングフィルタ（実験的）</value>
+    <value>Filtre anti-aliasing (expérimental)</value>
   </data>
   <data name="AppDescription" xml:space="preserve">
-    <value>コミックリーダー UWP</value>
+    <value>Lecteur de bandes dessinées UWP</value>
   </data>
   <data name="AppDisplayName" xml:space="preserve">
-    <value>コミックリーダー UWP</value>
+    <value>Lecteur de bandes dessinées UWP</value>
   </data>
   <data name="AppStoreName" xml:space="preserve">
-    <value>コミックリーダー UWP</value>
+    <value>Lecteur de bandes dessinées UWP</value>
   </data>
   <data name="AppearanceExpander.Detail" xml:space="preserve">
-    <value>表示するアプリのテーマを選択する</value>
+    <value>Sélectionnez le thème d'application à afficher</value>
   </data>
   <data name="AppearanceExpander.Header" xml:space="preserve">
-    <value>外観</value>
+    <value>Apparence</value>
   </data>
   <data name="ApplyOnNextLaunch" xml:space="preserve">
-    <value>次回アプリを起動したときに変更内容が表示されます</value>
+    <value>Vous verrez votre changement la prochaine fois que vous démarrerez l'application</value>
   </data>
   <data name="ArchiveEncoding.Text" xml:space="preserve">
-    <value>圧縮ファイルのエンコード</value>
+    <value>Codage de fichiers compressés</value>
   </data>
   <data name="Ascending" xml:space="preserve">
-    <value>上昇</value>
+    <value>Ascendant</value>
   </data>
   <data name="Calculating" xml:space="preserve">
-    <value>計算中...</value>
+    <value>Calculateur...</value>
   </data>
   <data name="Cancel" xml:space="preserve">
-    <value>キャンセル</value>
+    <value>Annuler</value>
   </data>
   <data name="ChooseLocationButton.Content" xml:space="preserve">
-    <value>画像を検索する場所を選択する</value>
+    <value>Choisir où nous recherchons des images</value>
   </data>
   <data name="ChooseLocationDialog.Title" xml:space="preserve">
-    <value>ローカルファイルからコレクションを構築する</value>
+    <value>Créez vos collections à partir de vos fichiers locaux</value>
   </data>
   <data name="ClearAllHistoryButton.Content" xml:space="preserve">
-    <value>すべての履歴を消去</value>
+    <value>Effacer tout l'historique</value>
   </data>
   <data name="ClearCacheButton.Content" xml:space="preserve">
-    <value>キャッシュをクリアする</value>
+    <value>Vider le cache</value>
   </data>
   <data name="ClearCacheDetail" xml:space="preserve">
-    <value>キャッシュサイズ: $size</value>
+    <value>Taille du cache : $size</value>
   </data>
   <data name="ComicInfo" xml:space="preserve">
-    <value>コミック情報</value>
+    <value>Informations sur la bande dessinée</value>
   </data>
   <data name="CompletionState" xml:space="preserve">
-    <value>完了ステータス</value>
+    <value>État d'achèvement</value>
   </data>
   <data name="ContinuousButton.Label" xml:space="preserve">
-    <value>連続</value>
+    <value>Continu</value>
   </data>
   <data name="ContributionRunAfterLink" xml:space="preserve">
-    <value>をご覧ください。</value>
+    <value> pour savoir comment contribuer à cette application.</value>
   </data>
   <data name="ContributionRunBeforeLink" xml:space="preserve">
-    <value>$appnameはオープンソースプロジェクトです。このアプリへの貢献方法については、</value>
+    <value>$appname est un projet open source. Consultez </value>
   </data>
   <data name="DebugInformation.Text" xml:space="preserve">
-    <value>デバッグ情報</value>
+    <value>Informations de débogage</value>
   </data>
   <data name="DebugMode.Text" xml:space="preserve">
-    <value>デバッグモード</value>
+    <value>Mode débogage</value>
   </data>
   <data name="DebugModeWarning" xml:space="preserve">
-    <value>デバッグモードを有効にすると、アプリケーションが不安定になる可能性があります。続行してもよろしいですか?</value>
+    <value>L'activation du mode débogage peut rendre l'application instable, continuer ?</value>
   </data>
   <data name="Default" xml:space="preserve">
-    <value>デフォルト</value>
+    <value>Défaut</value>
   </data>
   <data name="DefaultTags" xml:space="preserve">
-    <value>デフォルトタグ</value>
+    <value>Balises par défaut</value>
   </data>
   <data name="Delete" xml:space="preserve">
-    <value>消去</value>
+    <value>Supprimer</value>
   </data>
   <data name="Descending" xml:space="preserve">
-    <value>降順</value>
+    <value>Descendant</value>
   </data>
   <data name="DescriptionColon" xml:space="preserve">
-    <value>説明する：</value>
+    <value>Description:</value>
   </data>
   <data name="DevAppDisplayName" xml:space="preserve">
-    <value>コミックリーダー UWP [Dev]</value>
+    <value>Lecteur de bandes dessinées UWP [Dev]</value>
   </data>
   <data name="Disclaimer.Text" xml:space="preserve">
-    <value>免責事項</value>
+    <value>Clause de non-responsabilité</value>
   </data>
   <data name="DiscreteButton.Label" xml:space="preserve">
-    <value>スプリット</value>
+    <value>Séparé</value>
   </data>
   <data name="Done" xml:space="preserve">
-    <value>確認する</value>
+    <value>Fait</value>
   </data>
   <data name="Edit" xml:space="preserve">
-    <value>編集</value>
+    <value>Modifier</value>
   </data>
   <data name="ExpressionAnd" xml:space="preserve">
-    <value>そして</value>
+    <value>Et</value>
   </data>
   <data name="ExpressionIn" xml:space="preserve">
-    <value>含まれるもの</value>
+    <value>Contenu par</value>
   </data>
   <data name="ExpressionInvalid" xml:space="preserve">
-    <value>式が無効です ($reason)</value>
+    <value>L'expression n'est pas valide ($reason)</value>
   </data>
   <data name="ExpressionNot" xml:space="preserve">
-    <value>いいえ</value>
+    <value>Pas</value>
   </data>
   <data name="ExpressionOr" xml:space="preserve">
-    <value>または</value>
+    <value>Ou</value>
   </data>
   <data name="ExpressionReference" xml:space="preserve">
-    <value>(このドキュメントは機械翻訳されている可能性があります)
+    <value>(Ce document peut être traduit automatiquement)
 
-式リファレンス
+Référence des expressions
 
-1. 変数
+1. Variables
 
-%tag              - コミック内のすべてのタグに一致します。
-%title            - タイトル1またはタイトル2に一致します。
-%title1           - タイトル1に一致します。
-%title2           - タイトル2に一致します。
-%rating           - 評価に一致します。例：4は星4つ、0は評価なしを表します。
-%completion_state - コミックの完了状態（0 - 未読、1 - 読んでいる、2 - 完了）。
-%progress         - 読書の進捗状況（パーセンテージ）。例：50は50%を表します。
+%tag                  - Correspond à tous les tags d'une BD.
+%title                - Correspond au titre 1 ou 2.
+%title1               - Correspond au titre 1.
+%title2               - Correspond au titre 2.
+%rating               - Correspond à la note. Par exemple : 4 représente 4 étoiles, 0 représente aucune note.
+%completion_state     - État d'achèvement de la BD (0 - Non lu, 1 - Lu, 2 - Terminé).
+%progress             - Progression de la lecture, en pourcentage. Par exemple : 50 représente 50 %.
 
-2. 変数演算子
+2. Opérateurs de variables
 
-=                 - 等しい。例：%title = "This is a title"
-&gt;                 - より大きい。例：%rating &gt; 3
-&gt;=                - 以上。
-&lt;                 - より小さい。
-&lt;=                - 以下。
-... IN (...)      - 包含。例：
-                    %rating in (3, 4, 5) - 評価が3、4、5のコミックにマッチします。
-                    %tag.language in (languageA, languageB) - 「language」タグカテゴリに「languageA」または「languageB」が含まれるコミックにマッチします。
-                    (authorA, authorB) in %tag.authors - 「authors」タグカテゴリに「authorA」と「authorB」の両方が含まれるコミックにマッチします。
-                    apple in %tag - 「apple」タグを含むコミックにマッチします。
+=                     - Égal. Par exemple : %title = "Ceci est un titre"
+&gt;                     - Supérieur à. Par exemple : %rating &gt; 3
+&gt;=                    - Supérieur ou égal à.
+&lt;                     - Inférieur à.
+&lt;=                    - Inférieur ou égal à.
+... IN (...)          - Contenu par. Par exemple :
+                        %rating in (3, 4, 5) - Correspond aux bandes dessinées dont les notes sont comprises entre 3, 4 et 5.
+                        %tag.language in (languageA, languageB) - Correspond aux bandes dessinées dont la catégorie de balise « language » contient « languageA » ou « languageB ».
+                        (authorA, authorB) in %tag.authors - Correspond aux bandes dessinées dont la catégorie de balise « authors » contient à la fois « authorA » et « authorB ».
+                        apple in %tag - Correspond aux bandes dessinées contenant la balise « apple ».
 
-3. 論理演算子
+3. Opérateurs logiques
 
-AND               - 論理積。例：%tag.fruit = apple AND %title = "I have an apple"
-OR                - 論理和。例：%title1 = "Apple is OK" OR %title2 = "Orange is also OK"
-NOT               - 論理否定。例: NOT %tag = "hide this"
+AND                   - Et logique. Par exemple : %tag.fruit = apple and %title = "J'ai une pomme"
+OR                    - Ou logique. Par exemple : %title1 = "Apple is OK" or %title2 = "Orange is OK also"
+NOT                   - Non logique. Par exemple : NOT %tag = "hide this"
 
-4. 括弧
+4. Parenthèses
 
-デフォルトでは、演算子は左から右に評価されます。(...) を使用すると、含まれる式の優先順位が上がります。例:
+Par défaut, les opérateurs sont évalués de gauche à droite. Utilisez (...) pour augmenter la priorité de l'expression incluse. Par exemple :
 
 %tag.author = abc AND (%tag.language = langA OR NOT %tag.lang = langB)
 
-評価は以下の順序で実行されます:
+L'évaluation sera effectuée dans l'ordre suivant :
 
-1. NOT %tag.lang = langB  ==&gt;  結果1
-2. %tag.language = langA OR 結果1  ==&gt;  結果2
-3. %tag.author = abc AND 結果2  ==&gt;  結果3</value>
+1. NOT %tag.lang = langB  ==&gt;  Résultat1
+2. %tag.language = langA OR Result1  ==&gt;  Résultat2
+3. %tag.author = abc AND Result2  ==&gt;  Résultat3</value>
   </data>
   <data name="ExpressionTextBlock.Text" xml:space="preserve">
-    <value>条件式</value>
+    <value>Expression</value>
   </data>
   <data name="ExpressionValid" xml:space="preserve">
-    <value>SQLクエリステートメント: $query</value>
+    <value>Requête SQL : $query</value>
   </data>
   <data name="Favorite" xml:space="preserve">
-    <value>集める</value>
+    <value>Collecter</value>
   </data>
   <data name="Favorites" xml:space="preserve">
-    <value>お気に入り</value>
+    <value>Favoris</value>
   </data>
   <data name="FavoritesButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>お気に入りと履歴</value>
+    <value>Favoris et histoire</value>
   </data>
   <data name="Feedback.Text" xml:space="preserve">
-    <value>フィードバック</value>
+    <value>Retour</value>
   </data>
   <data name="FeedbackIntroduction.Text" xml:space="preserve">
-    <value>以下のボタンを使用して、GitHub で提案を送信したり、問題を報告したりすることができます。</value>
+    <value>Utilisez le bouton ci-dessous pour nous envoyer des suggestions ou signaler un bug sur GitHub.</value>
   </data>
   <data name="FilterSettings" xml:space="preserve">
-    <value>フィルター設定</value>
+    <value>Paramètres de filtre</value>
   </data>
   <data name="FilteredBy" xml:space="preserve">
-    <value>$count フィルター条件</value>
+    <value>$count filtre(s) appliqué(s)</value>
   </data>
   <data name="FinishPercentage" xml:space="preserve">
-    <value>読み取り $percentage%</value>
+    <value>$pourcentage% Terminé</value>
   </data>
   <data name="Finished" xml:space="preserve">
-    <value>完了</value>
+    <value>Fini</value>
   </data>
   <data name="FoldersHeader.Text" xml:space="preserve">
-    <value>フォルダ</value>
+    <value>Dossiers</value>
   </data>
   <data name="GoBack" xml:space="preserve">
-    <value>戻る</value>
+    <value>Retour</value>
   </data>
   <data name="GoForward" xml:space="preserve">
-    <value>前進する</value>
+    <value>Aller de l'avant</value>
   </data>
   <data name="Group" xml:space="preserve">
-    <value>グループ化</value>
+    <value>Regroupement</value>
   </data>
   <data name="Help" xml:space="preserve">
-    <value>ヘルプ</value>
+    <value>Aide</value>
   </data>
   <data name="Hide" xml:space="preserve">
-    <value>隠れる</value>
+    <value>Cacher</value>
   </data>
   <data name="History" xml:space="preserve">
-    <value>歴史</value>
+    <value>Histoire</value>
   </data>
   <data name="HistoryExpander.Detail" xml:space="preserve">
-    <value>履歴を消去、履歴を有効または無効にする</value>
+    <value>Effacer l'historique, activer ou désactiver l'historique</value>
   </data>
   <data name="HomeButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>家</value>
+    <value>Maison</value>
   </data>
   <data name="HorizontalButton.Label" xml:space="preserve">
-    <value>水平</value>
+    <value>Horizontal</value>
   </data>
   <data name="HotkeyFirstPage.Header" xml:space="preserve">
-    <value>最初のページへジャンプ</value>
+    <value>Aller à la première page</value>
   </data>
   <data name="HotkeyLastPage.Header" xml:space="preserve">
-    <value>最後のページへジャンプ</value>
+    <value>Aller à la dernière page</value>
   </data>
   <data name="HotkeyNextPage.Header" xml:space="preserve">
-    <value>次のページへ進む</value>
+    <value>Aller à la page suivante</value>
   </data>
   <data name="HotkeyPreviousPage.Header" xml:space="preserve">
-    <value>前のページへジャンプ</value>
+    <value>Aller à la page précédente</value>
   </data>
   <data name="ImageLocationExpander.Detail" xml:space="preserve">
-    <value>画像の場所を追加または変更する</value>
+    <value>Choisir où nous recherchons des images</value>
   </data>
   <data name="ImageLocationExpander.Header" xml:space="preserve">
-    <value>このデバイス上の画像</value>
+    <value>Images sur cet appareil</value>
   </data>
   <data name="KeyboardShortcutsExpander.Detail" xml:space="preserve">
-    <value>すべてのショートカットキーを表示</value>
+    <value>Découvrez tous les raccourcis clavier</value>
   </data>
   <data name="KeyboardShortcutsExpander.Header" xml:space="preserve">
-    <value>ショートカットキー</value>
+    <value>Raccourcis clavier</value>
   </data>
   <data name="LanguageExpander.Detail" xml:space="preserve">
-    <value>アプリの表示言語を選択してください</value>
+    <value>Sélectionnez la langue d'affichage de l'application</value>
   </data>
   <data name="LanguageExpander.Header" xml:space="preserve">
-    <value>言語</value>
+    <value>Langue</value>
   </data>
   <data name="LastReadTime" xml:space="preserve">
-    <value>最終閲覧時間</value>
+    <value>Dernière heure de lecture</value>
   </data>
   <data name="LeftToRightButton.Label" xml:space="preserve">
-    <value>左から右へ</value>
+    <value>De gauche à droite</value>
   </data>
   <data name="LibraryEmptyPart1.Text" xml:space="preserve">
-    <value>現在のフィルタ条件では結果が見つかりません。</value>
+    <value>Aucun résultat avec les paramètres de filtre actuels. Essayez </value>
   </data>
   <data name="LibraryEmptyPart2.Text" xml:space="preserve">
-    <value>または</value>
+    <value>ou</value>
   </data>
   <data name="LibraryEmptyPart3.Text" xml:space="preserve">
-    <value>を試してください。</value>
+    <value>.</value>
   </data>
   <data name="LibraryHeader.Text" xml:space="preserve">
-    <value>図書館</value>
+    <value>Bibliothèque</value>
   </data>
   <data name="MarkAsRead" xml:space="preserve">
-    <value>完了としてマーク</value>
+    <value>Marquer comme terminé</value>
   </data>
   <data name="MarkAsUnread" xml:space="preserve">
-    <value>未読としてマーク</value>
+    <value>Marquer comme non lu</value>
   </data>
   <data name="MenuFlyoutCreateNewFolder.Text" xml:space="preserve">
-    <value>新しいフォルダを作成する</value>
+    <value>Créer un nouveau dossier</value>
   </data>
   <data name="MenuFlyoutOpenInNewTab.Text" xml:space="preserve">
-    <value>新しいタブで開く</value>
+    <value>Ouvrir dans un nouvel onglet</value>
   </data>
   <data name="MenuFlyoutRemoveFromList.Text" xml:space="preserve">
-    <value>リストから削除</value>
+    <value>Supprimer de la liste</value>
   </data>
   <data name="MenuFlyoutRename.Text" xml:space="preserve">
-    <value>名前を変更</value>
+    <value>Rebaptiser</value>
   </data>
   <data name="MenuFlyoutSelect.Text" xml:space="preserve">
-    <value>選ぶ</value>
+    <value>Sélectionner</value>
   </data>
   <data name="MenuFlyoutSortByName.Text" xml:space="preserve">
-    <value>名前で並べ替え</value>
+    <value>Trier par nom</value>
   </data>
   <data name="MoreButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>もっと</value>
+    <value>Plus</value>
   </data>
   <data name="NameTextBlock.Text" xml:space="preserve">
-    <value>名前</value>
+    <value>nom</value>
   </data>
   <data name="NewFolder" xml:space="preserve">
-    <value>新しいフォルダ</value>
+    <value>Nouveau dossier</value>
   </data>
   <data name="NewTab" xml:space="preserve">
-    <value>新しいタブページ</value>
+    <value>Nouvel onglet</value>
   </data>
   <data name="NoFavorite.Text" xml:space="preserve">
-    <value>お気に入りはここに表示されます</value>
+    <value>Vos favoris apparaîtront ici</value>
   </data>
   <data name="NoHistory.Text" xml:space="preserve">
-    <value>閲覧履歴はここに表示されます</value>
+    <value>Votre historique de navigation sera affiché ici</value>
   </data>
   <data name="NoRating" xml:space="preserve">
-    <value>評価なし</value>
+    <value>Aucune note</value>
   </data>
   <data name="NoResults" xml:space="preserve">
-    <value>「$keyword」に該当する結果は見つかりませんでした</value>
+    <value>Aucun résultat pour « $keyword »</value>
   </data>
   <data name="NoResultsDetail.Text" xml:space="preserve">
-    <value>別のキーワードで検索してみてください</value>
+    <value>Essayez de rechercher avec différents mots-clés</value>
   </data>
   <data name="OpenInFileExplorer.ToolTipService.ToolTip" xml:space="preserve">
-    <value>エクスプローラーで開く</value>
+    <value>Ouvrir dans l'explorateur de fichiers</value>
   </data>
   <data name="PrivacyPolicy.Text" xml:space="preserve">
-    <value>プライバシーポリシー</value>
+    <value>politique de confidentialité</value>
   </data>
   <data name="Proceed" xml:space="preserve">
-    <value>続く</value>
+    <value>Procéder</value>
   </data>
   <data name="Progress" xml:space="preserve">
-    <value>スケジュール</value>
+    <value>Progrès</value>
   </data>
   <data name="Rating" xml:space="preserve">
-    <value>スコア</value>
+    <value>score</value>
   </data>
   <data name="ReaderExpander.Detail" xml:space="preserve">
-    <value>カスタムリーダー</value>
+    <value>Personnaliser le lecteur</value>
   </data>
   <data name="ReaderExpander.Header" xml:space="preserve">
-    <value>リーダー</value>
+    <value>Lecteur</value>
   </data>
   <data name="ReaderSettingButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>リーダー設定</value>
+    <value>Paramètres du lecteur</value>
   </data>
   <data name="ReaderStatusError" xml:space="preserve">
-    <value>読み込みエラー</value>
+    <value>Une erreur s'est produite lors du chargement</value>
   </data>
   <data name="ReaderStatusLoading" xml:space="preserve">
-    <value>リーダー読み込み中</value>
+    <value>Le lecteur est en cours de chargement</value>
   </data>
   <data name="ReaderTip.Message" xml:space="preserve">
-    <value>ダブルクリックして現在の画像の幅/高さに合わせます</value>
+    <value>Appuyez deux fois pour ajuster la largeur/hauteur</value>
   </data>
   <data name="ReaderTip.Title" xml:space="preserve">
-    <value>ヒント</value>
+    <value>Conseil</value>
   </data>
   <data name="Reading" xml:space="preserve">
-    <value>読む</value>
+    <value>En lisant</value>
   </data>
   <data name="Refresh" xml:space="preserve">
-    <value>リフレッシュ</value>
+    <value>Rafraîchir</value>
   </data>
   <data name="RemoveFromFavorites" xml:space="preserve">
-    <value>お気に入りから削除</value>
+    <value>Supprimer des favoris</value>
   </data>
   <data name="RemoveLocationButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>現在のフォルダをリストから削除する</value>
+    <value>Supprimer ce dossier de la liste</value>
   </data>
   <data name="RemoveUnreachableCheckBox.Content" xml:space="preserve">
-    <value>アクセスできないコミックを自動的に削除</value>
+    <value>Supprimer automatiquement les bandes dessinées inaccessibles</value>
   </data>
   <data name="RescanFilesButton.Content" xml:space="preserve">
-    <value>ファイルの再スキャン</value>
+    <value>Réanalyser les fichiers</value>
   </data>
   <data name="RightToLeftButton.Label" xml:space="preserve">
-    <value>右から左へ</value>
+    <value>De droite à gauche</value>
   </data>
   <data name="SaveAsNewButton.Content" xml:space="preserve">
-    <value>新しい構成として保存</value>
+    <value>Enregistrer comme nouveau</value>
   </data>
   <data name="SaveButton.Content" xml:space="preserve">
-    <value>保存</value>
+    <value>Sauvegarder</value>
   </data>
   <data name="SaveHistory.Text" xml:space="preserve">
-    <value>閲覧履歴を記録する</value>
+    <value>Enregistrer l'historique de navigation</value>
   </data>
   <data name="SearchResults" xml:space="preserve">
-    <value>検索結果</value>
+    <value>Résultats de la recherche</value>
   </data>
   <data name="SearchResultsOf" xml:space="preserve">
-    <value>「$keyword」の検索結果</value>
+    <value>Résultats de « $keyword »</value>
   </data>
   <data name="SelectAllAppBarButton.Label" xml:space="preserve">
-    <value>すべて選択</value>
+    <value>Tout sélectionner</value>
   </data>
   <data name="SendFeedbackButton.Content" xml:space="preserve">
-    <value>フィードバックを送信</value>
+    <value>Envoyer des commentaires</value>
   </data>
   <data name="Settings" xml:space="preserve">
-    <value>設定</value>
+    <value>Paramètres</value>
   </data>
   <data name="ShowHiddenComicButton.Content" xml:space="preserve">
-    <value>非表示のコミックを見る</value>
+    <value>Afficher les bandes dessinées cachées</value>
   </data>
   <data name="Sort" xml:space="preserve">
-    <value>ソート</value>
+    <value>Tri</value>
   </data>
   <data name="Statistics" xml:space="preserve">
-    <value>統計</value>
+    <value>Statistiques</value>
   </data>
   <data name="Tag" xml:space="preserve">
-    <value>ラベル</value>
+    <value>Étiquette</value>
   </data>
   <data name="TagIntroduction.Message" xml:space="preserve">
-    <value>コミックにタグを追加すると、リポジトリの管理が簡単になります。例:
-カテゴリー 1: タグ 1/タグ 2/タグ 3
-カテゴリー 2: タグ 4/タグ 5
-...</value>
+    <value>Ajouter des étiquettes aux bandes dessinées peut faciliter la gestion de votre répertoire, par exemple :
+Catégorie 1 : Étiquette 1/Étiquette 2/Étiquette 3
+Catégorie 2 : Étiquette 4/Étiquette 5
+…</value>
   </data>
   <data name="Tags" xml:space="preserve">
-    <value>ラベル</value>
+    <value>Étiquette</value>
   </data>
   <data name="TagsColon" xml:space="preserve">
-    <value>ラベル：</value>
+    <value>Étiquette:</value>
   </data>
   <data name="ThemeDark.Content" xml:space="preserve">
-    <value>暗い</value>
+    <value>Sombre</value>
   </data>
   <data name="ThemeLight.Content" xml:space="preserve">
-    <value>ライトカラー</value>
+    <value>Couleur de la lumière</value>
   </data>
   <data name="ThemeUseSystemSetting.Content" xml:space="preserve">
-    <value>システム設定に従う</value>
+    <value>Suivre les paramètres du système</value>
   </data>
   <data name="Title" xml:space="preserve">
-    <value>タイトル</value>
+    <value>Titre</value>
   </data>
   <data name="Title1" xml:space="preserve">
-    <value>タイトル 1</value>
+    <value>Titre 1</value>
   </data>
   <data name="Title1Colon" xml:space="preserve">
-    <value>タイトル 1：</value>
+    <value>Titre 1:</value>
   </data>
   <data name="Title2" xml:space="preserve">
-    <value>タイトル 2</value>
+    <value>Titre 2</value>
   </data>
   <data name="Title2Colon" xml:space="preserve">
-    <value>タイトル 2：</value>
+    <value>Titre 2:</value>
   </data>
   <data name="TotalComics" xml:space="preserve">
-    <value>漫画総数: </value>
+    <value>Total des bandes dessinées :</value>
   </data>
   <data name="TransitionAnimation.Text" xml:space="preserve">
-    <value>ページめくりアニメーション</value>
+    <value>Animation de transition</value>
   </data>
   <data name="Unfavorite" xml:space="preserve">
-    <value>お気に入りから削除</value>
+    <value>Défavori</value>
   </data>
   <data name="Ungrouped" xml:space="preserve">
-    <value>グループ化なし</value>
+    <value>Pas de regroupement</value>
   </data>
   <data name="Unhide" xml:space="preserve">
-    <value>非表示解除</value>
+    <value>Afficher</value>
   </data>
   <data name="Unread" xml:space="preserve">
-    <value>未読</value>
+    <value>Pas lu</value>
   </data>
   <data name="Untitled" xml:space="preserve">
-    <value>名前なし</value>
+    <value>Anonyme</value>
   </data>
   <data name="UseSystemLanguage" xml:space="preserve">
-    <value>システム言語を使用する</value>
+    <value>Utiliser la langue du système</value>
   </data>
   <data name="VerticalButton.Label" xml:space="preserve">
-    <value>垂直</value>
+    <value>Verticale</value>
   </data>
   <data name="ViewType" xml:space="preserve">
-    <value>ビュー</value>
+    <value>Voir</value>
   </data>
   <data name="ViewTypeLarge" xml:space="preserve">
-    <value>大きい</value>
+    <value>Grand</value>
   </data>
   <data name="ViewTypeMedium" xml:space="preserve">
-    <value>中くらい</value>
+    <value>Moyen</value>
   </data>
   <data name="Warning" xml:space="preserve">
-    <value>警告</value>
+    <value>Avertissement</value>
   </data>
   <data name="WatchingFolders.Text" xml:space="preserve">
-    <value>現在、リポジトリには次のフォルダーが含まれています。</value>
+    <value>En ce moment, nous surveillons ces dossiers :</value>
   </data>
 </root>

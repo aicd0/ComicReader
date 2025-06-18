@@ -4,7 +4,6 @@
 #nullable disable
 
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 using ComicReader.SDK.Data;
 
@@ -33,14 +32,14 @@ class DatabaseVersionModel : JsonDatabase<DatabaseVersionModel.JsonModel>
         return new();
     }
 
-    public async Task<JsonModel> GetModel()
+    public JsonModel GetModel()
     {
-        return await Read(CloneModel);
+        return Read(CloneModel);
     }
 
-    public async Task UpdateModel(JsonModel model)
+    public void UpdateModel(JsonModel model)
     {
-        await Write(CloneModel(model));
-        await Save();
+        Write(CloneModel(model));
+        Save();
     }
 }

@@ -73,15 +73,12 @@ internal class ComicItemViewModel : INotifyPropertyChanged
         Rating = comic.Rating;
         UpdateProgress(true);
 
-        C0.Run(async delegate
+        bool isFavorite = FavoriteModel.Instance.FromId(comic.Id) != null;
+        if (comic != Comic)
         {
-            bool isFavorite = await FavoriteModel.Instance.FromId(comic.Id) != null;
-            if (comic != Comic)
-            {
-                return;
-            }
-            IsFavorite = isFavorite;
-        });
+            return;
+        }
+        IsFavorite = isFavorite;
     }
 
     public void UpdateProgress(bool compat)

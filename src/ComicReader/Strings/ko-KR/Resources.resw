@@ -118,532 +118,533 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="About" xml:space="preserve">
-    <value>について</value>
+    <value>에 대한</value>
   </data>
   <data name="AboutCopyright" xml:space="preserve">
-    <value>© 2025 $author. 無断複写・転載を禁じます。</value>
+    <value>© 2025 $author. 모든 권리 보유.</value>
   </data>
   <data name="AddFolder" xml:space="preserve">
-    <value>フォルダを追加する</value>
+    <value>폴더 추가</value>
   </data>
   <data name="AddToFavorites" xml:space="preserve">
-    <value>お気に入りに追加</value>
+    <value>즐겨찾기에 추가</value>
   </data>
   <data name="AdvancedExpander.Detail" xml:space="preserve">
-    <value>珍しい設定</value>
+    <value>흔하지 않은 설정</value>
   </data>
   <data name="AdvancedExpander.Header" xml:space="preserve">
-    <value>高度な</value>
+    <value>고급의</value>
   </data>
   <data name="AllComics" xml:space="preserve">
-    <value>すべてのコミック</value>
+    <value>모든 만화</value>
   </data>
   <data name="AllComicsIn" xml:space="preserve">
-    <value>$path内のすべてのコミック</value>
+    <value>$path의 모든 만화</value>
   </data>
   <data name="AllHidden" xml:space="preserve">
-    <value>すべての非表示アイテム</value>
+    <value>모든 숨겨진 항목</value>
   </data>
   <data name="AllMatchedResults" xml:space="preserve">
-    <value>一致したすべての結果</value>
+    <value>모든 일치 결과</value>
   </data>
   <data name="AllPages" xml:space="preserve">
-    <value>すべてのページ</value>
+    <value>모든 페이지</value>
   </data>
   <data name="AntiAliasingFilter.Text" xml:space="preserve">
-    <value>アンチエイリアシングフィルタ（実験的）</value>
+    <value>앤티앨리어싱 필터(실험적)</value>
   </data>
   <data name="AppDescription" xml:space="preserve">
-    <value>コミックリーダー UWP</value>
+    <value>만화 리더 UWP</value>
   </data>
   <data name="AppDisplayName" xml:space="preserve">
-    <value>コミックリーダー UWP</value>
+    <value>만화 리더 UWP</value>
   </data>
   <data name="AppStoreName" xml:space="preserve">
-    <value>コミックリーダー UWP</value>
+    <value>만화 리더 UWP</value>
   </data>
   <data name="AppearanceExpander.Detail" xml:space="preserve">
-    <value>表示するアプリのテーマを選択する</value>
+    <value>표시할 앱 테마를 선택하세요</value>
   </data>
   <data name="AppearanceExpander.Header" xml:space="preserve">
-    <value>外観</value>
+    <value>모습</value>
   </data>
   <data name="ApplyOnNextLaunch" xml:space="preserve">
-    <value>次回アプリを起動したときに変更内容が表示されます</value>
+    <value>다음에 앱을 시작하면 변경 사항을 볼 수 있습니다.</value>
   </data>
   <data name="ArchiveEncoding.Text" xml:space="preserve">
-    <value>圧縮ファイルのエンコード</value>
+    <value>압축 파일 인코딩</value>
   </data>
   <data name="Ascending" xml:space="preserve">
-    <value>上昇</value>
+    <value>오름차순</value>
   </data>
   <data name="Calculating" xml:space="preserve">
-    <value>計算中...</value>
+    <value>계산 중...</value>
   </data>
   <data name="Cancel" xml:space="preserve">
-    <value>キャンセル</value>
+    <value>취소</value>
   </data>
   <data name="ChooseLocationButton.Content" xml:space="preserve">
-    <value>画像を検索する場所を選択する</value>
+    <value>이미지를 찾을 위치를 선택하세요</value>
   </data>
   <data name="ChooseLocationDialog.Title" xml:space="preserve">
-    <value>ローカルファイルからコレクションを構築する</value>
+    <value>로컬 파일에서 컬렉션을 구축하세요</value>
   </data>
   <data name="ClearAllHistoryButton.Content" xml:space="preserve">
-    <value>すべての履歴を消去</value>
+    <value>모든 기록 지우기</value>
   </data>
   <data name="ClearCacheButton.Content" xml:space="preserve">
-    <value>キャッシュをクリアする</value>
+    <value>캐시 지우기</value>
   </data>
   <data name="ClearCacheDetail" xml:space="preserve">
-    <value>キャッシュサイズ: $size</value>
+    <value>캐시 크기: $size</value>
   </data>
   <data name="ComicInfo" xml:space="preserve">
-    <value>コミック情報</value>
+    <value>만화 정보</value>
   </data>
   <data name="CompletionState" xml:space="preserve">
-    <value>完了ステータス</value>
+    <value>완료 상태</value>
   </data>
   <data name="ContinuousButton.Label" xml:space="preserve">
-    <value>連続</value>
+    <value>마디 없는</value>
   </data>
   <data name="ContributionRunAfterLink" xml:space="preserve">
-    <value>をご覧ください。</value>
+    <value>에서 이 앱에 기여하는 방법을 알아보세요.</value>
   </data>
   <data name="ContributionRunBeforeLink" xml:space="preserve">
-    <value>$appnameはオープンソースプロジェクトです。このアプリへの貢献方法については、</value>
+    <value>$appname은 오픈 소스 프로젝트입니다. </value>
   </data>
   <data name="DebugInformation.Text" xml:space="preserve">
-    <value>デバッグ情報</value>
+    <value>디버그 정보</value>
   </data>
   <data name="DebugMode.Text" xml:space="preserve">
-    <value>デバッグモード</value>
+    <value>디버그 모드</value>
   </data>
   <data name="DebugModeWarning" xml:space="preserve">
-    <value>デバッグモードを有効にすると、アプリケーションが不安定になる可能性があります。続行してもよろしいですか?</value>
+    <value>디버그 모드를 켜면 앱이 불안정해질 수 있습니다. 계속하시겠습니까?</value>
   </data>
   <data name="Default" xml:space="preserve">
-    <value>デフォルト</value>
+    <value>기본</value>
   </data>
   <data name="DefaultTags" xml:space="preserve">
-    <value>デフォルトタグ</value>
+    <value>기본 태그</value>
   </data>
   <data name="Delete" xml:space="preserve">
-    <value>消去</value>
+    <value>삭제</value>
   </data>
   <data name="Descending" xml:space="preserve">
-    <value>降順</value>
+    <value>하강</value>
   </data>
   <data name="DescriptionColon" xml:space="preserve">
-    <value>説明する：</value>
+    <value>설명:</value>
   </data>
   <data name="DevAppDisplayName" xml:space="preserve">
-    <value>コミックリーダー UWP [Dev]</value>
+    <value>만화 리더 UWP [Dev]</value>
   </data>
   <data name="Disclaimer.Text" xml:space="preserve">
-    <value>免責事項</value>
+    <value>부인 성명</value>
   </data>
   <data name="DiscreteButton.Label" xml:space="preserve">
-    <value>スプリット</value>
+    <value>분리된</value>
   </data>
   <data name="Done" xml:space="preserve">
-    <value>確認する</value>
+    <value>완료</value>
   </data>
   <data name="Edit" xml:space="preserve">
-    <value>編集</value>
+    <value>편집하다</value>
   </data>
   <data name="ExpressionAnd" xml:space="preserve">
-    <value>そして</value>
+    <value>그리고</value>
   </data>
   <data name="ExpressionIn" xml:space="preserve">
-    <value>含まれるもの</value>
+    <value>에 포함됨</value>
   </data>
   <data name="ExpressionInvalid" xml:space="preserve">
-    <value>式が無効です ($reason)</value>
+    <value>표현식이 잘못되었습니다($reason)</value>
   </data>
   <data name="ExpressionNot" xml:space="preserve">
-    <value>いいえ</value>
+    <value>아니다</value>
   </data>
   <data name="ExpressionOr" xml:space="preserve">
-    <value>または</value>
+    <value>또는</value>
   </data>
   <data name="ExpressionReference" xml:space="preserve">
-    <value>(このドキュメントは機械翻訳されている可能性があります)
+    <value>(이 문서는 기계 번역되었을 수 있습니다.)
 
-式リファレンス
+표현식 참조
 
-1. 変数
+1. 변수
 
-%tag              - コミック内のすべてのタグに一致します。
-%title            - タイトル1またはタイトル2に一致します。
-%title1           - タイトル1に一致します。
-%title2           - タイトル2に一致します。
-%rating           - 評価に一致します。例：4は星4つ、0は評価なしを表します。
-%completion_state - コミックの完了状態（0 - 未読、1 - 読んでいる、2 - 完了）。
-%progress         - 読書の進捗状況（パーセンテージ）。例：50は50%を表します。
+%tag                 - 만화의 모든 태그를 찾습니다.
+%title               - 제목 1 또는 제목 2를 찾습니다.
+%title1              - 제목 1을 찾습니다.
+%title2              - 제목 2를 찾습니다.
+%rating              - 평점을 찾습니다. 예: 4는 별 4개를, 0은평점 없음을 나타냅니다.
+%completion_state    - 만화 완료 상태(0 - 읽지 않음, 1 - 읽음, 2 - 완료).
+%progress            - 읽기 진행률(백분율). 예: 50은 50%를 나타냅니다.
 
-2. 変数演算子
+2. 변수 연산자
 
-=                 - 等しい。例：%title = "This is a title"
-&gt;                 - より大きい。例：%rating &gt; 3
-&gt;=                - 以上。
-&lt;                 - より小さい。
-&lt;=                - 以下。
-... IN (...)      - 包含。例：
-                    %rating in (3, 4, 5) - 評価が3、4、5のコミックにマッチします。
-                    %tag.language in (languageA, languageB) - 「language」タグカテゴリに「languageA」または「languageB」が含まれるコミックにマッチします。
-                    (authorA, authorB) in %tag.authors - 「authors」タグカテゴリに「authorA」と「authorB」の両方が含まれるコミックにマッチします。
-                    apple in %tag - 「apple」タグを含むコミックにマッチします。
+=                    - 같음. 예: %title = "This is a title"
+&gt;                    - 보다 큼. 예: %rating &gt; 3
+&gt;=                   - 크거나 같음.
+&lt;                    - 보다 작음.
+&lt;=                   - 작거나 같음.
+... IN (...)         - 다음에 포함됨. 예:
+                       %rating in (3, 4, 5) - 평점이 3, 4, 5점 이내인 만화를 찾습니다.
+                       %tag.language in (languageA, languageB) - "language" 태그 범주에 "languageA" 또는 "languageB"가 포함된 만화를 찾습니다.
+                       (authorA, authorB) in %tag.authors - "authors" 태그 범주에 "authorA"와 "authorB"가 모두 포함된 만화를 찾습니다.
+                       apple in %tag - "apple" 태그가 포함된 만화를 찾습니다.
 
-3. 論理演算子
+3. 논리 연산자
 
-AND               - 論理積。例：%tag.fruit = apple AND %title = "I have an apple"
-OR                - 論理和。例：%title1 = "Apple is OK" OR %title2 = "Orange is also OK"
-NOT               - 論理否定。例: NOT %tag = "hide this"
+AND                  - 논리 and. 예:%tag.fruit = apple AND %title = "I have an apple"
+OR                   - 논리 or. 예:%title1 = "Apple is OK" OR %title2 = "Orange is also OK"
+NOT                  - 논리 not. 예: NOT %tag = "hide this"
 
-4. 括弧
+4. 괄호
 
-デフォルトでは、演算子は左から右に評価されます。(...) を使用すると、含まれる式の優先順位が上がります。例:
+기본적으로 연산자는 왼쪽에서 오른쪽으로 평가됩니다. (...)를 사용하면 포함된 표현식의 우선순위를 높일 수 있습니다.
+예:
 
 %tag.author = abc AND (%tag.language = langA OR NOT %tag.lang = langB)
 
-評価は以下の順序で実行されます:
+평가는 다음 순서로 수행됩니다.
 
-1. NOT %tag.lang = langB  ==&gt;  結果1
-2. %tag.language = langA OR 結果1  ==&gt;  結果2
-3. %tag.author = abc AND 結果2  ==&gt;  結果3</value>
+1. NOT %tag.lang = langB  ==&gt;  Result1
+2. %tag.language = langA OR Result1  ==&gt;  Result2
+3. %tag.author = abc AND Result2  ==&gt;  Result3</value>
   </data>
   <data name="ExpressionTextBlock.Text" xml:space="preserve">
-    <value>条件式</value>
+    <value>표현식</value>
   </data>
   <data name="ExpressionValid" xml:space="preserve">
-    <value>SQLクエリステートメント: $query</value>
+    <value>SQL 쿼리: $query</value>
   </data>
   <data name="Favorite" xml:space="preserve">
-    <value>集める</value>
+    <value>좋아하는</value>
   </data>
   <data name="Favorites" xml:space="preserve">
-    <value>お気に入り</value>
+    <value>즐겨찾기</value>
   </data>
   <data name="FavoritesButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>お気に入りと履歴</value>
+    <value>즐겨찾기 및 역사</value>
   </data>
   <data name="Feedback.Text" xml:space="preserve">
-    <value>フィードバック</value>
+    <value>피드백</value>
   </data>
   <data name="FeedbackIntroduction.Text" xml:space="preserve">
-    <value>以下のボタンを使用して、GitHub で提案を送信したり、問題を報告したりすることができます。</value>
+    <value>아래 버튼을 사용하여 GitHub에 제안을 보내거나 버그를 발행하세요.</value>
   </data>
   <data name="FilterSettings" xml:space="preserve">
-    <value>フィルター設定</value>
+    <value>필터 설정</value>
   </data>
   <data name="FilteredBy" xml:space="preserve">
-    <value>$count フィルター条件</value>
+    <value>$count 필터가 적용되었습니다</value>
   </data>
   <data name="FinishPercentage" xml:space="preserve">
-    <value>読み取り $percentage%</value>
+    <value>$percentage% 완료됨</value>
   </data>
   <data name="Finished" xml:space="preserve">
-    <value>完了</value>
+    <value>완성된</value>
   </data>
   <data name="FoldersHeader.Text" xml:space="preserve">
-    <value>フォルダ</value>
+    <value>폴더</value>
   </data>
   <data name="GoBack" xml:space="preserve">
-    <value>戻る</value>
+    <value>돌아가기</value>
   </data>
   <data name="GoForward" xml:space="preserve">
-    <value>前進する</value>
+    <value>앞으로 나아가다</value>
   </data>
   <data name="Group" xml:space="preserve">
-    <value>グループ化</value>
+    <value>그룹화</value>
   </data>
   <data name="Help" xml:space="preserve">
-    <value>ヘルプ</value>
+    <value>돕다</value>
   </data>
   <data name="Hide" xml:space="preserve">
-    <value>隠れる</value>
+    <value>숨다</value>
   </data>
   <data name="History" xml:space="preserve">
-    <value>歴史</value>
+    <value>역사</value>
   </data>
   <data name="HistoryExpander.Detail" xml:space="preserve">
-    <value>履歴を消去、履歴を有効または無効にする</value>
+    <value>기록 지우기, 기록 활성화 또는 비활성화</value>
   </data>
   <data name="HomeButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>家</value>
+    <value>집</value>
   </data>
   <data name="HorizontalButton.Label" xml:space="preserve">
-    <value>水平</value>
+    <value>수평의</value>
   </data>
   <data name="HotkeyFirstPage.Header" xml:space="preserve">
-    <value>最初のページへジャンプ</value>
+    <value>첫 페이지로 이동</value>
   </data>
   <data name="HotkeyLastPage.Header" xml:space="preserve">
-    <value>最後のページへジャンプ</value>
+    <value>마지막 페이지로 이동</value>
   </data>
   <data name="HotkeyNextPage.Header" xml:space="preserve">
-    <value>次のページへ進む</value>
+    <value>다음 페이지로 이동</value>
   </data>
   <data name="HotkeyPreviousPage.Header" xml:space="preserve">
-    <value>前のページへジャンプ</value>
+    <value>이전 페이지로 이동</value>
   </data>
   <data name="ImageLocationExpander.Detail" xml:space="preserve">
-    <value>画像の場所を追加または変更する</value>
+    <value>이미지를 찾을 위치를 선택하세요</value>
   </data>
   <data name="ImageLocationExpander.Header" xml:space="preserve">
-    <value>このデバイス上の画像</value>
+    <value>이 장치의 이미지</value>
   </data>
   <data name="KeyboardShortcutsExpander.Detail" xml:space="preserve">
-    <value>すべてのショートカットキーを表示</value>
+    <value>모든 키보드 단축키를 확인하세요</value>
   </data>
   <data name="KeyboardShortcutsExpander.Header" xml:space="preserve">
-    <value>ショートカットキー</value>
+    <value>단축키</value>
   </data>
   <data name="LanguageExpander.Detail" xml:space="preserve">
-    <value>アプリの表示言語を選択してください</value>
+    <value>앱에 표시할 언어를 선택하세요</value>
   </data>
   <data name="LanguageExpander.Header" xml:space="preserve">
-    <value>言語</value>
+    <value>언어</value>
   </data>
   <data name="LastReadTime" xml:space="preserve">
-    <value>最終閲覧時間</value>
+    <value>마지막 읽기 시간</value>
   </data>
   <data name="LeftToRightButton.Label" xml:space="preserve">
-    <value>左から右へ</value>
+    <value>왼쪽에서 오른쪽으로</value>
   </data>
   <data name="LibraryEmptyPart1.Text" xml:space="preserve">
-    <value>現在のフィルタ条件では結果が見つかりません。</value>
+    <value>현재 필터 설정으로는 결과가 없습니다. </value>
   </data>
   <data name="LibraryEmptyPart2.Text" xml:space="preserve">
-    <value>または</value>
+    <value>또는</value>
   </data>
   <data name="LibraryEmptyPart3.Text" xml:space="preserve">
-    <value>を試してください。</value>
+    <value>를 입력해 보세요.</value>
   </data>
   <data name="LibraryHeader.Text" xml:space="preserve">
-    <value>図書館</value>
+    <value>도서관</value>
   </data>
   <data name="MarkAsRead" xml:space="preserve">
-    <value>完了としてマーク</value>
+    <value>완료로 표시</value>
   </data>
   <data name="MarkAsUnread" xml:space="preserve">
-    <value>未読としてマーク</value>
+    <value>읽지 않음으로 표시</value>
   </data>
   <data name="MenuFlyoutCreateNewFolder.Text" xml:space="preserve">
-    <value>新しいフォルダを作成する</value>
+    <value>새 폴더 만들기</value>
   </data>
   <data name="MenuFlyoutOpenInNewTab.Text" xml:space="preserve">
-    <value>新しいタブで開く</value>
+    <value>새 탭에서 열기</value>
   </data>
   <data name="MenuFlyoutRemoveFromList.Text" xml:space="preserve">
-    <value>リストから削除</value>
+    <value>목록에서 제거</value>
   </data>
   <data name="MenuFlyoutRename.Text" xml:space="preserve">
-    <value>名前を変更</value>
+    <value>이름 바꾸기</value>
   </data>
   <data name="MenuFlyoutSelect.Text" xml:space="preserve">
-    <value>選ぶ</value>
+    <value>선택하다</value>
   </data>
   <data name="MenuFlyoutSortByName.Text" xml:space="preserve">
-    <value>名前で並べ替え</value>
+    <value>이름으로 정렬</value>
   </data>
   <data name="MoreButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>もっと</value>
+    <value>더</value>
   </data>
   <data name="NameTextBlock.Text" xml:space="preserve">
-    <value>名前</value>
+    <value>이름</value>
   </data>
   <data name="NewFolder" xml:space="preserve">
-    <value>新しいフォルダ</value>
+    <value>새 폴더</value>
   </data>
   <data name="NewTab" xml:space="preserve">
-    <value>新しいタブページ</value>
+    <value>새 탭</value>
   </data>
   <data name="NoFavorite.Text" xml:space="preserve">
-    <value>お気に入りはここに表示されます</value>
+    <value>즐겨찾기가 여기에 표시됩니다</value>
   </data>
   <data name="NoHistory.Text" xml:space="preserve">
-    <value>閲覧履歴はここに表示されます</value>
+    <value>귀하의 검색 기록이 여기에 표시됩니다.</value>
   </data>
   <data name="NoRating" xml:space="preserve">
-    <value>評価なし</value>
+    <value>평가 없음</value>
   </data>
   <data name="NoResults" xml:space="preserve">
-    <value>「$keyword」に該当する結果は見つかりませんでした</value>
+    <value>"$keyword"에 대한 검색 결과가 없습니다.</value>
   </data>
   <data name="NoResultsDetail.Text" xml:space="preserve">
-    <value>別のキーワードで検索してみてください</value>
+    <value>다른 키워드로 검색해보세요</value>
   </data>
   <data name="OpenInFileExplorer.ToolTipService.ToolTip" xml:space="preserve">
-    <value>エクスプローラーで開く</value>
+    <value>파일 탐색기에서 열기</value>
   </data>
   <data name="PrivacyPolicy.Text" xml:space="preserve">
-    <value>プライバシーポリシー</value>
+    <value>개인정보 보호정책</value>
   </data>
   <data name="Proceed" xml:space="preserve">
-    <value>続く</value>
+    <value>진행하다</value>
   </data>
   <data name="Progress" xml:space="preserve">
-    <value>スケジュール</value>
+    <value>진행 상황</value>
   </data>
   <data name="Rating" xml:space="preserve">
-    <value>スコア</value>
+    <value>점수</value>
   </data>
   <data name="ReaderExpander.Detail" xml:space="preserve">
-    <value>カスタムリーダー</value>
+    <value>리더를 사용자 정의하세요</value>
   </data>
   <data name="ReaderExpander.Header" xml:space="preserve">
-    <value>リーダー</value>
+    <value>리더</value>
   </data>
   <data name="ReaderSettingButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>リーダー設定</value>
+    <value>리더 설정</value>
   </data>
   <data name="ReaderStatusError" xml:space="preserve">
-    <value>読み込みエラー</value>
+    <value>로딩 중 오류가 발생했습니다.</value>
   </data>
   <data name="ReaderStatusLoading" xml:space="preserve">
-    <value>リーダー読み込み中</value>
+    <value>리더가 로딩 중입니다</value>
   </data>
   <data name="ReaderTip.Message" xml:space="preserve">
-    <value>ダブルクリックして現在の画像の幅/高さに合わせます</value>
+    <value>너비/높이를 맞추려면 두 번 탭하세요</value>
   </data>
   <data name="ReaderTip.Title" xml:space="preserve">
-    <value>ヒント</value>
+    <value>힌트</value>
   </data>
   <data name="Reading" xml:space="preserve">
-    <value>読む</value>
+    <value>독서</value>
   </data>
   <data name="Refresh" xml:space="preserve">
-    <value>リフレッシュ</value>
+    <value>새로 고치다</value>
   </data>
   <data name="RemoveFromFavorites" xml:space="preserve">
-    <value>お気に入りから削除</value>
+    <value>즐겨찾기에서 제거</value>
   </data>
   <data name="RemoveLocationButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>現在のフォルダをリストから削除する</value>
+    <value>목록에서 이 폴더를 제거합니다</value>
   </data>
   <data name="RemoveUnreachableCheckBox.Content" xml:space="preserve">
-    <value>アクセスできないコミックを自動的に削除</value>
+    <value>접근할 수 없는 만화를 자동으로 제거합니다</value>
   </data>
   <data name="RescanFilesButton.Content" xml:space="preserve">
-    <value>ファイルの再スキャン</value>
+    <value>파일 다시 검사</value>
   </data>
   <data name="RightToLeftButton.Label" xml:space="preserve">
-    <value>右から左へ</value>
+    <value>오른쪽에서 왼쪽으로</value>
   </data>
   <data name="SaveAsNewButton.Content" xml:space="preserve">
-    <value>新しい構成として保存</value>
+    <value>새 구성으로 저장</value>
   </data>
   <data name="SaveButton.Content" xml:space="preserve">
-    <value>保存</value>
+    <value>구하다</value>
   </data>
   <data name="SaveHistory.Text" xml:space="preserve">
-    <value>閲覧履歴を記録する</value>
+    <value>검색 기록을 기록하세요</value>
   </data>
   <data name="SearchResults" xml:space="preserve">
-    <value>検索結果</value>
+    <value>검색 결과</value>
   </data>
   <data name="SearchResultsOf" xml:space="preserve">
-    <value>「$keyword」の検索結果</value>
+    <value>'$keyword'에 대한 검색 결과</value>
   </data>
   <data name="SelectAllAppBarButton.Label" xml:space="preserve">
-    <value>すべて選択</value>
+    <value>모두 선택</value>
   </data>
   <data name="SendFeedbackButton.Content" xml:space="preserve">
-    <value>フィードバックを送信</value>
+    <value>피드백 보내기</value>
   </data>
   <data name="Settings" xml:space="preserve">
-    <value>設定</value>
+    <value>설정</value>
   </data>
   <data name="ShowHiddenComicButton.Content" xml:space="preserve">
-    <value>非表示のコミックを見る</value>
+    <value>숨겨진 만화 보기</value>
   </data>
   <data name="Sort" xml:space="preserve">
-    <value>ソート</value>
+    <value>정렬</value>
   </data>
   <data name="Statistics" xml:space="preserve">
-    <value>統計</value>
+    <value>통계</value>
   </data>
   <data name="Tag" xml:space="preserve">
-    <value>ラベル</value>
+    <value>꼬리표</value>
   </data>
   <data name="TagIntroduction.Message" xml:space="preserve">
-    <value>コミックにタグを追加すると、リポジトリの管理が簡単になります。例:
-カテゴリー 1: タグ 1/タグ 2/タグ 3
-カテゴリー 2: タグ 4/タグ 5
+    <value>만화에 태그를 추가하면 저장소 관리가 더 쉬워집니다. 예:
+카테고리 1: 태그 1/태그 2/태그 3
+카테고리 2: 태그 4/태그 5
 ...</value>
   </data>
   <data name="Tags" xml:space="preserve">
-    <value>ラベル</value>
+    <value>태그</value>
   </data>
   <data name="TagsColon" xml:space="preserve">
-    <value>ラベル：</value>
+    <value>태그: </value>
   </data>
   <data name="ThemeDark.Content" xml:space="preserve">
-    <value>暗い</value>
+    <value>어두운</value>
   </data>
   <data name="ThemeLight.Content" xml:space="preserve">
-    <value>ライトカラー</value>
+    <value>밝은 색상</value>
   </data>
   <data name="ThemeUseSystemSetting.Content" xml:space="preserve">
-    <value>システム設定に従う</value>
+    <value>시스템 설정을 따르세요</value>
   </data>
   <data name="Title" xml:space="preserve">
-    <value>タイトル</value>
+    <value>제목</value>
   </data>
   <data name="Title1" xml:space="preserve">
-    <value>タイトル 1</value>
+    <value>제목 1</value>
   </data>
   <data name="Title1Colon" xml:space="preserve">
-    <value>タイトル 1：</value>
+    <value>제목 1:</value>
   </data>
   <data name="Title2" xml:space="preserve">
-    <value>タイトル 2</value>
+    <value>제목 2</value>
   </data>
   <data name="Title2Colon" xml:space="preserve">
-    <value>タイトル 2：</value>
+    <value>제목 2:</value>
   </data>
   <data name="TotalComics" xml:space="preserve">
-    <value>漫画総数: </value>
+    <value>총 만화 수: </value>
   </data>
   <data name="TransitionAnimation.Text" xml:space="preserve">
-    <value>ページめくりアニメーション</value>
+    <value>페이지 넘기기 애니메이션</value>
   </data>
   <data name="Unfavorite" xml:space="preserve">
-    <value>お気に入りから削除</value>
+    <value>즐겨찾기에서 제거</value>
   </data>
   <data name="Ungrouped" xml:space="preserve">
-    <value>グループ化なし</value>
+    <value>그룹화 없음</value>
   </data>
   <data name="Unhide" xml:space="preserve">
-    <value>非表示解除</value>
+    <value>숨기기 해제</value>
   </data>
   <data name="Unread" xml:space="preserve">
-    <value>未読</value>
+    <value>읽지 않음</value>
   </data>
   <data name="Untitled" xml:space="preserve">
-    <value>名前なし</value>
+    <value>이름 없음</value>
   </data>
   <data name="UseSystemLanguage" xml:space="preserve">
-    <value>システム言語を使用する</value>
+    <value>시스템 언어 사용</value>
   </data>
   <data name="VerticalButton.Label" xml:space="preserve">
-    <value>垂直</value>
+    <value>수직의</value>
   </data>
   <data name="ViewType" xml:space="preserve">
-    <value>ビュー</value>
+    <value>보다</value>
   </data>
   <data name="ViewTypeLarge" xml:space="preserve">
-    <value>大きい</value>
+    <value>더 큰</value>
   </data>
   <data name="ViewTypeMedium" xml:space="preserve">
-    <value>中くらい</value>
+    <value>보통의</value>
   </data>
   <data name="Warning" xml:space="preserve">
-    <value>警告</value>
+    <value>경고하다</value>
   </data>
   <data name="WatchingFolders.Text" xml:space="preserve">
-    <value>現在、リポジトリには次のフォルダーが含まれています。</value>
+    <value>지금 우리는 다음 폴더를 감시하고 있습니다:</value>
   </data>
 </root>

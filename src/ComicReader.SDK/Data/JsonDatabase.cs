@@ -10,13 +10,14 @@ using ComicReader.SDK.Common.Threading;
 
 namespace ComicReader.SDK.Data;
 
-public abstract class JsonDatabase<T> where T : class
+public abstract class JsonDatabase<T>(string fileName) where T : class
 {
     private const string TAG = nameof(JsonDatabase<T>);
 
-    private readonly string _fileName;
+    private readonly string _fileName = fileName;
     private readonly ReaderWriterLock _lock = new();
     private volatile T _jsonModel;
+    private readonly ITaskDispatcher _queue = TaskDispatcher.Factory.NewQueue($"{nameof(JsonDatabase<T>)}#{fileName}");
 
     private readonly JsonSerializerOptions _serializerOptions = new()
     {
@@ -24,16 +25,11 @@ public abstract class JsonDatabase<T> where T : class
         Encoder = DebugUtils.DebugMode ? System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping : System.Text.Encodings.Web.JavaScriptEncoder.Default,
     };
 
-    protected JsonDatabase(string fileName)
-    {
-        _fileName = fileName;
-    }
-
     protected abstract T CreateModel();
 
-    protected async Task<R> Read<R>(Func<T, R> func)
+    protected R Read<R>(Func<T, R> func)
     {
-        await Initialize();
+        Initialize();
         _lock.AcquireReaderLock(Timeout.Infinite);
         try
         {
@@ -45,9 +41,9 @@ public abstract class JsonDatabase<T> where T : class
         }
     }
 
-    protected async Task<R> Write<R>(Func<T, R> func)
+    protected R Write<R>(Func<T, R> func)
     {
-        await Initialize();
+        Initialize();
         _lock.AcquireWriterLock(Timeout.Infinite);
         try
         {
@@ -59,11 +55,11 @@ public abstract class JsonDatabase<T> where T : class
         }
     }
 
-    protected async Task Write(T model)
+    protected void Write(T model)
     {
         ArgumentNullException.ThrowIfNull(model, nameof(model));
 
-        await Initialize();
+        Initialize();
         _lock.AcquireWriterLock(Timeout.Infinite);
         try
         {
@@ -75,21 +71,17 @@ public abstract class JsonDatabase<T> where T : class
         }
     }
 
-    protected async Task Save()
+    protected void Save()
     {
-        await Read(delegate (T model)
+        T clonedModel = Read(CloneModel);
+        if (clonedModel != null)
         {
-            T clonedModel = CloneModel(model);
-            if (clonedModel != null)
+            _queue.Submit("Save", () =>
             {
-                TaskDispatcher.DefaultQueue.Submit($"{TAG}#{nameof(Save)}", delegate
-                {
-                    string json = JsonSerializer.Serialize(clonedModel, _serializerOptions);
-                    SimpleConfigDatabase.Instance.TryPutConfig(_fileName, json).Wait();
-                });
-            }
-            return true;
-        });
+                string json = JsonSerializer.Serialize(clonedModel, _serializerOptions);
+                SimpleConfigDatabase.Instance.TryPutConfig(_fileName, json);
+            });
+        }
     }
 
     protected T CloneModel(T model)
@@ -106,14 +98,14 @@ public abstract class JsonDatabase<T> where T : class
         }
     }
 
-    private async Task Initialize()
+    private void Initialize()
     {
         if (_jsonModel != null)
         {
             return;
         }
 
-        string json = await SimpleConfigDatabase.Instance.TryGetConfig(_fileName);
+        string json = SimpleConfigDatabase.Instance.TryGetConfig(_fileName);
         T jsonModel = null;
         if (json != null)
         {

@@ -1,8 +1,6 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-#nullable disable
-
 using ComicReader.SDK.Common.Caching;
 using ComicReader.SDK.Common.DebugTools;
 using ComicReader.SDK.Common.Storage;
@@ -22,32 +20,31 @@ internal class SimpleConfigDatabase
 
     private readonly object _lock = new();
     private readonly string _directoryPath;
-    private volatile bool _isInitialized = false;
-    private volatile LRUCache _lruCache = null;
+    private volatile LRUCache? _lruCache = null;
 
     private SimpleConfigDatabase(string directoryPath, string name)
     {
         _directoryPath = Path.Combine(directoryPath, name);
     }
 
-    public async Task<string> TryGetConfig(string key)
+    public string? TryGetConfig(string key)
     {
-        if (!TryInitialize())
+        LRUCache? lruCache = GetLRUCache();
+        if (lruCache is null)
         {
             return null;
         }
 
-        ILRUOutputStream stream = _lruCache.Get(key);
+        ILRUOutputStream stream = lruCache.Get(key);
         if (stream == null)
         {
             return null;
         }
         using DataReader reader = new(stream);
-
         string value;
         try
         {
-            uint bytesLoaded = await reader.LoadAsync((uint)stream.Size);
+            uint bytesLoaded = reader.LoadAsync((uint)stream.Size).AsTask().Result;
             if (bytesLoaded == 0)
             {
                 Logger.AssertNotReachHere("7EFEE0FD9C031188");
@@ -61,47 +58,51 @@ internal class SimpleConfigDatabase
             Logger.F(TAG, nameof(TryGetConfig), ex);
             return null;
         }
-
         return value;
     }
 
-    public async Task TryPutConfig(string key, string value)
+    public void TryPutConfig(string key, string value)
     {
-        if (!TryInitialize())
+        LRUCache? lruCache = GetLRUCache();
+        if (lruCache is null)
         {
             return;
         }
 
         IBuffer buffer = CryptographicBuffer.ConvertStringToBinary(value, BinaryStringEncoding.Utf8);
-        using ILRUInputStream stream = _lruCache.Put(key);
+        using ILRUInputStream stream = lruCache.Put(key);
         if (stream == null)
         {
             Logger.AssertNotReachHere("F36118EDF506473B");
             return;
         }
-
         try
         {
-            await stream.WriteAsync(buffer);
+            stream.WriteAsync(buffer).Wait();
         }
         catch (Exception ex)
         {
             Logger.F(TAG, nameof(TryPutConfig), ex);
+            return;
         }
     }
 
-    private bool TryInitialize()
+    private LRUCache? GetLRUCache()
     {
-        if (_isInitialized)
         {
-            return true;
+            LRUCache? cache = _lruCache;
+            if (cache is not null)
+            {
+                return cache;
+            }
         }
 
         lock (_lock)
         {
-            if (_isInitialized)
+            LRUCache? cache = _lruCache;
+            if (cache is not null)
             {
-                return true;
+                return cache;
             }
 
             try
@@ -110,14 +111,13 @@ internal class SimpleConfigDatabase
             }
             catch (Exception ex)
             {
-                Logger.F(TAG, nameof(TryInitialize), ex);
-                return false;
+                Logger.F(TAG, nameof(GetLRUCache), ex);
+                return null;
             }
 
-            _lruCache = new(_directoryPath, 0);
-            _isInitialized = true;
+            cache = new(_directoryPath, 0);
+            _lruCache = cache;
+            return cache;
         }
-
-        return true;
     }
 }

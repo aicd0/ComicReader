@@ -130,7 +130,7 @@
     <value>Add to favorites</value>
   </data>
   <data name="AdvancedExpander.Detail" xml:space="preserve">
-    <value>Rescan files, developer settings</value>
+    <value>Uncommon settings</value>
   </data>
   <data name="AdvancedExpander.Header" xml:space="preserve">
     <value>Advanced</value>
@@ -278,8 +278,7 @@ Expression Reference
 %title              - Match title 1 or title 2.
 %title1             - Match title 1.
 %title2             - Match title 2.
-%rating             - Match rating. For example: 4 represents 4 stars, 0 represents
-                      no rating.
+%rating             - Match rating. For example: 4 represents 4 stars, 0 represents no rating.
 %completion_state   - Comic completion state (0 - Unread, 1 - Reading, 2 - Completed).
 %progress           - reading progress, in percentage. For example: 50 represents 50%.
 
@@ -291,20 +290,15 @@ Expression Reference
 &lt;                   - Less than.
 &lt;=                  - Less than or equal.
 ... IN (...)        - Contained by. For example:
-                          %rating in (3, 4, 5) - Match those comics whose ratings are
-                      within 3, 4 and 5.
-                          %tag.language in (languageA, languageB) - Match those comics
-                      whose "language" tag category contains "languageA" or "languageB".
-                          (authorA, authorB) in %tag.authors - Match those comics whose
-                      "authors" tag category contains both "authorA" and "authorB".
-                          apple in %tag - Match those comics which contains tag "apple".
+                      %rating in (3, 4, 5) - Match those comics whose ratings are within 3, 4 and 5.
+                      %tag.language in (languageA, languageB) - Match those comics whose "language" tag category contains "languageA" or "languageB".
+                      (authorA, authorB) in %tag.authors - Match those comics whose "authors" tag category contains both "authorA" and "authorB".
+                      apple in %tag - Match those comics which contains tag "apple".
 
 3. Logic operators
 
-AND                 - Logic and. For example:
-                          %tag.fruit = apple AND %title = "I have an apple"
-OR                  - Logic or. For example:
-                          %title1 = "Apple is OK" OR %title2 = "Orange is also OK"
+AND                 - Logic and. For example: %tag.fruit = apple AND %title = "I have an apple"
+OR                  - Logic or. For example: %title1 = "Apple is OK" OR %title2 = "Orange is also OK"
 NOT                 - Logic not. For example: NOT %tag = "hide this"
 
 4. Parentheses
@@ -523,7 +517,7 @@ The evaluation will be performed in the following order:
     <value>Reading</value>
   </data>
   <data name="Refresh" xml:space="preserve">
-    <value>refresh</value>
+    <value>Refresh</value>
   </data>
   <data name="RemoveFromFavorites" xml:space="preserve">
     <value>Remove from favorites</value>

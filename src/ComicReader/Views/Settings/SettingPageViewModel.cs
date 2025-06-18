@@ -288,7 +288,7 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
             AntiAliasingEnabled = AppModel.AntiAliasingEnabled;
             DebugMode = DebugUtils.DebugMode;
 
-            ApplySettingsModel(await GetSettingsModelAsync());
+            ApplySettingsModel(GetSettingsModel());
             await UpdateEncodings();
             UpdateCacheSize();
             UpdateRescanStatus();
@@ -299,13 +299,10 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
 
     public void SetRemoveUnreachableComics(bool removeUnreachableComics)
     {
-        C0.Run(async () =>
-        {
-            _removeUnreachableComics = removeUnreachableComics;
-            AppSettingsModel.ExternalModel model = await GetSettingsModelAsync();
-            model.RemoveUnreachableComics = removeUnreachableComics;
-            await AppSettingsModel.Instance.UpdateModel(model);
-        });
+        _removeUnreachableComics = removeUnreachableComics;
+        AppSettingsModel.ExternalModel model = GetSettingsModel();
+        model.RemoveUnreachableComics = removeUnreachableComics;
+        AppSettingsModel.Instance.UpdateModel(model);
     }
 
     public void SelectLanguage(int index)
@@ -336,12 +333,9 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
             }
         }
 
-        C0.Run(async () =>
-        {
-            AppSettingsModel.ExternalModel model = await GetSettingsModelAsync();
-            model.Language = selectedLanguage.Identifier;
-            await AppSettingsModel.Instance.UpdateModel(model);
-        });
+        AppSettingsModel.ExternalModel model = GetSettingsModel();
+        model.Language = selectedLanguage.Identifier;
+        AppSettingsModel.Instance.UpdateModel(model);
     }
 
     public void ClearCache()
@@ -359,14 +353,14 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
         });
     }
 
-    private async Task<AppSettingsModel.ExternalModel> GetSettingsModelAsync()
+    private AppSettingsModel.ExternalModel GetSettingsModel()
     {
         AppSettingsModel.ExternalModel? model = _settingsModel;
         if (model != null)
         {
             return model;
         }
-        model = await AppSettingsModel.Instance.GetModel();
+        model = AppSettingsModel.Instance.GetModel();
         _settingsModel = model;
         return model;
     }
@@ -378,10 +372,15 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
         {
             string currentLanguage = model.Language;
             List<LanguageEntry> languages = [
+                new("Deutsch", "de-DE", "Einige Texte sind maschinell übersetzt"),
+                new("Español", "es-ES", "Algunos textos están traducidos automáticamente"),
+                new("Français", "fr-FR", "Certains textes sont traduits automatiquement"),
                 new("English", "en", ""),
+                new("日本語", "ja-JP", "一部のテキストは機械翻訳されています"),
+                new("한국어", "ko-KR", "일부 텍스트는 기계로 번역되었습니다"),
+                new("Русский", "ru-RU", "Некоторые тексты переведены машинным способом"),
                 new("简体中文", "zh-CN", ""),
                 new("繁體中文", "zh-TW", "部分文字使用了機器翻譯"),
-                new("日本語", "ja-JP", "一部のテキストは機械翻訳されています"),
             ];
             languages.Sort((x, y) => x.Identifier.CompareTo(y.Identifier));
             LanguageEntry useSystemLanguage = new(StringResourceProvider.Instance.UseSystemLanguage, "", GetLanguageDescriptionOfSystemLanguage(languages));
@@ -487,12 +486,9 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
     {
         AppearanceChanged = appearance != _initialAppearance;
 
-        C0.Run(async () =>
-        {
-            AppSettingsModel.ExternalModel model = await GetSettingsModelAsync();
-            model.Theme = appearance;
-            await AppSettingsModel.Instance.UpdateModel(model);
-        });
+        AppSettingsModel.ExternalModel model = GetSettingsModel();
+        model.Theme = appearance;
+        AppSettingsModel.Instance.UpdateModel(model);
     }
 
     private static string GetCacheSize()

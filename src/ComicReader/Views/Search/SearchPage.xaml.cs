@@ -225,14 +225,14 @@ internal sealed partial class SearchPage : BasePage
             .ToList();
     }
 
-    private async Task BindComicData(ComicItemViewModel model, ComicModel comic)
+    private void BindComicData(ComicItemViewModel model, ComicModel comic)
     {
         model.Comic = comic;
         model.Title = comic.Title;
         model.Detail = "#" + comic.Id;
         model.Rating = comic.Rating;
         model.UpdateProgress(false);
-        model.IsFavorite = await FavoriteModel.Instance.FromId(comic.Id) != null;
+        model.IsFavorite = FavoriteModel.Instance.FromId(comic.Id) != null;
         model.ItemHandler = _comicItemHandler;
     }
 
@@ -262,7 +262,7 @@ internal sealed partial class SearchPage : BasePage
                 }
 
                 ComicItemViewModel item = new();
-                await BindComicData(item, comic);
+                BindComicData(item, comic);
                 ViewModel.SearchResults.Add(item);
                 ++i;
             }
@@ -330,22 +330,16 @@ internal sealed partial class SearchPage : BasePage
 
     private void OnAddToFavoritesClicked(object sender, RoutedEventArgs e)
     {
-        C0.Run(async delegate
-        {
-            var result = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-            result.IsFavorite = true;
-            await FavoriteModel.Instance.Add(result.Comic.Id, result.Title, true);
-        });
+        var result = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
+        result.IsFavorite = true;
+        FavoriteModel.Instance.Add(result.Comic.Id, result.Title, true);
     }
 
     private void OnRemoveFromFavoritesClicked(object sender, RoutedEventArgs e)
     {
-        C0.Run(async delegate
-        {
-            var result = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-            result.IsFavorite = false;
-            await FavoriteModel.Instance.RemoveWithId(result.Comic.Id, true);
-        });
+        var result = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
+        result.IsFavorite = false;
+        FavoriteModel.Instance.RemoveWithId(result.Comic.Id, true);
     }
 
     private void OnUnhideComicClicked(object sender, RoutedEventArgs e)
@@ -380,7 +374,7 @@ internal sealed partial class SearchPage : BasePage
             {
                 await item.Comic.SetCompletionStateToNotStarted();
             }
-            await BindComicData(item, item.Comic);
+            BindComicData(item, item.Comic);
         });
     }
 
@@ -481,42 +475,36 @@ internal sealed partial class SearchPage : BasePage
 
     private void CommandBarFavoriteClicked(object sender, RoutedEventArgs e)
     {
-        C0.Run(async delegate
+        var selected_items = new List<object>(SearchResultGridView.SelectedItems);
+        for (int i = 0; i < selected_items.Count; ++i)
         {
-            var selected_items = new List<object>(SearchResultGridView.SelectedItems);
-            for (int i = 0; i < selected_items.Count; ++i)
+            var model = selected_items[i] as ComicItemViewModel;
+            if (model.IsFavorite)
             {
-                var model = selected_items[i] as ComicItemViewModel;
-                if (model.IsFavorite)
-                {
-                    continue;
-                }
-                model.IsFavorite = true;
-                await FavoriteModel.Instance.Add(model.Comic.Id, model.Title, i == selected_items.Count - 1);
+                continue;
             }
+            model.IsFavorite = true;
+            FavoriteModel.Instance.Add(model.Comic.Id, model.Title, i == selected_items.Count - 1);
+        }
 
-            UpdateCommandBarButtonStates();
-        });
+        UpdateCommandBarButtonStates();
     }
 
     private void CommandBarUnFavoriteClicked(object sender, RoutedEventArgs e)
     {
-        C0.Run(async delegate
+        var selected_items = new List<object>(SearchResultGridView.SelectedItems);
+        for (int i = 0; i < selected_items.Count; ++i)
         {
-            var selected_items = new List<object>(SearchResultGridView.SelectedItems);
-            for (int i = 0; i < selected_items.Count; ++i)
+            var model = selected_items[i] as ComicItemViewModel;
+            if (!model.IsFavorite)
             {
-                var model = selected_items[i] as ComicItemViewModel;
-                if (!model.IsFavorite)
-                {
-                    continue;
-                }
-                model.IsFavorite = false;
-                await FavoriteModel.Instance.RemoveWithId(model.Comic.Id, i == selected_items.Count - 1);
+                continue;
             }
+            model.IsFavorite = false;
+            FavoriteModel.Instance.RemoveWithId(model.Comic.Id, i == selected_items.Count - 1);
+        }
 
-            UpdateCommandBarButtonStates();
-        });
+        UpdateCommandBarButtonStates();
     }
 
     private void CommandBarHideClicked(object sender, RoutedEventArgs e)

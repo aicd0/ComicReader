@@ -4,7 +4,6 @@
 using System.Collections.Generic;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 using ComicReader.SDK.Data;
 
@@ -24,19 +23,19 @@ class ComicFilterModel : JsonDatabase<ComicFilterModel.JsonModel>
         return new();
     }
 
-    public async Task<ExternalModel?> GetModel()
+    public ExternalModel? GetModel()
     {
-        return await Read(ExternalModel.From);
+        return Read(ExternalModel.From);
     }
 
-    public async Task UpdateModel(ExternalModel model)
+    public void UpdateModel(ExternalModel model)
     {
-        await Write(m =>
+        Write(m =>
         {
             model.To(m);
             return true;
         });
-        await Save();
+        Save();
     }
 
     public class JsonModel
