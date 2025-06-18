@@ -118,533 +118,532 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="About" xml:space="preserve">
-    <value>О</value>
+    <value>Acerca de</value>
   </data>
   <data name="AboutCopyright" xml:space="preserve">
-    <value>© 2025 $author. Все права защищены.</value>
+    <value>© 2025 $author. Todos los derechos reservados.</value>
   </data>
   <data name="AddFolder" xml:space="preserve">
-    <value>Добавить папку</value>
+    <value>Agregar una carpeta</value>
   </data>
   <data name="AddToFavorites" xml:space="preserve">
-    <value>Добавить в избранное</value>
+    <value>Añadir a favoritos</value>
   </data>
   <data name="AdvancedExpander.Detail" xml:space="preserve">
-    <value>Необычные настройки</value>
+    <value>Configuraciones poco comunes</value>
   </data>
   <data name="AdvancedExpander.Header" xml:space="preserve">
-    <value>Передовой</value>
+    <value>Avanzado</value>
   </data>
   <data name="AllComics" xml:space="preserve">
-    <value>Все комиксы</value>
+    <value>Todos los cómics</value>
   </data>
   <data name="AllComicsIn" xml:space="preserve">
-    <value>Все комиксы в $path</value>
+    <value>Todos los cómics en $path</value>
   </data>
   <data name="AllHidden" xml:space="preserve">
-    <value>Все скрытые элементы</value>
+    <value>Todos los elementos ocultos</value>
   </data>
   <data name="AllMatchedResults" xml:space="preserve">
-    <value>Все совпавшие результаты</value>
+    <value>Todos los resultados coincidentes</value>
   </data>
   <data name="AllPages" xml:space="preserve">
-    <value>Все страницы</value>
+    <value>Todas las páginas</value>
   </data>
   <data name="AntiAliasingFilter.Text" xml:space="preserve">
-    <value>Фильтр сглаживания (экспериментальный)</value>
+    <value>Filtro anti-aliasing (experimental)</value>
   </data>
   <data name="AppDescription" xml:space="preserve">
-    <value>Читатель комиксов UWP</value>
+    <value>Lector de cómics UWP</value>
   </data>
   <data name="AppDisplayName" xml:space="preserve">
-    <value>Читатель комиксов UWP</value>
+    <value>Lector de cómics UWP</value>
   </data>
   <data name="AppStoreName" xml:space="preserve">
-    <value>Читатель комиксов UWP</value>
+    <value>Lector de cómics UWP</value>
   </data>
   <data name="AppearanceExpander.Detail" xml:space="preserve">
-    <value>Выберите тему приложения для отображения</value>
+    <value>Seleccione qué tema de aplicación desea mostrar</value>
   </data>
   <data name="AppearanceExpander.Header" xml:space="preserve">
-    <value>Появление</value>
+    <value>Apariencia</value>
   </data>
   <data name="ApplyOnNextLaunch" xml:space="preserve">
-    <value>Вы увидите изменения при следующем запуске приложения.</value>
+    <value>Verás el cambio la próxima vez que inicies la aplicación.</value>
   </data>
   <data name="ArchiveEncoding.Text" xml:space="preserve">
-    <value>Кодировка сжатого файла</value>
+    <value>Codificación de archivos comprimidos</value>
   </data>
   <data name="Ascending" xml:space="preserve">
-    <value>По возрастанию</value>
+    <value>Ascendente</value>
   </data>
   <data name="Calculating" xml:space="preserve">
-    <value>Расчет...</value>
+    <value>Calculador...</value>
   </data>
   <data name="Cancel" xml:space="preserve">
-    <value>Отмена</value>
+    <value>Cancelar</value>
   </data>
   <data name="ChooseLocationButton.Content" xml:space="preserve">
-    <value>Выберите, где мы ищем изображения</value>
+    <value>Elige dónde buscamos imágenes</value>
   </data>
   <data name="ChooseLocationDialog.Title" xml:space="preserve">
-    <value>Создавайте свои коллекции из локальных файлов</value>
+    <value>Crea tus colecciones a partir de tus archivos locales</value>
   </data>
   <data name="ClearAllHistoryButton.Content" xml:space="preserve">
-    <value>Очистить всю историю</value>
+    <value>Borrar todo el historial</value>
   </data>
   <data name="ClearCacheButton.Content" xml:space="preserve">
-    <value>Очистить кэш</value>
+    <value>Borrar caché</value>
   </data>
   <data name="ClearCacheDetail" xml:space="preserve">
-    <value>Размер кэша: $size</value>
+    <value>Tamaño de caché: $size</value>
   </data>
   <data name="ComicInfo" xml:space="preserve">
-    <value>Информация о комиксах</value>
+    <value>Información del cómic</value>
   </data>
   <data name="CompletionState" xml:space="preserve">
-    <value>Состояние завершения</value>
+    <value>Estado de finalización</value>
   </data>
   <data name="ContinuousButton.Label" xml:space="preserve">
-    <value>Непрерывный</value>
+    <value>Continuo</value>
   </data>
   <data name="ContributionRunAfterLink" xml:space="preserve">
-    <value>, чтобы узнать, как вы можете внести свой вклад в это приложение.</value>
+    <value> para saber cómo puedes contribuir a esta aplicación.</value>
   </data>
   <data name="ContributionRunBeforeLink" xml:space="preserve">
-    <value>$appname — проект с открытым исходным кодом. Посетите </value>
+    <value>$appname es un proyecto de código abierto. Visita </value>
   </data>
   <data name="DebugInformation.Text" xml:space="preserve">
-    <value>Отладочная информация</value>
+    <value>Información de depuración</value>
   </data>
   <data name="DebugMode.Text" xml:space="preserve">
-    <value>Режим отладки</value>
+    <value>Modo de depuración</value>
   </data>
   <data name="DebugModeWarning" xml:space="preserve">
-    <value>Включение режима отладки может привести к нестабильной работе приложения. Что делать?</value>
+    <value>Activar el modo de depuración puede hacer que la aplicación sea inestable. ¿Desea continuar?</value>
   </data>
   <data name="Default" xml:space="preserve">
-    <value>По умолчанию</value>
+    <value>Por defecto</value>
   </data>
   <data name="DefaultTags" xml:space="preserve">
-    <value>Теги по умолчанию</value>
+    <value>Etiquetas predeterminadas</value>
   </data>
   <data name="Delete" xml:space="preserve">
-    <value>Удалить</value>
+    <value>Borrar</value>
   </data>
   <data name="Descending" xml:space="preserve">
-    <value>По убыванию</value>
+    <value>Descendiendo</value>
   </data>
   <data name="DescriptionColon" xml:space="preserve">
-    <value>Описание:</value>
+    <value>Descripción:</value>
   </data>
   <data name="DevAppDisplayName" xml:space="preserve">
-    <value>Читатель комиксов UWP [Dev]</value>
+    <value>Lector de cómics UWP [Dev]</value>
   </data>
   <data name="Disclaimer.Text" xml:space="preserve">
-    <value>Отказ от ответственности</value>
+    <value>Descargo de responsabilidad</value>
   </data>
   <data name="DiscreteButton.Label" xml:space="preserve">
-    <value>Раздельный</value>
+    <value>Separado</value>
   </data>
   <data name="Done" xml:space="preserve">
-    <value>Сделанный</value>
+    <value>Hecho</value>
   </data>
   <data name="Edit" xml:space="preserve">
-    <value>Редактировать</value>
+    <value>Editar</value>
   </data>
   <data name="ExpressionAnd" xml:space="preserve">
-    <value>И</value>
+    <value>Y</value>
   </data>
   <data name="ExpressionIn" xml:space="preserve">
-    <value>Содержится в</value>
+    <value>Contenido por</value>
   </data>
   <data name="ExpressionInvalid" xml:space="preserve">
-    <value>Выражение недопустимо ($reason)</value>
+    <value>La expresión no es válida ($reason)</value>
   </data>
   <data name="ExpressionNot" xml:space="preserve">
-    <value>Нет</value>
+    <value>Not</value>
   </data>
   <data name="ExpressionOr" xml:space="preserve">
-    <value>Или</value>
+    <value>O</value>
   </data>
   <data name="ExpressionReference" xml:space="preserve">
-    <value>(Этот документ может быть переведен с помощью машины)
+    <value>(Este documento podría estar traducido automáticamente)
 
-Справочник по выражениям
+Referencia de expresiones
 
-1. Переменные
+1. Variables
 
-%tag                     - Соответствует всем тегам в комиксе.
-%title                   - Соответствует заголовку 1 или заголовку 2.
-%title1                  - Соответствует заголовку 1.
-%title2                  - Соответствует заголовку 2.
-%rating                  - Соответствует рейтингу. Например: 4 представляет 4 звезды, 0 представляет отсутствие рейтинга.
-%completion_state        - Состояние завершения комикса (0 - не прочитано, 1 - читается, 2 - завершено).
-%progress                - прогресс чтения в процентах. Например: 50 представляет 50%.
+%tag                 - Coincidir con todas las etiquetas de un cómic.
+%title               - Coincidir con el título 1 o el título 2.
+%title1              - Coincidir con el título 1.
+%title2              - Coincidir con el título 2.
+%rating              - Coincidir con la calificación. Por ejemplo: 4 representa 4 estrellas, 0 representa ninguna calificación.
+%completion_state    - Estado de finalización del cómic (0 - Sin leer, 1 - Leyendo, 2 - Completado).
+%progress            - Progreso de lectura, en porcentaje. Por ejemplo: 50 representa el 50%.
 
-2. Операторы переменных
+2. Operadores de variables
 
-=                        - Равно. Например: %title = "Это заголовок"
-&gt;                        - Больше. Например: %rating &gt; 3
-&gt;=                       - Больше или равно.
-&lt;                        - Меньше.
-&lt;=                       - Меньше или равно.
-... IN (...)             - Содержится в. Например:
-                           %rating in (3, 4, 5) - Сопоставить комиксы, рейтинги которых находятся в пределах 3, 4 и 5.
-                           %tag.language in (languageA, languageB) - Сопоставить комиксы, категория тега «язык» которых содержит «языкА» или «языкБ».
-                           (authorA, authorB) in %tag.authors - Сопоставить комиксы, категория тега «авторы» которых содержит как «авторА», так и «авторБ».
-                           apple in %tag - Сопоставить комиксы, содержащие тег «яблоко».
+=                    - Igual. Por ejemplo: %title = "Este es un título"
+&gt;                    - Mayor que. Por ejemplo: %rating &gt; 3
+&gt;=                   - Mayor o igual que.
+&lt;                    - Menor que.
+&lt;=                   - Menor o igual que.
+... IN (...)         - Contenido por. Por ejemplo:
+                       %rating in (3, 4, 5) - Encuentra los cómics cuyas calificaciones estén entre 3, 4 y 5.
+                       %tag.language in (languageA, languageB) - Encuentra los cómics cuya categoría de etiqueta "language" contenga "languageA" o "languageB".
+                       (authorA, authorB) in %tag.authors - Encuentra los cómics cuya categoría de etiqueta "authors" contenga tanto "authorA" como "authorB".
+                       apple in %tag - Encuentra los cómics que contengan la etiqueta "apple".
 
-3. Логические операторы
+3. Operadores lógicos
 
-AND                      - Логическое и. Например: %tag.fruit = apple AND %title = "У меня есть яблоко"
-OR                       - Логическое или. Например: %title1 = "Яблоко - это нормально" OR %title2 = "Апельсин - это тоже нормально"
-NOT                      - Логическое не. Например: NOT %tag = "скрыть это"
+AND                  - Operador lógico "y". Por ejemplo: %tag.fruit = apple AND %title = "Tengo una manzana".
+OR                   - Operador lógico "o". Por ejemplo: %title1 = "Apple is OK" OR %title2 = "Orange is OK"
+NOT                  - Operador lógico "no". Por ejemplo: NOT %tag = "ocultar esto".
 
-4. Скобки
+4. Paréntesis
 
-По умолчанию операторы будут оцениваться слева направо. Используйте (...), чтобы повысить
-приоритет включенного выражения. Например:
+Por defecto, los operadores se evalúan de izquierda a derecha. Utilice (...) para aumentar la prioridad de la expresión incluida. Por ejemplo:
 
 %tag.author = abc AND (%tag.language = langA OR NOT %tag.lang = langB)
 
-Оценка будет выполняться в следующем порядке:
+La evaluación se realizará en el siguiente orden:
 
-1. NOT %tag.lang = langB  ==&gt;  Результат1
-2. %tag.language = langA OR Результат1  ==&gt;  Результат2
-3. %tag.author = abc AND Результат2  ==&gt;  Результат3</value>
+1. NOT %tag.lang = langB  ==&gt;  Resultado1
+2. %tag.language = langA OR Result1  ==&gt;  Resultado2
+3. %tag.author = abc AND Result2  ==&gt;  Resultado3</value>
   </data>
   <data name="ExpressionTextBlock.Text" xml:space="preserve">
-    <value>Выражение</value>
+    <value>Expresión</value>
   </data>
   <data name="ExpressionValid" xml:space="preserve">
-    <value>SQL-запрос: $query</value>
+    <value>Consulta SQL: $query</value>
   </data>
   <data name="Favorite" xml:space="preserve">
-    <value>Собирать</value>
+    <value>Favorito</value>
   </data>
   <data name="Favorites" xml:space="preserve">
-    <value>Избранное</value>
+    <value>Favoritos</value>
   </data>
   <data name="FavoritesButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>Избранное и история</value>
+    <value>Favoritos e historial</value>
   </data>
   <data name="Feedback.Text" xml:space="preserve">
-    <value>Обратная связь</value>
+    <value>Comentario</value>
   </data>
   <data name="FeedbackIntroduction.Text" xml:space="preserve">
-    <value>Используйте кнопку ниже, чтобы отправить нам предложения или сообщить об ошибке на GitHub.</value>
+    <value>Utilice el botón a continuación para enviarnos sugerencias o informar un error en GitHub.</value>
   </data>
   <data name="FilterSettings" xml:space="preserve">
-    <value>Настройки фильтра</value>
+    <value>Configuración del filtro</value>
   </data>
   <data name="FilteredBy" xml:space="preserve">
-    <value>Применено $count фильтров</value>
+    <value>$count filtros aplicados</value>
   </data>
   <data name="FinishPercentage" xml:space="preserve">
-    <value>$процент% Завершено</value>
+    <value>$percentage% Completado</value>
   </data>
   <data name="Finished" xml:space="preserve">
-    <value>Законченный</value>
+    <value>Finalizado</value>
   </data>
   <data name="FoldersHeader.Text" xml:space="preserve">
-    <value>Папки</value>
+    <value>Carpetas</value>
   </data>
   <data name="GoBack" xml:space="preserve">
-    <value>Возвращаться</value>
+    <value>Volver</value>
   </data>
   <data name="GoForward" xml:space="preserve">
-    <value>Идти вперед</value>
+    <value>Avanzar</value>
   </data>
   <data name="Group" xml:space="preserve">
-    <value>Группировка</value>
+    <value>Agrupamiento</value>
   </data>
   <data name="Help" xml:space="preserve">
-    <value>Помощь</value>
+    <value>Ayuda</value>
   </data>
   <data name="Hide" xml:space="preserve">
-    <value>Скрывать</value>
+    <value>Esconder</value>
   </data>
   <data name="History" xml:space="preserve">
-    <value>История</value>
+    <value>Historia</value>
   </data>
   <data name="HistoryExpander.Detail" xml:space="preserve">
-    <value>Очистить историю, включить или отключить историю</value>
+    <value>Borrar historial, habilitar o deshabilitar el historial</value>
   </data>
   <data name="HomeButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>Дом</value>
+    <value>Hogar</value>
   </data>
   <data name="HorizontalButton.Label" xml:space="preserve">
-    <value>Горизонтальный</value>
+    <value>Horizontal</value>
   </data>
   <data name="HotkeyFirstPage.Header" xml:space="preserve">
-    <value>Перейти на первую страницу</value>
+    <value>Ir a la primera página</value>
   </data>
   <data name="HotkeyLastPage.Header" xml:space="preserve">
-    <value>Перейти на последнюю страницу</value>
+    <value>Ir a la última página</value>
   </data>
   <data name="HotkeyNextPage.Header" xml:space="preserve">
-    <value>Перейти на следующую страницу</value>
+    <value>Ir a la página siguiente</value>
   </data>
   <data name="HotkeyPreviousPage.Header" xml:space="preserve">
-    <value>Перейти на предыдущую страницу</value>
+    <value>Ir a la página anterior</value>
   </data>
   <data name="ImageLocationExpander.Detail" xml:space="preserve">
-    <value>Выберите, где мы ищем изображения</value>
+    <value>Elige dónde buscamos imágenes</value>
   </data>
   <data name="ImageLocationExpander.Header" xml:space="preserve">
-    <value>Изображения на этом устройстве</value>
+    <value>Imágenes en este dispositivo</value>
   </data>
   <data name="KeyboardShortcutsExpander.Detail" xml:space="preserve">
-    <value>Ознакомьтесь со всеми сочетаниями клавиш</value>
+    <value>Consulta todos los atajos de teclado</value>
   </data>
   <data name="KeyboardShortcutsExpander.Header" xml:space="preserve">
-    <value>Сочетания клавиш</value>
+    <value>Atajos de teclado</value>
   </data>
   <data name="LanguageExpander.Detail" xml:space="preserve">
-    <value>Выберите язык, на котором будет отображаться приложение</value>
+    <value>Seleccione el idioma que desea que se muestre en la aplicación</value>
   </data>
   <data name="LanguageExpander.Header" xml:space="preserve">
-    <value>Язык</value>
+    <value>Idioma</value>
   </data>
   <data name="LastReadTime" xml:space="preserve">
-    <value>Время последнего чтения</value>
+    <value>Hora de última lectura</value>
   </data>
   <data name="LeftToRightButton.Label" xml:space="preserve">
-    <value>Слева направо</value>
+    <value>De izquierda a derecha</value>
   </data>
   <data name="LibraryEmptyPart1.Text" xml:space="preserve">
-    <value>Нет результатов при текущих настройках фильтра. Попробуйте </value>
+    <value>No hay resultados con la configuración de filtro actual. Prueba con </value>
   </data>
   <data name="LibraryEmptyPart2.Text" xml:space="preserve">
-    <value> или </value>
+    <value> o </value>
   </data>
   <data name="LibraryEmptyPart3.Text" xml:space="preserve">
     <value>.</value>
   </data>
   <data name="LibraryHeader.Text" xml:space="preserve">
-    <value>Библиотека</value>
+    <value>Biblioteca</value>
   </data>
   <data name="MarkAsRead" xml:space="preserve">
-    <value>Отметить как завершенное</value>
+    <value>Marcar como terminado</value>
   </data>
   <data name="MarkAsUnread" xml:space="preserve">
-    <value>Отметить как непрочитанное</value>
+    <value>Marcar como no leído</value>
   </data>
   <data name="MenuFlyoutCreateNewFolder.Text" xml:space="preserve">
-    <value>Создать новую папку</value>
+    <value>Crear nueva carpeta</value>
   </data>
   <data name="MenuFlyoutOpenInNewTab.Text" xml:space="preserve">
-    <value>Открыть в новой вкладке</value>
+    <value>Abrir en nueva pestaña</value>
   </data>
   <data name="MenuFlyoutRemoveFromList.Text" xml:space="preserve">
-    <value>Удалить из списка</value>
+    <value>Eliminar de la lista</value>
   </data>
   <data name="MenuFlyoutRename.Text" xml:space="preserve">
-    <value>Переименовать</value>
+    <value>Rebautizar</value>
   </data>
   <data name="MenuFlyoutSelect.Text" xml:space="preserve">
-    <value>Выбирать</value>
+    <value>Seleccionar</value>
   </data>
   <data name="MenuFlyoutSortByName.Text" xml:space="preserve">
-    <value>Сортировать по имени</value>
+    <value>Ordenar por nombre</value>
   </data>
   <data name="MoreButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>Более</value>
+    <value>Más</value>
   </data>
   <data name="NameTextBlock.Text" xml:space="preserve">
-    <value>Имя</value>
+    <value>Nombre</value>
   </data>
   <data name="NewFolder" xml:space="preserve">
-    <value>Новая папка</value>
+    <value>Nueva carpeta</value>
   </data>
   <data name="NewTab" xml:space="preserve">
-    <value>Новая вкладка</value>
+    <value>Nueva pestaña</value>
   </data>
   <data name="NoFavorite.Text" xml:space="preserve">
-    <value>Ваши избранные отображаются здесь</value>
+    <value>Tus favoritos aparecen aquí</value>
   </data>
   <data name="NoHistory.Text" xml:space="preserve">
-    <value>Ваша история просмотров отображается здесь</value>
+    <value>Tu historial de navegación aparece aquí</value>
   </data>
   <data name="NoRating" xml:space="preserve">
-    <value>Нет рейтинга</value>
+    <value>Sin calificación</value>
   </data>
   <data name="NoResults" xml:space="preserve">
-    <value>Нет результатов по запросу "$keyword"</value>
+    <value>No hay resultados para "$keyword"</value>
   </data>
   <data name="NoResultsDetail.Text" xml:space="preserve">
-    <value>Попробуйте выполнить поиск по другим ключевым словам.</value>
+    <value>Intente buscar con diferentes palabras clave</value>
   </data>
   <data name="OpenInFileExplorer.ToolTipService.ToolTip" xml:space="preserve">
-    <value>Открыть в проводнике</value>
+    <value>Abrir en el Explorador de archivos</value>
   </data>
   <data name="PrivacyPolicy.Text" xml:space="preserve">
-    <value>политика конфиденциальности</value>
+    <value>política de privacidad</value>
   </data>
   <data name="Proceed" xml:space="preserve">
-    <value>Продолжить</value>
+    <value>Proceder</value>
   </data>
   <data name="Progress" xml:space="preserve">
-    <value>Прогресс</value>
+    <value>Progreso</value>
   </data>
   <data name="Rating" xml:space="preserve">
-    <value>Рейтинг</value>
+    <value>Puntaje</value>
   </data>
   <data name="ReaderExpander.Detail" xml:space="preserve">
-    <value>Настройте считыватель</value>
+    <value>Personalizar el lector</value>
   </data>
   <data name="ReaderExpander.Header" xml:space="preserve">
-    <value>Читатель</value>
+    <value>Lector</value>
   </data>
   <data name="ReaderSettingButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>Настройки ридера</value>
+    <value>Configuración del lector</value>
   </data>
   <data name="ReaderStatusError" xml:space="preserve">
-    <value>Произошла ошибка при загрузке</value>
+    <value>Se produjo un error durante la carga</value>
   </data>
   <data name="ReaderStatusLoading" xml:space="preserve">
-    <value>Читатель загружается</value>
+    <value>El lector esta cargando</value>
   </data>
   <data name="ReaderTip.Message" xml:space="preserve">
-    <value>Дважды нажмите, чтобы подогнать ширину/высоту</value>
+    <value>Toque dos veces para ajustar el ancho/alto</value>
   </data>
   <data name="ReaderTip.Title" xml:space="preserve">
-    <value>Кончик</value>
+    <value>Consejo</value>
   </data>
   <data name="Reading" xml:space="preserve">
-    <value>Чтение</value>
+    <value>Lectura</value>
   </data>
   <data name="Refresh" xml:space="preserve">
-    <value>Обновить</value>
+    <value>Refrescar</value>
   </data>
   <data name="RemoveFromFavorites" xml:space="preserve">
-    <value>Удалить из избранного</value>
+    <value>Eliminar de favoritos</value>
   </data>
   <data name="RemoveLocationButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>Удалить эту папку из списка</value>
+    <value>Eliminar esta carpeta de la lista</value>
   </data>
   <data name="RemoveUnreachableCheckBox.Content" xml:space="preserve">
-    <value>Автоматически удалять недоступные комиксы</value>
+    <value>Eliminar automáticamente los cómics inaccesibles</value>
   </data>
   <data name="RescanFilesButton.Content" xml:space="preserve">
-    <value>Повторное сканирование файлов</value>
+    <value>Volver a escanear archivos</value>
   </data>
   <data name="RightToLeftButton.Label" xml:space="preserve">
-    <value>Справа налево</value>
+    <value>De derecha a izquierda</value>
   </data>
   <data name="SaveAsNewButton.Content" xml:space="preserve">
-    <value>Сохранить как новый</value>
+    <value>Guardar como nuevo</value>
   </data>
   <data name="SaveButton.Content" xml:space="preserve">
-    <value>Сохранять</value>
+    <value>Ahorrar</value>
   </data>
   <data name="SaveHistory.Text" xml:space="preserve">
-    <value>Сохранить историю просмотров</value>
+    <value>Guardar el historial de navegación</value>
   </data>
   <data name="SearchResults" xml:space="preserve">
-    <value>Результаты поиска</value>
+    <value>Resultados de la búsqueda</value>
   </data>
   <data name="SearchResultsOf" xml:space="preserve">
-    <value>Результаты '$keyword'</value>
+    <value>Resultados de '$keyword'</value>
   </data>
   <data name="SelectAllAppBarButton.Label" xml:space="preserve">
-    <value>Выбрать все</value>
+    <value>Seleccionar todo</value>
   </data>
   <data name="SendFeedbackButton.Content" xml:space="preserve">
-    <value>Отправить отзыв</value>
+    <value>Enviar comentarios</value>
   </data>
   <data name="Settings" xml:space="preserve">
-    <value>Настройки</value>
+    <value>Ajustes</value>
   </data>
   <data name="ShowHiddenComicButton.Content" xml:space="preserve">
-    <value>Показать скрытые комиксы</value>
+    <value>Mostrar cómics ocultos</value>
   </data>
   <data name="Sort" xml:space="preserve">
-    <value>Сортировка</value>
+    <value>Clasificación</value>
   </data>
   <data name="Statistics" xml:space="preserve">
-    <value>Статистика</value>
+    <value>Estadística</value>
   </data>
   <data name="Tag" xml:space="preserve">
-    <value>Ярлык</value>
+    <value>Etiqueta</value>
   </data>
   <data name="TagIntroduction.Message" xml:space="preserve">
-    <value>Добавление тегов к комиксам может упростить управление вашим репозиторием, например:
-Категория 1: Тег 1/Тег 2/Тег 3
-Категория 2: Тег 4/Тег 5
+    <value>Añadir etiquetas a los cómics puede facilitar la gestión de tu repositorio, por ejemplo:
+Categoría 1: Etiqueta 1/Etiqueta 2/Etiqueta 3
+Categoría 2: Etiqueta 4/Etiqueta 5
 ...</value>
   </data>
   <data name="Tags" xml:space="preserve">
-    <value>Теги</value>
+    <value>Etiquetas</value>
   </data>
   <data name="TagsColon" xml:space="preserve">
-    <value>Теги:</value>
+    <value>Etiquetas:</value>
   </data>
   <data name="ThemeDark.Content" xml:space="preserve">
-    <value>Темный</value>
+    <value>Oscuro</value>
   </data>
   <data name="ThemeLight.Content" xml:space="preserve">
-    <value>Светлый цвет</value>
+    <value>Color de la luz</value>
   </data>
   <data name="ThemeUseSystemSetting.Content" xml:space="preserve">
-    <value>Следуйте системным настройкам</value>
+    <value>Siga la configuración del sistema</value>
   </data>
   <data name="Title" xml:space="preserve">
-    <value>Заголовок</value>
+    <value>Título</value>
   </data>
   <data name="Title1" xml:space="preserve">
-    <value>Заголовок 1</value>
+    <value>Título 1</value>
   </data>
   <data name="Title1Colon" xml:space="preserve">
-    <value>Заголовок 1:</value>
+    <value>Título 1: </value>
   </data>
   <data name="Title2" xml:space="preserve">
-    <value>Заголовок 2</value>
+    <value>Título 2</value>
   </data>
   <data name="Title2Colon" xml:space="preserve">
-    <value>Заголовок 2:</value>
+    <value>Título 2:  </value>
   </data>
   <data name="TotalComics" xml:space="preserve">
-    <value>Всего комиксов: </value>
+    <value>Total de cómics: </value>
   </data>
   <data name="TransitionAnimation.Text" xml:space="preserve">
-    <value>Анимация перелистывания страниц</value>
+    <value>Animación de transición</value>
   </data>
   <data name="Unfavorite" xml:space="preserve">
-    <value>Удалить из избранного</value>
+    <value>Eliminar de favoritos</value>
   </data>
   <data name="Ungrouped" xml:space="preserve">
-    <value>Нет группировки</value>
+    <value>Sin agrupación</value>
   </data>
   <data name="Unhide" xml:space="preserve">
-    <value>Показать</value>
+    <value>Mostrar</value>
   </data>
   <data name="Unread" xml:space="preserve">
-    <value>Не прочитано</value>
+    <value>No leído</value>
   </data>
   <data name="Untitled" xml:space="preserve">
-    <value>Безымянный</value>
+    <value>Intitulado</value>
   </data>
   <data name="UseSystemLanguage" xml:space="preserve">
-    <value>Использовать системный язык</value>
+    <value>Utilizar el lenguaje del sistema</value>
   </data>
   <data name="VerticalButton.Label" xml:space="preserve">
-    <value>Вертикальный</value>
+    <value>Vertical</value>
   </data>
   <data name="ViewType" xml:space="preserve">
-    <value>Вид</value>
+    <value>Vista</value>
   </data>
   <data name="ViewTypeLarge" xml:space="preserve">
-    <value>Большой</value>
+    <value>Grande</value>
   </data>
   <data name="ViewTypeMedium" xml:space="preserve">
-    <value>Середина</value>
+    <value>Medio</value>
   </data>
   <data name="Warning" xml:space="preserve">
-    <value>Предупреждение</value>
+    <value>Advertencia</value>
   </data>
   <data name="WatchingFolders.Text" xml:space="preserve">
-    <value>Прямо сейчас мы наблюдаем за этими папками:</value>
+    <value>En este momento estamos viendo estas carpetas:</value>
   </data>
 </root>

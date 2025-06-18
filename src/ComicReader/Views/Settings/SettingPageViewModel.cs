@@ -378,14 +378,15 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
         {
             string currentLanguage = model.Language;
             List<LanguageEntry> languages = [
+                new("Deutsch", "de-DE", "Einige Texte sind maschinell übersetzt"),
+                new("Español", "es-ES", "Algunos textos están traducidos automáticamente"),
+                new("Français", "fr-FR", "Certains textes sont traduits automatiquement"),
                 new("English", "en", ""),
-                new("简体中文", "zh-CN", ""),
-                new("繁體中文", "zh-TW", "部分文字使用了機器翻譯"),
                 new("日本語", "ja-JP", "一部のテキストは機械翻訳されています"),
                 new("한국어", "ko-KR", "일부 텍스트는 기계로 번역되었습니다"),
-                new("Français", "fr-FR", "Certains textes sont traduits automatiquement"),
-                new("Deutsch", "de-DE", "Einige Texte sind maschinell übersetzt"),
                 new("Русский", "ru-RU", "Некоторые тексты переведены машинным способом"),
+                new("简体中文", "zh-CN", ""),
+                new("繁體中文", "zh-TW", "部分文字使用了機器翻譯"),
             ];
             languages.Sort((x, y) => x.Identifier.CompareTo(y.Identifier));
             LanguageEntry useSystemLanguage = new(StringResourceProvider.Instance.UseSystemLanguage, "", GetLanguageDescriptionOfSystemLanguage(languages));
