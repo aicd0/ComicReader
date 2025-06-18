@@ -3,7 +3,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 
 using ComicReader.Data.Legacy;
 using ComicReader.Data.Models;
@@ -16,9 +15,9 @@ class DatabaseUpgradeManager
 
     private DatabaseUpgradeManager() { }
 
-    public async Task UpgradeDatabase()
+    public void UpgradeDatabase()
     {
-        DatabaseVersionModel.JsonModel databaseVersions = await DatabaseVersionModel.Instance.GetModel();
+        DatabaseVersionModel.JsonModel databaseVersions = DatabaseVersionModel.Instance.GetModel();
         if (databaseVersions == null)
         {
             return;
@@ -32,7 +31,7 @@ class DatabaseUpgradeManager
         {
             if (task(databaseVersions))
             {
-                await DatabaseVersionModel.Instance.UpdateModel(databaseVersions);
+                DatabaseVersionModel.Instance.UpdateModel(databaseVersions);
             }
         }
     }
@@ -88,7 +87,7 @@ class DatabaseUpgradeManager
             {
                 newData.Children.Add(CloneNode(child));
             }
-            FavoriteModel.Instance.UpdateModel(newData).Wait();
+            FavoriteModel.Instance.UpdateModel(newData);
         }
         versions.FavoritesVersion = 1;
         return true;

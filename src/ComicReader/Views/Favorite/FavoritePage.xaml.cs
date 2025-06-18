@@ -3,7 +3,6 @@
 
 #nullable disable
 
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -40,21 +39,14 @@ internal sealed partial class FavoritePage : BasePage
     {
         base.OnResume();
         ObserveData();
-
-        C0.Run(async delegate
-        {
-            await Update();
-        });
+        Update();
     }
 
     private void ObserveData()
     {
         EventBus.Default.With(EventId.SidePaneUpdate).Observe(this, delegate
         {
-            C0.Run(async delegate
-            {
-                await Update();
-            });
+            Update();
         });
     }
 
@@ -69,7 +61,7 @@ internal sealed partial class FavoritePage : BasePage
     }
 
     // utilities
-    private async Task Update()
+    private void Update()
     {
         void helper(List<FavoriteModel.ExternalNodeModel> it, ObservableCollection<FavoriteItemViewModel> et, FavoriteItemViewModel parent)
         {
@@ -91,7 +83,7 @@ internal sealed partial class FavoritePage : BasePage
             }
         }
 
-        FavoriteModel.ExternalModel model = await FavoriteModel.Instance.GetModel();
+        FavoriteModel.ExternalModel model = FavoriteModel.Instance.GetModel();
         if (model == null)
         {
             return;
@@ -107,7 +99,7 @@ internal sealed partial class FavoritePage : BasePage
         TbNoFavorite.Visibility = DataSource.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    private async Task Save()
+    private void Save()
     {
         void helper(List<FavoriteModel.ExternalNodeModel> it, ObservableCollection<FavoriteItemViewModel> et)
         {
@@ -131,10 +123,10 @@ internal sealed partial class FavoritePage : BasePage
 
         FavoriteModel.ExternalModel model = new([]);
         helper(model.Children, DataSource);
-        await FavoriteModel.Instance.UpdateModel(model);
+        FavoriteModel.Instance.UpdateModel(model);
     }
 
-    private async Task DeleteItem(FavoriteItemViewModel item)
+    private void DeleteItem(FavoriteItemViewModel item)
     {
         if (item.Parent != null)
         {
@@ -145,7 +137,7 @@ internal sealed partial class FavoritePage : BasePage
             _ = DataSource.Remove(item);
         }
 
-        await Save();
+        Save();
         UpdateView();
     }
 
@@ -169,7 +161,7 @@ internal sealed partial class FavoritePage : BasePage
                     item.IsRenaming = false;
                     ObservableCollection<FavoriteItemViewModel> parent = item.Parent != null ? item.Parent.Children : DataSource;
                     C1<FavoriteItemViewModel>.NotifyCollectionChanged(parent, item);
-                    await Save();
+                    Save();
                     return true;
                 }
 
@@ -233,25 +225,22 @@ internal sealed partial class FavoritePage : BasePage
 
     private void SortFavorites(ObservableCollection<FavoriteItemViewModel> source)
     {
-        C0.Run(async delegate
+        var ordered = source.OrderBy(x => x.Name, new StringUtils.OrdinalComparer()).ToList();
+
+        for (int i = 0; i < ordered.Count; ++i)
         {
-            var ordered = source.OrderBy(x => x.Name, new StringUtils.OrdinalComparer()).ToList();
+            FavoriteItemViewModel item = ordered[i];
 
-            for (int i = 0; i < ordered.Count; ++i)
+            if (source.IndexOf(item) == i)
             {
-                FavoriteItemViewModel item = ordered[i];
-
-                if (source.IndexOf(item) == i)
-                {
-                    continue;
-                }
-
-                source.Remove(item);
-                source.Insert(i, item);
+                continue;
             }
 
-            await Save();
-        });
+            source.Remove(item);
+            source.Insert(i, item);
+        }
+
+        Save();
     }
 
     // events
@@ -301,7 +290,7 @@ internal sealed partial class FavoritePage : BasePage
 
                 if (comic == null)
                 {
-                    await DeleteItem(item);
+                    DeleteItem(item);
                 }
                 else
                 {
@@ -316,11 +305,8 @@ internal sealed partial class FavoritePage : BasePage
 
     private void DeleteClick(object sender, RoutedEventArgs e)
     {
-        C0.Run(async delegate
-        {
-            var item = (FavoriteItemViewModel)((MenuFlyoutItem)sender).DataContext;
-            await DeleteItem(item);
-        });
+        var item = (FavoriteItemViewModel)((MenuFlyoutItem)sender).DataContext;
+        DeleteItem(item);
     }
 
     private void RenameClick(object sender, RoutedEventArgs e)
@@ -364,59 +350,50 @@ internal sealed partial class FavoritePage : BasePage
 
     private void NewFolderClick(object sender, RoutedEventArgs e)
     {
-        C0.Run(async delegate
+        var item = (FavoriteItemViewModel)((MenuFlyoutItem)sender).DataContext;
+
+        if (item.Type == FavoriteNodeType.Filter)
         {
-            var item = (FavoriteItemViewModel)((MenuFlyoutItem)sender).DataContext;
-
-            if (item.Type == FavoriteNodeType.Filter)
+            if (!item.Expanded)
             {
-                if (!item.Expanded)
-                {
-                    item.Expanded = true;
-                    C1<FavoriteItemViewModel>.NotifyCollectionChanged(item.Parent != null ? item.Parent.Children : DataSource, item);
-                }
+                item.Expanded = true;
+                C1<FavoriteItemViewModel>.NotifyCollectionChanged(item.Parent != null ? item.Parent.Children : DataSource, item);
+            }
 
-                CreateNewFolder(item.Children, item);
+            CreateNewFolder(item.Children, item);
+        }
+        else
+        {
+            if (item.Parent != null)
+            {
+                CreateNewFolder(item.Parent.Children, item.Parent);
             }
             else
             {
-                if (item.Parent != null)
-                {
-                    CreateNewFolder(item.Parent.Children, item.Parent);
-                }
-                else
-                {
-                    CreateNewFolder(DataSource, null);
-                }
+                CreateNewFolder(DataSource, null);
             }
+        }
 
-            await Save();
-        });
+        Save();
     }
 
     private void RootNewFolderClick(object sender, RoutedEventArgs e)
     {
-        C0.Run(async delegate
-        {
-            CreateNewFolder(DataSource, null);
-            await Save();
-        });
+        CreateNewFolder(DataSource, null);
+        Save();
     }
 
     private void MainTreeViewDragItemsCompleted(Microsoft.UI.Xaml.Controls.TreeView sender,
         Microsoft.UI.Xaml.Controls.TreeViewDragItemsCompletedEventArgs args)
     {
-        C0.Run(async delegate
+        var parent = (FavoriteItemViewModel)args.NewParentItem;
+
+        foreach (FavoriteItemViewModel item in args.Items.Cast<FavoriteItemViewModel>())
         {
-            var parent = (FavoriteItemViewModel)args.NewParentItem;
+            item.Parent = parent;
+        }
 
-            foreach (FavoriteItemViewModel item in args.Items.Cast<FavoriteItemViewModel>())
-            {
-                item.Parent = parent;
-            }
-
-            await Save();
-        });
+        Save();
     }
 
     private void OpenInNewTabClick(object sender, RoutedEventArgs e)

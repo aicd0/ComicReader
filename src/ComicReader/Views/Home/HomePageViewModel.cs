@@ -457,7 +457,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
                     {
                         Id = x.Comic.Id,
                         Title = x.Comic.Title,
-                    })).Wait();
+                    }));
                     _ = MainThreadUtils.RunInMainThread(delegate
                     {
                         foreach (ComicItemViewModel item in items)
@@ -470,7 +470,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
             case BatchOperationType.UnFavorite:
                 {
                     List<ComicItemViewModel> items = models.FindAll(x => x.IsFavorite);
-                    FavoriteModel.Instance.BatchRemoveWithId(items.ConvertAll(x => x.Comic.Id)).Wait();
+                    FavoriteModel.Instance.BatchRemoveWithId(items.ConvertAll(x => x.Comic.Id));
                     _ = MainThreadUtils.RunInMainThread(delegate
                     {
                         foreach (ComicItemViewModel item in items)
@@ -625,7 +625,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
         // Validate and save
         if (reloadFromDatabase || _filterModel == null)
         {
-            _filterModel = await ComicFilterModel.Instance.GetModel() ?? new();
+            _filterModel = ComicFilterModel.Instance.GetModel() ?? new();
         }
         List<ComicFilterModel.ExternalFilterModel> filters = _filterModel.Filters;
         if (filters == null || filters.Count == 0)
@@ -643,7 +643,7 @@ internal class HomePageViewModel : INotifyPropertyChanged
         lastFilter.SortBy = sortBy;
 
         ComicPropertyModel? groupBy = lastFilter.GroupBy;
-        _ = ComicFilterModel.Instance.UpdateModel(_filterModel);
+        ComicFilterModel.Instance.UpdateModel(_filterModel);
 
         // Update expression
         _searchEngine.SetFilterExpresssion(lastFilter.Expression);

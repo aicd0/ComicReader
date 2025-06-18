@@ -4,7 +4,6 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.SDK.Common.DebugTools;
@@ -53,7 +52,7 @@ internal class DebugSwitchModel : JsonDatabase<DebugSwitchModel.JsonModel>
         {
             JsonModel model = GetConfig();
             model.ConsoleEnabled = value;
-            _ = UpdateModel(model);
+            UpdateModel(model);
         }
     }
 
@@ -64,7 +63,7 @@ internal class DebugSwitchModel : JsonDatabase<DebugSwitchModel.JsonModel>
         {
             JsonModel model = GetConfig();
             model.LogTreeEnabled = value;
-            _ = UpdateModel(model);
+            UpdateModel(model);
         }
     }
 
@@ -100,10 +99,10 @@ internal class DebugSwitchModel : JsonDatabase<DebugSwitchModel.JsonModel>
         return new();
     }
 
-    public async Task Initialize()
+    public void Initialize()
     {
         DebugUtils.DebugMode = DebugMode;
-        JsonModel model = await Read((m) => m);
+        JsonModel model = Read((m) => m);
         UpdateConfig(model);
     }
 
@@ -112,11 +111,11 @@ internal class DebugSwitchModel : JsonDatabase<DebugSwitchModel.JsonModel>
         return JsonSerializer.Serialize(GetConfig(), _serializeOption);
     }
 
-    public async Task SaveConfig(string json)
+    public void SaveConfig(string json)
     {
         JsonModel config = JsonSerializer.Deserialize<JsonModel>(json) ?? new();
         UpdateConfig(config);
-        await UpdateModel(config);
+        UpdateModel(config);
     }
 
     private JsonModel GetConfig()
@@ -145,10 +144,10 @@ internal class DebugSwitchModel : JsonDatabase<DebugSwitchModel.JsonModel>
         _consoleWhitelist = null;
     }
 
-    private async Task UpdateModel(JsonModel model)
+    private void UpdateModel(JsonModel model)
     {
-        await Write(model);
-        await Save();
+        Write(model);
+        Save();
     }
 
     public class JsonModel

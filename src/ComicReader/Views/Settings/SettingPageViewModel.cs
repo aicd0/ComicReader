@@ -288,7 +288,7 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
             AntiAliasingEnabled = AppModel.AntiAliasingEnabled;
             DebugMode = DebugUtils.DebugMode;
 
-            ApplySettingsModel(await GetSettingsModelAsync());
+            ApplySettingsModel(GetSettingsModel());
             await UpdateEncodings();
             UpdateCacheSize();
             UpdateRescanStatus();
@@ -299,13 +299,10 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
 
     public void SetRemoveUnreachableComics(bool removeUnreachableComics)
     {
-        C0.Run(async () =>
-        {
-            _removeUnreachableComics = removeUnreachableComics;
-            AppSettingsModel.ExternalModel model = await GetSettingsModelAsync();
-            model.RemoveUnreachableComics = removeUnreachableComics;
-            await AppSettingsModel.Instance.UpdateModel(model);
-        });
+        _removeUnreachableComics = removeUnreachableComics;
+        AppSettingsModel.ExternalModel model = GetSettingsModel();
+        model.RemoveUnreachableComics = removeUnreachableComics;
+        AppSettingsModel.Instance.UpdateModel(model);
     }
 
     public void SelectLanguage(int index)
@@ -336,12 +333,9 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
             }
         }
 
-        C0.Run(async () =>
-        {
-            AppSettingsModel.ExternalModel model = await GetSettingsModelAsync();
-            model.Language = selectedLanguage.Identifier;
-            await AppSettingsModel.Instance.UpdateModel(model);
-        });
+        AppSettingsModel.ExternalModel model = GetSettingsModel();
+        model.Language = selectedLanguage.Identifier;
+        AppSettingsModel.Instance.UpdateModel(model);
     }
 
     public void ClearCache()
@@ -359,14 +353,14 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
         });
     }
 
-    private async Task<AppSettingsModel.ExternalModel> GetSettingsModelAsync()
+    private AppSettingsModel.ExternalModel GetSettingsModel()
     {
         AppSettingsModel.ExternalModel? model = _settingsModel;
         if (model != null)
         {
             return model;
         }
-        model = await AppSettingsModel.Instance.GetModel();
+        model = AppSettingsModel.Instance.GetModel();
         _settingsModel = model;
         return model;
     }
@@ -492,12 +486,9 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
     {
         AppearanceChanged = appearance != _initialAppearance;
 
-        C0.Run(async () =>
-        {
-            AppSettingsModel.ExternalModel model = await GetSettingsModelAsync();
-            model.Theme = appearance;
-            await AppSettingsModel.Instance.UpdateModel(model);
-        });
+        AppSettingsModel.ExternalModel model = GetSettingsModel();
+        model.Theme = appearance;
+        AppSettingsModel.Instance.UpdateModel(model);
     }
 
     private static string GetCacheSize()

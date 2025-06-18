@@ -116,7 +116,7 @@ public partial class App : Application
 
     private void InitializeAppTheme()
     {
-        AppSettingsModel.AppearanceSetting themeSetting = AppSettingsModel.Instance.GetModel().Result.Theme;
+        AppSettingsModel.AppearanceSetting themeSetting = AppSettingsModel.Instance.GetModel().Theme;
         switch (themeSetting)
         {
             case AppSettingsModel.AppearanceSetting.Light:
@@ -134,7 +134,7 @@ public partial class App : Application
     {
         if (EnvironmentProvider.IsPortable())
         {
-            string languageTag = AppSettingsModel.Instance.GetModel().Result.Language;
+            string languageTag = AppSettingsModel.Instance.GetModel().Language;
             if (string.IsNullOrEmpty(languageTag))
             {
                 languageTag = EnvironmentProvider.Instance.GetCurrentSystemLanguage();
@@ -146,7 +146,7 @@ public partial class App : Application
     private async Task InitializeOnAppLaunch()
     {
         // Initialize debug switches
-        DebugSwitchModel.Instance.Initialize().Wait();
+        DebugSwitchModel.Instance.Initialize();
 
         // Initialize logger
         Logger.Initialize();
@@ -154,7 +154,7 @@ public partial class App : Application
         // Initialize databases
         await XmlDatabaseManager.Initialize();
         SqlDatabaseManager.Initialize();
-        await DatabaseUpgradeManager.Instance.UpgradeDatabase();
+        DatabaseUpgradeManager.Instance.UpgradeDatabase();
 
         // Update comic library
         ComicModel.UpdateAllComics("DatabaseManager#init", lazy: true);

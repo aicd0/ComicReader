@@ -143,7 +143,7 @@ internal partial class EditFilterDialogViewModel : INotifyPropertyChanged
         }
         model.LastFilterModified = false;
         model.LastFilter = filter.Clone();
-        _ = ComicFilterModel.Instance.UpdateModel(model);
+        ComicFilterModel.Instance.UpdateModel(model);
     }
 
     public void SaveAsNew()
@@ -164,7 +164,7 @@ internal partial class EditFilterDialogViewModel : INotifyPropertyChanged
         }
         model.LastFilterModified = false;
         model.LastFilter = filter.Clone();
-        _ = ComicFilterModel.Instance.UpdateModel(model);
+        ComicFilterModel.Instance.UpdateModel(model);
     }
 
     public void Delete()
@@ -183,7 +183,7 @@ internal partial class EditFilterDialogViewModel : INotifyPropertyChanged
         }
         model.LastFilterModified = false;
         model.LastFilter = null;
-        _ = ComicFilterModel.Instance.UpdateModel(model);
+        ComicFilterModel.Instance.UpdateModel(model);
     }
 
     private async Task InitializeAsync(ComicFilterModel.ExternalFilterModel filter)
@@ -216,7 +216,7 @@ internal partial class EditFilterDialogViewModel : INotifyPropertyChanged
             ExpressionButtons = buttons;
         }
 
-        ComicFilterModel.ExternalModel? filterModel = await ComicFilterModel.Instance.GetModel();
+        ComicFilterModel.ExternalModel? filterModel = ComicFilterModel.Instance.GetModel();
         _filterModel = filterModel;
         _filter = filter;
         if (filter != null)

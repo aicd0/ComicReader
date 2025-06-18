@@ -5,7 +5,6 @@
 
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Common.Lifecycle;
@@ -46,14 +45,14 @@ class FavoriteModel : JsonDatabase<FavoriteModel.JsonModel>
         return new();
     }
 
-    public async Task<ExternalModel> GetModel()
+    public ExternalModel GetModel()
     {
-        return await Read(ConvertToExternalModel);
+        return Read(ConvertToExternalModel);
     }
 
-    public async Task UpdateModel(ExternalModel model)
+    public void UpdateModel(ExternalModel model)
     {
-        await Write(m =>
+        Write(m =>
         {
             m.Children.Clear();
             foreach (ExternalNodeModel node in model.Children)
@@ -62,16 +61,16 @@ class FavoriteModel : JsonDatabase<FavoriteModel.JsonModel>
             }
             return true;
         });
-        await Save();
+        Save();
     }
 
-    public async Task<ExternalNodeModel> FromId(long id)
+    public ExternalNodeModel FromId(long id)
     {
-        JsonNodeModel model = await Read(model => FromIdNoLock(model, id));
+        JsonNodeModel model = Read(model => FromIdNoLock(model, id));
         return ConvertToExternalModel(model);
     }
 
-    public async Task<bool> RemoveWithId(long id, bool sendEvent)
+    public bool RemoveWithId(long id, bool sendEvent)
     {
         bool helper(List<JsonNodeModel> e)
         {
@@ -102,8 +101,8 @@ class FavoriteModel : JsonDatabase<FavoriteModel.JsonModel>
             return false;
         }
 
-        bool result = await Write(model => helper(model.Children));
-        await Save();
+        bool result = Write(model => helper(model.Children));
+        Save();
 
         if (sendEvent)
         {
@@ -112,7 +111,7 @@ class FavoriteModel : JsonDatabase<FavoriteModel.JsonModel>
         return result;
     }
 
-    public async Task BatchRemoveWithId(List<long> ids)
+    public void BatchRemoveWithId(List<long> ids)
     {
         if (ids == null || ids.Count == 0)
         {
@@ -139,17 +138,17 @@ class FavoriteModel : JsonDatabase<FavoriteModel.JsonModel>
             }
             return updated;
         }
-        bool updated = await Write(model => Helper(model.Children));
+        bool updated = Write(model => Helper(model.Children));
         if (updated)
         {
-            await Save();
+            Save();
             DispatchUpdateEvent();
         }
     }
 
-    public async Task Add(long id, string title, bool sendEvent)
+    public void Add(long id, string title, bool sendEvent)
     {
-        bool updated = await Write(delegate (JsonModel model)
+        bool updated = Write(delegate (JsonModel model)
         {
             JsonNodeModel node = FromIdNoLock(model, id);
             if (node != null)
@@ -168,7 +167,7 @@ class FavoriteModel : JsonDatabase<FavoriteModel.JsonModel>
 
         if (updated)
         {
-            await Save();
+            Save();
 
             if (sendEvent)
             {
@@ -177,13 +176,13 @@ class FavoriteModel : JsonDatabase<FavoriteModel.JsonModel>
         }
     }
 
-    public async Task BatchAdd(List<FavoriteItem> items)
+    public void BatchAdd(List<FavoriteItem> items)
     {
         if (items == null || items.Count == 0)
         {
             return;
         }
-        bool updated = await Write(delegate (JsonModel model)
+        bool updated = Write(delegate (JsonModel model)
         {
             bool updated = false;
             foreach (FavoriteItem item in items)
@@ -206,7 +205,7 @@ class FavoriteModel : JsonDatabase<FavoriteModel.JsonModel>
         });
         if (updated)
         {
-            await Save();
+            Save();
             DispatchUpdateEvent();
         }
     }

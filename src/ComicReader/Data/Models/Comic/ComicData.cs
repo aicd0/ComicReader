@@ -845,7 +845,7 @@ internal abstract class ComicData
 
     private static async Task<TaskException> UpdateAllComicsInternal(bool lazy)
     {
-        AppSettingsModel.ExternalModel appSettings = await AppSettingsModel.Instance.GetModel();
+        AppSettingsModel.ExternalModel appSettings = AppSettingsModel.Instance.GetModel();
 
         // Fetch all locations in the database
         var locExist = new List<string>();

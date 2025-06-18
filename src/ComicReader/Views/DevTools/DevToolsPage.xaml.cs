@@ -67,21 +67,18 @@ internal sealed partial class DevToolsPage : BasePage
 
     private void OnCommonConfigsApplyClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        C0.Run(async () =>
+        string configs = TbCommonConfigs.Text;
+        try
         {
-            string configs = TbCommonConfigs.Text;
-            try
-            {
-                await DebugSwitchModel.Instance.SaveConfig(configs);
-            }
-            catch (Exception ex)
-            {
-                SetResult(ex.ToString());
-                return;
-            }
-            SetResult("Successfully applied");
-            RestoreConfig();
-        });
+            DebugSwitchModel.Instance.SaveConfig(configs);
+        }
+        catch (Exception ex)
+        {
+            SetResult(ex.ToString());
+            return;
+        }
+        SetResult("Successfully applied");
+        RestoreConfig();
     }
 
     private void OnCommonConfigsRestoreClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
