@@ -173,7 +173,7 @@
                         <settings:SettingExpander.InnerContent>
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="1000*" MaxWidth="300" />
+                                    <ColumnDefinition Width="1000*" MaxWidth="350" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
                                 <StackPanel
