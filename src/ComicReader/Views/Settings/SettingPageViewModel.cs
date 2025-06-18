@@ -384,6 +384,7 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
                 new("日本語", "ja-JP", "一部のテキストは機械翻訳されています"),
                 new("한국어", "ko-KR", "일부 텍스트는 기계로 번역되었습니다"),
                 new("Français", "fr-FR", "Certains textes sont traduits automatiquement"),
+                new("Deutsch", "de-DE", "Einige Texte sind maschinell übersetzt"),
             ];
             languages.Sort((x, y) => x.Identifier.CompareTo(y.Identifier));
             LanguageEntry useSystemLanguage = new(StringResourceProvider.Instance.UseSystemLanguage, "", GetLanguageDescriptionOfSystemLanguage(languages));

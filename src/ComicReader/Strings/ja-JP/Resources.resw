@@ -274,34 +274,32 @@
 
 1. 変数
 
-%tag - コミック内のすべてのタグに一致します。
-%title - タイトル1またはタイトル2に一致します。
-%title1 - タイトル1に一致します。
-%title2 - タイトル2に一致します。
-%rating - 評価に一致します。例：4は星4つ、0は評価なしを表します。
+%tag              - コミック内のすべてのタグに一致します。
+%title            - タイトル1またはタイトル2に一致します。
+%title1           - タイトル1に一致します。
+%title2           - タイトル2に一致します。
+%rating           - 評価に一致します。例：4は星4つ、0は評価なしを表します。
 %completion_state - コミックの完了状態（0 - 未読、1 - 読んでいる、2 - 完了）。
-%progress - 読書の進捗状況（パーセンテージ）。例：50は50%を表します。
+%progress         - 読書の進捗状況（パーセンテージ）。例：50は50%を表します。
 
 2. 変数演算子
 
-= - 等しい。例：%title = "This is a title"
-&gt; - より大きい。例：%rating &gt; 3
-&gt;= - 以上。
-&lt; - より小さい。
-&lt;= - 以下。
-... IN (...) - 包含。例：
-%rating in (3, 4, 5) - 評価が3、4、5のコミックにマッチします。
-%tag.language in (languageA, languageB) - 「language」タグカテゴリに「languageA」または「languageB」が含まれるコミックにマッチします。
-(authorA, authorB) in %tag.authors - 「authors」タグカテゴリに「authorA」と「authorB」の両方が含まれるコミックにマッチします。
-apple in %tag - 「apple」タグを含むコミックにマッチします。
+=                 - 等しい。例：%title = "This is a title"
+&gt;                 - より大きい。例：%rating &gt; 3
+&gt;=                - 以上。
+&lt;                 - より小さい。
+&lt;=                - 以下。
+... IN (...)      - 包含。例：
+                    %rating in (3, 4, 5) - 評価が3、4、5のコミックにマッチします。
+                    %tag.language in (languageA, languageB) - 「language」タグカテゴリに「languageA」または「languageB」が含まれるコミックにマッチします。
+                    (authorA, authorB) in %tag.authors - 「authors」タグカテゴリに「authorA」と「authorB」の両方が含まれるコミックにマッチします。
+                    apple in %tag - 「apple」タグを含むコミックにマッチします。
 
 3. 論理演算子
 
-AND - 論理積。例：
-%tag.fruit = apple AND %title = "I have an apple"
-OR - 論理和。例：
-%title1 = "Apple is OK" OR %title2 = "Orange is also OK"
-NOT - 論理否定。例: NOT %tag = "hide this"
+AND               - 論理積。例：%tag.fruit = apple AND %title = "I have an apple"
+OR                - 論理和。例：%title1 = "Apple is OK" OR %title2 = "Orange is also OK"
+NOT               - 論理否定。例: NOT %tag = "hide this"
 
 4. 括弧
 
@@ -311,9 +309,9 @@ NOT - 論理否定。例: NOT %tag = "hide this"
 
 評価は以下の順序で実行されます:
 
-1. NOT %tag.lang = langB ==&gt; 結果1
-2. %tag.language = langA OR 結果1 ==&gt; 結果2
-3. %tag.author = abc AND 結果2 ==&gt; 結果3</value>
+1. NOT %tag.lang = langB  ==&gt;  結果1
+2. %tag.language = langA OR 結果1  ==&gt;  結果2
+3. %tag.author = abc AND 結果2  ==&gt;  結果3</value>
   </data>
   <data name="ExpressionTextBlock.Text" xml:space="preserve">
     <value>条件式</value>
