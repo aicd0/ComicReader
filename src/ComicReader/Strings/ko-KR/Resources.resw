@@ -570,9 +570,9 @@ NOT                  - 논리 not. 예: NOT %tag = "hide this"
     <value>꼬리표</value>
   </data>
   <data name="TagIntroduction.Message" xml:space="preserve">
-    <value>만화에 태그를 추가하면 저장소 관리가 더 쉬워집니다. 예:
-카테고리 1: 태그 1/태그 2/태그 3
-카테고리 2: 태그 4/태그 5
+    <value>태그를 제대로 사용하면 라이브러리를 더 쉽게 정리할 수 있습니다. 예:
+카테고리1: 태그1/태그2/태그3
+카테고리2: 태그4/태그5
 ...</value>
   </data>
   <data name="Tags" xml:space="preserve">

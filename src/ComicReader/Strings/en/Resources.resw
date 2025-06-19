@@ -571,9 +571,9 @@ The evaluation will be performed in the following order:
     <value>Tag</value>
   </data>
   <data name="TagIntroduction.Message" xml:space="preserve">
-    <value>Using tags properly can make your library easier to get organized. Basic usage:
-Category1: tag1/tag2/tag3
-Category2: tag4/tag5
+    <value>Using tags properly can make your library easier to get organized. For example:
+Category1: Tag1/Tag2/Tag3
+Category2: Tag4/Tag5
 ...</value>
   </data>
   <data name="Tags" xml:space="preserve">

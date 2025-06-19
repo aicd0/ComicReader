@@ -569,10 +569,10 @@ NOT               - 論理否定。例: NOT %tag = "hide this"
     <value>ラベル</value>
   </data>
   <data name="TagIntroduction.Message" xml:space="preserve">
-    <value>コミックにタグを追加すると、リポジトリの管理が簡単になります。例:
-カテゴリー 1: タグ 1/タグ 2/タグ 3
-カテゴリー 2: タグ 4/タグ 5
-...</value>
+    <value>タグを適切に使うことで、ライブラリを整理しやすくなります。例：
+カテゴリー1: タグ1/タグ2/タグ3
+カテゴリー2: タグ4/タグ5
+…</value>
   </data>
   <data name="Tags" xml:space="preserve">
     <value>ラベル</value>
