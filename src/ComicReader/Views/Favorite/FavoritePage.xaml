@@ -27,8 +27,8 @@
                 <muxc:TreeViewItem.ContextFlyout>
                     <MenuFlyout>
                         <MenuFlyoutItem
-                            x:Uid="MenuFlyoutOpenInNewTab"
                             Click="OpenInNewTabClick"
+                            Text="{x:Bind StringResource.OpenInNewTab}"
                             Visibility="{x:Bind IsItem, Mode=OneWay}" />
                         <MenuFlyoutItem x:Uid="MenuFlyoutCreateNewFolder" Click="NewFolderClick" />
                         <MenuFlyoutItem x:Uid="MenuFlyoutSortByName" Click="SortByNameClick" />

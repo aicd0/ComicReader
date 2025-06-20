@@ -427,23 +427,20 @@ NOT                 - 邏輯非。例如：NOT %tag = "hide this"
   <data name="MarkAsRead" xml:space="preserve">
     <value>標記為完成</value>
   </data>
+  <data name="MarkAsReading" xml:space="preserve">
+    <value>標記為閱讀中</value>
+  </data>
   <data name="MarkAsUnread" xml:space="preserve">
     <value>標記為未讀</value>
   </data>
   <data name="MenuFlyoutCreateNewFolder.Text" xml:space="preserve">
     <value>新建資料夾</value>
   </data>
-  <data name="MenuFlyoutOpenInNewTab.Text" xml:space="preserve">
-    <value>在新分頁中開啟</value>
-  </data>
   <data name="MenuFlyoutRemoveFromList.Text" xml:space="preserve">
     <value>從清單中移除</value>
   </data>
   <data name="MenuFlyoutRename.Text" xml:space="preserve">
     <value>重新命名</value>
-  </data>
-  <data name="MenuFlyoutSelect.Text" xml:space="preserve">
-    <value>選擇</value>
   </data>
   <data name="MenuFlyoutSortByName.Text" xml:space="preserve">
     <value>按名稱排序</value>
@@ -477,6 +474,9 @@ NOT                 - 邏輯非。例如：NOT %tag = "hide this"
   </data>
   <data name="OpenInFileExplorer.ToolTipService.ToolTip" xml:space="preserve">
     <value>在資源管理器中開啟</value>
+  </data>
+  <data name="OpenInNewTab" xml:space="preserve">
+    <value>在新分頁中開啟</value>
   </data>
   <data name="PrivacyPolicy.Text" xml:space="preserve">
     <value>隱私權策略</value>
@@ -547,11 +547,17 @@ NOT                 - 邏輯非。例如：NOT %tag = "hide this"
   <data name="SearchResultsOf" xml:space="preserve">
     <value>'$keyword' 的搜尋結果</value>
   </data>
+  <data name="Select" xml:space="preserve">
+    <value>選擇</value>
+  </data>
   <data name="SelectAllAppBarButton.Label" xml:space="preserve">
     <value>全選</value>
   </data>
   <data name="SendFeedbackButton.Content" xml:space="preserve">
     <value>傳送回饋</value>
+  </data>
+  <data name="SetCompletionState" xml:space="preserve">
+    <value>設定完成狀態</value>
   </data>
   <data name="Settings" xml:space="preserve">
     <value>設定</value>
@@ -645,17 +651,5 @@ NOT                 - 邏輯非。例如：NOT %tag = "hide this"
   </data>
   <data name="WatchingFolders.Text" xml:space="preserve">
     <value>目前，您的倉庫包含以下資料夾：</value>
-  </data>
-  <data name="OpenInNewTab" xml:space="preserve">
-    <value />
-  </data>
-  <data name="Select" xml:space="preserve">
-    <value />
-  </data>
-  <data name="SetCompletionState" xml:space="preserve">
-    <value />
-  </data>
-  <data name="MarkAsReading" xml:space="preserve">
-    <value />
   </data>
 </root>

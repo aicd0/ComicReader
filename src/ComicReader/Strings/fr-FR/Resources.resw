@@ -427,23 +427,20 @@ L'évaluation sera effectuée dans l'ordre suivant :
   <data name="MarkAsRead" xml:space="preserve">
     <value>Marquer comme terminé</value>
   </data>
+  <data name="MarkAsReading" xml:space="preserve">
+    <value>Marquer comme lecture</value>
+  </data>
   <data name="MarkAsUnread" xml:space="preserve">
     <value>Marquer comme non lu</value>
   </data>
   <data name="MenuFlyoutCreateNewFolder.Text" xml:space="preserve">
     <value>Créer un nouveau dossier</value>
   </data>
-  <data name="MenuFlyoutOpenInNewTab.Text" xml:space="preserve">
-    <value>Ouvrir dans un nouvel onglet</value>
-  </data>
   <data name="MenuFlyoutRemoveFromList.Text" xml:space="preserve">
     <value>Supprimer de la liste</value>
   </data>
   <data name="MenuFlyoutRename.Text" xml:space="preserve">
     <value>Rebaptiser</value>
-  </data>
-  <data name="MenuFlyoutSelect.Text" xml:space="preserve">
-    <value>Sélectionner</value>
   </data>
   <data name="MenuFlyoutSortByName.Text" xml:space="preserve">
     <value>Trier par nom</value>
@@ -477,6 +474,9 @@ L'évaluation sera effectuée dans l'ordre suivant :
   </data>
   <data name="OpenInFileExplorer.ToolTipService.ToolTip" xml:space="preserve">
     <value>Ouvrir dans l'explorateur de fichiers</value>
+  </data>
+  <data name="OpenInNewTab" xml:space="preserve">
+    <value>Ouvrir dans un nouvel onglet</value>
   </data>
   <data name="PrivacyPolicy.Text" xml:space="preserve">
     <value>politique de confidentialité</value>
@@ -547,11 +547,17 @@ L'évaluation sera effectuée dans l'ordre suivant :
   <data name="SearchResultsOf" xml:space="preserve">
     <value>Résultats de « $keyword »</value>
   </data>
+  <data name="Select" xml:space="preserve">
+    <value>Sélectionner</value>
+  </data>
   <data name="SelectAllAppBarButton.Label" xml:space="preserve">
     <value>Tout sélectionner</value>
   </data>
   <data name="SendFeedbackButton.Content" xml:space="preserve">
     <value>Envoyer des commentaires</value>
+  </data>
+  <data name="SetCompletionState" xml:space="preserve">
+    <value>Définir l'état d'achèvement</value>
   </data>
   <data name="Settings" xml:space="preserve">
     <value>Paramètres</value>
@@ -645,17 +651,5 @@ Catégorie 2 : Étiquette 4/Étiquette 5
   </data>
   <data name="WatchingFolders.Text" xml:space="preserve">
     <value>En ce moment, nous surveillons ces dossiers :</value>
-  </data>
-  <data name="OpenInNewTab" xml:space="preserve">
-    <value />
-  </data>
-  <data name="Select" xml:space="preserve">
-    <value />
-  </data>
-  <data name="SetCompletionState" xml:space="preserve">
-    <value />
-  </data>
-  <data name="MarkAsReading" xml:space="preserve">
-    <value />
   </data>
 </root>

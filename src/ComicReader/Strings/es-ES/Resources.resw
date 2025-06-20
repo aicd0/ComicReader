@@ -427,23 +427,20 @@ La evaluación se realizará en el siguiente orden:
   <data name="MarkAsRead" xml:space="preserve">
     <value>Marcar como terminado</value>
   </data>
+  <data name="MarkAsReading" xml:space="preserve">
+    <value>Marcar como leído</value>
+  </data>
   <data name="MarkAsUnread" xml:space="preserve">
     <value>Marcar como no leído</value>
   </data>
   <data name="MenuFlyoutCreateNewFolder.Text" xml:space="preserve">
     <value>Crear nueva carpeta</value>
   </data>
-  <data name="MenuFlyoutOpenInNewTab.Text" xml:space="preserve">
-    <value>Abrir en nueva pestaña</value>
-  </data>
   <data name="MenuFlyoutRemoveFromList.Text" xml:space="preserve">
     <value>Eliminar de la lista</value>
   </data>
   <data name="MenuFlyoutRename.Text" xml:space="preserve">
     <value>Rebautizar</value>
-  </data>
-  <data name="MenuFlyoutSelect.Text" xml:space="preserve">
-    <value>Seleccionar</value>
   </data>
   <data name="MenuFlyoutSortByName.Text" xml:space="preserve">
     <value>Ordenar por nombre</value>
@@ -477,6 +474,9 @@ La evaluación se realizará en el siguiente orden:
   </data>
   <data name="OpenInFileExplorer.ToolTipService.ToolTip" xml:space="preserve">
     <value>Abrir en el Explorador de archivos</value>
+  </data>
+  <data name="OpenInNewTab" xml:space="preserve">
+    <value>Abrir en nueva pestaña</value>
   </data>
   <data name="PrivacyPolicy.Text" xml:space="preserve">
     <value>política de privacidad</value>
@@ -547,11 +547,17 @@ La evaluación se realizará en el siguiente orden:
   <data name="SearchResultsOf" xml:space="preserve">
     <value>Resultados de '$keyword'</value>
   </data>
+  <data name="Select" xml:space="preserve">
+    <value>Seleccionar</value>
+  </data>
   <data name="SelectAllAppBarButton.Label" xml:space="preserve">
     <value>Seleccionar todo</value>
   </data>
   <data name="SendFeedbackButton.Content" xml:space="preserve">
     <value>Enviar comentarios</value>
+  </data>
+  <data name="SetCompletionState" xml:space="preserve">
+    <value>Establecer estado de finalización</value>
   </data>
   <data name="Settings" xml:space="preserve">
     <value>Ajustes</value>
@@ -645,17 +651,5 @@ Categoría 2: Etiqueta 4/Etiqueta 5
   </data>
   <data name="WatchingFolders.Text" xml:space="preserve">
     <value>En este momento estamos viendo estas carpetas:</value>
-  </data>
-  <data name="OpenInNewTab" xml:space="preserve">
-    <value />
-  </data>
-  <data name="Select" xml:space="preserve">
-    <value />
-  </data>
-  <data name="SetCompletionState" xml:space="preserve">
-    <value />
-  </data>
-  <data name="MarkAsReading" xml:space="preserve">
-    <value />
   </data>
 </root>
