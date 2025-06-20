@@ -58,11 +58,13 @@ public class StringResourceProvider
     public string History => GetResourceString("History");
     public string LastReadTime => GetResourceString("LastReadTime");
     public string MarkAsRead => GetResourceString("MarkAsRead");
+    public string MarkAsReading => GetResourceString("MarkAsReading");
     public string MarkAsUnread => GetResourceString("MarkAsUnread");
     public string NewFolder => GetResourceString("NewFolder");
     public string NewTab => GetResourceString("NewTab");
     public string NoRating => GetResourceString("NoRating");
     public string NoResults => GetResourceString("NoResults");
+    public string OpenInNewTab => GetResourceString("OpenInNewTab");
     public string Proceed => GetResourceString("Proceed");
     public string Progress => GetResourceString("Progress");
     public string Rating => GetResourceString("Rating");
@@ -73,7 +75,9 @@ public class StringResourceProvider
     public string RemoveFromFavorites => GetResourceString("RemoveFromFavorites");
     public string SearchResults => GetResourceString("SearchResults");
     public string SearchResultsOf => GetResourceString("SearchResultsOf");
+    public string Select => GetResourceString("Select");
     public string Settings => GetResourceString("Settings");
+    public string SetCompletionState => GetResourceString("SetCompletionState");
     public string Sort => GetResourceString("Sort");
     public string Statistics => GetResourceString("Statistics");
     public string Tag => GetResourceString("Tag");

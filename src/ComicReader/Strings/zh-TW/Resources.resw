@@ -646,4 +646,16 @@ NOT                 - 邏輯非。例如：NOT %tag = "hide this"
   <data name="WatchingFolders.Text" xml:space="preserve">
     <value>目前，您的倉庫包含以下資料夾：</value>
   </data>
+  <data name="OpenInNewTab" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Select" xml:space="preserve">
+    <value />
+  </data>
+  <data name="SetCompletionState" xml:space="preserve">
+    <value />
+  </data>
+  <data name="MarkAsReading" xml:space="preserve">
+    <value />
+  </data>
 </root>

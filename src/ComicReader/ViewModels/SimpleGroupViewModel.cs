@@ -3,14 +3,14 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 
-using ComicReader.Common;
 using ComicReader.SDK.Common.Algorithm;
 
 namespace ComicReader.ViewModels;
 
-internal partial class SimpleGroupViewModel<T> : INotifyPropertyChanged where T : INotifyPropertyChanged
+internal partial class SimpleGroupViewModel<T> : INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler? PropertyChanged;
 
@@ -30,7 +30,7 @@ internal partial class SimpleGroupViewModel<T> : INotifyPropertyChanged where T 
     /// <remarks>
     /// Do not modify this collection directly. Use <see cref="UpdateItems"/> to set the items.
     /// </remarks>
-    public ObservableCollectionPlus<T> DisplayItems { get; } = [];
+    public ObservableCollection<T> DisplayItems { get; } = [];
 
     private bool _collaped = false;
     public bool Collapsed

@@ -7,22 +7,25 @@ using ComicReader.Common;
 using ComicReader.Common.Imaging;
 using ComicReader.Common.PageBase;
 using ComicReader.Helpers.Imaging;
+using ComicReader.Helpers.MenuFlyoutHelpers;
 using ComicReader.ViewModels;
 
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Imaging;
 
-namespace ComicReader.UserControls;
+namespace ComicReader.UserControls.ComicItemView;
 
-internal sealed partial class ComicItemHorizontal : BaseUserControl, IComicItemView
+internal sealed partial class ComicItemVertical : BaseUserControl, IComicItemView
 {
     private readonly CancellationSession _loadImageToken = new();
+    private IComicItemViewHandler? _itemHandler;
 
     public ComicItemViewModel? Ctx => DataContext as ComicItemViewModel;
     public ComicItemViewModel? Item { get; private set; }
 
-    public ComicItemHorizontal()
+    public ComicItemVertical()
     {
         InitializeComponent();
     }
@@ -67,15 +70,42 @@ internal sealed partial class ComicItemHorizontal : BaseUserControl, IComicItemV
         Bindings.Update();
     }
 
-    public void Bind(ComicItemViewModel item)
+    private void RootGrid_PointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+        VisualStateManager.GoToState(this, "PointerOver", true);
+    }
+
+    private void RootGrid_PointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        VisualStateManager.GoToState(this, "Normal", true);
+    }
+
+    public void Bind(ComicItemViewModel item, IComicItemViewHandler handler)
     {
         if (item != Item)
         {
             item.Image.ImageRequested = false;
             Item = item;
         }
+
+        IComicItemViewHandler? oldHandler = _itemHandler;
+        if (oldHandler != null)
+        {
+            RootGrid.Tapped -= oldHandler.OnItemTapped;
+        }
+        _itemHandler = handler;
+        RootGrid.Tapped += handler.OnItemTapped;
+
         BindImage(item);
         RequestImageIfNeeded(item);
+
+        List<MenuFlyoutItemBase> menuItems = ComicItemMenuFlyoutCreator.CreateMenuItems(item, handler);
+        MenuFlyout menuFlyout = new();
+        foreach (MenuFlyoutItemBase menuItem in menuItems)
+        {
+            menuFlyout.Items.Add(menuItem);
+        }
+        RootGrid.ContextFlyout = menuFlyout;
     }
 
     public void Unbind()
@@ -92,7 +122,8 @@ internal sealed partial class ComicItemHorizontal : BaseUserControl, IComicItemV
     private void BindImage(ComicItemViewModel item)
     {
         BitmapImage? image = item.Image.Image;
-        ImageHolder.Source = image;
+        ImageHolder1.Source = image;
+        ImageHolder2.Source = image;
     }
 
     private void RequestImageIfNeeded(ComicItemViewModel item)
@@ -102,15 +133,14 @@ internal sealed partial class ComicItemHorizontal : BaseUserControl, IComicItemV
             return;
         }
         item.Image.ImageRequested = true;
-        double imageWidth = (double)Application.Current.Resources["ComicItemHorizontalImageWidth"];
-        double imageHeight = (double)Application.Current.Resources["ComicItemHorizontalImageHeight"];
+        double imageWidth = (double)Application.Current.Resources["ComicItemVerticalDesiredWidth"] - 40.0;
+        double imageHeight = (double)Application.Current.Resources["ComicItemVerticalImageHeight"];
         var tokens = new List<SimpleImageLoader.Token>
         {
             new() {
                 Width = imageWidth,
                 Height = imageHeight,
                 Multiplication = 1.4,
-                StretchMode = StretchModeEnum.UniformToFill,
                 Source = new ComicCoverImageSource(item.Comic),
                 ImageResultHandler = new LoadImageCallback(this, item)
             }
@@ -120,10 +150,10 @@ internal sealed partial class ComicItemHorizontal : BaseUserControl, IComicItemV
 
     private class LoadImageCallback : IImageResultHandler
     {
-        private readonly ComicItemHorizontal _viewHolder;
+        private readonly ComicItemVertical _viewHolder;
         private readonly ComicItemViewModel _viewModel;
 
-        public LoadImageCallback(ComicItemHorizontal viewHolder, ComicItemViewModel viewModel)
+        public LoadImageCallback(ComicItemVertical viewHolder, ComicItemViewModel viewModel)
         {
             _viewHolder = viewHolder;
             _viewModel = viewModel;

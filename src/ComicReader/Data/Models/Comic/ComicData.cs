@@ -442,16 +442,6 @@ internal abstract class ComicData
         }, "SaveProgress");
     }
 
-    public void SetAsRead()
-    {
-        _ = SaveProgressAsync(100, LastPosition);
-    }
-
-    public void SetAsUnread()
-    {
-        _ = SaveProgressAsync(-1, 0);
-    }
-
     public void SetAsStarted()
     {
         LastVisit = DateTimeOffset.Now;

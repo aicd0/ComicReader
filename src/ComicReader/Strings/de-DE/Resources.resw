@@ -646,4 +646,16 @@ Kategorie 2: Tag 4/Tag 5
   <data name="WatchingFolders.Text" xml:space="preserve">
     <value>Im Moment beobachten wir diese Ordner:</value>
   </data>
+  <data name="OpenInNewTab" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Select" xml:space="preserve">
+    <value />
+  </data>
+  <data name="SetCompletionState" xml:space="preserve">
+    <value />
+  </data>
+  <data name="MarkAsReading" xml:space="preserve">
+    <value />
+  </data>
 </root>
