@@ -51,6 +51,9 @@ internal sealed partial class ReaderPage : BasePage
     //
 
     private ComicModel _comic;
+    private ComicModel _pendingComic;
+    private bool _isLoading = false;
+
     private IComicConnection _comicConnection;
     private volatile bool _updatingProgress = false;
     private bool? _isFavorite = null;
@@ -132,21 +135,21 @@ internal sealed partial class ReaderPage : BasePage
     }
 
     //
-    // Page Lifecycle
+    // Lifecycle
     //
 
     protected override void OnStart(PageBundle bundle)
     {
         base.OnStart(bundle);
 
+        bool tipShown = KVDatabase.GetDefaultMethod().GetBoolean(GlobalConstants.KV_DB_TIPS, KEY_TIP_SHOWN, false);
+        if (!tipShown)
+        {
+            ReaderTip.IsOpen = !tipShown;
+        }
+
         C0.Run(async delegate
         {
-            bool tipShown = KVDatabase.GetDefaultMethod().GetBoolean(GlobalConstants.KV_DB_TIPS, KEY_TIP_SHOWN, false);
-            if (!tipShown)
-            {
-                ReaderTip.IsOpen = !tipShown;
-            }
-
             long comic_id = bundle.GetLong(RouterConstants.ARG_COMIC_ID, -1);
             ComicModel comic = await ComicModel.FromId(comic_id, "ReaderGetComic");
             if (comic == null)
@@ -258,7 +261,7 @@ internal sealed partial class ReaderPage : BasePage
         {
             FiFavoriteFilled.Visibility = isFavorite ? Visibility.Visible : Visibility.Collapsed;
             FiFavoriteUnfilled.Visibility = isFavorite ? Visibility.Collapsed : Visibility.Visible;
-            SetIsFavorite(isFavorite);
+            SetIsFavorite(isFavorite, true);
         });
 
         ReaderStatusLiveData.Observe(this, delegate (ReaderStatusEnum status)
@@ -282,13 +285,37 @@ internal sealed partial class ReaderPage : BasePage
 
     public async Task LoadComic(ComicModel comic)
     {
+        if (_isLoading)
+        {
+            _pendingComic = comic;
+            return;
+        }
+
+        _isLoading = true;
+        try
+        {
+            while (comic != null)
+            {
+                await LoadComicInternal(comic);
+                comic = _pendingComic;
+                _pendingComic = null;
+            }
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    public async Task LoadComicInternal(ComicModel comic)
+    {
         if (comic == _comic)
         {
             return;
         }
 
         ReleaseComicConnection();
-        _comic = comic;
+        _comic = null;
 
         if (comic == null)
         {
@@ -296,6 +323,14 @@ internal sealed partial class ReaderPage : BasePage
             return;
         }
 
+        if (!comic.IsExternal)
+        {
+            await comic.SetCompletionStateToAtLeastStarted();
+            await HistoryDataManager.Add(comic.Id, comic.Title1, true);
+        }
+
+        _comic = comic;
+        LoadComicInfo();
         IComicConnection connection = await comic.OpenComicAsync();
         _comicConnection = connection;
 
@@ -307,22 +342,17 @@ internal sealed partial class ReaderPage : BasePage
 
         ReaderStatusLiveData.Emit(ReaderStatusEnum.Loading);
 
-        LoadComicInfo();
-
-        if (!_comic.IsExternal)
+        if (!comic.IsExternal)
         {
-            await _comic.SetCompletionStateToAtLeastStarted();
-            await HistoryDataManager.Add(_comic.Id, _comic.Title1, true);
-
-            TaskException result = await _comic.ReloadImageFiles();
+            TaskException result = await comic.ReloadImageFiles();
             if (!result.Successful())
             {
-                Log("Failed to load images of '" + _comic.Location + "'. " + result.ToString());
+                Log("Failed to load images of '" + comic.Location + "'. " + result.ToString());
                 ReaderStatusLiveData.Emit(ReaderStatusEnum.Error);
                 return;
             }
 
-            MainReaderView.SetInitialPage(_comic.LastPosition);
+            MainReaderView.SetInitialPage(comic.LastPosition);
         }
 
         var images = new List<IImageSource>();
@@ -386,9 +416,9 @@ internal sealed partial class ReaderPage : BasePage
         LoadComicTag();
 
         bool isFavorite = !_comic.IsExternal && FavoriteModel.Instance.FromId(_comic.Id) != null;
-        SetIsFavorite(isFavorite);
+        SetIsFavorite(isFavorite, false);
 
-        SetCompletionState(_comic.CompletionState);
+        SetCompletionState(_comic.CompletionState, false);
 
         if (!_comic.IsExternal)
         {
@@ -593,22 +623,22 @@ internal sealed partial class ReaderPage : BasePage
 
     private void FavoriteBt_Click(object sender, RoutedEventArgs e)
     {
-        SetIsFavorite(!(_isFavorite == true));
+        SetIsFavorite(!(_isFavorite == true), true);
     }
 
     private void MarkAsUnreadButton_Click(object sender, RoutedEventArgs e)
     {
-        SetCompletionState(ComicData.CompletionStateEnum.NotStarted);
+        SetCompletionState(ComicData.CompletionStateEnum.NotStarted, true);
     }
 
     private void MarkAsReadingButton_Click(object sender, RoutedEventArgs e)
     {
-        SetCompletionState(ComicData.CompletionStateEnum.Started);
+        SetCompletionState(ComicData.CompletionStateEnum.Started, true);
     }
 
     private void MarkAsFinishedButton_Click(object sender, RoutedEventArgs e)
     {
-        SetCompletionState(ComicData.CompletionStateEnum.Completed);
+        SetCompletionState(ComicData.CompletionStateEnum.Completed, true);
     }
 
     private void OnRatingControlValueChanged(RatingControl sender, object args)
@@ -803,9 +833,8 @@ internal sealed partial class ReaderPage : BasePage
         return GetAbility<INavigationPageAbility>();
     }
 
-    public void SetIsFavorite(bool isFavorite)
+    public void SetIsFavorite(bool isFavorite, bool writeDatabase)
     {
-        bool firstSet = _isFavorite is null;
         if (_isFavorite == isFavorite)
         {
             return;
@@ -814,7 +843,7 @@ internal sealed partial class ReaderPage : BasePage
 
         GetNavigationPageAbility().SetFavorite(isFavorite);
 
-        if (!firstSet && !_comic.IsExternal)
+        if (writeDatabase && !_comic.IsExternal)
         {
             if (isFavorite)
             {
@@ -827,9 +856,8 @@ internal sealed partial class ReaderPage : BasePage
         }
     }
 
-    public void SetCompletionState(ComicData.CompletionStateEnum completionState)
+    public void SetCompletionState(ComicData.CompletionStateEnum completionState, bool writeDatabase)
     {
-        bool firstSet = _completionState is null;
         if (_completionState == completionState)
         {
             return;
@@ -867,7 +895,7 @@ internal sealed partial class ReaderPage : BasePage
         MarkAsReadingButton.Visibility = completionState == ComicData.CompletionStateEnum.Started ? Visibility.Collapsed : Visibility.Visible;
         MarkAsFinishedButton.Visibility = completionState == ComicData.CompletionStateEnum.Completed ? Visibility.Collapsed : Visibility.Visible;
 
-        if (!firstSet)
+        if (writeDatabase)
         {
             switch (completionState)
             {
