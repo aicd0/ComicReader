@@ -27,14 +27,14 @@
                 <muxc:TreeViewItem.ContextFlyout>
                     <MenuFlyout>
                         <MenuFlyoutItem
-                            x:Uid="MenuFlyoutOpenInNewTab"
                             Click="OpenInNewTabClick"
+                            Text="{x:Bind StringResource.OpenInNewTab}"
                             Visibility="{x:Bind IsItem, Mode=OneWay}" />
                         <MenuFlyoutItem x:Uid="MenuFlyoutCreateNewFolder" Click="NewFolderClick" />
                         <MenuFlyoutItem x:Uid="MenuFlyoutSortByName" Click="SortByNameClick" />
                         <MenuFlyoutItem x:Uid="MenuFlyoutRename" Click="RenameClick" />
                         <MenuFlyoutSeparator />
-                        <MenuFlyoutItem x:Uid="MenuFlyoutDelete" Click="DeleteClick" />
+                        <MenuFlyoutItem Click="DeleteClick" Text="{x:Bind StringResource.Delete}" />
                     </MenuFlyout>
                 </muxc:TreeViewItem.ContextFlyout>
                 <Grid>

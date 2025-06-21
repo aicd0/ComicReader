@@ -1,14 +1,16 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 
 using ComicReader.Common;
-using ComicReader.Common.DebugTools;
 using ComicReader.Common.Imaging;
-using ComicReader.Common.Threading;
+using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Common.Threading;
 
 using Microsoft.UI.Xaml.Media.Imaging;
 
@@ -77,7 +79,7 @@ internal class ReaderImagePool
         string uri = source.GetUri();
         if (uri == null || uri.Length == 0)
         {
-            DebugUtils.Assert(false);
+            Logger.AssertNotReachHere("D7744CE87FA274AB");
             return;
         }
 
@@ -118,7 +120,7 @@ internal class ReaderImagePool
         string uri = source.GetUri();
         if (uri == null || uri.Length == 0)
         {
-            DebugUtils.Assert(false);
+            Logger.AssertNotReachHere("02760A5DB2BA42C4");
             return;
         }
 
@@ -234,7 +236,7 @@ internal class ReaderImagePool
                     _entries.Remove(uri);
                     break;
                 default:
-                    DebugUtils.Assert(false);
+                    Logger.AssertNotReachHere("0DA06D20A76086F2");
                     break;
             }
         }

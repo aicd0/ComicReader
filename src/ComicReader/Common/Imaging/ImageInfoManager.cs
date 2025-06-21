@@ -1,9 +1,11 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System;
 
-using ComicReader.Common.DebugTools;
+using ComicReader.SDK.Common.DebugTools;
 
 using Windows.Graphics.Imaging;
 using Windows.Storage.Streams;
@@ -57,7 +59,7 @@ internal static class ImageInfoManager
 
         if (width <= 0 || height <= 0)
         {
-            DebugUtils.Assert(false);
+            Logger.AssertNotReachHere("8315BC14B4B0AE5D");
             return null;
         }
 

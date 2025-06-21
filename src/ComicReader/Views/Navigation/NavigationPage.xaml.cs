@@ -1,16 +1,17 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System;
-using System.ComponentModel;
 
 using ComicReader.Common;
-using ComicReader.Common.DebugTools;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Common.PageBase;
-using ComicReader.Common.Threading;
-using ComicReader.Data;
+using ComicReader.Data.Legacy;
 using ComicReader.Helpers.Navigation;
+using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Common.Threading;
 using ComicReader.Views.Main;
 
 using Microsoft.UI.Input;
@@ -20,22 +21,6 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 
 namespace ComicReader.Views.Navigation;
-
-public class NavigationPageViewModel : INotifyPropertyChanged
-{
-    public event PropertyChangedEventHandler PropertyChanged;
-
-    private bool _devToolsVisible;
-    public bool DevToolsVisible
-    {
-        get => _devToolsVisible;
-        set
-        {
-            _devToolsVisible = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(DevToolsVisible)));
-        }
-    }
-}
 
 internal sealed partial class NavigationPage : BasePage
 {
@@ -65,13 +50,13 @@ internal sealed partial class NavigationPage : BasePage
 
     private void ObserveData()
     {
-        EventBus.Default.With<double>(EventId.RootTabHeightChange).ObserveSticky(this, delegate (double h)
+        GetEventBus().With<double>(EventId.RootTabHeightChange).ObserveSticky(this, delegate (double h)
         {
             _rootTabHeight = h;
             UpdateTopPadding();
         });
 
-        EventBus.Default.With<double>(EventId.TitleBarOpacity).ObserveSticky(this, delegate (double opacity)
+        GetEventBus().With<double>(EventId.TitleBarOpacity).ObserveSticky(this, delegate (double opacity)
         {
             TopTile.Opacity = opacity;
             TopTile.IsHitTestVisible = opacity > 0.5;
@@ -143,7 +128,7 @@ internal sealed partial class NavigationPage : BasePage
     private void OnTopTileSizeChanged(object sender, SizeChangedEventArgs e)
     {
         _navigationBarHeight = e.NewSize.Height;
-        EventBus.Default.With<double>(EventId.NavigationBarHeightChange).Emit(_navigationBarHeight);
+        GetEventBus().With<double>(EventId.NavigationBarHeightChange).Emit(_navigationBarHeight);
         UpdateTopPadding();
     }
 
@@ -166,8 +151,8 @@ internal sealed partial class NavigationPage : BasePage
     {
         if (DebugUtils.DebugBuild)
         {
-            var route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_DEV_TOOLS);
-            MainPage.Current.OpenInNewTab(route);
+            var route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_DEV_TOOLS);
+            GetMainPageAbility().OpenInNewTab(route);
         }
     }
 
@@ -178,7 +163,10 @@ internal sealed partial class NavigationPage : BasePage
         SearchBox.Text = keywords;
     }
 
-    private void OnSearchBoxTextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args) { }
+    private void OnSearchBoxTextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+    {
+        _ability.SendSearchTextChangeEvent(sender.Text);
+    }
 
     private void OnSearchBoxQuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
     {
@@ -187,7 +175,7 @@ internal sealed partial class NavigationPage : BasePage
             return;
         }
 
-        Route route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_SEARCH)
+        Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_SEARCH)
             .WithParam(RouterConstants.ARG_KEYWORD, args.QueryText);
         GetMainPageAbility().OpenInCurrentTab(route);
     }
@@ -205,13 +193,13 @@ internal sealed partial class NavigationPage : BasePage
 
     private void OnHomeClick(object sender, RoutedEventArgs e)
     {
-        var route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_HOME);
+        var route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_HOME);
         GetMainPageAbility().OpenInCurrentTab(route);
     }
 
     private void OnRefreshClick(object sender, RoutedEventArgs e)
     {
-        // TODO implement refresh feature
+        _ability.SendRefreshEvent();
     }
 
     private void OnFavoritesClick(object sender, RoutedEventArgs e)
@@ -224,14 +212,8 @@ internal sealed partial class NavigationPage : BasePage
 
     private void OnMoreSettingsClick(object sender, RoutedEventArgs e)
     {
-        var route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_SETTING);
-        MainPage.Current.OpenInNewTab(route);
-    }
-
-    private void OnMoreHelpClick(object sender, RoutedEventArgs e)
-    {
-        var route = new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_HELP);
-        MainPage.Current.OpenInNewTab(route);
+        var route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_SETTING);
+        GetMainPageAbility().OpenInNewTab(route);
     }
 
     private void OnAddToFavoritesClick(object sender, RoutedEventArgs e)
@@ -249,8 +231,8 @@ internal sealed partial class NavigationPage : BasePage
         _isFavorite = isFavorite;
         FiFavoriteFilled.Visibility = isFavorite ? Visibility.Visible : Visibility.Collapsed;
         FiFavoriteUnfilled.Visibility = isFavorite ? Visibility.Collapsed : Visibility.Visible;
-        string toolTip = isFavorite ? StringResourceProvider.GetResourceString("RemoveFromFavorites") :
-            StringResourceProvider.GetResourceString("AddToFavorites");
+        string toolTip = isFavorite ? StringResourceProvider.Instance.RemoveFromFavorites :
+            StringResourceProvider.Instance.AddToFavorites;
         ToolTipService.SetToolTip(AbbAddToFavorite, toolTip);
         _ability.SendFavoriteChangedEvent(isFavorite);
     }
@@ -315,11 +297,12 @@ internal sealed partial class NavigationPage : BasePage
     {
         Route route = item switch
         {
-            "Favorites" => new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_FAVORITE),
-            "History" => new Route(RouterConstants.SCHEME_APP + RouterConstants.HOST_HISTORY),
+            "Favorites" => Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_FAVORITE),
+            "History" => Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_HISTORY),
             _ => throw new Exception(),
         };
-        NavigationBundle bundle = AppRouter.Process(route.Build());
+        route.WithParam(RouterConstants.ARG_WINDOW_ID, WindowId.ToString());
+        NavigationBundle bundle = AppRouter.Process(route);
         TransferAbility(bundle.Communicator);
         sender.Navigate(bundle);
     }
@@ -339,10 +322,12 @@ internal sealed partial class NavigationPage : BasePage
     private class NavigationPageAbility : INavigationPageAbility
     {
         private const string EVENT_LEAVING = "Leaving";
+        private const string EVENT_REFRESH = "Refresh";
         private const string EVENT_EXPAND_INFO_PANE = "ExpandInfoPane";
         private const string EVENT_FAVORITE_CHANGED = "FavoriteChanged";
         private const string EVENT_GRID_VIEW_MODE_CHANGED = "GridViewModeChanged";
         private const string EVENT_READER_SETTINGS_CHANGED = "ReaderSettingsChanged";
+        private const string EVENT_SEARCH_TEXT_CHANGED = "SearchTextChanged";
 
         private readonly WeakReference<NavigationPage> _parent;
         private readonly EventBus _eventBus = new();
@@ -440,6 +425,19 @@ internal sealed partial class NavigationPage : BasePage
             _eventBus.With<bool>(EVENT_LEAVING).Emit(true);
         }
 
+        public void RegisterRefreshHandler(Page owner, INavigationPageAbility.CommonEventHandler handler)
+        {
+            _eventBus.With<bool>(EVENT_REFRESH).Observe(owner, delegate
+            {
+                handler();
+            });
+        }
+
+        public void SendRefreshEvent()
+        {
+            _eventBus.With<bool>(EVENT_REFRESH).Emit(true);
+        }
+
         public void RegisterExpandInfoPaneHandler(Page owner, INavigationPageAbility.CommonEventHandler handler)
         {
             _eventBus.With<bool>(EVENT_EXPAND_INFO_PANE).Observe(owner, delegate
@@ -490,6 +488,19 @@ internal sealed partial class NavigationPage : BasePage
         public void SendReaderSettingsChangedEvent(ReaderSettingDataModel settings)
         {
             _eventBus.With<ReaderSettingDataModel>(EVENT_READER_SETTINGS_CHANGED).Emit(settings.Clone());
+        }
+
+        public void RegisterSearchTextChangeHandler(Page owner, INavigationPageAbility.SearchTextChangeEventHandler handler)
+        {
+            _eventBus.With<string>(EVENT_SEARCH_TEXT_CHANGED).Observe(owner, delegate (string text)
+            {
+                handler(text);
+            });
+        }
+
+        public void SendSearchTextChangeEvent(string text)
+        {
+            _eventBus.With<string>(EVENT_SEARCH_TEXT_CHANGED).Emit(text);
         }
     }
 }

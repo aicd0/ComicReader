@@ -7,12 +7,14 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
-using ComicReader.Common.DebugTools;
-using ComicReader.Data;
+using ComicReader.Data.Models;
+using ComicReader.SDK.Common.DebugTools;
 
 using Windows.Storage;
 
 namespace ComicReader.Common;
+
+#nullable disable
 
 public abstract class ArchiveEntry
 {
@@ -244,7 +246,7 @@ public class ArchiveAccess
 
         // Reader options.
         var opts = new SharpCompress.Readers.ReaderOptions();
-        int default_code_page = AppData.DefaultArchiveCodePage;
+        int default_code_page = AppModel.DefaultArchiveCodePage;
 
         if (default_code_page > 0)
         {
@@ -356,7 +358,7 @@ public class ArchiveAccess
     {
         if (stream == null)
         {
-            DebugUtils.Assert(false);
+            Logger.AssertNotReachHere("F1487557CF9CC3A7");
             return TaskException.InvalidParameters;
         }
 

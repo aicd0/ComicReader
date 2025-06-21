@@ -1,12 +1,14 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System.Collections.Generic;
 using System.Linq;
 
 using ComicReader.Data;
-using ComicReader.Data.Comic;
-using ComicReader.Data.SqlHelpers;
+using ComicReader.Data.Tables;
+using ComicReader.SDK.Data.SqlHelpers;
 
 using LiteDB;
 
@@ -29,16 +31,16 @@ public class Filter
 
         if (unique_string == "<~hidden>")
         {
-            return StringResourceProvider.GetResourceString("AllComics");
+            return StringResourceProvider.Instance.AllComics;
         }
         else if (unique_string == "<hidden>")
         {
-            return StringResourceProvider.GetResourceString("AllHidden");
+            return StringResourceProvider.Instance.AllHidden;
         }
         else if (m_subfilters.Count == 2 && m_subfilters[0] is SubFilterDirectory && m_subfilters[1].UniqueString == "~hidden")
         {
             string dir = (m_subfilters[0] as SubFilterDirectory).Directory;
-            string format_string = StringResourceProvider.GetResourceString("AllComicsIn");
+            string format_string = StringResourceProvider.Instance.AllComicsIn;
             format_string = format_string.Replace("$path", dir);
             return format_string;
         }
@@ -61,7 +63,7 @@ public class Filter
             return "";
         }
 
-        string format_string = StringResourceProvider.GetResourceString("FilteredBy");
+        string format_string = StringResourceProvider.Instance.FilteredBy;
         format_string = format_string.Replace("$count", cpy.Count.ToString());
         string res = format_string + ": ";
 
@@ -283,7 +285,7 @@ public class Filter
         }
 
         {
-            var sub_args = args.Split(',').ToList();
+            List<string> sub_args = [.. args.Split(',')];
 
             for (int i = sub_args.Count - 1; i >= 0; --i)
             {
@@ -549,12 +551,12 @@ public class SubFilterCategoryTag : SubFilter
         var tag_matched = new List<long>();
 
         {
-            SelectCommand<TagCategoryTable> command = new SelectCommand<TagCategoryTable>(TagCategoryTable.Instance)
+            SelectCommand command = new SelectCommand(TagCategoryTable.Instance)
                 .AppendCondition(TagCategoryTable.ColumnName, m_category)
                 .CollateNocase();
-            SelectCommand<TagCategoryTable>.IToken<long> tagCateogryIdToken = command.PutQueryInt64(TagCategoryTable.ColumnId);
-            SelectCommand<TagCategoryTable>.IToken<long> comicIdToken = command.PutQueryInt64(TagCategoryTable.ColumnComicId);
-            using SelectCommand<TagCategoryTable>.IReader reader = command.Execute();
+            IReaderToken<long> tagCateogryIdToken = command.PutQueryInt64(TagCategoryTable.ColumnId);
+            IReaderToken<long> comicIdToken = command.PutQueryInt64(TagCategoryTable.ColumnComicId);
+            using SelectCommand.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 
             while (reader.Read())
             {
@@ -567,11 +569,11 @@ public class SubFilterCategoryTag : SubFilter
         }
 
         {
-            SelectCommand<TagTable> command = new SelectCommand<TagTable>(TagTable.Instance)
+            SelectCommand command = new SelectCommand(TagTable.Instance)
                 .AppendCondition(TagTable.ColumnContent, m_tag)
                 .CollateNocase();
-            SelectCommand<TagTable>.IToken<long> categoryIdToken = command.PutQueryInt64(TagTable.ColumnTagCategoryId);
-            using SelectCommand<TagTable>.IReader reader = command.Execute();
+            IReaderToken<long> categoryIdToken = command.PutQueryInt64(TagTable.ColumnTagCategoryId);
+            using SelectCommand.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 
             while (reader.Read())
             {
@@ -623,10 +625,10 @@ public class SubFilterDirectory : SubFilter
     {
         var results = new List<long>();
 
-        SelectCommand<ComicTable> command = new SelectCommand<ComicTable>(ComicTable.Instance)
+        SelectCommand command = new SelectCommand(ComicTable.Instance)
             .AppendCondition(new LikeCondition(ComicTable.ColumnLocation, m_directory + "%"));
-        SelectCommand<ComicTable>.IToken<long> comicIdToken = command.PutQueryInt64(ComicTable.ColumnId);
-        using SelectCommand<ComicTable>.IReader reader = command.Execute();
+        IReaderToken<long> comicIdToken = command.PutQueryInt64(ComicTable.ColumnId);
+        using SelectCommand.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 
         while (reader.Read())
         {
@@ -646,10 +648,10 @@ public class SubFilterHidden : SubFilter
     {
         var results = new List<long>();
 
-        SelectCommand<ComicTable> command = new SelectCommand<ComicTable>(ComicTable.Instance)
+        SelectCommand command = new SelectCommand(ComicTable.Instance)
             .AppendCondition(ComicTable.ColumnHidden, true);
-        SelectCommand<ComicTable>.IToken<long> comicIdToken = command.PutQueryInt64(ComicTable.ColumnId);
-        using SelectCommand<ComicTable>.IReader reader = command.Execute();
+        IReaderToken<long> comicIdToken = command.PutQueryInt64(ComicTable.ColumnId);
+        using SelectCommand.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 
         while (reader.Read())
         {
@@ -682,11 +684,11 @@ public class SubFilterId : SubFilter
     {
         var results = new List<long>();
 
-        SelectCommand<ComicTable> command = new SelectCommand<ComicTable>(ComicTable.Instance)
+        SelectCommand command = new SelectCommand(ComicTable.Instance)
             .AppendCondition(ComicTable.ColumnId, m_id)
             .Limit(1);
-        SelectCommand<ComicTable>.IToken<long> comicIdToken = command.PutQueryInt64(ComicTable.ColumnId);
-        using SelectCommand<ComicTable>.IReader reader = command.Execute();
+        IReaderToken<long> comicIdToken = command.PutQueryInt64(ComicTable.ColumnId);
+        using SelectCommand.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 
         while (reader.Read())
         {
@@ -719,10 +721,10 @@ public class SubFilterRating : SubFilter
     {
         var results = new List<long>();
 
-        SelectCommand<ComicTable> command = new SelectCommand<ComicTable>(ComicTable.Instance)
+        SelectCommand command = new SelectCommand(ComicTable.Instance)
             .AppendCondition(ComicTable.ColumnRating, m_rating);
-        SelectCommand<ComicTable>.IToken<long> comicIdToken = command.PutQueryInt64(ComicTable.ColumnId);
-        using SelectCommand<ComicTable>.IReader reader = command.Execute();
+        IReaderToken<long> comicIdToken = command.PutQueryInt64(ComicTable.ColumnId);
+        using SelectCommand.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 
         while (reader.Read())
         {
@@ -749,12 +751,12 @@ public class SubFilterTag : SubFilter
     {
         var results = new List<long>();
 
-        SelectCommand<TagTable> command = new SelectCommand<TagTable>(TagTable.Instance)
+        SelectCommand command = new SelectCommand(TagTable.Instance)
             .AppendCondition(TagTable.ColumnContent, m_tag)
             .Distinct()
             .CollateNocase();
-        SelectCommand<TagTable>.IToken<long> comicIdToken = command.PutQueryInt64(TagTable.ColumnComicId);
-        using SelectCommand<TagTable>.IReader reader = command.Execute();
+        IReaderToken<long> comicIdToken = command.PutQueryInt64(TagTable.ColumnComicId);
+        using SelectCommand.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 
         while (reader.Read())
         {

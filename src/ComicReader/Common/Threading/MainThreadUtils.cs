@@ -2,12 +2,7 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Diagnostics;
 using System.Threading.Tasks;
-
-using ComicReader.Common.DebugTools;
-
-using CommunityToolkit.WinUI;
 
 using Microsoft.UI.Dispatching;
 
@@ -15,89 +10,129 @@ namespace ComicReader.Common.Threading;
 
 internal class MainThreadUtils
 {
-    public static async Task RunInMainThread(Action action)
+    public static Task RunInMainThread(Action action, DispatcherQueuePriority priority = DispatcherQueuePriority.Normal)
     {
-        if (IsMainThread())
+        DispatcherQueue? dispatcher = GetMainThreadDispatcher();
+        if (dispatcher == null)
         {
-            MeasureMainThreadExecutionTimeAction(action)();
-            return;
+            return Task.CompletedTask;
         }
 
-        DispatcherQueue queue = App.Window.DispatcherQueue;
-
-        if (queue == null)
+        if (dispatcher.HasThreadAccess)
         {
-            return;
+            try
+            {
+                action();
+                return Task.CompletedTask;
+            }
+            catch (Exception e)
+            {
+                return Task.FromException(e);
+            }
         }
 
-        await queue.EnqueueAsync(MeasureMainThreadExecutionTimeAction(action), DispatcherQueuePriority.Normal);
+        var taskCompletionSource = new TaskCompletionSource<object?>();
+        if (!dispatcher.TryEnqueue(priority, delegate
+        {
+            try
+            {
+                action();
+                taskCompletionSource.SetResult(null);
+            }
+            catch (Exception e)
+            {
+                taskCompletionSource.SetException(e);
+            }
+        }))
+        {
+            taskCompletionSource.SetException(new InvalidOperationException("Failed to enqueue the operation"));
+        }
+        return taskCompletionSource.Task;
     }
 
-    public static async Task RunInMainThreadAsync(Func<Task> action)
+    public static Task RunInMainThreadAsync(Func<Task> action, DispatcherQueuePriority priority = DispatcherQueuePriority.Normal)
     {
-        if (IsMainThread())
+        DispatcherQueue? dispatcher = GetMainThreadDispatcher();
+        if (dispatcher == null)
         {
-            await action();
-            return;
+            return Task.CompletedTask;
         }
 
-        DispatcherQueue queue = App.Window.DispatcherQueue;
-
-        if (queue == null)
+        if (dispatcher.HasThreadAccess)
         {
-            return;
+            try
+            {
+                return action();
+            }
+            catch (Exception e)
+            {
+                return Task.FromException(e);
+            }
         }
 
-        var completionSrc = new TaskCompletionSource<bool>();
-
-        await queue.EnqueueAsync(async delegate
+        var taskCompletionSource = new TaskCompletionSource<object?>();
+        if (!dispatcher.TryEnqueue(priority, async delegate
         {
-            await action();
-            completionSrc.SetResult(true);
-        }, DispatcherQueuePriority.Normal);
+            try
+            {
+                await action();
+                taskCompletionSource.SetResult(null);
+            }
+            catch (Exception e)
+            {
+                taskCompletionSource.SetException(e);
+            }
+        }))
+        {
+            taskCompletionSource.SetException(new InvalidOperationException("Failed to enqueue the operation"));
+        }
+        return taskCompletionSource.Task;
+    }
 
-        await completionSrc.Task;
+    public static Task PostInMainThreadAsync(Func<Task> action, DispatcherQueuePriority priority = DispatcherQueuePriority.Normal)
+    {
+        DispatcherQueue? dispatcher = GetMainThreadDispatcher();
+        if (dispatcher == null)
+        {
+            return Task.CompletedTask;
+        }
+
+        var taskCompletionSource = new TaskCompletionSource<object?>();
+        if (!dispatcher.TryEnqueue(priority, async delegate
+        {
+            try
+            {
+                await action();
+                taskCompletionSource.SetResult(null);
+            }
+            catch (Exception e)
+            {
+                taskCompletionSource.SetException(e);
+            }
+        }))
+        {
+            taskCompletionSource.SetException(new InvalidOperationException("Failed to enqueue the operation"));
+        }
+        return taskCompletionSource.Task;
     }
 
     public static bool IsMainThread()
     {
-        DispatcherQueue queue = App.Window.DispatcherQueue;
-
+        DispatcherQueue? queue = GetMainThreadDispatcher();
         if (queue == null)
         {
             return false;
         }
-
         return queue.HasThreadAccess;
     }
 
-    private static Action MeasureMainThreadExecutionTimeAction(Action action)
+    private static DispatcherQueue? GetMainThreadDispatcher()
     {
-        if (!DebugUtils.DebugModeStrict)
+        MainWindow? window = App.WindowManager.GetAnyWindow();
+        if (window == null)
         {
-            return action;
+            return null;
         }
-
-        StackTrace stackTrace = new();
-        return delegate
-        {
-            long startTime = GetCurrentMilliseconds();
-            action();
-            long timeUsed = GetCurrentMilliseconds() - startTime;
-            OnMainThreadExecutionTime(timeUsed, stackTrace);
-        };
-    }
-
-    private static void OnMainThreadExecutionTime(long timeUsed, StackTrace stackTrace)
-    {
-        if (timeUsed > 300)
-        {
-            Logger.I("MainThreadUtils", $"timeUsed={timeUsed}\n{stackTrace}");
-        }
-    }
-
-    private static long GetCurrentMilliseconds()
-    {
-        return DateTimeOffset.Now.ToUnixTimeMilliseconds();
+        return window.DispatcherQueue;
     }
 }

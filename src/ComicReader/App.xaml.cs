@@ -6,33 +6,34 @@ using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Common.AppEnvironment;
-using ComicReader.Common.DebugTools;
+using ComicReader.Common.Services;
 using ComicReader.Data;
-using ComicReader.Data.Comic;
-using ComicReader.Views.Main;
+using ComicReader.Data.Legacy;
+using ComicReader.Data.Models;
+using ComicReader.Data.Models.Comic;
+using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Common.ServiceManagement;
 
-using Microsoft.AppCenter;
-using Microsoft.AppCenter.Analytics;
-using Microsoft.AppCenter.Crashes;
 using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppLifecycle;
+using Microsoft.Windows.Globalization;
+
+using Sentry;
 
 using Windows.ApplicationModel.Activation;
-using Windows.Storage;
 
 namespace ComicReader;
 
 public partial class App : Application
 {
-    public static MainWindow Window { get; private set; }
+    private const string TAG = nameof(App);
+
+    internal static readonly WindowManager<MainWindow> WindowManager = new();
 
     public App()
     {
-        UnhandledException += CrashHandler.OnUnhandledException;
-        EnvironmentProvider.Instance.Initialize();
-        ApplyAppTheme();
+        InitializeBeforeAppCreate();
         InitializeComponent();
-        StartAppCenter();
     }
 
     protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs e)
@@ -54,47 +55,111 @@ public partial class App : Application
             return;
         }
 
-        await PerformInitialization();
+        await InitializeOnAppLaunch();
 
         // Initialize MainWindow here
-        Window = new MainWindow();
-        Window.Activate();
+        var window = new MainWindow("");
+        window.Activate();
 
         mainInstance.Activated += OnActivated;
         OnActivated(null, activatedEventArgs);
     }
 
-    private void OnActivated(object sender, AppActivationArguments e)
+    private void OnActivated(object? sender, AppActivationArguments e)
     {
         if (e.Kind == ExtendedActivationKind.File)
         {
-            MainPage.OnFileActivated((FileActivatedEventArgs)e.Data);
+            MainWindow? window = WindowManager.GetAnyWindow();
+            if (window != null)
+            {
+                window.OnFileActivated((FileActivatedEventArgs)e.Data);
+            }
+            else
+            {
+                Logger.F(TAG, "Failed to perform file activation, no window is found.");
+            }
         }
     }
 
-    private void ApplyAppTheme()
+    private void InitializeBeforeAppCreate()
     {
-        object appearanceSetting = ApplicationData.Current.LocalSettings.Values[GlobalConstants.LOCAL_SETTINGS_KEY_APPEARANCE];
-        if (appearanceSetting != null)
+        // Register crash handler
+        UnhandledException += (_, e) =>
         {
-            Current.RequestedTheme = (ApplicationTheme)(int)appearanceSetting;
-        }
-    }
+            if (Properties.SentryDsn.Length > 0)
+            {
+                SentrySdk.CaptureException(e.Exception);
+            }
+            CrashHandler.OnUnhandledException(e.Exception);
+        };
 
-    private void StartAppCenter()
-    {
-        string appSecret = Properties.AppCenterSecret;
-        if (appSecret.Length > 0)
+        // Register services
+        ServiceManager.RegisterService<IApplicationService>(new ApplicationService());
+        ServiceManager.RegisterService<IDebugService>(new DebugService());
+
+        // Initialize environment information
+        EnvironmentProvider.Instance.Initialize();
+
+        // Initialize Sentry
+        if (Properties.SentryDsn.Length > 0)
         {
-            AppCenter.Start(appSecret, typeof(Analytics), typeof(Crashes));
+            SentrySdk.Init(o =>
+            {
+                o.Dsn = Properties.SentryDsn;
+                EnvironmentProvider.Instance.AppendEnvironmentTags(o.DefaultTags);
+            });
+        }
+
+        // Initialize app language
+        InitializeAppLanguage();
+
+        // Initialize app theme
+        InitializeAppTheme();
+    }
+
+    private void InitializeAppTheme()
+    {
+        AppSettingsModel.AppearanceSetting themeSetting = AppSettingsModel.Instance.GetModel().Theme;
+        switch (themeSetting)
+        {
+            case AppSettingsModel.AppearanceSetting.Light:
+                Current.RequestedTheme = ApplicationTheme.Light;
+                break;
+            case AppSettingsModel.AppearanceSetting.Dark:
+                Current.RequestedTheme = ApplicationTheme.Dark;
+                break;
+            default:
+                break;
         }
     }
 
-    private async Task PerformInitialization()
+    private void InitializeAppLanguage()
     {
+        if (EnvironmentProvider.IsPortable())
+        {
+            string languageTag = AppSettingsModel.Instance.GetModel().Language;
+            if (string.IsNullOrEmpty(languageTag))
+            {
+                languageTag = EnvironmentProvider.Instance.GetCurrentSystemLanguage();
+            }
+            ApplicationLanguages.PrimaryLanguageOverride = languageTag;
+        }
+    }
+
+    private async Task InitializeOnAppLaunch()
+    {
+        // Initialize debug switches
+        DebugSwitchModel.Instance.Initialize();
+
+        // Initialize logger
         Logger.Initialize();
+
+        // Initialize databases
         await XmlDatabaseManager.Initialize();
-        await SqliteDatabaseManager.Initialize(XmlDatabase.Settings.DatabaseVersion);
-        ComicData.UpdateAllComics("DatabaseManager#init", lazy: true);
+        SqlDatabaseManager.Initialize();
+        DatabaseUpgradeManager.Instance.UpgradeDatabase();
+
+        // Update comic library
+        ComicModel.UpdateAllComics("DatabaseManager#init", lazy: true);
     }
 }

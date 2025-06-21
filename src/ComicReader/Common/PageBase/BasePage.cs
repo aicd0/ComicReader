@@ -1,7 +1,9 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-using ComicReader.Common.DebugTools;
+using ComicReader.Common.Lifecycle;
+using ComicReader.Helpers.Navigation;
+using ComicReader.SDK.Common.DebugTools;
 
 using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
@@ -13,8 +15,10 @@ namespace ComicReader.Common.PageBase;
 
 internal abstract class BasePage : Page
 {
-    private PageCommunicator _communicator;
-    private PointerPoint _lastPointerPoint;
+    protected int WindowId { get; private set; } = 0;
+
+    private PageCommunicator? _communicator = null;
+    private PointerPoint? _lastPointerPoint = null;
 
     private bool _isStarted = false;
     private bool _isResumed = false;
@@ -22,6 +26,8 @@ internal abstract class BasePage : Page
     private bool _requireStop = false;
 
     private readonly PageStopEventHandler _pageStopHandler;
+
+    public StringResourceProvider StringResource { get; } = StringResourceProvider.Instance;
 
     public BasePage()
     {
@@ -86,9 +92,14 @@ internal abstract class BasePage : Page
     {
     }
 
-    protected T GetAbility<T>() where T : class
+    protected T? GetAbility<T>() where T : class
     {
-        return _communicator.GetAbility<T>();
+        return _communicator?.GetAbility<T>();
+    }
+
+    protected EventBus GetEventBus()
+    {
+        return App.WindowManager.GetEventBus(WindowId)!;
     }
 
     protected bool CanHandleTapped()
@@ -108,7 +119,7 @@ internal abstract class BasePage : Page
 
     private void OnLoadedInternal(object sender, RoutedEventArgs e)
     {
-        if (!(sender as Page).IsLoaded)
+        if (!((Page)sender).IsLoaded)
         {
             return;
         }
@@ -119,7 +130,7 @@ internal abstract class BasePage : Page
 
     private void OnUnloadedInternal(object sender, RoutedEventArgs e)
     {
-        if ((sender as Page).IsLoaded)
+        if (((Page)sender).IsLoaded)
         {
             return;
         }
@@ -141,17 +152,19 @@ internal abstract class BasePage : Page
         }
 
         _isStarted = true;
-
         LogLifecycleEvent("Start");
+
         if (p is NavigationBundle bundle)
         {
             _communicator = bundle.Communicator;
             _communicator.GetAbility<ICommonPageAbility>()?.RegisterPageStopHandler(_pageStopHandler);
+            WindowId = StringUtils.ParseInt(bundle.Bundle.GetString(RouterConstants.ARG_WINDOW_ID));
+            Logger.Assert(WindowId > 0, "16EFCEB1C7797AA2");
             OnStart(bundle.Bundle);
         }
         else
         {
-            OnStart(null);
+            Logger.AssertNotReachHere("4E6487BEA8B0B06F");
         }
     }
 
@@ -192,13 +205,13 @@ internal abstract class BasePage : Page
         }
 
         _isStarted = false;
-        _communicator.GetAbility<ICommonPageAbility>()?.UnregisterPageStopHandler(_pageStopHandler);
+        _communicator?.GetAbility<ICommonPageAbility>()?.UnregisterPageStopHandler(_pageStopHandler);
         LogLifecycleEvent("Stop");
         OnStop();
     }
 
     private void LogLifecycleEvent(string eventName)
     {
-        Logger.I(LogTag.N("PageLifecycle", this.GetType().Name), eventName);
+        Logger.I(LogTag.N("PageLifecycle", GetType().Name), eventName);
     }
 }

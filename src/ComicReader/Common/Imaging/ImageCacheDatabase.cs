@@ -1,6 +1,8 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +13,8 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
-using ComicReader.Common.DebugTools;
+using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Common.Storage;
 
 using Microsoft.Data.Sqlite;
 
@@ -44,7 +47,13 @@ internal static class ImageCacheDatabase
         {
             if (_databaseFolder == null)
             {
-                StorageFolder databaseFolder = ApplicationData.Current.LocalCacheFolder;
+                string folderPath = StorageLocation.GetLocalCacheFolderPath();
+                StorageFolder databaseFolder = Storage.TryGetFolder(folderPath).Result;
+                if (databaseFolder == null)
+                {
+                    Logger.AssertNotReachHere("C337BD5DF4FAE670");
+                    return null;
+                }
                 _databaseFolder = databaseFolder.CreateFolderAsync("database", CreationCollisionOption.OpenIfExists).Get();
             }
             return _databaseFolder;
@@ -135,7 +144,7 @@ internal static class ImageCacheDatabase
                     records.Add(record);
                 }
             }
-            DebugUtils.Assert(records.Count <= 1);
+            Logger.Assert(records.Count <= 1, "9C0107871C1B6CB1");
 
             if (records.Count == 0)
             {
@@ -203,7 +212,13 @@ internal static class ImageCacheDatabase
 
     private static async Task<SqliteConnection> CreateConnection(bool clear)
     {
-        StorageFile databaseFile = await DatabaseFolder.CreateFileAsync(DATABASE_FILE_NAME,
+        StorageFolder databaseFolder = DatabaseFolder;
+        if (databaseFolder == null)
+        {
+            Logger.AssertNotReachHere("DD5103C3E794B6A6");
+            return null;
+        }
+        StorageFile databaseFile = await databaseFolder.CreateFileAsync(DATABASE_FILE_NAME,
             clear ? CreationCollisionOption.ReplaceExisting : CreationCollisionOption.OpenIfExists);
         var connection = new SqliteConnection($"Filename={databaseFile.Path}");
         connection.Open();

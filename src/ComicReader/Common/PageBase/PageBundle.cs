@@ -1,6 +1,8 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System.Collections.Generic;
 
 namespace ComicReader.Common.PageBase;
@@ -14,7 +16,7 @@ internal class PageBundle
         _parameters = parameters;
     }
 
-    public string GetString(string key, string defaultValue)
+    public string GetString(string key, string defaultValue = "")
     {
         if (_parameters.TryGetValue(key, out string value))
         {
@@ -24,7 +26,7 @@ internal class PageBundle
         return defaultValue;
     }
 
-    public long GetLong(string key, long defaultValue)
+    public long GetLong(string key, long defaultValue = 0L)
     {
         if (_parameters.TryGetValue(key, out string value))
         {

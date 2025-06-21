@@ -1,10 +1,12 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 
-using ComicReader.Common.Threading;
+using ComicReader.SDK.Common.Threading;
 
 namespace ComicReader.Common.Imaging;
 

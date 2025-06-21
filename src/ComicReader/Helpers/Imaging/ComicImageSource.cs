@@ -4,7 +4,7 @@
 using System.Threading.Tasks;
 
 using ComicReader.Common.Imaging;
-using ComicReader.Data.Comic;
+using ComicReader.Data.Models.Comic;
 
 using Windows.Storage.Streams;
 
@@ -12,11 +12,11 @@ namespace ComicReader.Helpers.Imaging;
 
 internal class ComicImageSource : IImageSource
 {
-    private readonly ComicData _comic;
+    private readonly ComicModel _comic;
     private readonly IComicConnection _connection;
     private readonly int _index;
 
-    public ComicImageSource(ComicData comic, IComicConnection connection, int index)
+    public ComicImageSource(ComicModel comic, IComicConnection connection, int index)
     {
         _comic = comic;
         _connection = connection;

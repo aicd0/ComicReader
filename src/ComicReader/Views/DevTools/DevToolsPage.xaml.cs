@@ -3,8 +3,10 @@
 
 using System;
 
-using ComicReader.Common.DebugTools;
+using ComicReader.Common;
 using ComicReader.Common.PageBase;
+using ComicReader.Data.Models;
+using ComicReader.SDK.Common.Storage;
 using ComicReader.Views.Main;
 
 using Microsoft.UI.Xaml.Controls;
@@ -37,9 +39,8 @@ internal sealed partial class DevToolsPage : BasePage
     protected override void OnResume()
     {
         base.OnResume();
-
         SetResult(null);
-        TbCommonConfigs.Text = DebugSwitches.Instance.SerializeToJson();
+        RestoreConfig();
     }
 
     //
@@ -48,7 +49,20 @@ internal sealed partial class DevToolsPage : BasePage
 
     private void OnOpenAppFolderClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        _ = Launcher.LaunchFolderAsync(ApplicationData.Current.LocalFolder);
+        C0.Run(async () =>
+        {
+            string path = StorageLocation.GetLocalFolderPath();
+            StorageFolder? folder = await Storage.TryGetFolder(path);
+            if (folder != null)
+            {
+                _ = Launcher.LaunchFolderAsync(folder);
+            }
+        });
+    }
+
+    private void CrashAppButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        throw new InvalidOperationException();
     }
 
     private void OnCommonConfigsApplyClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
@@ -56,25 +70,20 @@ internal sealed partial class DevToolsPage : BasePage
         string configs = TbCommonConfigs.Text;
         try
         {
-            DebugSwitches.Instance.ParseFromJson(configs);
+            DebugSwitchModel.Instance.SaveConfig(configs);
         }
         catch (Exception ex)
         {
             SetResult(ex.ToString());
             return;
         }
-
         SetResult("Successfully applied");
+        RestoreConfig();
     }
 
     private void OnCommonConfigsRestoreClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        TbCommonConfigs.Text = DebugSwitches.Instance.SerializeToJson();
-    }
-
-    private void OnCommonConfigsTextChanged(object sender, TextChangedEventArgs e)
-    {
-        SetResult(null);
+        RestoreConfig();
     }
 
     //
@@ -83,10 +92,10 @@ internal sealed partial class DevToolsPage : BasePage
 
     private IMainPageAbility GetMainPageAbility()
     {
-        return GetAbility<IMainPageAbility>();
+        return GetAbility<IMainPageAbility>()!;
     }
 
-    private void SetResult(string result)
+    private void SetResult(string? result)
     {
         if (result == null || result.Length == 0)
         {
@@ -94,5 +103,10 @@ internal sealed partial class DevToolsPage : BasePage
         }
 
         TbOperationResult.Text = result;
+    }
+
+    private void RestoreConfig()
+    {
+        TbCommonConfigs.Text = DebugSwitchModel.Instance.SerializeToJson();
     }
 }

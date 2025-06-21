@@ -1,39 +1,22 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-using System.ComponentModel;
-
-using ComicReader.Common.Threading;
-using ComicReader.Data.Comic;
+using ComicReader.Common.PageBase;
+using ComicReader.Data.Models.Comic;
+using ComicReader.SDK.Common.Threading;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
 namespace ComicReader.Views.Reader;
 
-internal class EditComicInfoDialogViewModel : INotifyPropertyChanged
-{
-    public event PropertyChangedEventHandler PropertyChanged;
-
-    private bool _isTagInfoBarOpen = false;
-    public bool IsTagInfoBarOpen
-    {
-        get => _isTagInfoBarOpen;
-        set
-        {
-            _isTagInfoBarOpen = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsTagInfoBarOpen)));
-        }
-    }
-}
-
-internal sealed partial class EditComicInfoDialog : ContentDialog
+internal sealed partial class EditComicInfoDialog : BaseContentDialog
 {
     public EditComicInfoDialogViewModel ViewModel = new();
 
-    private readonly ComicData _comic;
+    private readonly ComicModel _comic;
 
-    public EditComicInfoDialog(ComicData comic)
+    public EditComicInfoDialog(ComicModel comic)
     {
         _comic = comic;
         InitializeComponent();
@@ -48,7 +31,7 @@ internal sealed partial class EditComicInfoDialog : ContentDialog
         Title1TextBox.Text = _comic.Title1;
         Title2TextBox.Text = _comic.Title2;
         DescriptionTextBox.Text = _comic.Description;
-        TagTextBox.Text = _comic.TagString();
+        TagTextBox.Text = _comic.ReadableTags;
     }
 
     private void ContentDialogPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
@@ -57,7 +40,10 @@ internal sealed partial class EditComicInfoDialog : ContentDialog
         _comic.ParseInfo(infoText);
         _comic.SaveBasic();
 
-        TaskDispatcher.DefaultQueue.Submit("ContentDialogPrimaryButtonClick", _comic.SaveToInfoFileSealed());
+        TaskDispatcher.DefaultQueue.Submit("ContentDialogPrimaryButtonClick", delegate
+        {
+            _comic.SaveToInfoFile().Wait();
+        });
     }
 
     private void ContentDialogSecondaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)

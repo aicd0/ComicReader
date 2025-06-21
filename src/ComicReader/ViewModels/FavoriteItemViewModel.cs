@@ -1,8 +1,12 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+
+using ComicReader.Common.PageBase;
 
 namespace ComicReader.ViewModels;
 
@@ -12,7 +16,7 @@ public enum FavoriteNodeType
     Filter
 };
 
-public class FavoriteItemViewModel : INotifyPropertyChanged
+public class FavoriteItemViewModel : BaseViewModel, INotifyPropertyChanged
 {
     public event PropertyChangedEventHandler PropertyChanged;
 

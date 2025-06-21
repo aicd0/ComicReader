@@ -7,8 +7,8 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
-using ComicReader.Common.DebugTools;
 using ComicReader.Common.Native;
+using ComicReader.SDK.Common.DebugTools;
 
 using Microsoft.Win32.SafeHandles;
 
@@ -93,7 +93,7 @@ public class Win32IO
 
             if (m_initial_search)
             {
-                DebugUtils.Assert(m_stack.Count == 1);
+                Logger.Assert(m_stack.Count == 1, "A870BE3C949DF1C3");
                 m_initial_search = false;
 
                 foreach (string path in m_stack[0].Paths)

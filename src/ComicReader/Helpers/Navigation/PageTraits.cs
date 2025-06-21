@@ -1,10 +1,11 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System;
 
 using ComicReader.Common.PageBase;
-using ComicReader.Views.Help;
 using ComicReader.Views.Home;
 using ComicReader.Views.Search;
 using ComicReader.Views.Settings;
@@ -172,7 +173,7 @@ internal class SettingPageTrait : IPageTrait
 
     public Type GetPageType()
     {
-        return typeof(SettingsPage);
+        return typeof(SettingPage);
     }
 
     public bool HasNavigationBar()
@@ -201,46 +202,6 @@ internal class SettingPageTrait : IPageTrait
         get
         {
             _instance ??= new SettingPageTrait();
-            return _instance;
-        }
-    }
-}
-
-internal class HelpPageTrait : IPageTrait
-{
-    private HelpPageTrait() { }
-
-    public Type GetPageType()
-    {
-        return typeof(HelpPage);
-    }
-
-    public bool HasNavigationBar()
-    {
-        return false;
-    }
-
-    public bool ImmersiveMode()
-    {
-        return false;
-    }
-
-    public bool SupportFullscreen()
-    {
-        return false;
-    }
-
-    public bool SupportMultiInstance()
-    {
-        return false;
-    }
-
-    private static IPageTrait _instance;
-    public static IPageTrait Instance
-    {
-        get
-        {
-            _instance ??= new HelpPageTrait();
             return _instance;
         }
     }

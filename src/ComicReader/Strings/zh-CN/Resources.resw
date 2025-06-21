@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -117,26 +117,20 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="About.Text" xml:space="preserve">
+  <data name="About" xml:space="preserve">
     <value>关于</value>
   </data>
   <data name="AboutCopyright" xml:space="preserve">
     <value>© 2025 $author。保留所有权利。</value>
   </data>
-  <data name="AddFolderButton.Content" xml:space="preserve">
+  <data name="AddFolder" xml:space="preserve">
     <value>添加文件夹</value>
-  </data>
-  <data name="AddFolderControl.Detail" xml:space="preserve">
-    <value>在仓库中添加更多文件夹</value>
-  </data>
-  <data name="AddFolderControl.Title" xml:space="preserve">
-    <value>添加文件夹</value>
-  </data>
-  <data name="AddLocationButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>添加位置</value>
   </data>
   <data name="AddToFavorites" xml:space="preserve">
     <value>添加收藏</value>
+  </data>
+  <data name="AdvancedExpander.Detail" xml:space="preserve">
+    <value>非常用设置</value>
   </data>
   <data name="AdvancedExpander.Header" xml:space="preserve">
     <value>高级</value>
@@ -151,28 +145,46 @@
     <value>所有隐藏项</value>
   </data>
   <data name="AllMatchedResults" xml:space="preserve">
-    <value>所有搜索结果</value>
+    <value>所有匹配项</value>
   </data>
-  <data name="AllPagesButton.ToolTipService.ToolTip" xml:space="preserve">
+  <data name="AllPages" xml:space="preserve">
     <value>所有页面</value>
+  </data>
+  <data name="AntiAliasingFilter.Text" xml:space="preserve">
+    <value>抗混叠滤波器（实验性）</value>
+  </data>
+  <data name="AppDescription" xml:space="preserve">
+    <value>漫画阅读器 UWP</value>
+  </data>
+  <data name="AppDisplayName" xml:space="preserve">
+    <value>漫画阅读器 UWP</value>
+  </data>
+  <data name="AppStoreName" xml:space="preserve">
+    <value>漫画阅读器 UWP</value>
+  </data>
+  <data name="AppearanceExpander.Detail" xml:space="preserve">
+    <value>选择要显示的应用主题</value>
   </data>
   <data name="AppearanceExpander.Header" xml:space="preserve">
     <value>外观</value>
   </data>
-  <data name="ApplyOnNextLaunch.Text" xml:space="preserve">
+  <data name="ApplyOnNextLaunch" xml:space="preserve">
     <value>您将在下次应用启动时看到您的更改</value>
   </data>
-  <data name="AppDisplayName" xml:space="preserve">
-    <value>漫画阅读器</value>
+  <data name="ArchiveEncoding.Text" xml:space="preserve">
+    <value>压缩文件编码</value>
   </data>
-  <data name="BackButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>返回</value>
+  <data name="Ascending" xml:space="preserve">
+    <value>升序</value>
+  </data>
+  <data name="Calculating" xml:space="preserve">
+    <value>计算中...</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>取消</value>
   </data>
   <data name="ChooseLocationButton.Content" xml:space="preserve">
     <value>添加或修改图片位置</value>
-  </data>
-  <data name="ChooseLocationDialog.PrimaryButtonText" xml:space="preserve">
-    <value>完成</value>
   </data>
   <data name="ChooseLocationDialog.Title" xml:space="preserve">
     <value>从以下位置扫描图片</value>
@@ -180,38 +192,141 @@
   <data name="ClearAllHistoryButton.Content" xml:space="preserve">
     <value>清除所有记录</value>
   </data>
+  <data name="ClearCacheButton.Content" xml:space="preserve">
+    <value>清空缓存</value>
+  </data>
+  <data name="ClearCacheDetail" xml:space="preserve">
+    <value>缓存大小：$size</value>
+  </data>
+  <data name="ComicInfo" xml:space="preserve">
+    <value>漫画信息</value>
+  </data>
+  <data name="CompletionState" xml:space="preserve">
+    <value>完成状态</value>
+  </data>
+  <data name="ContinuousButton.Label" xml:space="preserve">
+    <value>连续</value>
+  </data>
   <data name="ContributionRunAfterLink" xml:space="preserve">
     <value>上了解如何参与该项目的开发。</value>
   </data>
   <data name="ContributionRunBeforeLink" xml:space="preserve">
     <value>$appname是一个开源项目。在</value>
   </data>
+  <data name="DebugInformation.Text" xml:space="preserve">
+    <value>调试信息</value>
+  </data>
+  <data name="DebugMode.Text" xml:space="preserve">
+    <value>调试模式</value>
+  </data>
+  <data name="DebugModeWarning" xml:space="preserve">
+    <value>开启调试模式可能会使应用不稳定，确认继续吗？</value>
+  </data>
+  <data name="Default" xml:space="preserve">
+    <value>默认</value>
+  </data>
   <data name="DefaultTags" xml:space="preserve">
     <value>默认标签</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>删除</value>
+  </data>
+  <data name="Descending" xml:space="preserve">
+    <value>降序</value>
+  </data>
+  <data name="DescriptionColon" xml:space="preserve">
+    <value>描述：</value>
+  </data>
+  <data name="DevAppDisplayName" xml:space="preserve">
+    <value>漫画阅读器 UWP [Dev]</value>
   </data>
   <data name="Disclaimer.Text" xml:space="preserve">
     <value>免责声明</value>
   </data>
-  <data name="EditComicInfoDialog.PrimaryButtonText" xml:space="preserve">
+  <data name="DiscreteButton.Label" xml:space="preserve">
+    <value>拆分</value>
+  </data>
+  <data name="Done" xml:space="preserve">
     <value>完成</value>
   </data>
-  <data name="EditComicInfoDialog.SecondaryButtonText" xml:space="preserve">
-    <value>取消</value>
-  </data>
-  <data name="EditComicInfoDialog.Title" xml:space="preserve">
-    <value>漫画信息</value>
-  </data>
-  <data name="EditInfoButton.Label" xml:space="preserve">
+  <data name="Edit" xml:space="preserve">
     <value>编辑</value>
   </data>
-  <data name="FavoriteAppBarButton.Label" xml:space="preserve">
+  <data name="ExpressionAnd" xml:space="preserve">
+    <value>与</value>
+  </data>
+  <data name="ExpressionIn" xml:space="preserve">
+    <value>包含于</value>
+  </data>
+  <data name="ExpressionInvalid" xml:space="preserve">
+    <value>表达式不合法（$reason）</value>
+  </data>
+  <data name="ExpressionNot" xml:space="preserve">
+    <value>非</value>
+  </data>
+  <data name="ExpressionOr" xml:space="preserve">
+    <value>或</value>
+  </data>
+  <data name="ExpressionReference" xml:space="preserve">
+    <value>（本文档可能为机器翻译）
+
+表达式参考
+
+1. 变量
+
+%tag              - 匹配漫画中的所有标签。
+%title            - 匹配标题 1 或标题 2。
+%title1           - 匹配标题 1。
+%title2           - 匹配标题 2。
+%rating           - 匹配评分。例如：4 代表 4 星，0 代表无评分。
+%completion_state - 漫画完成状态（0 - 未读，1 - 正在阅读，2 - 已完成）。
+%progress         - 阅读进度，以百分比表示。例如：50 代表 50%。
+
+2. 变量运算符
+
+=                 - 等于。例如：%title = "This is a title"
+&gt;                 - 大于。例如：%rating &gt; 3
+&gt;=                - 大于等于。
+&lt;                 - 小于。
+&lt;=                - 小于等于。
+... IN (...)      - 包含于。例如：
+                    %rating in (3, 4, 5) - 匹配评分在 3、4 和 5 之间的漫画。
+                    %tag.language in (languageA, languageB) - 匹配“language”标签类别包含“languageA”或“languageB”的漫画。
+                    (authorA, authorB) in %tag.authors - 匹配“authors”标签类别同时包含“authorA”和“authorB”的漫画。
+                    apple in %tag - 匹配包含标签“apple”的漫画。
+
+3. 逻辑运算符
+
+AND               - 逻辑与。例如：%tag.fruit = apple AND %title = "我有一个苹果"
+OR                - 逻辑或。例如：%title1 = "苹果还可以" OR %title2 = "橙子也可以"
+NOT               - 逻辑非。例如：NOT %tag = "hide this"
+
+4. 括号
+
+默认情况下，运算符将从左到右进行求值。使用 (...) 可提高所包含表达式的优先级。例如：
+
+%tag.author = abc AND (%tag.language = langA OR NOT %tag.lang = langB)
+
+求值将按以下顺序进行：
+
+1. NOT %tag.lang = langB  ==&gt;  结果 1
+2. %tag.language = langA OR 结果 1  ==&gt;  结果 2
+3. %tag.author = abc AND 结果 2  ==&gt;  结果 3</value>
+  </data>
+  <data name="ExpressionTextBlock.Text" xml:space="preserve">
+    <value>表达式</value>
+  </data>
+  <data name="ExpressionValid" xml:space="preserve">
+    <value>SQL查询语句：$query</value>
+  </data>
+  <data name="Favorite" xml:space="preserve">
     <value>收藏</value>
+  </data>
+  <data name="Favorites" xml:space="preserve">
+    <value>收藏夹</value>
   </data>
   <data name="FavoritesButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>收藏夹及历史记录</value>
-  </data>
-  <data name="FavoriteToggleButton.Label" xml:space="preserve">
-    <value>收藏</value>
   </data>
   <data name="Feedback.Text" xml:space="preserve">
     <value>反馈</value>
@@ -219,126 +334,86 @@
   <data name="FeedbackIntroduction.Text" xml:space="preserve">
     <value>您可以通过以下按钮在GitHub上向我们提交建议或报告问题。</value>
   </data>
+  <data name="FilterSettings" xml:space="preserve">
+    <value>过滤器设置</value>
+  </data>
   <data name="FilteredBy" xml:space="preserve">
     <value>$count个过滤条件</value>
-  </data>
-  <data name="Finished" xml:space="preserve">
-    <value>已完成</value>
   </data>
   <data name="FinishPercentage" xml:space="preserve">
     <value>已读$percentage%</value>
   </data>
+  <data name="Finished" xml:space="preserve">
+    <value>已完成</value>
+  </data>
   <data name="FoldersHeader.Text" xml:space="preserve">
     <value>文件夹</value>
   </data>
-  <data name="ForwardButton.ToolTipService.ToolTip" xml:space="preserve">
+  <data name="GoBack" xml:space="preserve">
+    <value>返回</value>
+  </data>
+  <data name="GoForward" xml:space="preserve">
     <value>前进</value>
+  </data>
+  <data name="Group" xml:space="preserve">
+    <value>分组</value>
   </data>
   <data name="Help" xml:space="preserve">
     <value>帮助</value>
   </data>
-  <data name="HelpPageMarkdown.Text" xml:space="preserve">
-    <value># 如何使用过滤器进行搜索
-您可以通过使用过滤器来让搜索引擎只展示您感兴趣的搜索结果。
-
-### 基本用法
-搜索关键词的基本格式： (过滤器间的空格非必需)
-
-`关键词1 关键词2 ... &lt;过滤器1&gt; &lt;过滤器2&gt; ...`
-
-以下为您列出几种常用的过滤器：
-
-### 搜索指定目录
-只搜索在指定目录下的漫画。
-
-* 格式：`&lt;dir: 目录1[, 目录2, 目录3...]&gt;`
-
-* 例如：`漫画标题 &lt;dir: D:\漫画文件夹&gt;`
-
-* 等价写法：directory, folder, location, path.
-
-### 搜索指定隐藏漫画
-只显示被隐藏的漫画
-
-* 格式：`&lt;hidden&gt;`
-
-* 等价写法：hide.
-
-### 搜索指定标签
-只显示包含特定标签的漫画。
-
-* 格式：`&lt;tag: 标签1[, 标签2, 标签3...]&gt;`
-
-* 例如：`漫画标题 &lt;tag: 漫画标签1&gt;`
-
-* 等价写法：tags.
-
-### 搜索带指定分类的标签
-在搜索标签的同时指定标签的分类。
-
-* 格式：`&lt;标签分类: 标签1[, 标签2, 标签3...]&gt;`
-
-* 例如：`漫画标题 &lt;语言: 中文, 英文&gt;`
-
-### 搜索漫画ID
-通过直接指定漫画ID的方式进行搜索。
-
-* 格式：`&lt;id: 漫画ID&gt;`
-
-* 例如：`&lt;id: 1234&gt;`
-
-* 等价写法：no, num, number.
-
-### 搜索评分
-依据漫画评分进行过滤。
-
-* 格式：`&lt;rating: 评分1[, 评分2, 评分3...]&gt;`
-
-* 例如：`&lt;rating: -1, 4, 5&gt;` (`-1` 表示没有评分)
-
-* 等价写法：ratings, rate, star, stars.
-
-### 使用逻辑 与/或 组合过滤器
-使用逻辑 与/或 组合多个过滤器。
-
-* 或格式: `&lt;or: &lt;过滤器1&gt; &lt;过滤器2&gt; &lt;过滤器3&gt; ...&gt;`
-
-* 与格式: `&lt;and: &lt;过滤器1&gt; &lt;过滤器2&gt; &lt;过滤器3&gt; ...&gt;`
-
-* 例如: `漫画标题 &lt;or: &lt;star: 5&gt; &lt;语言: 中文&gt;&gt;`
-
-### 对过滤器取反
-只搜索不能通过过滤器的漫画。
-
-* 格式：`&lt;~&lt;过滤器&gt;&gt;`
-
-* 例如：`&lt;~&lt;rating: 1&gt;&gt;` (不显示评分为1星的漫画)
-
-### 全部
-不进行过滤。只在需要查看仓库中所有漫画（除被隐藏的漫画）时使用。
-
-* 格式：`&lt;all&gt;`
-
-* 例如：`&lt;all&gt;`
-</value>
-  </data>
-  <data name="HideAppBarButton.Label" xml:space="preserve">
+  <data name="Hide" xml:space="preserve">
     <value>隐藏</value>
   </data>
-  <data name="HistoryExpander.Header" xml:space="preserve">
+  <data name="History" xml:space="preserve">
     <value>历史记录</value>
+  </data>
+  <data name="HistoryExpander.Detail" xml:space="preserve">
+    <value>清空历史记录，启用或停用历史记录</value>
   </data>
   <data name="HomeButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>主页</value>
   </data>
-  <data name="HomePageRefreshButton.Content" xml:space="preserve">
-    <value>刷新</value>
+  <data name="HorizontalButton.Label" xml:space="preserve">
+    <value>横向</value>
   </data>
-  <data name="LeftToRight.Text" xml:space="preserve">
-    <value>从左到右</value>
+  <data name="HotkeyFirstPage.Header" xml:space="preserve">
+    <value>跳转到第一页</value>
+  </data>
+  <data name="HotkeyLastPage.Header" xml:space="preserve">
+    <value>跳转到最后一页</value>
+  </data>
+  <data name="HotkeyNextPage.Header" xml:space="preserve">
+    <value>跳转到下一页</value>
+  </data>
+  <data name="HotkeyPreviousPage.Header" xml:space="preserve">
+    <value>跳转到上一页</value>
+  </data>
+  <data name="ImageLocationExpander.Detail" xml:space="preserve">
+    <value>添加或修改图片位置</value>
+  </data>
+  <data name="ImageLocationExpander.Header" xml:space="preserve">
+    <value>此设备上的图片</value>
+  </data>
+  <data name="KeyboardShortcutsExpander.Detail" xml:space="preserve">
+    <value>查看所有热键</value>
+  </data>
+  <data name="KeyboardShortcutsExpander.Header" xml:space="preserve">
+    <value>热键</value>
+  </data>
+  <data name="LanguageExpander.Detail" xml:space="preserve">
+    <value>选择应用显示的语言</value>
+  </data>
+  <data name="LanguageExpander.Header" xml:space="preserve">
+    <value>语言</value>
+  </data>
+  <data name="LastReadTime" xml:space="preserve">
+    <value>上次阅读时间</value>
+  </data>
+  <data name="LeftToRightButton.Label" xml:space="preserve">
+    <value>自左向右</value>
   </data>
   <data name="LibraryEmptyPart1.Text" xml:space="preserve">
-    <value>您的仓库似乎是空的，尝试</value>
+    <value>当前筛选条件下没有找到结果，尝试</value>
   </data>
   <data name="LibraryEmptyPart2.Text" xml:space="preserve">
     <value>或</value>
@@ -349,29 +424,17 @@
   <data name="LibraryHeader.Text" xml:space="preserve">
     <value>库</value>
   </data>
-  <data name="MenuFlyoutAddToFavorites.Text" xml:space="preserve">
-    <value>添加收藏</value>
+  <data name="MarkAsRead" xml:space="preserve">
+    <value>标记为完成</value>
   </data>
-  <data name="MenuFlyoutComicInfo.Text" xml:space="preserve">
-    <value>漫画信息</value>
+  <data name="MarkAsReading" xml:space="preserve">
+    <value>标记为阅读中</value>
+  </data>
+  <data name="MarkAsUnread" xml:space="preserve">
+    <value>标记为未读</value>
   </data>
   <data name="MenuFlyoutCreateNewFolder.Text" xml:space="preserve">
     <value>新建文件夹</value>
-  </data>
-  <data name="MenuFlyoutDelete.Text" xml:space="preserve">
-    <value>删除</value>
-  </data>
-  <data name="MenuFlyoutHelp.Text" xml:space="preserve">
-    <value>帮助</value>
-  </data>
-  <data name="MenuFlyoutHide.Text" xml:space="preserve">
-    <value>隐藏</value>
-  </data>
-  <data name="MenuFlyoutOpenInNewTab.Text" xml:space="preserve">
-    <value>在新选项卡中打开</value>
-  </data>
-  <data name="MenuFlyoutRemoveFromFavorites.Text" xml:space="preserve">
-    <value>取消收藏</value>
   </data>
   <data name="MenuFlyoutRemoveFromList.Text" xml:space="preserve">
     <value>从列表中移除</value>
@@ -379,20 +442,14 @@
   <data name="MenuFlyoutRename.Text" xml:space="preserve">
     <value>重命名</value>
   </data>
-  <data name="MenuFlyoutSelect.Text" xml:space="preserve">
-    <value>选择</value>
-  </data>
-  <data name="MenuFlyoutSettings.Text" xml:space="preserve">
-    <value>设置</value>
-  </data>
   <data name="MenuFlyoutSortByName.Text" xml:space="preserve">
     <value>按名称排序</value>
   </data>
-  <data name="MenuFlyoutUnhide.Text" xml:space="preserve">
-    <value>取消隐藏</value>
-  </data>
   <data name="MoreButton.ToolTipService.ToolTip" xml:space="preserve">
     <value>更多</value>
+  </data>
+  <data name="NameTextBlock.Text" xml:space="preserve">
+    <value>名称</value>
   </data>
   <data name="NewFolder" xml:space="preserve">
     <value>新文件夹</value>
@@ -406,35 +463,83 @@
   <data name="NoHistory.Text" xml:space="preserve">
     <value>您的浏览记录会显示在此处</value>
   </data>
+  <data name="NoRating" xml:space="preserve">
+    <value>无评分</value>
+  </data>
   <data name="NoResults" xml:space="preserve">
     <value>没有找到与 "$keyword" 相关的结果</value>
   </data>
   <data name="NoResultsDetail.Text" xml:space="preserve">
     <value>尝试使用不同关键词进行搜索</value>
   </data>
+  <data name="OpenInFileExplorer.ToolTipService.ToolTip" xml:space="preserve">
+    <value>在资源管理器中打开</value>
+  </data>
+  <data name="OpenInNewTab" xml:space="preserve">
+    <value>在新选项卡中打开</value>
+  </data>
+  <data name="PrivacyPolicy.Text" xml:space="preserve">
+    <value>隐私策略</value>
+  </data>
+  <data name="Proceed" xml:space="preserve">
+    <value>继续</value>
+  </data>
+  <data name="Progress" xml:space="preserve">
+    <value>进度</value>
+  </data>
+  <data name="Rating" xml:space="preserve">
+    <value>评分</value>
+  </data>
+  <data name="ReaderExpander.Detail" xml:space="preserve">
+    <value>自定义阅读器</value>
+  </data>
   <data name="ReaderExpander.Header" xml:space="preserve">
     <value>阅读器</value>
   </data>
-  <data name="RefreshButton.ToolTipService.ToolTip" xml:space="preserve">
+  <data name="ReaderSettingButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>阅读器设置</value>
+  </data>
+  <data name="ReaderStatusError" xml:space="preserve">
+    <value>加载时发生错误</value>
+  </data>
+  <data name="ReaderStatusLoading" xml:space="preserve">
+    <value>阅读器加载中</value>
+  </data>
+  <data name="ReaderTip.Message" xml:space="preserve">
+    <value>双击以适应当前图片宽/高</value>
+  </data>
+  <data name="ReaderTip.Title" xml:space="preserve">
+    <value>提示</value>
+  </data>
+  <data name="Reading" xml:space="preserve">
+    <value>阅读中</value>
+  </data>
+  <data name="Refresh" xml:space="preserve">
     <value>刷新</value>
   </data>
   <data name="RemoveFromFavorites" xml:space="preserve">
     <value>取消收藏</value>
   </data>
   <data name="RemoveLocationButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>从列表中移除当前位置</value>
+    <value>从列表中移除当前文件夹</value>
+  </data>
+  <data name="RemoveUnreachableCheckBox.Content" xml:space="preserve">
+    <value>自动移除不可访问的漫画</value>
   </data>
   <data name="RescanFilesButton.Content" xml:space="preserve">
     <value>重新扫描文件</value>
   </data>
-  <data name="RescanFilesDetail.Text" xml:space="preserve">
-    <value>当出现部分漫画缺失或信息不一致时，重新扫描文件可能解决问题。这一操作可能引发较高的CPU占用率，进而缩短您的电池使用时间。</value>
+  <data name="RightToLeftButton.Label" xml:space="preserve">
+    <value>自右向左</value>
+  </data>
+  <data name="SaveAsNewButton.Content" xml:space="preserve">
+    <value>保存为新配置</value>
+  </data>
+  <data name="SaveButton.Content" xml:space="preserve">
+    <value>保存</value>
   </data>
   <data name="SaveHistory.Text" xml:space="preserve">
     <value>记录您的浏览历史</value>
-  </data>
-  <data name="SearchBox.PlaceholderText" xml:space="preserve">
-    <value>在帮助中了解如何过滤搜索结果</value>
   </data>
   <data name="SearchResults" xml:space="preserve">
     <value>搜索结果</value>
@@ -442,26 +547,32 @@
   <data name="SearchResultsOf" xml:space="preserve">
     <value>'$keyword' 的搜索结果</value>
   </data>
+  <data name="Select" xml:space="preserve">
+    <value>选择</value>
+  </data>
   <data name="SelectAllAppBarButton.Label" xml:space="preserve">
     <value>全选</value>
   </data>
   <data name="SendFeedbackButton.Content" xml:space="preserve">
     <value>发送反馈</value>
   </data>
-  <data name="SettingHeader.Text" xml:space="preserve">
-    <value>设置</value>
+  <data name="SetCompletionState" xml:space="preserve">
+    <value>设置完成状态</value>
   </data>
   <data name="Settings" xml:space="preserve">
     <value>设置</value>
   </data>
-  <data name="ShowAllButton.Content" xml:space="preserve">
-    <value>显示全部</value>
+  <data name="ShowHiddenComicButton.Content" xml:space="preserve">
+    <value>查看隐藏漫画</value>
   </data>
-  <data name="ShowHiddenButton.Content" xml:space="preserve">
-    <value>显示隐藏项</value>
+  <data name="Sort" xml:space="preserve">
+    <value>排序</value>
   </data>
-  <data name="Statistics.Text" xml:space="preserve">
+  <data name="Statistics" xml:space="preserve">
     <value>统计信息</value>
+  </data>
+  <data name="Tag" xml:space="preserve">
+    <value>标签</value>
   </data>
   <data name="TagIntroduction.Message" xml:space="preserve">
     <value>为漫画添加标签可以使您的仓库更易于管理，例如：
@@ -469,11 +580,11 @@
 类别2: 标签4/标签5
 ...</value>
   </data>
-  <data name="TagIntroduction.Title" xml:space="preserve">
+  <data name="Tags" xml:space="preserve">
     <value>标签</value>
   </data>
-  <data name="Tags.Text" xml:space="preserve">
-    <value>标签:</value>
+  <data name="TagsColon" xml:space="preserve">
+    <value>标签：</value>
   </data>
   <data name="ThemeDark.Content" xml:space="preserve">
     <value>深色</value>
@@ -484,169 +595,61 @@
   <data name="ThemeUseSystemSetting.Content" xml:space="preserve">
     <value>跟随系统设置</value>
   </data>
-  <data name="Title1.Text" xml:space="preserve">
-    <value>标题 1:</value>
+  <data name="Title" xml:space="preserve">
+    <value>标题</value>
   </data>
-  <data name="Title2.Text" xml:space="preserve">
-    <value>标题 2:</value>
+  <data name="Title1" xml:space="preserve">
+    <value>标题 1</value>
+  </data>
+  <data name="Title1Colon" xml:space="preserve">
+    <value>标题 1：</value>
+  </data>
+  <data name="Title2" xml:space="preserve">
+    <value>标题 2</value>
+  </data>
+  <data name="Title2Colon" xml:space="preserve">
+    <value>标题 2：</value>
   </data>
   <data name="TotalComics" xml:space="preserve">
     <value>漫画总数：</value>
   </data>
-  <data name="UnFavoriteAppBarButton.Label" xml:space="preserve">
+  <data name="TransitionAnimation.Text" xml:space="preserve">
+    <value>翻页动画</value>
+  </data>
+  <data name="Unfavorite" xml:space="preserve">
     <value>取消收藏</value>
   </data>
-  <data name="UnhideAppBarButton.Label" xml:space="preserve">
+  <data name="Ungrouped" xml:space="preserve">
+    <value>无分组</value>
+  </data>
+  <data name="Unhide" xml:space="preserve">
     <value>取消隐藏</value>
   </data>
   <data name="Unread" xml:space="preserve">
     <value>未阅读</value>
   </data>
-  <data name="WatchingFolders.Text" xml:space="preserve">
-    <value>目前，您的仓库包含如下文件夹：</value>
+  <data name="Untitled" xml:space="preserve">
+    <value>未命名</value>
   </data>
-  <data name="AppDescription" xml:space="preserve">
-    <value>漫画阅读器</value>
-  </data>
-  <data name="ReaderStatusLoading" xml:space="preserve">
-    <value>阅读器加载中</value>
-  </data>
-  <data name="DebugMode.Text" xml:space="preserve">
-    <value>调试模式</value>
-  </data>
-  <data name="PrivacyPolicy.Text" xml:space="preserve">
-    <value>隐私策略</value>
-  </data>
-  <data name="UntitledCollection" xml:space="preserve">
-    <value>未命名图片集</value>
-  </data>
-  <data name="AdvancedExpander.Detail" xml:space="preserve">
-    <value>重新扫描文件，开发者选项</value>
-  </data>
-  <data name="AppearanceExpander.Detail" xml:space="preserve">
-    <value>选择要显示的应用主题</value>
-  </data>
-  <data name="HistoryExpander.Detail" xml:space="preserve">
-    <value>清空历史记录，选择是否储存您的浏览历史</value>
-  </data>
-  <data name="ImageLocationExpander.Detail" xml:space="preserve">
-    <value>添加或修改图片位置</value>
-  </data>
-  <data name="ImageLocationExpander.Header" xml:space="preserve">
-    <value>此设备上的图片</value>
-  </data>
-  <data name="ReaderExpander.Detail" xml:space="preserve">
-    <value>自定义阅读器</value>
-  </data>
-  <data name="HotkeyPreviousPage.Header" xml:space="preserve">
-    <value>跳转到上一页</value>
-  </data>
-  <data name="HotkeyNextPage.Header" xml:space="preserve">
-    <value>跳转到下一页</value>
-  </data>
-  <data name="KeyboardShortcutsExpander.Detail" xml:space="preserve">
-    <value>查看所有热键</value>
-  </data>
-  <data name="KeyboardShortcutsExpander.Header" xml:space="preserve">
-    <value>热键</value>
-  </data>
-  <data name="HotkeyFirstPage.Header" xml:space="preserve">
-    <value>跳转到第一页</value>
-  </data>
-  <data name="HotkeyLastPage.Header" xml:space="preserve">
-    <value>跳转到最后一页</value>
-  </data>
-  <data name="ReaderStatusError" xml:space="preserve">
-    <value>加载时发生错误</value>
-  </data>
-  <data name="AppStoreName" xml:space="preserve">
-    <value>漫画阅读器 UWP</value>
-  </data>
-  <data name="ContinuousButton.Label" xml:space="preserve">
-    <value>连续</value>
-  </data>
-  <data name="HorizontalButton.Label" xml:space="preserve">
-    <value>横向</value>
-  </data>
-  <data name="LeftToRightButton.Label" xml:space="preserve">
-    <value>自左向右</value>
-  </data>
-  <data name="RightToLeftButton.Label" xml:space="preserve">
-    <value>自右向左</value>
+  <data name="UseSystemLanguage" xml:space="preserve">
+    <value>使用系统语言</value>
   </data>
   <data name="VerticalButton.Label" xml:space="preserve">
     <value>纵向</value>
   </data>
-  <data name="ArchiveEncoding.Text" xml:space="preserve">
-    <value>压缩文件编码</value>
+  <data name="ViewType" xml:space="preserve">
+    <value>视图</value>
   </data>
-  <data name="Default" xml:space="preserve">
-    <value>默认</value>
+  <data name="ViewTypeLarge" xml:space="preserve">
+    <value>较大</value>
   </data>
-  <data name="TransitionAnimation.Text" xml:space="preserve">
-    <value>翻页动画</value>
-  </data>
-  <data name="ReaderSettingButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>阅读器设置</value>
-  </data>
-  <data name="ComicInfoButton.ToolTipService.ToolTip" xml:space="preserve">
-    <value>漫画信息</value>
-  </data>
-  <data name="DiscreteButton.Label" xml:space="preserve">
-    <value>拆分</value>
-  </data>
-  <data name="OpenInFileExplorer.ToolTipService.ToolTip" xml:space="preserve">
-    <value>在资源管理器中打开</value>
-  </data>
-  <data name="ReaderTip.Message" xml:space="preserve">
-    <value>双击以适应当前图片宽/高</value>
-  </data>
-  <data name="ReaderTip.Title" xml:space="preserve">
-    <value>提示</value>
-  </data>
-  <data name="MenuFlyoutMarkAsRead.Text" xml:space="preserve">
-    <value>标记为完成</value>
-  </data>
-  <data name="MenuFlyoutMarkAsUnread.Text" xml:space="preserve">
-    <value>标记为未读</value>
-  </data>
-  <data name="MarkAsReadAppBarButton.Label" xml:space="preserve">
-    <value>标记为完成</value>
-  </data>
-  <data name="MarkAsUnreadAppBarButton.Label" xml:space="preserve">
-    <value>标记为未读</value>
-  </data>
-  <data name="DevAppDisplayName" xml:space="preserve">
-    <value>漫画阅读器 [Dev]</value>
-  </data>
-  <data name="ClearCacheButton.Content" xml:space="preserve">
-    <value>清空缓存</value>
-  </data>
-  <data name="ClearCacheDetail" xml:space="preserve">
-    <value>缓存大小：$size</value>
-  </data>
-  <data name="Calculating" xml:space="preserve">
-    <value>计算中...</value>
-  </data>
-  <data name="AntiAliasingFilter.Text" xml:space="preserve">
-    <value>抗混叠滤波器（实验性）</value>
+  <data name="ViewTypeMedium" xml:space="preserve">
+    <value>适中</value>
   </data>
   <data name="Warning" xml:space="preserve">
     <value>警告</value>
   </data>
-  <data name="DebugModeWarning" xml:space="preserve">
-    <value>开启调试模式可能会使应用不稳定，确认继续吗？</value>
-  </data>
-  <data name="Cancel" xml:space="preserve">
-    <value>取消</value>
-  </data>
-  <data name="Proceed" xml:space="preserve">
-    <value>继续</value>
-  </data>
-  <data name="Description.Text" xml:space="preserve">
-    <value>描述：</value>
-  </data>
-  <data name="DebugInformation.Text" xml:space="preserve">
-    <value>调试信息</value>
+  <data name="WatchingFolders.Text" xml:space="preserve">
+    <value>目前，您的仓库包含如下文件夹：</value>
   </data>
 </root>

@@ -5,8 +5,9 @@ using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
-using ComicReader.Data;
-using ComicReader.Data.Comic;
+using ComicReader.Common.PageBase;
+using ComicReader.Data.Legacy;
+using ComicReader.Data.Models.Comic;
 using ComicReader.ViewModels;
 
 using Microsoft.UI.Xaml;
@@ -15,15 +16,17 @@ using Microsoft.UI.Xaml.Input;
 
 namespace ComicReader.Views.Settings;
 
-public sealed partial class ChooseLocationsDialog : ContentDialog
+public sealed partial class ChooseLocationsDialog : BaseContentDialog
 {
     public ObservableCollection<FolderItemViewModel> FolderItemDataSource { get; set; }
 
-    public ChooseLocationsDialog()
-    {
-        FolderItemDataSource = new ObservableCollection<FolderItemViewModel>();
+    private int WindowId { get; }
 
+    public ChooseLocationsDialog(int windowId)
+    {
         InitializeComponent();
+        FolderItemDataSource = new ObservableCollection<FolderItemViewModel>();
+        WindowId = windowId;
     }
 
     // utilities
@@ -52,7 +55,7 @@ public sealed partial class ChooseLocationsDialog : ContentDialog
 
     private void ContentDialogPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
     {
-        ComicData.UpdateAllComics("ContentDialogPrimaryButtonClick", lazy: true);
+        ComicModel.UpdateAllComics("ContentDialogPrimaryButtonClick", lazy: true);
     }
 
     private void ListViewLoaded(object sender, RoutedEventArgs e)
@@ -77,7 +80,7 @@ public sealed partial class ChooseLocationsDialog : ContentDialog
 
             try
             {
-                if (!await SettingDataManager.AddComicFolderUsingPicker())
+                if (!await SettingDataManager.AddComicFolderUsingPicker(WindowId))
                 {
                     return;
                 }

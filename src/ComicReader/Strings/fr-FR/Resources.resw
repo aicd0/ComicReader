@@ -1,0 +1,655 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="About" xml:space="preserve">
+    <value>À propos</value>
+  </data>
+  <data name="AboutCopyright" xml:space="preserve">
+    <value>© 2025 $author. Tous droits réservés.</value>
+  </data>
+  <data name="AddFolder" xml:space="preserve">
+    <value>Ajouter un dossier</value>
+  </data>
+  <data name="AddToFavorites" xml:space="preserve">
+    <value>Ajouter aux favoris</value>
+  </data>
+  <data name="AdvancedExpander.Detail" xml:space="preserve">
+    <value>Paramètres inhabituels</value>
+  </data>
+  <data name="AdvancedExpander.Header" xml:space="preserve">
+    <value>Avancé</value>
+  </data>
+  <data name="AllComics" xml:space="preserve">
+    <value>Toutes les bandes dessinées</value>
+  </data>
+  <data name="AllComicsIn" xml:space="preserve">
+    <value>Toutes les bandes dessinées dans $path</value>
+  </data>
+  <data name="AllHidden" xml:space="preserve">
+    <value>Tous les objets cachés</value>
+  </data>
+  <data name="AllMatchedResults" xml:space="preserve">
+    <value>Tous les résultats correspondants</value>
+  </data>
+  <data name="AllPages" xml:space="preserve">
+    <value>Toutes les pages</value>
+  </data>
+  <data name="AntiAliasingFilter.Text" xml:space="preserve">
+    <value>Filtre anti-aliasing (expérimental)</value>
+  </data>
+  <data name="AppDescription" xml:space="preserve">
+    <value>Lecteur de bandes dessinées UWP</value>
+  </data>
+  <data name="AppDisplayName" xml:space="preserve">
+    <value>Lecteur de bandes dessinées UWP</value>
+  </data>
+  <data name="AppStoreName" xml:space="preserve">
+    <value>Lecteur de bandes dessinées UWP</value>
+  </data>
+  <data name="AppearanceExpander.Detail" xml:space="preserve">
+    <value>Sélectionnez le thème d'application à afficher</value>
+  </data>
+  <data name="AppearanceExpander.Header" xml:space="preserve">
+    <value>Apparence</value>
+  </data>
+  <data name="ApplyOnNextLaunch" xml:space="preserve">
+    <value>Vous verrez votre changement la prochaine fois que vous démarrerez l'application</value>
+  </data>
+  <data name="ArchiveEncoding.Text" xml:space="preserve">
+    <value>Codage de fichiers compressés</value>
+  </data>
+  <data name="Ascending" xml:space="preserve">
+    <value>Ascendant</value>
+  </data>
+  <data name="Calculating" xml:space="preserve">
+    <value>Calculateur...</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Annuler</value>
+  </data>
+  <data name="ChooseLocationButton.Content" xml:space="preserve">
+    <value>Choisir où nous recherchons des images</value>
+  </data>
+  <data name="ChooseLocationDialog.Title" xml:space="preserve">
+    <value>Créez vos collections à partir de vos fichiers locaux</value>
+  </data>
+  <data name="ClearAllHistoryButton.Content" xml:space="preserve">
+    <value>Effacer tout l'historique</value>
+  </data>
+  <data name="ClearCacheButton.Content" xml:space="preserve">
+    <value>Vider le cache</value>
+  </data>
+  <data name="ClearCacheDetail" xml:space="preserve">
+    <value>Taille du cache : $size</value>
+  </data>
+  <data name="ComicInfo" xml:space="preserve">
+    <value>Informations sur la bande dessinée</value>
+  </data>
+  <data name="CompletionState" xml:space="preserve">
+    <value>État d'achèvement</value>
+  </data>
+  <data name="ContinuousButton.Label" xml:space="preserve">
+    <value>Continu</value>
+  </data>
+  <data name="ContributionRunAfterLink" xml:space="preserve">
+    <value> pour savoir comment contribuer à cette application.</value>
+  </data>
+  <data name="ContributionRunBeforeLink" xml:space="preserve">
+    <value>$appname est un projet open source. Consultez </value>
+  </data>
+  <data name="DebugInformation.Text" xml:space="preserve">
+    <value>Informations de débogage</value>
+  </data>
+  <data name="DebugMode.Text" xml:space="preserve">
+    <value>Mode débogage</value>
+  </data>
+  <data name="DebugModeWarning" xml:space="preserve">
+    <value>L'activation du mode débogage peut rendre l'application instable, continuer ?</value>
+  </data>
+  <data name="Default" xml:space="preserve">
+    <value>Défaut</value>
+  </data>
+  <data name="DefaultTags" xml:space="preserve">
+    <value>Balises par défaut</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>Supprimer</value>
+  </data>
+  <data name="Descending" xml:space="preserve">
+    <value>Descendant</value>
+  </data>
+  <data name="DescriptionColon" xml:space="preserve">
+    <value>Description:</value>
+  </data>
+  <data name="DevAppDisplayName" xml:space="preserve">
+    <value>Lecteur de bandes dessinées UWP [Dev]</value>
+  </data>
+  <data name="Disclaimer.Text" xml:space="preserve">
+    <value>Clause de non-responsabilité</value>
+  </data>
+  <data name="DiscreteButton.Label" xml:space="preserve">
+    <value>Séparé</value>
+  </data>
+  <data name="Done" xml:space="preserve">
+    <value>Fait</value>
+  </data>
+  <data name="Edit" xml:space="preserve">
+    <value>Modifier</value>
+  </data>
+  <data name="ExpressionAnd" xml:space="preserve">
+    <value>Et</value>
+  </data>
+  <data name="ExpressionIn" xml:space="preserve">
+    <value>Contenu par</value>
+  </data>
+  <data name="ExpressionInvalid" xml:space="preserve">
+    <value>L'expression n'est pas valide ($reason)</value>
+  </data>
+  <data name="ExpressionNot" xml:space="preserve">
+    <value>Pas</value>
+  </data>
+  <data name="ExpressionOr" xml:space="preserve">
+    <value>Ou</value>
+  </data>
+  <data name="ExpressionReference" xml:space="preserve">
+    <value>(Ce document peut être traduit automatiquement)
+
+Référence des expressions
+
+1. Variables
+
+%tag                  - Correspond à tous les tags d'une BD.
+%title                - Correspond au titre 1 ou 2.
+%title1               - Correspond au titre 1.
+%title2               - Correspond au titre 2.
+%rating               - Correspond à la note. Par exemple : 4 représente 4 étoiles, 0 représente aucune note.
+%completion_state     - État d'achèvement de la BD (0 - Non lu, 1 - Lu, 2 - Terminé).
+%progress             - Progression de la lecture, en pourcentage. Par exemple : 50 représente 50 %.
+
+2. Opérateurs de variables
+
+=                     - Égal. Par exemple : %title = "Ceci est un titre"
+&gt;                     - Supérieur à. Par exemple : %rating &gt; 3
+&gt;=                    - Supérieur ou égal à.
+&lt;                     - Inférieur à.
+&lt;=                    - Inférieur ou égal à.
+... IN (...)          - Contenu par. Par exemple :
+                        %rating in (3, 4, 5) - Correspond aux bandes dessinées dont les notes sont comprises entre 3, 4 et 5.
+                        %tag.language in (languageA, languageB) - Correspond aux bandes dessinées dont la catégorie de balise « language » contient « languageA » ou « languageB ».
+                        (authorA, authorB) in %tag.authors - Correspond aux bandes dessinées dont la catégorie de balise « authors » contient à la fois « authorA » et « authorB ».
+                        apple in %tag - Correspond aux bandes dessinées contenant la balise « apple ».
+
+3. Opérateurs logiques
+
+AND                   - Et logique. Par exemple : %tag.fruit = apple and %title = "J'ai une pomme"
+OR                    - Ou logique. Par exemple : %title1 = "Apple is OK" or %title2 = "Orange is OK also"
+NOT                   - Non logique. Par exemple : NOT %tag = "hide this"
+
+4. Parenthèses
+
+Par défaut, les opérateurs sont évalués de gauche à droite. Utilisez (...) pour augmenter la priorité de l'expression incluse. Par exemple :
+
+%tag.author = abc AND (%tag.language = langA OR NOT %tag.lang = langB)
+
+L'évaluation sera effectuée dans l'ordre suivant :
+
+1. NOT %tag.lang = langB  ==&gt;  Résultat1
+2. %tag.language = langA OR Result1  ==&gt;  Résultat2
+3. %tag.author = abc AND Result2  ==&gt;  Résultat3</value>
+  </data>
+  <data name="ExpressionTextBlock.Text" xml:space="preserve">
+    <value>Expression</value>
+  </data>
+  <data name="ExpressionValid" xml:space="preserve">
+    <value>Requête SQL : $query</value>
+  </data>
+  <data name="Favorite" xml:space="preserve">
+    <value>Collecter</value>
+  </data>
+  <data name="Favorites" xml:space="preserve">
+    <value>Favoris</value>
+  </data>
+  <data name="FavoritesButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Favoris et histoire</value>
+  </data>
+  <data name="Feedback.Text" xml:space="preserve">
+    <value>Retour</value>
+  </data>
+  <data name="FeedbackIntroduction.Text" xml:space="preserve">
+    <value>Utilisez le bouton ci-dessous pour nous envoyer des suggestions ou signaler un bug sur GitHub.</value>
+  </data>
+  <data name="FilterSettings" xml:space="preserve">
+    <value>Paramètres de filtre</value>
+  </data>
+  <data name="FilteredBy" xml:space="preserve">
+    <value>$count filtre(s) appliqué(s)</value>
+  </data>
+  <data name="FinishPercentage" xml:space="preserve">
+    <value>$pourcentage% Terminé</value>
+  </data>
+  <data name="Finished" xml:space="preserve">
+    <value>Fini</value>
+  </data>
+  <data name="FoldersHeader.Text" xml:space="preserve">
+    <value>Dossiers</value>
+  </data>
+  <data name="GoBack" xml:space="preserve">
+    <value>Retour</value>
+  </data>
+  <data name="GoForward" xml:space="preserve">
+    <value>Aller de l'avant</value>
+  </data>
+  <data name="Group" xml:space="preserve">
+    <value>Regroupement</value>
+  </data>
+  <data name="Help" xml:space="preserve">
+    <value>Aide</value>
+  </data>
+  <data name="Hide" xml:space="preserve">
+    <value>Cacher</value>
+  </data>
+  <data name="History" xml:space="preserve">
+    <value>Histoire</value>
+  </data>
+  <data name="HistoryExpander.Detail" xml:space="preserve">
+    <value>Effacer l'historique, activer ou désactiver l'historique</value>
+  </data>
+  <data name="HomeButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Maison</value>
+  </data>
+  <data name="HorizontalButton.Label" xml:space="preserve">
+    <value>Horizontal</value>
+  </data>
+  <data name="HotkeyFirstPage.Header" xml:space="preserve">
+    <value>Aller à la première page</value>
+  </data>
+  <data name="HotkeyLastPage.Header" xml:space="preserve">
+    <value>Aller à la dernière page</value>
+  </data>
+  <data name="HotkeyNextPage.Header" xml:space="preserve">
+    <value>Aller à la page suivante</value>
+  </data>
+  <data name="HotkeyPreviousPage.Header" xml:space="preserve">
+    <value>Aller à la page précédente</value>
+  </data>
+  <data name="ImageLocationExpander.Detail" xml:space="preserve">
+    <value>Choisir où nous recherchons des images</value>
+  </data>
+  <data name="ImageLocationExpander.Header" xml:space="preserve">
+    <value>Images sur cet appareil</value>
+  </data>
+  <data name="KeyboardShortcutsExpander.Detail" xml:space="preserve">
+    <value>Découvrez tous les raccourcis clavier</value>
+  </data>
+  <data name="KeyboardShortcutsExpander.Header" xml:space="preserve">
+    <value>Raccourcis clavier</value>
+  </data>
+  <data name="LanguageExpander.Detail" xml:space="preserve">
+    <value>Sélectionnez la langue d'affichage de l'application</value>
+  </data>
+  <data name="LanguageExpander.Header" xml:space="preserve">
+    <value>Langue</value>
+  </data>
+  <data name="LastReadTime" xml:space="preserve">
+    <value>Dernière heure de lecture</value>
+  </data>
+  <data name="LeftToRightButton.Label" xml:space="preserve">
+    <value>De gauche à droite</value>
+  </data>
+  <data name="LibraryEmptyPart1.Text" xml:space="preserve">
+    <value>Aucun résultat avec les paramètres de filtre actuels. Essayez </value>
+  </data>
+  <data name="LibraryEmptyPart2.Text" xml:space="preserve">
+    <value>ou</value>
+  </data>
+  <data name="LibraryEmptyPart3.Text" xml:space="preserve">
+    <value>.</value>
+  </data>
+  <data name="LibraryHeader.Text" xml:space="preserve">
+    <value>Bibliothèque</value>
+  </data>
+  <data name="MarkAsRead" xml:space="preserve">
+    <value>Marquer comme terminé</value>
+  </data>
+  <data name="MarkAsReading" xml:space="preserve">
+    <value>Marquer comme lecture</value>
+  </data>
+  <data name="MarkAsUnread" xml:space="preserve">
+    <value>Marquer comme non lu</value>
+  </data>
+  <data name="MenuFlyoutCreateNewFolder.Text" xml:space="preserve">
+    <value>Créer un nouveau dossier</value>
+  </data>
+  <data name="MenuFlyoutRemoveFromList.Text" xml:space="preserve">
+    <value>Supprimer de la liste</value>
+  </data>
+  <data name="MenuFlyoutRename.Text" xml:space="preserve">
+    <value>Rebaptiser</value>
+  </data>
+  <data name="MenuFlyoutSortByName.Text" xml:space="preserve">
+    <value>Trier par nom</value>
+  </data>
+  <data name="MoreButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Plus</value>
+  </data>
+  <data name="NameTextBlock.Text" xml:space="preserve">
+    <value>nom</value>
+  </data>
+  <data name="NewFolder" xml:space="preserve">
+    <value>Nouveau dossier</value>
+  </data>
+  <data name="NewTab" xml:space="preserve">
+    <value>Nouvel onglet</value>
+  </data>
+  <data name="NoFavorite.Text" xml:space="preserve">
+    <value>Vos favoris apparaîtront ici</value>
+  </data>
+  <data name="NoHistory.Text" xml:space="preserve">
+    <value>Votre historique de navigation sera affiché ici</value>
+  </data>
+  <data name="NoRating" xml:space="preserve">
+    <value>Aucune note</value>
+  </data>
+  <data name="NoResults" xml:space="preserve">
+    <value>Aucun résultat pour « $keyword »</value>
+  </data>
+  <data name="NoResultsDetail.Text" xml:space="preserve">
+    <value>Essayez de rechercher avec différents mots-clés</value>
+  </data>
+  <data name="OpenInFileExplorer.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Ouvrir dans l'explorateur de fichiers</value>
+  </data>
+  <data name="OpenInNewTab" xml:space="preserve">
+    <value>Ouvrir dans un nouvel onglet</value>
+  </data>
+  <data name="PrivacyPolicy.Text" xml:space="preserve">
+    <value>politique de confidentialité</value>
+  </data>
+  <data name="Proceed" xml:space="preserve">
+    <value>Procéder</value>
+  </data>
+  <data name="Progress" xml:space="preserve">
+    <value>Progrès</value>
+  </data>
+  <data name="Rating" xml:space="preserve">
+    <value>score</value>
+  </data>
+  <data name="ReaderExpander.Detail" xml:space="preserve">
+    <value>Personnaliser le lecteur</value>
+  </data>
+  <data name="ReaderExpander.Header" xml:space="preserve">
+    <value>Lecteur</value>
+  </data>
+  <data name="ReaderSettingButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Paramètres du lecteur</value>
+  </data>
+  <data name="ReaderStatusError" xml:space="preserve">
+    <value>Une erreur s'est produite lors du chargement</value>
+  </data>
+  <data name="ReaderStatusLoading" xml:space="preserve">
+    <value>Le lecteur est en cours de chargement</value>
+  </data>
+  <data name="ReaderTip.Message" xml:space="preserve">
+    <value>Appuyez deux fois pour ajuster la largeur/hauteur</value>
+  </data>
+  <data name="ReaderTip.Title" xml:space="preserve">
+    <value>Conseil</value>
+  </data>
+  <data name="Reading" xml:space="preserve">
+    <value>En lisant</value>
+  </data>
+  <data name="Refresh" xml:space="preserve">
+    <value>Rafraîchir</value>
+  </data>
+  <data name="RemoveFromFavorites" xml:space="preserve">
+    <value>Supprimer des favoris</value>
+  </data>
+  <data name="RemoveLocationButton.ToolTipService.ToolTip" xml:space="preserve">
+    <value>Supprimer ce dossier de la liste</value>
+  </data>
+  <data name="RemoveUnreachableCheckBox.Content" xml:space="preserve">
+    <value>Supprimer automatiquement les bandes dessinées inaccessibles</value>
+  </data>
+  <data name="RescanFilesButton.Content" xml:space="preserve">
+    <value>Réanalyser les fichiers</value>
+  </data>
+  <data name="RightToLeftButton.Label" xml:space="preserve">
+    <value>De droite à gauche</value>
+  </data>
+  <data name="SaveAsNewButton.Content" xml:space="preserve">
+    <value>Enregistrer comme nouveau</value>
+  </data>
+  <data name="SaveButton.Content" xml:space="preserve">
+    <value>Sauvegarder</value>
+  </data>
+  <data name="SaveHistory.Text" xml:space="preserve">
+    <value>Enregistrer l'historique de navigation</value>
+  </data>
+  <data name="SearchResults" xml:space="preserve">
+    <value>Résultats de la recherche</value>
+  </data>
+  <data name="SearchResultsOf" xml:space="preserve">
+    <value>Résultats de « $keyword »</value>
+  </data>
+  <data name="Select" xml:space="preserve">
+    <value>Sélectionner</value>
+  </data>
+  <data name="SelectAllAppBarButton.Label" xml:space="preserve">
+    <value>Tout sélectionner</value>
+  </data>
+  <data name="SendFeedbackButton.Content" xml:space="preserve">
+    <value>Envoyer des commentaires</value>
+  </data>
+  <data name="SetCompletionState" xml:space="preserve">
+    <value>Définir l'état d'achèvement</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
+    <value>Paramètres</value>
+  </data>
+  <data name="ShowHiddenComicButton.Content" xml:space="preserve">
+    <value>Afficher les bandes dessinées cachées</value>
+  </data>
+  <data name="Sort" xml:space="preserve">
+    <value>Tri</value>
+  </data>
+  <data name="Statistics" xml:space="preserve">
+    <value>Statistiques</value>
+  </data>
+  <data name="Tag" xml:space="preserve">
+    <value>Étiquette</value>
+  </data>
+  <data name="TagIntroduction.Message" xml:space="preserve">
+    <value>Utiliser correctement les étiquettes peut faciliter l'organisation de votre bibliothèque. Par exemple :
+Catégorie 1 : Étiquette 1/Étiquette 2/Étiquette 3
+Catégorie 2 : Étiquette 4/Étiquette 5
+…</value>
+  </data>
+  <data name="Tags" xml:space="preserve">
+    <value>Étiquette</value>
+  </data>
+  <data name="TagsColon" xml:space="preserve">
+    <value>Étiquette:</value>
+  </data>
+  <data name="ThemeDark.Content" xml:space="preserve">
+    <value>Sombre</value>
+  </data>
+  <data name="ThemeLight.Content" xml:space="preserve">
+    <value>Couleur de la lumière</value>
+  </data>
+  <data name="ThemeUseSystemSetting.Content" xml:space="preserve">
+    <value>Suivre les paramètres du système</value>
+  </data>
+  <data name="Title" xml:space="preserve">
+    <value>Titre</value>
+  </data>
+  <data name="Title1" xml:space="preserve">
+    <value>Titre 1</value>
+  </data>
+  <data name="Title1Colon" xml:space="preserve">
+    <value>Titre 1:</value>
+  </data>
+  <data name="Title2" xml:space="preserve">
+    <value>Titre 2</value>
+  </data>
+  <data name="Title2Colon" xml:space="preserve">
+    <value>Titre 2:</value>
+  </data>
+  <data name="TotalComics" xml:space="preserve">
+    <value>Total des bandes dessinées :</value>
+  </data>
+  <data name="TransitionAnimation.Text" xml:space="preserve">
+    <value>Animation de transition</value>
+  </data>
+  <data name="Unfavorite" xml:space="preserve">
+    <value>Défavori</value>
+  </data>
+  <data name="Ungrouped" xml:space="preserve">
+    <value>Pas de regroupement</value>
+  </data>
+  <data name="Unhide" xml:space="preserve">
+    <value>Afficher</value>
+  </data>
+  <data name="Unread" xml:space="preserve">
+    <value>Pas lu</value>
+  </data>
+  <data name="Untitled" xml:space="preserve">
+    <value>Anonyme</value>
+  </data>
+  <data name="UseSystemLanguage" xml:space="preserve">
+    <value>Utiliser la langue du système</value>
+  </data>
+  <data name="VerticalButton.Label" xml:space="preserve">
+    <value>Verticale</value>
+  </data>
+  <data name="ViewType" xml:space="preserve">
+    <value>Voir</value>
+  </data>
+  <data name="ViewTypeLarge" xml:space="preserve">
+    <value>Grand</value>
+  </data>
+  <data name="ViewTypeMedium" xml:space="preserve">
+    <value>Moyen</value>
+  </data>
+  <data name="Warning" xml:space="preserve">
+    <value>Avertissement</value>
+  </data>
+  <data name="WatchingFolders.Text" xml:space="preserve">
+    <value>En ce moment, nous surveillons ces dossiers :</value>
+  </data>
+</root>

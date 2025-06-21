@@ -1,14 +1,18 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System;
+
+using ComicReader.Common.PageBase;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
 
 namespace ComicReader.ViewModels;
 
-public class FolderItemViewModel
+public class FolderItemViewModel : BaseViewModel
 {
     public string Folder { get; set; }
     public string Path { get; set; }

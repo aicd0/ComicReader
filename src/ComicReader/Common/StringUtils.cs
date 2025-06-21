@@ -1,6 +1,8 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -143,16 +145,6 @@ class StringUtils
         return total_similarity;
     }
 
-    public static string TokenFromPath(string path)
-    {
-        return UniquePath(path).Replace('\\', '%');
-    }
-
-    public static string PathFromToken(string token)
-    {
-        return token.Replace('%', '\\');
-    }
-
     public static string UniquePath(string path)
     {
         return path.ToLower();
@@ -293,5 +285,14 @@ class StringUtils
         }
 
         return text.ToString();
+    }
+
+    public static int ParseInt(string text, int defaultValue = 0)
+    {
+        if (int.TryParse(text, out int result))
+        {
+            return result;
+        }
+        return defaultValue;
     }
 }
