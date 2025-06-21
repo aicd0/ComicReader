@@ -254,7 +254,8 @@ internal sealed partial class ReaderPage : BasePage
 
         GetNavigationPageAbility().RegisterFavoriteChangedEventHandler(this, delegate (bool isFavorite)
         {
-            FavoriteBt.IsChecked = isFavorite;
+            FiFavoriteFilled.Visibility = isFavorite ? Visibility.Visible : Visibility.Collapsed;
+            FiFavoriteUnfilled.Visibility = isFavorite ? Visibility.Collapsed : Visibility.Visible;
             SetIsFavorite(isFavorite);
         });
 
@@ -586,14 +587,9 @@ internal sealed partial class ReaderPage : BasePage
             .Commit();
     }
 
-    private void OnFavoritesChecked(object sender, RoutedEventArgs e)
+    private void FavoriteBt_Click(object sender, RoutedEventArgs e)
     {
-        SetIsFavorite(true);
-    }
-
-    private void OnFavoritesUnchecked(object sender, RoutedEventArgs e)
-    {
-        SetIsFavorite(false);
+        SetIsFavorite(!(_isFavorite == true));
     }
 
     private void OnRatingControlValueChanged(RatingControl sender, object args)

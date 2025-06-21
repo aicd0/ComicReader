@@ -301,18 +301,23 @@
                                 IsCompact="False"
                                 IsEnabled="{x:Bind ViewModel.IsEditable, Mode=OneWay}"
                                 Label="{x:Bind StringResource.Edit}" />
-                            <AppBarToggleButton
+                            <AppBarButton
                                 x:Name="FavoriteBt"
                                 Width="68"
                                 Margin="2,0,0,0"
-                                Checked="OnFavoritesChecked"
+                                Click="FavoriteBt_Click"
                                 IsCompact="False"
-                                Label="{x:Bind StringResource.Favorite}"
-                                Unchecked="OnFavoritesUnchecked">
-                                <AppBarToggleButton.Content>
-                                    <FontIcon Glyph="&#xE734;" />
-                                </AppBarToggleButton.Content>
-                            </AppBarToggleButton>
+                                Label="{x:Bind StringResource.Favorite}">
+                                <AppBarButton.Content>
+                                    <Grid>
+                                        <FontIcon x:Name="FiFavoriteUnfilled" Glyph="&#xE734;" />
+                                        <FontIcon
+                                            x:Name="FiFavoriteFilled"
+                                            Foreground="{ThemeResource SystemAccentColor}"
+                                            Glyph="&#xE735;" />
+                                    </Grid>
+                                </AppBarButton.Content>
+                            </AppBarButton>
                         </StackPanel>
                     </Grid>
                 </SplitView.Pane>
