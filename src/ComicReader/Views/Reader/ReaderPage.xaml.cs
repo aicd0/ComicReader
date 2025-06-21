@@ -182,13 +182,7 @@ internal sealed partial class ReaderPage : BasePage
         GetNavigationPageAbility().SetGridViewMode(false);
         GetNavigationPageAbility().SetReaderSettings(GetReaderSettingModel());
         UpdateReaderUI();
-
-        ComicModel comic = _comic;
-        if (comic != null && !comic.IsExternal)
-        {
-            AppModel.SetReadingComic(comic.Id);
-        }
-
+        SetAsReadingComic();
         LoadComicInfo();
     }
 
@@ -330,6 +324,7 @@ internal sealed partial class ReaderPage : BasePage
         }
 
         _comic = comic;
+        SetAsReadingComic();
         LoadComicInfo();
         IComicConnection connection = await comic.OpenComicAsync();
         _comicConnection = connection;
@@ -387,6 +382,15 @@ internal sealed partial class ReaderPage : BasePage
     {
         _comicConnection?.Dispose();
         _comicConnection = null;
+    }
+
+    private void SetAsReadingComic()
+    {
+        ComicModel comic = _comic;
+        if (comic != null && !comic.IsExternal)
+        {
+            AppModel.SetReadingComic(comic.Id);
+        }
     }
 
     private void LoadComicInfo()
