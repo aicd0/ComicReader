@@ -50,10 +50,11 @@ internal sealed partial class ReaderPage : BasePage
     // Variables
     //
 
-    private bool? _isFavorite = null;
     private ComicModel _comic;
     private IComicConnection _comicConnection;
     private volatile bool _updatingProgress = false;
+    private bool? _isFavorite = null;
+    private ComicData.CompletionStateEnum? _completionState = null;
 
     private bool _buttomTileShowed = false;
     private bool _buttomTileHold = false;
@@ -249,6 +250,7 @@ internal sealed partial class ReaderPage : BasePage
         {
             RcRating.Visibility = isExternal ? Visibility.Collapsed : Visibility.Visible;
             FavoriteBt.IsEnabled = !isExternal;
+            SetCompletionStateButton.Visibility = isExternal ? Visibility.Collapsed : Visibility.Visible;
             GetNavigationPageAbility().SetExternalComic(isExternal);
         });
 
@@ -385,6 +387,8 @@ internal sealed partial class ReaderPage : BasePage
 
         bool isFavorite = !_comic.IsExternal && FavoriteModel.Instance.FromId(_comic.Id) != null;
         SetIsFavorite(isFavorite);
+
+        SetCompletionState(_comic.CompletionState);
 
         if (!_comic.IsExternal)
         {
@@ -590,6 +594,21 @@ internal sealed partial class ReaderPage : BasePage
     private void FavoriteBt_Click(object sender, RoutedEventArgs e)
     {
         SetIsFavorite(!(_isFavorite == true));
+    }
+
+    private void MarkAsUnreadButton_Click(object sender, RoutedEventArgs e)
+    {
+        SetCompletionState(ComicData.CompletionStateEnum.NotStarted);
+    }
+
+    private void MarkAsReadingButton_Click(object sender, RoutedEventArgs e)
+    {
+        SetCompletionState(ComicData.CompletionStateEnum.Started);
+    }
+
+    private void MarkAsFinishedButton_Click(object sender, RoutedEventArgs e)
+    {
+        SetCompletionState(ComicData.CompletionStateEnum.Completed);
     }
 
     private void OnRatingControlValueChanged(RatingControl sender, object args)
@@ -804,6 +823,65 @@ internal sealed partial class ReaderPage : BasePage
             else
             {
                 FavoriteModel.Instance.RemoveWithId(_comic.Id, true);
+            }
+        }
+    }
+
+    public void SetCompletionState(ComicData.CompletionStateEnum completionState)
+    {
+        bool firstSet = _completionState is null;
+        if (_completionState == completionState)
+        {
+            return;
+        }
+        _completionState = completionState;
+
+        switch (completionState)
+        {
+            case ComicData.CompletionStateEnum.NotStarted:
+                SetCompletionStateButton.Icon = new FontIcon
+                {
+                    Glyph = "\uEA3A"
+                };
+                SetCompletionStateButton.Label = StringResource.Unread;
+                break;
+            case ComicData.CompletionStateEnum.Started:
+                SetCompletionStateButton.Icon = new FontIcon
+                {
+                    Glyph = "\uED5A"
+                };
+                SetCompletionStateButton.Label = StringResource.Reading;
+                break;
+            case ComicData.CompletionStateEnum.Completed:
+                SetCompletionStateButton.Icon = new FontIcon
+                {
+                    Glyph = "\uE8FB"
+                };
+                SetCompletionStateButton.Label = StringResource.Finished;
+                break;
+            default:
+                break;
+        }
+
+        MarkAsUnreadButton.Visibility = completionState == ComicData.CompletionStateEnum.NotStarted ? Visibility.Collapsed : Visibility.Visible;
+        MarkAsReadingButton.Visibility = completionState == ComicData.CompletionStateEnum.Started ? Visibility.Collapsed : Visibility.Visible;
+        MarkAsFinishedButton.Visibility = completionState == ComicData.CompletionStateEnum.Completed ? Visibility.Collapsed : Visibility.Visible;
+
+        if (!firstSet)
+        {
+            switch (completionState)
+            {
+                case ComicData.CompletionStateEnum.NotStarted:
+                    _ = _comic.SetCompletionStateToNotStarted();
+                    break;
+                case ComicData.CompletionStateEnum.Started:
+                    _ = _comic.SetCompletionStateToStarted();
+                    break;
+                case ComicData.CompletionStateEnum.Completed:
+                    _ = _comic.SetCompletionStateToCompleted();
+                    break;
+                default:
+                    break;
             }
         }
     }
