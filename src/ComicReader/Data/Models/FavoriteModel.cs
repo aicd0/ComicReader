@@ -120,7 +120,7 @@ class FavoriteModel : JsonDatabase<FavoriteModel.JsonModel>
         bool Helper(List<JsonNodeModel> e)
         {
             bool updated = false;
-            for (int i = 0; i < e.Count; ++i)
+            for (int i = e.Count - 1; i >= 0; --i)
             {
                 JsonNodeModel node = e[i];
                 if (node.Type == "i")

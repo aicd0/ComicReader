@@ -182,13 +182,7 @@ internal sealed partial class ReaderPage : BasePage
         GetNavigationPageAbility().SetGridViewMode(false);
         GetNavigationPageAbility().SetReaderSettings(GetReaderSettingModel());
         UpdateReaderUI();
-
-        ComicModel comic = _comic;
-        if (comic != null && !comic.IsExternal)
-        {
-            AppModel.SetReadingComic(comic.Id);
-        }
-
+        SetAsReadingComic();
         LoadComicInfo();
     }
 
@@ -259,8 +253,6 @@ internal sealed partial class ReaderPage : BasePage
 
         GetNavigationPageAbility().RegisterFavoriteChangedEventHandler(this, delegate (bool isFavorite)
         {
-            FiFavoriteFilled.Visibility = isFavorite ? Visibility.Visible : Visibility.Collapsed;
-            FiFavoriteUnfilled.Visibility = isFavorite ? Visibility.Collapsed : Visibility.Visible;
             SetIsFavorite(isFavorite, true);
         });
 
@@ -330,6 +322,7 @@ internal sealed partial class ReaderPage : BasePage
         }
 
         _comic = comic;
+        SetAsReadingComic();
         LoadComicInfo();
         IComicConnection connection = await comic.OpenComicAsync();
         _comicConnection = connection;
@@ -387,6 +380,15 @@ internal sealed partial class ReaderPage : BasePage
     {
         _comicConnection?.Dispose();
         _comicConnection = null;
+    }
+
+    private void SetAsReadingComic()
+    {
+        ComicModel comic = _comic;
+        if (comic != null && !comic.IsExternal)
+        {
+            AppModel.SetReadingComic(comic.Id);
+        }
     }
 
     private void LoadComicInfo()
@@ -840,6 +842,9 @@ internal sealed partial class ReaderPage : BasePage
             return;
         }
         _isFavorite = isFavorite;
+
+        FiFavoriteFilled.Visibility = isFavorite ? Visibility.Visible : Visibility.Collapsed;
+        FiFavoriteUnfilled.Visibility = isFavorite ? Visibility.Collapsed : Visibility.Visible;
 
         GetNavigationPageAbility().SetFavorite(isFavorite);
 
