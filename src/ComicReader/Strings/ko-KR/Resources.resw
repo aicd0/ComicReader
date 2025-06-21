@@ -428,23 +428,20 @@ NOT                  - 논리 not. 예: NOT %tag = "hide this"
   <data name="MarkAsRead" xml:space="preserve">
     <value>완료로 표시</value>
   </data>
+  <data name="MarkAsReading" xml:space="preserve">
+    <value>읽음으로 표시</value>
+  </data>
   <data name="MarkAsUnread" xml:space="preserve">
     <value>읽지 않음으로 표시</value>
   </data>
   <data name="MenuFlyoutCreateNewFolder.Text" xml:space="preserve">
     <value>새 폴더 만들기</value>
   </data>
-  <data name="MenuFlyoutOpenInNewTab.Text" xml:space="preserve">
-    <value>새 탭에서 열기</value>
-  </data>
   <data name="MenuFlyoutRemoveFromList.Text" xml:space="preserve">
     <value>목록에서 제거</value>
   </data>
   <data name="MenuFlyoutRename.Text" xml:space="preserve">
     <value>이름 바꾸기</value>
-  </data>
-  <data name="MenuFlyoutSelect.Text" xml:space="preserve">
-    <value>선택하다</value>
   </data>
   <data name="MenuFlyoutSortByName.Text" xml:space="preserve">
     <value>이름으로 정렬</value>
@@ -478,6 +475,9 @@ NOT                  - 논리 not. 예: NOT %tag = "hide this"
   </data>
   <data name="OpenInFileExplorer.ToolTipService.ToolTip" xml:space="preserve">
     <value>파일 탐색기에서 열기</value>
+  </data>
+  <data name="OpenInNewTab" xml:space="preserve">
+    <value>새 탭에서 열기</value>
   </data>
   <data name="PrivacyPolicy.Text" xml:space="preserve">
     <value>개인정보 보호정책</value>
@@ -548,11 +548,17 @@ NOT                  - 논리 not. 예: NOT %tag = "hide this"
   <data name="SearchResultsOf" xml:space="preserve">
     <value>'$keyword'에 대한 검색 결과</value>
   </data>
+  <data name="Select" xml:space="preserve">
+    <value>선택하다</value>
+  </data>
   <data name="SelectAllAppBarButton.Label" xml:space="preserve">
     <value>모두 선택</value>
   </data>
   <data name="SendFeedbackButton.Content" xml:space="preserve">
     <value>피드백 보내기</value>
+  </data>
+  <data name="SetCompletionState" xml:space="preserve">
+    <value>완료 상태 설정</value>
   </data>
   <data name="Settings" xml:space="preserve">
     <value>설정</value>
@@ -570,9 +576,9 @@ NOT                  - 논리 not. 예: NOT %tag = "hide this"
     <value>꼬리표</value>
   </data>
   <data name="TagIntroduction.Message" xml:space="preserve">
-    <value>만화에 태그를 추가하면 저장소 관리가 더 쉬워집니다. 예:
-카테고리 1: 태그 1/태그 2/태그 3
-카테고리 2: 태그 4/태그 5
+    <value>태그를 제대로 사용하면 라이브러리를 더 쉽게 정리할 수 있습니다. 예:
+카테고리1: 태그1/태그2/태그3
+카테고리2: 태그4/태그5
 ...</value>
   </data>
   <data name="Tags" xml:space="preserve">

@@ -1,5 +1,5 @@
 <base:BaseUserControl
-    x:Class="ComicReader.UserControls.ComicItemHorizontal"
+    x:Class="ComicReader.UserControls.ComicItemView.ComicItemHorizontal"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:base="using:ComicReader.Common.PageBase"
@@ -23,65 +23,9 @@
     </base:BaseUserControl.Resources>
 
     <Grid
+        x:Name="RootGrid"
         Background="Transparent"
-        DataContextChanged="RootGrid_DataContextChanged"
-        Tapped="{x:Bind Ctx.ItemHandler.OnItemTapped}">
-        <Grid.ContextFlyout>
-            <MenuFlyout>
-                <MenuFlyoutItem
-                    x:Uid="MenuFlyoutOpenInNewTab"
-                    Click="{x:Bind Ctx.ItemHandler.OnOpenInNewTabClicked}"
-                    Icon="Document" />
-                <MenuFlyoutItem
-                    Click="{x:Bind Ctx.ItemHandler.OnAddToFavoritesClicked}"
-                    Icon="Favorite"
-                    Text="{x:Bind StringResource.AddToFavorites}"
-                    Visibility="{x:Bind Ctx.IsFavorite, Converter={StaticResource BooleanToVisibilityNegationConverter}}" />
-                <MenuFlyoutItem
-                    Click="{x:Bind Ctx.ItemHandler.OnRemoveFromFavoritesClicked}"
-                    Icon="Unfavorite"
-                    Text="{x:Bind StringResource.RemoveFromFavorites}"
-                    Visibility="{x:Bind Ctx.IsFavorite}" />
-                <MenuFlyoutItem
-                    Click="{x:Bind Ctx.ItemHandler.OnMarkAsReadClicked}"
-                    Text="{x:Bind StringResource.MarkAsRead}"
-                    Visibility="{x:Bind Ctx.IsRead, Converter={StaticResource BooleanToVisibilityNegationConverter}}">
-                    <MenuFlyoutItem.Icon>
-                        <FontIcon Glyph="&#xE930;" />
-                    </MenuFlyoutItem.Icon>
-                </MenuFlyoutItem>
-                <MenuFlyoutItem
-                    Click="{x:Bind Ctx.ItemHandler.OnMarkAsUnreadClicked}"
-                    Text="{x:Bind StringResource.MarkAsUnread}"
-                    Visibility="{x:Bind Ctx.IsUnread, Converter={StaticResource BooleanToVisibilityNegationConverter}}">
-                    <MenuFlyoutItem.Icon>
-                        <FontIcon Glyph="&#xECCA;" />
-                    </MenuFlyoutItem.Icon>
-                </MenuFlyoutItem>
-                <MenuFlyoutItem
-                    Click="{x:Bind Ctx.ItemHandler.OnHideClicked}"
-                    Text="{x:Bind StringResource.Hide}"
-                    Visibility="{x:Bind Ctx.IsHide, Converter={StaticResource BooleanToVisibilityNegationConverter}}">
-                    <MenuFlyoutItem.Icon>
-                        <FontIcon Glyph="&#xE8FF;" />
-                    </MenuFlyoutItem.Icon>
-                </MenuFlyoutItem>
-                <MenuFlyoutItem
-                    Click="{x:Bind Ctx.ItemHandler.OnUnhideClicked}"
-                    Text="{x:Bind StringResource.Unhide}"
-                    Visibility="{x:Bind Ctx.IsHide}">
-                    <MenuFlyoutItem.Icon>
-                        <FontIcon Glyph="&#xE7B3;" />
-                    </MenuFlyoutItem.Icon>
-                </MenuFlyoutItem>
-                <MenuFlyoutSeparator />
-                <MenuFlyoutItem x:Uid="MenuFlyoutSelect" Click="{x:Bind Ctx.ItemHandler.OnSelectClicked}">
-                    <MenuFlyoutItem.Icon>
-                        <FontIcon Glyph="&#xE762;" />
-                    </MenuFlyoutItem.Icon>
-                </MenuFlyoutItem>
-            </MenuFlyout>
-        </Grid.ContextFlyout>
+        DataContextChanged="RootGrid_DataContextChanged">
         <Grid Margin="10,8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />

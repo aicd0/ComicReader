@@ -427,23 +427,20 @@ Die Auswertung erfolgt in der folgenden Reihenfolge:
   <data name="MarkAsRead" xml:space="preserve">
     <value>Als erledigt markieren</value>
   </data>
+  <data name="MarkAsReading" xml:space="preserve">
+    <value>Als gelesen markieren</value>
+  </data>
   <data name="MarkAsUnread" xml:space="preserve">
     <value>Als ungelesen markieren</value>
   </data>
   <data name="MenuFlyoutCreateNewFolder.Text" xml:space="preserve">
     <value>Neuen Ordner erstellen</value>
   </data>
-  <data name="MenuFlyoutOpenInNewTab.Text" xml:space="preserve">
-    <value>In neuem Tab öffnen</value>
-  </data>
   <data name="MenuFlyoutRemoveFromList.Text" xml:space="preserve">
     <value>Aus der Liste entfernen</value>
   </data>
   <data name="MenuFlyoutRename.Text" xml:space="preserve">
     <value>Umbenennen</value>
-  </data>
-  <data name="MenuFlyoutSelect.Text" xml:space="preserve">
-    <value>Wählen</value>
   </data>
   <data name="MenuFlyoutSortByName.Text" xml:space="preserve">
     <value>Nach Namen sortieren</value>
@@ -477,6 +474,9 @@ Die Auswertung erfolgt in der folgenden Reihenfolge:
   </data>
   <data name="OpenInFileExplorer.ToolTipService.ToolTip" xml:space="preserve">
     <value>Im Datei-Explorer öffnen</value>
+  </data>
+  <data name="OpenInNewTab" xml:space="preserve">
+    <value>In neuem Tab öffnen</value>
   </data>
   <data name="PrivacyPolicy.Text" xml:space="preserve">
     <value>Datenschutzrichtlinie</value>
@@ -547,11 +547,17 @@ Die Auswertung erfolgt in der folgenden Reihenfolge:
   <data name="SearchResultsOf" xml:space="preserve">
     <value>Ergebnisse von „$keyword“</value>
   </data>
+  <data name="Select" xml:space="preserve">
+    <value>Wählen</value>
+  </data>
   <data name="SelectAllAppBarButton.Label" xml:space="preserve">
     <value>Alles auswählen</value>
   </data>
   <data name="SendFeedbackButton.Content" xml:space="preserve">
     <value>Feedback senden</value>
+  </data>
+  <data name="SetCompletionState" xml:space="preserve">
+    <value>Abschlussstatus festlegen</value>
   </data>
   <data name="Settings" xml:space="preserve">
     <value>Einstellungen</value>
@@ -569,7 +575,7 @@ Die Auswertung erfolgt in der folgenden Reihenfolge:
     <value>Etikett</value>
   </data>
   <data name="TagIntroduction.Message" xml:space="preserve">
-    <value>Das Hinzufügen von Tags zu Comics erleichtert die Verwaltung Ihres Archivs. Beispiel:
+    <value>Die richtige Verwendung von Tags erleichtert die Organisation Ihrer Bibliothek. Beispiel:
 Kategorie 1: Tag 1/Tag 2/Tag 3
 Kategorie 2: Tag 4/Tag 5
 ...</value>

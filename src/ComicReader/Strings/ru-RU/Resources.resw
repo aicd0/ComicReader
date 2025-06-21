@@ -428,23 +428,20 @@ NOT                      - Логическое не. Например: NOT %tag
   <data name="MarkAsRead" xml:space="preserve">
     <value>Отметить как завершенное</value>
   </data>
+  <data name="MarkAsReading" xml:space="preserve">
+    <value>Отметить как чтение</value>
+  </data>
   <data name="MarkAsUnread" xml:space="preserve">
     <value>Отметить как непрочитанное</value>
   </data>
   <data name="MenuFlyoutCreateNewFolder.Text" xml:space="preserve">
     <value>Создать новую папку</value>
   </data>
-  <data name="MenuFlyoutOpenInNewTab.Text" xml:space="preserve">
-    <value>Открыть в новой вкладке</value>
-  </data>
   <data name="MenuFlyoutRemoveFromList.Text" xml:space="preserve">
     <value>Удалить из списка</value>
   </data>
   <data name="MenuFlyoutRename.Text" xml:space="preserve">
     <value>Переименовать</value>
-  </data>
-  <data name="MenuFlyoutSelect.Text" xml:space="preserve">
-    <value>Выбирать</value>
   </data>
   <data name="MenuFlyoutSortByName.Text" xml:space="preserve">
     <value>Сортировать по имени</value>
@@ -478,6 +475,9 @@ NOT                      - Логическое не. Например: NOT %tag
   </data>
   <data name="OpenInFileExplorer.ToolTipService.ToolTip" xml:space="preserve">
     <value>Открыть в проводнике</value>
+  </data>
+  <data name="OpenInNewTab" xml:space="preserve">
+    <value>Открыть в новой вкладке</value>
   </data>
   <data name="PrivacyPolicy.Text" xml:space="preserve">
     <value>политика конфиденциальности</value>
@@ -548,11 +548,17 @@ NOT                      - Логическое не. Например: NOT %tag
   <data name="SearchResultsOf" xml:space="preserve">
     <value>Результаты '$keyword'</value>
   </data>
+  <data name="Select" xml:space="preserve">
+    <value>Выбирать</value>
+  </data>
   <data name="SelectAllAppBarButton.Label" xml:space="preserve">
     <value>Выбрать все</value>
   </data>
   <data name="SendFeedbackButton.Content" xml:space="preserve">
     <value>Отправить отзыв</value>
+  </data>
+  <data name="SetCompletionState" xml:space="preserve">
+    <value>Установить состояние завершения</value>
   </data>
   <data name="Settings" xml:space="preserve">
     <value>Настройки</value>
@@ -570,9 +576,9 @@ NOT                      - Логическое не. Например: NOT %tag
     <value>Ярлык</value>
   </data>
   <data name="TagIntroduction.Message" xml:space="preserve">
-    <value>Добавление тегов к комиксам может упростить управление вашим репозиторием, например:
-Категория 1: Тег 1/Тег 2/Тег 3
-Категория 2: Тег 4/Тег 5
+    <value>Правильное использование тегов может облегчить организацию вашей библиотеки. Например:
+Категория1: Тег1/Тег2/Тег3
+Категория2: Тег4/Тег5
 ...</value>
   </data>
   <data name="Tags" xml:space="preserve">

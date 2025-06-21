@@ -427,23 +427,20 @@ NOT               - 論理否定。例: NOT %tag = "hide this"
   <data name="MarkAsRead" xml:space="preserve">
     <value>完了としてマーク</value>
   </data>
+  <data name="MarkAsReading" xml:space="preserve">
+    <value>既読としてマーク</value>
+  </data>
   <data name="MarkAsUnread" xml:space="preserve">
     <value>未読としてマーク</value>
   </data>
   <data name="MenuFlyoutCreateNewFolder.Text" xml:space="preserve">
     <value>新しいフォルダを作成する</value>
   </data>
-  <data name="MenuFlyoutOpenInNewTab.Text" xml:space="preserve">
-    <value>新しいタブで開く</value>
-  </data>
   <data name="MenuFlyoutRemoveFromList.Text" xml:space="preserve">
     <value>リストから削除</value>
   </data>
   <data name="MenuFlyoutRename.Text" xml:space="preserve">
     <value>名前を変更</value>
-  </data>
-  <data name="MenuFlyoutSelect.Text" xml:space="preserve">
-    <value>選ぶ</value>
   </data>
   <data name="MenuFlyoutSortByName.Text" xml:space="preserve">
     <value>名前で並べ替え</value>
@@ -477,6 +474,9 @@ NOT               - 論理否定。例: NOT %tag = "hide this"
   </data>
   <data name="OpenInFileExplorer.ToolTipService.ToolTip" xml:space="preserve">
     <value>エクスプローラーで開く</value>
+  </data>
+  <data name="OpenInNewTab" xml:space="preserve">
+    <value>新しいタブで開く</value>
   </data>
   <data name="PrivacyPolicy.Text" xml:space="preserve">
     <value>プライバシーポリシー</value>
@@ -547,11 +547,17 @@ NOT               - 論理否定。例: NOT %tag = "hide this"
   <data name="SearchResultsOf" xml:space="preserve">
     <value>「$keyword」の検索結果</value>
   </data>
+  <data name="Select" xml:space="preserve">
+    <value>選ぶ</value>
+  </data>
   <data name="SelectAllAppBarButton.Label" xml:space="preserve">
     <value>すべて選択</value>
   </data>
   <data name="SendFeedbackButton.Content" xml:space="preserve">
     <value>フィードバックを送信</value>
+  </data>
+  <data name="SetCompletionState" xml:space="preserve">
+    <value>完了状態を設定する</value>
   </data>
   <data name="Settings" xml:space="preserve">
     <value>設定</value>
@@ -569,10 +575,10 @@ NOT               - 論理否定。例: NOT %tag = "hide this"
     <value>ラベル</value>
   </data>
   <data name="TagIntroduction.Message" xml:space="preserve">
-    <value>コミックにタグを追加すると、リポジトリの管理が簡単になります。例:
-カテゴリー 1: タグ 1/タグ 2/タグ 3
-カテゴリー 2: タグ 4/タグ 5
-...</value>
+    <value>タグを適切に使うことで、ライブラリを整理しやすくなります。例：
+カテゴリー1: タグ1/タグ2/タグ3
+カテゴリー2: タグ4/タグ5
+…</value>
   </data>
   <data name="Tags" xml:space="preserve">
     <value>ラベル</value>

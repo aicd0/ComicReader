@@ -429,23 +429,20 @@ The evaluation will be performed in the following order:
   <data name="MarkAsRead" xml:space="preserve">
     <value>Mark as finished</value>
   </data>
+  <data name="MarkAsReading" xml:space="preserve">
+    <value>Mark as reading</value>
+  </data>
   <data name="MarkAsUnread" xml:space="preserve">
     <value>Mark as unread</value>
   </data>
   <data name="MenuFlyoutCreateNewFolder.Text" xml:space="preserve">
     <value>Create new folder</value>
   </data>
-  <data name="MenuFlyoutOpenInNewTab.Text" xml:space="preserve">
-    <value>Open in new tab</value>
-  </data>
   <data name="MenuFlyoutRemoveFromList.Text" xml:space="preserve">
     <value>Remove from list</value>
   </data>
   <data name="MenuFlyoutRename.Text" xml:space="preserve">
     <value>Rename</value>
-  </data>
-  <data name="MenuFlyoutSelect.Text" xml:space="preserve">
-    <value>Select</value>
   </data>
   <data name="MenuFlyoutSortByName.Text" xml:space="preserve">
     <value>Sort by name</value>
@@ -479,6 +476,9 @@ The evaluation will be performed in the following order:
   </data>
   <data name="OpenInFileExplorer.ToolTipService.ToolTip" xml:space="preserve">
     <value>Open in File Explorer</value>
+  </data>
+  <data name="OpenInNewTab" xml:space="preserve">
+    <value>Open in new tab</value>
   </data>
   <data name="PrivacyPolicy.Text" xml:space="preserve">
     <value>Privacy Policy</value>
@@ -549,11 +549,17 @@ The evaluation will be performed in the following order:
   <data name="SearchResultsOf" xml:space="preserve">
     <value>Results of '$keyword'</value>
   </data>
+  <data name="Select" xml:space="preserve">
+    <value>Select</value>
+  </data>
   <data name="SelectAllAppBarButton.Label" xml:space="preserve">
     <value>Select all</value>
   </data>
   <data name="SendFeedbackButton.Content" xml:space="preserve">
     <value>Send feedback</value>
+  </data>
+  <data name="SetCompletionState" xml:space="preserve">
+    <value>Set completion state</value>
   </data>
   <data name="Settings" xml:space="preserve">
     <value>Settings</value>
@@ -571,9 +577,9 @@ The evaluation will be performed in the following order:
     <value>Tag</value>
   </data>
   <data name="TagIntroduction.Message" xml:space="preserve">
-    <value>Using tags properly can make your library easier to get organized. Basic usage:
-Category1: tag1/tag2/tag3
-Category2: tag4/tag5
+    <value>Using tags properly can make your library easier to get organized. For example:
+Category1: Tag1/Tag2/Tag3
+Category2: Tag4/Tag5
 ...</value>
   </data>
   <data name="Tags" xml:space="preserve">

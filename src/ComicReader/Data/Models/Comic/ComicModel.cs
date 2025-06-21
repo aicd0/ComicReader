@@ -77,8 +77,14 @@ internal sealed class ComicModel
 
     public async Task SetCompletionStateToNotStarted()
     {
-        _internalModel.SetAsUnread();
+        await SaveProgressAsync(-1, 0);
         await _internalModel.SaveCompletionState(CompletionStateEnum.NotStarted);
+    }
+
+    public async Task SetCompletionStateToStarted()
+    {
+        _internalModel.SetAsStarted();
+        await _internalModel.SaveCompletionState(CompletionStateEnum.Started);
     }
 
     public async Task SetCompletionStateToAtLeastStarted()
@@ -92,7 +98,6 @@ internal sealed class ComicModel
 
     public async Task SetCompletionStateToCompleted()
     {
-        _internalModel.SetAsRead();
         await _internalModel.SaveCompletionState(CompletionStateEnum.Completed);
     }
 

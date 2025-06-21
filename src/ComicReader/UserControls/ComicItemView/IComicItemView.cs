@@ -3,11 +3,11 @@
 
 using ComicReader.ViewModels;
 
-namespace ComicReader.UserControls;
+namespace ComicReader.UserControls.ComicItemView;
 
 interface IComicItemView
 {
-    void Bind(ComicItemViewModel item);
+    void Bind(ComicItemViewModel item, IComicItemViewHandler handler);
 
     void Unbind();
 }

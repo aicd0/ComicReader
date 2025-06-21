@@ -12,7 +12,7 @@ using ComicReader.Data.Models;
 using ComicReader.Data.Models.Comic;
 using ComicReader.Helpers.Navigation;
 using ComicReader.SDK.Common.DebugTools;
-using ComicReader.UserControls;
+using ComicReader.UserControls.ComicItemView;
 using ComicReader.ViewModels;
 using ComicReader.Views.Main;
 using ComicReader.Views.Navigation;
@@ -34,7 +34,7 @@ internal sealed partial class HomePage : BasePage
 
     private ComicFilterModel.ViewTypeEnum? _viewType = null;
     private bool? _usingGroupSource = null;
-    private readonly ComicItemViewModel.IItemHandler _comicItemHandler;
+    private readonly IComicItemViewHandler _comicItemHandler;
     private Storyboard? _headerTextBlockAnimation = null;
     private double _lastGridViewVerticalOffset = 0.0;
 
@@ -216,8 +216,7 @@ internal sealed partial class HomePage : BasePage
         }
         else
         {
-            item.ItemHandler = _comicItemHandler;
-            viewHolder.Bind(item);
+            viewHolder.Bind(item, _comicItemHandler);
         }
     }
 
@@ -271,32 +270,37 @@ internal sealed partial class HomePage : BasePage
 
     private void CommandBarFavoriteClicked(object sender, RoutedEventArgs e)
     {
-        ViewModel.ApplyOperationToSelection(HomePageViewModel.BatchOperationType.Favorite);
+        ViewModel.ApplyOperationToSelection(ComicOperationType.Favorite);
     }
 
     private void CommandBarUnFavoriteClicked(object sender, RoutedEventArgs e)
     {
-        ViewModel.ApplyOperationToSelection(HomePageViewModel.BatchOperationType.UnFavorite);
+        ViewModel.ApplyOperationToSelection(ComicOperationType.Unfavorite);
     }
 
     private void CommandBarHideClicked(object sender, RoutedEventArgs e)
     {
-        ViewModel.ApplyOperationToSelection(HomePageViewModel.BatchOperationType.Hide);
+        ViewModel.ApplyOperationToSelection(ComicOperationType.Hide);
     }
 
     private void CommandBarUnhideClicked(object sender, RoutedEventArgs e)
     {
-        ViewModel.ApplyOperationToSelection(HomePageViewModel.BatchOperationType.UnHide);
+        ViewModel.ApplyOperationToSelection(ComicOperationType.Unhide);
     }
 
     private void CommandBarMarkAsReadClicked(object sender, RoutedEventArgs e)
     {
-        ViewModel.ApplyOperationToSelection(HomePageViewModel.BatchOperationType.MarkAsRead);
+        ViewModel.ApplyOperationToSelection(ComicOperationType.MarkAsRead);
+    }
+
+    private void CommandBarMarkAsReadingClicked(object sender, RoutedEventArgs e)
+    {
+        ViewModel.ApplyOperationToSelection(ComicOperationType.MarkAsReading);
     }
 
     private void CommandBarMarkAsUnreadClicked(object sender, RoutedEventArgs e)
     {
-        ViewModel.ApplyOperationToSelection(HomePageViewModel.BatchOperationType.MarkAsUnread);
+        ViewModel.ApplyOperationToSelection(ComicOperationType.MarkAsUnread);
     }
 
     //
@@ -460,35 +464,22 @@ internal sealed partial class HomePage : BasePage
         GetMainPageAbility().OpenInCurrentTab(route);
     }
 
-    private void MarkAsReadOrUnread(ComicItemViewModel item, bool read)
-    {
-        if (read)
-        {
-            ViewModel.ApplyOperationToComic(HomePageViewModel.BatchOperationType.MarkAsRead, item);
-        }
-        else
-        {
-            ViewModel.ApplyOperationToComic(HomePageViewModel.BatchOperationType.MarkAsUnread, item);
-        }
-        item.UpdateProgress(true);
-    }
-
     private void OnAddToFavoritesClicked(object sender, RoutedEventArgs e)
     {
         var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-        ViewModel.ApplyOperationToComic(HomePageViewModel.BatchOperationType.Favorite, item);
+        ViewModel.ApplyOperationToComic(ComicOperationType.Favorite, item);
     }
 
     private void OnRemoveFromFavoritesClicked(object sender, RoutedEventArgs e)
     {
         var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-        ViewModel.ApplyOperationToComic(HomePageViewModel.BatchOperationType.UnFavorite, item);
+        ViewModel.ApplyOperationToComic(ComicOperationType.Unfavorite, item);
     }
 
     private void OnHideComicClicked(object sender, RoutedEventArgs e)
     {
         var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-        ViewModel.ApplyOperationToComic(HomePageViewModel.BatchOperationType.Hide, item);
+        ViewModel.ApplyOperationToComic(ComicOperationType.Hide, item);
     }
 
     private void EditFilterButton_Click(object sender, RoutedEventArgs e)
@@ -528,14 +519,9 @@ internal sealed partial class HomePage : BasePage
     // Helper Class
     //
 
-    private class ComicItemHandler : ComicItemViewModel.IItemHandler
+    private class ComicItemHandler(HomePage page) : IComicItemViewHandler
     {
-        private readonly WeakReference<HomePage> _pageRef;
-
-        public ComicItemHandler(HomePage page)
-        {
-            _pageRef = new WeakReference<HomePage>(page);
-        }
+        private readonly WeakReference<HomePage> _pageRef = new(page);
 
         public void OnAddToFavoritesClicked(object sender, RoutedEventArgs e)
         {
@@ -555,13 +541,19 @@ internal sealed partial class HomePage : BasePage
         public void OnMarkAsReadClicked(object sender, RoutedEventArgs e)
         {
             var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-            GetPage()?.MarkAsReadOrUnread(item, true);
+            GetPage()?.ViewModel?.ApplyOperationToComic(ComicOperationType.MarkAsRead, item);
+        }
+
+        public void OnMarkAsReadingClicked(object sender, RoutedEventArgs e)
+        {
+            var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
+            GetPage()?.ViewModel?.ApplyOperationToComic(ComicOperationType.MarkAsReading, item);
         }
 
         public void OnMarkAsUnreadClicked(object sender, RoutedEventArgs e)
         {
             var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
-            GetPage()?.MarkAsReadOrUnread(item, false);
+            GetPage()?.ViewModel?.ApplyOperationToComic(ComicOperationType.MarkAsUnread, item);
         }
 
         public void OnOpenInNewTabClicked(object sender, RoutedEventArgs e)
@@ -581,6 +573,8 @@ internal sealed partial class HomePage : BasePage
 
         public void OnUnhideClicked(object sender, RoutedEventArgs e)
         {
+            var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
+            GetPage()?.ViewModel?.ApplyOperationToComic(ComicOperationType.Unhide, item);
         }
 
         private HomePage? GetPage()

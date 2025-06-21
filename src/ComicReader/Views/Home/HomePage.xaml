@@ -3,6 +3,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:base="using:ComicReader.Common.PageBase"
+    xmlns:comicitemview="using:ComicReader.UserControls.ComicItemView"
     xmlns:controls="using:ComicReader.UserControls"
     xmlns:converters="using:ComicReader.Converters"
     xmlns:cw="using:CommunityToolkit.WinUI"
@@ -65,11 +66,11 @@
                 Source="{x:Bind ViewModel.GroupedComicItems, Mode=OneWay}" />
 
             <DataTemplate x:Name="LargeComicItemTemplate" x:DataType="vm:ComicItemViewModel">
-                <controls:ComicItemVertical />
+                <comicitemview:ComicItemVertical />
             </DataTemplate>
 
             <DataTemplate x:Name="MediumComicItemTemplate" x:DataType="vm:ComicItemViewModel">
-                <controls:ComicItemHorizontal />
+                <comicitemview:ComicItemHorizontal />
             </DataTemplate>
 
             <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
@@ -200,19 +201,27 @@
                         IsEnabled="{x:Bind ViewModel.IsCommandBarUnFavoriteEnabled, Mode=OneWay}"
                         Label="{x:Bind StringResource.Unfavorite}" />
                     <AppBarButton
-                        Click="CommandBarMarkAsReadClicked"
-                        IsEnabled="{x:Bind ViewModel.IsCommandBarMarkAsReadEnabled, Mode=OneWay}"
-                        Label="{x:Bind StringResource.MarkAsRead}">
-                        <AppBarButton.Icon>
-                            <FontIcon Glyph="&#xE930;" />
-                        </AppBarButton.Icon>
-                    </AppBarButton>
-                    <AppBarButton
                         Click="CommandBarMarkAsUnreadClicked"
                         IsEnabled="{x:Bind ViewModel.IsCommandBarMarkAsUnreadEnabled, Mode=OneWay}"
                         Label="{x:Bind StringResource.MarkAsUnread}">
                         <AppBarButton.Icon>
-                            <FontIcon Glyph="&#xECCA;" />
+                            <FontIcon Glyph="&#xEA3A;" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
+                    <AppBarButton
+                        Click="CommandBarMarkAsReadingClicked"
+                        IsEnabled="{x:Bind ViewModel.IsCommandBarMarkAsReadingEnabled, Mode=OneWay}"
+                        Label="{x:Bind StringResource.MarkAsReading}">
+                        <AppBarButton.Icon>
+                            <FontIcon Glyph="&#xED5A;" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
+                    <AppBarButton
+                        Click="CommandBarMarkAsReadClicked"
+                        IsEnabled="{x:Bind ViewModel.IsCommandBarMarkAsReadEnabled, Mode=OneWay}"
+                        Label="{x:Bind StringResource.MarkAsRead}">
+                        <AppBarButton.Icon>
+                            <FontIcon Glyph="&#xE8FB;" />
                         </AppBarButton.Icon>
                     </AppBarButton>
                     <AppBarButton

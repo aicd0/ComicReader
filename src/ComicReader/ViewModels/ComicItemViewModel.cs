@@ -1,85 +1,66 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-#nullable disable
-
-using System;
-using System.ComponentModel;
-
 using ComicReader.Common;
 using ComicReader.Data.Models;
 using ComicReader.Data.Models.Comic;
 
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Input;
-
 namespace ComicReader.ViewModels;
 
-internal class ComicItemViewModel : INotifyPropertyChanged
+internal class ComicItemViewModel
 {
-    //
-    // events
-    //
-
-    public event PropertyChangedEventHandler PropertyChanged;
-
     //
     // properties
     //
 
-    public ComicModel Comic;
+    public ComicModel Comic { get; }
     public string Title { get; set; }
-    public string Detail { get; set; }
+    public string Detail { get; set; } = string.Empty;
     public int Rating { get; set; } = -1;
-
-    private string _progress = string.Empty;
-    public string Progress
-    {
-        get => _progress;
-        private set
-        {
-            _progress = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("Progress"));
-        }
-    }
-
-    private bool m_IsFavorite = false;
-    public bool IsFavorite
-    {
-        get => m_IsFavorite;
-        set
-        {
-            m_IsFavorite = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsFavorite"));
-        }
-    }
+    public string Progress { get; set; } = string.Empty;
+    public bool IsFavorite { get; set; } = false;
+    public bool IsHide { get; set; } = false;
+    public ComicData.CompletionStateEnum CompletionState { get; set; } = ComicData.CompletionStateEnum.NotStarted;
 
     private readonly ReaderImageViewModel _image = new();
     public ReaderImageViewModel Image => _image;
 
     public bool IsRatingVisible => Rating != -1;
-    public bool IsHide => Comic.Hidden;
-    public bool IsRead => Comic.CompletionState == ComicData.CompletionStateEnum.Completed;
-    public bool IsUnread => Comic.CompletionState == ComicData.CompletionStateEnum.NotStarted;
+    public bool IsRead => CompletionState == ComicData.CompletionStateEnum.Completed;
+    public bool IsReading => CompletionState == ComicData.CompletionStateEnum.Started;
+    public bool IsUnread => CompletionState == ComicData.CompletionStateEnum.NotStarted;
 
     //
-    // functions
+    // Constructors
     //
 
-    public void Update(ComicModel comic)
+    public ComicItemViewModel(ComicModel comic)
     {
         Comic = comic;
         Title = Comic.Title;
         Rating = comic.Rating;
-        UpdateProgress(true);
-
-        bool isFavorite = FavoriteModel.Instance.FromId(comic.Id) != null;
-        if (comic != Comic)
-        {
-            return;
-        }
-        IsFavorite = isFavorite;
+        IsFavorite = FavoriteModel.Instance.FromId(comic.Id) != null;
+        IsHide = comic.Hidden;
+        CompletionState = comic.CompletionState;
     }
+
+    public ComicItemViewModel(ComicItemViewModel source)
+    {
+        Comic = source.Comic;
+        Title = source.Title;
+        Detail = source.Detail;
+        Rating = source.Rating;
+        Progress = source.Progress;
+        IsFavorite = source.IsFavorite;
+        IsHide = source.IsHide;
+        CompletionState = source.CompletionState;
+        _image.Image = source._image.Image;
+        _image.ImageRequested = source._image.ImageRequested;
+    }
+
+    //
+    // Utilities
+    //
 
     public void UpdateProgress(bool compat)
     {
@@ -102,100 +83,6 @@ internal class ComicItemViewModel : INotifyPropertyChanged
                 Progress = StringResourceProvider.Instance.FinishPercentage
                     .Replace("$percentage", Comic.Progress.ToString());
             }
-        }
-
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsRead"));
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("IsUnread"));
-    }
-
-    //
-    // handler
-    //
-
-    private WeakReference<IItemHandler> _itemHandler;
-    public IItemHandler ItemHandler
-    {
-        get
-        {
-            return _itemHandler?.Get() ?? EmptyItemHandler.Instance;
-        }
-        set
-        {
-            _itemHandler = new WeakReference<IItemHandler>(value);
-        }
-    }
-
-    public interface IItemHandler
-    {
-        void OnItemTapped(object sender, TappedRoutedEventArgs e);
-
-        void OnOpenInNewTabClicked(object sender, RoutedEventArgs e);
-
-        void OnAddToFavoritesClicked(object sender, RoutedEventArgs e);
-
-        void OnRemoveFromFavoritesClicked(object sender, RoutedEventArgs e);
-
-        void OnHideClicked(object sender, RoutedEventArgs e);
-
-        void OnUnhideClicked(object sender, RoutedEventArgs e);
-
-        void OnMarkAsReadClicked(object sender, RoutedEventArgs e);
-
-        void OnMarkAsUnreadClicked(object sender, RoutedEventArgs e);
-
-        void OnSelectClicked(object sender, RoutedEventArgs e);
-    }
-
-    private class EmptyItemHandler : IItemHandler
-    {
-        private EmptyItemHandler()
-        {
-        }
-
-        private static IItemHandler _instance;
-        public static IItemHandler Instance
-        {
-            get
-            {
-                _instance ??= new EmptyItemHandler();
-                return _instance;
-            }
-        }
-
-        public void OnAddToFavoritesClicked(object sender, RoutedEventArgs e)
-        {
-        }
-
-        public void OnHideClicked(object sender, RoutedEventArgs e)
-        {
-        }
-
-        public void OnItemTapped(object sender, TappedRoutedEventArgs e)
-        {
-        }
-
-        public void OnOpenInNewTabClicked(object sender, RoutedEventArgs e)
-        {
-        }
-
-        public void OnRemoveFromFavoritesClicked(object sender, RoutedEventArgs e)
-        {
-        }
-
-        public void OnSelectClicked(object sender, RoutedEventArgs e)
-        {
-        }
-
-        public void OnUnhideClicked(object sender, RoutedEventArgs e)
-        {
-        }
-
-        public void OnMarkAsReadClicked(object sender, RoutedEventArgs e)
-        {
-        }
-
-        public void OnMarkAsUnreadClicked(object sender, RoutedEventArgs e)
-        {
         }
     }
 };

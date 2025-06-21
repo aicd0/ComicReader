@@ -83,7 +83,7 @@ public partial class App : Application
 
     private void InitializeBeforeAppCreate()
     {
-        // Initialize crash handler
+        // Register crash handler
         UnhandledException += (_, e) =>
         {
             if (Properties.SentryDsn.Length > 0)
@@ -96,6 +96,9 @@ public partial class App : Application
         // Register services
         ServiceManager.RegisterService<IApplicationService>(new ApplicationService());
         ServiceManager.RegisterService<IDebugService>(new DebugService());
+
+        // Initialize environment information
+        EnvironmentProvider.Instance.Initialize();
 
         // Initialize Sentry
         if (Properties.SentryDsn.Length > 0)
