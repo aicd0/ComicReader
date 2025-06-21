@@ -253,8 +253,6 @@ internal sealed partial class ReaderPage : BasePage
 
         GetNavigationPageAbility().RegisterFavoriteChangedEventHandler(this, delegate (bool isFavorite)
         {
-            FiFavoriteFilled.Visibility = isFavorite ? Visibility.Visible : Visibility.Collapsed;
-            FiFavoriteUnfilled.Visibility = isFavorite ? Visibility.Collapsed : Visibility.Visible;
             SetIsFavorite(isFavorite, true);
         });
 
@@ -844,6 +842,9 @@ internal sealed partial class ReaderPage : BasePage
             return;
         }
         _isFavorite = isFavorite;
+
+        FiFavoriteFilled.Visibility = isFavorite ? Visibility.Visible : Visibility.Collapsed;
+        FiFavoriteUnfilled.Visibility = isFavorite ? Visibility.Collapsed : Visibility.Visible;
 
         GetNavigationPageAbility().SetFavorite(isFavorite);
 
