@@ -152,7 +152,7 @@ internal class ComicSQLCommandProvider : ISQLCommandProvider
             VAR_RATING => new ComparisonCondition(ColumnOrValue.FromColumn(ComicTable.ColumnRating), ColumnOrValue.FromValue(0), ComparisonCondition.TypeEnum.GreaterThan),
             VAR_TITLE1 => NotNullAndEmptyCondition(ComicTable.ColumnTitle1),
             VAR_TITLE2 => NotNullAndEmptyCondition(ComicTable.ColumnTitle2),
-            VAR_PROGRESS => new ComparisonCondition(ColumnOrValue.FromColumn(ComicTable.ColumnRating), ColumnOrValue.FromValue(0), ComparisonCondition.TypeEnum.GreaterThan),
+            VAR_PROGRESS => new ComparisonCondition(ColumnOrValue.FromColumn(ComicTable.ColumnProgress), ColumnOrValue.FromValue(0), ComparisonCondition.TypeEnum.GreaterThanOrEqual),
             _ => throw new ExpressionException($"Variable '{path1}' cannot be used as a condition"),
         };
     }
