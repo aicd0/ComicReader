@@ -568,7 +568,14 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
             {
                 foreach (ComicGroupViewModel group in GroupedComicItems)
                 {
-                    ModifyExistingList(group.Items, changedItems);
+                    group.UpdateItems((oldItem) =>
+                    {
+                        if (changedItems.TryGetValue(oldItem.Comic, out ComicItemViewModel? newItem))
+                        {
+                            return newItem;
+                        }
+                        return null;
+                    });
                 }
             }
             else
