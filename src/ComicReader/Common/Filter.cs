@@ -552,8 +552,7 @@ public class SubFilterCategoryTag : SubFilter
 
         {
             SelectCommand command = new SelectCommand(TagCategoryTable.Instance)
-                .AppendCondition(TagCategoryTable.ColumnName, m_category)
-                .CollateNocase();
+                .AppendCondition(new ComparisonCondition(ColumnOrValue.FromColumn(TagCategoryTable.ColumnName).CollateNocase(), ColumnOrValue.FromValue(m_category)));
             IReaderToken<long> tagCateogryIdToken = command.PutQueryInt64(TagCategoryTable.ColumnId);
             IReaderToken<long> comicIdToken = command.PutQueryInt64(TagCategoryTable.ColumnComicId);
             using SelectCommand.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
@@ -570,8 +569,7 @@ public class SubFilterCategoryTag : SubFilter
 
         {
             SelectCommand command = new SelectCommand(TagTable.Instance)
-                .AppendCondition(TagTable.ColumnContent, m_tag)
-                .CollateNocase();
+                .AppendCondition(new ComparisonCondition(ColumnOrValue.FromColumn(TagTable.ColumnContent).CollateNocase(), ColumnOrValue.FromValue(m_tag)));
             IReaderToken<long> categoryIdToken = command.PutQueryInt64(TagTable.ColumnTagCategoryId);
             using SelectCommand.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 
@@ -752,9 +750,8 @@ public class SubFilterTag : SubFilter
         var results = new List<long>();
 
         SelectCommand command = new SelectCommand(TagTable.Instance)
-            .AppendCondition(TagTable.ColumnContent, m_tag)
-            .Distinct()
-            .CollateNocase();
+            .AppendCondition(new ComparisonCondition(ColumnOrValue.FromColumn(TagTable.ColumnContent).CollateNocase(), ColumnOrValue.FromValue(m_tag)))
+            .Distinct();
         IReaderToken<long> comicIdToken = command.PutQueryInt64(TagTable.ColumnComicId);
         using SelectCommand.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 

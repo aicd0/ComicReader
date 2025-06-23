@@ -13,7 +13,6 @@ public class SelectCommand
     private readonly Dictionary<string, ITokenInternal> _tokens = [];
     private readonly List<ICondition> _conditions = [];
 
-    private bool _collateNocase = false;
     private bool _distinct = false;
     private int _limit = 0;
     private bool _executed = false;
@@ -26,12 +25,6 @@ public class SelectCommand
     public SelectCommand Distinct()
     {
         _distinct = true;
-        return this;
-    }
-
-    public SelectCommand CollateNocase()
-    {
-        _collateNocase = true;
         return this;
     }
 
@@ -178,11 +171,6 @@ public class SelectCommand
                 }
                 sb.Append('(').Append(_conditions[i].GetExpression(command)).Append(')');
             }
-        }
-
-        if (_collateNocase)
-        {
-            sb.Append(" COLLATE NOCASE");
         }
 
         if (_limit > 0)
