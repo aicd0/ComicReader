@@ -353,7 +353,7 @@ internal partial class EditComicInfoDialogViewModel : INotifyPropertyChanged
                     }
                     foreach (KeyValuePair<TagWithId, List<TagWithId>> pair in newTags)
                     {
-                        if (pair.Key == key)
+                        if (pair.Key.Content == key.Content)
                         {
                             foreach (TagWithId tag in pair.Value)
                             {
@@ -376,7 +376,7 @@ internal partial class EditComicInfoDialogViewModel : INotifyPropertyChanged
                     HashSet<TagWithId> newValues = [];
                     foreach (KeyValuePair<TagWithId, List<TagWithId>> pair in newTags)
                     {
-                        if (pair.Key == key)
+                        if (pair.Key.Content == key.Content)
                         {
                             foreach (TagWithId tag in pair.Value)
                             {
