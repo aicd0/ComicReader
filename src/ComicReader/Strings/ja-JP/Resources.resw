@@ -240,6 +240,9 @@
   <data name="DevAppDisplayName" xml:space="preserve">
     <value>コミックリーダー UWP [Dev]</value>
   </data>
+  <data name="DiffMode" xml:space="preserve">
+    <value>差分モード</value>
+  </data>
   <data name="Disclaimer.Text" xml:space="preserve">
     <value>免責事項</value>
   </data>
@@ -564,6 +567,9 @@ NOT               - 論理否定。例: NOT %tag = "hide this"
   </data>
   <data name="ShowHiddenComicButton.Content" xml:space="preserve">
     <value>非表示のコミックを見る</value>
+  </data>
+  <data name="ShowTagId" xml:space="preserve">
+    <value>タグIDを表示</value>
   </data>
   <data name="Sort" xml:space="preserve">
     <value>ソート</value>

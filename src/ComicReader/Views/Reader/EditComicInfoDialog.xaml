@@ -70,12 +70,12 @@
             <StackPanel Margin="0,4,0,0" Orientation="Horizontal">
                 <CheckBox
                     Click="TagDiffModeCheckBox_Click"
-                    Content="Diff mode"
+                    Content="{x:Bind StringResource.DiffMode}"
                     IsChecked="True" />
                 <CheckBox
                     x:Name="TagIdCheckBox"
                     Click="TagIdCheckBox_Click"
-                    Content="Show tag ID"
+                    Content="{x:Bind StringResource.ShowTagId}"
                     IsChecked="False" />
             </StackPanel>
         </StackPanel>

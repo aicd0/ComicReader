@@ -240,6 +240,9 @@
   <data name="DevAppDisplayName" xml:space="preserve">
     <value>Lecteur de bandes dessinées UWP [Dev]</value>
   </data>
+  <data name="DiffMode" xml:space="preserve">
+    <value>Mode différentiel</value>
+  </data>
   <data name="Disclaimer.Text" xml:space="preserve">
     <value>Clause de non-responsabilité</value>
   </data>
@@ -564,6 +567,9 @@ L'évaluation sera effectuée dans l'ordre suivant :
   </data>
   <data name="ShowHiddenComicButton.Content" xml:space="preserve">
     <value>Afficher les bandes dessinées cachées</value>
+  </data>
+  <data name="ShowTagId" xml:space="preserve">
+    <value>Afficher l'ID de la balise</value>
   </data>
   <data name="Sort" xml:space="preserve">
     <value>Tri</value>

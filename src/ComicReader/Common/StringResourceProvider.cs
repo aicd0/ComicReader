@@ -36,6 +36,7 @@ public class StringResourceProvider
     public string Delete => GetResourceString("Delete");
     public string Descending => GetResourceString("Descending");
     public string DescriptionColon => GetResourceString("DescriptionColon");
+    public string DiffMode => GetResourceString("DiffMode");
     public string Done => GetResourceString("Done");
     public string Edit => GetResourceString("Edit");
     public string ExpressionAnd => GetResourceString("ExpressionAnd");
@@ -78,6 +79,7 @@ public class StringResourceProvider
     public string Select => GetResourceString("Select");
     public string Settings => GetResourceString("Settings");
     public string SetCompletionState => GetResourceString("SetCompletionState");
+    public string ShowTagId => GetResourceString("ShowTagId");
     public string Sort => GetResourceString("Sort");
     public string Statistics => GetResourceString("Statistics");
     public string Tag => GetResourceString("Tag");
