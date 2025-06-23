@@ -9,11 +9,18 @@ public class ColumnOrValue
 {
     public readonly IColumnTypeless? Column;
     public readonly object? Value;
+    private bool _collateNocase = false;
 
     private ColumnOrValue(IColumnTypeless? column, object? value)
     {
         Column = column;
         Value = value;
+    }
+
+    public ColumnOrValue CollateNocase()
+    {
+        _collateNocase = true;
+        return this;
     }
 
     internal void AppendToCommand(StringBuilder sb, ICommandContext command)
@@ -33,6 +40,10 @@ public class ColumnOrValue
         else
         {
             sb.Append(Column.Name);
+            if (_collateNocase)
+            {
+                sb.Append(" COLLATE NOCASE");
+            }
         }
     }
 
