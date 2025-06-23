@@ -15,27 +15,30 @@
     SecondaryButtonText="{x:Bind StringResource.Cancel}"
     mc:Ignorable="d">
 
-    <Grid Width="500">
+    <ScrollView Width="500">
         <StackPanel Orientation="Vertical">
-            <TextBlock Text="{x:Bind StringResource.Title1Colon}" />
+            <TextBlock x:Name="Title1NameTextBlock" />
             <TextBox
                 x:Name="Title1TextBox"
                 Margin="0,6,0,0"
+                TextChanged="Title1TextBox_TextChanged"
                 TextWrapping="Wrap" />
-            <TextBlock Margin="0,8,0,0" Text="{x:Bind StringResource.Title2Colon}" />
+            <TextBlock x:Name="Title2NameTextBlock" Margin="0,8,0,0" />
             <TextBox
                 x:Name="Title2TextBox"
                 Margin="0,6,0,0"
+                TextChanged="Title2TextBox_TextChanged"
                 TextWrapping="Wrap" />
-            <TextBlock Margin="0,8,0,0" Text="{x:Bind StringResource.DescriptionColon}" />
+            <TextBlock x:Name="DescriptionNameTextBlock" Margin="0,8,0,0" />
             <TextBox
                 x:Name="DescriptionTextBox"
                 Margin="0,6,0,0"
                 AcceptsReturn="True"
+                TextChanged="DescriptionTextBox_TextChanged"
                 TextWrapping="Wrap" />
             <StackPanel Margin="0,8,0,0">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="{x:Bind StringResource.TagsColon}" />
+                    <TextBlock x:Name="TagNameTextBlock" />
                     <Button
                         Margin="20,0,0,2"
                         Padding="0"
@@ -62,7 +65,19 @@
                 MinHeight="120"
                 Margin="0,6,0,0"
                 AcceptsReturn="True"
+                TextChanged="TagTextBox_TextChanged"
                 TextWrapping="Wrap" />
+            <StackPanel Margin="0,4,0,0" Orientation="Horizontal">
+                <CheckBox
+                    Click="TagDiffModeCheckBox_Click"
+                    Content="{x:Bind StringResource.DiffMode}"
+                    IsChecked="True" />
+                <CheckBox
+                    x:Name="TagIdCheckBox"
+                    Click="TagIdCheckBox_Click"
+                    Content="{x:Bind StringResource.ShowTagId}"
+                    IsChecked="False" />
+            </StackPanel>
         </StackPanel>
-    </Grid>
+    </ScrollView>
 </base:BaseContentDialog>

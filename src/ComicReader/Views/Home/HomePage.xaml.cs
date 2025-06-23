@@ -16,6 +16,7 @@ using ComicReader.UserControls.ComicItemView;
 using ComicReader.ViewModels;
 using ComicReader.Views.Main;
 using ComicReader.Views.Navigation;
+using ComicReader.Views.Reader;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -492,6 +493,21 @@ internal sealed partial class HomePage : BasePage
         });
     }
 
+    private void OnEditComicInfoClick(ComicItemViewModel item)
+    {
+        List<ComicModel> selection = ViewModel.GetSelection(item).ConvertAll(x => x.Comic);
+        C0.Run(async () =>
+        {
+            var dialog = new EditComicInfoDialog(selection);
+            ContentDialogResult result = await C0.ShowDialogAsync(dialog, XamlRoot);
+            if (result == ContentDialogResult.Primary)
+            {
+                ViewModel.UpdateLibrary();
+                ViewModel.UpdateFilters();
+            }
+        });
+    }
+
     private void AddNewFolder()
     {
         C0.Run(async delegate
@@ -526,6 +542,12 @@ internal sealed partial class HomePage : BasePage
         public void OnAddToFavoritesClicked(object sender, RoutedEventArgs e)
         {
             GetPage()?.OnAddToFavoritesClicked(sender, e);
+        }
+
+        public void OnEditClick(object sender, RoutedEventArgs e)
+        {
+            var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
+            GetPage()?.OnEditComicInfoClick(item);
         }
 
         public void OnHideClicked(object sender, RoutedEventArgs e)

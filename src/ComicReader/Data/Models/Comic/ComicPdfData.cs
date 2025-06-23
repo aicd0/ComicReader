@@ -75,16 +75,6 @@ internal class ComicPdfData : ComicData
         return TaskException.Success;
     }
 
-    public override Task<TaskException> LoadFromInfoFile()
-    {
-        return Task.FromResult(TaskException.NotSupported);
-    }
-
-    public override Task<TaskException> SaveToInfoFile()
-    {
-        return Task.FromResult(TaskException.NotSupported);
-    }
-
     protected override async Task<TaskException> ReloadImages()
     {
         TaskException r = await SetFile();

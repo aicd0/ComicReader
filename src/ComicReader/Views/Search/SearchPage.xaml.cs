@@ -20,6 +20,7 @@ using ComicReader.UserControls.ComicItemView;
 using ComicReader.ViewModels;
 using ComicReader.Views.Main;
 using ComicReader.Views.Navigation;
+using ComicReader.Views.Reader;
 
 using LiteDB;
 
@@ -321,6 +322,20 @@ internal sealed partial class SearchPage : BasePage
         GetMainPageAbility().OpenInNewTab(route);
     }
 
+    private void OnEditComicInfoClick(ComicItemViewModel item)
+    {
+        List<ComicModel> selection = ViewModel.GetSelection(item).ConvertAll(x => x.Comic);
+        C0.Run(async () =>
+        {
+            var dialog = new EditComicInfoDialog(selection);
+            ContentDialogResult result = await C0.ShowDialogAsync(dialog, XamlRoot);
+            if (result == ContentDialogResult.Primary)
+            {
+                await StartSearch();
+            }
+        });
+    }
+
     private void SetSelectMode(bool val)
     {
         if (val == ViewModel.IsSelectMode)
@@ -352,7 +367,7 @@ internal sealed partial class SearchPage : BasePage
                 selectedItems.Add(comicItem);
             }
         }
-        ViewModel.UpdateComicSelection(selectedItems);
+        ViewModel.SetSelection(selectedItems);
     }
 
     private void CommandBarSelectAllClicked(object sender, RoutedEventArgs e)
@@ -433,6 +448,12 @@ internal sealed partial class SearchPage : BasePage
         {
             var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
             _page.ViewModel.ApplyOperationToComic(ComicOperationType.Favorite, item);
+        }
+
+        public void OnEditClick(object sender, RoutedEventArgs e)
+        {
+            var item = (ComicItemViewModel)((MenuFlyoutItem)sender).DataContext;
+            _page.OnEditComicInfoClick(item);
         }
 
         public void OnHideClicked(object sender, RoutedEventArgs e)

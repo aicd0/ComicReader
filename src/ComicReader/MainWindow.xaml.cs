@@ -162,7 +162,6 @@ public sealed partial class MainWindow : Window
 
             if (comic == null)
             {
-                StorageFile info_file = null;
                 var all_files = new List<StorageFile>();
                 var img_files = new List<StorageFile>();
                 StorageFileQueryResult neighboring_file_query =
@@ -187,17 +186,13 @@ public sealed partial class MainWindow : Window
 
                 foreach (StorageFile file in all_files)
                 {
-                    if (file.Name.ToLower().Equals(ComicModel.COMIC_INFO_FILE_NAME))
-                    {
-                        info_file = file;
-                    }
-                    else if (AppInfoProvider.IsSupportedImageExtension(file.FileType))
+                    if (AppInfoProvider.IsSupportedImageExtension(file.FileType))
                     {
                         img_files.Add(file);
                     }
                 }
 
-                comic = await ComicModel.FromImageFiles(dir, img_files, info_file);
+                comic = ComicModel.FromImageFiles(dir, img_files);
             }
         }
 

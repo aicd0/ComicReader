@@ -26,5 +26,7 @@ internal interface IComicItemMenuFlyoutHandler
 
     void OnMarkAsUnreadClicked(object sender, RoutedEventArgs e);
 
+    void OnEditClick(object sender, RoutedEventArgs e);
+
     void OnSelectClicked(object sender, RoutedEventArgs e);
 }

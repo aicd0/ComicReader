@@ -673,7 +673,7 @@ internal sealed partial class ReaderPage : BasePage
                 return;
             }
 
-            var dialog = new EditComicInfoDialog(comic);
+            var dialog = new EditComicInfoDialog([comic]);
             ContentDialogResult result = await C0.ShowDialogAsync(dialog, XamlRoot);
             if (result == ContentDialogResult.Primary)
             {
