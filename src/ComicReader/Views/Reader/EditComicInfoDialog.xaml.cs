@@ -141,6 +141,7 @@ internal sealed partial class EditComicInfoDialog : BaseContentDialog
         {
             TagIdCheckBox.IsChecked = false;
             TagIdCheckBox.IsEnabled = false;
+            ViewModel.SetTagIdMode(false);
         }
     }
 
