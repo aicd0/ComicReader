@@ -310,7 +310,7 @@
                     <Button Click="EditFilterButton_Click">
                         <Button.Content>
                             <StackPanel Orientation="Horizontal" Spacing="8">
-                                <FontIcon FontSize="16" Glyph="&#xE70f;" />
+                                <FontIcon FontSize="16" Glyph="&#xE70F;" />
                                 <TextBlock Text="{x:Bind StringResource.FilterSettings}" />
                             </StackPanel>
                         </Button.Content>

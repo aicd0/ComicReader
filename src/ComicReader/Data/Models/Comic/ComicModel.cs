@@ -19,8 +19,6 @@ namespace ComicReader.Data.Models.Comic;
 
 internal sealed class ComicModel
 {
-    public const string COMIC_INFO_FILE_NAME = ComicData.COMIC_INFO_FILE_NAME;
-
     private readonly ComicData _internalModel;
 
     private ComicModel(ComicData comicData)
@@ -44,7 +42,6 @@ internal sealed class ComicModel
     public int Progress => _internalModel.Progress;
     public DateTimeOffset LastVisit => _internalModel.LastVisit;
     public int Rating => _internalModel.Rating;
-    public string ReadableTags => _internalModel.TagString();
     public IReadOnlyList<TagData> Tags => _internalModel.Tags;
     public string Title => _internalModel.Title;
     public string Title1 => _internalModel.Title1;
@@ -65,14 +62,24 @@ internal sealed class ComicModel
     // Setters
     //
 
-    public void ParseInfo(string text)
+    public void SetTitle1(string title)
     {
-        _internalModel.ParseInfo(text);
+        _internalModel.SetTitle1(title);
     }
 
-    public void SaveBasic()
+    public void SetTitle2(string title)
     {
-        _internalModel.SaveBasic();
+        _internalModel.SetTitle2(title);
+    }
+
+    public void SetDescription(string description)
+    {
+        _internalModel.SetDescription(description);
+    }
+
+    public void SetTags(IReadOnlyDictionary<string, HashSet<string>> tags)
+    {
+        _internalModel.SetTags(tags);
     }
 
     public async Task SetCompletionStateToNotStarted()
@@ -123,11 +130,6 @@ internal sealed class ComicModel
     public Task<IComicConnection> OpenComicAsync()
     {
         return _internalModel.OpenComicAsync();
-    }
-
-    public Task SaveToInfoFile()
-    {
-        return _internalModel.SaveToInfoFile();
     }
 
     public Task<TaskException> ReloadImageFiles()
@@ -229,9 +231,9 @@ internal sealed class ComicModel
         return ReplaceWithExisting(comic);
     }
 
-    public static async Task<ComicModel?> FromImageFiles(string directory, List<StorageFile> imageFiles, StorageFile infoFile)
+    public static ComicModel? FromImageFiles(string directory, List<StorageFile> imageFiles)
     {
-        ComicData? comic = await ComicFolderData.FromExternal(directory, imageFiles, infoFile);
+        ComicData? comic = ComicFolderData.FromExternal(directory, imageFiles);
         return ReplaceWithExisting(comic);
     }
 

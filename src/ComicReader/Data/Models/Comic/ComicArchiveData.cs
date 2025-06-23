@@ -47,7 +47,6 @@ internal class ComicArchiveData : ComicData
             Location = archive.Path,
         };
 
-        _ = await comic.LoadFromInfoFile();
         _ = await comic.ReloadImageFiles();
         return comic;
     }
@@ -89,79 +88,6 @@ internal class ComicArchiveData : ComicData
         {
             return sub_path + "\\" + filename;
         }
-    }
-
-    public override async Task<TaskException> LoadFromInfoFile()
-    {
-        TaskException r = await SetArchive();
-        if (!r.Successful())
-        {
-            return r;
-        }
-
-        string info_text;
-        string sub_path = null;
-
-        if (IsExternal)
-        {
-            var ctx = new SearchContext(Location, PathType.File);
-            string base_path = ArchiveAccess.GetBasePath(Location, false) + ArchiveAccess.FileSeperator;
-
-            while (await ctx.Search(512))
-            {
-                foreach (string filepath in ctx.Files)
-                {
-                    if (filepath.Length <= base_path.Length)
-                    {
-                        Logger.AssertNotReachHere("F280B20B790F9D49");
-                        continue;
-                    }
-
-                    string filename = StringUtils.ItemNameFromPath(filepath);
-
-                    if (filename.Equals(COMIC_INFO_FILE_NAME))
-                    {
-                        sub_path = filepath.Substring(base_path.Length);
-                        break;
-                    }
-                }
-
-                if (sub_path != null)
-                {
-                    break;
-                }
-            }
-
-            if (sub_path == null)
-            {
-                return TaskException.FileNotFound;
-            }
-        }
-        else
-        {
-            sub_path = GetSubPathFromFilename(COMIC_INFO_FILE_NAME);
-        }
-
-        using (Stream stream = await ArchiveAccess.TryGetFileStream(Archive, sub_path))
-        {
-            if (stream == null)
-            {
-                return TaskException.Failure;
-            }
-
-            using (var reader = new StreamReader(stream))
-            {
-                info_text = await reader.ReadToEndAsync();
-            }
-        }
-
-        ParseInfo(info_text);
-        return TaskException.Success;
-    }
-
-    public override Task<TaskException> SaveToInfoFile()
-    {
-        return Task.FromResult(TaskException.NotSupported);
     }
 
     protected override async Task<TaskException> ReloadImages()

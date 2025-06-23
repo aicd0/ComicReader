@@ -1,9 +1,10 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Collections.Generic;
+
 using ComicReader.Common.PageBase;
 using ComicReader.Data.Models.Comic;
-using ComicReader.SDK.Common.Threading;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -14,36 +15,84 @@ internal sealed partial class EditComicInfoDialog : BaseContentDialog
 {
     public EditComicInfoDialogViewModel ViewModel = new();
 
-    private readonly ComicModel _comic;
-
-    public EditComicInfoDialog(ComicModel comic)
+    public EditComicInfoDialog(IEnumerable<ComicModel> comics)
     {
-        _comic = comic;
         InitializeComponent();
+        ViewModel.Initialize(comics);
+    }
+
+    //
+    // Lifecycle
+    //
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        ObserveData();
+    }
+
+    private void ObserveData()
+    {
+        ViewModel.Title1TextLiveData.ObserveSticky(this, (text) =>
+        {
+            Title1TextBox.Text = text;
+        });
+        ViewModel.Title2TextLiveData.ObserveSticky(this, (text) =>
+        {
+            Title2TextBox.Text = text;
+        });
+        ViewModel.DescriptionTextLiveData.ObserveSticky(this, (text) =>
+        {
+            DescriptionTextBox.Text = text;
+        });
+        ViewModel.TagTextLiveData.ObserveSticky(this, (text) =>
+        {
+            TagTextBox.Text = text;
+        });
+        ViewModel.Title1ChangedLiveData.ObserveSticky(this, (changed) =>
+        {
+            string name = StringResource.Title1Colon;
+            if (changed)
+            {
+                name += " *";
+            }
+            Title1NameTextBlock.Text = name;
+        });
+        ViewModel.Title2ChangedLiveData.ObserveSticky(this, (changed) =>
+        {
+            string name = StringResource.Title2Colon;
+            if (changed)
+            {
+                name += " *";
+            }
+            Title2NameTextBlock.Text = name;
+        });
+        ViewModel.DescriptionChangedLiveData.ObserveSticky(this, (changed) =>
+        {
+            string name = StringResource.DescriptionColon;
+            if (changed)
+            {
+                name += " *";
+            }
+            DescriptionNameTextBlock.Text = name;
+        });
+        ViewModel.TagChangedLiveData.ObserveSticky(this, (changed) =>
+        {
+            string name = StringResource.TagsColon;
+            if (changed)
+            {
+                name += " *";
+            }
+            TagNameTextBlock.Text = name;
+        });
     }
 
     //
     // Events
     //
 
-    private void OnLoaded(object sender, RoutedEventArgs e)
-    {
-        Title1TextBox.Text = _comic.Title1;
-        Title2TextBox.Text = _comic.Title2;
-        DescriptionTextBox.Text = _comic.Description;
-        TagTextBox.Text = _comic.ReadableTags;
-    }
-
     private void ContentDialogPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
     {
-        string infoText = ComicData.InfoString(Title1TextBox.Text, Title2TextBox.Text, DescriptionTextBox.Text, TagTextBox.Text);
-        _comic.ParseInfo(infoText);
-        _comic.SaveBasic();
-
-        TaskDispatcher.DefaultQueue.Submit("ContentDialogPrimaryButtonClick", delegate
-        {
-            _comic.SaveToInfoFile().Wait();
-        });
+        ViewModel.Save();
     }
 
     private void ContentDialogSecondaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
@@ -58,5 +107,45 @@ internal sealed partial class EditComicInfoDialog : BaseContentDialog
     private void OnTagInfoBarCloseButtonClicked(Microsoft.UI.Xaml.Controls.InfoBar sender, object args)
     {
         ViewModel.IsTagInfoBarOpen = false;
+    }
+
+    private void Title1TextBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        ViewModel.SetTitle1(((TextBox)sender).Text);
+    }
+
+    private void Title2TextBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        ViewModel.SetTitle2(((TextBox)sender).Text);
+    }
+
+    private void DescriptionTextBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        ViewModel.SetDescription(((TextBox)sender).Text);
+    }
+
+    private void TagTextBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        ViewModel.SetTags(((TextBox)sender).Text);
+    }
+
+    private void TagDiffModeCheckBox_Click(object sender, RoutedEventArgs e)
+    {
+        bool isChecked = ((CheckBox)sender).IsChecked == true;
+        ViewModel.SetTagDiffMode(isChecked);
+        if (isChecked)
+        {
+            TagIdCheckBox.IsEnabled = true;
+        }
+        else
+        {
+            TagIdCheckBox.IsChecked = false;
+            TagIdCheckBox.IsEnabled = false;
+        }
+    }
+
+    private void TagIdCheckBox_Click(object sender, RoutedEventArgs e)
+    {
+        ViewModel.SetTagIdMode(((CheckBox)sender).IsChecked == true);
     }
 }
