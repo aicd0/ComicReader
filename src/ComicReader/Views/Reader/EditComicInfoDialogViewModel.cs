@@ -146,13 +146,13 @@ internal partial class EditComicInfoDialogViewModel : INotifyPropertyChanged
             return;
         }
         _tags = text;
-        _tagsChanged = true;
-        TagChangedLiveData.Emit(true);
+        MarkTagChange(true);
     }
 
     public void SetTagDiffMode(bool diffMode)
     {
         _tagDiffMode = diffMode;
+        MarkTagChange(true);
     }
 
     public void SetTagIdMode(bool tagIdMode)
@@ -191,9 +191,7 @@ internal partial class EditComicInfoDialogViewModel : INotifyPropertyChanged
 
     private void InitializeTags(bool tagIdMode)
     {
-        TagChangedLiveData.Emit(false);
-        _tagsChanged = false;
-
+        MarkTagChange(false);
         Dictionary<TagWithId, HashSet<TagWithId>> commonTags = [];
         for (int i = 0; i < _comics.Count; i++)
         {
@@ -294,6 +292,12 @@ internal partial class EditComicInfoDialogViewModel : INotifyPropertyChanged
         }
         _tags = ToStandardString(sb.ToString());
         TagTextLiveData.Emit(_tags);
+    }
+
+    private void MarkTagChange(bool changed)
+    {
+        _tagsChanged = changed;
+        TagChangedLiveData.Emit(changed);
     }
 
     private static Dictionary<string, HashSet<string>> MergeTags(Dictionary<string, HashSet<string>> comicTags,
@@ -532,17 +536,32 @@ internal partial class EditComicInfoDialogViewModel : INotifyPropertyChanged
         {
             return null;
         }
-        var result = new ParsePropertyResult(ParseTag(pieces[0], tagIdMode));
+        TagWithId? name = ParseTag(pieces[0], tagIdMode);
+        if (name is null)
+        {
+            return null;
+        }
+        var result = new ParsePropertyResult(name);
         var tags = new List<string>(pieces[1].Split("/", StringSplitOptions.RemoveEmptyEntries));
         foreach (string tag in tags)
         {
-            result.Tags.Add(ParseTag(tag, tagIdMode));
+            TagWithId? item = ParseTag(tag, tagIdMode);
+            if (item is null)
+            {
+                continue;
+            }
+            result.Tags.Add(item);
         }
         return result;
     }
 
-    private static TagWithId ParseTag(string text, bool tagIdMode)
+    private static TagWithId? ParseTag(string text, bool tagIdMode)
     {
+        text = text.Trim();
+        if (text.Length == 0)
+        {
+            return null;
+        }
         if (!tagIdMode)
         {
             return new(text);
@@ -550,13 +569,18 @@ internal partial class EditComicInfoDialogViewModel : INotifyPropertyChanged
         string[] tagPieces = text.Split('#', 2, StringSplitOptions.RemoveEmptyEntries);
         if (tagPieces.Length < 2)
         {
-            return new(text.Trim());
+            return new(text);
         }
         if (!int.TryParse(tagPieces[0].Trim(), out int tagId))
         {
-            return new(text.Trim());
+            return new(text);
         }
-        return new(tagPieces[1].Trim())
+        text = tagPieces[1].Trim();
+        if (text.Length == 0)
+        {
+            return null;
+        }
+        return new(text)
         {
             Id = tagId
         };

@@ -154,7 +154,7 @@ internal abstract class ComicData
             }
         }
 
-        Dictionary<long, TagData> tagCategories = new(comics.Count);
+        Dictionary<long, TagTempData> tagCategories = new(comics.Count);
         {
             SelectCommand command = new SelectCommand(TagCategoryTable.Instance)
                 .AppendCondition(new InCondition(ColumnOrValue.FromColumn(TagCategoryTable.ColumnComicId), comics.Keys.Select(x => ColumnOrValue.FromValue(x))));
@@ -170,11 +170,11 @@ internal abstract class ComicData
                 {
                     long tagCategoryId = tagCategoryIdToken.GetValue();
                     string name = nameToken.GetValue();
-                    var tagData = new TagData
+                    var tagData = new TagTempData
                     {
-                        Name = name
+                        Name = name,
+                        ComicId = comicId,
                     };
-                    comic.Tags.Add(tagData);
                     tagCategories[tagCategoryId] = tagData;
                 }
             }
@@ -190,10 +190,34 @@ internal abstract class ComicData
             while (reader.Read())
             {
                 long tagCategoryId = tagCategoryIdToken.GetValue();
-                if (tagCategories.TryGetValue(tagCategoryId, out TagData? tagData))
+                if (tagCategories.TryGetValue(tagCategoryId, out TagTempData? tagData))
                 {
                     string tag = tagToken.GetValue();
                     tagData.Tags.Add(tag);
+                }
+            }
+        }
+
+        {
+            Dictionary<long, List<TagData>> comicTags = [];
+            foreach (TagTempData tagCategory in tagCategories.Values)
+            {
+                if (comics.TryGetValue(tagCategory.ComicId, out ComicData? comic))
+                {
+                    TagData tagData = new(tagCategory.Name, tagCategory.Tags);
+                    if (!comicTags.TryGetValue(tagCategory.ComicId, out List<TagData>? tags))
+                    {
+                        tags = [];
+                        comicTags[tagCategory.ComicId] = tags;
+                    }
+                    tags.Add(tagData);
+                }
+            }
+            foreach (KeyValuePair<long, List<TagData>> pair in comicTags)
+            {
+                if (comics.TryGetValue(pair.Key, out ComicData? comic))
+                {
+                    comic.Tags = pair.Value;
                 }
             }
         }
@@ -273,7 +297,7 @@ internal abstract class ComicData
     public string CoverCacheKey { get; private set; } = "";
     public string Description { get; private set; } = "";
 
-    public List<TagData> Tags { get; private set; } = new List<TagData>();
+    public IReadOnlyList<TagData> Tags { get; private set; } = [];
 
     public string Title
     {
@@ -382,20 +406,32 @@ internal abstract class ComicData
 
     public void SetTags(IReadOnlyDictionary<string, HashSet<string>> tags)
     {
-        Tags.Clear();
-        foreach (KeyValuePair<string, HashSet<string>> tag in tags)
+        List<TagData> newTags = [];
+        foreach (KeyValuePair<string, HashSet<string>> pair in tags)
         {
-            if (tag.Value.Count == 0)
+            string name = pair.Key.Trim();
+            if (name.Length == 0)
             {
                 continue;
             }
-            TagData tagData = new()
+            HashSet<string> processedTags = [];
+            foreach (string tag in pair.Value)
             {
-                Name = tag.Key,
-                Tags = [.. tag.Value]
-            };
-            Tags.Add(tagData);
+                string processedTag = tag.Trim();
+                if (processedTag.Length == 0)
+                {
+                    continue;
+                }
+                processedTags.Add(processedTag);
+            }
+            if (processedTags.Count == 0)
+            {
+                continue;
+            }
+            TagData tagData = new(name, processedTags);
+            newTags.Add(tagData);
         }
+        Tags = newTags;
         _ = Enqueue(() =>
         {
             return SaveNoLock(() =>
@@ -526,7 +562,6 @@ internal abstract class ComicData
     {
         Title1 = "";
         Title2 = "";
-        Tags.Clear();
 
         List<string> sub_paths = [.. Location.Split(ArchiveAccess.FileSeperator)];
         var tags = new List<string>();
@@ -555,13 +590,8 @@ internal abstract class ComicData
 
         Title1 = tags[tags.Count - 1];
 
-        var default_tag = new TagData
-        {
-            Name = DefaultTagsString,
-            Tags = tags.Skip(1).ToHashSet(),
-        };
-
-        Tags.Add(default_tag);
+        TagData defaultTag = new(DefaultTagsString, tags.Skip(1).ToHashSet());
+        Tags = [defaultTag];
     }
 
     public async Task<TaskException> LoadImageFiles()
@@ -970,11 +1000,18 @@ internal abstract class ComicData
         public bool IsExist;
     };
 
-    internal class TagData
+    internal class TagData(string name, IEnumerable<string> tags)
     {
+        public readonly string Name = name;
+        public readonly IReadOnlySet<string> Tags = (HashSet<string>)[.. tags];
+    };
+
+    private class TagTempData
+    {
+        public long ComicId = -1;
         public string Name = "";
         public HashSet<string> Tags = [];
-    };
+    }
 
     //
     // Enums
