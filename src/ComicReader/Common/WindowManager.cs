@@ -50,14 +50,14 @@ class WindowManager<T> where T : Window
         return null;
     }
 
-    public EventBus? GetEventBus(int windowId)
+    public IEventBus GetEventBus(int windowId)
     {
         if (_windows.TryGetValue(windowId, out WindowWrapper? wrapper))
         {
             return wrapper.EventBus;
         }
         Logger.AssertNotReachHere("2399192BB68F8CC4");
-        return null;
+        return EmptyEventBus.Instance;
     }
 
     private class WindowWrapper

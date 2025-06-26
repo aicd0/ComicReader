@@ -97,7 +97,7 @@ internal abstract class BasePage : Page
         return _communicator?.GetAbility<T>();
     }
 
-    protected EventBus GetEventBus()
+    protected IEventBus GetEventBus()
     {
         return App.WindowManager.GetEventBus(WindowId)!;
     }
