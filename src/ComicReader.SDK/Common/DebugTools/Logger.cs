@@ -11,7 +11,6 @@ namespace ComicReader.SDK.Common.DebugTools;
 public static class Logger
 {
     private const string TAG = "Logger";
-    private const string UNTITLED_EVENT = "UntitledEvent";
     private const int LEVEL_CONSOLE = 0;
     private const int LEVEL_DEBUG = 1;
     private const int LEVEL_INFO = 2;
@@ -424,42 +423,32 @@ public static class Logger
 
     private class AssertException : Exception
     {
-        public readonly string EventName;
+        private const string UNTITLED_EVENT = "UntitledEvent";
 
-        public AssertException(string? eventName)
+        public AssertException(string? eventName) : base(CombineMessage(eventName, null)) { }
+
+        public AssertException(string? eventName, string? message) : base(CombineMessage(eventName, message)) { }
+
+        public AssertException(string? eventName, Exception? inner) : base(CombineMessage(eventName, null), inner) { }
+
+        public AssertException(string? eventName, string? message, Exception? inner) : base(CombineMessage(eventName, message), inner) { }
+
+        private static string CombineMessage(string? eventName, string? message)
         {
+            StringBuilder sb = new();
             if (string.IsNullOrEmpty(eventName))
             {
-                eventName = UNTITLED_EVENT;
+                sb.Append(UNTITLED_EVENT);
             }
-            EventName = eventName;
-        }
-
-        public AssertException(string? eventName, string? message) : base(message)
-        {
-            if (string.IsNullOrEmpty(eventName))
+            else
             {
-                eventName = UNTITLED_EVENT;
+                sb.Append(eventName);
             }
-            EventName = eventName;
-        }
-
-        public AssertException(string? eventName, Exception? inner) : base(null, inner)
-        {
-            if (string.IsNullOrEmpty(eventName))
+            if (!string.IsNullOrEmpty(message))
             {
-                eventName = UNTITLED_EVENT;
+                sb.Append(" (").Append(message).Append(')');
             }
-            EventName = eventName;
-        }
-
-        public AssertException(string? eventName, string? message, Exception? inner) : base(message, inner)
-        {
-            if (string.IsNullOrEmpty(eventName))
-            {
-                eventName = UNTITLED_EVENT;
-            }
-            EventName = eventName;
+            return sb.ToString();
         }
     }
 }
