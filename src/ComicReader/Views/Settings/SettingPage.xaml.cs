@@ -104,7 +104,7 @@ internal sealed partial class SettingPage : BasePage
         C0.Run(async delegate
         {
             var dialog = new ChooseLocationsDialog(WindowId);
-            await C0.ShowDialogAsync(dialog, XamlRoot);
+            await dialog.ShowAsync(XamlRoot);
         });
     }
 

@@ -328,7 +328,7 @@ internal sealed partial class SearchPage : BasePage
         C0.Run(async () =>
         {
             var dialog = new EditComicInfoDialog(selection);
-            ContentDialogResult result = await C0.ShowDialogAsync(dialog, XamlRoot);
+            ContentDialogResult result = await dialog.ShowAsync(XamlRoot);
             if (result == ContentDialogResult.Primary)
             {
                 await StartSearch();

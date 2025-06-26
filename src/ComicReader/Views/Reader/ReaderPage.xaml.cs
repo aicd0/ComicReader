@@ -674,7 +674,7 @@ internal sealed partial class ReaderPage : BasePage
             }
 
             var dialog = new EditComicInfoDialog([comic]);
-            ContentDialogResult result = await C0.ShowDialogAsync(dialog, XamlRoot);
+            ContentDialogResult result = await dialog.ShowAsync(XamlRoot);
             if (result == ContentDialogResult.Primary)
             {
                 LoadComicInfo();
