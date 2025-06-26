@@ -4,7 +4,7 @@
 using System;
 
 using ComicReader.Common;
-using ComicReader.Common.PageBase;
+using ComicReader.Common.BaseUI;
 using ComicReader.Data.Models;
 using ComicReader.SDK.Common.Storage;
 using ComicReader.Views.Main;

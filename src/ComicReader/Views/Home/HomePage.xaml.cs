@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 using ComicReader.Common;
-using ComicReader.Common.PageBase;
+using ComicReader.Common.BaseUI;
 using ComicReader.Data.Legacy;
 using ComicReader.Data.Models;
 using ComicReader.Data.Models.Comic;

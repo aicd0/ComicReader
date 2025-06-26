@@ -6,7 +6,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 
-using ComicReader.Common.PageBase;
+using ComicReader.Common.BaseUI;
 
 namespace ComicReader.ViewModels;
 

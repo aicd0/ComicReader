@@ -5,7 +5,7 @@
 
 using System.Collections.Generic;
 
-namespace ComicReader.Common.PageBase;
+namespace ComicReader.Common.BaseUI;
 
 internal class PageBundle
 {

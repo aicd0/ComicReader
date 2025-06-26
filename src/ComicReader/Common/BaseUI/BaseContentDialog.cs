@@ -10,7 +10,7 @@ using ComicReader.SDK.Common.DebugTools;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
-namespace ComicReader.Common.PageBase;
+namespace ComicReader.Common.BaseUI;
 
 public partial class BaseContentDialog : ContentDialog
 {
