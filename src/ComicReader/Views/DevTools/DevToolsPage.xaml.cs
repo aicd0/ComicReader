@@ -6,6 +6,7 @@ using System;
 using ComicReader.Common;
 using ComicReader.Common.BaseUI;
 using ComicReader.Data.Models;
+using ComicReader.SDK.Common.DebugTools;
 using ComicReader.SDK.Common.Storage;
 using ComicReader.Views.Main;
 
@@ -63,6 +64,11 @@ internal sealed partial class DevToolsPage : BasePage
     private void CrashAppButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
         throw new InvalidOperationException();
+    }
+
+    private void TriggerAssertFailureButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        Logger.AssertNotReachHere("MockAssertFailure");
     }
 
     private void OnCommonConfigsApplyClick(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)

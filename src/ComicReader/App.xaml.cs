@@ -18,8 +18,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppLifecycle;
 using Microsoft.Windows.Globalization;
 
-using Sentry;
-
 using Windows.ApplicationModel.Activation;
 
 namespace ComicReader;
@@ -86,10 +84,7 @@ public partial class App : Application
         // Register crash handler
         UnhandledException += (_, e) =>
         {
-            if (Properties.SentryDsn.Length > 0)
-            {
-                SentrySdk.CaptureException(e.Exception);
-            }
+            SentryManager.CaptureException(e.Exception);
             CrashHandler.OnUnhandledException(e.Exception);
         };
 
@@ -101,14 +96,7 @@ public partial class App : Application
         EnvironmentProvider.Instance.Initialize();
 
         // Initialize Sentry
-        if (Properties.SentryDsn.Length > 0)
-        {
-            SentrySdk.Init(o =>
-            {
-                o.Dsn = Properties.SentryDsn;
-                EnvironmentProvider.Instance.AppendEnvironmentTags(o.DefaultTags);
-            });
-        }
+        SentryManager.Initialize(Properties.SentryDsn, EnvironmentProvider.Instance.GetEnvironmentTags());
 
         // Initialize app language
         InitializeAppLanguage();

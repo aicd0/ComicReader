@@ -11,6 +11,7 @@ namespace ComicReader.SDK.Common.DebugTools;
 public static class Logger
 {
     private const string TAG = "Logger";
+    private const string UNTITLED_EVENT = "UntitledEvent";
     private const int LEVEL_CONSOLE = 0;
     private const int LEVEL_DEBUG = 1;
     private const int LEVEL_INFO = 2;
@@ -25,6 +26,7 @@ public static class Logger
     private static bool sLogTreeEnabled = false;
     private static string sLogFolderPath = "";
     private static readonly ConcurrentQueue<LogItem> sBuffer = new();
+    private static long sLastErrorReportTime = 0;
 
     public static void Initialize()
     {
@@ -124,42 +126,42 @@ public static class Logger
 
     public static void F(string? tag, string? message)
     {
-        Exception exceptionNotNull = new(message);
+        AssertException exceptionNotNull = new(null, message);
         Log(LEVEL_FATAL, LogTag.N(tag), message, exceptionNotNull);
         FailOnDebug(exceptionNotNull);
     }
 
     public static void F(LogTag? tag, string? message)
     {
-        Exception exceptionNotNull = new(message);
+        AssertException exceptionNotNull = new(null, message);
         Log(LEVEL_FATAL, tag, message, exceptionNotNull);
         FailOnDebug(exceptionNotNull);
     }
 
     public static void F(string? tag, Exception? exception)
     {
-        Exception exceptionNotNull = exception ?? new();
+        AssertException exceptionNotNull = new(null, exception);
         Log(LEVEL_FATAL, LogTag.N(tag), null, exceptionNotNull);
         FailOnDebug(exceptionNotNull);
     }
 
     public static void F(LogTag? tag, Exception? exception)
     {
-        Exception exceptionNotNull = exception ?? new();
+        AssertException exceptionNotNull = new(null, exception);
         Log(LEVEL_FATAL, tag, null, exceptionNotNull);
         FailOnDebug(exceptionNotNull);
     }
 
     public static void F(string? tag, string? message, Exception? exception)
     {
-        Exception exceptionNotNull = exception ?? new(message);
+        AssertException exceptionNotNull = new(null, message, exception);
         Log(LEVEL_FATAL, LogTag.N(tag), message, exceptionNotNull);
         FailOnDebug(exceptionNotNull);
     }
 
     public static void F(LogTag? tag, string? message, Exception? exception)
     {
-        Exception exceptionNotNull = exception ?? new(message);
+        AssertException exceptionNotNull = new(null, message, exception);
         Log(LEVEL_FATAL, tag, message, exceptionNotNull);
         FailOnDebug(exceptionNotNull);
     }
@@ -185,7 +187,7 @@ public static class Logger
 
     public static void AssertNotReachHere(string? eventName, Exception? exception)
     {
-        AssertNotReachHereInternal(eventName, null, new AssertException(eventName, exception));
+        AssertNotReachHereInternal(eventName, null, exception);
     }
 
     public static void AssertNotReachHere(string? eventName, string? message, Exception? exception)
@@ -195,22 +197,9 @@ public static class Logger
 
     private static void AssertNotReachHereInternal(string? eventName, string? message, Exception? exception)
     {
-        if (string.IsNullOrEmpty(eventName))
-        {
-            eventName = "UnknownEvent";
-        }
-        Log(LEVEL_FATAL, LogTag.N("Assert", eventName), message, exception);
-
-        string fullMsg;
-        if (string.IsNullOrEmpty(message))
-        {
-            fullMsg = eventName;
-        }
-        else
-        {
-            fullMsg = $"{eventName}({message})";
-        }
-        FailOnDebug(new AssertException(fullMsg, exception));
+        AssertException exceptionNotNull = new(eventName, message, exception);
+        Log(LEVEL_FATAL, LogTag.N("Assert", eventName), message, exceptionNotNull);
+        FailOnDebug(exceptionNotNull);
     }
 
     private static void Console(string message)
@@ -254,7 +243,7 @@ public static class Logger
                 levelTag = "F";
                 break;
             default:
-                FailOnDebug(new AssertException($"Unknown log level {level}."));
+                FailOnDebug(new AssertException("CC13A1E9D13CC9EC"));
                 levelTag = "U";
                 break;
         }
@@ -400,8 +389,15 @@ public static class Logger
         System.Diagnostics.Debug.Print(message);
     }
 
-    private static void FailOnDebug(Exception exception)
+    private static void FailOnDebug(AssertException exception)
     {
+        long time = GetTick();
+        if (time - sLastErrorReportTime > 5000)
+        {
+            sLastErrorReportTime = time;
+            SentryManager.CaptureException(exception);
+        }
+
         if (DebugUtils.DebugMode)
         {
             if (DebugUtils.DebugBuild && System.Diagnostics.Debugger.IsAttached)
@@ -409,11 +405,15 @@ public static class Logger
                 System.Diagnostics.Debugger.Break();
             }
 
-            exception ??= new AssertException();
             CrashHandler.OnUnhandledException(exception);
             Environment.FailFast("The application encountered an assertion failure.", exception);
             throw exception;
         }
+    }
+
+    private static long GetTick()
+    {
+        return Environment.TickCount64;
     }
 
     private class LogItem
@@ -424,10 +424,42 @@ public static class Logger
 
     private class AssertException : Exception
     {
-        public AssertException() { }
+        public readonly string EventName;
 
-        public AssertException(string? message) : base(message) { }
+        public AssertException(string? eventName)
+        {
+            if (string.IsNullOrEmpty(eventName))
+            {
+                eventName = UNTITLED_EVENT;
+            }
+            EventName = eventName;
+        }
 
-        public AssertException(string? message, Exception? inner) : base(message, inner) { }
+        public AssertException(string? eventName, string? message) : base(message)
+        {
+            if (string.IsNullOrEmpty(eventName))
+            {
+                eventName = UNTITLED_EVENT;
+            }
+            EventName = eventName;
+        }
+
+        public AssertException(string? eventName, Exception? inner) : base(null, inner)
+        {
+            if (string.IsNullOrEmpty(eventName))
+            {
+                eventName = UNTITLED_EVENT;
+            }
+            EventName = eventName;
+        }
+
+        public AssertException(string? eventName, string? message, Exception? inner) : base(message, inner)
+        {
+            if (string.IsNullOrEmpty(eventName))
+            {
+                eventName = UNTITLED_EVENT;
+            }
+            EventName = eventName;
+        }
     }
 }
