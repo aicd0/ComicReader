@@ -1,6 +1,9 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+using ComicReader.SDK.Common.AppEnvironment;
+using ComicReader.SDK.Common.Storage;
+
 namespace ComicReader.SDK.Common.DebugTools;
 
 public static class SentryManager
@@ -22,7 +25,10 @@ public static class SentryManager
         SentrySdk.Init(o =>
         {
             o.AutoSessionTracking = true;
+            o.CacheDirectoryPath = StorageLocation.GetLocalCacheFolderPath();
+            o.Distribution = EnvironmentProvider.IsPortable() ? "Portable" : "Packaged";
             o.Dsn = dsn;
+            o.Release = EnvironmentProvider.GetVersionName();
 
             foreach (KeyValuePair<string, string> tag in tags)
             {

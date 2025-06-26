@@ -8,7 +8,7 @@
 
 using System.Management;
 
-namespace ComicReader.Common.AppEnvironment;
+namespace ComicReader.SDK.Common.AppEnvironment;
 
 internal class ManagementClassFactory
 {

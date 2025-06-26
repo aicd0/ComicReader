@@ -3,7 +3,7 @@
 
 using System.Text;
 
-using ComicReader.Common.AppEnvironment;
+using ComicReader.SDK.Common.AppEnvironment;
 using ComicReader.SDK.Common.ServiceManagement;
 
 namespace ComicReader.Common.Services;

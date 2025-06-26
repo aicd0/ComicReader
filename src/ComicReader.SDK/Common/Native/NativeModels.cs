@@ -1,22 +1,21 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
 using System.Runtime.InteropServices;
 
-namespace ComicReader.Common.Native;
+namespace ComicReader.SDK.Common.Native;
 
-internal class NativeModels
+public class NativeModels
 {
     // https://docs.microsoft.com/en-us/windows/win32/api/minwinbase/ne-minwinbase-findex_info_levels
-    internal enum FindExInfoLevel
+    public enum FindExInfoLevel
     {
         FindExInfoStandard = 0,
         FindExInfoBasic = 1
     }
 
     // https://docs.microsoft.com/en-us/windows/win32/api/minwinbase/ne-minwinbase-findex_search_ops
-    internal enum FIndexSearchOps
+    public enum FIndexSearchOps
     {
         FindExSearchNameMatch = 0,
         FindExSearchLimitToDirectories = 1,
@@ -25,7 +24,7 @@ internal class NativeModels
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
-    internal struct Win32FindData
+    public struct Win32FindData
     {
         public uint dwFileAttributes;
         public System.Runtime.InteropServices.ComTypes.FILETIME ftCreationTime;
@@ -41,7 +40,7 @@ internal class NativeModels
         public string cAlternateFileName;
     }
 
-    internal enum MonitorDPIType : int
+    public enum MonitorDPIType : int
     {
         MDT_Effective_DPI = 0,
         MDT_Angular_DPI = 1,
@@ -49,7 +48,7 @@ internal class NativeModels
         MDT_Default = MDT_Effective_DPI
     }
 
-    internal enum ShowWindowCommands : int
+    public enum ShowWindowCommands : int
     {
         Hide = 0,
         Normal = 1,
@@ -59,7 +58,7 @@ internal class NativeModels
 
     [Serializable]
     [StructLayout(LayoutKind.Sequential)]
-    internal struct WindowPlacement
+    public struct WindowPlacement
     {
         public int length { get; set; }
         public int flags { get; set; }
@@ -69,5 +68,5 @@ internal class NativeModels
         public System.Drawing.Rectangle rcNormalPosition { get; set; }
     }
 
-    internal delegate void WinEventDelegate(IntPtr winEventHookHandle, uint eventType, IntPtr windowHandle, int objectId, int childId, uint eventThreadId, uint eventTimeInMilliseconds);
+    public delegate void WinEventDelegate(nint winEventHookHandle, uint eventType, nint windowHandle, int objectId, int childId, uint eventThreadId, uint eventTimeInMilliseconds);
 }
