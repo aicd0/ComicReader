@@ -3,7 +3,7 @@
 
 #nullable disable
 
-using ComicReader.Common.PageBase;
+using ComicReader.Common.BaseUI;
 
 using Microsoft.UI.Xaml.Controls;
 

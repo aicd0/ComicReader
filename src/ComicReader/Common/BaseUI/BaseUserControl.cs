@@ -3,7 +3,7 @@
 
 using Microsoft.UI.Xaml.Controls;
 
-namespace ComicReader.Common.PageBase;
+namespace ComicReader.Common.BaseUI;
 
 public partial class BaseUserControl : UserControl
 {

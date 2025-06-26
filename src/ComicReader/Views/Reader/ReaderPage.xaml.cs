@@ -10,9 +10,9 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
+using ComicReader.Common.BaseUI;
 using ComicReader.Common.Imaging;
 using ComicReader.Common.Lifecycle;
-using ComicReader.Common.PageBase;
 using ComicReader.Common.Threading;
 using ComicReader.Data.Legacy;
 using ComicReader.Data.Models;
@@ -674,7 +674,7 @@ internal sealed partial class ReaderPage : BasePage
             }
 
             var dialog = new EditComicInfoDialog([comic]);
-            ContentDialogResult result = await C0.ShowDialogAsync(dialog, XamlRoot);
+            ContentDialogResult result = await dialog.ShowAsync(XamlRoot);
             if (result == ContentDialogResult.Primary)
             {
                 LoadComicInfo();

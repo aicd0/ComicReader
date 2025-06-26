@@ -9,7 +9,7 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
-using ComicReader.Common.PageBase;
+using ComicReader.Common.BaseUI;
 using ComicReader.Data;
 using ComicReader.Data.Models.Comic;
 using ComicReader.Data.Tables;
@@ -328,7 +328,7 @@ internal sealed partial class SearchPage : BasePage
         C0.Run(async () =>
         {
             var dialog = new EditComicInfoDialog(selection);
-            ContentDialogResult result = await C0.ShowDialogAsync(dialog, XamlRoot);
+            ContentDialogResult result = await dialog.ShowAsync(XamlRoot);
             if (result == ContentDialogResult.Primary)
             {
                 await StartSearch();

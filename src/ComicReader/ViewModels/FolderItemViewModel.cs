@@ -5,7 +5,7 @@
 
 using System;
 
-using ComicReader.Common.PageBase;
+using ComicReader.Common.BaseUI;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;

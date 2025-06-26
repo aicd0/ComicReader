@@ -3,7 +3,7 @@
 
 using System.Text;
 
-using ComicReader.Common.PageBase;
+using ComicReader.Common.BaseUI;
 using ComicReader.Data.Models;
 
 using Microsoft.UI.Xaml.Controls;

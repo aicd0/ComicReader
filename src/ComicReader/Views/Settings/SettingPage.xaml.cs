@@ -7,7 +7,7 @@ using System.Text;
 
 using ComicReader.Common;
 using ComicReader.Common.AppEnvironment;
-using ComicReader.Common.PageBase;
+using ComicReader.Common.BaseUI;
 using ComicReader.Common.Threading;
 using ComicReader.Data;
 using ComicReader.Data.Legacy;
@@ -104,7 +104,7 @@ internal sealed partial class SettingPage : BasePage
         C0.Run(async delegate
         {
             var dialog = new ChooseLocationsDialog(WindowId);
-            await C0.ShowDialogAsync(dialog, XamlRoot);
+            await dialog.ShowAsync(XamlRoot);
         });
     }
 

@@ -12,9 +12,6 @@ using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-
 using Windows.Security.Cryptography;
 using Windows.Storage.Streams;
 
@@ -50,14 +47,6 @@ internal class C0
                 sw.SpinOnce();
             }
         });
-    }
-
-    public static async Task<ContentDialogResult> ShowDialogAsync(ContentDialog dialog, XamlRoot root)
-    {
-        // https://learn.microsoft.com/en-us/windows/apps/design/controls/dialogs-and-flyouts/dialogs
-        // https://github.com/microsoft/microsoft-ui-xaml/issues/4167
-        dialog.XamlRoot = root;
-        return await dialog.ShowAsync();
     }
 
     public static IBuffer GetBufferFromString(string text)

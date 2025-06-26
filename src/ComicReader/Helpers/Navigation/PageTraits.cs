@@ -5,7 +5,7 @@
 
 using System;
 
-using ComicReader.Common.PageBase;
+using ComicReader.Common.BaseUI;
 using ComicReader.Views.Home;
 using ComicReader.Views.Search;
 using ComicReader.Views.Settings;

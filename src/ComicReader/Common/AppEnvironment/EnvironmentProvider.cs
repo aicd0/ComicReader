@@ -36,10 +36,12 @@ internal class EnvironmentProvider
         // Keep this even if it does nothing, as some logic is performed in the constructor
     }
 
-    public void AppendEnvironmentTags(Dictionary<string, string> tags)
+    public Dictionary<string, string> GetEnvironmentTags()
     {
+        Dictionary<string, string> tags = [];
         tags["version-name"] = GetVersionName();
         tags["portable"] = IsPortable().ToString();
+        return tags;
     }
 
     public void AppendDebugText(StringBuilder sb)

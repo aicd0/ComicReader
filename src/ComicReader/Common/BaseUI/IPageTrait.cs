@@ -3,7 +3,7 @@
 
 using System;
 
-namespace ComicReader.Common.PageBase;
+namespace ComicReader.Common.BaseUI;
 
 internal interface IPageTrait
 {

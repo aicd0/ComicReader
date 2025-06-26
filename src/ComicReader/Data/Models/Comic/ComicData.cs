@@ -376,7 +376,7 @@ internal abstract class ComicData
 
     public void SetTitle2(string title)
     {
-        Title1 = title;
+        Title2 = title;
         _ = Enqueue(() =>
         {
             return SaveNoLock(() =>

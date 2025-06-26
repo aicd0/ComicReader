@@ -6,8 +6,8 @@
 using System;
 
 using ComicReader.Common;
+using ComicReader.Common.BaseUI;
 using ComicReader.Common.Lifecycle;
-using ComicReader.Common.PageBase;
 using ComicReader.Data.Legacy;
 using ComicReader.Helpers.Navigation;
 using ComicReader.SDK.Common.DebugTools;

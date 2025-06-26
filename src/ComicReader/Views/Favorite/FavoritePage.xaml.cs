@@ -9,8 +9,8 @@ using System.Linq;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
+using ComicReader.Common.BaseUI;
 using ComicReader.Common.Lifecycle;
-using ComicReader.Common.PageBase;
 using ComicReader.Data.Models;
 using ComicReader.Data.Models.Comic;
 using ComicReader.Helpers.Navigation;
