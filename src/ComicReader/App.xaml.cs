@@ -5,12 +5,12 @@ using System;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
-using ComicReader.Common.AppEnvironment;
 using ComicReader.Common.Services;
 using ComicReader.Data;
 using ComicReader.Data.Legacy;
 using ComicReader.Data.Models;
 using ComicReader.Data.Models.Comic;
+using ComicReader.SDK.Common.AppEnvironment;
 using ComicReader.SDK.Common.DebugTools;
 using ComicReader.SDK.Common.ServiceManagement;
 
@@ -93,10 +93,10 @@ public partial class App : Application
         ServiceManager.RegisterService<IDebugService>(new DebugService());
 
         // Initialize environment information
-        EnvironmentProvider.Instance.Initialize();
+        EnvironmentProvider.Instance.Initialize(Properties.AdditionalDebugInformation);
 
         // Initialize Sentry
-        SentryManager.Initialize(Properties.SentryDsn, EnvironmentProvider.Instance.GetEnvironmentTags());
+        SentryManager.Initialize(Properties.SentryDsn, EnvironmentProvider.GetEnvironmentTags());
 
         // Initialize app language
         InitializeAppLanguage();
@@ -128,7 +128,7 @@ public partial class App : Application
             string languageTag = AppSettingsModel.Instance.GetModel().Language;
             if (string.IsNullOrEmpty(languageTag))
             {
-                languageTag = EnvironmentProvider.Instance.GetCurrentSystemLanguage();
+                languageTag = EnvironmentProvider.GetCurrentSystemLanguage();
             }
             ApplicationLanguages.PrimaryLanguageOverride = languageTag;
         }

@@ -9,11 +9,11 @@ using System.Text.Json;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
-using ComicReader.Common.Native;
 using ComicReader.Data.Models;
 using ComicReader.Data.Models.Comic;
 using ComicReader.Helpers.Navigation;
 using ComicReader.SDK.Common.KVStorage;
+using ComicReader.SDK.Common.Native;
 using ComicReader.Views.Main;
 
 using Microsoft.UI;

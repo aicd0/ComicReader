@@ -1,8 +1,6 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -10,17 +8,19 @@ using System.Text;
 
 using ComicReader.SDK.Common.DebugTools;
 using ComicReader.SDK.Common.ServiceManagement;
+using ComicReader.SDK.Common.Utils;
 
 using Windows.ApplicationModel;
 using Windows.System.UserProfile;
 
-namespace ComicReader.Common.AppEnvironment;
+namespace ComicReader.SDK.Common.AppEnvironment;
 
-internal class EnvironmentProvider
+public class EnvironmentProvider
 {
     public static EnvironmentProvider Instance = new();
 
     private readonly DateTimeOffset _launchTime;
+    private string _additionalDebugInformation = string.Empty;
 
     private EnvironmentProvider()
     {
@@ -31,17 +31,9 @@ internal class EnvironmentProvider
     /// Initialize the EnvironmentProvider instance. Some fields like launch time
     /// require the static instance to be initialized as soon as possible.
     /// </summary>
-    public void Initialize()
+    public void Initialize(string additionalDebugInformation)
     {
-        // Keep this even if it does nothing, as some logic is performed in the constructor
-    }
-
-    public Dictionary<string, string> GetEnvironmentTags()
-    {
-        Dictionary<string, string> tags = [];
-        tags["version-name"] = GetVersionName();
-        tags["portable"] = IsPortable().ToString();
-        return tags;
+        _additionalDebugInformation = additionalDebugInformation;
     }
 
     public void AppendDebugText(StringBuilder sb)
@@ -64,15 +56,32 @@ internal class EnvironmentProvider
         sb.SafeAppend("Launch time", () => GetLaunchTime());
         sb.SafeAppend("Awake time", () => GetAwakeTime());
 
-        string additionalInfo = Properties.AdditionalDebugInformation;
-        if (additionalInfo.Length > 0)
+        if (_additionalDebugInformation.Length > 0)
         {
-            sb.Append(additionalInfo);
+            sb.Append(_additionalDebugInformation);
             sb.Append('\n');
         }
     }
 
-    public string GetVersionName()
+    public DateTimeOffset GetLaunchTime()
+    {
+        return _launchTime;
+    }
+
+    public TimeSpan GetAwakeTime()
+    {
+        return DateTimeOffset.Now - _launchTime;
+    }
+
+    public static Dictionary<string, string> GetEnvironmentTags()
+    {
+        Dictionary<string, string> tags = [];
+        tags["version-name"] = GetVersionName();
+        tags["portable"] = IsPortable().ToString();
+        return tags;
+    }
+
+    public static string GetVersionName()
     {
         if (IsPortable())
         {
@@ -90,19 +99,9 @@ internal class EnvironmentProvider
         }
     }
 
-    public string GetCurrentSystemLanguage()
+    public static string GetCurrentSystemLanguage()
     {
         return GlobalizationPreferences.Languages[0];
-    }
-
-    public DateTimeOffset GetLaunchTime()
-    {
-        return _launchTime;
-    }
-
-    public TimeSpan GetAwakeTime()
-    {
-        return DateTimeOffset.Now - _launchTime;
     }
 
     public static bool IsPortable()
