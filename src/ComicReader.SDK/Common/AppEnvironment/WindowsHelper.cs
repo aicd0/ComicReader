@@ -6,15 +6,12 @@
 
 #nullable disable
 
-using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
 using System.Reflection;
 
-using ComicReader.Common.Native;
+using ComicReader.SDK.Common.Native;
 
-namespace ComicReader.Common.AppEnvironment;
+namespace ComicReader.SDK.Common.AppEnvironment;
 
 internal static class WindowsHelper
 {
@@ -26,7 +23,7 @@ internal static class WindowsHelper
 
     private const uint WINEVENT_OUTOFCONTEXT = 0u;
 
-    private static readonly IDictionary<NativeModels.WinEventDelegate, IntPtr> _hooks;
+    private static readonly IDictionary<NativeModels.WinEventDelegate, nint> _hooks;
 
     private const int DESKTOPVERTRES = 117;
 
@@ -47,7 +44,7 @@ internal static class WindowsHelper
         add
         {
             uint id = (uint)Environment.ProcessId;
-            IntPtr value2 = NativeMethods.SetWinEventHook(22u, 23u, IntPtr.Zero, value, id, 0u, 0u);
+            nint value2 = NativeMethods.SetWinEventHook(22u, 23u, nint.Zero, value, id, 0u, 0u);
             _hooks.Add(value, value2);
         }
         remove
@@ -63,7 +60,7 @@ internal static class WindowsHelper
     {
         try
         {
-            return Assembly.GetEntryAssembly().GetReferencedAssemblies().Any((AssemblyName referencedAssembly) => referencedAssembly.Name == "Windows.UI.Xaml");
+            return Assembly.GetEntryAssembly().GetReferencedAssemblies().Any((referencedAssembly) => referencedAssembly.Name == "Windows.UI.Xaml");
         }
         catch (Exception)
         {
@@ -76,7 +73,7 @@ internal static class WindowsHelper
     {
         try
         {
-            return Assembly.GetEntryAssembly().GetReferencedAssemblies().Any((AssemblyName referencedAssembly) => referencedAssembly.Name == "Microsoft.UI.Xaml" || referencedAssembly.Name == "Microsoft.WinUI");
+            return Assembly.GetEntryAssembly().GetReferencedAssemblies().Any((referencedAssembly) => referencedAssembly.Name == "Microsoft.UI.Xaml" || referencedAssembly.Name == "Microsoft.WinUI");
         }
         catch (Exception)
         {
@@ -87,15 +84,15 @@ internal static class WindowsHelper
 
     public static void GetScreenSize(out int width, out int height)
     {
-        using var graphics = Graphics.FromHwnd(IntPtr.Zero);
-        IntPtr hdc = graphics.GetHdc();
+        using var graphics = Graphics.FromHwnd(nint.Zero);
+        nint hdc = graphics.GetHdc();
         width = NativeMethods.GetDeviceCaps(hdc, 118);
         height = NativeMethods.GetDeviceCaps(hdc, 117);
     }
 
     static WindowsHelper()
     {
-        _hooks = new Dictionary<NativeModels.WinEventDelegate, IntPtr>();
+        _hooks = new Dictionary<NativeModels.WinEventDelegate, nint>();
         try
         {
             Assembly assembly = GetAssembly("PresentationFramework");
@@ -117,7 +114,7 @@ internal static class WindowsHelper
 
     private static Assembly GetAssembly(string name)
     {
-        return AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault((Assembly assembly) => assembly.GetName().Name == name);
+        return AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault((assembly) => assembly.GetName().Name == name);
     }
 
     private static Rectangle WindowsRectToRectangle(dynamic windowsRect)

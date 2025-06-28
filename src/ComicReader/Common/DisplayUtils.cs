@@ -4,8 +4,8 @@
 using System;
 using System.Drawing;
 
-using ComicReader.Common.Native;
 using ComicReader.SDK.Common.DebugTools;
+using ComicReader.SDK.Common.Native;
 
 using Microsoft.UI;
 using Microsoft.UI.Windowing;

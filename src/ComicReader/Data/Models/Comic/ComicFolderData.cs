@@ -23,10 +23,9 @@ internal class ComicFolderData : ComicData
     private const string TAG = "ComicFolderData";
 
     private StorageFolder Folder { get; set; }
-    private StorageFile InfoFile { get; set; }
-    private List<StorageFile> ImageFiles { get; set; } = new List<StorageFile>();
+    private List<StorageFile> ImageFiles { get; set; } = [];
 
-    public override bool IsEditable => !(IsExternal && InfoFile == null);
+    public override bool IsEditable => !IsExternal;
 
     private ComicFolderData(bool is_external) :
         base(ComicType.Folder, is_external)
@@ -40,28 +39,20 @@ internal class ComicFolderData : ComicData
         };
     }
 
-    public static async Task<ComicData> FromExternal(string directory, List<StorageFile> image_files, StorageFile info_file)
+    public static ComicData FromExternal(string directory, List<StorageFile> image_files)
     {
         if (image_files.Count == 0)
         {
             return null;
         }
 
-        image_files = image_files
-            .OrderBy(x => StringUtils.SmartFileNameKeySelector(x.DisplayName), StringUtils.SmartFileNameComparer)
-            .ToList();
+        image_files = [.. image_files.OrderBy(x => StringUtils.SmartFileNameKeySelector(x.DisplayName), StringUtils.SmartFileNameComparer)];
 
         var comic = new ComicFolderData(true)
         {
             Location = directory,
             ImageFiles = image_files,
-            InfoFile = info_file,
         };
-
-        if (info_file != null)
-        {
-            await comic.LoadFromInfoFile();
-        }
 
         return comic;
     }
@@ -86,97 +77,6 @@ internal class ComicFolderData : ComicData
         }
 
         Folder = folder;
-        return TaskException.Success;
-    }
-
-    private async Task<TaskException> SetInfoFile(bool create_if_not_exists)
-    {
-        if (InfoFile != null)
-        {
-            return TaskException.Success;
-        }
-
-        if (IsExternal)
-        {
-            return create_if_not_exists ? TaskException.NoPermission : TaskException.FileNotFound;
-        }
-
-        TaskException r = await SetFolder();
-
-        if (!r.Successful())
-        {
-            return r;
-        }
-
-        IStorageItem item = await Folder.TryGetItemAsync(COMIC_INFO_FILE_NAME);
-
-        if (item == null)
-        {
-            if (!create_if_not_exists)
-            {
-                return TaskException.FileNotFound;
-            }
-
-            InfoFile = await Folder.CreateFileAsync(COMIC_INFO_FILE_NAME, CreationCollisionOption.OpenIfExists);
-            return TaskException.Success;
-        }
-
-        if (!(item is StorageFile))
-        {
-            return TaskException.NameCollision;
-        }
-
-        InfoFile = (StorageFile)item;
-        return TaskException.Success;
-    }
-
-    public override async Task<TaskException> LoadFromInfoFile()
-    {
-        TaskException r = await SetInfoFile(false);
-
-        if (!r.Successful())
-        {
-            return r;
-        }
-
-        string info_text;
-
-        try
-        {
-            info_text = await FileIO.ReadTextAsync(InfoFile);
-        }
-        catch (Exception e)
-        {
-            Log("Failed to access '" + InfoFile.Path + "'. " + e.ToString());
-            return TaskException.Failure;
-        }
-
-        ParseInfo(info_text);
-        return TaskException.Success;
-    }
-
-    public override async Task<TaskException> SaveToInfoFile()
-    {
-        TaskException r = await SetInfoFile(true);
-
-        if (!r.Successful())
-        {
-            return r;
-        }
-
-        string text = InfoString(Title1, Title2, Description, TagString());
-        IBuffer buffer = C0.GetBufferFromString(text);
-
-        try
-        {
-            await FileIO.WriteBufferAsync(InfoFile, buffer);
-        }
-        catch (Exception e)
-        {
-            Log("Failed to access '" + InfoFile.Path + "'. " + e.ToString());
-            return TaskException.Failure;
-        }
-
         return TaskException.Success;
     }
 

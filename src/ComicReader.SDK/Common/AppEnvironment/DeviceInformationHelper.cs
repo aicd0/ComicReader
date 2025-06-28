@@ -6,16 +6,15 @@
 
 #nullable disable
 
-using System;
 using System.Management;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
 using Microsoft.Win32;
 
-namespace ComicReader.Common.AppEnvironment;
+namespace ComicReader.SDK.Common.AppEnvironment;
 
-class DeviceInformationHelper
+internal class DeviceInformationHelper
 {
     public static string DefaultSystemManufacturer = "System manufacturer";
     public static string DefaultSystemProductName = "System Product Name";
@@ -38,7 +37,7 @@ class DeviceInformationHelper
             if (managementObjectEnumerator.MoveNext())
             {
                 string text = (string)managementObjectEnumerator.Current["Model"];
-                return (string.IsNullOrEmpty(text) || DefaultSystemProductName == text) ? null : text;
+                return string.IsNullOrEmpty(text) || DefaultSystemProductName == text ? null : text;
             }
         }
         catch (UnauthorizedAccessException)
@@ -74,7 +73,7 @@ class DeviceInformationHelper
             if (managementObjectEnumerator.MoveNext())
             {
                 string text = (string)managementObjectEnumerator.Current["Manufacturer"];
-                return (string.IsNullOrEmpty(text) || DefaultSystemManufacturer == text) ? null : text;
+                return string.IsNullOrEmpty(text) || DefaultSystemManufacturer == text ? null : text;
             }
         }
         catch (UnauthorizedAccessException)
@@ -113,7 +112,7 @@ class DeviceInformationHelper
         object value5 = registryKey2.GetValue("CurrentVersion", "0.0");
         object value6 = registryKey2.GetValue("CurrentBuild", "0");
         string[] array = registryKey2.GetValue("BuildLabEx")?.ToString().Split('.');
-        string value7 = ((array != null && array.Length >= 2) ? array[1] : "0");
+        string value7 = array != null && array.Length >= 2 ? array[1] : "0";
         return $"{value5}.{value6}.{value7}";
     }
 

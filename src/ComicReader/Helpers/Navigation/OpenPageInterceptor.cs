@@ -3,7 +3,7 @@
 
 using System;
 
-using ComicReader.Common.PageBase;
+using ComicReader.Common.BaseUI;
 using ComicReader.Views.DevTools;
 using ComicReader.Views.Favorite;
 using ComicReader.Views.History;

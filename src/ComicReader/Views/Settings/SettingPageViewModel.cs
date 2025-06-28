@@ -10,11 +10,11 @@ using System.Text;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
-using ComicReader.Common.AppEnvironment;
 using ComicReader.Common.Threading;
 using ComicReader.Data.Legacy;
 using ComicReader.Data.Models;
 using ComicReader.Data.Models.Comic;
+using ComicReader.SDK.Common.AppEnvironment;
 using ComicReader.SDK.Common.DebugTools;
 using ComicReader.SDK.Common.Storage;
 using ComicReader.SDK.Common.Threading;
@@ -598,7 +598,7 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
 
     private static string GetLanguageDescriptionOfSystemLanguage(List<LanguageEntry> entries)
     {
-        string systemLanguage = EnvironmentProvider.Instance.GetCurrentSystemLanguage();
+        string systemLanguage = EnvironmentProvider.GetCurrentSystemLanguage();
         foreach (LanguageEntry entry in entries)
         {
             if (entry.Identifier == systemLanguage)

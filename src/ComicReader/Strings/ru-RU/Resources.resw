@@ -240,6 +240,9 @@
   <data name="DevAppDisplayName" xml:space="preserve">
     <value>Читатель комиксов UWP [Dev]</value>
   </data>
+  <data name="DiffMode" xml:space="preserve">
+    <value>Режим дифференциации</value>
+  </data>
   <data name="Disclaimer.Text" xml:space="preserve">
     <value>Отказ от ответственности</value>
   </data>
@@ -565,6 +568,9 @@ NOT                      - Логическое не. Например: NOT %tag
   </data>
   <data name="ShowHiddenComicButton.Content" xml:space="preserve">
     <value>Показать скрытые комиксы</value>
+  </data>
+  <data name="ShowTagId" xml:space="preserve">
+    <value>Показать идентификатор тега</value>
   </data>
   <data name="Sort" xml:space="preserve">
     <value>Сортировка</value>

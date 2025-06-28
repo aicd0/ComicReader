@@ -81,4 +81,26 @@ internal partial class SimpleGroupViewModel<T> : INotifyPropertyChanged
             DiffUtils.UpdateCollection(DisplayItems, items, comparer);
         }
     }
+
+    public void UpdateItems(Func<T, T?> replacement)
+    {
+        for (int i = 0; i < Items.Count; i++)
+        {
+            T oldItem = Items[i];
+            T? newItem = replacement(oldItem);
+            if (newItem is not null)
+            {
+                Items[i] = newItem;
+            }
+        }
+        for (int i = 0; i < DisplayItems.Count; i++)
+        {
+            T oldItem = DisplayItems[i];
+            T? newItem = replacement(oldItem);
+            if (newItem is not null)
+            {
+                DisplayItems[i] = newItem;
+            }
+        }
+    }
 }

@@ -11,7 +11,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 
-namespace ComicReader.Common.PageBase;
+namespace ComicReader.Common.BaseUI;
 
 internal abstract class BasePage : Page
 {
@@ -97,7 +97,7 @@ internal abstract class BasePage : Page
         return _communicator?.GetAbility<T>();
     }
 
-    protected EventBus GetEventBus()
+    protected IEventBus GetEventBus()
     {
         return App.WindowManager.GetEventBus(WindowId)!;
     }

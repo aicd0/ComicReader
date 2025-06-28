@@ -4,8 +4,8 @@
 using System.Collections.Generic;
 
 using ComicReader.Common;
+using ComicReader.Common.BaseUI;
 using ComicReader.Common.Imaging;
-using ComicReader.Common.PageBase;
 using ComicReader.Helpers.Imaging;
 using ComicReader.Helpers.MenuFlyoutHelpers;
 using ComicReader.ViewModels;

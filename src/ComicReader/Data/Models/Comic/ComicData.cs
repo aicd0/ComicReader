@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -28,7 +27,6 @@ internal abstract class ComicData
     //
 
     private const string TAG = "ComicData";
-    public const string COMIC_INFO_FILE_NAME = "info.txt";
 
     //
     // Static Variables
@@ -156,7 +154,7 @@ internal abstract class ComicData
             }
         }
 
-        Dictionary<long, TagData> tagCategories = new(comics.Count);
+        Dictionary<long, TagTempData> tagCategories = new(comics.Count);
         {
             SelectCommand command = new SelectCommand(TagCategoryTable.Instance)
                 .AppendCondition(new InCondition(ColumnOrValue.FromColumn(TagCategoryTable.ColumnComicId), comics.Keys.Select(x => ColumnOrValue.FromValue(x))));
@@ -172,11 +170,11 @@ internal abstract class ComicData
                 {
                     long tagCategoryId = tagCategoryIdToken.GetValue();
                     string name = nameToken.GetValue();
-                    var tagData = new TagData
+                    var tagData = new TagTempData
                     {
-                        Name = name
+                        Name = name,
+                        ComicId = comicId,
                     };
-                    comic.Tags.Add(tagData);
                     tagCategories[tagCategoryId] = tagData;
                 }
             }
@@ -192,10 +190,34 @@ internal abstract class ComicData
             while (reader.Read())
             {
                 long tagCategoryId = tagCategoryIdToken.GetValue();
-                if (tagCategories.TryGetValue(tagCategoryId, out TagData? tagData))
+                if (tagCategories.TryGetValue(tagCategoryId, out TagTempData? tagData))
                 {
                     string tag = tagToken.GetValue();
                     tagData.Tags.Add(tag);
+                }
+            }
+        }
+
+        {
+            Dictionary<long, List<TagData>> comicTags = [];
+            foreach (TagTempData tagCategory in tagCategories.Values)
+            {
+                if (comics.TryGetValue(tagCategory.ComicId, out ComicData? comic))
+                {
+                    TagData tagData = new(tagCategory.Name, tagCategory.Tags);
+                    if (!comicTags.TryGetValue(tagCategory.ComicId, out List<TagData>? tags))
+                    {
+                        tags = [];
+                        comicTags[tagCategory.ComicId] = tags;
+                    }
+                    tags.Add(tagData);
+                }
+            }
+            foreach (KeyValuePair<long, List<TagData>> pair in comicTags)
+            {
+                if (comics.TryGetValue(pair.Key, out ComicData? comic))
+                {
+                    comic.Tags = pair.Value;
                 }
             }
         }
@@ -275,7 +297,7 @@ internal abstract class ComicData
     public string CoverCacheKey { get; private set; } = "";
     public string Description { get; private set; } = "";
 
-    public List<TagData> Tags { get; private set; } = new List<TagData>();
+    public IReadOnlyList<TagData> Tags { get; private set; } = [];
 
     public string Title
     {
@@ -334,6 +356,92 @@ internal abstract class ComicData
     }
 
     //
+    // Setters
+    //
+
+    public void SetTitle1(string title)
+    {
+        Title1 = title;
+        _ = Enqueue(() =>
+        {
+            return SaveNoLock(() =>
+            {
+                new UpdateCommand(ComicTable.Instance)
+                    .AppendColumn(ComicTable.ColumnTitle1, ValueTitle1)
+                    .AppendCondition(ComicTable.ColumnId, Id)
+                    .Execute(SqlDatabaseManager.MainDatabase);
+            });
+        }, "SetTitle1");
+    }
+
+    public void SetTitle2(string title)
+    {
+        Title2 = title;
+        _ = Enqueue(() =>
+        {
+            return SaveNoLock(() =>
+            {
+                new UpdateCommand(ComicTable.Instance)
+                    .AppendColumn(ComicTable.ColumnTitle2, ValueTitle2)
+                    .AppendCondition(ComicTable.ColumnId, Id)
+                    .Execute(SqlDatabaseManager.MainDatabase);
+            });
+        }, "SetTitle2");
+    }
+
+    public void SetDescription(string description)
+    {
+        Description = description;
+        _ = Enqueue(() =>
+        {
+            return SaveNoLock(() =>
+            {
+                new UpdateCommand(ComicTable.Instance)
+                    .AppendColumn(ComicTable.ColumnDescription, ValueDescription)
+                    .AppendCondition(ComicTable.ColumnId, Id)
+                    .Execute(SqlDatabaseManager.MainDatabase);
+            });
+        }, "SetDescription");
+    }
+
+    public void SetTags(IReadOnlyDictionary<string, HashSet<string>> tags)
+    {
+        List<TagData> newTags = [];
+        foreach (KeyValuePair<string, HashSet<string>> pair in tags)
+        {
+            string name = pair.Key.Trim();
+            if (name.Length == 0)
+            {
+                continue;
+            }
+            HashSet<string> processedTags = [];
+            foreach (string tag in pair.Value)
+            {
+                string processedTag = tag.Trim();
+                if (processedTag.Length == 0)
+                {
+                    continue;
+                }
+                processedTags.Add(processedTag);
+            }
+            if (processedTags.Count == 0)
+            {
+                continue;
+            }
+            TagData tagData = new(name, processedTags);
+            newTags.Add(tagData);
+        }
+        Tags = newTags;
+        _ = Enqueue(() =>
+        {
+            return SaveNoLock(() =>
+            {
+                InternalSaveTagsNoLock();
+            });
+        }, "SetTags");
+    }
+
+    //
     // Unsorted
     //
 
@@ -358,32 +466,6 @@ internal abstract class ComicData
 
             InternalSaveTagsNoLock();
         });
-    }
-
-    public void SaveBasic()
-    {
-        _ = Enqueue(delegate
-        {
-            return SaveNoLock(delegate
-            {
-                new UpdateCommand(ComicTable.Instance)
-                    .AppendColumn(ComicTable.ColumnType, (long)ValueType)
-                    .AppendColumn(ComicTable.ColumnLocation, ValueLocation)
-                    .AppendColumn(ComicTable.ColumnTitle1, ValueTitle1)
-                    .AppendColumn(ComicTable.ColumnTitle2, ValueTitle2)
-                    .AppendColumn(ComicTable.ColumnHidden, ValueHidden)
-                    .AppendColumn(ComicTable.ColumnRating, ValueRating)
-                    .AppendColumn(ComicTable.ColumnProgress, ValueProgress)
-                    .AppendColumn(ComicTable.ColumnLastVisit, ValueLastVisit)
-                    .AppendColumn(ComicTable.ColumnLastPosition, ValueLastPosition)
-                    .AppendColumn(ComicTable.ColumnCoverCacheKey, ValueCoverCacheKey)
-                    .AppendColumn(ComicTable.ColumnDescription, ValueDescription)
-                    .AppendCondition(ComicTable.ColumnId, Id)
-                    .Execute(SqlDatabaseManager.MainDatabase);
-
-                InternalSaveTagsNoLock();
-            });
-        }, "SaveBasic");
     }
 
     public async Task SaveHiddenAsync(bool hidden)
@@ -480,7 +562,6 @@ internal abstract class ComicData
     {
         Title1 = "";
         Title2 = "";
-        Tags.Clear();
 
         List<string> sub_paths = [.. Location.Split(ArchiveAccess.FileSeperator)];
         var tags = new List<string>();
@@ -509,117 +590,8 @@ internal abstract class ComicData
 
         Title1 = tags[tags.Count - 1];
 
-        var default_tag = new TagData
-        {
-            Name = DefaultTagsString,
-            Tags = tags.Skip(1).ToHashSet(),
-        };
-
-        Tags.Add(default_tag);
-    }
-
-    public string TagString()
-    {
-        string text = "";
-
-        foreach (TagData tag in Tags)
-        {
-            text += tag.Name + ": " + StringUtils.Join("/", tag.Tags) + "\n";
-        }
-
-        return text;
-    }
-
-    public static string InfoString(string title1, string title2, string description, string tags)
-    {
-        string[] descriptions = description.Replace('\r', '\n').Split('\n', StringSplitOptions.RemoveEmptyEntries);
-
-        StringBuilder sb = new();
-        sb.Append("Title1: ");
-        sb.Append(title1);
-        sb.Append('\n');
-        sb.Append("Title2: ");
-        sb.Append(title2);
-        sb.Append('\n');
-        foreach (string desc in descriptions)
-        {
-            sb.Append("Description: ");
-            sb.Append(desc);
-            sb.Append('\n');
-        }
-        sb.Append(tags);
-        return sb.ToString();
-    }
-
-    public void ParseInfo(string text)
-    {
-        Title1 = "";
-        Title2 = "";
-        Description = "";
-        Tags.Clear();
-
-        text = text.Replace('\r', '\n');
-        string[] properties = text.Split("\n", StringSplitOptions.RemoveEmptyEntries);
-        bool title1Set = false;
-        bool title2Set = false;
-
-        foreach (string property in properties)
-        {
-            ParsePropertyResult? parseResult = ParseProperty(property);
-
-            if (parseResult == null)
-            {
-                continue;
-            }
-
-            string name = parseResult.Name.ToLower();
-
-            if (!title1Set && (name == "title1" || name == "title" || name == "t1" || name == "to"))
-            {
-                title1Set = true;
-                Title1 = parseResult.Content;
-            }
-            else if (!title2Set && (name == "title2" || name == "t2"))
-            {
-                title2Set = true;
-                Title2 = parseResult.Content;
-            }
-            else if (name == "description")
-            {
-                if (parseResult.Content.Length > 0)
-                {
-                    if (Description.Length > 0)
-                    {
-                        Description += '\n';
-                    }
-                    Description += parseResult.Content;
-                }
-            }
-            else
-            {
-                // combine duplicated tag
-                bool duplicated = false;
-
-                foreach (TagData t in Tags)
-                {
-                    if (t.Name.ToLower().Equals(name))
-                    {
-                        duplicated = true;
-                        t.Tags.UnionWith(parseResult.Tags);
-                        break;
-                    }
-                }
-
-                if (!duplicated)
-                {
-                    Tags.Add(new TagData
-                    {
-                        Name = parseResult.Name,
-                        Tags = parseResult.Tags,
-                    });
-                }
-            }
-        }
+        TagData defaultTag = new(DefaultTagsString, tags.Skip(1).ToHashSet());
+        Tags = [defaultTag];
     }
 
     public async Task<TaskException> LoadImageFiles()
@@ -652,8 +624,6 @@ internal abstract class ComicData
         _imageUpdated = false;
         return await LoadImageFiles();
     }
-
-    public abstract Task<TaskException> LoadFromInfoFile();
 
     public string GetCoverImageCacheKey()
     {
@@ -714,9 +684,7 @@ internal abstract class ComicData
 
     protected abstract Task<TaskException> ReloadImages();
 
-    public abstract Task<TaskException> SaveToInfoFile();
-
-    private static async Task UpdateComicNoLock(string location, ComicType type, bool is_exist)
+    private static void UpdateComicNoLock(string location, ComicType type, bool is_exist)
     {
         Log((is_exist ? "Updat" : "Add") + "ing comic '" + location + "'");
 
@@ -738,12 +706,7 @@ internal abstract class ComicData
         }
 
         // Load comic info locally.
-        TaskException r = await comic.LoadFromInfoFile();
-        if (r.Successful())
-        {
-            comic.SaveAllNoLock();
-        }
-        else if (!is_exist)
+        if (!is_exist)
         {
             comic.SetAsDefaultInfo();
             comic.SaveAllNoLock();
@@ -970,8 +933,9 @@ internal abstract class ComicData
                 {
                     foreach (UpdateItemInfo info in queue)
                     {
-                        await UpdateComicNoLock(info.Location, info.ItemType, info.IsExist);
+                        UpdateComicNoLock(info.Location, info.ItemType, info.IsExist);
                     }
+                    await Task.CompletedTask;
                 }, "Update comic");
 
                 if (watch.LapSpan().TotalSeconds > 2)
@@ -1020,36 +984,6 @@ internal abstract class ComicData
         return TaskException.Success;
     }
 
-    private static ParsePropertyResult? ParseProperty(string src)
-    {
-        string[] pieces = src.Split(":", 2, StringSplitOptions.RemoveEmptyEntries);
-
-        if (pieces.Length != 2)
-        {
-            return null;
-        }
-
-        var result = new ParsePropertyResult
-        {
-            Name = pieces[0].Trim(),
-            Content = pieces[1].Trim(),
-        };
-
-        var tags = new List<string>(pieces[1].Split("/", StringSplitOptions.RemoveEmptyEntries));
-
-        foreach (string tag in tags)
-        {
-            string tagTrimed = tag.Trim();
-
-            if (tagTrimed.Length != 0)
-            {
-                result.Tags.Add(tagTrimed);
-            }
-        }
-
-        return result;
-    }
-
     private RequestOption CreateRequestOption()
     {
         return new(!IsExternal);
@@ -1066,18 +1000,18 @@ internal abstract class ComicData
         public bool IsExist;
     };
 
-    internal class TagData
+    internal class TagData(string name, IEnumerable<string> tags)
     {
-        public string Name = "";
-        public HashSet<string> Tags = [];
+        public readonly string Name = name;
+        public readonly IReadOnlySet<string> Tags = (HashSet<string>)[.. tags];
     };
 
-    internal class ParsePropertyResult
+    private class TagTempData
     {
+        public long ComicId = -1;
         public string Name = "";
-        public string Content = "";
         public HashSet<string> Tags = [];
-    };
+    }
 
     //
     // Enums

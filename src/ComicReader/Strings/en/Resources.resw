@@ -240,6 +240,9 @@
   <data name="DevAppDisplayName" xml:space="preserve">
     <value>Comic Reader UWP [Dev]</value>
   </data>
+  <data name="DiffMode" xml:space="preserve">
+    <value>Diff mode</value>
+  </data>
   <data name="Disclaimer.Text" xml:space="preserve">
     <value>Disclaimer</value>
   </data>
@@ -566,6 +569,9 @@ The evaluation will be performed in the following order:
   </data>
   <data name="ShowHiddenComicButton.Content" xml:space="preserve">
     <value>Show hidden comics</value>
+  </data>
+  <data name="ShowTagId" xml:space="preserve">
+    <value>Show tag ID</value>
   </data>
   <data name="Sort" xml:space="preserve">
     <value>Sort</value>

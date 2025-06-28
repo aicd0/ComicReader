@@ -6,8 +6,7 @@ using System.Globalization;
 using System.Text;
 
 using ComicReader.Common;
-using ComicReader.Common.AppEnvironment;
-using ComicReader.Common.PageBase;
+using ComicReader.Common.BaseUI;
 using ComicReader.Common.Threading;
 using ComicReader.Data;
 using ComicReader.Data.Legacy;
@@ -15,6 +14,7 @@ using ComicReader.Data.Models;
 using ComicReader.Data.Models.Comic;
 using ComicReader.Data.Tables;
 using ComicReader.Helpers.Navigation;
+using ComicReader.SDK.Common.AppEnvironment;
 using ComicReader.SDK.Data.SqlHelpers;
 using ComicReader.Views.Main;
 
@@ -104,7 +104,7 @@ internal sealed partial class SettingPage : BasePage
         C0.Run(async delegate
         {
             var dialog = new ChooseLocationsDialog(WindowId);
-            await C0.ShowDialogAsync(dialog, XamlRoot);
+            await dialog.ShowAsync(XamlRoot);
         });
     }
 
@@ -199,7 +199,7 @@ internal sealed partial class SettingPage : BasePage
     private void UpdateAbout()
     {
         string appName = StringResourceProvider.Instance.AppDisplayName;
-        AboutBuildVersionControl.Text = appName + " " + EnvironmentProvider.Instance.GetVersionName();
+        AboutBuildVersionControl.Text = appName + " " + EnvironmentProvider.GetVersionName();
 
         string author = "aicd0";
         string aboutCopyright = StringResourceProvider.Instance.AboutCopyright;

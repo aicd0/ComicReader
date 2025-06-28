@@ -100,13 +100,13 @@ internal partial class SearchPageViewModel : INotifyPropertyChanged
         }
     }
 
-    private bool m_IsSelectMode = false;
+    private bool _isSelectMode = false;
     public bool IsSelectMode
     {
-        get => m_IsSelectMode;
+        get => _isSelectMode;
         set
         {
-            m_IsSelectMode = value;
+            _isSelectMode = value;
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs($"{nameof(IsSelectMode)}"));
         }
     }
@@ -217,32 +217,66 @@ internal partial class SearchPageViewModel : INotifyPropertyChanged
         IsNoResultTextVisible = !IsLoading && IsResultEmpty;
     }
 
-    public void UpdateComicSelection(IEnumerable<ComicItemViewModel> selectedItems)
+    public void SetSelection(IEnumerable<ComicItemViewModel> selectedItems)
     {
-        List<ComicItemViewModel> selectedItemsCopy = [.. selectedItems];
-        _sharedDispatcher.Submit("UpdateComicSelection", () =>
+        _selectedItems.Clear();
+        _selectedItems.AddRange(selectedItems);
+        UpdateCommandBarButtonStates();
+    }
+
+    public List<ComicItemViewModel> GetSelection(ComicItemViewModel triggerItem)
+    {
+        List<ComicItemViewModel> selection = [];
+        if (_isSelectMode)
         {
-            _selectedItems.Clear();
-            _selectedItems.AddRange(selectedItemsCopy);
-            UpdateCommandBarButtonStates();
-        });
+            bool contained = false;
+            foreach (ComicItemViewModel item in _selectedItems)
+            {
+                if (triggerItem.Comic == item.Comic)
+                {
+                    contained = true;
+                    break;
+                }
+            }
+            if (contained)
+            {
+                selection.AddRange(_selectedItems);
+            }
+            else
+            {
+                selection.Add(triggerItem);
+            }
+        }
+        else
+        {
+            selection.Add(triggerItem);
+        }
+        return selection;
     }
 
     public void ApplyOperationToComic(ComicOperationType operationType, ComicItemViewModel item)
     {
+        List<ComicItemViewModel> selection = GetSelection(item);
         _sharedDispatcher.Submit("ApplyOperationToComic", () =>
         {
-            BatchApplyOperation(operationType, [item]);
-            UpdateCommandBarButtonStates();
+            BatchApplyOperation(operationType, selection);
+            MainThreadUtils.RunInMainThread(() =>
+            {
+                UpdateCommandBarButtonStates();
+            });
         });
     }
 
     public void ApplyOperationToComicSelection(ComicOperationType operationType)
     {
+        List<ComicItemViewModel> selectedItems = [.. _selectedItems];
         _sharedDispatcher.Submit("ApplyOperationToComicSelection", () =>
         {
-            BatchApplyOperation(operationType, _selectedItems);
-            UpdateCommandBarButtonStates();
+            BatchApplyOperation(operationType, selectedItems);
+            MainThreadUtils.RunInMainThread(() =>
+            {
+                UpdateCommandBarButtonStates();
+            });
         });
     }
 
@@ -293,17 +327,14 @@ internal partial class SearchPageViewModel : INotifyPropertyChanged
             }
         }
 
-        _ = MainThreadUtils.RunInMainThread(delegate
-        {
-            IsCommandBarSelectAllToggled = allSelected;
-            IsCommandBarFavoriteEnabled = favoriteEnabled;
-            IsCommandBarUnFavoriteEnabled = unfavoriteEnabled;
-            IsCommandBarHideEnabled = hideEnabled;
-            IsCommandBarUnHideEnabled = unhideEnabled;
-            IsCommandBarMarkAsReadEnabled = markAsReadEnabled;
-            IsCommandBarMarkAsReadingEnabled = markAsReadingEnabled;
-            IsCommandBarMarkAsUnreadEnabled = markAsUnreadEnabled;
-        });
+        IsCommandBarSelectAllToggled = allSelected;
+        IsCommandBarFavoriteEnabled = favoriteEnabled;
+        IsCommandBarUnFavoriteEnabled = unfavoriteEnabled;
+        IsCommandBarHideEnabled = hideEnabled;
+        IsCommandBarUnHideEnabled = unhideEnabled;
+        IsCommandBarMarkAsReadEnabled = markAsReadEnabled;
+        IsCommandBarMarkAsReadingEnabled = markAsReadingEnabled;
+        IsCommandBarMarkAsUnreadEnabled = markAsUnreadEnabled;
     }
 
     private void BatchApplyOperation(ComicOperationType operationType, List<ComicItemViewModel> models)
@@ -404,9 +435,9 @@ internal partial class SearchPageViewModel : INotifyPropertyChanged
             action(newItem);
             changedItems[item.Comic] = newItem;
         }
-        ModifyExistingList(_selectedItems, changedItems);
         _ = MainThreadUtils.RunInMainThread(delegate
         {
+            ModifyExistingList(_selectedItems, changedItems);
             ModifyExistingList(SearchResults, changedItems);
         });
     }

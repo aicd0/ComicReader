@@ -365,11 +365,8 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
         ComicItemSelectionMode = enabled ? ListViewSelectionMode.Multiple : ListViewSelectionMode.None;
         if (enabled)
         {
-            _sharedDispatcher.Submit("SetSelectionMode", delegate
-            {
-                _selectedComicItems.Clear();
-                UpdateCommandBarButtonsNoLock();
-            });
+            _selectedComicItems.Clear();
+            UpdateCommandBarButtonsNoLock();
         }
     }
 
@@ -382,12 +379,46 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
     /// </remarks>
     public void SetSelection(List<ComicItemViewModel> items)
     {
-        _sharedDispatcher.Submit("SetSelection", delegate
+        _selectedComicItems.Clear();
+        _selectedComicItems.AddRange(items);
+        UpdateCommandBarButtonsNoLock();
+    }
+
+    /// <summary>
+    /// Gets the selected comic items according to the triggering comic item.
+    /// </summary>
+    /// <param name="triggerItem">The triggering comic item.</param>
+    /// <remarks>
+    /// Must be called on the UI thread.
+    /// </remarks>
+    public List<ComicItemViewModel> GetSelection(ComicItemViewModel triggerItem)
+    {
+        List<ComicItemViewModel> selection = [];
+        if (_isSelectMode)
         {
-            _selectedComicItems.Clear();
-            _selectedComicItems.AddRange(items);
-            UpdateCommandBarButtonsNoLock();
-        });
+            bool contained = false;
+            foreach (ComicItemViewModel item in _selectedComicItems)
+            {
+                if (triggerItem.Comic == item.Comic)
+                {
+                    contained = true;
+                    break;
+                }
+            }
+            if (contained)
+            {
+                selection.AddRange(_selectedComicItems);
+            }
+            else
+            {
+                selection.Add(triggerItem);
+            }
+        }
+        else
+        {
+            selection.Add(triggerItem);
+        }
+        return selection;
     }
 
     /// <summary>
@@ -400,10 +431,14 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
     /// </remarks>
     public void ApplyOperationToComic(ComicOperationType operationType, ComicItemViewModel comic)
     {
+        List<ComicItemViewModel> selection = GetSelection(comic);
         _sharedDispatcher.Submit("ApplyOperationToSelection", delegate
         {
-            BatchApplyOperation(operationType, [comic]);
-            UpdateCommandBarButtonsNoLock();
+            BatchApplyOperation(operationType, selection);
+            MainThreadUtils.RunInMainThread(() =>
+            {
+                UpdateCommandBarButtonsNoLock();
+            });
         });
     }
 
@@ -416,10 +451,14 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
     /// </remarks>
     public void ApplyOperationToSelection(ComicOperationType operationType)
     {
+        List<ComicItemViewModel> selectedItems = [.. _selectedComicItems];
         _sharedDispatcher.Submit("ApplyOperationToSelection", delegate
         {
-            BatchApplyOperation(operationType, _selectedComicItems);
-            UpdateCommandBarButtonsNoLock();
+            BatchApplyOperation(operationType, selectedItems);
+            MainThreadUtils.RunInMainThread(() =>
+            {
+                UpdateCommandBarButtonsNoLock();
+            });
         });
     }
 
@@ -560,15 +599,22 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
             changedItems[item.Comic] = newItem;
         }
         ModifyExistingList(_comicItems, changedItems);
-        ModifyExistingList(_selectedComicItems, changedItems);
         _ = MainThreadUtils.RunInMainThread(delegate
         {
+            ModifyExistingList(_selectedComicItems, changedItems);
             bool isGrouped = GroupingEnabledLiveData.GetValue();
             if (isGrouped)
             {
                 foreach (ComicGroupViewModel group in GroupedComicItems)
                 {
-                    ModifyExistingList(group.Items, changedItems);
+                    group.UpdateItems((oldItem) =>
+                    {
+                        if (changedItems.TryGetValue(oldItem.Comic, out ComicItemViewModel? newItem))
+                        {
+                            return newItem;
+                        }
+                        return null;
+                    });
                 }
             }
             else
@@ -637,17 +683,14 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
             }
         }
 
-        _ = MainThreadUtils.RunInMainThread(delegate
-        {
-            IsCommandBarSelectAllToggled = allSelected;
-            IsCommandBarFavoriteEnabled = favoriteEnabled;
-            IsCommandBarUnFavoriteEnabled = unfavoriteEnabled;
-            IsCommandBarHideEnabled = hideEnabled;
-            IsCommandBarUnHideEnabled = unhideEnabled;
-            IsCommandBarMarkAsReadEnabled = markAsReadEnabled;
-            IsCommandBarMarkAsReadingEnabled = markAsReadingEnabled;
-            IsCommandBarMarkAsUnreadEnabled = markAsUnreadEnabled;
-        });
+        IsCommandBarSelectAllToggled = allSelected;
+        IsCommandBarFavoriteEnabled = favoriteEnabled;
+        IsCommandBarUnFavoriteEnabled = unfavoriteEnabled;
+        IsCommandBarHideEnabled = hideEnabled;
+        IsCommandBarUnHideEnabled = unhideEnabled;
+        IsCommandBarMarkAsReadEnabled = markAsReadEnabled;
+        IsCommandBarMarkAsReadingEnabled = markAsReadingEnabled;
+        IsCommandBarMarkAsUnreadEnabled = markAsUnreadEnabled;
     }
 
     private void ScheduleUpdateFilters(bool reloadFromDatabase)

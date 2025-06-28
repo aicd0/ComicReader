@@ -2,7 +2,7 @@
     x:Class="ComicReader.Views.Reader.ReaderPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:base="using:ComicReader.Common.PageBase"
+    xmlns:base="using:ComicReader.Common.BaseUI"
     xmlns:controls="using:ComicReader.UserControls"
     xmlns:converters="using:ComicReader.Converters"
     xmlns:cw="using:CommunityToolkit.WinUI"

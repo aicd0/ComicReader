@@ -1,16 +1,13 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-#nullable disable
-
 using System.Collections.Generic;
 
 namespace ComicReader.Common.Lifecycle;
 
-internal class EventBus
+internal class EventBus : IEventBus
 {
-    public static readonly EventBus Default = new();
-    private static readonly IMutableLiveData<object> sEmptyLiveData = new EmptyLiveData<object>();
+    public static readonly IEventBus Default = new EventBus();
 
     private readonly Dictionary<string, ILiveDataNoType> _topics = [];
     private bool _clearing = false;
@@ -19,12 +16,12 @@ internal class EventBus
     {
         if (_clearing)
         {
-            return sEmptyLiveData as IMutableLiveData<T>;
+            return new EmptyLiveData<T>();
         }
 
-        if (_topics.TryGetValue(eventId, out ILiveDataNoType topic))
+        if (_topics.TryGetValue(eventId, out ILiveDataNoType? topic))
         {
-            return topic as IMutableLiveData<T>;
+            return (IMutableLiveData<T>)topic;
         }
 
         var newTopic = new MutableLiveData<T>();
