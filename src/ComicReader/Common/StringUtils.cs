@@ -77,7 +77,7 @@ class StringUtils
 
         if (x.Length > 0)
         {
-            list.Add(x.Substring(start_index, x.Length - start_index));
+            list.Add(x[start_index..]);
         }
 
         return list;
