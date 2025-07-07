@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -816,36 +815,13 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
 
             if (groupBy != null)
             {
-                Dictionary<string, List<ComicItemViewModel>> groupMap = [];
-                Dictionary<string, ComicPropertyModel.IGroupInfo> groupInfoMap = [];
-                foreach (ComicItemViewModel item in comicItems)
-                {
-                    IEnumerable<ComicPropertyModel.IGroupInfo> groupInfos = groupBy.GetPropertyAsGroupInfos(item.Comic);
-                    foreach (ComicPropertyModel.IGroupInfo groupInfo in groupInfos)
-                    {
-                        if (!groupMap.TryGetValue(groupInfo.Name, out List<ComicItemViewModel>? group))
-                        {
-                            group = [];
-                            groupMap[groupInfo.Name] = group;
-                        }
-                        group.Add(item);
-                        groupInfoMap[groupInfo.Name] = groupInfo;
-                    }
-                }
+                List<ComicPropertyModel.GroupItem<ComicItemViewModel>> groupItems = groupBy.GroupComics(comicItems, (x) => x.Comic, groupByAscending);
                 comicsGrouped = [];
-                foreach (KeyValuePair<string, List<ComicItemViewModel>> p in groupMap)
+                foreach (ComicPropertyModel.GroupItem<ComicItemViewModel> item in groupItems)
                 {
-                    List<ComicItemViewModel> sorted = SortComicItemsByProerty(p.Value, sortBy, sortByAscending);
-                    var group = new ComicGroupViewModel(p.Key, sorted, false);
+                    List<ComicItemViewModel> sorted = SortComicItemsByProerty(item.Items, sortBy, sortByAscending);
+                    var group = new ComicGroupViewModel(item.Name, sorted, false);
                     comicsGrouped.Add(group);
-                }
-                if (groupByAscending)
-                {
-                    comicsGrouped.Sort((x, y) => groupInfoMap[x.GroupName].SortKey.CompareTo(groupInfoMap[y.GroupName].SortKey));
-                }
-                else
-                {
-                    comicsGrouped.Sort((y, x) => groupInfoMap[x.GroupName].SortKey.CompareTo(groupInfoMap[y.GroupName].SortKey));
                 }
             }
             else
@@ -890,18 +866,7 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
 
     private List<ComicItemViewModel> SortComicItemsByProerty(IReadOnlyList<ComicItemViewModel> items, ComicPropertyModel property, bool ascending)
     {
-        var paired = items
-            .Select(x => new KeyValuePair<IComparable, ComicItemViewModel>(property.GetPropertyAsComparable(x.Comic), x))
-            .ToList();
-        if (ascending)
-        {
-            paired.Sort((x, y) => x.Key.CompareTo(y.Key));
-        }
-        else
-        {
-            paired.Sort((x, y) => y.Key.CompareTo(x.Key));
-        }
-        return [.. paired.Select(x => x.Value)];
+        return property.SortComics(items, (x) => x.Comic, ascending);
     }
 
     private ComicFilterModel.ExternalFilterModel EnsureLastFilterNoLock()

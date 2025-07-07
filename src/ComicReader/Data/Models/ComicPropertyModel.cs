@@ -67,7 +67,67 @@ internal class ComicPropertyModel
         return HashCode.Combine(Type, Name);
     }
 
-    public IComparable GetPropertyAsComparable(ComicModel? comic)
+    public JsonNode? ToJson()
+    {
+        var jsonModel = new JsonModel
+        {
+            Type = PropertyTypeToString(Type),
+            Name = Name
+        };
+        return JsonSerializer.SerializeToNode(jsonModel);
+    }
+
+    public List<T> SortComics<T>(IEnumerable<T> items, Func<T, ComicModel> selector, bool ascending)
+    {
+        var paired = items
+            .Select(x => new KeyValuePair<IComparable, T>(GetPropertyAsComparable(selector(x)), x))
+            .ToList();
+        if (ascending)
+        {
+            paired.Sort((x, y) => x.Key.CompareTo(y.Key));
+        }
+        else
+        {
+            paired.Sort((x, y) => y.Key.CompareTo(x.Key));
+        }
+        return [.. paired.Select(x => x.Value)];
+    }
+
+    public List<GroupItem<T>> GroupComics<T>(IEnumerable<T> items, Func<T, ComicModel> selector, bool ascending)
+    {
+        Dictionary<string, List<T>> groupMap = [];
+        Dictionary<string, GroupInfo> groupInfoMap = [];
+        foreach (T item in items)
+        {
+            IEnumerable<GroupInfo> groupInfos = GetPropertyAsGroupInfos(selector(item));
+            foreach (GroupInfo groupInfo in groupInfos)
+            {
+                if (!groupMap.TryGetValue(groupInfo.Name, out List<T>? group))
+                {
+                    group = [];
+                    groupMap[groupInfo.Name] = group;
+                }
+                group.Add(item);
+                groupInfoMap[groupInfo.Name] = groupInfo;
+            }
+        }
+        List<GroupItem<T>> comicGroups = [];
+        foreach (KeyValuePair<string, List<T>> p in groupMap)
+        {
+            comicGroups.Add(new(p.Value, p.Key));
+        }
+        if (ascending)
+        {
+            comicGroups.Sort((x, y) => groupInfoMap[x.Name].SortKey.CompareTo(groupInfoMap[y.Name].SortKey));
+        }
+        else
+        {
+            comicGroups.Sort((y, x) => groupInfoMap[x.Name].SortKey.CompareTo(groupInfoMap[y.Name].SortKey));
+        }
+        return comicGroups;
+    }
+
+    private IComparable GetPropertyAsComparable(ComicModel? comic)
     {
         if (comic == null)
         {
@@ -109,106 +169,96 @@ internal class ComicPropertyModel
         };
     }
 
-    public IEnumerable<IGroupInfo> GetPropertyAsGroupInfos(ComicModel? comic)
+    private IEnumerable<GroupInfo> GetPropertyAsGroupInfos(ComicModel? comic)
     {
         if (comic == null)
         {
             return [];
         }
 
-        GroupInfo<string> GetTitleGroup(string title)
+        GroupInfo GetTitleGroup(string title)
         {
             title = title.TrimStart();
             if (string.IsNullOrEmpty(title))
             {
-                return GroupInfo<string>.New(StringResourceProvider.Instance.Untitled);
+                return new(StringResourceProvider.Instance.Untitled);
             }
-            return GroupInfo<string>.New(title[0].ToString().ToUpper());
+            return new(title[0].ToString().ToUpper());
         }
 
-        GroupInfo<int> GetProgressGroup(int progress)
+        GroupInfo GetProgressGroup(int progress)
         {
             progress = Math.Min(Math.Max(progress, 0), 100);
             if (progress < 10)
             {
-                return GroupInfo<int>.New("<10%", 0);
+                return new("<10%", 0);
             }
             if (progress >= 100)
             {
-                return GroupInfo<int>.New("100%", 100);
+                return new("100%", 100);
             }
-            return GroupInfo<int>.New($"{progress / 10 * 10}%", progress);
+            return new($"{progress / 10 * 10}%", progress);
         }
 
-        IEnumerable<GroupInfo<string>> GetTagGroups()
+        IEnumerable<GroupInfo> GetTagGroups()
         {
             ComicData.TagData? tagData = comic.Tags.FirstOrDefault(tag => tag.Name == Name);
             if (tagData == null || tagData.Tags.Count == 0)
             {
-                return [GroupInfo<string>.New(StringResourceProvider.Instance.Ungrouped)];
+                return [new(StringResourceProvider.Instance.Ungrouped)];
             }
-            List<GroupInfo<string>> groups = new(tagData.Tags.Count);
+            List<GroupInfo> groups = new(tagData.Tags.Count);
             foreach (string tag in tagData.Tags)
             {
-                groups.Add(GroupInfo<string>.New(tag));
+                groups.Add(new(tag));
             }
             return groups;
         }
 
-        GroupInfo<int> GetRatingGroup()
+        GroupInfo GetRatingGroup()
         {
             int rating = comic.Rating;
             if (rating >= 5)
             {
-                return GroupInfo<int>.New("5", 5);
+                return new("5", 5);
             }
             if (rating <= 0)
             {
-                return GroupInfo<int>.New(StringResourceProvider.Instance.NoRating, 0);
+                return new(StringResourceProvider.Instance.NoRating, 0);
             }
-            return GroupInfo<int>.New(rating.ToString(), rating);
+            return new(rating.ToString(), rating);
         }
 
-        GroupInfo<int> GetCompletionStateGroup(ComicData.CompletionStateEnum state)
+        GroupInfo GetCompletionStateGroup(ComicData.CompletionStateEnum state)
         {
             return state switch
             {
-                ComicData.CompletionStateEnum.Completed => GroupInfo<int>.New(StringResourceProvider.Instance.Finished, 3),
-                ComicData.CompletionStateEnum.Started => GroupInfo<int>.New(StringResourceProvider.Instance.Reading, 2),
-                ComicData.CompletionStateEnum.NotStarted => GroupInfo<int>.New(StringResourceProvider.Instance.Unread, 1),
-                _ => GroupInfo<int>.New(StringResourceProvider.Instance.Ungrouped, 0), // Unknown state
+                ComicData.CompletionStateEnum.Completed => new(StringResourceProvider.Instance.Finished, 3),
+                ComicData.CompletionStateEnum.Started => new(StringResourceProvider.Instance.Reading, 2),
+                ComicData.CompletionStateEnum.NotStarted => new(StringResourceProvider.Instance.Unread, 1),
+                _ => new(StringResourceProvider.Instance.Ungrouped, 0), // Unknown state
             };
         }
 
-        GroupInfo<long> GetLastReadTimeGroup(DateTimeOffset lastReadTime)
+        GroupInfo GetLastReadTimeGroup(DateTimeOffset lastReadTime)
         {
             if (lastReadTime == DateTimeOffset.MinValue)
             {
-                return GroupInfo<long>.New(StringResourceProvider.Instance.Ungrouped, 0L);
+                return new(StringResourceProvider.Instance.Ungrouped, 0L);
             }
-            return GroupInfo<long>.New(lastReadTime.ToString("D"), lastReadTime.Ticks);
+            return new(lastReadTime.ToString("D"), lastReadTime.Ticks);
         }
 
         return Type switch
         {
             PropertyTypeEnum.Title => [GetTitleGroup(comic.Title)],
             PropertyTypeEnum.Progress => [GetProgressGroup(comic.Progress)],
-            PropertyTypeEnum.Tag => GetTagGroups().Cast<IGroupInfo>(),
+            PropertyTypeEnum.Tag => GetTagGroups(),
             PropertyTypeEnum.Rating => [GetRatingGroup()],
             PropertyTypeEnum.CompletionState => [GetCompletionStateGroup(comic.CompletionState)],
             PropertyTypeEnum.LastReadTime => [GetLastReadTimeGroup(comic.LastVisit)],
-            _ => [GroupInfo<string>.New(StringResourceProvider.Instance.Ungrouped)]
+            _ => [new(StringResourceProvider.Instance.Ungrouped)]
         };
-    }
-
-    public JsonNode? ToJson()
-    {
-        var jsonModel = new JsonModel
-        {
-            Type = PropertyTypeToString(Type),
-            Name = Name
-        };
-        return JsonSerializer.SerializeToNode(jsonModel);
     }
 
     public static ComicPropertyModel? FromJson(JsonNode? model)
@@ -307,35 +357,28 @@ internal class ComicPropertyModel
         public string? Name { get; set; }
     }
 
-    public interface IGroupInfo
+    public class GroupItem<T>(List<T> items, string name)
     {
-        public string Name { get; }
-        public IComparable SortKey { get; }
+        public List<T> Items { get; } = items;
+        public string Name { get; } = name;
     }
 
-    private readonly struct GroupInfo<T> : IGroupInfo where T : IComparable
+    private class GroupInfo
     {
-        private readonly string _name;
-        private readonly T _sortKey;
-
-        private GroupInfo(string name, T sortKey)
+        public GroupInfo(string name)
         {
-            _name = name;
-            _sortKey = sortKey;
+            Name = name;
+            SortKey = name;
         }
 
-        readonly string IGroupInfo.Name => _name;
-        readonly IComparable IGroupInfo.SortKey => _sortKey;
-
-        public static GroupInfo<T> New(string name, T sortKey)
+        public GroupInfo(string name, IComparable sortKey)
         {
-            return new GroupInfo<T>(name, sortKey);
+            Name = name;
+            SortKey = sortKey;
         }
 
-        public static GroupInfo<string> New(string name)
-        {
-            return new GroupInfo<string>(name, name);
-        }
+        public string Name { get; }
+        public IComparable SortKey { get; }
     }
 
     private enum PropertyTypeEnum
