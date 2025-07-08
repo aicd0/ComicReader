@@ -11,6 +11,7 @@ using ComicReader.SDK.Common.ServiceManagement;
 using ComicReader.SDK.Common.Utils;
 
 using Windows.ApplicationModel;
+using Windows.Globalization;
 using Windows.System.UserProfile;
 
 namespace ComicReader.SDK.Common.AppEnvironment;
@@ -43,7 +44,7 @@ public class EnvironmentProvider
         sb.SafeAppend("OS architecture", () => RuntimeInformation.OSArchitecture);
         sb.SafeAppend("Installed system language", () => CultureInfo.InstalledUICulture.Name);
         sb.SafeAppend("Current system language", GetCurrentSystemLanguage);
-        sb.SafeAppend("Current app language", () => CultureInfo.CurrentUICulture.Name);
+        sb.SafeAppend("Current app language", GetCurrentAppLanguage);
         sb.SafeAppend("Machine name", () => Environment.MachineName);
         sb.SafeAppend("Device model", DeviceInformationHelper.Instance.GetDeviceModel);
         sb.SafeAppend("OEM name", DeviceInformationHelper.Instance.GetDeviceOemName);
@@ -102,6 +103,34 @@ public class EnvironmentProvider
     public static string GetCurrentSystemLanguage()
     {
         return GlobalizationPreferences.Languages[0];
+    }
+
+    public static string GetCurrentAppLanguage()
+    {
+        string language = ApplicationLanguages.PrimaryLanguageOverride;
+        if (string.IsNullOrEmpty(language))
+        {
+            language = CultureInfo.CurrentUICulture.Name;
+        }
+        return language;
+    }
+
+    public static CultureInfo GetCurrentAppLanguageInfo()
+    {
+        string language = GetCurrentAppLanguage();
+        if (string.IsNullOrEmpty(language))
+        {
+            return CultureInfo.CurrentUICulture;
+        }
+        try
+        {
+            return new CultureInfo(language);
+        }
+        catch (CultureNotFoundException)
+        {
+            Logger.AssertNotReachHere("92052DFC4960E58D", language);
+            return CultureInfo.CurrentUICulture;
+        }
     }
 
     public static bool IsPortable()

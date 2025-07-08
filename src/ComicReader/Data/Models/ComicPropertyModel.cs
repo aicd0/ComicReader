@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Data.Models.Comic;
+using ComicReader.SDK.Common.AppEnvironment;
 using ComicReader.SDK.Common.DebugTools;
 
 namespace ComicReader.Data.Models;
@@ -206,7 +207,7 @@ internal class ComicPropertyModel
             {
                 return new(StringResourceProvider.Instance.Ungrouped, 0L);
             }
-            return new(lastReadTime.ToString("D"), lastReadTime.Ticks);
+            return new(lastReadTime.ToString("D", EnvironmentProvider.GetCurrentAppLanguageInfo()), lastReadTime.Ticks);
         }
 
         return Type switch
