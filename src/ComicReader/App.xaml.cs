@@ -131,6 +131,7 @@ public partial class App : Application
                 languageTag = EnvironmentProvider.GetCurrentSystemLanguage();
             }
             ApplicationLanguages.PrimaryLanguageOverride = languageTag;
+            EnvironmentProvider.Instance.SetCurrentAppLanguage(languageTag);
         }
     }
 

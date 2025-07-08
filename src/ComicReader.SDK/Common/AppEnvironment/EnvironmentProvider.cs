@@ -20,6 +20,7 @@ public class EnvironmentProvider
 {
     public static EnvironmentProvider Instance = new();
 
+    private string _appLanguageTag = string.Empty;
     private readonly DateTimeOffset _launchTime;
     private string _additionalDebugInformation = string.Empty;
 
@@ -64,6 +65,55 @@ public class EnvironmentProvider
         }
     }
 
+    public string GetCurrentAppLanguage()
+    {
+        string languageTag = _appLanguageTag;
+        if (!string.IsNullOrEmpty(languageTag))
+        {
+            return languageTag;
+        }
+        if (!IsPortable())
+        {
+            try
+            {
+                languageTag = ApplicationLanguages.PrimaryLanguageOverride;
+            }
+            catch (Exception e)
+            {
+                Logger.AssertNotReachHere("91F609C11120E95E", e);
+            }
+            if (!string.IsNullOrEmpty(languageTag))
+            {
+                _appLanguageTag = languageTag;
+                return languageTag;
+            }
+        }
+        return CultureInfo.CurrentUICulture.Name;
+    }
+
+    public void SetCurrentAppLanguage(string languageTag)
+    {
+        _appLanguageTag = languageTag;
+    }
+
+    public CultureInfo GetCurrentAppLanguageInfo()
+    {
+        string languageTag = GetCurrentAppLanguage();
+        if (string.IsNullOrEmpty(languageTag))
+        {
+            return CultureInfo.CurrentUICulture;
+        }
+        try
+        {
+            return new CultureInfo(languageTag);
+        }
+        catch (CultureNotFoundException)
+        {
+            Logger.AssertNotReachHere("92052DFC4960E58D", languageTag);
+            return CultureInfo.CurrentUICulture;
+        }
+    }
+
     public DateTimeOffset GetLaunchTime()
     {
         return _launchTime;
@@ -103,34 +153,6 @@ public class EnvironmentProvider
     public static string GetCurrentSystemLanguage()
     {
         return GlobalizationPreferences.Languages[0];
-    }
-
-    public static string GetCurrentAppLanguage()
-    {
-        string language = ApplicationLanguages.PrimaryLanguageOverride;
-        if (string.IsNullOrEmpty(language))
-        {
-            language = CultureInfo.CurrentUICulture.Name;
-        }
-        return language;
-    }
-
-    public static CultureInfo GetCurrentAppLanguageInfo()
-    {
-        string language = GetCurrentAppLanguage();
-        if (string.IsNullOrEmpty(language))
-        {
-            return CultureInfo.CurrentUICulture;
-        }
-        try
-        {
-            return new CultureInfo(language);
-        }
-        catch (CultureNotFoundException)
-        {
-            Logger.AssertNotReachHere("92052DFC4960E58D", language);
-            return CultureInfo.CurrentUICulture;
-        }
     }
 
     public static bool IsPortable()
