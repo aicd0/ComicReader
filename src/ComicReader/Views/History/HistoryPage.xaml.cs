@@ -12,6 +12,7 @@ using ComicReader.Common.Lifecycle;
 using ComicReader.Data.Legacy;
 using ComicReader.Data.Models.Comic;
 using ComicReader.Helpers.Navigation;
+using ComicReader.SDK.Common.AppEnvironment;
 using ComicReader.ViewModels;
 using ComicReader.Views.Main;
 using ComicReader.Views.Navigation;
@@ -59,7 +60,7 @@ internal sealed partial class HistoryPage : BasePage
 
         foreach (HistoryItemData item in XmlDatabase.History.Items)
         {
-            string key = item.DateTime.ToString("D");
+            string key = item.DateTime.ToString("D", EnvironmentProvider.GetCurrentAppLanguageInfo());
 
             if (current_group != null && !current_group.Key.Equals(key))
             {
@@ -72,7 +73,7 @@ internal sealed partial class HistoryPage : BasePage
             var item_out = new HistoryItemViewModel
             {
                 Id = item.Id,
-                Time = item.DateTime.ToString("t"),
+                Time = item.DateTime.ToString("t", EnvironmentProvider.GetCurrentAppLanguageInfo()),
                 Title = item.Title
             };
 
