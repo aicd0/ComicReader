@@ -84,7 +84,7 @@ public partial class App : Application
         // Register crash handler
         UnhandledException += (_, e) =>
         {
-            SentryManager.CaptureException(e.Exception);
+            SentryManager.CaptureError(e.Exception);
             CrashHandler.OnUnhandledException(e.Exception);
         };
 

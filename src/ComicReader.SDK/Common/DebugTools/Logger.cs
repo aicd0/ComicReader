@@ -394,7 +394,7 @@ public static class Logger
         if (time - sLastErrorReportTime > 5000)
         {
             sLastErrorReportTime = time;
-            SentryManager.CaptureException(exception);
+            SentryManager.CaptureWarning(exception);
         }
 
         if (DebugUtils.DebugMode)

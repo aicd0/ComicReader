@@ -77,7 +77,7 @@ public class EnvironmentProvider
     {
         Dictionary<string, string> tags = [];
         tags["version-name"] = GetVersionName();
-        tags["portable"] = IsPortable().ToString();
+        tags["portable"] = IsPortable() ? "true" : "false";
         return tags;
     }
 
