@@ -207,7 +207,7 @@ internal class ComicPropertyModel
             {
                 return new(StringResourceProvider.Instance.Ungrouped, 0L);
             }
-            return new(lastReadTime.ToString("D", EnvironmentProvider.GetCurrentAppLanguageInfo()), lastReadTime.Ticks);
+            return new(lastReadTime.ToString("D", EnvironmentProvider.Instance.GetCurrentAppLanguageInfo()), lastReadTime.Ticks);
         }
 
         return Type switch

@@ -60,7 +60,7 @@ internal sealed partial class HistoryPage : BasePage
 
         foreach (HistoryItemData item in XmlDatabase.History.Items)
         {
-            string key = item.DateTime.ToString("D", EnvironmentProvider.GetCurrentAppLanguageInfo());
+            string key = item.DateTime.ToString("D", EnvironmentProvider.Instance.GetCurrentAppLanguageInfo());
 
             if (current_group != null && !current_group.Key.Equals(key))
             {
@@ -73,7 +73,7 @@ internal sealed partial class HistoryPage : BasePage
             var item_out = new HistoryItemViewModel
             {
                 Id = item.Id,
-                Time = item.DateTime.ToString("t", EnvironmentProvider.GetCurrentAppLanguageInfo()),
+                Time = item.DateTime.ToString("t", EnvironmentProvider.Instance.GetCurrentAppLanguageInfo()),
                 Title = item.Title
             };
 
