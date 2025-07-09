@@ -318,7 +318,7 @@ internal sealed partial class ReaderPage : BasePage
         if (!comic.IsExternal)
         {
             await comic.SetCompletionStateToAtLeastStarted();
-            await HistoryDataManager.Add(comic.Id, comic.Title1, true);
+            HistoryModel.Instance.Add(comic.Id, comic.Title1, true);
         }
 
         _comic = comic;

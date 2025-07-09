@@ -21,6 +21,9 @@ class DatabaseVersionModel : JsonDatabase<DatabaseVersionModel.JsonModel>
 
         [JsonPropertyName("favorites_version")]
         public int FavoritesVersion { get; set; } = 0;
+
+        [JsonPropertyName("history_version")]
+        public int HistoryVersion { get; set; } = 0;
     }
 
     public static readonly DatabaseVersionModel Instance = new();
