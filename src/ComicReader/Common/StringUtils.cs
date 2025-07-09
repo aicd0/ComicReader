@@ -85,14 +85,12 @@ class StringUtils
 
     public static string Join(string seperator, IEnumerable<string> list)
     {
-        if (list.Count() == 0)
+        if (!list.Any())
         {
             return "";
         }
-
-        string res = list.First();
+        StringBuilder res = new(list.First());
         bool first = true;
-
         foreach (string s in list)
         {
             if (first)
@@ -100,11 +98,9 @@ class StringUtils
                 first = false;
                 continue;
             }
-
-            res += seperator + s;
+            res.Append(seperator).Append(s);
         }
-
-        return res;
+        return res.ToString();
     }
 
     public static int QuickMatch(List<string> keywords, string str)
@@ -156,8 +152,7 @@ class StringUtils
         {
             return false;
         }
-
-        return text.Substring(0, subText.Length).Equals(subText);
+        return text[..subText.Length].Equals(subText);
     }
 
     public static bool FolderContain(string parentPath, string childPath)
@@ -168,8 +163,7 @@ class StringUtils
         {
             return false;
         }
-
-        return childPath.Substring(0, parentPath.Length).Equals(parentPath);
+        return childPath[..parentPath.Length].Equals(parentPath);
     }
 
     public static string ToFolderPath(string path)
@@ -179,67 +173,56 @@ class StringUtils
         {
             return path;
         }
-
-        if (path[path.Length - 1] != '\\')
+        if (path[^1] != '\\')
         {
             path += '\\';
         }
-
         return path;
     }
 
     public static string ItemNameFromPath(string path)
     {
         int i = path.LastIndexOf('\\');
-
         if (i == -1)
         {
             return path;
         }
-
-        return path.Substring(i + 1);
+        return path[(i + 1)..];
     }
 
     public static string ParentLocationFromLocation(string location)
     {
         int i = location.LastIndexOf('\\');
-
         if (i == -1)
         {
             return "";
         }
-
         if (i > 0 && location[i - 1] == '\\')
         {
             i--;
         }
-
-        return location.Substring(0, i);
+        return location[..i];
 
     }
 
     public static string ExtensionFromFilename(string filename)
     {
         int i = filename.LastIndexOf('.');
-
         if (i == -1)
         {
             return "";
         }
-
-        return filename.Substring(i);
+        return filename[i..];
     }
 
     public static string DisplayNameFromFilename(string filename)
     {
         int i = filename.LastIndexOf('.');
-
         if (i == -1)
         {
             return filename;
         }
-
-        return filename.Substring(0, i);
+        return filename[..i];
     }
 
     public static string ToPathNoTail(string path)
@@ -248,12 +231,10 @@ class StringUtils
         {
             return path;
         }
-
-        if (path[path.Length - 1] == '\\')
+        if (path[^1] == '\\')
         {
-            return path.Substring(0, path.Length - 1);
+            return path[..^1];
         }
-
         return path;
     }
 
@@ -283,7 +264,6 @@ class StringUtils
             V v = dictionary[k];
             text.Append("\"" + k.ToString() + "\": \"" + v.ToString() + "\"");
         }
-
         return text.ToString();
     }
 

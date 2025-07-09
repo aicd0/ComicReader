@@ -27,6 +27,7 @@ class DatabaseUpgradeManager
             UpgradeComicDatabase,
             UpgradeFavorites,
             UpgradeHistory,
+            UpgradeAppSettings,
         ];
         foreach (Func<DatabaseVersionModel.JsonModel, bool> task in tasks)
         {
@@ -113,6 +114,25 @@ class DatabaseUpgradeManager
         }
 
         versions.HistoryVersion = 1;
+        return true;
+    }
+
+    private bool UpgradeAppSettings(DatabaseVersionModel.JsonModel versions)
+    {
+        if (versions.AppSettingVersion >= 1)
+        {
+            return false;
+        }
+
+        SettingData oldModel = XmlDatabase.Settings;
+        if (oldModel != null)
+        {
+            AppSettingsModel.ExternalModel newModel = AppSettingsModel.Instance.GetModel();
+            newModel.ComicFolders = oldModel.ComicFolders ?? [];
+            AppSettingsModel.Instance.UpdateModel(newModel);
+        }
+
+        versions.AppSettingVersion = 1;
         return true;
     }
 }

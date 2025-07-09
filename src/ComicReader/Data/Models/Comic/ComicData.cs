@@ -9,7 +9,6 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
-using ComicReader.Data.Legacy;
 using ComicReader.Data.Tables;
 using ComicReader.SDK.Common.AutoProperty;
 using ComicReader.SDK.Common.DebugTools;
@@ -815,13 +814,11 @@ internal abstract class ComicData
         }, "GetLocationsFromDatabase");
 
         // Get all root folders from setting
-        var rootFolders = new List<string>(XmlDatabase.Settings.ComicFolders.Count);
-        await XmlDatabaseManager.WaitLock();
-        foreach (string folder_path in XmlDatabase.Settings.ComicFolders)
+        List<string> rootFolders = [];
+        foreach (string path in AppSettingsModel.Instance.GetModel().ComicFolders)
         {
-            rootFolders.Add(folder_path);
+            rootFolders.Add(path);
         }
-        XmlDatabaseManager.ReleaseLock();
 
         // Get all subfolders in root folders
         var locInLib = new List<string>();

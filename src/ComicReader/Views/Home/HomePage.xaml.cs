@@ -7,7 +7,7 @@ using System.Linq;
 
 using ComicReader.Common;
 using ComicReader.Common.BaseUI;
-using ComicReader.Data.Legacy;
+using ComicReader.Common.Utils;
 using ComicReader.Data.Models;
 using ComicReader.Data.Models.Comic;
 using ComicReader.Helpers.Navigation;
@@ -24,6 +24,8 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media.Animation;
+
+using Windows.Storage;
 
 namespace ComicReader.Views.Home;
 
@@ -512,11 +514,12 @@ internal sealed partial class HomePage : BasePage
     {
         C0.Run(async delegate
         {
-            if (!await SettingDataManager.AddComicFolderUsingPicker(WindowId))
+            StorageFolder? folder = await FilePickerUtils.PickFolder(WindowId);
+            if (folder == null)
             {
                 return;
             }
-
+            AppSettingsModel.Instance.AddComicFolder(folder.Path);
             ComicModel.UpdateAllComics("HomePage#AddNewFolder", lazy: true);
         });
     }
