@@ -102,7 +102,7 @@
                 <ListViewItem Style="{StaticResource PageArrangementListViewItemStyle}">
                     <StackPanel
                         x:Name="SpDemoSingle"
-                        Margin="3"
+                        Margin="3,0"
                         Orientation="Horizontal"
                         Spacing="6">
                         <reader:PageDemoSingle x:Name="PdsDemoSingle1" Header="1" />
@@ -117,9 +117,9 @@
                 <ListViewItem Style="{StaticResource PageArrangementListViewItemStyle}">
                     <StackPanel
                         x:Name="SpDemoDualCover"
-                        Margin="3"
+                        Margin="3,0"
                         Orientation="Horizontal"
-                        Spacing="12">
+                        Spacing="6">
                         <reader:PageDemoSingle x:Name="PdsDemoDual1" Header="1" />
                         <reader:PageDemoDual
                             x:Name="PdsDemoDual2"
@@ -138,9 +138,9 @@
                 <ListViewItem Style="{StaticResource PageArrangementListViewItemStyle}">
                     <StackPanel
                         x:Name="SpDemoDualCoverMirror"
-                        Margin="3"
+                        Margin="3,0"
                         Orientation="Horizontal"
-                        Spacing="12">
+                        Spacing="6">
                         <reader:PageDemoSingle x:Name="PdsDemoDualCoverMirror1" Header="1" />
                         <reader:PageDemoDual
                             x:Name="PdsDemoDualCoverMirror2"
@@ -159,9 +159,9 @@
                 <ListViewItem Style="{StaticResource PageArrangementListViewItemStyle}">
                     <StackPanel
                         x:Name="SpDemoDualNoCover"
-                        Margin="3"
+                        Margin="3,0"
                         Orientation="Horizontal"
-                        Spacing="12">
+                        Spacing="6">
                         <reader:PageDemoDual
                             x:Name="PdsDemoDualNoCover1"
                             FlowDirection="LeftToRight"
@@ -180,9 +180,9 @@
                 <ListViewItem Style="{StaticResource PageArrangementListViewItemStyle}">
                     <StackPanel
                         x:Name="SpDemoDualNoCoverMirror"
-                        Margin="3"
+                        Margin="3,0"
                         Orientation="Horizontal"
-                        Spacing="12">
+                        Spacing="6">
                         <reader:PageDemoDual
                             x:Name="PdsDemoDualNoCoverMirror1"
                             FlowDirection="LeftToRight"
@@ -197,7 +197,7 @@
                     </StackPanel>
                 </ListViewItem>
             </ListView>
-            <Grid Height="10" />
+            <Grid Height="2" />
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
