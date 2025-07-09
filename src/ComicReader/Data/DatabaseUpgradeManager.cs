@@ -52,13 +52,13 @@ class DatabaseUpgradeManager
 
     private bool UpgradeComicDatabase(DatabaseVersionModel.JsonModel versions)
     {
-        if (versions.ComicDatabaseVersion >= 4)
+        if (versions.ComicDatabaseVersion >= SqlDatabaseManager.DATABASE_VERSION)
         {
             return false;
         }
 
         SqlDatabaseManager.UpdateDatabase(versions.ComicDatabaseVersion);
-        versions.ComicDatabaseVersion = 4;
+        versions.ComicDatabaseVersion = SqlDatabaseManager.DATABASE_VERSION;
         return true;
     }
 
@@ -129,6 +129,13 @@ class DatabaseUpgradeManager
         {
             AppSettingsModel.ExternalModel newModel = AppSettingsModel.Instance.GetModel();
             newModel.ComicFolders = oldModel.ComicFolders ?? [];
+            AppSettingsModel.ReaderSettingModel readerSettings = newModel.DefaultReaderSetting;
+            readerSettings.VerticalReading = oldModel.VerticalReading;
+            readerSettings.LeftToRight = oldModel.LeftToRight;
+            readerSettings.VerticalContinuous = oldModel.VerticalContinuous;
+            readerSettings.HorizontalContinuous = oldModel.HorizontalContinuous;
+            readerSettings.VerticalPageArrangement = oldModel.VerticalPageArrangement;
+            readerSettings.HorizontalPageArrangement = oldModel.HorizontalPageArrangement;
             AppSettingsModel.Instance.UpdateModel(newModel);
         }
 

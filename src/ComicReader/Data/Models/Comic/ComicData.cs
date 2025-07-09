@@ -2,9 +2,11 @@
 // Licensed under the MIT License.
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,8 +16,6 @@ using ComicReader.SDK.Common.AutoProperty;
 using ComicReader.SDK.Common.DebugTools;
 using ComicReader.SDK.Common.Threading;
 using ComicReader.SDK.Data.SqlHelpers;
-
-using LiteDB;
 
 namespace ComicReader.Data.Models.Comic;
 
@@ -113,6 +113,7 @@ internal abstract class ComicData
             IReaderToken<string> coverCacheKeyToken = command.PutQueryString(ComicTable.ColumnCoverCacheKey);
             IReaderToken<string> descriptionToken = command.PutQueryString(ComicTable.ColumnDescription);
             IReaderToken<int> completionStateToken = command.PutQueryInt32(ComicTable.ColumnCompletionState);
+            IReaderToken<string> extToken = command.PutQueryString(ComicTable.ColumnExt);
             using SelectCommand.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
 
             while (reader.Read())
@@ -130,6 +131,7 @@ internal abstract class ComicData
                 string coverCacheKey = coverCacheKeyToken.GetValue();
                 string description = descriptionToken.GetValue();
                 CompletionStateEnum completionState = ComicPropertyRepository.ParseCompletionState(completionStateToken.GetValue());
+                string extJson = extToken.GetValue();
 
                 ComicData? comic = FromDatabase(type, location);
                 if (comic == null)
@@ -149,6 +151,27 @@ internal abstract class ComicData
                 comic.Description = description;
                 comic.Tags = [];
                 comic.CompletionState = completionState;
+
+                if (!string.IsNullOrEmpty(extJson))
+                {
+                    Dictionary<string, string>? ext = null;
+                    try
+                    {
+                        ext = JsonSerializer.Deserialize<Dictionary<string, string>>(extJson);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.AssertNotReachHere("", ex);
+                    }
+                    if (ext != null)
+                    {
+                        foreach (KeyValuePair<string, string> pair in ext)
+                        {
+                            comic._ext[pair.Key] = pair.Value;
+                        }
+                    }
+                }
+
                 comics[id] = comic;
             }
         }
@@ -273,9 +296,10 @@ internal abstract class ComicData
     }
 
     //
-    // Member Variables
+    // Member variables
     //
 
+    private readonly ConcurrentDictionary<string, string> _ext = [];
     private bool _imageUpdated = false;
 
     //
@@ -295,9 +319,7 @@ internal abstract class ComicData
     public double LastPosition { get; protected set; } = 0.0;
     public string CoverCacheKey { get; private set; } = "";
     public string Description { get; private set; } = "";
-
     public IReadOnlyList<TagData> Tags { get; private set; } = [];
-
     public string Title
     {
         get
@@ -323,7 +345,6 @@ internal abstract class ComicData
             }
         }
     }
-
     public bool IsExternal { get; private set; }
     public abstract bool IsEditable { get; }
 
@@ -338,6 +359,7 @@ internal abstract class ComicData
     private double ValueLastPosition => LastPosition;
     private string ValueCoverCacheKey => CoverCacheKey;
     private string ValueDescription => Description;
+    private string ValueExt => JsonSerializer.Serialize(_ext);
 
     public static Action? OnUpdated { get; set; }
 
@@ -355,8 +377,47 @@ internal abstract class ComicData
     }
 
     //
+    // Getters
+    //
+
+    public string? GetExt(string key)
+    {
+        if (_ext.TryGetValue(key, out string? value))
+        {
+            return value;
+        }
+        return null;
+    }
+
+    //
     // Setters
     //
+
+    public void SetExt(string key, string? value)
+    {
+        if (value is null)
+        {
+            _ext.Remove(key, out _);
+        }
+        else
+        {
+            _ext[key] = value;
+        }
+    }
+
+    public void FlushExt()
+    {
+        _ = Enqueue(() =>
+        {
+            return SaveNoLock(() =>
+            {
+                new UpdateCommand(ComicTable.Instance)
+                    .AppendColumn(ComicTable.ColumnExt, ValueExt)
+                    .AppendCondition(ComicTable.ColumnId, Id)
+                    .Execute(SqlDatabaseManager.MainDatabase);
+            });
+        }, "FlushExt");
+    }
 
     public void SetTitle1(string title)
     {
@@ -460,9 +521,9 @@ internal abstract class ComicData
                 .AppendColumn(ComicTable.ColumnLastPosition, ValueLastPosition)
                 .AppendColumn(ComicTable.ColumnCoverCacheKey, ValueCoverCacheKey)
                 .AppendColumn(ComicTable.ColumnDescription, ValueDescription)
+                .AppendColumn(ComicTable.ColumnExt, ValueExt)
                 .AppendCondition(ComicTable.ColumnId, Id)
                 .Execute(SqlDatabaseManager.MainDatabase);
-
             InternalSaveTagsNoLock();
         });
     }

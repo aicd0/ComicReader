@@ -11,7 +11,6 @@ using System.Threading.Tasks;
 using ComicReader.Common;
 using ComicReader.Common.Imaging;
 using ComicReader.Common.Threading;
-using ComicReader.Data.Legacy;
 using ComicReader.Data.Models;
 using ComicReader.SDK.Common.DebugTools;
 using ComicReader.SDK.Common.Threading;
@@ -52,7 +51,7 @@ internal partial class ReaderView : UserControl
     private bool _isContinuous = true;
     private bool _isVisible = true;
     private bool _isLeftToRight = true;
-    private PageArrangementType _pageArrangement = PageArrangementType.Single;
+    private PageArrangementEnum _pageArrangement = PageArrangementEnum.Single;
     private bool _uiStateUpdatedVisibility = true;
     private bool _uiStateUpdatedOrientation = true;
     private bool _uiStateUpdatedContinuous = true;
@@ -174,7 +173,7 @@ internal partial class ReaderView : UserControl
         UpdateUI();
     }
 
-    public void SetPageArrangement(PageArrangementType type)
+    public void SetPageArrangement(PageArrangementEnum type)
     {
         if (_pageArrangement == type)
         {
@@ -2033,29 +2032,29 @@ internal partial class ReaderView : UserControl
 
         switch (_pageArrangement)
         {
-            case PageArrangementType.Single:
+            case PageArrangementEnum.Single:
                 left_side = true;
                 neighbor = -1;
                 return page - 1;
-            case PageArrangementType.DualCover:
+            case PageArrangementEnum.DualCover:
                 left_side = page == 1 || page % 2 == 0;
                 neighbor = (page > 1 && (PageCount % 2 == 1 || page < PageCount)) ? (left_side ? page + 1 : page - 1) : -1;
                 return page / 2;
-            case PageArrangementType.DualCoverMirror:
+            case PageArrangementEnum.DualCoverMirror:
                 left_side = page == PageCount || page % 2 == 1;
                 neighbor = (page > 1 && (PageCount % 2 == 1 || page < PageCount)) ? (left_side ? page - 1 : page + 1) : -1;
                 return page / 2;
-            case PageArrangementType.DualNoCover:
+            case PageArrangementEnum.DualNoCover:
                 left_side = page % 2 == 1;
                 neighbor = (PageCount % 2 == 0 || page < PageCount) ? (left_side ? page + 1 : page - 1) : -1;
                 return (page - 1) / 2;
-            case PageArrangementType.DualNoCoverMirror:
+            case PageArrangementEnum.DualNoCoverMirror:
                 left_side = page == PageCount || page % 2 == 0;
                 neighbor = (PageCount % 2 == 0 || page < PageCount) ? (left_side ? page - 1 : page + 1) : -1;
                 return (page - 1) / 2;
             default:
                 Logger.AssertNotReachHere("734FF3964EFE8681");
-                goto case PageArrangementType.Single;
+                goto case PageArrangementEnum.Single;
         }
     }
 

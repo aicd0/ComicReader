@@ -8,10 +8,9 @@ using System;
 using ComicReader.Common;
 using ComicReader.Common.BaseUI;
 using ComicReader.Common.Lifecycle;
-using ComicReader.Data.Legacy;
+using ComicReader.Data.Models;
 using ComicReader.Helpers.Navigation;
 using ComicReader.SDK.Common.DebugTools;
-using ComicReader.SDK.Common.Threading;
 using ComicReader.Views.Main;
 
 using Microsoft.UI.Input;
@@ -24,8 +23,6 @@ namespace ComicReader.Views.Navigation;
 
 internal sealed partial class NavigationPage : BasePage
 {
-    private const string TAG = "NavigationPage";
-
     private bool _isFavorite = false;
     private double _rootTabHeight = 0;
     private double _navigationBarHeight = 0;
@@ -276,21 +273,17 @@ internal sealed partial class NavigationPage : BasePage
 
     private void RspReaderSetting_DataChanged(ReaderSettingDataModel data)
     {
+        AppSettingsModel.ExternalModel settingsModel = AppSettingsModel.Instance.GetModel();
+        AppSettingsModel.ReaderSettingModel readerSettings = settingsModel.DefaultReaderSetting;
+        readerSettings.VerticalReading = data.IsVertical;
+        readerSettings.LeftToRight = data.IsLeftToRight;
+        readerSettings.VerticalContinuous = data.IsVerticalContinuous;
+        readerSettings.HorizontalContinuous = data.IsHorizontalContinuous;
+        readerSettings.VerticalPageArrangement = data.VerticalPageArrangement;
+        readerSettings.HorizontalPageArrangement = data.HorizontalPageArrangement;
+        AppSettingsModel.Instance.UpdateModel(settingsModel);
+
         _ability.SendReaderSettingsChangedEvent(data);
-        C0.Run(async delegate
-        {
-            await XmlDatabaseManager.WaitLock();
-
-            XmlDatabase.Settings.VerticalReading = data.IsVertical;
-            XmlDatabase.Settings.LeftToRight = data.IsLeftToRight;
-            XmlDatabase.Settings.VerticalContinuous = data.IsVerticalContinuous;
-            XmlDatabase.Settings.HorizontalContinuous = data.IsHorizontalContinuous;
-            XmlDatabase.Settings.VerticalPageArrangement = data.VerticalPageArrangement;
-            XmlDatabase.Settings.HorizontalPageArrangement = data.HorizontalPageArrangement;
-
-            XmlDatabaseManager.ReleaseLock();
-            TaskDispatcher.DefaultQueue.Submit($"{TAG}#RspReaderSetting_DataChanged", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.Settings));
-        });
     }
 
     private void OnSidePaneSelectionChanged(SidePane sender, string item)

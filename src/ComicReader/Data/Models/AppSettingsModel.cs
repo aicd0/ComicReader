@@ -93,6 +93,30 @@ class AppSettingsModel : JsonDatabase<AppSettingsModel.JsonModel>
 
         [JsonPropertyName("Theme")]
         public int? Theme { get; set; }
+
+        [JsonPropertyName("DefaultReaderSetting")]
+        public ReaderSettingJsonModel? DefaultReaderSetting { get; set; }
+    }
+
+    public class ReaderSettingJsonModel
+    {
+        [JsonPropertyName("VerticalReading")]
+        public bool? VerticalReading { get; set; }
+
+        [JsonPropertyName("LeftToRight")]
+        public bool? LeftToRight { get; set; }
+
+        [JsonPropertyName("VerticalContinuous")]
+        public bool? VerticalContinuous { get; set; }
+
+        [JsonPropertyName("HorizontalContinuous")]
+        public bool? HorizontalContinuous { get; set; }
+
+        [JsonPropertyName("VerticalPageArrangement")]
+        public int? VerticalPageArrangement { get; set; }
+
+        [JsonPropertyName("HorizontalPageArrangement")]
+        public int? HorizontalPageArrangement { get; set; }
     }
 
     public class ExternalModel
@@ -101,13 +125,15 @@ class AppSettingsModel : JsonDatabase<AppSettingsModel.JsonModel>
         public bool RemoveUnreachableComics { get; set; }
         public string Language { get; set; } = "";
         public AppearanceSetting Theme { get; set; } = AppearanceSetting.UseSystemSetting;
+        public ReaderSettingModel DefaultReaderSetting { get; set; } = new ReaderSettingModel();
 
         public static ExternalModel From(JsonModel model)
         {
             ExternalModel externalModel = new()
             {
                 RemoveUnreachableComics = model.RemoveUnreachableComics ?? true,
-                Language = model.Language ?? ""
+                Language = model.Language ?? "",
+                DefaultReaderSetting = ReaderSettingModel.From(model.DefaultReaderSetting),
             };
 
             if (model.ComicFolders is not null)
@@ -145,6 +171,52 @@ class AppSettingsModel : JsonDatabase<AppSettingsModel.JsonModel>
             model.RemoveUnreachableComics = RemoveUnreachableComics;
             model.Language = Language;
             model.Theme = (int)Theme;
+            model.DefaultReaderSetting = DefaultReaderSetting.To();
+        }
+    }
+
+    public class ReaderSettingModel
+    {
+        public bool VerticalReading { get; set; }
+        public bool LeftToRight { get; set; }
+        public bool VerticalContinuous { get; set; }
+        public bool HorizontalContinuous { get; set; }
+        public PageArrangementEnum VerticalPageArrangement { get; set; }
+        public PageArrangementEnum HorizontalPageArrangement { get; set; }
+
+        public static ReaderSettingModel From(ReaderSettingJsonModel? model)
+        {
+            return new ReaderSettingModel
+            {
+                VerticalReading = model?.VerticalReading ?? true,
+                LeftToRight = model?.LeftToRight ?? false,
+                VerticalContinuous = model?.VerticalContinuous ?? true,
+                HorizontalContinuous = model?.HorizontalContinuous ?? false,
+                VerticalPageArrangement = ParsePageArrangementEnum(model?.VerticalPageArrangement) ?? PageArrangementEnum.Single,
+                HorizontalPageArrangement = ParsePageArrangementEnum(model?.HorizontalPageArrangement) ?? PageArrangementEnum.DualCoverMirror,
+            };
+        }
+
+        public ReaderSettingJsonModel To()
+        {
+            return new()
+            {
+                VerticalReading = VerticalReading,
+                LeftToRight = LeftToRight,
+                VerticalContinuous = VerticalContinuous,
+                HorizontalContinuous = HorizontalContinuous,
+                VerticalPageArrangement = (int)VerticalPageArrangement,
+                HorizontalPageArrangement = (int)HorizontalPageArrangement
+            };
+        }
+
+        private static PageArrangementEnum? ParsePageArrangementEnum(int? value)
+        {
+            if (value.HasValue && Enum.IsDefined(typeof(PageArrangementEnum), value))
+            {
+                return (PageArrangementEnum)value;
+            }
+            return null;
         }
     }
 

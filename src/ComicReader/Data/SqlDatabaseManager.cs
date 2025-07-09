@@ -13,6 +13,8 @@ namespace ComicReader.Data;
 
 public class SqlDatabaseManager
 {
+    public const int DATABASE_VERSION = 5;
+
     private const string TAG = nameof(SqlDatabaseManager);
 
     private static string DatabaseFolderPath => StorageLocation.GetLocalFolderPath();
@@ -58,6 +60,7 @@ public class SqlDatabaseManager
             "," + ComicTable.ColumnCoverCacheKey.Name + " TEXT" +
             "," + ComicTable.ColumnDescription.Name + " TEXT" +
             "," + ComicTable.ColumnCompletionState.Name + " INTEGER NOT NULL" +
+            "," + ComicTable.ColumnExt.Name + " TEXT" +
             ")");
 
         ExecuteCommand("CREATE TABLE IF NOT EXISTS " + tagCategoryTable + " (" +
@@ -81,7 +84,7 @@ public class SqlDatabaseManager
             case -1:
             case 0:
             case 1:
-                goto case 4;
+                goto case DATABASE_VERSION;
             case 2:
                 {
                     ExecuteCommand($"ALTER TABLE {tableName} DROP COLUMN image_aspect_ratios");
@@ -96,6 +99,11 @@ public class SqlDatabaseManager
                 }
                 goto case 4;
             case 4:
+                {
+                    ExecuteCommand($"ALTER TABLE {tableName} ADD COLUMN {ComicTable.ColumnExt.Name} TEXT DEFAULT ''");
+                }
+                goto case DATABASE_VERSION;
+            case DATABASE_VERSION:
                 break;
             default:
                 Logger.AssertNotReachHere("A39EA189ED8BB40B");
