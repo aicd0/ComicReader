@@ -104,7 +104,7 @@ internal class ComicPdfData : ComicData
             return null;
         }
 
-        PdfManager.IPdfConnection connection = await PdfManager.OpenPdf(ThisFile.Path);
+        PdfManager.IPdfConnection connection = await PdfManager.OpenPdf(ThisFile.Path, null);
         if (connection == null)
         {
             return null;
