@@ -1,8 +1,8 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-#nullable disable
-
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
@@ -48,11 +48,13 @@ internal sealed partial class HistoryPage : BasePage
     private void Update()
     {
         var source = new ObservableCollection<HistoryGroupViewModel>();
-        HistoryGroupViewModel currentGroup = null;
-        HistoryModel.ExternalModel historyModel = HistoryModel.Instance.GetModel();
-        foreach (HistoryModel.ExternalItemModel item in historyModel.Items)
+        HistoryGroupViewModel? currentGroup = null;
+        List<HistoryModel.ExternalItemModel> historyItems = HistoryModel.Instance.GetModel().Items;
+        historyItems.Sort((x, y) => y.DateTime.CompareTo(x.DateTime));
+        foreach (HistoryModel.ExternalItemModel item in historyItems)
         {
-            string key = item.DateTime.ToString("D", EnvironmentProvider.Instance.GetCurrentAppLanguageInfo());
+            DateTimeOffset localTime = item.DateTime.ToLocalTime();
+            string key = localTime.ToString("D", EnvironmentProvider.Instance.GetCurrentAppLanguageInfo());
             if (currentGroup != null && !currentGroup.Key.Equals(key))
             {
                 source.Add(currentGroup);
@@ -62,7 +64,7 @@ internal sealed partial class HistoryPage : BasePage
             var itemOut = new HistoryItemViewModel
             {
                 Id = item.Id,
-                Time = item.DateTime.ToString("t", EnvironmentProvider.Instance.GetCurrentAppLanguageInfo()),
+                Time = localTime.ToString("t", EnvironmentProvider.Instance.GetCurrentAppLanguageInfo()),
                 Title = item.Title
             };
             currentGroup.Add(itemOut);
@@ -79,7 +81,7 @@ internal sealed partial class HistoryPage : BasePage
 
     private async Task OpenItem(HistoryItemViewModel item, bool newTab)
     {
-        ComicModel comic = await ComicModel.FromId(item.Id, "HistoryLoadComic");
+        ComicModel? comic = await ComicModel.FromId(item.Id, "HistoryLoadComic");
 
         if (comic == null)
         {
@@ -104,12 +106,12 @@ internal sealed partial class HistoryPage : BasePage
 
     private IMainPageAbility GetMainPageAbility()
     {
-        return GetAbility<IMainPageAbility>();
+        return GetAbility<IMainPageAbility>()!;
     }
 
     private INavigationPageAbility GetNavigationPageAbility()
     {
-        return GetAbility<INavigationPageAbility>();
+        return GetAbility<INavigationPageAbility>()!;
     }
 
     private void DeleteItem(HistoryItemViewModel item)
