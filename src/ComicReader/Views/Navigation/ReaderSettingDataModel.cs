@@ -1,7 +1,7 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-using ComicReader.Data.Legacy;
+using ComicReader.Data.Models;
 
 namespace ComicReader.Views.Navigation;
 
@@ -11,8 +11,8 @@ internal class ReaderSettingDataModel
     public bool IsLeftToRight { get; set; } = false;
     public bool IsVerticalContinuous { get; set; } = false;
     public bool IsHorizontalContinuous { get; set; } = false;
-    public PageArrangementType VerticalPageArrangement { get; set; } = PageArrangementType.Single;
-    public PageArrangementType HorizontalPageArrangement { get; set; } = PageArrangementType.DualCover;
+    public PageArrangementEnum VerticalPageArrangement { get; set; } = PageArrangementEnum.Single;
+    public PageArrangementEnum HorizontalPageArrangement { get; set; } = PageArrangementEnum.DualCover;
 
     public bool IsContinuous
     {
@@ -33,7 +33,7 @@ internal class ReaderSettingDataModel
         }
     }
 
-    public PageArrangementType PageArrangement
+    public PageArrangementEnum PageArrangement
     {
         get
         {

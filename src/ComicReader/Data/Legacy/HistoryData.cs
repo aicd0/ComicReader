@@ -6,13 +6,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Threading.Tasks;
 using System.Xml.Serialization;
-
-using ComicReader.Common;
-using ComicReader.Common.Lifecycle;
-using ComicReader.Data.Models;
-using ComicReader.SDK.Common.Threading;
 
 namespace ComicReader.Data.Legacy;
 
@@ -66,80 +60,5 @@ public class HistoryItemData
     public void Unpack()
     {
         DateTime = DateTimeOffset.Parse(DateTimePack, CultureInfo.InvariantCulture);
-    }
-}
-
-internal class HistoryDataManager
-{
-    private const string TAG = "HistoryDataManager";
-
-    public static async Task Add(long id, string title, bool sendEvent)
-    {
-        await XmlDatabaseManager.WaitLock();
-        try
-        {
-            if (!AppModel.SaveBrowsingHistory)
-            {
-                return;
-            }
-
-            var record = new HistoryItemData
-            {
-                Id = id,
-                DateTime = DateTimeOffset.Now,
-                Title = title
-            };
-
-            RemoveNoLock(id);
-            XmlDatabase.History.Items.Insert(0, record);
-        }
-        finally
-        {
-            XmlDatabaseManager.ReleaseLock();
-        }
-
-        OnUpdated(sendEvent);
-    }
-
-    public static async Task Remove(long id, bool sendEvent)
-    {
-        await XmlDatabaseManager.WaitLock();
-        RemoveNoLock(id);
-        XmlDatabaseManager.ReleaseLock();
-        OnUpdated(sendEvent);
-    }
-
-    public static async Task Clear(bool sendEvent)
-    {
-        await XmlDatabaseManager.WaitLock();
-        XmlDatabase.History.Items.Clear();
-        XmlDatabaseManager.ReleaseLock();
-        OnUpdated(sendEvent);
-    }
-
-    private static void OnUpdated(bool sendEvent)
-    {
-        TaskDispatcher.DefaultQueue.Submit($"{TAG}#OnUpdated", XmlDatabaseManager.SaveSealed(XmlDatabaseItem.History));
-
-        if (sendEvent)
-        {
-            EventBus.Default.With(EventId.SidePaneUpdate).Emit(0);
-        }
-    }
-
-    private static void RemoveNoLock(long id)
-    {
-        List<HistoryItemData> items = XmlDatabase.History.Items;
-
-        for (int i = 0; i < items.Count; ++i)
-        {
-            HistoryItemData record = items[i];
-
-            if (record.Id == id)
-            {
-                items.RemoveAt(i);
-                --i;
-            }
-        }
     }
 }

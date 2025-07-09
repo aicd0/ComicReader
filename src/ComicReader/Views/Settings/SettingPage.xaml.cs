@@ -9,7 +9,6 @@ using ComicReader.Common;
 using ComicReader.Common.BaseUI;
 using ComicReader.Common.Threading;
 using ComicReader.Data;
-using ComicReader.Data.Legacy;
 using ComicReader.Data.Models;
 using ComicReader.Data.Models.Comic;
 using ComicReader.Data.Tables;
@@ -110,11 +109,8 @@ internal sealed partial class SettingPage : BasePage
 
     private void OnHistoryClearAllClicked(object sender, RoutedEventArgs e)
     {
-        C0.Run(async delegate
-        {
-            await HistoryDataManager.Clear(true);
-            ViewModel.IsClearHistoryEnabled = false;
-        });
+        HistoryModel.Instance.Clear(true);
+        ViewModel.IsClearHistoryEnabled = false;
     }
 
     private void OnSendFeedbackButtonClicked(object sender, RoutedEventArgs e)

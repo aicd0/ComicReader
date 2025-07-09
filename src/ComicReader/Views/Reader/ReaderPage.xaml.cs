@@ -1,8 +1,6 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-#nullable disable
-
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -14,7 +12,6 @@ using ComicReader.Common.BaseUI;
 using ComicReader.Common.Imaging;
 using ComicReader.Common.Lifecycle;
 using ComicReader.Common.Threading;
-using ComicReader.Data.Legacy;
 using ComicReader.Data.Models;
 using ComicReader.Data.Models.Comic;
 using ComicReader.Helpers.Imaging;
@@ -50,11 +47,11 @@ internal sealed partial class ReaderPage : BasePage
     // Variables
     //
 
-    private ComicModel _comic;
-    private ComicModel _pendingComic;
+    private ComicModel? _comic;
+    private ComicModel? _pendingComic;
     private bool _isLoading = false;
 
-    private IComicConnection _comicConnection;
+    private IComicConnection? _comicConnection;
     private volatile bool _updatingProgress = false;
     private bool? _isFavorite = null;
     private ComicData.CompletionStateEnum? _completionState = null;
@@ -150,8 +147,8 @@ internal sealed partial class ReaderPage : BasePage
 
         C0.Run(async delegate
         {
-            long comic_id = bundle.GetLong(RouterConstants.ARG_COMIC_ID, -1);
-            ComicModel comic = await ComicModel.FromId(comic_id, "ReaderGetComic");
+            long comicId = bundle.GetLong(RouterConstants.ARG_COMIC_ID, -1);
+            ComicModel? comic = await ComicModel.FromId(comicId, "ReaderGetComic");
             if (comic == null)
             {
                 string token = bundle.GetString(RouterConstants.ARG_COMIC_TOKEN, "");
@@ -164,14 +161,10 @@ internal sealed partial class ReaderPage : BasePage
             }
             GetMainPageAbility().SetIcon(new SymbolIconSource { Symbol = Symbol.Pictures });
 
-            ReaderSettingDataModel readerSettingModel = GetReaderSettingModel();
-            ReaderView reader = MainReaderView;
-            reader.SetIsVertical(readerSettingModel.IsVertical);
-            reader.SetIsContinuous(readerSettingModel.IsContinuous);
-            reader.SetPageArrangement(readerSettingModel.PageArrangement);
-            reader.SetFlowDirection(readerSettingModel.IsLeftToRight);
-
-            await LoadComic(comic);
+            if (comic != null)
+            {
+                await LoadComic(comic);
+            }
         });
     }
 
@@ -180,7 +173,7 @@ internal sealed partial class ReaderPage : BasePage
         base.OnResume();
         ObserveData();
         GetNavigationPageAbility().SetGridViewMode(false);
-        GetNavigationPageAbility().SetReaderSettings(GetReaderSettingModel());
+        LoadReaderSettings();
         UpdateReaderUI();
         SetAsReadingComic();
         LoadComicInfo();
@@ -241,6 +234,18 @@ internal sealed partial class ReaderPage : BasePage
             reader.SetIsContinuous(setting.IsContinuous);
             reader.SetPageArrangement(setting.PageArrangement);
             UpdateReaderUI();
+
+            ComicModel? comic = _comic;
+            if (comic != null && !comic.IsExternal)
+            {
+                comic.SetExt(ComicExt.VERTICAL_READING, setting.IsVertical ? "1" : "0");
+                comic.SetExt(ComicExt.LEFT_TO_RIGHT, setting.IsLeftToRight ? "1" : "0");
+                comic.SetExt(ComicExt.VERTICAL_CONTINUOUS, setting.IsVerticalContinuous ? "1" : "0");
+                comic.SetExt(ComicExt.HORIZONTAL_CONTINUOUS, setting.IsHorizontalContinuous ? "1" : "0");
+                comic.SetExt(ComicExt.VERTICAL_PAGE_ARRANGEMENT, setting.VerticalPageArrangement.ToString());
+                comic.SetExt(ComicExt.HORIZONTAL_PAGE_ARRANGEMENT, setting.HorizontalPageArrangement.ToString());
+                comic.FlushExt();
+            }
         });
 
         IsExternalComicLiveData.ObserveSticky(this, delegate (bool isExternal)
@@ -286,10 +291,11 @@ internal sealed partial class ReaderPage : BasePage
         _isLoading = true;
         try
         {
-            while (comic != null)
+            ComicModel? loadingComic = comic;
+            while (loadingComic != null)
             {
-                await LoadComicInternal(comic);
-                comic = _pendingComic;
+                await LoadComicInternal(loadingComic);
+                loadingComic = _pendingComic;
                 _pendingComic = null;
             }
         }
@@ -318,11 +324,12 @@ internal sealed partial class ReaderPage : BasePage
         if (!comic.IsExternal)
         {
             await comic.SetCompletionStateToAtLeastStarted();
-            await HistoryDataManager.Add(comic.Id, comic.Title1, true);
+            HistoryModel.Instance.Add(comic.Id, comic.Title1, true);
         }
 
         _comic = comic;
         SetAsReadingComic();
+        LoadReaderSettings();
         LoadComicInfo();
         IComicConnection connection = await comic.OpenComicAsync();
         _comicConnection = connection;
@@ -384,11 +391,29 @@ internal sealed partial class ReaderPage : BasePage
 
     private void SetAsReadingComic()
     {
-        ComicModel comic = _comic;
+        ComicModel? comic = _comic;
         if (comic != null && !comic.IsExternal)
         {
             AppModel.SetReadingComic(comic.Id);
         }
+    }
+
+    private void LoadReaderSettings()
+    {
+        ComicModel? comic = _comic;
+        if (comic == null)
+        {
+            return;
+        }
+        ReaderSettingDataModel readerSettingModel = GetReaderSettingModel(comic);
+
+        GetNavigationPageAbility().SetReaderSettings(readerSettingModel);
+
+        ReaderView reader = MainReaderView;
+        reader.SetIsVertical(readerSettingModel.IsVertical);
+        reader.SetIsContinuous(readerSettingModel.IsContinuous);
+        reader.SetPageArrangement(readerSettingModel.PageArrangement);
+        reader.SetFlowDirection(readerSettingModel.IsLeftToRight);
     }
 
     private void LoadComicInfo()
@@ -531,16 +556,37 @@ internal sealed partial class ReaderPage : BasePage
         ViewModel.ComicTags = new_collection;
     }
 
-    private ReaderSettingDataModel GetReaderSettingModel()
+    private ReaderSettingDataModel GetReaderSettingModel(ComicModel comic)
     {
+        PageArrangementEnum? ParsePageArrangement(string? value)
+        {
+            if (value == null)
+            {
+                return null;
+            }
+            if (Enum.TryParse(value, out PageArrangementEnum arrangement))
+            {
+                return arrangement;
+            }
+            return null;
+        }
+
+        AppSettingsModel.ReaderSettingModel readerSettings = AppSettingsModel.Instance.GetModel().DefaultReaderSetting;
+        bool verticalReading = comic.GetExt(ComicExt.VERTICAL_READING)?.Equals("1") ?? readerSettings.VerticalReading;
+        bool leftToRight = comic.GetExt(ComicExt.LEFT_TO_RIGHT)?.Equals("1") ?? readerSettings.LeftToRight;
+        bool verticalContinuous = comic.GetExt(ComicExt.VERTICAL_CONTINUOUS)?.Equals("1") ?? readerSettings.VerticalContinuous;
+        bool horizontalContinuous = comic.GetExt(ComicExt.HORIZONTAL_CONTINUOUS)?.Equals("1") ?? readerSettings.HorizontalContinuous;
+        PageArrangementEnum verticalPageArrangement = ParsePageArrangement(comic.GetExt(ComicExt.VERTICAL_PAGE_ARRANGEMENT)) ?? readerSettings.VerticalPageArrangement;
+        PageArrangementEnum horizontalPageArrangement = ParsePageArrangement(comic.GetExt(ComicExt.HORIZONTAL_PAGE_ARRANGEMENT)) ?? readerSettings.HorizontalPageArrangement;
+
         return new ReaderSettingDataModel
         {
-            IsVertical = XmlDatabase.Settings.VerticalReading,
-            IsLeftToRight = XmlDatabase.Settings.LeftToRight,
-            IsVerticalContinuous = XmlDatabase.Settings.VerticalContinuous,
-            IsHorizontalContinuous = XmlDatabase.Settings.HorizontalContinuous,
-            VerticalPageArrangement = XmlDatabase.Settings.VerticalPageArrangement,
-            HorizontalPageArrangement = XmlDatabase.Settings.HorizontalPageArrangement,
+            IsVertical = verticalReading,
+            IsLeftToRight = leftToRight,
+            IsVerticalContinuous = verticalContinuous,
+            IsHorizontalContinuous = horizontalContinuous,
+            VerticalPageArrangement = verticalPageArrangement,
+            HorizontalPageArrangement = horizontalPageArrangement,
         };
     }
 
@@ -603,7 +649,7 @@ internal sealed partial class ReaderPage : BasePage
             _updatingProgress = true;
             Task.Run(delegate
             {
-                _comic.SaveProgressAsync(progress, page).Wait();
+                _comic?.SaveProgressAsync(progress, page).Wait();
                 _updatingProgress = false;
             });
         }
@@ -645,17 +691,19 @@ internal sealed partial class ReaderPage : BasePage
 
     private void OnRatingControlValueChanged(RatingControl sender, object args)
     {
-        _comic.SaveRating((int)sender.Value);
+        _comic?.SaveRating((int)sender.Value);
     }
 
     private void OnDirectoryTapped(object sender, TappedRoutedEventArgs e)
     {
         C0.Run(async delegate
         {
-            ComicModel comic = _comic;
-
-            StorageFolder folder = await Storage.TryGetFolder(comic.Location);
-
+            ComicModel? comic = _comic;
+            if (comic == null)
+            {
+                return;
+            }
+            StorageFolder? folder = await Storage.TryGetFolder(comic.Location);
             if (folder != null)
             {
                 _ = await Launcher.LaunchFolderAsync(folder);
@@ -667,7 +715,7 @@ internal sealed partial class ReaderPage : BasePage
     {
         C0.Run(async delegate
         {
-            ComicModel comic = _comic;
+            ComicModel? comic = _comic;
             if (comic == null)
             {
                 return;
@@ -735,7 +783,7 @@ internal sealed partial class ReaderPage : BasePage
     {
         var item = args.Item as ReaderImagePreviewViewModel;
         var viewHolder = args.ItemContainer.ContentTemplateRoot as ReaderPreviewImage;
-        viewHolder.SetModel(item, args.InRecycleQueue);
+        viewHolder?.SetModel(item, args.InRecycleQueue);
     }
 
     //
@@ -827,12 +875,12 @@ internal sealed partial class ReaderPage : BasePage
 
     private IMainPageAbility GetMainPageAbility()
     {
-        return GetAbility<IMainPageAbility>();
+        return GetAbility<IMainPageAbility>()!;
     }
 
     private INavigationPageAbility GetNavigationPageAbility()
     {
-        return GetAbility<INavigationPageAbility>();
+        return GetAbility<INavigationPageAbility>()!;
     }
 
     public void SetIsFavorite(bool isFavorite, bool writeDatabase)
@@ -848,15 +896,16 @@ internal sealed partial class ReaderPage : BasePage
 
         GetNavigationPageAbility().SetFavorite(isFavorite);
 
-        if (writeDatabase && !_comic.IsExternal)
+        ComicModel? comic = _comic;
+        if (writeDatabase && comic != null && !comic.IsExternal)
         {
             if (isFavorite)
             {
-                FavoriteModel.Instance.Add(_comic.Id, _comic.Title1, true);
+                FavoriteModel.Instance.Add(comic.Id, comic.Title1, true);
             }
             else
             {
-                FavoriteModel.Instance.RemoveWithId(_comic.Id, true);
+                FavoriteModel.Instance.RemoveWithId(comic.Id, true);
             }
         }
     }
@@ -900,18 +949,19 @@ internal sealed partial class ReaderPage : BasePage
         MarkAsReadingButton.Visibility = completionState == ComicData.CompletionStateEnum.Started ? Visibility.Collapsed : Visibility.Visible;
         MarkAsFinishedButton.Visibility = completionState == ComicData.CompletionStateEnum.Completed ? Visibility.Collapsed : Visibility.Visible;
 
-        if (writeDatabase)
+        ComicModel? comic = _comic;
+        if (writeDatabase && comic != null && !comic.IsExternal)
         {
             switch (completionState)
             {
                 case ComicData.CompletionStateEnum.NotStarted:
-                    _ = _comic.SetCompletionStateToNotStarted();
+                    _ = comic.SetCompletionStateToNotStarted();
                     break;
                 case ComicData.CompletionStateEnum.Started:
-                    _ = _comic.SetCompletionStateToStarted();
+                    _ = comic.SetCompletionStateToStarted();
                     break;
                 case ComicData.CompletionStateEnum.Completed:
-                    _ = _comic.SetCompletionStateToCompleted();
+                    _ = comic.SetCompletionStateToCompleted();
                     break;
                 default:
                     break;

@@ -62,6 +62,7 @@ class FavoriteModel : JsonDatabase<FavoriteModel.JsonModel>
             return true;
         });
         Save();
+        DispatchUpdateEvent();
     }
 
     public ExternalNodeModel FromId(long id)
@@ -103,7 +104,6 @@ class FavoriteModel : JsonDatabase<FavoriteModel.JsonModel>
 
         bool result = Write(model => helper(model.Children));
         Save();
-
         if (sendEvent)
         {
             DispatchUpdateEvent();
