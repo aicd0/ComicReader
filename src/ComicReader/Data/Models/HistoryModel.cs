@@ -52,8 +52,13 @@ internal class HistoryModel : JsonDatabase<HistoryModel.JsonModel>
         {
             m.Items ??= [];
             m.Items.Clear();
+            HashSet<long> comicIds = [];
             foreach (ExternalItemModel item in model.Items)
             {
+                if (!comicIds.Add(item.Id))
+                {
+                    continue;
+                }
                 m.Items.Add(new JsonItemModel
                 {
                     Id = item.Id,
@@ -71,14 +76,15 @@ internal class HistoryModel : JsonDatabase<HistoryModel.JsonModel>
     {
         bool updated = Write(delegate (JsonModel model)
         {
-            JsonItemModel item = new()
+            model.Items ??= [];
+            model.Items.RemoveAll(item => item is null || item.Id == id);
+            JsonItemModel newItem = new()
             {
                 Id = id,
                 Title = title,
                 DateTime = DateTimeOffset.Now.ToUnixTimeMilliseconds(),
             };
-            model.Items ??= [];
-            model.Items.Add(item);
+            model.Items.Add(newItem);
             return true;
         });
 
@@ -96,17 +102,8 @@ internal class HistoryModel : JsonDatabase<HistoryModel.JsonModel>
     {
         bool updated = Write(delegate (JsonModel model)
         {
-            if (model.Items is null)
-            {
-                return false;
-            }
-            JsonItemModel? itemToRemove = model.Items.Find(item => item?.Id == id);
-            if (itemToRemove is null)
-            {
-                return false;
-            }
-            model.Items.Remove(itemToRemove);
-            return true;
+            model.Items ??= [];
+            return model.Items.RemoveAll(item => item is null || item.Id == id) > 0;
         });
 
         if (updated)
