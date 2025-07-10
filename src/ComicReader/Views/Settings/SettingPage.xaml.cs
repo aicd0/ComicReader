@@ -170,16 +170,18 @@ internal sealed partial class SettingPage : BasePage
         C0.Run(async delegate
         {
             long comicCount = 0;
-            SelectCommand command = new(ComicTable.Instance);
-            IReaderToken<long> comicCountToken = command.PutQueryCountAll();
-            using SelectCommand.IReader reader = await command.ExecuteAsync(SqlDatabaseManager.MainDatabase);
-            if (await reader.ReadAsync())
+            await ComicData.EnqueueCommand(() =>
             {
-                comicCount = comicCountToken.GetValue();
-            }
-            string total_comic_string = StringResourceProvider.Instance.TotalComics;
-            StatisticsTextBlock.Text = total_comic_string +
-                comicCount.ToString("#,#0", CultureInfo.InvariantCulture);
+                SelectCommand command = new(ComicTable.Instance);
+                IReaderToken<long> comicCountToken = command.PutQueryCountAll();
+                using SelectCommand.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
+                if (reader.Read())
+                {
+                    comicCount = comicCountToken.GetValue();
+                }
+            }, "SettingPage#UpdateStatistis");
+            string totalComicString = StringResourceProvider.Instance.TotalComics;
+            StatisticsTextBlock.Text = totalComicString + comicCount.ToString("#,#0", CultureInfo.InvariantCulture);
         });
     }
 
