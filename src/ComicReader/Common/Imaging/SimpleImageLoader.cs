@@ -1,8 +1,6 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-#nullable disable
-
 using System;
 using System.Collections.Generic;
 
@@ -12,11 +10,13 @@ namespace ComicReader.Common.Imaging;
 
 internal static class SimpleImageLoader
 {
+    public static ITaskDispatcher DefaultDispatcher { get; } = TaskDispatcher.Factory.NewThreadPool("SimpleImageLoader");
+
     public sealed class Transaction : BaseTransaction<TaskException>
     {
         private readonly CancellationSession.IToken _sessionToken;
         private readonly List<Token> _tokens;
-        private ITaskDispatcher _dispatcher = TaskDispatcher.DefaultQueue;
+        private ITaskDispatcher _dispatcher = DefaultDispatcher;
 
         public Transaction(CancellationSession.IToken token, List<Token> tokens)
         {
@@ -48,13 +48,13 @@ internal static class SimpleImageLoader
         }
     }
 
-    public class Token
+    public class Token(IImageSource source, IImageResultHandler callback)
     {
-        public IImageSource Source { get; set; }
+        public IImageSource Source { get; set; } = source;
         public double Width { get; set; } = double.PositiveInfinity;
         public double Height { get; set; } = double.PositiveInfinity;
         public StretchModeEnum StretchMode { get; set; } = StretchModeEnum.Uniform;
         public double Multiplication { get; set; } = 1.0;
-        public IImageResultHandler ImageResultHandler { get; set; }
+        public IImageResultHandler ImageResultHandler { get; set; } = callback;
     }
 }

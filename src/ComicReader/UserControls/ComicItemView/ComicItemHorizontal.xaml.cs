@@ -126,13 +126,11 @@ internal sealed partial class ComicItemHorizontal : BaseUserControl, IComicItemV
         double imageHeight = (double)Application.Current.Resources["ComicItemHorizontalImageHeight"];
         var tokens = new List<SimpleImageLoader.Token>
         {
-            new() {
+            new(new ComicCoverImageSource(item.Comic), new LoadImageCallback(this, item)) {
                 Width = imageWidth,
                 Height = imageHeight,
                 Multiplication = 1.4,
                 StretchMode = StretchModeEnum.UniformToFill,
-                Source = new ComicCoverImageSource(item.Comic),
-                ImageResultHandler = new LoadImageCallback(this, item)
             }
         };
         new SimpleImageLoader.Transaction(_loadImageToken.Token, tokens).Commit();

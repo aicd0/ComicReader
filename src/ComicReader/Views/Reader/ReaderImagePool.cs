@@ -200,10 +200,7 @@ internal class ReaderImagePool
                     {
                         var tokens = new List<SimpleImageLoader.Token>
                         {
-                            new() {
-                                Source = entry.Source,
-                                ImageResultHandler = new LoadImageResultHandler(this, uri)
-                            }
+                            new(entry.Source, new LoadImageResultHandler(this, uri))
                         };
                         var session = new CancellationSession(_session);
                         entry.Session = session;
