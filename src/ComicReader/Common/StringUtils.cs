@@ -105,40 +105,59 @@ class StringUtils
 
     public static int QuickMatch(List<string> keywords, string str)
     {
-        int total_similarity = 0;
+        int totalSimilarity = 0;
         str = str.ToLower();
-
+        List<int> keywordIndices = new(8);
         foreach (string keyword in keywords)
         {
+            if (keyword.Length == 0)
+            {
+                continue;
+            }
+            keywordIndices.Clear();
             int similarity = 0;
-            int keyword_ptr = 0;
-
             foreach (char c in str)
             {
-                if (c == keyword[keyword_ptr])
+                for (int i = keywordIndices.Count - 1; i >= 0; i--)
                 {
-                    ++keyword_ptr;
-                    if (keyword_ptr >= keyword.Length)
+                    int keywordIndex = keywordIndices[i];
+                    if (keyword[keywordIndex] == c)
                     {
-                        ++similarity;
-                        keyword_ptr = 0;
+                        keywordIndex++;
+                        if (keywordIndex >= keyword.Length)
+                        {
+                            ++similarity;
+                            keywordIndices.RemoveAt(i);
+                        }
+                        else
+                        {
+                            keywordIndices[i] = keywordIndex;
+                        }
+                    }
+                    else
+                    {
+                        keywordIndices.RemoveAt(i);
                     }
                 }
-                else
+                if (keyword[0] == c)
                 {
-                    keyword_ptr = 0;
+                    if (1 >= keyword.Length)
+                    {
+                        ++similarity;
+                    }
+                    else
+                    {
+                        keywordIndices.Add(1);
+                    }
                 }
             }
-
             if (similarity == 0)
             {
                 return 0;
             }
-
-            total_similarity += similarity;
+            totalSimilarity += similarity;
         }
-
-        return total_similarity;
+        return totalSimilarity;
     }
 
     public static string UniquePath(string path)
