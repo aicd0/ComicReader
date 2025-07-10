@@ -53,11 +53,13 @@ internal partial class ReaderView : UserControl
     private bool _isVisible = true;
     private bool _isLeftToRight = true;
     private PageArrangementEnum _pageArrangement = PageArrangementEnum.Single;
+    private int _pageGap = 100;
     private bool _uiStateUpdatedVisibility = true;
     private bool _uiStateUpdatedOrientation = true;
     private bool _uiStateUpdatedContinuous = true;
     private bool _uiStateUpdatedFlowDirection = true;
     private bool _uiStateUpdatedPageArrangement = true;
+    private bool _uiStateUpdatedPageGap = true;
     private bool _postUiStateUpdated = false;
 
     private bool _isFirstFrameLoaded = false;
@@ -186,6 +188,18 @@ internal partial class ReaderView : UserControl
         UpdateUI();
     }
 
+    public void SetPageGap(int pageGap)
+    {
+        if (pageGap == _pageGap)
+        {
+            return;
+        }
+
+        _pageGap = pageGap;
+        _uiStateUpdatedPageGap = true;
+        UpdateUI();
+    }
+
     public void SetInitialPage(double page)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(page);
@@ -194,7 +208,7 @@ internal partial class ReaderView : UserControl
 
     public void StartLoadingImages(List<IImageSource> images)
     {
-        _originalDataModel = new List<IImageSource>(images);
+        _originalDataModel = [.. images];
         Reload(_originalDataModel, true);
     }
 
@@ -472,6 +486,12 @@ internal partial class ReaderView : UserControl
             needReload = true;
         }
 
+        if (_uiStateUpdatedPageGap)
+        {
+            _uiStateUpdatedPageGap = false;
+            needReload = true;
+        }
+
         if (needReload && _originalDataModel != null)
         {
             if (_isInitialFrameJumped)
@@ -537,12 +557,12 @@ internal partial class ReaderView : UserControl
             {
                 defaultWidth *= 2;
             }
-
             if (_isContinuous)
             {
                 defaultHorizontalPadding = 10.0;
             }
-
+            defaultVerticalPadding *= _pageGap / 100.0;
+            defaultHorizontalPadding *= _pageGap / 100.0;
             frameWidth = _isVertical ? defaultWidth : defaultHeight * aspectRatio;
             frameHeight = _isVertical ? defaultWidth / aspectRatio : defaultHeight;
             verticalPadding = _isVertical ? defaultVerticalPadding : 0;
