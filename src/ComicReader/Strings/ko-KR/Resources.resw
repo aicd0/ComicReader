@@ -482,6 +482,9 @@ NOT                  - 논리 not. 예: NOT %tag = "hide this"
   <data name="OpenInNewTab" xml:space="preserve">
     <value>새 탭에서 열기</value>
   </data>
+  <data name="PageGap" xml:space="preserve">
+    <value>페이지 간격</value>
+  </data>
   <data name="PrivacyPolicy.Text" xml:space="preserve">
     <value>개인정보 보호정책</value>
   </data>

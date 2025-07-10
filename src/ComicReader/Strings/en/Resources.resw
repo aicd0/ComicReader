@@ -483,6 +483,9 @@ The evaluation will be performed in the following order:
   <data name="OpenInNewTab" xml:space="preserve">
     <value>Open in new tab</value>
   </data>
+  <data name="PageGap" xml:space="preserve">
+    <value>Page spacing</value>
+  </data>
   <data name="PrivacyPolicy.Text" xml:space="preserve">
     <value>Privacy Policy</value>
   </data>

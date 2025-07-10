@@ -481,6 +481,9 @@ La evaluación se realizará en el siguiente orden:
   <data name="OpenInNewTab" xml:space="preserve">
     <value>Abrir en nueva pestaña</value>
   </data>
+  <data name="PageGap" xml:space="preserve">
+    <value>Espaciado</value>
+  </data>
   <data name="PrivacyPolicy.Text" xml:space="preserve">
     <value>política de privacidad</value>
   </data>

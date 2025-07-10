@@ -481,6 +481,9 @@ Die Auswertung erfolgt in der folgenden Reihenfolge:
   <data name="OpenInNewTab" xml:space="preserve">
     <value>In neuem Tab öffnen</value>
   </data>
+  <data name="PageGap" xml:space="preserve">
+    <value>Seitenabstand</value>
+  </data>
   <data name="PrivacyPolicy.Text" xml:space="preserve">
     <value>Datenschutzrichtlinie</value>
   </data>

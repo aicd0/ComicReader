@@ -482,6 +482,9 @@ NOT                      - Логическое не. Например: NOT %tag
   <data name="OpenInNewTab" xml:space="preserve">
     <value>Открыть в новой вкладке</value>
   </data>
+  <data name="PageGap" xml:space="preserve">
+    <value>интервал</value>
+  </data>
   <data name="PrivacyPolicy.Text" xml:space="preserve">
     <value>политика конфиденциальности</value>
   </data>
