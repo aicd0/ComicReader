@@ -18,17 +18,6 @@
     </UserControl.Resources>
 
     <Grid>
-        <TextBlock
-            x:Name="SearchGlyph"
-            Margin="12,0,0,0"
-            HorizontalAlignment="Left"
-            VerticalAlignment="Center"
-            AutomationProperties.AccessibilityView="Raw"
-            FontFamily="{ThemeResource SymbolThemeFontFamily}"
-            FontSize="12"
-            FontStyle="Normal"
-            Foreground="{ThemeResource TextControlButtonForeground}"
-            Text="&#xE721;" />
         <AutoSuggestBox
             x:Name="SearchBox"
             MinWidth="100"
@@ -40,6 +29,18 @@
             Style="{StaticResource NavigationPageSearchBoxStyle}"
             TextBoxStyle="{StaticResource NavigationPageSearchBoxTextBoxStyle}"
             TextChanged="SearchBox_TextChanged" />
+        <TextBlock
+            x:Name="SearchGlyph"
+            Margin="12,0,0,0"
+            HorizontalAlignment="Left"
+            VerticalAlignment="Center"
+            AutomationProperties.AccessibilityView="Raw"
+            FontFamily="{ThemeResource SymbolThemeFontFamily}"
+            FontSize="12"
+            FontStyle="Normal"
+            Foreground="{ThemeResource TextControlButtonForeground}"
+            IsHitTestVisible="False"
+            Text="&#xE721;" />
     </Grid>
 
 </UserControl>
