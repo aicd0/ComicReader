@@ -66,6 +66,7 @@ public class StringResourceProvider
     public string NoRating => GetResourceString("NoRating");
     public string NoResults => GetResourceString("NoResults");
     public string OpenInNewTab => GetResourceString("OpenInNewTab");
+    public string PageGap => GetResourceString("PageGap");
     public string Proceed => GetResourceString("Proceed");
     public string Progress => GetResourceString("Progress");
     public string Rating => GetResourceString("Rating");

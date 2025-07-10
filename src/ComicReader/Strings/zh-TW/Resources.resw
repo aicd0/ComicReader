@@ -481,6 +481,9 @@ NOT                 - 邏輯非。例如：NOT %tag = "hide this"
   <data name="OpenInNewTab" xml:space="preserve">
     <value>在新分頁中開啟</value>
   </data>
+  <data name="PageGap" xml:space="preserve">
+    <value>頁面間距</value>
+  </data>
   <data name="PrivacyPolicy.Text" xml:space="preserve">
     <value>隱私權策略</value>
   </data>

@@ -481,6 +481,9 @@ NOT               - 論理否定。例: NOT %tag = "hide this"
   <data name="OpenInNewTab" xml:space="preserve">
     <value>新しいタブで開く</value>
   </data>
+  <data name="PageGap" xml:space="preserve">
+    <value>ページ間隔</value>
+  </data>
   <data name="PrivacyPolicy.Text" xml:space="preserve">
     <value>プライバシーポリシー</value>
   </data>

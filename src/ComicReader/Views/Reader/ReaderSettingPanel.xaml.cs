@@ -3,6 +3,7 @@
 
 using System;
 
+using ComicReader.Common.BaseUI;
 using ComicReader.Data.Models;
 using ComicReader.SDK.Common.DebugTools;
 using ComicReader.Views.Navigation;
@@ -12,7 +13,7 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace ComicReader.Views.Reader;
 
-internal sealed partial class ReaderSettingPanel : UserControl
+internal sealed partial class ReaderSettingPanel : BaseUserControl
 {
     public delegate void DataChangedEventHandler(ReaderSettingDataModel data);
     public event DataChangedEventHandler? DataChanged;
