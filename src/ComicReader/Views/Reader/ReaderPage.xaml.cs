@@ -228,13 +228,6 @@ internal sealed partial class ReaderPage : BasePage
 
         GetNavigationPageAbility().RegisterReaderSettingsChangedEventHandler(this, delegate (ReaderSettingDataModel setting)
         {
-            ReaderView reader = MainReaderView;
-            reader.SetIsVertical(setting.IsVertical);
-            reader.SetFlowDirection(setting.IsLeftToRight);
-            reader.SetIsContinuous(setting.IsContinuous);
-            reader.SetPageArrangement(setting.PageArrangement);
-            UpdateReaderUI();
-
             ComicModel? comic = _comic;
             if (comic != null && !comic.IsExternal)
             {
@@ -244,8 +237,12 @@ internal sealed partial class ReaderPage : BasePage
                 comic.SetExt(ComicExt.HORIZONTAL_CONTINUOUS, setting.IsHorizontalContinuous ? "1" : "0");
                 comic.SetExt(ComicExt.VERTICAL_PAGE_ARRANGEMENT, setting.VerticalPageArrangement.ToString());
                 comic.SetExt(ComicExt.HORIZONTAL_PAGE_ARRANGEMENT, setting.HorizontalPageArrangement.ToString());
+                comic.SetExt(ComicExt.PAGE_GAP, setting.PageGap.ToString());
                 comic.FlushExt();
             }
+
+            ApplyReaderSettings(setting);
+            UpdateReaderUI();
         });
 
         IsExternalComicLiveData.ObserveSticky(this, delegate (bool isExternal)
@@ -406,14 +403,18 @@ internal sealed partial class ReaderPage : BasePage
             return;
         }
         ReaderSettingDataModel readerSettingModel = GetReaderSettingModel(comic);
-
         GetNavigationPageAbility().SetReaderSettings(readerSettingModel);
+        ApplyReaderSettings(readerSettingModel);
+    }
 
+    private void ApplyReaderSettings(ReaderSettingDataModel readerSettingModel)
+    {
         ReaderView reader = MainReaderView;
         reader.SetIsVertical(readerSettingModel.IsVertical);
         reader.SetIsContinuous(readerSettingModel.IsContinuous);
         reader.SetPageArrangement(readerSettingModel.PageArrangement);
         reader.SetFlowDirection(readerSettingModel.IsLeftToRight);
+        reader.SetPageGap(readerSettingModel.PageGap);
     }
 
     private void LoadComicInfo()
@@ -579,6 +580,15 @@ internal sealed partial class ReaderPage : BasePage
         PageArrangementEnum verticalPageArrangement = ParsePageArrangement(comic.GetExt(ComicExt.VERTICAL_PAGE_ARRANGEMENT)) ?? readerSettings.VerticalPageArrangement;
         PageArrangementEnum horizontalPageArrangement = ParsePageArrangement(comic.GetExt(ComicExt.HORIZONTAL_PAGE_ARRANGEMENT)) ?? readerSettings.HorizontalPageArrangement;
 
+        int pageGap = readerSettings.PageGap;
+        {
+            string? pageGapString = comic.GetExt(ComicExt.PAGE_GAP);
+            if (!string.IsNullOrEmpty(pageGapString) && int.TryParse(pageGapString, out int parsedPageGap))
+            {
+                pageGap = parsedPageGap;
+            }
+        }
+
         return new ReaderSettingDataModel
         {
             IsVertical = verticalReading,
@@ -587,6 +597,7 @@ internal sealed partial class ReaderPage : BasePage
             IsHorizontalContinuous = horizontalContinuous,
             VerticalPageArrangement = verticalPageArrangement,
             HorizontalPageArrangement = horizontalPageArrangement,
+            PageGap = pageGap,
         };
     }
 

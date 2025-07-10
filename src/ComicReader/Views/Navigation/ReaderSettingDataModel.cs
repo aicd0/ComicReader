@@ -13,6 +13,7 @@ internal class ReaderSettingDataModel
     public bool IsHorizontalContinuous { get; set; } = false;
     public PageArrangementEnum VerticalPageArrangement { get; set; } = PageArrangementEnum.Single;
     public PageArrangementEnum HorizontalPageArrangement { get; set; } = PageArrangementEnum.DualCover;
+    public int PageGap { get; set; } = 100;
 
     public bool IsContinuous
     {
@@ -43,13 +44,16 @@ internal class ReaderSettingDataModel
 
     public ReaderSettingDataModel Clone()
     {
-        var clone = new ReaderSettingDataModel();
-        clone.IsVertical = IsVertical;
-        clone.IsLeftToRight = IsLeftToRight;
-        clone.IsVerticalContinuous = IsVerticalContinuous;
-        clone.IsHorizontalContinuous = IsHorizontalContinuous;
-        clone.VerticalPageArrangement = VerticalPageArrangement;
-        clone.HorizontalPageArrangement = HorizontalPageArrangement;
+        var clone = new ReaderSettingDataModel
+        {
+            IsVertical = IsVertical,
+            IsLeftToRight = IsLeftToRight,
+            IsVerticalContinuous = IsVerticalContinuous,
+            IsHorizontalContinuous = IsHorizontalContinuous,
+            VerticalPageArrangement = VerticalPageArrangement,
+            HorizontalPageArrangement = HorizontalPageArrangement,
+            PageGap = PageGap,
+        };
         return clone;
     }
 }

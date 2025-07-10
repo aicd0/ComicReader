@@ -117,6 +117,9 @@ class AppSettingsModel : JsonDatabase<AppSettingsModel.JsonModel>
 
         [JsonPropertyName("HorizontalPageArrangement")]
         public int? HorizontalPageArrangement { get; set; }
+
+        [JsonPropertyName("PageGap")]
+        public int? PageGap { get; set; }
     }
 
     public class ExternalModel
@@ -183,6 +186,7 @@ class AppSettingsModel : JsonDatabase<AppSettingsModel.JsonModel>
         public bool HorizontalContinuous { get; set; }
         public PageArrangementEnum VerticalPageArrangement { get; set; }
         public PageArrangementEnum HorizontalPageArrangement { get; set; }
+        public int PageGap { get; set; }
 
         public static ReaderSettingModel From(ReaderSettingJsonModel? model)
         {
@@ -194,6 +198,7 @@ class AppSettingsModel : JsonDatabase<AppSettingsModel.JsonModel>
                 HorizontalContinuous = model?.HorizontalContinuous ?? false,
                 VerticalPageArrangement = ParsePageArrangementEnum(model?.VerticalPageArrangement) ?? PageArrangementEnum.Single,
                 HorizontalPageArrangement = ParsePageArrangementEnum(model?.HorizontalPageArrangement) ?? PageArrangementEnum.DualCoverMirror,
+                PageGap = model?.PageGap ?? 100
             };
         }
 
@@ -206,7 +211,8 @@ class AppSettingsModel : JsonDatabase<AppSettingsModel.JsonModel>
                 VerticalContinuous = VerticalContinuous,
                 HorizontalContinuous = HorizontalContinuous,
                 VerticalPageArrangement = (int)VerticalPageArrangement,
-                HorizontalPageArrangement = (int)HorizontalPageArrangement
+                HorizontalPageArrangement = (int)HorizontalPageArrangement,
+                PageGap = PageGap,
             };
         }
 

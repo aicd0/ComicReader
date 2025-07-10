@@ -1,6 +1,8 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
+
 using ComicReader.Data.Models;
 using ComicReader.SDK.Common.DebugTools;
 using ComicReader.Views.Navigation;
@@ -25,7 +27,8 @@ internal sealed partial class ReaderSettingPanel : UserControl
     public void SetData(ReaderSettingDataModel settings)
     {
         _model = settings;
-        OnDataChanged();
+        UpdateUI();
+        DispatchDataChangeEvent();
     }
 
     private int PageArrangementToIndex(PageArrangementEnum pageArrangement)
@@ -79,47 +82,59 @@ internal sealed partial class ReaderSettingPanel : UserControl
         {
             _model.HorizontalPageArrangement = pageArrangement;
         }
-
-        OnDataChanged();
+        UpdateUI();
+        DispatchDataChangeEvent();
     }
 
     private void AbbVertical_Click(object sender, RoutedEventArgs e)
     {
         _model.IsVertical = false;
-        OnDataChanged();
+        UpdateUI();
+        DispatchDataChangeEvent();
     }
 
     private void AbbHorizontal_Click(object sender, RoutedEventArgs e)
     {
         _model.IsVertical = true;
-        OnDataChanged();
+        UpdateUI();
+        DispatchDataChangeEvent();
     }
 
     private void AbbLeftToRight_Click(object sender, RoutedEventArgs e)
     {
         _model.IsLeftToRight = false;
-        OnDataChanged();
+        UpdateUI();
+        DispatchDataChangeEvent();
     }
 
     private void AbbRightToLeft_Click(object sender, RoutedEventArgs e)
     {
         _model.IsLeftToRight = true;
-        OnDataChanged();
+        UpdateUI();
+        DispatchDataChangeEvent();
     }
 
     private void AbbSeperate_Click(object sender, RoutedEventArgs e)
     {
         _model.IsContinuous = true;
-        OnDataChanged();
+        UpdateUI();
+        DispatchDataChangeEvent();
     }
 
     private void AbbContinuous_Click(object sender, RoutedEventArgs e)
     {
         _model.IsContinuous = false;
-        OnDataChanged();
+        UpdateUI();
+        DispatchDataChangeEvent();
     }
 
-    private void OnDataChanged()
+    private void PageGapSlider_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
+    {
+        _model.PageGap = Math.Clamp((int)e.NewValue, 0, 200);
+        DispatchDataChangeEvent();
+    }
+
+    private void UpdateUI()
     {
         PageArrangementEnum pageArrangement = _model.IsVertical ? _model.VerticalPageArrangement : _model.HorizontalPageArrangement;
         LvPageArrangement.SelectedIndex = PageArrangementToIndex(pageArrangement);
@@ -156,6 +171,11 @@ internal sealed partial class ReaderSettingPanel : UserControl
         AbbContinuous.Visibility = _model.IsContinuous ? Visibility.Visible : Visibility.Collapsed;
         AbbSeperate.Visibility = _model.IsContinuous ? Visibility.Collapsed : Visibility.Visible;
 
+        PageGapSlider.Value = Math.Clamp(_model.PageGap, 0, 200);
+    }
+
+    private void DispatchDataChangeEvent()
+    {
         DataChanged?.Invoke(_model);
     }
 }

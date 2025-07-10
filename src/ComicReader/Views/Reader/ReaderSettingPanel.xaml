@@ -91,6 +91,7 @@
 
     <Grid>
         <StackPanel Orientation="Vertical">
+
             <ListView
                 x:Name="LvPageArrangement"
                 Margin="-50,0"
@@ -197,8 +198,13 @@
                     </StackPanel>
                 </ListViewItem>
             </ListView>
-            <Grid Height="2" />
-            <Grid>
+
+            <Rectangle
+                Height="1"
+                Margin="0,8,0,0"
+                Fill="{ThemeResource ComicInfoSeparatorForeground}" />
+
+            <Grid Margin="0,4">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition />
@@ -268,6 +274,38 @@
                     </AppBarButton>
                 </StackPanel>
             </Grid>
+
+            <Rectangle
+                Height="1"
+                Margin="0,0,0,7"
+                Fill="{ThemeResource ComicInfoSeparatorForeground}" />
+
+            <Grid Margin="0,5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBlock
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    Margin="0,4,0,0"
+                    VerticalAlignment="Top"
+                    Text="Page gap" />
+                <Slider
+                    x:Name="PageGapSlider"
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    Margin="12,0,0,0"
+                    Maximum="200"
+                    Minimum="0"
+                    StepFrequency="1"
+                    ValueChanged="PageGapSlider_ValueChanged"
+                    Value="1" />
+            </Grid>
+
         </StackPanel>
     </Grid>
 </UserControl>
