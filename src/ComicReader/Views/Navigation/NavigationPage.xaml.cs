@@ -273,15 +273,19 @@ internal sealed partial class NavigationPage : BasePage
 
     private void RspReaderSetting_DataChanged(ReaderSettingDataModel data)
     {
-        AppSettingsModel.ExternalModel settingsModel = AppSettingsModel.Instance.GetModel();
-        AppSettingsModel.ReaderSettingModel readerSettings = settingsModel.DefaultReaderSetting;
-        readerSettings.VerticalReading = data.IsVertical;
-        readerSettings.LeftToRight = data.IsLeftToRight;
-        readerSettings.VerticalContinuous = data.IsVerticalContinuous;
-        readerSettings.HorizontalContinuous = data.IsHorizontalContinuous;
-        readerSettings.VerticalPageArrangement = data.VerticalPageArrangement;
-        readerSettings.HorizontalPageArrangement = data.HorizontalPageArrangement;
-        AppSettingsModel.Instance.UpdateModel(settingsModel);
+        if (data.UseDefault)
+        {
+            AppSettingsModel.ExternalModel settingsModel = AppSettingsModel.Instance.GetModel();
+            AppSettingsModel.ReaderSettingModel readerSettings = settingsModel.DefaultReaderSetting;
+            readerSettings.VerticalReading = data.IsVertical;
+            readerSettings.LeftToRight = data.IsLeftToRight;
+            readerSettings.VerticalContinuous = data.IsVerticalContinuous;
+            readerSettings.HorizontalContinuous = data.IsHorizontalContinuous;
+            readerSettings.VerticalPageArrangement = data.VerticalPageArrangement;
+            readerSettings.HorizontalPageArrangement = data.HorizontalPageArrangement;
+            readerSettings.PageGap = data.PageGap;
+            AppSettingsModel.Instance.UpdateModel(settingsModel);
+        }
 
         _ability.SendReaderSettingsChangedEvent(data);
     }

@@ -19,6 +19,7 @@ internal sealed partial class ReaderSettingPanel : BaseUserControl
     public event DataChangedEventHandler? DataChanged;
 
     private ReaderSettingDataModel _model = new();
+    private bool _updatingUI = false;
 
     public ReaderSettingPanel()
     {
@@ -135,7 +136,30 @@ internal sealed partial class ReaderSettingPanel : BaseUserControl
         DispatchDataChangeEvent();
     }
 
+    private void SaveAsDefaultToggleSwitch_Toggled(object sender, RoutedEventArgs e)
+    {
+        _model.UseDefault = SaveAsDefaultToggleSwitch.IsOn;
+        DispatchDataChangeEvent();
+    }
+
     private void UpdateUI()
+    {
+        if (_updatingUI)
+        {
+            return;
+        }
+        _updatingUI = true;
+        try
+        {
+            UpdateUIInternal();
+        }
+        finally
+        {
+            _updatingUI = false;
+        }
+    }
+
+    private void UpdateUIInternal()
     {
         PageArrangementEnum pageArrangement = _model.IsVertical ? _model.VerticalPageArrangement : _model.HorizontalPageArrangement;
         LvPageArrangement.SelectedIndex = PageArrangementToIndex(pageArrangement);
@@ -172,11 +196,16 @@ internal sealed partial class ReaderSettingPanel : BaseUserControl
         AbbContinuous.Visibility = _model.IsContinuous ? Visibility.Visible : Visibility.Collapsed;
         AbbSeperate.Visibility = _model.IsContinuous ? Visibility.Collapsed : Visibility.Visible;
 
+        SaveAsDefaultToggleSwitch.IsOn = _model.UseDefault;
         PageGapSlider.Value = Math.Clamp(_model.PageGap, 0, 200);
     }
 
     private void DispatchDataChangeEvent()
     {
+        if (_updatingUI)
+        {
+            return;
+        }
         DataChanged?.Invoke(_model);
     }
 }
