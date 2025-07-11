@@ -484,6 +484,21 @@ NOT               - 論理否定。例: NOT %tag = "hide this"
   <data name="PageGap" xml:space="preserve">
     <value>ページ間隔</value>
   </data>
+  <data name="PageLayoutDualNoCover" xml:space="preserve">
+    <value>2ページ、表紙なし</value>
+  </data>
+  <data name="PageLayoutDualNoCoverMirrored" xml:space="preserve">
+    <value>2ページ、表紙なし、ミラーリング</value>
+  </data>
+  <data name="PageLayoutDualWithCover" xml:space="preserve">
+    <value>2ページ、表紙</value>
+  </data>
+  <data name="PageLayoutDualWithCoverMirrored" xml:space="preserve">
+    <value>2ページ、表紙、ミラーリング</value>
+  </data>
+  <data name="PageLayoutSingle" xml:space="preserve">
+    <value>シングルページ</value>
+  </data>
   <data name="PrivacyPolicy.Text" xml:space="preserve">
     <value>プライバシーポリシー</value>
   </data>
@@ -537,6 +552,9 @@ NOT               - 論理否定。例: NOT %tag = "hide this"
   </data>
   <data name="RightToLeftButton.Label" xml:space="preserve">
     <value>右から左へ</value>
+  </data>
+  <data name="SaveAsDefaultConfig" xml:space="preserve">
+    <value>デフォルト設定として保存</value>
   </data>
   <data name="SaveAsNewButton.Content" xml:space="preserve">
     <value>新しい構成として保存</value>

@@ -13,8 +13,10 @@
 
     <base:BaseUserControl.Resources>
         <ResourceDictionary>
+
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/Styles/AppBarButton.xaml" />
+                <ResourceDictionary Source="/Styles/ToggleSwitch.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <Style x:Key="PageArrangementListViewItemStyle" TargetType="ListViewItem">
@@ -26,7 +28,7 @@
                 <Setter Property="IsHoldingEnabled" Value="True" />
                 <Setter Property="Padding" Value="50,9" />
                 <Setter Property="Margin" Value="-50,-3" />
-                <Setter Property="HorizontalContentAlignment" Value="Left" />
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                 <Setter Property="VerticalContentAlignment" Value="Center" />
                 <Setter Property="MinWidth" Value="{ThemeResource ListViewItemMinWidth}" />
                 <Setter Property="MinHeight" Value="{ThemeResource ListViewItemMinHeight}" />
@@ -83,7 +85,6 @@
                 </Setter>
             </Style>
 
-            <!--  Converters  -->
             <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
             <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
 
@@ -92,6 +93,7 @@
 
     <StackPanel Orientation="Vertical">
 
+        <!--  Page arrangement  -->
         <ListView
             x:Name="LvPageArrangement"
             Margin="-50,0"
@@ -101,102 +103,178 @@
 
             <!--  Single  -->
             <ListViewItem Style="{StaticResource PageArrangementListViewItemStyle}">
-                <StackPanel
-                    x:Name="SpDemoSingle"
-                    Margin="3,0"
-                    Orientation="Horizontal"
-                    Spacing="6">
-                    <reader:PageDemoSingle x:Name="PdsDemoSingle1" Header="1" />
-                    <reader:PageDemoSingle x:Name="PdsDemoSingle2" Header="2" />
-                    <reader:PageDemoSingle x:Name="PdsDemoSingle3" Header="3" />
-                    <reader:PageDemoSingle x:Name="PdsDemoSingle4" Header="4" />
-                    <reader:PageDemoSingle x:Name="PdsDemoSingle5" Header="5" />
-                </StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock
+                        Grid.Column="0"
+                        MaxWidth="200"
+                        Margin="0,0,12,0"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        Text="{x:Bind StringResource.PageLayoutSingle}"
+                        TextWrapping="WrapWholeWords" />
+                    <StackPanel
+                        x:Name="SpDemoSingle"
+                        Grid.Column="1"
+                        Margin="3,0"
+                        Orientation="Horizontal"
+                        Spacing="6">
+                        <reader:PageDemoSingle x:Name="PdsDemoSingle1" Header="1" />
+                        <reader:PageDemoSingle x:Name="PdsDemoSingle2" Header="2" />
+                        <reader:PageDemoSingle x:Name="PdsDemoSingle3" Header="3" />
+                        <reader:PageDemoSingle x:Name="PdsDemoSingle4" Header="4" />
+                        <reader:PageDemoSingle x:Name="PdsDemoSingle5" Header="5" />
+                    </StackPanel>
+                </Grid>
             </ListViewItem>
 
             <!--  DualCover  -->
             <ListViewItem Style="{StaticResource PageArrangementListViewItemStyle}">
-                <StackPanel
-                    x:Name="SpDemoDualCover"
-                    Margin="3,0"
-                    Orientation="Horizontal"
-                    Spacing="6">
-                    <reader:PageDemoSingle x:Name="PdsDemoDual1" Header="1" />
-                    <reader:PageDemoDual
-                        x:Name="PdsDemoDual2"
-                        FlowDirection="LeftToRight"
-                        HeaderL="2"
-                        HeaderR="3" />
-                    <reader:PageDemoDual
-                        x:Name="PdsDemoDual3"
-                        FlowDirection="LeftToRight"
-                        HeaderL="4"
-                        HeaderR="5" />
-                </StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock
+                        Grid.Column="0"
+                        MaxWidth="200"
+                        Margin="0,0,12,0"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        Text="{x:Bind StringResource.PageLayoutDualWithCover}"
+                        TextWrapping="WrapWholeWords" />
+                    <StackPanel
+                        x:Name="SpDemoDualCover"
+                        Grid.Column="1"
+                        Margin="3,0"
+                        Orientation="Horizontal"
+                        Spacing="6">
+                        <reader:PageDemoSingle x:Name="PdsDemoDual1" Header="1" />
+                        <reader:PageDemoDual
+                            x:Name="PdsDemoDual2"
+                            FlowDirection="LeftToRight"
+                            HeaderL="2"
+                            HeaderR="3" />
+                        <reader:PageDemoDual
+                            x:Name="PdsDemoDual3"
+                            FlowDirection="LeftToRight"
+                            HeaderL="4"
+                            HeaderR="5" />
+                    </StackPanel>
+                </Grid>
             </ListViewItem>
 
             <!--  DualCoverMirror  -->
             <ListViewItem Style="{StaticResource PageArrangementListViewItemStyle}">
-                <StackPanel
-                    x:Name="SpDemoDualCoverMirror"
-                    Margin="3,0"
-                    Orientation="Horizontal"
-                    Spacing="6">
-                    <reader:PageDemoSingle x:Name="PdsDemoDualCoverMirror1" Header="1" />
-                    <reader:PageDemoDual
-                        x:Name="PdsDemoDualCoverMirror2"
-                        FlowDirection="LeftToRight"
-                        HeaderL="3"
-                        HeaderR="2" />
-                    <reader:PageDemoDual
-                        x:Name="PdsDemoDualCoverMirror3"
-                        FlowDirection="LeftToRight"
-                        HeaderL="5"
-                        HeaderR="4" />
-                </StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock
+                        Grid.Column="0"
+                        MaxWidth="200"
+                        Margin="0,0,12,0"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        Text="{x:Bind StringResource.PageLayoutDualWithCoverMirrored}"
+                        TextWrapping="WrapWholeWords" />
+                    <StackPanel
+                        x:Name="SpDemoDualCoverMirror"
+                        Grid.Column="1"
+                        Margin="3,0"
+                        Orientation="Horizontal"
+                        Spacing="6">
+                        <reader:PageDemoSingle x:Name="PdsDemoDualCoverMirror1" Header="1" />
+                        <reader:PageDemoDual
+                            x:Name="PdsDemoDualCoverMirror2"
+                            FlowDirection="LeftToRight"
+                            HeaderL="3"
+                            HeaderR="2" />
+                        <reader:PageDemoDual
+                            x:Name="PdsDemoDualCoverMirror3"
+                            FlowDirection="LeftToRight"
+                            HeaderL="5"
+                            HeaderR="4" />
+                    </StackPanel>
+                </Grid>
             </ListViewItem>
 
             <!--  DualNoCover  -->
             <ListViewItem Style="{StaticResource PageArrangementListViewItemStyle}">
-                <StackPanel
-                    x:Name="SpDemoDualNoCover"
-                    Margin="3,0"
-                    Orientation="Horizontal"
-                    Spacing="6">
-                    <reader:PageDemoDual
-                        x:Name="PdsDemoDualNoCover1"
-                        FlowDirection="LeftToRight"
-                        HeaderL="1"
-                        HeaderR="2" />
-                    <reader:PageDemoDual
-                        x:Name="PdsDemoDualNoCover2"
-                        FlowDirection="LeftToRight"
-                        HeaderL="3"
-                        HeaderR="4" />
-                    <reader:PageDemoSingle x:Name="PdsDemoDualNoCover3" Header="5" />
-                </StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock
+                        Grid.Column="0"
+                        MaxWidth="200"
+                        Margin="0,0,12,0"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        Text="{x:Bind StringResource.PageLayoutDualNoCover}"
+                        TextWrapping="WrapWholeWords" />
+                    <StackPanel
+                        x:Name="SpDemoDualNoCover"
+                        Grid.Column="1"
+                        Margin="3,0"
+                        Orientation="Horizontal"
+                        Spacing="6">
+                        <reader:PageDemoDual
+                            x:Name="PdsDemoDualNoCover1"
+                            FlowDirection="LeftToRight"
+                            HeaderL="1"
+                            HeaderR="2" />
+                        <reader:PageDemoDual
+                            x:Name="PdsDemoDualNoCover2"
+                            FlowDirection="LeftToRight"
+                            HeaderL="3"
+                            HeaderR="4" />
+                        <reader:PageDemoSingle x:Name="PdsDemoDualNoCover3" Header="5" />
+                    </StackPanel>
+                </Grid>
             </ListViewItem>
 
             <!--  DualNoCoverMirror  -->
             <ListViewItem Style="{StaticResource PageArrangementListViewItemStyle}">
-                <StackPanel
-                    x:Name="SpDemoDualNoCoverMirror"
-                    Margin="3,0"
-                    Orientation="Horizontal"
-                    Spacing="6">
-                    <reader:PageDemoDual
-                        x:Name="PdsDemoDualNoCoverMirror1"
-                        FlowDirection="LeftToRight"
-                        HeaderL="2"
-                        HeaderR="1" />
-                    <reader:PageDemoDual
-                        x:Name="PdsDemoDualNoCoverMirror2"
-                        FlowDirection="LeftToRight"
-                        HeaderL="4"
-                        HeaderR="3" />
-                    <reader:PageDemoSingle x:Name="PdsDemoDualNoCoverMirror3" Header="5" />
-                </StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock
+                        Grid.Column="0"
+                        MaxWidth="200"
+                        Margin="0,0,12,0"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Center"
+                        Text="{x:Bind StringResource.PageLayoutDualNoCoverMirrored}"
+                        TextWrapping="WrapWholeWords" />
+                    <StackPanel
+                        x:Name="SpDemoDualNoCoverMirror"
+                        Grid.Column="1"
+                        Margin="3,0"
+                        Orientation="Horizontal"
+                        Spacing="6">
+                        <reader:PageDemoDual
+                            x:Name="PdsDemoDualNoCoverMirror1"
+                            FlowDirection="LeftToRight"
+                            HeaderL="2"
+                            HeaderR="1" />
+                        <reader:PageDemoDual
+                            x:Name="PdsDemoDualNoCoverMirror2"
+                            FlowDirection="LeftToRight"
+                            HeaderL="4"
+                            HeaderR="3" />
+                        <reader:PageDemoSingle x:Name="PdsDemoDualNoCoverMirror3" Header="5" />
+                    </StackPanel>
+                </Grid>
             </ListViewItem>
+
         </ListView>
 
         <Rectangle
@@ -211,6 +289,7 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0" Orientation="Horizontal">
+
                 <!--  Vertical/Horizontal  -->
                 <AppBarButton
                     x:Name="AbbVertical"
@@ -250,9 +329,11 @@
                         <FontIcon Glyph="&#xEC52;" />
                     </Grid>
                 </AppBarButton>
+
             </StackPanel>
 
             <StackPanel Grid.Column="2" Orientation="Horizontal">
+
                 <!--  Continuous reading  -->
                 <AppBarButton
                     x:Name="AbbContinuous"
@@ -272,6 +353,7 @@
                         <FontIcon Glyph="&#xE7C3;" />
                     </Grid>
                 </AppBarButton>
+
             </StackPanel>
         </Grid>
 
@@ -280,10 +362,16 @@
             Margin="0,0,0,7"
             Fill="{ThemeResource ComicInfoSeparatorForeground}" />
 
-        <Grid Margin="0,5">
+        <!--  Page spacing  -->
+        <Grid Margin="0,5,0,0">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="12" />
                 <ColumnDefinition Width="*" />
+                <ColumnDefinition
+                    Width="10000*"
+                    MinWidth="120"
+                    MaxWidth="180" />
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -291,19 +379,44 @@
             <TextBlock
                 Grid.Row="0"
                 Grid.Column="0"
-                Margin="0,4,0,0"
-                VerticalAlignment="Top"
+                Margin="0,0,0,8"
+                VerticalAlignment="Bottom"
                 Text="{x:Bind StringResource.PageGap}" />
             <Slider
                 x:Name="PageGapSlider"
                 Grid.Row="0"
-                Grid.Column="1"
-                Margin="12,0,0,0"
+                Grid.Column="3"
                 Maximum="200"
                 Minimum="0"
                 StepFrequency="1"
                 ValueChanged="PageGapSlider_ValueChanged"
                 Value="1" />
+        </Grid>
+
+        <!--  Save as default configs  -->
+        <Grid Margin="0,5,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="12" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <TextBlock
+                Grid.Row="0"
+                Grid.Column="0"
+                Margin="0,0,0,3"
+                VerticalAlignment="Bottom"
+                Text="{x:Bind StringResource.SaveAsDefaultConfig}" />
+            <ToggleSwitch
+                x:Name="SaveAsDefaultToggleSwitch"
+                Grid.Row="0"
+                Grid.Column="3"
+                IsOn="True"
+                Style="{StaticResource CompatToggleSwitchStyle}"
+                Toggled="SaveAsDefaultToggleSwitch_Toggled" />
         </Grid>
 
     </StackPanel>
