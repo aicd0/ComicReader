@@ -486,6 +486,21 @@ The evaluation will be performed in the following order:
   <data name="PageGap" xml:space="preserve">
     <value>Page spacing</value>
   </data>
+  <data name="PageLayoutDualNoCover" xml:space="preserve">
+    <value>Dual, no cover</value>
+  </data>
+  <data name="PageLayoutDualNoCoverMirrored" xml:space="preserve">
+    <value>Dual, no cover, mirrored</value>
+  </data>
+  <data name="PageLayoutDualWithCover" xml:space="preserve">
+    <value>Dual, with cover</value>
+  </data>
+  <data name="PageLayoutDualWithCoverMirrored" xml:space="preserve">
+    <value>Dual, with cover, mirrored</value>
+  </data>
+  <data name="PageLayoutSingle" xml:space="preserve">
+    <value>Single</value>
+  </data>
   <data name="PrivacyPolicy.Text" xml:space="preserve">
     <value>Privacy Policy</value>
   </data>
@@ -539,6 +554,9 @@ The evaluation will be performed in the following order:
   </data>
   <data name="RightToLeftButton.Label" xml:space="preserve">
     <value>R to L</value>
+  </data>
+  <data name="SaveAsDefaultConfig" xml:space="preserve">
+    <value>Save as default configurations</value>
   </data>
   <data name="SaveAsNewButton.Content" xml:space="preserve">
     <value>Save as new</value>

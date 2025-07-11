@@ -110,9 +110,12 @@
                     </Grid.ColumnDefinitions>
                     <TextBlock
                         Grid.Column="0"
+                        MaxWidth="200"
                         Margin="0,0,12,0"
+                        HorizontalAlignment="Left"
                         VerticalAlignment="Center"
-                        Text="Single" />
+                        Text="{x:Bind StringResource.PageLayoutSingle}"
+                        TextWrapping="WrapWholeWords" />
                     <StackPanel
                         x:Name="SpDemoSingle"
                         Grid.Column="1"
@@ -137,9 +140,12 @@
                     </Grid.ColumnDefinitions>
                     <TextBlock
                         Grid.Column="0"
+                        MaxWidth="200"
                         Margin="0,0,12,0"
+                        HorizontalAlignment="Left"
                         VerticalAlignment="Center"
-                        Text="Dual, with cover" />
+                        Text="{x:Bind StringResource.PageLayoutDualWithCover}"
+                        TextWrapping="WrapWholeWords" />
                     <StackPanel
                         x:Name="SpDemoDualCover"
                         Grid.Column="1"
@@ -170,9 +176,12 @@
                     </Grid.ColumnDefinitions>
                     <TextBlock
                         Grid.Column="0"
+                        MaxWidth="200"
                         Margin="0,0,12,0"
+                        HorizontalAlignment="Left"
                         VerticalAlignment="Center"
-                        Text="Dual, with cover, mirrored" />
+                        Text="{x:Bind StringResource.PageLayoutDualWithCoverMirrored}"
+                        TextWrapping="WrapWholeWords" />
                     <StackPanel
                         x:Name="SpDemoDualCoverMirror"
                         Grid.Column="1"
@@ -203,9 +212,12 @@
                     </Grid.ColumnDefinitions>
                     <TextBlock
                         Grid.Column="0"
+                        MaxWidth="200"
                         Margin="0,0,12,0"
+                        HorizontalAlignment="Left"
                         VerticalAlignment="Center"
-                        Text="Dual, no cover" />
+                        Text="{x:Bind StringResource.PageLayoutDualNoCover}"
+                        TextWrapping="WrapWholeWords" />
                     <StackPanel
                         x:Name="SpDemoDualNoCover"
                         Grid.Column="1"
@@ -236,9 +248,12 @@
                     </Grid.ColumnDefinitions>
                     <TextBlock
                         Grid.Column="0"
+                        MaxWidth="200"
                         Margin="0,0,12,0"
+                        HorizontalAlignment="Left"
                         VerticalAlignment="Center"
-                        Text="Dual, no cover, mirrored" />
+                        Text="{x:Bind StringResource.PageLayoutDualNoCoverMirrored}"
+                        TextWrapping="WrapWholeWords" />
                     <StackPanel
                         x:Name="SpDemoDualNoCoverMirror"
                         Grid.Column="1"
@@ -394,7 +409,7 @@
                 Grid.Column="0"
                 Margin="0,0,0,3"
                 VerticalAlignment="Bottom"
-                Text="Save as default configurations" />
+                Text="{x:Bind StringResource.SaveAsDefaultConfig}" />
             <ToggleSwitch
                 x:Name="SaveAsDefaultToggleSwitch"
                 Grid.Row="0"
