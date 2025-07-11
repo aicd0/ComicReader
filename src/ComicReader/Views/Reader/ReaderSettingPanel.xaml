@@ -363,7 +363,7 @@
             Fill="{ThemeResource ComicInfoSeparatorForeground}" />
 
         <!--  Page spacing  -->
-        <Grid Margin="0,5,0,0">
+        <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="12" />
@@ -374,18 +374,19 @@
                     MaxWidth="180" />
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
+                <RowDefinition Height="30" />
             </Grid.RowDefinitions>
             <TextBlock
                 Grid.Row="0"
                 Grid.Column="0"
-                Margin="0,0,0,8"
-                VerticalAlignment="Bottom"
+                Margin="0,0,0,2"
+                VerticalAlignment="Center"
                 Text="{x:Bind StringResource.PageGap}" />
             <Slider
                 x:Name="PageGapSlider"
                 Grid.Row="0"
                 Grid.Column="3"
+                Margin="0,-1,0,0"
                 Maximum="200"
                 Minimum="0"
                 StepFrequency="1"
@@ -394,7 +395,7 @@
         </Grid>
 
         <!--  Save as default configs  -->
-        <Grid Margin="0,5,0,10">
+        <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="12" />
@@ -402,13 +403,13 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
+                <RowDefinition Height="30" />
             </Grid.RowDefinitions>
             <TextBlock
                 Grid.Row="0"
                 Grid.Column="0"
-                Margin="0,0,0,3"
-                VerticalAlignment="Bottom"
+                Margin="0,0,0,2"
+                VerticalAlignment="Center"
                 Text="{x:Bind StringResource.SaveAsDefaultConfig}" />
             <ToggleSwitch
                 x:Name="SaveAsDefaultToggleSwitch"
