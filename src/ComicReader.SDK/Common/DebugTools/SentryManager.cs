@@ -42,7 +42,7 @@ public static class SentryManager
         });
         _initialized = true;
 
-        CaptureInfo("SentryInit");
+        //CaptureInfo("SentryInit");
     }
 
     public static void CaptureInfo(string message)
