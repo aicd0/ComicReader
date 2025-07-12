@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Common.Services;
@@ -53,7 +52,7 @@ public partial class App : Application
             return;
         }
 
-        await InitializeOnAppLaunch();
+        InitializeOnAppLaunch();
 
         // Initialize MainWindow here
         var window = new MainWindow("");
@@ -135,7 +134,7 @@ public partial class App : Application
         }
     }
 
-    private async Task InitializeOnAppLaunch()
+    private void InitializeOnAppLaunch()
     {
         // Initialize debug switches
         DebugSwitchModel.Instance.Initialize();
@@ -144,7 +143,7 @@ public partial class App : Application
         Logger.Initialize();
 
         // Initialize databases
-        await XmlDatabaseManager.Initialize();
+        XmlDatabaseManager.Initialize();
         SqlDatabaseManager.Initialize();
         DatabaseUpgradeManager.Instance.UpgradeDatabase();
 
