@@ -52,14 +52,15 @@ public sealed partial class MainWindow : Window
         _url = url;
 
         InitializeComponent();
+
         WindowId = App.WindowManager.RegisterWindow(this);
         WindowHandle = WindowNative.GetWindowHandle(this);
 
         Title = StringResourceProvider.Instance.AppDisplayName;
         ExtendsContentIntoTitleBar = true;
         TrySetAcrylicBackdrop();
-
         SetWindowIcon();
+        SubscribeEvents();
     }
 
     //
@@ -80,6 +81,20 @@ public sealed partial class MainWindow : Window
 
     // IMPORTANT: Handle event registration and unregistration in the code-behind file,
     // do not use XAML for this purpose in order to prevent memory leaks.
+
+    private void SubscribeEvents()
+    {
+        PageFrame.Loaded += OnPageFrameLoaded;
+        Closed += OnWindowClosed;
+        SizeChanged += OnWindowSizeChanged;
+    }
+
+    private void UnsubscribeEvents()
+    {
+        PageFrame.Loaded -= OnPageFrameLoaded;
+        Closed -= OnWindowClosed;
+        SizeChanged -= OnWindowSizeChanged;
+    }
 
     private void OnWindowSizeChanged(object sender, WindowSizeChangedEventArgs args)
     {
@@ -108,9 +123,9 @@ public sealed partial class MainWindow : Window
     private void OnWindowClosed(object sender, WindowEventArgs args)
     {
         _mainPage.CloseAllTabs();
-        PageFrame.Loaded -= OnPageFrameLoaded;
-        App.WindowManager.UnregisterWindow(WindowId);
 
+        UnsubscribeEvents();
+        App.WindowManager.UnregisterWindow(WindowId);
         _mainPage = null;
         _url = null;
         PageFrame.Content = null;
