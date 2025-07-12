@@ -1,6 +1,8 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
+using System;
+
 using ComicReader.Common.Services;
 using ComicReader.Data;
 using ComicReader.Data.Legacy;
@@ -21,11 +23,20 @@ internal class InitTaskManager(Application application)
 
     public void InitOnAppCreate()
     {
+        FailFastOnException(InitOnAppCreateInternal);
+    }
+
+    public void InitOnAppLaunch()
+    {
+        FailFastOnException(InitOnAppLaunchInternal);
+    }
+
+    private void InitOnAppCreateInternal()
+    {
         // Register crash handler
         _application.UnhandledException += (_, e) =>
         {
-            SentryManager.CaptureError(e.Exception);
-            CrashHandler.OnUnhandledException(e.Exception);
+            CaptureFatalError(e.Exception);
         };
 
         // Register services
@@ -45,7 +56,7 @@ internal class InitTaskManager(Application application)
         InitializeAppTheme();
     }
 
-    public void InitOnAppLaunch()
+    private void InitOnAppLaunchInternal()
     {
         // Initialize debug switches
         DebugSwitchModel.Instance.Initialize();
@@ -90,5 +101,25 @@ internal class InitTaskManager(Application application)
             ApplicationLanguages.PrimaryLanguageOverride = languageTag;
             EnvironmentProvider.Instance.SetCurrentAppLanguage(languageTag);
         }
+    }
+
+    private void FailFastOnException(Action action)
+    {
+        try
+        {
+            action();
+        }
+        catch (Exception e)
+        {
+            CaptureFatalError(e);
+            Environment.FailFast("A fatal error occurred during startup.", e);
+            throw;
+        }
+    }
+
+    private void CaptureFatalError(Exception e)
+    {
+        SentryManager.CaptureError(e);
+        CrashHandler.OnUnhandledException(e);
     }
 }
