@@ -481,6 +481,24 @@ NOT               - 逻辑非。例如：NOT %tag = "hide this"
   <data name="OpenInNewTab" xml:space="preserve">
     <value>在新选项卡中打开</value>
   </data>
+  <data name="PageGap" xml:space="preserve">
+    <value>页面间距</value>
+  </data>
+  <data name="PageLayoutDualNoCover" xml:space="preserve">
+    <value>两页，无封面</value>
+  </data>
+  <data name="PageLayoutDualNoCoverMirrored" xml:space="preserve">
+    <value>两页，无封面，镜像</value>
+  </data>
+  <data name="PageLayoutDualWithCover" xml:space="preserve">
+    <value>两页，封面</value>
+  </data>
+  <data name="PageLayoutDualWithCoverMirrored" xml:space="preserve">
+    <value>两页，封面，镜像</value>
+  </data>
+  <data name="PageLayoutSingle" xml:space="preserve">
+    <value>单页</value>
+  </data>
   <data name="PrivacyPolicy.Text" xml:space="preserve">
     <value>隐私策略</value>
   </data>
@@ -534,6 +552,9 @@ NOT               - 逻辑非。例如：NOT %tag = "hide this"
   </data>
   <data name="RightToLeftButton.Label" xml:space="preserve">
     <value>自右向左</value>
+  </data>
+  <data name="SaveAsDefaultConfig" xml:space="preserve">
+    <value>保存为默认配置</value>
   </data>
   <data name="SaveAsNewButton.Content" xml:space="preserve">
     <value>保存为新配置</value>

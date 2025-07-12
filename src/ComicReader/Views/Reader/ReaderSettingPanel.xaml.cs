@@ -1,9 +1,10 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-#nullable disable
+using System;
 
-using ComicReader.Data.Legacy;
+using ComicReader.Common.BaseUI;
+using ComicReader.Data.Models;
 using ComicReader.SDK.Common.DebugTools;
 using ComicReader.Views.Navigation;
 
@@ -12,12 +13,13 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace ComicReader.Views.Reader;
 
-internal sealed partial class ReaderSettingPanel : UserControl
+internal sealed partial class ReaderSettingPanel : BaseUserControl
 {
     public delegate void DataChangedEventHandler(ReaderSettingDataModel data);
-    public event DataChangedEventHandler DataChanged;
+    public event DataChangedEventHandler? DataChanged;
 
-    private ReaderSettingDataModel _model;
+    private ReaderSettingDataModel _model = new();
+    private bool _updatingUI = false;
 
     public ReaderSettingPanel()
     {
@@ -27,22 +29,23 @@ internal sealed partial class ReaderSettingPanel : UserControl
     public void SetData(ReaderSettingDataModel settings)
     {
         _model = settings;
-        OnDataChanged();
+        UpdateUI();
+        DispatchDataChangeEvent();
     }
 
-    private int PageArrangementToIndex(PageArrangementType pageArrangement)
+    private int PageArrangementToIndex(PageArrangementEnum pageArrangement)
     {
         switch (pageArrangement)
         {
-            case PageArrangementType.Single:
+            case PageArrangementEnum.Single:
                 return 0;
-            case PageArrangementType.DualCover:
+            case PageArrangementEnum.DualCover:
                 return 1;
-            case PageArrangementType.DualCoverMirror:
+            case PageArrangementEnum.DualCoverMirror:
                 return 2;
-            case PageArrangementType.DualNoCover:
+            case PageArrangementEnum.DualNoCover:
                 return 3;
-            case PageArrangementType.DualNoCoverMirror:
+            case PageArrangementEnum.DualNoCoverMirror:
                 return 4;
             default:
                 Logger.AssertNotReachHere("979D38CE673E1BC0");
@@ -50,29 +53,29 @@ internal sealed partial class ReaderSettingPanel : UserControl
         }
     }
 
-    private PageArrangementType IndexToPageArrangement(int index)
+    private PageArrangementEnum IndexToPageArrangement(int index)
     {
         switch (index)
         {
             case 0:
-                return PageArrangementType.Single;
+                return PageArrangementEnum.Single;
             case 1:
-                return PageArrangementType.DualCover;
+                return PageArrangementEnum.DualCover;
             case 2:
-                return PageArrangementType.DualCoverMirror;
+                return PageArrangementEnum.DualCoverMirror;
             case 3:
-                return PageArrangementType.DualNoCover;
+                return PageArrangementEnum.DualNoCover;
             case 4:
-                return PageArrangementType.DualNoCoverMirror;
+                return PageArrangementEnum.DualNoCoverMirror;
             default:
                 Logger.AssertNotReachHere("B8CA81937666C2FB");
-                return PageArrangementType.Single;
+                return PageArrangementEnum.Single;
         }
     }
 
     private void LvPageArrangement_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        PageArrangementType pageArrangement = IndexToPageArrangement(LvPageArrangement.SelectedIndex);
+        PageArrangementEnum pageArrangement = IndexToPageArrangement(LvPageArrangement.SelectedIndex);
         if (_model.IsVertical)
         {
             _model.VerticalPageArrangement = pageArrangement;
@@ -81,67 +84,102 @@ internal sealed partial class ReaderSettingPanel : UserControl
         {
             _model.HorizontalPageArrangement = pageArrangement;
         }
-
-        OnDataChanged();
+        UpdateUI();
+        DispatchDataChangeEvent();
     }
 
     private void AbbVertical_Click(object sender, RoutedEventArgs e)
     {
         _model.IsVertical = false;
-        OnDataChanged();
+        UpdateUI();
+        DispatchDataChangeEvent();
     }
 
     private void AbbHorizontal_Click(object sender, RoutedEventArgs e)
     {
         _model.IsVertical = true;
-        OnDataChanged();
+        UpdateUI();
+        DispatchDataChangeEvent();
     }
 
     private void AbbLeftToRight_Click(object sender, RoutedEventArgs e)
     {
         _model.IsLeftToRight = false;
-        OnDataChanged();
+        UpdateUI();
+        DispatchDataChangeEvent();
     }
 
     private void AbbRightToLeft_Click(object sender, RoutedEventArgs e)
     {
         _model.IsLeftToRight = true;
-        OnDataChanged();
+        UpdateUI();
+        DispatchDataChangeEvent();
     }
 
     private void AbbSeperate_Click(object sender, RoutedEventArgs e)
     {
         _model.IsContinuous = true;
-        OnDataChanged();
+        UpdateUI();
+        DispatchDataChangeEvent();
     }
 
     private void AbbContinuous_Click(object sender, RoutedEventArgs e)
     {
         _model.IsContinuous = false;
-        OnDataChanged();
+        UpdateUI();
+        DispatchDataChangeEvent();
     }
 
-    private void OnDataChanged()
+    private void PageGapSlider_ValueChanged(object sender, Microsoft.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
     {
-        PageArrangementType pageArrangement = _model.IsVertical ? _model.VerticalPageArrangement : _model.HorizontalPageArrangement;
+        _model.PageGap = Math.Clamp((int)e.NewValue, 0, 200);
+        DispatchDataChangeEvent();
+    }
+
+    private void SaveAsDefaultToggleSwitch_Toggled(object sender, RoutedEventArgs e)
+    {
+        _model.UseDefault = SaveAsDefaultToggleSwitch.IsOn;
+        DispatchDataChangeEvent();
+    }
+
+    private void UpdateUI()
+    {
+        if (_updatingUI)
+        {
+            return;
+        }
+        _updatingUI = true;
+        try
+        {
+            UpdateUIInternal();
+        }
+        finally
+        {
+            _updatingUI = false;
+        }
+    }
+
+    private void UpdateUIInternal()
+    {
+        PageArrangementEnum pageArrangement = _model.IsVertical ? _model.VerticalPageArrangement : _model.HorizontalPageArrangement;
         LvPageArrangement.SelectedIndex = PageArrangementToIndex(pageArrangement);
-        PdsDemoSingle1.IsHighlight = pageArrangement == PageArrangementType.Single;
-        PdsDemoSingle2.IsHighlight = pageArrangement == PageArrangementType.Single;
-        PdsDemoSingle3.IsHighlight = pageArrangement == PageArrangementType.Single;
-        PdsDemoSingle4.IsHighlight = pageArrangement == PageArrangementType.Single;
-        PdsDemoSingle5.IsHighlight = pageArrangement == PageArrangementType.Single;
-        PdsDemoDual1.IsHighlight = pageArrangement == PageArrangementType.DualCover;
-        PdsDemoDual2.IsHighlight = pageArrangement == PageArrangementType.DualCover;
-        PdsDemoDual3.IsHighlight = pageArrangement == PageArrangementType.DualCover;
-        PdsDemoDualCoverMirror1.IsHighlight = pageArrangement == PageArrangementType.DualCoverMirror;
-        PdsDemoDualCoverMirror2.IsHighlight = pageArrangement == PageArrangementType.DualCoverMirror;
-        PdsDemoDualCoverMirror3.IsHighlight = pageArrangement == PageArrangementType.DualCoverMirror;
-        PdsDemoDualNoCover1.IsHighlight = pageArrangement == PageArrangementType.DualNoCover;
-        PdsDemoDualNoCover2.IsHighlight = pageArrangement == PageArrangementType.DualNoCover;
-        PdsDemoDualNoCover3.IsHighlight = pageArrangement == PageArrangementType.DualNoCover;
-        PdsDemoDualNoCoverMirror1.IsHighlight = pageArrangement == PageArrangementType.DualNoCoverMirror;
-        PdsDemoDualNoCoverMirror2.IsHighlight = pageArrangement == PageArrangementType.DualNoCoverMirror;
-        PdsDemoDualNoCoverMirror3.IsHighlight = pageArrangement == PageArrangementType.DualNoCoverMirror;
+        PdsDemoSingle1.IsHighlight = pageArrangement == PageArrangementEnum.Single;
+        PdsDemoSingle2.IsHighlight = pageArrangement == PageArrangementEnum.Single;
+        PdsDemoSingle3.IsHighlight = pageArrangement == PageArrangementEnum.Single;
+        PdsDemoSingle4.IsHighlight = pageArrangement == PageArrangementEnum.Single;
+        PdsDemoSingle5.IsHighlight = pageArrangement == PageArrangementEnum.Single;
+        PdsDemoDual1.IsHighlight = pageArrangement == PageArrangementEnum.DualCover;
+        PdsDemoDual2.IsHighlight = pageArrangement == PageArrangementEnum.DualCover;
+        PdsDemoDual3.IsHighlight = pageArrangement == PageArrangementEnum.DualCover;
+        PdsDemoDualCoverMirror1.IsHighlight = pageArrangement == PageArrangementEnum.DualCoverMirror;
+        PdsDemoDualCoverMirror2.IsHighlight = pageArrangement == PageArrangementEnum.DualCoverMirror;
+        PdsDemoDualCoverMirror3.IsHighlight = pageArrangement == PageArrangementEnum.DualCoverMirror;
+        PdsDemoDualNoCover1.IsHighlight = pageArrangement == PageArrangementEnum.DualNoCover;
+        PdsDemoDualNoCover2.IsHighlight = pageArrangement == PageArrangementEnum.DualNoCover;
+        PdsDemoDualNoCover3.IsHighlight = pageArrangement == PageArrangementEnum.DualNoCover;
+        PdsDemoDualNoCoverMirror1.IsHighlight = pageArrangement == PageArrangementEnum.DualNoCoverMirror;
+        PdsDemoDualNoCoverMirror2.IsHighlight = pageArrangement == PageArrangementEnum.DualNoCoverMirror;
+        PdsDemoDualNoCoverMirror3.IsHighlight = pageArrangement == PageArrangementEnum.DualNoCoverMirror;
 
         FlowDirection flowDirection = _model.IsLeftToRight ? FlowDirection.LeftToRight : FlowDirection.RightToLeft;
         FlowDirection demoPageFlowDirection = _model.IsVertical ? FlowDirection.LeftToRight : flowDirection;
@@ -158,6 +196,16 @@ internal sealed partial class ReaderSettingPanel : UserControl
         AbbContinuous.Visibility = _model.IsContinuous ? Visibility.Visible : Visibility.Collapsed;
         AbbSeperate.Visibility = _model.IsContinuous ? Visibility.Collapsed : Visibility.Visible;
 
+        SaveAsDefaultToggleSwitch.IsOn = _model.UseDefault;
+        PageGapSlider.Value = Math.Clamp(_model.PageGap, 0, 200);
+    }
+
+    private void DispatchDataChangeEvent()
+    {
+        if (_updatingUI)
+        {
+            return;
+        }
         DataChanged?.Invoke(_model);
     }
 }

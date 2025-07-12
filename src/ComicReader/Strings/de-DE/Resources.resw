@@ -481,6 +481,24 @@ Die Auswertung erfolgt in der folgenden Reihenfolge:
   <data name="OpenInNewTab" xml:space="preserve">
     <value>In neuem Tab öffnen</value>
   </data>
+  <data name="PageGap" xml:space="preserve">
+    <value>Seitenabstand</value>
+  </data>
+  <data name="PageLayoutDualNoCover" xml:space="preserve">
+    <value>Zwei Seiten, kein cover</value>
+  </data>
+  <data name="PageLayoutDualNoCoverMirrored" xml:space="preserve">
+    <value>Zwei Seiten, kein cover, gespiegelt</value>
+  </data>
+  <data name="PageLayoutDualWithCover" xml:space="preserve">
+    <value>Zwei Seiten, cover</value>
+  </data>
+  <data name="PageLayoutDualWithCoverMirrored" xml:space="preserve">
+    <value>Zwei Seiten, cover, gespiegelt</value>
+  </data>
+  <data name="PageLayoutSingle" xml:space="preserve">
+    <value>Einzelne Seite</value>
+  </data>
   <data name="PrivacyPolicy.Text" xml:space="preserve">
     <value>Datenschutzrichtlinie</value>
   </data>
@@ -534,6 +552,9 @@ Die Auswertung erfolgt in der folgenden Reihenfolge:
   </data>
   <data name="RightToLeftButton.Label" xml:space="preserve">
     <value>Von rechts nach links</value>
+  </data>
+  <data name="SaveAsDefaultConfig" xml:space="preserve">
+    <value>Als Standardkonfigurationen speichern</value>
   </data>
   <data name="SaveAsNewButton.Content" xml:space="preserve">
     <value>Als neu speichern</value>

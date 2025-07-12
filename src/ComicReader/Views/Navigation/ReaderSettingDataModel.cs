@@ -1,18 +1,20 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-using ComicReader.Data.Legacy;
+using ComicReader.Data.Models;
 
 namespace ComicReader.Views.Navigation;
 
 internal class ReaderSettingDataModel
 {
+    public bool UseDefault { get; set; } = true;
     public bool IsVertical { get; set; } = true;
     public bool IsLeftToRight { get; set; } = false;
     public bool IsVerticalContinuous { get; set; } = false;
     public bool IsHorizontalContinuous { get; set; } = false;
-    public PageArrangementType VerticalPageArrangement { get; set; } = PageArrangementType.Single;
-    public PageArrangementType HorizontalPageArrangement { get; set; } = PageArrangementType.DualCover;
+    public PageArrangementEnum VerticalPageArrangement { get; set; } = PageArrangementEnum.Single;
+    public PageArrangementEnum HorizontalPageArrangement { get; set; } = PageArrangementEnum.DualCover;
+    public int PageGap { get; set; } = 100;
 
     public bool IsContinuous
     {
@@ -33,7 +35,7 @@ internal class ReaderSettingDataModel
         }
     }
 
-    public PageArrangementType PageArrangement
+    public PageArrangementEnum PageArrangement
     {
         get
         {
@@ -43,13 +45,17 @@ internal class ReaderSettingDataModel
 
     public ReaderSettingDataModel Clone()
     {
-        var clone = new ReaderSettingDataModel();
-        clone.IsVertical = IsVertical;
-        clone.IsLeftToRight = IsLeftToRight;
-        clone.IsVerticalContinuous = IsVerticalContinuous;
-        clone.IsHorizontalContinuous = IsHorizontalContinuous;
-        clone.VerticalPageArrangement = VerticalPageArrangement;
-        clone.HorizontalPageArrangement = HorizontalPageArrangement;
+        var clone = new ReaderSettingDataModel
+        {
+            UseDefault = UseDefault,
+            IsVertical = IsVertical,
+            IsLeftToRight = IsLeftToRight,
+            IsVerticalContinuous = IsVerticalContinuous,
+            IsHorizontalContinuous = IsHorizontalContinuous,
+            VerticalPageArrangement = VerticalPageArrangement,
+            HorizontalPageArrangement = HorizontalPageArrangement,
+            PageGap = PageGap,
+        };
         return clone;
     }
 }

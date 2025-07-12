@@ -85,14 +85,12 @@ class StringUtils
 
     public static string Join(string seperator, IEnumerable<string> list)
     {
-        if (list.Count() == 0)
+        if (!list.Any())
         {
             return "";
         }
-
-        string res = list.First();
+        StringBuilder res = new(list.First());
         bool first = true;
-
         foreach (string s in list)
         {
             if (first)
@@ -100,49 +98,66 @@ class StringUtils
                 first = false;
                 continue;
             }
-
-            res += seperator + s;
+            res.Append(seperator).Append(s);
         }
-
-        return res;
+        return res.ToString();
     }
 
     public static int QuickMatch(List<string> keywords, string str)
     {
-        int total_similarity = 0;
+        int totalSimilarity = 0;
         str = str.ToLower();
-
+        List<int> keywordIndices = new(8);
         foreach (string keyword in keywords)
         {
+            if (keyword.Length == 0)
+            {
+                continue;
+            }
+            keywordIndices.Clear();
             int similarity = 0;
-            int keyword_ptr = 0;
-
             foreach (char c in str)
             {
-                if (c == keyword[keyword_ptr])
+                for (int i = keywordIndices.Count - 1; i >= 0; i--)
                 {
-                    ++keyword_ptr;
-                    if (keyword_ptr >= keyword.Length)
+                    int keywordIndex = keywordIndices[i];
+                    if (keyword[keywordIndex] == c)
                     {
-                        ++similarity;
-                        keyword_ptr = 0;
+                        keywordIndex++;
+                        if (keywordIndex >= keyword.Length)
+                        {
+                            ++similarity;
+                            keywordIndices.RemoveAt(i);
+                        }
+                        else
+                        {
+                            keywordIndices[i] = keywordIndex;
+                        }
+                    }
+                    else
+                    {
+                        keywordIndices.RemoveAt(i);
                     }
                 }
-                else
+                if (keyword[0] == c)
                 {
-                    keyword_ptr = 0;
+                    if (1 >= keyword.Length)
+                    {
+                        ++similarity;
+                    }
+                    else
+                    {
+                        keywordIndices.Add(1);
+                    }
                 }
             }
-
             if (similarity == 0)
             {
                 return 0;
             }
-
-            total_similarity += similarity;
+            totalSimilarity += similarity;
         }
-
-        return total_similarity;
+        return totalSimilarity;
     }
 
     public static string UniquePath(string path)
@@ -156,8 +171,7 @@ class StringUtils
         {
             return false;
         }
-
-        return text.Substring(0, subText.Length).Equals(subText);
+        return text[..subText.Length].Equals(subText);
     }
 
     public static bool FolderContain(string parentPath, string childPath)
@@ -168,8 +182,7 @@ class StringUtils
         {
             return false;
         }
-
-        return childPath.Substring(0, parentPath.Length).Equals(parentPath);
+        return childPath[..parentPath.Length].Equals(parentPath);
     }
 
     public static string ToFolderPath(string path)
@@ -179,67 +192,56 @@ class StringUtils
         {
             return path;
         }
-
-        if (path[path.Length - 1] != '\\')
+        if (path[^1] != '\\')
         {
             path += '\\';
         }
-
         return path;
     }
 
     public static string ItemNameFromPath(string path)
     {
         int i = path.LastIndexOf('\\');
-
         if (i == -1)
         {
             return path;
         }
-
-        return path.Substring(i + 1);
+        return path[(i + 1)..];
     }
 
     public static string ParentLocationFromLocation(string location)
     {
         int i = location.LastIndexOf('\\');
-
         if (i == -1)
         {
             return "";
         }
-
         if (i > 0 && location[i - 1] == '\\')
         {
             i--;
         }
-
-        return location.Substring(0, i);
+        return location[..i];
 
     }
 
     public static string ExtensionFromFilename(string filename)
     {
         int i = filename.LastIndexOf('.');
-
         if (i == -1)
         {
             return "";
         }
-
-        return filename.Substring(i);
+        return filename[i..];
     }
 
     public static string DisplayNameFromFilename(string filename)
     {
         int i = filename.LastIndexOf('.');
-
         if (i == -1)
         {
             return filename;
         }
-
-        return filename.Substring(0, i);
+        return filename[..i];
     }
 
     public static string ToPathNoTail(string path)
@@ -248,12 +250,10 @@ class StringUtils
         {
             return path;
         }
-
-        if (path[path.Length - 1] == '\\')
+        if (path[^1] == '\\')
         {
-            return path.Substring(0, path.Length - 1);
+            return path[..^1];
         }
-
         return path;
     }
 
@@ -283,7 +283,6 @@ class StringUtils
             V v = dictionary[k];
             text.Append("\"" + k.ToString() + "\": \"" + v.ToString() + "\"");
         }
-
         return text.ToString();
     }
 

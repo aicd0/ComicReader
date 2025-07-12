@@ -482,6 +482,24 @@ NOT                  - 논리 not. 예: NOT %tag = "hide this"
   <data name="OpenInNewTab" xml:space="preserve">
     <value>새 탭에서 열기</value>
   </data>
+  <data name="PageGap" xml:space="preserve">
+    <value>페이지 간격</value>
+  </data>
+  <data name="PageLayoutDualNoCover" xml:space="preserve">
+    <value>2페이지, 무표지</value>
+  </data>
+  <data name="PageLayoutDualNoCoverMirrored" xml:space="preserve">
+    <value>2페이지, 무표지, 미러링</value>
+  </data>
+  <data name="PageLayoutDualWithCover" xml:space="preserve">
+    <value>2페이지, 표지</value>
+  </data>
+  <data name="PageLayoutDualWithCoverMirrored" xml:space="preserve">
+    <value>2페이지, 표지, 미러링</value>
+  </data>
+  <data name="PageLayoutSingle" xml:space="preserve">
+    <value>단일 페이지</value>
+  </data>
   <data name="PrivacyPolicy.Text" xml:space="preserve">
     <value>개인정보 보호정책</value>
   </data>
@@ -535,6 +553,9 @@ NOT                  - 논리 not. 예: NOT %tag = "hide this"
   </data>
   <data name="RightToLeftButton.Label" xml:space="preserve">
     <value>오른쪽에서 왼쪽으로</value>
+  </data>
+  <data name="SaveAsDefaultConfig" xml:space="preserve">
+    <value>기본 구성으로 저장</value>
   </data>
   <data name="SaveAsNewButton.Content" xml:space="preserve">
     <value>새 구성으로 저장</value>

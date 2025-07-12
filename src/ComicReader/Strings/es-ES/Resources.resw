@@ -481,6 +481,24 @@ La evaluación se realizará en el siguiente orden:
   <data name="OpenInNewTab" xml:space="preserve">
     <value>Abrir en nueva pestaña</value>
   </data>
+  <data name="PageGap" xml:space="preserve">
+    <value>Espaciado</value>
+  </data>
+  <data name="PageLayoutDualNoCover" xml:space="preserve">
+    <value>Dos páginas, sin portada</value>
+  </data>
+  <data name="PageLayoutDualNoCoverMirrored" xml:space="preserve">
+    <value>Dos páginas, sin portada, reflejado</value>
+  </data>
+  <data name="PageLayoutDualWithCover" xml:space="preserve">
+    <value>Dos páginas, portada</value>
+  </data>
+  <data name="PageLayoutDualWithCoverMirrored" xml:space="preserve">
+    <value>Dos páginas, portada, reflejado</value>
+  </data>
+  <data name="PageLayoutSingle" xml:space="preserve">
+    <value>Página única</value>
+  </data>
   <data name="PrivacyPolicy.Text" xml:space="preserve">
     <value>política de privacidad</value>
   </data>
@@ -534,6 +552,9 @@ La evaluación se realizará en el siguiente orden:
   </data>
   <data name="RightToLeftButton.Label" xml:space="preserve">
     <value>De derecha a izquierda</value>
+  </data>
+  <data name="SaveAsDefaultConfig" xml:space="preserve">
+    <value>Guardar como configuraciones predeterminadas</value>
   </data>
   <data name="SaveAsNewButton.Content" xml:space="preserve">
     <value>Guardar como nuevo</value>

@@ -66,6 +66,12 @@ public class StringResourceProvider
     public string NoRating => GetResourceString("NoRating");
     public string NoResults => GetResourceString("NoResults");
     public string OpenInNewTab => GetResourceString("OpenInNewTab");
+    public string PageLayoutSingle => GetResourceString("PageLayoutSingle");
+    public string PageLayoutDualWithCover => GetResourceString("PageLayoutDualWithCover");
+    public string PageLayoutDualWithCoverMirrored => GetResourceString("PageLayoutDualWithCoverMirrored");
+    public string PageLayoutDualNoCover => GetResourceString("PageLayoutDualNoCover");
+    public string PageLayoutDualNoCoverMirrored => GetResourceString("PageLayoutDualNoCoverMirrored");
+    public string PageGap => GetResourceString("PageGap");
     public string Proceed => GetResourceString("Proceed");
     public string Progress => GetResourceString("Progress");
     public string Rating => GetResourceString("Rating");
@@ -74,6 +80,7 @@ public class StringResourceProvider
     public string Reading => GetResourceString("Reading");
     public string Refresh => GetResourceString("Refresh");
     public string RemoveFromFavorites => GetResourceString("RemoveFromFavorites");
+    public string SaveAsDefaultConfig => GetResourceString("SaveAsDefaultConfig");
     public string SearchResults => GetResourceString("SearchResults");
     public string SearchResultsOf => GetResourceString("SearchResultsOf");
     public string Select => GetResourceString("Select");

@@ -1,17 +1,18 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-#nullable disable
-
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Common.BaseUI;
 using ComicReader.Common.Lifecycle;
-using ComicReader.Data.Legacy;
+using ComicReader.Data.Models;
 using ComicReader.Data.Models.Comic;
 using ComicReader.Helpers.Navigation;
+using ComicReader.SDK.Common.AppEnvironment;
 using ComicReader.ViewModels;
 using ComicReader.Views.Main;
 using ComicReader.Views.Navigation;
@@ -32,58 +33,45 @@ internal sealed partial class HistoryPage : BasePage
     {
         base.OnResume();
         ObserveData();
-
-        C0.Run(async delegate
-        {
-            await Update();
-        });
+        Update();
     }
 
     private void ObserveData()
     {
         EventBus.Default.With(EventId.SidePaneUpdate).Observe(this, delegate
         {
-            C0.Run(async delegate
-            {
-                await Update();
-            });
+            Update();
         });
     }
 
     // utilities
-    private async Task Update()
+    private void Update()
     {
         var source = new ObservableCollection<HistoryGroupViewModel>();
-        HistoryGroupViewModel current_group = null;
-        await XmlDatabaseManager.WaitLock();
-
-        foreach (HistoryItemData item in XmlDatabase.History.Items)
+        HistoryGroupViewModel? currentGroup = null;
+        List<HistoryModel.ExternalItemModel> historyItems = HistoryModel.Instance.GetModel().Items;
+        historyItems.Sort((x, y) => y.DateTime.CompareTo(x.DateTime));
+        foreach (HistoryModel.ExternalItemModel item in historyItems)
         {
-            string key = item.DateTime.ToString("D");
-
-            if (current_group != null && !current_group.Key.Equals(key))
+            DateTimeOffset localTime = item.DateTime.ToLocalTime();
+            string key = localTime.ToString("D", EnvironmentProvider.Instance.GetCurrentAppLanguageInfo());
+            if (currentGroup != null && !currentGroup.Key.Equals(key))
             {
-                source.Add(current_group);
-                current_group = null;
+                source.Add(currentGroup);
+                currentGroup = null;
             }
-
-            current_group ??= new HistoryGroupViewModel(key);
-
-            var item_out = new HistoryItemViewModel
+            currentGroup ??= new HistoryGroupViewModel(key);
+            var itemOut = new HistoryItemViewModel
             {
                 Id = item.Id,
-                Time = item.DateTime.ToString("t"),
+                Time = localTime.ToString("t", EnvironmentProvider.Instance.GetCurrentAppLanguageInfo()),
                 Title = item.Title
             };
-
-            current_group.Add(item_out);
+            currentGroup.Add(itemOut);
         }
-
-        XmlDatabaseManager.ReleaseLock();
-
-        if (current_group != null)
+        if (currentGroup != null)
         {
-            source.Add(current_group);
+            source.Add(currentGroup);
         }
 
         HistorySource.Source = source;
@@ -93,11 +81,11 @@ internal sealed partial class HistoryPage : BasePage
 
     private async Task OpenItem(HistoryItemViewModel item, bool newTab)
     {
-        ComicModel comic = await ComicModel.FromId(item.Id, "HistoryLoadComic");
+        ComicModel? comic = await ComicModel.FromId(item.Id, "HistoryLoadComic");
 
         if (comic == null)
         {
-            await DeleteItem(item);
+            DeleteItem(item);
         }
         else
         {
@@ -118,17 +106,17 @@ internal sealed partial class HistoryPage : BasePage
 
     private IMainPageAbility GetMainPageAbility()
     {
-        return GetAbility<IMainPageAbility>();
+        return GetAbility<IMainPageAbility>()!;
     }
 
     private INavigationPageAbility GetNavigationPageAbility()
     {
-        return GetAbility<INavigationPageAbility>();
+        return GetAbility<INavigationPageAbility>()!;
     }
 
-    private async Task DeleteItem(HistoryItemViewModel item)
+    private void DeleteItem(HistoryItemViewModel item)
     {
-        await HistoryDataManager.Remove(item.Id, false);
+        HistoryModel.Instance.Remove(item.Id, false);
         var source = (ObservableCollection<HistoryGroupViewModel>)HistorySource.Source;
 
         for (int i = 0; i < source.Count; ++i)
@@ -168,11 +156,8 @@ internal sealed partial class HistoryPage : BasePage
 
     private void OnDeleteItemClicked(object sender, RoutedEventArgs e)
     {
-        C0.Run(async delegate
-        {
-            var item = (HistoryItemViewModel)((MenuFlyoutItem)sender).DataContext;
-            await DeleteItem(item);
-        });
+        var item = (HistoryItemViewModel)((MenuFlyoutItem)sender).DataContext;
+        DeleteItem(item);
     }
 
     private void MainListViewItemClick(object sender, ItemClickEventArgs e)

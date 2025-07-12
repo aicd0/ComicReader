@@ -48,6 +48,11 @@ internal sealed class ComicModel
     public string Title2 => _internalModel.Title2;
     public CompletionStateEnum CompletionState => _internalModel.CompletionState;
 
+    public string? GetExt(string key)
+    {
+        return _internalModel.GetExt(key);
+    }
+
     public string GetImageCacheKey(int index)
     {
         return _internalModel.GetImageCacheKey(index);
@@ -61,6 +66,16 @@ internal sealed class ComicModel
     //
     // Setters
     //
+
+    public void SetExt(string key, string? value)
+    {
+        _internalModel.SetExt(key, value);
+    }
+
+    public void FlushExt()
+    {
+        _internalModel.FlushExt();
+    }
 
     public void SetTitle1(string title)
     {

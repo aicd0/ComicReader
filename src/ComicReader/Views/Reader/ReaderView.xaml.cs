@@ -11,7 +11,6 @@ using System.Threading.Tasks;
 using ComicReader.Common;
 using ComicReader.Common.Imaging;
 using ComicReader.Common.Threading;
-using ComicReader.Data.Legacy;
 using ComicReader.Data.Models;
 using ComicReader.SDK.Common.DebugTools;
 using ComicReader.SDK.Common.Threading;
@@ -37,7 +36,8 @@ internal partial class ReaderView : UserControl
 
     private const string TAG = nameof(ReaderView);
     private const float MAX_ZOOM = 250F;
-    private const float MIN_ZOOM = 50F;
+    private const float MIN_ZOOM_CENTER_INSIDE = 50F;
+    private const float MIN_ZOOM_CENTER_CROP = 20F;
     private const float FORCE_CONTINUOUS_ZOOM_THRESHOLD = 105F;
     private const int PRELOAD_FRAMES_BEFORE = 10;
     private const int PRELOAD_FRAMES_AFTER = 10;
@@ -52,12 +52,14 @@ internal partial class ReaderView : UserControl
     private bool _isContinuous = true;
     private bool _isVisible = true;
     private bool _isLeftToRight = true;
-    private PageArrangementType _pageArrangement = PageArrangementType.Single;
+    private PageArrangementEnum _pageArrangement = PageArrangementEnum.Single;
+    private int _pageGap = 100;
     private bool _uiStateUpdatedVisibility = true;
     private bool _uiStateUpdatedOrientation = true;
     private bool _uiStateUpdatedContinuous = true;
     private bool _uiStateUpdatedFlowDirection = true;
     private bool _uiStateUpdatedPageArrangement = true;
+    private bool _uiStateUpdatedPageGap = true;
     private bool _postUiStateUpdated = false;
 
     private bool _isFirstFrameLoaded = false;
@@ -174,7 +176,7 @@ internal partial class ReaderView : UserControl
         UpdateUI();
     }
 
-    public void SetPageArrangement(PageArrangementType type)
+    public void SetPageArrangement(PageArrangementEnum type)
     {
         if (_pageArrangement == type)
         {
@@ -186,6 +188,18 @@ internal partial class ReaderView : UserControl
         UpdateUI();
     }
 
+    public void SetPageGap(int pageGap)
+    {
+        if (pageGap == _pageGap)
+        {
+            return;
+        }
+
+        _pageGap = pageGap;
+        _uiStateUpdatedPageGap = true;
+        UpdateUI();
+    }
+
     public void SetInitialPage(double page)
     {
         ArgumentOutOfRangeException.ThrowIfNegative(page);
@@ -194,7 +208,7 @@ internal partial class ReaderView : UserControl
 
     public void StartLoadingImages(List<IImageSource> images)
     {
-        _originalDataModel = new List<IImageSource>(images);
+        _originalDataModel = [.. images];
         Reload(_originalDataModel, true);
     }
 
@@ -472,6 +486,12 @@ internal partial class ReaderView : UserControl
             needReload = true;
         }
 
+        if (_uiStateUpdatedPageGap)
+        {
+            _uiStateUpdatedPageGap = false;
+            needReload = true;
+        }
+
         if (needReload && _originalDataModel != null)
         {
             if (_isInitialFrameJumped)
@@ -537,12 +557,12 @@ internal partial class ReaderView : UserControl
             {
                 defaultWidth *= 2;
             }
-
             if (_isContinuous)
             {
                 defaultHorizontalPadding = 10.0;
             }
-
+            defaultVerticalPadding *= _pageGap / 100.0;
+            defaultHorizontalPadding *= _pageGap / 100.0;
             frameWidth = _isVertical ? defaultWidth : defaultHeight * aspectRatio;
             frameHeight = _isVertical ? defaultWidth / aspectRatio : defaultHeight;
             verticalPadding = _isVertical ? defaultVerticalPadding : 0;
@@ -1551,25 +1571,21 @@ internal partial class ReaderView : UserControl
 
     private void SetScrollViewerZoom(ScrollRequest request, ScrollContext context)
     {
-        // Calculate zoom coefficient prediction
+        // Calculate zoom coefficient for new frame
         ZoomCoefficient zoomCoefficientNew;
         int frameNew;
         {
             int pageNew = request.pageToApplyZoom.HasValue ? (int)request.pageToApplyZoom.Value : SCCurrentPageFinal;
             frameNew = PageToFrame(pageNew, out _, out _);
-
             if (frameNew < 0 || frameNew >= FrameDataSource.Count)
             {
                 frameNew = 0;
             }
-
             zoomCoefficientNew = CalculateZoomCoefficient(frameNew);
-
             Log("Jump", "Zoom#1:"
                 + $" PN={pageNew}"
                 + $",FN={frameNew}"
                 + $",ZCN={zoomCoefficientNew}");
-
             if (zoomCoefficientNew == null)
             {
                 context.ZoomPercentage = _zoom;
@@ -1578,11 +1594,16 @@ internal partial class ReaderView : UserControl
             }
         }
 
-        // Calculate zooming in percentage
+        // Calculate zoom factor
         double zoom;
+        double centerCropMultipier = zoomCoefficientNew.Max() / zoomCoefficientNew.Min();
         if (request.zoom.HasValue)
         {
             zoom = request.zoom.Value;
+            if (request.zoomType == ZoomType.CenterCrop)
+            {
+                zoom *= centerCropMultipier;
+            }
         }
         else
         {
@@ -1591,7 +1612,6 @@ internal partial class ReaderView : UserControl
             {
                 frame = 0;
             }
-
             ZoomCoefficient zoomCoefficient = zoomCoefficientNew;
             if (frame != frameNew)
             {
@@ -1601,28 +1621,19 @@ internal partial class ReaderView : UserControl
                     zoomCoefficient = zoomCoefficientTest;
                 }
             }
-
             zoom = (float)(SCZoomFactorFinal / zoomCoefficient.Min());
         }
-
-        if (request.zoomType == ZoomType.CenterCrop)
-        {
-            zoom *= zoomCoefficientNew.Max() / zoomCoefficientNew.Min();
-        }
-
-        zoom = Math.Min(zoom, MAX_ZOOM * zoomCoefficientNew.Max() / zoomCoefficientNew.Min());
-        zoom = Math.Max(zoom, MIN_ZOOM);
+        zoom = Math.Min(zoom, MAX_ZOOM * centerCropMultipier);
+        zoom = Math.Max(zoom, Math.Min(MIN_ZOOM_CENTER_INSIDE, MIN_ZOOM_CENTER_CROP * centerCropMultipier));
         context.ZoomPercentage = (float)zoom;
 
-        // Ignore any zoom factor vary less than 1%
+        // Ignore vary less than 1%
         float zoomFactorNew = (float)(zoom * zoomCoefficientNew.Min());
-
         if (Math.Abs(zoomFactorNew / SCZoomFactorFinal - 1.0f) <= 0.01f)
         {
             context.ZoomFactor = null;
             return;
         }
-
         context.ZoomFactor = zoomFactorNew;
 
         // Apply zooming
@@ -1634,10 +1645,8 @@ internal partial class ReaderView : UserControl
         double extraPaddingDiff = extraPaddingAfter - extraPaddingBefore;
         double halfViewportWidth = ThisScrollViewer.ViewportWidth * 0.5;
         double halfViewportHeight = ThisScrollViewer.ViewportHeight * 0.5;
-
         context.HorizontalOffset ??= SCHorizontalOffsetFinal;
         context.VerticalOffset ??= SCVerticalOffsetFinal;
-
         Log("Jump", "Zoom#2:"
             + $" Z1={zoomFactorBefore}"
             + $",Z2={zoomFactorAfter}"
@@ -1648,7 +1657,6 @@ internal partial class ReaderView : UserControl
             + $",VH={halfViewportHeight}"
             + $",HO={context.HorizontalOffset}"
             + $",VO={context.VerticalOffset}");
-
         if (IsVertical)
         {
             context.HorizontalOffset += halfViewportWidth + extraPaddingDiff;
@@ -1667,7 +1675,6 @@ internal partial class ReaderView : UserControl
             context.VerticalOffset *= zoomChangeRatio;
             context.VerticalOffset -= halfViewportHeight;
         }
-
         context.HorizontalOffset = Math.Max(0.0, context.HorizontalOffset.Value);
         context.VerticalOffset = Math.Max(0.0, context.VerticalOffset.Value);
     }
@@ -1796,60 +1803,53 @@ internal partial class ReaderView : UserControl
             return;
         }
 
-        double padding_start = SCPaddingStartFinal;
+        double paddingStart = SCPaddingStartFinal;
         do
         {
-            int frame_idx = 0;
-
-            if (_frameManager.GetContainer(frame_idx) == null)
+            int frameIdx = 0;
+            if (_frameManager.GetContainer(frameIdx) == null)
             {
                 break;
             }
-
-            ZoomCoefficient zoom_coefficient = CalculateZoomCoefficient(frame_idx);
-            if (zoom_coefficient == null)
+            ZoomCoefficient zoomCoefficient = CalculateZoomCoefficient(frameIdx);
+            if (zoomCoefficient == null)
             {
                 break;
             }
-
-            double zoom_factor = MIN_ZOOM * zoom_coefficient.Min();
-            double inner_length = ViewportParallelLength / zoom_factor;
-            padding_start = (inner_length - FrameParallelLength(frame_idx)) / 2;
-            padding_start = Math.Max(0.0, padding_start);
+            double zoomFactor = Math.Min(MIN_ZOOM_CENTER_INSIDE * zoomCoefficient.Min(), MIN_ZOOM_CENTER_CROP * zoomCoefficient.Max());
+            double innerLength = ViewportParallelLength / zoomFactor;
+            paddingStart = (innerLength - FrameParallelLength(frameIdx)) / 2;
+            paddingStart = Math.Max(0.0, paddingStart);
         } while (false);
 
-        double padding_end = SCPaddingEndFinal;
+        double paddingEnd = SCPaddingEndFinal;
         do
         {
-            int frame_idx = FrameDataSource.Count - 1;
-
-            if (_frameManager.GetContainer(frame_idx) == null)
+            int frameIdx = FrameDataSource.Count - 1;
+            if (_frameManager.GetContainer(frameIdx) == null)
             {
                 break;
             }
-
-            ZoomCoefficient zoom_coefficient = CalculateZoomCoefficient(frame_idx);
-            if (zoom_coefficient == null)
+            ZoomCoefficient zoomCoefficient = CalculateZoomCoefficient(frameIdx);
+            if (zoomCoefficient == null)
             {
                 break;
             }
-
-            double zoom_factor = MIN_ZOOM * zoom_coefficient.Min();
-            double inner_length = ViewportParallelLength / zoom_factor;
-            padding_end = (inner_length - FrameParallelLength(frame_idx)) / 2;
-            padding_end = Math.Max(0.0, padding_end);
+            double zoomFactor = Math.Min(MIN_ZOOM_CENTER_INSIDE * zoomCoefficient.Min(), MIN_ZOOM_CENTER_CROP * zoomCoefficient.Max());
+            double inner_length = ViewportParallelLength / zoomFactor;
+            paddingEnd = (inner_length - FrameParallelLength(frameIdx)) / 2;
+            paddingEnd = Math.Max(0.0, paddingEnd);
         } while (false);
 
-        SCPaddingStartFinal = padding_start;
-        SCPaddingEndFinal = padding_end;
-
+        SCPaddingStartFinal = paddingStart;
+        SCPaddingEndFinal = paddingEnd;
         if (IsVertical)
         {
-            ThisListView.Padding = new Thickness(0.0, padding_start, 0.0, padding_end);
+            ThisListView.Padding = new Thickness(0.0, paddingStart, 0.0, paddingEnd);
         }
         else
         {
-            ThisListView.Padding = new Thickness(padding_start, 0.0, padding_end, 0.0);
+            ThisListView.Padding = new Thickness(paddingStart, 0.0, paddingEnd, 0.0);
         }
     }
 
@@ -2033,29 +2033,29 @@ internal partial class ReaderView : UserControl
 
         switch (_pageArrangement)
         {
-            case PageArrangementType.Single:
+            case PageArrangementEnum.Single:
                 left_side = true;
                 neighbor = -1;
                 return page - 1;
-            case PageArrangementType.DualCover:
+            case PageArrangementEnum.DualCover:
                 left_side = page == 1 || page % 2 == 0;
                 neighbor = (page > 1 && (PageCount % 2 == 1 || page < PageCount)) ? (left_side ? page + 1 : page - 1) : -1;
                 return page / 2;
-            case PageArrangementType.DualCoverMirror:
+            case PageArrangementEnum.DualCoverMirror:
                 left_side = page == PageCount || page % 2 == 1;
                 neighbor = (page > 1 && (PageCount % 2 == 1 || page < PageCount)) ? (left_side ? page - 1 : page + 1) : -1;
                 return page / 2;
-            case PageArrangementType.DualNoCover:
+            case PageArrangementEnum.DualNoCover:
                 left_side = page % 2 == 1;
                 neighbor = (PageCount % 2 == 0 || page < PageCount) ? (left_side ? page + 1 : page - 1) : -1;
                 return (page - 1) / 2;
-            case PageArrangementType.DualNoCoverMirror:
+            case PageArrangementEnum.DualNoCoverMirror:
                 left_side = page == PageCount || page % 2 == 0;
                 neighbor = (PageCount % 2 == 0 || page < PageCount) ? (left_side ? page - 1 : page + 1) : -1;
                 return (page - 1) / 2;
             default:
                 Logger.AssertNotReachHere("734FF3964EFE8681");
-                goto case PageArrangementType.Single;
+                goto case PageArrangementEnum.Single;
         }
     }
 

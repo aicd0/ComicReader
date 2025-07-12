@@ -1,8 +1,6 @@
 ﻿// Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-#nullable disable
-
 using System.Drawing;
 
 using ComicReader.SDK.Common.DebugTools;
@@ -20,7 +18,7 @@ public static class PdfManager
     private static readonly Lazy<IDisposableTaskDispatcher> _pdfQueue = new(() => TaskDispatcher.Factory.NewSingleThread("PdfQueue"));
     private static readonly Dictionary<string, PdfWrapper> _cache = [];
 
-    public static Task<IPdfConnection> OpenPdf(string filepath)
+    public static Task<IPdfConnection?> OpenPdf(string filepath, string? password)
     {
         string fullpath;
         try
@@ -30,34 +28,34 @@ public static class PdfManager
         catch (Exception ex)
         {
             Logger.F(TAG, "", ex);
-            return null;
+            return Task.FromResult<IPdfConnection?>(null);
         }
 
         lock (_lock)
         {
-            if (_cache.TryGetValue(fullpath, out PdfWrapper existing))
+            if (_cache.TryGetValue(fullpath, out PdfWrapper? existing))
             {
                 existing.UseCount++;
                 IPdfConnection connection = new PdfConnection(existing);
-                return Task.FromResult(connection);
+                return Task.FromResult<IPdfConnection?>(connection);
             }
         }
 
-        IPdfConnection loadPdfFunc()
+        IPdfConnection? loadPdfFunc()
         {
             lock (_lock)
             {
-                if (_cache.TryGetValue(fullpath, out PdfWrapper existing))
+                if (_cache.TryGetValue(fullpath, out PdfWrapper? existing))
                 {
                     existing.UseCount++;
                     return new PdfConnection(existing);
                 }
             }
 
-            PdfDocument pdfDocument = null;
+            PdfDocument? pdfDocument = null;
             try
             {
-                pdfDocument = PdfDocument.Load(fullpath);
+                pdfDocument = PdfDocument.Load(fullpath, password);
             }
             catch (Exception ex)
             {
@@ -93,7 +91,7 @@ public static class PdfManager
 
     private class PdfWrapper : IDisposable
     {
-        public PdfDocument RawPdfDocument;
+        public PdfDocument? RawPdfDocument;
         public int UseCount = 1;
         public readonly int PageCount;
         public readonly List<SizeF> PageSizes;
@@ -118,7 +116,7 @@ public static class PdfManager
 
         SizeF GetPageSize(int page);
 
-        Task<Image> Render(int page, int width, int height);
+        Task<Image?> Render(int page, int width, int height);
     }
 
     private class PdfConnection : IPdfConnection
@@ -174,7 +172,7 @@ public static class PdfManager
             return _wrapper.PageSizes[page];
         }
 
-        public Task<Image> Render(int page, int width, int height)
+        public Task<Image?> Render(int page, int width, int height)
         {
             return Enqueue(delegate
             {

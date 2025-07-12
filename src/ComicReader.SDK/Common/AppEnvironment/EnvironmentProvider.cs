@@ -11,6 +11,7 @@ using ComicReader.SDK.Common.ServiceManagement;
 using ComicReader.SDK.Common.Utils;
 
 using Windows.ApplicationModel;
+using Windows.Globalization;
 using Windows.System.UserProfile;
 
 namespace ComicReader.SDK.Common.AppEnvironment;
@@ -19,6 +20,7 @@ public class EnvironmentProvider
 {
     public static EnvironmentProvider Instance = new();
 
+    private string _appLanguageTag = string.Empty;
     private readonly DateTimeOffset _launchTime;
     private string _additionalDebugInformation = string.Empty;
 
@@ -43,7 +45,7 @@ public class EnvironmentProvider
         sb.SafeAppend("OS architecture", () => RuntimeInformation.OSArchitecture);
         sb.SafeAppend("Installed system language", () => CultureInfo.InstalledUICulture.Name);
         sb.SafeAppend("Current system language", GetCurrentSystemLanguage);
-        sb.SafeAppend("Current app language", () => CultureInfo.CurrentUICulture.Name);
+        sb.SafeAppend("Current app language", GetCurrentAppLanguage);
         sb.SafeAppend("Machine name", () => Environment.MachineName);
         sb.SafeAppend("Device model", DeviceInformationHelper.Instance.GetDeviceModel);
         sb.SafeAppend("OEM name", DeviceInformationHelper.Instance.GetDeviceOemName);
@@ -60,6 +62,55 @@ public class EnvironmentProvider
         {
             sb.Append(_additionalDebugInformation);
             sb.Append('\n');
+        }
+    }
+
+    public string GetCurrentAppLanguage()
+    {
+        string languageTag = _appLanguageTag;
+        if (!string.IsNullOrEmpty(languageTag))
+        {
+            return languageTag;
+        }
+        if (!IsPortable())
+        {
+            try
+            {
+                languageTag = ApplicationLanguages.PrimaryLanguageOverride;
+            }
+            catch (Exception e)
+            {
+                Logger.AssertNotReachHere("91F609C11120E95E", e);
+            }
+            if (!string.IsNullOrEmpty(languageTag))
+            {
+                _appLanguageTag = languageTag;
+                return languageTag;
+            }
+        }
+        return CultureInfo.CurrentUICulture.Name;
+    }
+
+    public void SetCurrentAppLanguage(string languageTag)
+    {
+        _appLanguageTag = languageTag;
+    }
+
+    public CultureInfo GetCurrentAppLanguageInfo()
+    {
+        string languageTag = GetCurrentAppLanguage();
+        if (string.IsNullOrEmpty(languageTag))
+        {
+            return CultureInfo.CurrentUICulture;
+        }
+        try
+        {
+            return new CultureInfo(languageTag);
+        }
+        catch (CultureNotFoundException)
+        {
+            Logger.AssertNotReachHere("92052DFC4960E58D", languageTag);
+            return CultureInfo.CurrentUICulture;
         }
     }
 

@@ -2,21 +2,13 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Threading.Tasks;
 
 using ComicReader.Common;
-using ComicReader.Common.Services;
-using ComicReader.Data;
-using ComicReader.Data.Legacy;
-using ComicReader.Data.Models;
-using ComicReader.Data.Models.Comic;
-using ComicReader.SDK.Common.AppEnvironment;
+using ComicReader.Common.InitTask;
 using ComicReader.SDK.Common.DebugTools;
-using ComicReader.SDK.Common.ServiceManagement;
 
 using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppLifecycle;
-using Microsoft.Windows.Globalization;
 
 using Windows.ApplicationModel.Activation;
 
@@ -28,9 +20,12 @@ public partial class App : Application
 
     internal static readonly WindowManager<MainWindow> WindowManager = new();
 
+    private readonly InitTaskManager _initTaskManager;
+
     public App()
     {
-        InitializeBeforeAppCreate();
+        _initTaskManager = new(this);
+        _initTaskManager.InitOnAppCreate();
         InitializeComponent();
     }
 
@@ -53,7 +48,7 @@ public partial class App : Application
             return;
         }
 
-        await InitializeOnAppLaunch();
+        _initTaskManager.InitOnAppLaunch();
 
         // Initialize MainWindow here
         var window = new MainWindow("");
@@ -77,77 +72,5 @@ public partial class App : Application
                 Logger.F(TAG, "Failed to perform file activation, no window is found.");
             }
         }
-    }
-
-    private void InitializeBeforeAppCreate()
-    {
-        // Register crash handler
-        UnhandledException += (_, e) =>
-        {
-            SentryManager.CaptureError(e.Exception);
-            CrashHandler.OnUnhandledException(e.Exception);
-        };
-
-        // Register services
-        ServiceManager.RegisterService<IApplicationService>(new ApplicationService());
-        ServiceManager.RegisterService<IDebugService>(new DebugService());
-
-        // Initialize environment information
-        EnvironmentProvider.Instance.Initialize(Properties.AdditionalDebugInformation);
-
-        // Initialize Sentry
-        SentryManager.Initialize(Properties.SentryDsn, EnvironmentProvider.GetEnvironmentTags());
-
-        // Initialize app language
-        InitializeAppLanguage();
-
-        // Initialize app theme
-        InitializeAppTheme();
-    }
-
-    private void InitializeAppTheme()
-    {
-        AppSettingsModel.AppearanceSetting themeSetting = AppSettingsModel.Instance.GetModel().Theme;
-        switch (themeSetting)
-        {
-            case AppSettingsModel.AppearanceSetting.Light:
-                Current.RequestedTheme = ApplicationTheme.Light;
-                break;
-            case AppSettingsModel.AppearanceSetting.Dark:
-                Current.RequestedTheme = ApplicationTheme.Dark;
-                break;
-            default:
-                break;
-        }
-    }
-
-    private void InitializeAppLanguage()
-    {
-        if (EnvironmentProvider.IsPortable())
-        {
-            string languageTag = AppSettingsModel.Instance.GetModel().Language;
-            if (string.IsNullOrEmpty(languageTag))
-            {
-                languageTag = EnvironmentProvider.GetCurrentSystemLanguage();
-            }
-            ApplicationLanguages.PrimaryLanguageOverride = languageTag;
-        }
-    }
-
-    private async Task InitializeOnAppLaunch()
-    {
-        // Initialize debug switches
-        DebugSwitchModel.Instance.Initialize();
-
-        // Initialize logger
-        Logger.Initialize();
-
-        // Initialize databases
-        await XmlDatabaseManager.Initialize();
-        SqlDatabaseManager.Initialize();
-        DatabaseUpgradeManager.Instance.UpgradeDatabase();
-
-        // Update comic library
-        ComicModel.UpdateAllComics("DatabaseManager#init", lazy: true);
     }
 }

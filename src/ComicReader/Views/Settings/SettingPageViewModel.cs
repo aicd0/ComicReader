@@ -11,7 +11,6 @@ using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Common.Threading;
-using ComicReader.Data.Legacy;
 using ComicReader.Data.Models;
 using ComicReader.Data.Models.Comic;
 using ComicReader.SDK.Common.AppEnvironment;
@@ -279,10 +278,7 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
         {
             Updating = true;
 
-            await XmlDatabaseManager.WaitLock();
-            IsClearHistoryEnabled = XmlDatabase.History.Items.Count > 0;
-            XmlDatabaseManager.ReleaseLock();
-
+            IsClearHistoryEnabled = HistoryModel.Instance.GetModel().Items.Count > 0;
             TransitionAnimation = AppModel.TransitionAnimation;
             HistorySaveBrowsingHistory = AppModel.SaveBrowsingHistory;
             AntiAliasingEnabled = AppModel.AntiAliasingEnabled;

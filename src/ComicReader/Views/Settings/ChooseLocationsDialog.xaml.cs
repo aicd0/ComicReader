@@ -2,17 +2,19 @@
 // Licensed under the MIT License.
 
 using System.Collections.ObjectModel;
-using System.Threading.Tasks;
 
 using ComicReader.Common;
 using ComicReader.Common.BaseUI;
-using ComicReader.Data.Legacy;
+using ComicReader.Common.Utils;
+using ComicReader.Data.Models;
 using ComicReader.Data.Models.Comic;
 using ComicReader.ViewModels;
 
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+
+using Windows.Storage;
 
 namespace ComicReader.Views.Settings;
 
@@ -25,12 +27,11 @@ public sealed partial class ChooseLocationsDialog : BaseContentDialog
     public ChooseLocationsDialog(int windowId)
     {
         InitializeComponent();
-        FolderItemDataSource = new ObservableCollection<FolderItemViewModel>();
+        FolderItemDataSource = [];
         WindowId = windowId;
     }
 
-    // utilities
-    private async Task Update()
+    private void Update()
     {
         FolderItemDataSource.Clear();
 
@@ -39,9 +40,7 @@ public sealed partial class ChooseLocationsDialog : BaseContentDialog
             IsAddNew = true
         });
 
-        await XmlDatabaseManager.WaitLock();
-
-        foreach (string folder in XmlDatabase.Settings.ComicFolders)
+        foreach (string folder in AppSettingsModel.Instance.GetModel().ComicFolders)
         {
             FolderItemDataSource.Add(new FolderItemViewModel
             {
@@ -49,8 +48,6 @@ public sealed partial class ChooseLocationsDialog : BaseContentDialog
                 IsAddNew = false
             });
         }
-
-        XmlDatabaseManager.ReleaseLock();
     }
 
     private void ContentDialogPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
@@ -60,32 +57,27 @@ public sealed partial class ChooseLocationsDialog : BaseContentDialog
 
     private void ListViewLoaded(object sender, RoutedEventArgs e)
     {
-        C0.Run(async delegate
-        {
-            await Update();
-        });
+        Update();
     }
 
     private void AddNewPointerPressed(object sender, PointerRoutedEventArgs e)
     {
-        // Add a folder.
         C0.Run(async delegate
         {
             if (!IsPrimaryButtonEnabled)
             {
                 return;
             }
-
             IsPrimaryButtonEnabled = false;
-
             try
             {
-                if (!await SettingDataManager.AddComicFolderUsingPicker(WindowId))
+                StorageFolder? folder = await FilePickerUtils.PickFolder(WindowId);
+                if (folder == null)
                 {
                     return;
                 }
-
-                await Update();
+                AppSettingsModel.Instance.AddComicFolder(folder.Path);
+                Update();
             }
             finally
             {
@@ -96,19 +88,20 @@ public sealed partial class ChooseLocationsDialog : BaseContentDialog
 
     private void RemoveFolderPointerPressed(object sender, PointerRoutedEventArgs e)
     {
-        // remove a folder
-        C0.Run(async delegate
+        if (!IsPrimaryButtonEnabled)
         {
-            if (!IsPrimaryButtonEnabled)
-            {
-                return;
-            }
-
-            IsPrimaryButtonEnabled = false;
+            return;
+        }
+        IsPrimaryButtonEnabled = false;
+        try
+        {
             var item = (FolderItemViewModel)((Grid)sender).DataContext;
-            await SettingDataManager.RemoveComicFolder(item.Folder, final: true);
-            await Update();
+            AppSettingsModel.Instance.RemoveComicFolder(item.Folder);
+            Update();
+        }
+        finally
+        {
             IsPrimaryButtonEnabled = true;
-        });
+        }
     }
 }
