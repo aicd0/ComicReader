@@ -14,6 +14,7 @@
 
     <Page.Resources>
         <ResourceDictionary>
+
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/Styles/AppBarButton.xaml" />
                 <ResourceDictionary Source="/Styles/AppBarToggleButton.xaml" />
@@ -21,13 +22,14 @@
                 <ResourceDictionary Source="/Styles/TextBox.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <!--  Converters  -->
             <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
             <converters:BooleanToVisibilityNegationConverter x:Key="BooleanToVisibilityNegationConverter" />
+
         </ResourceDictionary>
     </Page.Resources>
 
     <Grid>
+
         <Grid
             x:Name="ContentGrid"
             Background="Transparent"
@@ -35,11 +37,13 @@
             PointerReleased="OnPagePointerReleased">
             <Frame x:Name="ContentFrame" Navigated="OnPageChanged" />
         </Grid>
+
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
+
             <Grid
                 x:Name="TopTile"
                 Grid.Row="0"
@@ -50,12 +54,14 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
+
                 <Grid Grid.Row="0">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
+
                     <!--  Left buttons  -->
                     <StackPanel
                         Grid.Column="0"
@@ -87,6 +93,7 @@
                             Style="{StaticResource NavigationPageTopTileAppBarButton}"
                             ToolTipService.ToolTip="{x:Bind StringResource.Refresh}" />
                     </StackPanel>
+
                     <!--  Search box  -->
                     <controls:ExtendedSearchBox
                         x:Name="SearchBox"
@@ -97,12 +104,14 @@
                         VerticalAlignment="Center"
                         QuerySubmitted="OnSearchBoxQuerySubmitted"
                         TextChanged="OnSearchBoxTextChanged" />
+
                     <!--  Right buttons  -->
                     <StackPanel
                         Grid.Column="2"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Center"
                         Orientation="Horizontal">
+
                         <!--  Expand favorites pane button  -->
                         <AppBarButton
                             x:Uid="FavoritesButton"
@@ -112,6 +121,7 @@
                                 <FontIcon Glyph="&#xE728;" />
                             </AppBarButton.Content>
                         </AppBarButton>
+
                         <!--  More button  -->
                         <AppBarButton x:Uid="MoreButton" Style="{StaticResource NavigationPageTopTileAppBarButton}">
                             <AppBarButton.Content>
@@ -131,8 +141,11 @@
                                 </MenuFlyout>
                             </AppBarButton.Flyout>
                         </AppBarButton>
+
                     </StackPanel>
+
                 </Grid>
+
                 <!--  Center buttons  -->
                 <StackPanel
                     x:Name="SpCenterButtons"
@@ -140,6 +153,7 @@
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
                     Orientation="Horizontal">
+
                     <!--  Add to favorites  -->
                     <AppBarButton
                         x:Name="AbbAddToFavorite"
@@ -155,6 +169,7 @@
                             </Grid>
                         </AppBarButton.Content>
                     </AppBarButton>
+
                     <!--  Reader grid preview toggle  -->
                     <AppBarToggleButton
                         x:Name="AbtbPreviewButton"
@@ -166,6 +181,7 @@
                             <FontIcon Glyph="&#xF0E2;" />
                         </AppBarToggleButton.Content>
                     </AppBarToggleButton>
+
                     <!--  Reader settings  -->
                     <AppBarButton x:Uid="ReaderSettingButton" Style="{StaticResource NavigationPageTopTileAppBarButton}">
                         <AppBarButton.Content>
@@ -176,7 +192,7 @@
                                 <Flyout.FlyoutPresenterStyle>
                                     <Style TargetType="FlyoutPresenter">
                                         <Setter Property="CornerRadius" Value="8" />
-                                        <Setter Property="Padding" Value="15,15,15,8" />
+                                        <Setter Property="Padding" Value="15,8" />
                                         <Setter Property="MaxWidth" Value="1000" />
                                     </Style>
                                 </Flyout.FlyoutPresenterStyle>
@@ -184,6 +200,7 @@
                             </Flyout>
                         </AppBarButton.Flyout>
                     </AppBarButton>
+
                     <!--  Comic info  -->
                     <AppBarButton
                         Click="OnComicInfoClick"
@@ -193,13 +210,17 @@
                             <FontIcon Glyph="&#xE946;" />
                         </AppBarButton.Content>
                     </AppBarButton>
+
                 </StackPanel>
+
                 <Rectangle
                     Grid.Row="1"
                     Height="1"
                     VerticalAlignment="Bottom"
                     Fill="{ThemeResource NavigationPageTopTileBorderBrush}" />
+
             </Grid>
+
             <SplitView
                 x:Name="NavigationPageSidePane"
                 Grid.Row="1"
@@ -212,6 +233,8 @@
                     <navigation:SidePane SelectionChanged="OnSidePaneSelectionChanged" />
                 </SplitView.Pane>
             </SplitView>
+
         </Grid>
+
     </Grid>
 </base:BasePage>
