@@ -62,31 +62,22 @@ internal class XmlDatabaseManager
         m_database_lock.Release();
     }
 
-    public static async Task<TaskException> Initialize()
+    public static void Initialize()
     {
-        await Load(XmlDatabase.Settings);
-        await Load(XmlDatabase.Favorites);
-        await Load(XmlDatabase.History);
-
+        Load(XmlDatabase.Settings);
+        Load(XmlDatabase.Favorites);
+        Load(XmlDatabase.History);
         m_database_ready = true;
-        return TaskException.Success;
     }
 
-    private static async Task<TaskException> Load(XmlData obj)
+    private static void Load(XmlData obj)
     {
-        StorageFolder folder = await Storage.TryGetFolder(DatabaseFolderPath);
-        if (folder == null)
+        string filePath = Path.Combine(DatabaseFolderPath, obj.FileName);
+        if (!File.Exists(filePath))
         {
-            Logger.AssertNotReachHere("27EF5890495546BE");
-            return TaskException.Failure;
-        }
-        StorageFile file = await Storage.TryGetFile(folder, obj.FileName);
-        if (file == null)
-        {
-            return TaskException.FileNotFound;
+            return;
         }
 
-        IRandomAccessStream stream = await file.OpenAsync(FileAccessMode.Read);
         var serializer = new XmlSerializer(obj.GetType());
         serializer.UnknownAttribute += (x, y) => Log("UnknownAttribute: " + y.ToString());
         serializer.UnknownElement += (x, y) => Log("UnknownElement: " + y.ToString());
@@ -95,16 +86,16 @@ internal class XmlDatabaseManager
 
         try
         {
-            obj.Target = serializer.Deserialize(stream.AsStream()) as XmlData;
+            using Stream stream = File.OpenRead(filePath);
+            obj.Target = serializer.Deserialize(stream) as XmlData;
         }
-        catch (Exception)
+        catch (Exception e)
         {
-            return TaskException.Failure;
+            Logger.AssertNotReachHere("5C89EA796A7DFC0A", e);
+            return;
         }
 
         obj.Target.Unpack();
-        stream.Dispose();
-        return TaskException.Success;
     }
 
     public static Action SaveSealed(XmlDatabaseItem item) =>
