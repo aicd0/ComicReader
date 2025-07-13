@@ -31,4 +31,4 @@ We retain collected data only as long as necessary to fulfill the purposes outli
 Since we do not collect personal information, there is no need for users to manage, access, or delete personal data. However, users may opt out of data collection through application settings, if such an option is made available.
 
 ## Changes to This Privacy Policy
-We may update this Privacy Policy from time to time. All updates will be posted this document. Continued use of Comic Reader UWP after updates constitutes acceptance of the revised policy.
+We may update this Privacy Policy from time to time. All updates will be posted to this document. Continued use of Comic Reader UWP after updates constitutes acceptance of the revised policy.
