@@ -51,7 +51,10 @@ public class SelectCommand
 
     public IReaderToken<string> PutQueryString(IColumn<string> column)
     {
-        return PutToken(new ColumnToken<string>(column, delegate (SqliteDataReader reader, int ordinal) { return reader.GetString(ordinal); }));
+        return PutToken(new ColumnToken<string>(column, delegate (SqliteDataReader reader, int ordinal)
+        {
+            return reader.IsDBNull(ordinal) ? string.Empty : reader.GetString(ordinal);
+        }));
     }
 
     public IReaderToken<bool> PutQueryBoolean(IColumn<bool> column)

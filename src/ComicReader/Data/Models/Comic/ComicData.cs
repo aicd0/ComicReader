@@ -815,6 +815,7 @@ internal abstract class ComicData
             .AppendColumn(ComicTable.ColumnCoverCacheKey, CoverCacheKey)
             .AppendColumn(ComicTable.ColumnDescription, Description)
             .AppendColumn(ComicTable.ColumnCompletionState, CompletionState)
+            .AppendColumn(ComicTable.ColumnExt, ValueExt)
             .Execute(SqlDatabaseManager.MainDatabase);
 
         InternalSaveTagsNoLock(removeOld: false);
