@@ -3,7 +3,7 @@
 
 namespace ComicReader.Common.Lifecycle;
 
-internal class EmptyEventBus : IEventBus
+public class EmptyEventBus : IEventBus
 {
     public static readonly EmptyEventBus Instance = new();
 

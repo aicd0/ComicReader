@@ -3,7 +3,7 @@
 
 namespace ComicReader.Common.Lifecycle;
 
-internal interface IMutableLiveData<T> : ILiveData<T>
+public interface IMutableLiveData<T> : ILiveData<T>
 {
     void Emit(T value);
 }

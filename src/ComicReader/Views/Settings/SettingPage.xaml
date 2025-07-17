@@ -243,10 +243,7 @@
 
                     <!--  Statistics  -->
                     <TextBlock Style="{StaticResource SettingsPageSubTitleTextBlock}" Text="{x:Bind StringResource.Statistics}" />
-                    <TextBlock
-                        x:Name="StatisticsTextBlock"
-                        Style="{StaticResource SettingsPageBodyTextBlock}"
-                        Text="Updating..." />
+                    <TextBlock Style="{StaticResource SettingsPageBodyTextBlock}" Text="{x:Bind ViewModel.StatisticText, Mode=OneWay}" />
 
                     <!--  Feedback  -->
                     <TextBlock x:Uid="Feedback" Style="{StaticResource SettingsPageSubTitleTextBlock}" />
@@ -276,7 +273,7 @@
                         Style="{StaticResource SettingsPageBodyTextBlock}"
                         Text="© AboutCopyright" />
                     <Grid Height="8" />
-                    <RichTextBlock IsTextSelectionEnabled="False">
+                    <RichTextBlock HorizontalAlignment="Left" IsTextSelectionEnabled="False">
                         <Paragraph>
                             <Hyperlink NavigateUri="https://github.com/aicd0/ComicReader/blob/develop/docs/PrivacyPolicy.md">
                                 <Run x:Uid="PrivacyPolicy" />

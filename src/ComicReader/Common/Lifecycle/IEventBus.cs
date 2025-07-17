@@ -3,7 +3,7 @@
 
 namespace ComicReader.Common.Lifecycle;
 
-internal interface IEventBus
+public interface IEventBus
 {
     public IMutableLiveData<T> With<T>(string eventId);
 
