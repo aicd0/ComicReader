@@ -7,7 +7,7 @@ using System;
 
 namespace ComicReader.Common.Lifecycle;
 
-internal class ChangedObserver<T> : IObserver<T> where T : IEquatable<T>
+public class ChangedObserver<T> : IObserver<T> where T : IEquatable<T>
 {
     private T _lastValue;
     private bool _initialized = false;

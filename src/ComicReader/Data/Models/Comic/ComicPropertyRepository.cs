@@ -20,9 +20,9 @@ internal class ComicPropertyRepository
     private readonly PropertyServer _server = new("ComicPropertyRepository");
 
     private SqlProperty<ComicTable, long, int> CompletionStateSql { get; }
-    private ConverterProperty<ComicIdKey, SqlPropertyKey<long, int>, int, ComicData.CompletionStateEnum> CompletionStateConverter { get; }
-    private MemoryCacheProperty<ComicIdKey, ComicData.CompletionStateEnum> CompletionStateCache { get; }
-    public SimplePropertyOperator<long, ComicIdKey, ComicData.CompletionStateEnum> CompletionStateOperator { get; }
+    private ConverterProperty<ComicIdKey, SqlPropertyKey<long, int>, int, ComicCompletionStatusEnum> CompletionStateConverter { get; }
+    private MemoryCacheProperty<ComicIdKey, ComicCompletionStatusEnum> CompletionStateCache { get; }
+    public SimplePropertyOperator<long, ComicIdKey, ComicCompletionStatusEnum> CompletionStateOperator { get; }
 
     private ComicPropertyRepository()
     {
@@ -38,12 +38,12 @@ internal class ComicPropertyRepository
         return _databaseDispatcher;
     }
 
-    public static ComicData.CompletionStateEnum ParseCompletionState(int value)
+    public static ComicCompletionStatusEnum ParseCompletionState(int value)
     {
-        if (Enum.IsDefined(typeof(ComicData.CompletionStateEnum), value))
+        if (Enum.IsDefined(typeof(ComicCompletionStatusEnum), value))
         {
-            return (ComicData.CompletionStateEnum)value;
+            return (ComicCompletionStatusEnum)value;
         }
-        return ComicData.CompletionStateEnum.NotStarted;
+        return ComicCompletionStatusEnum.NotStarted;
     }
 }

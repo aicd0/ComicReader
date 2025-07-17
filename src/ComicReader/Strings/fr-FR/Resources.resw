@@ -613,6 +613,9 @@ Catégorie 2 : Étiquette 4/Étiquette 5
   <data name="TagsColon" xml:space="preserve">
     <value>Étiquette:</value>
   </data>
+  <data name="TextWithColon" xml:space="preserve">
+    <value>$text : </value>
+  </data>
   <data name="ThemeDark.Content" xml:space="preserve">
     <value>Sombre</value>
   </data>
@@ -638,7 +641,7 @@ Catégorie 2 : Étiquette 4/Étiquette 5
     <value>Titre 2:</value>
   </data>
   <data name="TotalComics" xml:space="preserve">
-    <value>Total des bandes dessinées :</value>
+    <value>Total des bandes dessinées</value>
   </data>
   <data name="TransitionAnimation.Text" xml:space="preserve">
     <value>Animation de transition</value>

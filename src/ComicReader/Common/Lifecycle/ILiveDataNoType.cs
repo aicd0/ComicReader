@@ -3,7 +3,7 @@
 
 namespace ComicReader.Common.Lifecycle;
 
-internal interface ILiveDataNoType
+public interface ILiveDataNoType
 {
     void Clear();
 }

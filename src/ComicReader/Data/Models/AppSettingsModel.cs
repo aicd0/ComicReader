@@ -10,7 +10,7 @@ using ComicReader.SDK.Data;
 
 namespace ComicReader.Data.Models;
 
-class AppSettingsModel : JsonDatabase<AppSettingsModel.JsonModel>
+public class AppSettingsModel : JsonDatabase<AppSettingsModel.JsonModel>
 {
     public static readonly AppSettingsModel Instance = new();
 

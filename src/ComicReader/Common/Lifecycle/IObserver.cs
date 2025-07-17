@@ -3,7 +3,7 @@
 
 namespace ComicReader.Common.Lifecycle;
 
-internal interface IObserver<T>
+public interface IObserver<T>
 {
     void OnChanged(T value);
 }

@@ -614,6 +614,9 @@ NOT                  - 논리 not. 예: NOT %tag = "hide this"
   <data name="TagsColon" xml:space="preserve">
     <value>태그: </value>
   </data>
+  <data name="TextWithColon" xml:space="preserve">
+    <value>$text: </value>
+  </data>
   <data name="ThemeDark.Content" xml:space="preserve">
     <value>어두운</value>
   </data>
@@ -639,7 +642,7 @@ NOT                  - 논리 not. 예: NOT %tag = "hide this"
     <value>제목 2:</value>
   </data>
   <data name="TotalComics" xml:space="preserve">
-    <value>총 만화 수: </value>
+    <value>총 만화 수</value>
   </data>
   <data name="TransitionAnimation.Text" xml:space="preserve">
     <value>페이지 넘기기 애니메이션</value>

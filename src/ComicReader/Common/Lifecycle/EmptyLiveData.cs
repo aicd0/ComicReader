@@ -9,7 +9,7 @@ using Microsoft.UI.Xaml;
 
 namespace ComicReader.Common.Lifecycle;
 
-internal class EmptyLiveData<T> : IMutableLiveData<T>
+public class EmptyLiveData<T> : IMutableLiveData<T>
 {
     public void Clear()
     {

@@ -37,9 +37,11 @@ public static class Logger
 
         sLogFolderPath = StorageLocation.GetLocalCacheFolderPath() + "\\logs\\";
 
-        Thread logThread = new(LogThreadMain);
-        logThread.IsBackground = true;
-        logThread.Priority = ThreadPriority.Lowest;
+        Thread logThread = new(LogThreadMain)
+        {
+            IsBackground = true,
+            Priority = ThreadPriority.Lowest,
+        };
         logThread.Start();
     }
 

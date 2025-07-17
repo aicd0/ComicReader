@@ -2,19 +2,14 @@
 // Licensed under the MIT License.
 
 using System;
-using System.Globalization;
 using System.Text;
 
 using ComicReader.Common;
 using ComicReader.Common.BaseUI;
-using ComicReader.Common.Threading;
-using ComicReader.Data;
 using ComicReader.Data.Models;
 using ComicReader.Data.Models.Comic;
-using ComicReader.Data.Tables;
 using ComicReader.Helpers.Navigation;
 using ComicReader.SDK.Common.AppEnvironment;
-using ComicReader.SDK.Data.SqlHelpers;
 using ComicReader.Views.Main;
 
 using Microsoft.UI.Xaml;
@@ -42,7 +37,6 @@ internal sealed partial class SettingPage : BasePage
         GetMainPageAbility().SetIcon(new SymbolIconSource() { Symbol = Symbol.Setting });
 
         ViewModel.Initialize();
-        UpdateStatistis();
         UpdateFeedback();
         UpdateAbout();
         UpdateDebugInformation();
@@ -51,13 +45,13 @@ internal sealed partial class SettingPage : BasePage
     protected override void OnResume()
     {
         base.OnResume();
-        ComicData.OnUpdated += OnComicDataUpdated;
+        ViewModel.OnPageResume();
     }
 
     protected override void OnPause()
     {
         base.OnPause();
-        ComicData.OnUpdated -= OnComicDataUpdated;
+        ViewModel.OnPagePause();
     }
 
     //
@@ -124,7 +118,7 @@ internal sealed partial class SettingPage : BasePage
 
     private void LanguageComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        ViewModel.SelectLanguage(((ComboBox)sender).SelectedIndex);
+        ViewModel.SetAppLanguage(((ComboBox)sender).SelectedIndex);
     }
 
     private void ShowHiddenComicButton_Click(object sender, RoutedEventArgs e)
@@ -152,38 +146,9 @@ internal sealed partial class SettingPage : BasePage
         ViewModel.ClearCache();
     }
 
-    private void OnComicDataUpdated()
-    {
-        _ = MainThreadUtils.RunInMainThread(delegate
-        {
-            ViewModel.UpdateRescanStatus();
-            UpdateStatistis();
-        });
-    }
-
     //
     // UI
     //
-
-    private void UpdateStatistis()
-    {
-        C0.Run(async delegate
-        {
-            long comicCount = 0;
-            await ComicData.EnqueueCommand(() =>
-            {
-                SelectCommand command = new(ComicTable.Instance);
-                IReaderToken<long> comicCountToken = command.PutQueryCountAll();
-                using SelectCommand.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
-                if (reader.Read())
-                {
-                    comicCount = comicCountToken.GetValue();
-                }
-            }, "SettingPage#UpdateStatistis");
-            string totalComicString = StringResourceProvider.Instance.TotalComics;
-            StatisticsTextBlock.Text = totalComicString + comicCount.ToString("#,#0", CultureInfo.InvariantCulture);
-        });
-    }
 
     private void UpdateFeedback()
     {

@@ -7,7 +7,7 @@ using Microsoft.UI.Xaml;
 
 namespace ComicReader.Common.Lifecycle;
 
-internal interface ILiveData<T> : ILiveDataNoType
+public interface ILiveData<T> : ILiveDataNoType
 {
     public void Observe(FrameworkElement owner, Action<T> observer);
 

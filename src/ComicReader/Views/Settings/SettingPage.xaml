@@ -13,13 +13,14 @@
 
     <Page.Resources>
         <ResourceDictionary>
+
             <ResourceDictionary.MergedDictionaries>
                 <ResourceDictionary Source="/Styles/TextBlock.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <!--  Converters  -->
             <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
             <converters:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
+
         </ResourceDictionary>
     </Page.Resources>
 
@@ -74,6 +75,17 @@
                                     Click="RemoveUnreachableCheckBox_Click"
                                     IsChecked="{x:Bind ViewModel.RemoveUnreachableComics, Mode=OneWay}" />
                                 <Grid Height="12" />
+                                <StackPanel Orientation="Horizontal">
+                                    <Button
+                                        x:Uid="RescanFilesButton"
+                                        Click="OnRescanFilesClicked"
+                                        IsEnabled="{x:Bind ViewModel.IsRescanning, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}" />
+                                    <ProgressRing
+                                        Margin="20,0,0,0"
+                                        VerticalAlignment="Center"
+                                        IsActive="{x:Bind ViewModel.IsRescanning, Mode=OneWay}" />
+                                </StackPanel>
+                                <Grid Height="8" />
                                 <Button x:Uid="ShowHiddenComicButton" Click="ShowHiddenComicButton_Click" />
                                 <Grid Height="12" />
                                 <TextBlock x:Uid="ArchiveEncoding" Style="{StaticResource SettingsPageBodyTextBlock}" />
@@ -115,7 +127,7 @@
                                     x:Uid="ClearAllHistoryButton"
                                     Click="OnHistoryClearAllClicked"
                                     IsEnabled="{x:Bind ViewModel.IsClearHistoryEnabled, Mode=OneWay}" />
-                                <Grid Height="12" />
+                                <Grid Height="16" />
                                 <TextBlock x:Uid="SaveHistory" Style="{StaticResource SettingsPageBodyTextBlock}" />
                                 <ToggleSwitch IsOn="{x:Bind ViewModel.HistorySaveBrowsingHistory, Mode=TwoWay}" />
                             </StackPanel>
@@ -130,11 +142,11 @@
                         <settings:SettingExpander.InnerContent>
                             <StackPanel Orientation="Vertical">
                                 <TextBlock
-                                    Margin="0,0,0,7"
+                                    Margin="0,0,0,8"
                                     Style="{StaticResource SettingsPageBodyTextBlock}"
                                     Text="{x:Bind StringResource.ApplyOnNextLaunch}"
                                     Visibility="{x:Bind ViewModel.AppearanceChanged, Mode=OneWay}" />
-                                <muxc:RadioButtons Margin="0,-7,0,0">
+                                <muxc:RadioButtons Margin="0,-8,0,0">
                                     <RadioButton x:Uid="ThemeLight" IsChecked="{x:Bind ViewModel.AppearanceLightChecked, Mode=TwoWay}" />
                                     <RadioButton x:Uid="ThemeDark" IsChecked="{x:Bind ViewModel.AppearanceDarkChecked, Mode=TwoWay}" />
                                     <RadioButton x:Uid="ThemeUseSystemSetting" IsChecked="{x:Bind ViewModel.AppearanceUseSystemSettingChecked, Mode=TwoWay}" />
@@ -211,18 +223,7 @@
                                     Foreground="{ThemeResource ForegroundGrey2}"
                                     Style="{StaticResource SettingsPageBodyTextBlock}"
                                     Text="{x:Bind ViewModel.CacheSize, Mode=OneWay}" />
-                                <Grid Height="12" />
-                                <StackPanel Orientation="Horizontal">
-                                    <Button
-                                        x:Uid="RescanFilesButton"
-                                        Click="OnRescanFilesClicked"
-                                        IsEnabled="{x:Bind ViewModel.IsRescanning, Converter={StaticResource BooleanNegationConverter}, Mode=OneWay}" />
-                                    <ProgressRing
-                                        Margin="20,0,0,0"
-                                        VerticalAlignment="Center"
-                                        IsActive="{x:Bind ViewModel.IsRescanning, Mode=OneWay}" />
-                                </StackPanel>
-                                <Grid Height="12" />
+                                <Grid Height="16" />
                                 <TextBlock x:Uid="DebugMode" Style="{StaticResource SettingsPageBodyTextBlock}" />
                                 <ToggleSwitch
                                     x:Name="TsDebugMode"
@@ -231,6 +232,7 @@
                             </StackPanel>
                         </settings:SettingExpander.InnerContent>
                     </settings:SettingExpander>
+
                 </StackPanel>
 
                 <StackPanel
@@ -238,12 +240,10 @@
                     Grid.Row="0"
                     Grid.Column="2"
                     Orientation="Vertical">
+
                     <!--  Statistics  -->
                     <TextBlock Style="{StaticResource SettingsPageSubTitleTextBlock}" Text="{x:Bind StringResource.Statistics}" />
-                    <TextBlock
-                        x:Name="StatisticsTextBlock"
-                        Style="{StaticResource SettingsPageBodyTextBlock}"
-                        Text="Updating..." />
+                    <TextBlock Style="{StaticResource SettingsPageBodyTextBlock}" Text="{x:Bind ViewModel.StatisticText, Mode=OneWay}" />
 
                     <!--  Feedback  -->
                     <TextBlock x:Uid="Feedback" Style="{StaticResource SettingsPageSubTitleTextBlock}" />
@@ -273,7 +273,7 @@
                         Style="{StaticResource SettingsPageBodyTextBlock}"
                         Text="© AboutCopyright" />
                     <Grid Height="8" />
-                    <RichTextBlock IsTextSelectionEnabled="False">
+                    <RichTextBlock HorizontalAlignment="Left" IsTextSelectionEnabled="False">
                         <Paragraph>
                             <Hyperlink NavigateUri="https://github.com/aicd0/ComicReader/blob/develop/docs/PrivacyPolicy.md">
                                 <Run x:Uid="PrivacyPolicy" />
@@ -296,6 +296,7 @@
                             IsTextSelectionEnabled="True"
                             Style="{StaticResource SettingsPageBodyTextBlock}" />
                     </StackPanel>
+
                 </StackPanel>
             </Grid>
         </ScrollViewer>

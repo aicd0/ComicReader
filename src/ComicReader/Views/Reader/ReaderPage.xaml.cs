@@ -54,7 +54,7 @@ internal sealed partial class ReaderPage : BasePage
     private IComicConnection? _comicConnection;
     private volatile bool _updatingProgress = false;
     private bool? _isFavorite = null;
-    private ComicData.CompletionStateEnum? _completionState = null;
+    private ComicCompletionStatusEnum? _completionState = null;
 
     private bool _buttomTileShowed = false;
     private bool _buttomTileHold = false;
@@ -711,17 +711,17 @@ internal sealed partial class ReaderPage : BasePage
 
     private void MarkAsUnreadButton_Click(object sender, RoutedEventArgs e)
     {
-        SetCompletionState(ComicData.CompletionStateEnum.NotStarted, true);
+        SetCompletionState(ComicCompletionStatusEnum.NotStarted, true);
     }
 
     private void MarkAsReadingButton_Click(object sender, RoutedEventArgs e)
     {
-        SetCompletionState(ComicData.CompletionStateEnum.Started, true);
+        SetCompletionState(ComicCompletionStatusEnum.Started, true);
     }
 
     private void MarkAsFinishedButton_Click(object sender, RoutedEventArgs e)
     {
-        SetCompletionState(ComicData.CompletionStateEnum.Completed, true);
+        SetCompletionState(ComicCompletionStatusEnum.Completed, true);
     }
 
     private void OnRatingControlValueChanged(RatingControl sender, object args)
@@ -945,7 +945,7 @@ internal sealed partial class ReaderPage : BasePage
         }
     }
 
-    public void SetCompletionState(ComicData.CompletionStateEnum completionState, bool writeDatabase)
+    public void SetCompletionState(ComicCompletionStatusEnum completionState, bool writeDatabase)
     {
         if (_completionState == completionState)
         {
@@ -955,21 +955,21 @@ internal sealed partial class ReaderPage : BasePage
 
         switch (completionState)
         {
-            case ComicData.CompletionStateEnum.NotStarted:
+            case ComicCompletionStatusEnum.NotStarted:
                 SetCompletionStateButton.Icon = new FontIcon
                 {
                     Glyph = "\uEA3A"
                 };
                 SetCompletionStateButton.Label = StringResource.Unread;
                 break;
-            case ComicData.CompletionStateEnum.Started:
+            case ComicCompletionStatusEnum.Started:
                 SetCompletionStateButton.Icon = new FontIcon
                 {
                     Glyph = "\uED5A"
                 };
                 SetCompletionStateButton.Label = StringResource.Reading;
                 break;
-            case ComicData.CompletionStateEnum.Completed:
+            case ComicCompletionStatusEnum.Completed:
                 SetCompletionStateButton.Icon = new FontIcon
                 {
                     Glyph = "\uE8FB"
@@ -980,22 +980,22 @@ internal sealed partial class ReaderPage : BasePage
                 break;
         }
 
-        MarkAsUnreadButton.Visibility = completionState == ComicData.CompletionStateEnum.NotStarted ? Visibility.Collapsed : Visibility.Visible;
-        MarkAsReadingButton.Visibility = completionState == ComicData.CompletionStateEnum.Started ? Visibility.Collapsed : Visibility.Visible;
-        MarkAsFinishedButton.Visibility = completionState == ComicData.CompletionStateEnum.Completed ? Visibility.Collapsed : Visibility.Visible;
+        MarkAsUnreadButton.Visibility = completionState == ComicCompletionStatusEnum.NotStarted ? Visibility.Collapsed : Visibility.Visible;
+        MarkAsReadingButton.Visibility = completionState == ComicCompletionStatusEnum.Started ? Visibility.Collapsed : Visibility.Visible;
+        MarkAsFinishedButton.Visibility = completionState == ComicCompletionStatusEnum.Completed ? Visibility.Collapsed : Visibility.Visible;
 
         ComicModel? comic = _comic;
         if (writeDatabase && comic != null && !comic.IsExternal)
         {
             switch (completionState)
             {
-                case ComicData.CompletionStateEnum.NotStarted:
+                case ComicCompletionStatusEnum.NotStarted:
                     _ = comic.SetCompletionStateToNotStarted();
                     break;
-                case ComicData.CompletionStateEnum.Started:
+                case ComicCompletionStatusEnum.Started:
                     _ = comic.SetCompletionStateToStarted();
                     break;
-                case ComicData.CompletionStateEnum.Completed:
+                case ComicCompletionStatusEnum.Completed:
                     _ = comic.SetCompletionStateToCompleted();
                     break;
                 default:

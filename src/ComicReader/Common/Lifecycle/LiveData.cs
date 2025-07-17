@@ -13,7 +13,7 @@ using Microsoft.UI.Xaml;
 
 namespace ComicReader.Common.Lifecycle;
 
-internal class LiveData<T> : ILiveData<T>, ILiveDataNoType
+public class LiveData<T> : ILiveData<T>, ILiveDataNoType
 {
     private readonly Dictionary<IObserver<T>, ObserverWrapper> _observers = new();
     private T _value;

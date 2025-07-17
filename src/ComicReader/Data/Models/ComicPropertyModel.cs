@@ -104,13 +104,13 @@ internal class ComicPropertyModel
             return string.Join(' ', tags);
         }
 
-        int CompletionStateToComparable(ComicData.CompletionStateEnum state)
+        int CompletionStateToComparable(ComicCompletionStatusEnum state)
         {
             return state switch
             {
-                ComicData.CompletionStateEnum.Completed => 100,
-                ComicData.CompletionStateEnum.Started => 50,
-                ComicData.CompletionStateEnum.NotStarted => 0,
+                ComicCompletionStatusEnum.Completed => 100,
+                ComicCompletionStatusEnum.Started => 50,
+                ComicCompletionStatusEnum.NotStarted => 0,
                 _ => -1, // Unknown state
             };
         }
@@ -190,13 +190,13 @@ internal class ComicPropertyModel
             return new(rating.ToString(), rating);
         }
 
-        GroupInfo<int> GetCompletionStateGroup(ComicData.CompletionStateEnum state)
+        GroupInfo<int> GetCompletionStateGroup(ComicCompletionStatusEnum state)
         {
             return state switch
             {
-                ComicData.CompletionStateEnum.Completed => new(StringResourceProvider.Instance.Finished, 3),
-                ComicData.CompletionStateEnum.Started => new(StringResourceProvider.Instance.Reading, 2),
-                ComicData.CompletionStateEnum.NotStarted => new(StringResourceProvider.Instance.Unread, 1),
+                ComicCompletionStatusEnum.Completed => new(StringResourceProvider.Instance.Finished, 3),
+                ComicCompletionStatusEnum.Started => new(StringResourceProvider.Instance.Reading, 2),
+                ComicCompletionStatusEnum.NotStarted => new(StringResourceProvider.Instance.Unread, 1),
                 _ => new(StringResourceProvider.Instance.Ungrouped, 0), // Unknown state
             };
         }

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace ComicReader.Common.Lifecycle;
 
-internal class EventBus : IEventBus
+public class EventBus : IEventBus
 {
     public static readonly IEventBus Default = new EventBus();
 

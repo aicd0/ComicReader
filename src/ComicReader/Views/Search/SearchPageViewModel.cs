@@ -388,7 +388,7 @@ internal partial class SearchPageViewModel : INotifyPropertyChanged
                     }
                     ModifyExistingItems(items, (item) =>
                     {
-                        item.CompletionState = ComicData.CompletionStateEnum.Completed;
+                        item.CompletionState = ComicCompletionStatusEnum.Completed;
                         item.UpdateProgress(true);
                     });
                 }
@@ -402,7 +402,7 @@ internal partial class SearchPageViewModel : INotifyPropertyChanged
                     }
                     ModifyExistingItems(items, (item) =>
                     {
-                        item.CompletionState = ComicData.CompletionStateEnum.Started;
+                        item.CompletionState = ComicCompletionStatusEnum.Started;
                         item.UpdateProgress(true);
                     });
                 }
@@ -416,7 +416,7 @@ internal partial class SearchPageViewModel : INotifyPropertyChanged
                     }
                     ModifyExistingItems(items, (item) =>
                     {
-                        item.CompletionState = ComicData.CompletionStateEnum.NotStarted;
+                        item.CompletionState = ComicCompletionStatusEnum.NotStarted;
                         item.UpdateProgress(true);
                     });
                 }

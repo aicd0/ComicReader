@@ -20,15 +20,15 @@ internal class ComicItemViewModel
     public string Progress { get; set; } = string.Empty;
     public bool IsFavorite { get; set; } = false;
     public bool IsHide { get; set; } = false;
-    public ComicData.CompletionStateEnum CompletionState { get; set; } = ComicData.CompletionStateEnum.NotStarted;
+    public ComicCompletionStatusEnum CompletionState { get; set; } = ComicCompletionStatusEnum.NotStarted;
 
     private readonly ReaderImageViewModel _image = new();
     public ReaderImageViewModel Image => _image;
 
     public bool IsRatingVisible => Rating != -1;
-    public bool IsRead => CompletionState == ComicData.CompletionStateEnum.Completed;
-    public bool IsReading => CompletionState == ComicData.CompletionStateEnum.Started;
-    public bool IsUnread => CompletionState == ComicData.CompletionStateEnum.NotStarted;
+    public bool IsRead => CompletionState == ComicCompletionStatusEnum.Completed;
+    public bool IsReading => CompletionState == ComicCompletionStatusEnum.Started;
+    public bool IsUnread => CompletionState == ComicCompletionStatusEnum.NotStarted;
 
     //
     // Constructors
@@ -64,11 +64,11 @@ internal class ComicItemViewModel
 
     public void UpdateProgress(bool compat)
     {
-        if (Comic.CompletionState == ComicData.CompletionStateEnum.NotStarted)
+        if (Comic.CompletionState == ComicCompletionStatusEnum.NotStarted)
         {
             Progress = StringResourceProvider.Instance.Unread;
         }
-        else if (Comic.CompletionState == ComicData.CompletionStateEnum.Completed)
+        else if (Comic.CompletionState == ComicCompletionStatusEnum.Completed)
         {
             Progress = StringResourceProvider.Instance.Finished;
         }
