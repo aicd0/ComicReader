@@ -92,6 +92,7 @@ public class StringResourceProvider
     public string Tag => GetResourceString("Tag");
     public string Tags => GetResourceString("Tags");
     public string TagsColon => GetResourceString("TagsColon");
+    public string TextWithColon => GetResourceString("TextWithColon");
     public string Title => GetResourceString("Title");
     public string Title1 => GetResourceString("Title1");
     public string Title1Colon => GetResourceString("Title1Colon");

@@ -613,6 +613,9 @@ Kategorie 2: Tag 4/Tag 5
   <data name="TagsColon" xml:space="preserve">
     <value>Stichworte:</value>
   </data>
+  <data name="TextWithColon" xml:space="preserve">
+    <value>$text: </value>
+  </data>
   <data name="ThemeDark.Content" xml:space="preserve">
     <value>Dunkel</value>
   </data>
@@ -638,7 +641,7 @@ Kategorie 2: Tag 4/Tag 5
     <value>Titel 2:</value>
   </data>
   <data name="TotalComics" xml:space="preserve">
-    <value>Comics insgesamt: </value>
+    <value>Comics insgesamt</value>
   </data>
   <data name="TransitionAnimation.Text" xml:space="preserve">
     <value>Animation zum Umblättern</value>

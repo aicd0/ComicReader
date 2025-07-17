@@ -201,9 +201,9 @@ internal partial class EditFilterDialogViewModel : INotifyPropertyChanged
             buttons.Add(new() { Tag = StringResourceProvider.Instance.ExpressionIn, ItemHandler = CreateExpressionButtonHandler("in ()", -2) });
             buttons.Add(new() { Tag = StringResourceProvider.Instance.Title, ItemHandler = CreateExpressionButtonHandler("%title") });
             buttons.Add(new() { Tag = StringResourceProvider.Instance.Rating, ItemHandler = CreateExpressionButtonHandler("%rating") });
-            buttons.Add(new() { Tag = StringResourceProvider.Instance.Unread, ItemHandler = CreateExpressionButtonHandler($"%completion_state = {(int)ComicData.CompletionStateEnum.NotStarted}") });
-            buttons.Add(new() { Tag = StringResourceProvider.Instance.Reading, ItemHandler = CreateExpressionButtonHandler($"%completion_state = {(int)ComicData.CompletionStateEnum.Started}") });
-            buttons.Add(new() { Tag = StringResourceProvider.Instance.Finished, ItemHandler = CreateExpressionButtonHandler($"%completion_state = {(int)ComicData.CompletionStateEnum.Completed}") });
+            buttons.Add(new() { Tag = StringResourceProvider.Instance.Unread, ItemHandler = CreateExpressionButtonHandler($"%completion_state = {(int)ComicCompletionStatusEnum.NotStarted}") });
+            buttons.Add(new() { Tag = StringResourceProvider.Instance.Reading, ItemHandler = CreateExpressionButtonHandler($"%completion_state = {(int)ComicCompletionStatusEnum.Started}") });
+            buttons.Add(new() { Tag = StringResourceProvider.Instance.Finished, ItemHandler = CreateExpressionButtonHandler($"%completion_state = {(int)ComicCompletionStatusEnum.Completed}") });
             buttons.Add(new() { Tag = StringResourceProvider.Instance.Progress, ItemHandler = CreateExpressionButtonHandler("%progress") });
             buttons.Add(new() { Tag = StringResourceProvider.Instance.Title1, ItemHandler = CreateExpressionButtonHandler("%title1") });
             buttons.Add(new() { Tag = StringResourceProvider.Instance.Title2, ItemHandler = CreateExpressionButtonHandler("%title2") });

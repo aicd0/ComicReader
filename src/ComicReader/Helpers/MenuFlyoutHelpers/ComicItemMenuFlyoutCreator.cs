@@ -62,7 +62,7 @@ internal static class ComicItemMenuFlyoutCreator
                     Glyph = "\uE7C1"
                 }
             };
-            if (model.Comic.CompletionState != Data.Models.Comic.ComicData.CompletionStateEnum.NotStarted)
+            if (model.Comic.CompletionState != Data.Models.Comic.ComicCompletionStatusEnum.NotStarted)
             {
                 MenuFlyoutItem item = new()
                 {
@@ -71,7 +71,7 @@ internal static class ComicItemMenuFlyoutCreator
                 item.Click += handler.OnMarkAsUnreadClicked;
                 groupItem.Items.Add(item);
             }
-            if (model.Comic.CompletionState != Data.Models.Comic.ComicData.CompletionStateEnum.Started)
+            if (model.Comic.CompletionState != Data.Models.Comic.ComicCompletionStatusEnum.Started)
             {
                 MenuFlyoutItem item = new()
                 {
@@ -80,7 +80,7 @@ internal static class ComicItemMenuFlyoutCreator
                 item.Click += handler.OnMarkAsReadingClicked;
                 groupItem.Items.Add(item);
             }
-            if (model.Comic.CompletionState != Data.Models.Comic.ComicData.CompletionStateEnum.Completed)
+            if (model.Comic.CompletionState != Data.Models.Comic.ComicCompletionStatusEnum.Completed)
             {
                 MenuFlyoutItem item = new()
                 {

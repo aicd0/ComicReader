@@ -46,7 +46,7 @@ internal sealed class ComicModel
     public string Title => _internalModel.Title;
     public string Title1 => _internalModel.Title1;
     public string Title2 => _internalModel.Title2;
-    public CompletionStateEnum CompletionState => _internalModel.CompletionState;
+    public ComicCompletionStatusEnum CompletionState => _internalModel.CompletionState;
 
     public string? GetExt(string key)
     {
@@ -100,27 +100,27 @@ internal sealed class ComicModel
     public async Task SetCompletionStateToNotStarted()
     {
         await SaveProgressAsync(-1, 0);
-        await _internalModel.SaveCompletionState(CompletionStateEnum.NotStarted);
+        await _internalModel.SaveCompletionState(ComicCompletionStatusEnum.NotStarted);
     }
 
     public async Task SetCompletionStateToStarted()
     {
         _internalModel.SetAsStarted();
-        await _internalModel.SaveCompletionState(CompletionStateEnum.Started);
+        await _internalModel.SaveCompletionState(ComicCompletionStatusEnum.Started);
     }
 
     public async Task SetCompletionStateToAtLeastStarted()
     {
         _internalModel.SetAsStarted();
-        if (CompletionState == CompletionStateEnum.NotStarted)
+        if (CompletionState == ComicCompletionStatusEnum.NotStarted)
         {
-            await _internalModel.SaveCompletionState(CompletionStateEnum.Started);
+            await _internalModel.SaveCompletionState(ComicCompletionStatusEnum.Started);
         }
     }
 
     public async Task SetCompletionStateToCompleted()
     {
-        await _internalModel.SaveCompletionState(CompletionStateEnum.Completed);
+        await _internalModel.SaveCompletionState(ComicCompletionStatusEnum.Completed);
     }
 
     public Task SaveProgressAsync(int progress, double lastPosition)

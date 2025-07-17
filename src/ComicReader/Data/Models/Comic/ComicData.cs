@@ -130,7 +130,7 @@ internal abstract class ComicData
                 double lastPosition = lastPositionToken.GetValue();
                 string coverCacheKey = coverCacheKeyToken.GetValue();
                 string description = descriptionToken.GetValue();
-                CompletionStateEnum completionState = ComicPropertyRepository.ParseCompletionState(completionStateToken.GetValue());
+                ComicCompletionStatusEnum completionState = ComicPropertyRepository.ParseCompletionState(completionStateToken.GetValue());
                 string extJson = extToken.GetValue();
 
                 ComicData? comic = FromDatabase(type, location);
@@ -308,7 +308,7 @@ internal abstract class ComicData
 
     public long Id { get; private set; } = -1;
     private ComicType Type { get; set; }
-    public CompletionStateEnum CompletionState { get; private set; }
+    public ComicCompletionStatusEnum CompletionState { get; private set; }
     public string Location { get; protected set; } = "";
     public string Title1 { get; protected set; } = "";
     public string Title2 { get; protected set; } = "";
@@ -544,7 +544,7 @@ internal abstract class ComicData
         }, "SaveHiddenAsync");
     }
 
-    public Task SaveCompletionState(CompletionStateEnum completionState)
+    public Task SaveCompletionState(ComicCompletionStatusEnum completionState)
     {
         CompletionState = completionState;
         return ComicPropertyRepository.Instance.CompletionStateOperator.Write(Id, completionState, CreateRequestOption());
@@ -1081,12 +1081,5 @@ internal abstract class ComicData
         Folder = 1,
         Archive = 2,
         PDF = 3,
-    }
-
-    public enum CompletionStateEnum
-    {
-        NotStarted = 0,
-        Started = 1,
-        Completed = 2,
     }
 };

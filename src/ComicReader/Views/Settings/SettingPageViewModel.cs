@@ -503,22 +503,45 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
 
     private void UpdateStatistis()
     {
-        long comicCount = 0;
-        ComicData.EnqueueCommand(() =>
+        long QueryComicCount(Action<SelectCommand>? condition = null)
         {
             SelectCommand command = new(ComicTable.Instance);
+            condition?.Invoke(command);
             IReaderToken<long> comicCountToken = command.PutQueryCountAll();
             using SelectCommand.IReader reader = command.Execute(SqlDatabaseManager.MainDatabase);
+            long result = 0;
             if (reader.Read())
             {
-                comicCount = comicCountToken.GetValue();
+                result = comicCountToken.GetValue();
             }
+            return result;
+        }
+
+        long comicCount = 0;
+        long unreadComicCount = 0;
+        long readingComicCount = 0;
+        long finishedComicCount = 0;
+        ComicData.EnqueueCommand(() =>
+        {
+            comicCount = QueryComicCount();
+            unreadComicCount = QueryComicCount(c => c.AppendCondition(ComicTable.ColumnCompletionState, (int)ComicCompletionStatusEnum.NotStarted));
+            readingComicCount = QueryComicCount(c => c.AppendCondition(ComicTable.ColumnCompletionState, (int)ComicCompletionStatusEnum.Started));
+            finishedComicCount = QueryComicCount(c => c.AppendCondition(ComicTable.ColumnCompletionState, (int)ComicCompletionStatusEnum.Completed));
         }, "SettingPage#UpdateStatistis").Wait();
-        string totalComicString = StringResourceProvider.Instance.TotalComics;
+        string textWithColon = StringResourceProvider.Instance.TextWithColon;
+        StringBuilder sb = new();
+        sb.Append(textWithColon.Replace("$text", StringResourceProvider.Instance.TotalComics)).Append(comicCount.ToString("#,#0", CultureInfo.InvariantCulture));
+        sb.Append('\n');
+        sb.Append(textWithColon.Replace("$text", StringResourceProvider.Instance.Unread)).Append(unreadComicCount.ToString("#,#0", CultureInfo.InvariantCulture));
+        sb.Append('\n');
+        sb.Append(textWithColon.Replace("$text", StringResourceProvider.Instance.Reading)).Append(readingComicCount.ToString("#,#0", CultureInfo.InvariantCulture));
+        sb.Append('\n');
+        sb.Append(textWithColon.Replace("$text", StringResourceProvider.Instance.Finished)).Append(finishedComicCount.ToString("#,#0", CultureInfo.InvariantCulture));
+        string statisticText = sb.ToString();
 
         MainThreadUtils.RunInMainThread(() =>
         {
-            StatisticText = totalComicString + comicCount.ToString("#,#0", CultureInfo.InvariantCulture);
+            StatisticText = statisticText;
         });
     }
 
