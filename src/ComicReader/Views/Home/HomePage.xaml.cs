@@ -344,8 +344,7 @@ internal sealed partial class HomePage : BasePage
         }
 
         BindDropDownButton(ViewTypeDropDownButton, ViewTypeDropDownButtonText, model.ViewTypeDropDown, ViewModel.SelectViewType);
-        BindDropDownButton(SortByDropDownButton, SortByDropDownButtonText, model.SortByDropDown, ViewModel.SelectSortBy);
-        BindDropDownButton(GroupByDropDownButton, GroupByDropDownButtonText, model.GroupByDropDown, ViewModel.SelectGroupBy);
+        BindDropDownButton(SortAndGroupDropDownButton, SortAndGroupDropDownButtonText, model.SortAndGroupDropDown, ViewModel.SelectSortOrGroup);
         BindDropDownButton(FilterPresetDropDownButton, FilterPresetDropDownButtonText, model.FilterPresetDropDown, ViewModel.SelectFilterPreset);
     }
 
