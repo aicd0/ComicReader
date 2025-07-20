@@ -63,6 +63,7 @@ public class StringResourceProvider
     public string MarkAsUnread => GetResourceString("MarkAsUnread");
     public string NewFolder => GetResourceString("NewFolder");
     public string NewTab => GetResourceString("NewTab");
+    public string None => GetResourceString("None");
     public string NoRating => GetResourceString("NoRating");
     public string NoResults => GetResourceString("NoResults");
     public string OpenInNewTab => GetResourceString("OpenInNewTab");

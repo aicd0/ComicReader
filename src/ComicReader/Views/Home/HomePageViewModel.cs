@@ -256,44 +256,69 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
             ComicFilterModel.ExternalFilterModel lastFilter = EnsureLastFilterNoLock();
             if (model.IsSortBy)
             {
-                if (model.IsProperty)
+                switch (model.Type)
                 {
-                    if (!model.Property.Equals(lastFilter.SortBy))
-                    {
-                        modified = true;
-                        lastFilter.SortBy = model.Property;
-                    }
-                }
-                else
-                {
-                    if (lastFilter.SortByAscending != model.IsAscending)
-                    {
-                        modified = true;
-                        lastFilter.SortByAscending = model.IsAscending;
-                    }
+                    case SortByMenuItemTypeEnum.None:
+                        break;
+                    case SortByMenuItemTypeEnum.Property:
+                        if (!model.Property.Equals(lastFilter.SortBy))
+                        {
+                            modified = true;
+                            lastFilter.SortBy = model.Property;
+                        }
+                        break;
+                    case SortByMenuItemTypeEnum.Ascending:
+                        if (!lastFilter.SortByAscending)
+                        {
+                            modified = true;
+                            lastFilter.SortByAscending = true;
+                        }
+                        break;
+                    case SortByMenuItemTypeEnum.Descending:
+                        if (lastFilter.SortByAscending)
+                        {
+                            modified = true;
+                            lastFilter.SortByAscending = false;
+                        }
+                        break;
+                    default:
+                        break;
                 }
             }
             else
             {
-                if (model.IsProperty)
+                switch (model.Type)
                 {
-                    modified = true;
-                    if (model.Property.Equals(lastFilter.GroupBy))
-                    {
-                        lastFilter.GroupBy = null;
-                    }
-                    else
-                    {
-                        lastFilter.GroupBy = model.Property;
-                    }
-                }
-                else
-                {
-                    if (lastFilter.GroupByAscending != model.IsAscending)
-                    {
-                        modified = true;
-                        lastFilter.GroupByAscending = model.IsAscending;
-                    }
+                    case SortByMenuItemTypeEnum.None:
+                        if (lastFilter.GroupBy != null)
+                        {
+                            modified = true;
+                            lastFilter.GroupBy = null;
+                        }
+                        break;
+                    case SortByMenuItemTypeEnum.Property:
+                        if (!model.Property.Equals(lastFilter.GroupBy))
+                        {
+                            modified = true;
+                            lastFilter.GroupBy = model.Property;
+                        }
+                        break;
+                    case SortByMenuItemTypeEnum.Ascending:
+                        if (!lastFilter.GroupByAscending)
+                        {
+                            modified = true;
+                            lastFilter.GroupByAscending = true;
+                        }
+                        break;
+                    case SortByMenuItemTypeEnum.Descending:
+                        if (lastFilter.GroupByAscending)
+                        {
+                            modified = true;
+                            lastFilter.GroupByAscending = false;
+                        }
+                        break;
+                    default:
+                        break;
                 }
             }
             if (modified)
@@ -908,7 +933,7 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
             {
                 items.Add(CreateToggleMenuFlyoutItem(p.DisplayName, p.Equals(selectedProperty), new SortByUIModel
                 {
-                    IsProperty = true,
+                    Type = SortByMenuItemTypeEnum.Property,
                     Property = p,
                     IsSortBy = true,
                 }));
@@ -921,7 +946,7 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
             {
                 subItems.Add(CreateToggleMenuFlyoutItem(p.DisplayName, p.Equals(selectedProperty), new SortByUIModel
                 {
-                    IsProperty = true,
+                    Type = SortByMenuItemTypeEnum.Property,
                     Property = p,
                     IsSortBy = true,
                 }));
@@ -937,14 +962,12 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
             items.Add(CreateSeperatorMenuFlyoutItem<SortByUIModel>());
             items.Add(CreateToggleMenuFlyoutItem(StringResourceProvider.Instance.Ascending, ascending, new SortByUIModel
             {
-                IsProperty = false,
-                IsAscending = true,
+                Type = SortByMenuItemTypeEnum.Ascending,
                 IsSortBy = true,
             }));
             items.Add(CreateToggleMenuFlyoutItem(StringResourceProvider.Instance.Descending, !ascending, new SortByUIModel
             {
-                IsProperty = false,
-                IsAscending = false,
+                Type = SortByMenuItemTypeEnum.Descending,
                 IsSortBy = true,
             }));
         }
@@ -980,13 +1003,18 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
         propertyGroupList.Sort((a, b) => string.Compare(a.Key, b.Key, StringComparison.Ordinal));
 
         List<MenuFlyoutItemModel<SortByUIModel>> items = [];
+        items.Add(CreateToggleMenuFlyoutItem(StringResourceProvider.Instance.None, selectedProperty is null, new SortByUIModel
+        {
+            Type = SortByMenuItemTypeEnum.None,
+            IsSortBy = false,
+        }));
         if (plainProperties != null)
         {
             foreach (ComicPropertyModel p in plainProperties)
             {
                 items.Add(CreateToggleMenuFlyoutItem(p.DisplayName, p.Equals(selectedProperty), new SortByUIModel
                 {
-                    IsProperty = true,
+                    Type = SortByMenuItemTypeEnum.Property,
                     Property = p,
                     IsSortBy = false,
                 }));
@@ -999,7 +1027,7 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
             {
                 subItems.Add(CreateToggleMenuFlyoutItem(p.DisplayName, p.Equals(selectedProperty), new SortByUIModel
                 {
-                    IsProperty = true,
+                    Type = SortByMenuItemTypeEnum.Property,
                     Property = p,
                     IsSortBy = false,
                 }));
@@ -1015,14 +1043,12 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
             items.Add(CreateSeperatorMenuFlyoutItem<SortByUIModel>());
             items.Add(CreateToggleMenuFlyoutItem(StringResourceProvider.Instance.Ascending, ascending, new SortByUIModel
             {
-                IsProperty = false,
-                IsAscending = true,
+                Type = SortByMenuItemTypeEnum.Ascending,
                 IsSortBy = false,
             }));
             items.Add(CreateToggleMenuFlyoutItem(StringResourceProvider.Instance.Descending, !ascending, new SortByUIModel
             {
-                IsProperty = false,
-                IsAscending = false,
+                Type = SortByMenuItemTypeEnum.Descending,
                 IsSortBy = false,
             }));
         }
@@ -1093,8 +1119,15 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
     public class SortByUIModel
     {
         public bool IsSortBy { get; set; }
-        public bool IsProperty { get; set; }
-        public bool IsAscending { get; set; }
+        public SortByMenuItemTypeEnum Type { get; set; }
         public ComicPropertyModel Property { get; set; } = new();
+    }
+
+    public enum SortByMenuItemTypeEnum
+    {
+        None,
+        Property,
+        Ascending,
+        Descending,
     }
 }

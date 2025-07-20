@@ -202,7 +202,7 @@
     <value>Comic information</value>
   </data>
   <data name="CompletionState" xml:space="preserve">
-    <value>Completion state</value>
+    <value>Completion status</value>
   </data>
   <data name="ContinuousButton.Label" xml:space="preserve">
     <value>Continuous</value>
@@ -477,6 +477,9 @@ The evaluation will be performed in the following order:
   <data name="NoResultsDetail.Text" xml:space="preserve">
     <value>Try searching with different keywords</value>
   </data>
+  <data name="None" xml:space="preserve">
+    <value>None</value>
+  </data>
   <data name="OpenInFileExplorer.ToolTipService.ToolTip" xml:space="preserve">
     <value>Open in File Explorer</value>
   </data>
@@ -583,7 +586,7 @@ The evaluation will be performed in the following order:
     <value>Send feedback</value>
   </data>
   <data name="SetCompletionState" xml:space="preserve">
-    <value>Set completion state</value>
+    <value>Set completion status</value>
   </data>
   <data name="Settings" xml:space="preserve">
     <value>Settings</value>
