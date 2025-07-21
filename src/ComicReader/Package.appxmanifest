@@ -25,15 +25,15 @@
   </Dependencies>
 
   <Resources>
-	<Resource Language="de-DE" />
+    <Resource Language="de-DE" />
     <Resource Language="en" />
-	<Resource Language="es-ES" />
-	<Resource Language="fr-FR" />
-	<Resource Language="ja-JP" />
-	<Resource Language="ko-KR" />
-	<Resource Language="ru-RU" />
-	<Resource Language="zh-CN" />
-	<Resource Language="zh-TW" />
+    <Resource Language="es-ES" />
+    <Resource Language="fr-FR" />
+    <Resource Language="ja-JP" />
+    <Resource Language="ko-KR" />
+    <Resource Language="ru-RU" />
+    <Resource Language="zh-CN" />
+    <Resource Language="zh-TW" />
   </Resources>
 
   <Applications>
