@@ -378,7 +378,7 @@ internal class ComicPropertyModel
 
             IItemSorterWithKeyInfo<GroupSortingKeySelectorParams, string> sorter = GetSorter(sortingFunction, sortingProperty);
             return sorter.Sort(comicGroups, x => new(x.Name, x.Items.ConvertAll(y => selector(y))), ascending,
-                (m, t) => m.Description = string.IsNullOrEmpty(t) ? string.Empty : $"({t})");
+                (m, t) => m.Description = string.IsNullOrEmpty(t) ? $"({m.Items.Count})" : $"({t})");
         }
 
         private IItemSorterWithKeyInfo<GroupSortingKeySelectorParams, string> GetSorter(ComicFilterModel.FunctionTypeEnum sortingFunction, ComicPropertyModel? sortingProperty)
