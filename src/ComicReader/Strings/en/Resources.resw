@@ -198,6 +198,9 @@
   <data name="ClearCacheDetail" xml:space="preserve">
     <value>Cache size: $size</value>
   </data>
+  <data name="CollapseAll" xml:space="preserve">
+    <value>Collapse all</value>
+  </data>
   <data name="ComicInfo" xml:space="preserve">
     <value>Comic information</value>
   </data>
@@ -254,6 +257,9 @@
   </data>
   <data name="Edit" xml:space="preserve">
     <value>Edit</value>
+  </data>
+  <data name="ExpandAll" xml:space="preserve">
+    <value>Expand all</value>
   </data>
   <data name="ExpressionAnd" xml:space="preserve">
     <value>And</value>
@@ -500,6 +506,9 @@ The evaluation will be performed in the following order:
   </data>
   <data name="OpenInNewTab" xml:space="preserve">
     <value>Open in new tab</value>
+  </data>
+  <data name="OpenRandomComic" xml:space="preserve">
+    <value>Open a random comic</value>
   </data>
   <data name="PageGap" xml:space="preserve">
     <value>Page spacing</value>

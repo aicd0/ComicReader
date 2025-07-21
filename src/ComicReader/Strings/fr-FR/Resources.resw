@@ -198,6 +198,9 @@
   <data name="ClearCacheDetail" xml:space="preserve">
     <value>Taille du cache : $size</value>
   </data>
+  <data name="CollapseAll" xml:space="preserve">
+    <value>Réduire tout</value>
+  </data>
   <data name="ComicInfo" xml:space="preserve">
     <value>Informations sur la bande dessinée</value>
   </data>
@@ -254,6 +257,9 @@
   </data>
   <data name="Edit" xml:space="preserve">
     <value>Modifier</value>
+  </data>
+  <data name="ExpandAll" xml:space="preserve">
+    <value>Développer tout</value>
   </data>
   <data name="ExpressionAnd" xml:space="preserve">
     <value>Et</value>
@@ -498,6 +504,9 @@ L'évaluation sera effectuée dans l'ordre suivant :
   </data>
   <data name="OpenInNewTab" xml:space="preserve">
     <value>Ouvrir dans un nouvel onglet</value>
+  </data>
+  <data name="OpenRandomComic" xml:space="preserve">
+    <value>Ouvrir une bande dessinée au hasard</value>
   </data>
   <data name="PageGap" xml:space="preserve">
     <value>Espacement</value>

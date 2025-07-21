@@ -26,6 +26,7 @@ public class StringResourceProvider
     public string Calculating => GetResourceString("Calculating");
     public string Cancel => GetResourceString("Cancel");
     public string ClearCacheDetail => GetResourceString("ClearCacheDetail");
+    public string CollapseAll => GetResourceString("CollapseAll");
     public string ComicInfo => GetResourceString("ComicInfo");
     public string CompletionState => GetResourceString("CompletionState");
     public string ContributionRunBeforeLink => GetResourceString("ContributionRunBeforeLink");
@@ -39,6 +40,7 @@ public class StringResourceProvider
     public string DiffMode => GetResourceString("DiffMode");
     public string Done => GetResourceString("Done");
     public string Edit => GetResourceString("Edit");
+    public string ExpandAll => GetResourceString("ExpandAll");
     public string ExpressionAnd => GetResourceString("ExpressionAnd");
     public string ExpressionIn => GetResourceString("ExpressionIn");
     public string ExpressionNot => GetResourceString("ExpressionNot");
@@ -72,6 +74,7 @@ public class StringResourceProvider
     public string NoRating => GetResourceString("NoRating");
     public string NoResults => GetResourceString("NoResults");
     public string OpenInNewTab => GetResourceString("OpenInNewTab");
+    public string OpenRandomComic => GetResourceString("OpenRandomComic");
     public string PageLayoutSingle => GetResourceString("PageLayoutSingle");
     public string PageLayoutDualWithCover => GetResourceString("PageLayoutDualWithCover");
     public string PageLayoutDualWithCoverMirrored => GetResourceString("PageLayoutDualWithCoverMirrored");

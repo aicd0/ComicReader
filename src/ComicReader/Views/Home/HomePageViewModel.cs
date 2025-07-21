@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -157,8 +158,31 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
         }
     }
 
+    private bool _isCollapseAllEnabled = false;
+    public bool IsCollapseAllEnabled
+    {
+        get => _isCollapseAllEnabled;
+        set
+        {
+            _isCollapseAllEnabled = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsCollapseAllEnabled)));
+        }
+    }
+
+    private bool _isExpandAllEnabled = false;
+    public bool IsExpandAllEnabled
+    {
+        get => _isExpandAllEnabled;
+        set
+        {
+            _isExpandAllEnabled = value;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsExpandAllEnabled)));
+        }
+    }
+
     private readonly ComicSearchEngine _searchEngine = new();
     private ComicFilterModel.ExternalModel _filterModel = new();
+    private readonly ReaderWriterLock _comicItemsLock = new();
     private readonly List<ComicItemViewModel> _comicItems = [];
     private readonly List<ComicItemViewModel> _selectedComicItems = [];
 
@@ -376,7 +400,7 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
         if (enabled)
         {
             _selectedComicItems.Clear();
-            UpdateCommandBarButtonsNoLock();
+            UpdateCommandBarButtonStates();
         }
     }
 
@@ -391,7 +415,7 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
     {
         _selectedComicItems.Clear();
         _selectedComicItems.AddRange(items);
-        UpdateCommandBarButtonsNoLock();
+        UpdateCommandBarButtonStates();
     }
 
     /// <summary>
@@ -447,7 +471,7 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
             BatchApplyOperation(operationType, selection);
             MainThreadUtils.RunInMainThread(() =>
             {
-                UpdateCommandBarButtonsNoLock();
+                UpdateCommandBarButtonStates();
             });
         });
     }
@@ -467,7 +491,7 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
             BatchApplyOperation(operationType, selectedItems);
             MainThreadUtils.RunInMainThread(() =>
             {
-                UpdateCommandBarButtonsNoLock();
+                UpdateCommandBarButtonStates();
             });
         });
     }
@@ -492,17 +516,96 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
         _searchEngine.Update();
     }
 
+    /// <summary>
+    /// Retrieves a random comic from the collection.
+    /// </summary>
+    /// <remarks>If the collection is empty, the method returns <see langword="null"/>. This method is
+    /// thread-safe and can be called concurrently from multiple threads.</remarks>
+    /// <returns>A <see cref="ComicModel"/> representing a random comic from the collection, or <see langword="null"/> if the
+    /// collection is empty.</returns>
+    public ComicModel? GetRandomComic()
+    {
+        _comicItemsLock.AcquireReaderLock(Timeout.Infinite);
+        try
+        {
+            if (_comicItems.Count == 0)
+            {
+                return null;
+            }
+            Random random = new();
+            int index = random.Next(_comicItems.Count);
+            return _comicItems[index].Comic;
+        }
+        finally
+        {
+            _comicItemsLock.ReleaseReaderLock();
+        }
+    }
+
+    /// <summary>
+    /// Toggles the collapsed state of the specified comic group.
+    /// </summary>
+    /// <remarks>This method inverts the current collapsed state of the provided comic group.  It also updates
+    /// the state of the collapse/expand button to reflect the new state.</remarks>
+    /// <param name="groupModel">The comic group to be collapsed or expanded. Cannot be null.</param>
+    public void CollapseOrExpandGroup(ComicGroupViewModel groupModel)
+    {
+        groupModel.Collapsed = !groupModel.Collapsed;
+        UpdateCollapseExpandGroupButtonStates();
+    }
+
+    /// <summary>
+    /// Collapses all comic groups in the collection.
+    /// </summary>
+    /// <remarks>This method sets the <see cref="ComicGroupViewModel.Collapsed"/> property to <see
+    /// langword="true"/> for each group in the <c>GroupedComicItems</c> collection. It also updates the state of the
+    /// collapse/expand group button to reflect the changes.</remarks>
+    public void CollapseAllGroups()
+    {
+        foreach (ComicGroupViewModel group in GroupedComicItems)
+        {
+            group.Collapsed = true;
+        }
+
+        UpdateCollapseExpandGroupButtonStates();
+    }
+
+    /// <summary>
+    /// Expands all comic groups by setting their collapsed state to false.
+    /// </summary>
+    /// <remarks>This method iterates through all comic groups and expands them, ensuring that each group's
+    /// <see cref="ComicGroupViewModel.Collapsed"/> property is set to <see langword="false"/>. After expanding the
+    /// groups, it updates the state of the collapse/expand button to reflect the changes.</remarks>
+    public void ExpandAllGroups()
+    {
+        foreach (ComicGroupViewModel group in GroupedComicItems)
+        {
+            group.Collapsed = false;
+        }
+
+        UpdateCollapseExpandGroupButtonStates();
+    }
+
     private void OnComicSearchResult(IReadOnlyList<ComicModel> items)
     {
         _sharedDispatcher.Submit("OnComicSearchResult", delegate
         {
-            _comicItems.Clear();
-            foreach (ComicModel item in items)
+            _comicItemsLock.AcquireWriterLock(Timeout.Infinite);
+            try
             {
-                var model = new ComicItemViewModel(item);
-                model.UpdateProgress(true);
-                _comicItems.Add(model);
+                _comicItems.Clear();
+                foreach (ComicModel item in items)
+                {
+                    var model = new ComicItemViewModel(item);
+                    model.UpdateProgress(true);
+                    _comicItems.Add(model);
+                }
             }
+            finally
+            {
+                _comicItemsLock.ReleaseWriterLock();
+            }
+
             ScheduleUpdateComics();
         });
     }
@@ -608,7 +711,17 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
             action(newItem);
             changedItems[item.Comic] = newItem;
         }
-        ModifyExistingList(_comicItems, changedItems);
+
+        _comicItemsLock.AcquireWriterLock(Timeout.Infinite);
+        try
+        {
+            ModifyExistingList(_comicItems, changedItems);
+        }
+        finally
+        {
+            _comicItemsLock.ReleaseWriterLock();
+        }
+
         _ = MainThreadUtils.RunInMainThread(delegate
         {
             ModifyExistingList(_selectedComicItems, changedItems);
@@ -646,9 +759,20 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
         }
     }
 
-    private void UpdateCommandBarButtonsNoLock()
+    private void UpdateCommandBarButtonStates()
     {
-        bool allSelected = _selectedComicItems.Count == _comicItems.Count;
+        int itemCount;
+        _comicItemsLock.AcquireReaderLock(Timeout.Infinite);
+        try
+        {
+            itemCount = _comicItems.Count;
+        }
+        finally
+        {
+            _comicItemsLock.ReleaseReaderLock();
+        }
+
+        bool allSelected = _selectedComicItems.Count == itemCount;
         bool favoriteEnabled = false;
         bool unfavoriteEnabled = false;
         bool hideEnabled = false;
@@ -701,6 +825,13 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
         IsCommandBarMarkAsReadEnabled = markAsReadEnabled;
         IsCommandBarMarkAsReadingEnabled = markAsReadingEnabled;
         IsCommandBarMarkAsUnreadEnabled = markAsUnreadEnabled;
+    }
+
+    private void UpdateCollapseExpandGroupButtonStates()
+    {
+        bool groupingEnabled = GroupingEnabledLiveData.GetValue();
+        IsCollapseAllEnabled = groupingEnabled && GroupedComicItems.Count > 0 && GroupedComicItems.Any(x => !x.Collapsed);
+        IsExpandAllEnabled = groupingEnabled && GroupedComicItems.Count > 0 && GroupedComicItems.Any(x => x.Collapsed);
     }
 
     private void ScheduleUpdateFilters(bool reloadFromDatabase)
@@ -810,7 +941,17 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
     {
         Logger.I(TAG, "UpdateComicsNoLock");
 
-        IReadOnlyList<ComicItemViewModel> comicItems = _comicItems;
+        IReadOnlyList<ComicItemViewModel> comicItems;
+        _comicItemsLock.AcquireReaderLock(Timeout.Infinite);
+        try
+        {
+            comicItems = [.. _comicItems];
+        }
+        finally
+        {
+            _comicItemsLock.ReleaseReaderLock();
+        }
+
         bool isEmpty = comicItems.Count == 0;
         List<ComicItemViewModel>? comicsUngrouped = null;
         List<ComicGroupViewModel>? comicsGrouped = null;
@@ -877,6 +1018,8 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
                 DiffUtils.UpdateCollection(UngroupedComicItems, comicsUngrouped, comparer);
                 GroupingEnabledLiveData.Emit(false);
             }
+
+            UpdateCollapseExpandGroupButtonStates();
         });
     }
 

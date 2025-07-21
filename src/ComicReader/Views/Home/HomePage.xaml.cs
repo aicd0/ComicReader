@@ -228,7 +228,7 @@ internal sealed partial class HomePage : BasePage
         var button = sender as Button;
         if (button?.DataContext is ComicGroupViewModel group)
         {
-            group.Collapsed = !group.Collapsed;
+            ViewModel.CollapseOrExpandGroup(group);
         }
     }
 
@@ -531,6 +531,33 @@ internal sealed partial class HomePage : BasePage
     private void RefreshHyperlink_Click(Microsoft.UI.Xaml.Documents.Hyperlink sender, Microsoft.UI.Xaml.Documents.HyperlinkClickEventArgs args)
     {
         ComicModel.UpdateAllComics("RefreshPage", lazy: true);
+    }
+
+    //
+    // More actions
+    //
+
+    private void CollapseAllButton_Click(object sender, RoutedEventArgs e)
+    {
+        ViewModel.CollapseAllGroups();
+    }
+
+    private void ExpandAllButton_Click(object sender, RoutedEventArgs e)
+    {
+        ViewModel.ExpandAllGroups();
+    }
+
+    private void OpenRandomComicButton_Click(object sender, RoutedEventArgs e)
+    {
+        ComicModel? comic = ViewModel.GetRandomComic();
+        if (comic == null)
+        {
+            return;
+        }
+
+        Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
+            .WithParam(RouterConstants.ARG_COMIC_ID, comic.Id.ToString());
+        GetMainPageAbility().OpenInCurrentTab(route);
     }
 
     //

@@ -198,6 +198,9 @@
   <data name="ClearCacheDetail" xml:space="preserve">
     <value>Cache-Größe: $size</value>
   </data>
+  <data name="CollapseAll" xml:space="preserve">
+    <value>Alle ausblenden</value>
+  </data>
   <data name="ComicInfo" xml:space="preserve">
     <value>Comic-Informationen</value>
   </data>
@@ -254,6 +257,9 @@
   </data>
   <data name="Edit" xml:space="preserve">
     <value>Bearbeiten</value>
+  </data>
+  <data name="ExpandAll" xml:space="preserve">
+    <value>Alle erweitern</value>
   </data>
   <data name="ExpressionAnd" xml:space="preserve">
     <value>Und</value>
@@ -498,6 +504,9 @@ Die Auswertung erfolgt in der folgenden Reihenfolge:
   </data>
   <data name="OpenInNewTab" xml:space="preserve">
     <value>In neuem Tab öffnen</value>
+  </data>
+  <data name="OpenRandomComic" xml:space="preserve">
+    <value>Öffne einen zufälligen Comic</value>
   </data>
   <data name="PageGap" xml:space="preserve">
     <value>Seitenabstand</value>

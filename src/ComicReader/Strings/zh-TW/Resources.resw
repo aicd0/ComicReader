@@ -198,6 +198,9 @@
   <data name="ClearCacheDetail" xml:space="preserve">
     <value>快取大小：$size</value>
   </data>
+  <data name="CollapseAll" xml:space="preserve">
+    <value>折疊全部</value>
+  </data>
   <data name="ComicInfo" xml:space="preserve">
     <value>漫畫資訊</value>
   </data>
@@ -254,6 +257,9 @@
   </data>
   <data name="Edit" xml:space="preserve">
     <value>編輯</value>
+  </data>
+  <data name="ExpandAll" xml:space="preserve">
+    <value>展開全部</value>
   </data>
   <data name="ExpressionAnd" xml:space="preserve">
     <value>與</value>
@@ -498,6 +504,9 @@ NOT                 - 邏輯非。例如：NOT %tag = "hide this"
   </data>
   <data name="OpenInNewTab" xml:space="preserve">
     <value>在新分頁中開啟</value>
+  </data>
+  <data name="OpenRandomComic" xml:space="preserve">
+    <value>開啟隨機漫畫</value>
   </data>
   <data name="PageGap" xml:space="preserve">
     <value>頁面間距</value>
