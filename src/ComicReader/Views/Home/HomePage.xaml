@@ -250,6 +250,7 @@
                     VerticalAlignment="Top"
                     Fill="{ThemeResource CommandBarBorderBrush}" />
             </Grid>
+
         </Grid>
 
         <Grid VerticalAlignment="Top">
@@ -311,8 +312,33 @@
                             </StackPanel>
                         </Button.Content>
                     </Button>
+                    <Button
+                        Width="32"
+                        Padding="0"
+                        VerticalAlignment="Stretch"
+                        Click="CollapseExpandGroupButton_Click">
+                        <FontIcon FontSize="16" Glyph="&#xE712;" />
+                        <Button.Flyout>
+                            <MenuFlyout Placement="BottomEdgeAlignedRight">
+                                <MenuFlyoutItem
+                                    Click="CollapseAllButton_Click"
+                                    IsEnabled="{x:Bind ViewModel.IsCollapseAllEnabled, Mode=OneWay}"
+                                    Text="{x:Bind StringResource.CollapseAll}" />
+                                <MenuFlyoutItem
+                                    Click="ExpandAllButton_Click"
+                                    IsEnabled="{x:Bind ViewModel.IsExpandAllEnabled, Mode=OneWay}"
+                                    Text="{x:Bind StringResource.ExpandAll}" />
+                                <MenuFlyoutItem
+                                    Click="OpenRandomComicButton_Click"
+                                    IsEnabled="{x:Bind ViewModel.LibraryEmptyVisible, Mode=OneWay, Converter={StaticResource BooleanNegationConverter}}"
+                                    Text="{x:Bind StringResource.OpenRandomComic}" />
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
                 </StackPanel>
             </Grid>
         </Grid>
+
     </Grid>
+
 </base:BasePage>

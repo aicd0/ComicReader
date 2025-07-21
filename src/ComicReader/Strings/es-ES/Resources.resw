@@ -198,6 +198,9 @@
   <data name="ClearCacheDetail" xml:space="preserve">
     <value>Tamaño de caché: $size</value>
   </data>
+  <data name="CollapseAll" xml:space="preserve">
+    <value>Contraer todo</value>
+  </data>
   <data name="ComicInfo" xml:space="preserve">
     <value>Información del cómic</value>
   </data>
@@ -254,6 +257,9 @@
   </data>
   <data name="Edit" xml:space="preserve">
     <value>Editar</value>
+  </data>
+  <data name="ExpandAll" xml:space="preserve">
+    <value>Expandir todo</value>
   </data>
   <data name="ExpressionAnd" xml:space="preserve">
     <value>Y</value>
@@ -498,6 +504,9 @@ La evaluación se realizará en el siguiente orden:
   </data>
   <data name="OpenInNewTab" xml:space="preserve">
     <value>Abrir en nueva pestaña</value>
+  </data>
+  <data name="OpenRandomComic" xml:space="preserve">
+    <value>Abre un cómic al azar</value>
   </data>
   <data name="PageGap" xml:space="preserve">
     <value>Espaciado</value>

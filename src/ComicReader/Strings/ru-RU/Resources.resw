@@ -198,6 +198,9 @@
   <data name="ClearCacheDetail" xml:space="preserve">
     <value>Размер кэша: $size</value>
   </data>
+  <data name="CollapseAll" xml:space="preserve">
+    <value>Свернуть все</value>
+  </data>
   <data name="ComicInfo" xml:space="preserve">
     <value>Информация о комиксах</value>
   </data>
@@ -254,6 +257,9 @@
   </data>
   <data name="Edit" xml:space="preserve">
     <value>Редактировать</value>
+  </data>
+  <data name="ExpandAll" xml:space="preserve">
+    <value>Развернуть все</value>
   </data>
   <data name="ExpressionAnd" xml:space="preserve">
     <value>И</value>
@@ -499,6 +505,9 @@ NOT                      - Логическое не. Например: NOT %tag
   </data>
   <data name="OpenInNewTab" xml:space="preserve">
     <value>Открыть в новой вкладке</value>
+  </data>
+  <data name="OpenRandomComic" xml:space="preserve">
+    <value>Откройте случайный комикс</value>
   </data>
   <data name="PageGap" xml:space="preserve">
     <value>интервал</value>

@@ -198,6 +198,9 @@
   <data name="ClearCacheDetail" xml:space="preserve">
     <value>キャッシュサイズ: $size</value>
   </data>
+  <data name="CollapseAll" xml:space="preserve">
+    <value>すべて折りたたむ</value>
+  </data>
   <data name="ComicInfo" xml:space="preserve">
     <value>コミック情報</value>
   </data>
@@ -254,6 +257,9 @@
   </data>
   <data name="Edit" xml:space="preserve">
     <value>編集</value>
+  </data>
+  <data name="ExpandAll" xml:space="preserve">
+    <value>すべて展開</value>
   </data>
   <data name="ExpressionAnd" xml:space="preserve">
     <value>そして</value>
@@ -498,6 +504,9 @@ NOT               - 論理否定。例: NOT %tag = "hide this"
   </data>
   <data name="OpenInNewTab" xml:space="preserve">
     <value>新しいタブで開く</value>
+  </data>
+  <data name="OpenRandomComic" xml:space="preserve">
+    <value>ランダムにコミックを開く</value>
   </data>
   <data name="PageGap" xml:space="preserve">
     <value>ページ間隔</value>

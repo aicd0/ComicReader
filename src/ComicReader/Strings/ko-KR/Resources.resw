@@ -198,6 +198,9 @@
   <data name="ClearCacheDetail" xml:space="preserve">
     <value>캐시 크기: $size</value>
   </data>
+  <data name="CollapseAll" xml:space="preserve">
+    <value>모두 접기</value>
+  </data>
   <data name="ComicInfo" xml:space="preserve">
     <value>만화 정보</value>
   </data>
@@ -254,6 +257,9 @@
   </data>
   <data name="Edit" xml:space="preserve">
     <value>편집하다</value>
+  </data>
+  <data name="ExpandAll" xml:space="preserve">
+    <value>모두 확장</value>
   </data>
   <data name="ExpressionAnd" xml:space="preserve">
     <value>그리고</value>
@@ -499,6 +505,9 @@ NOT                  - 논리 not. 예: NOT %tag = "hide this"
   </data>
   <data name="OpenInNewTab" xml:space="preserve">
     <value>새 탭에서 열기</value>
+  </data>
+  <data name="OpenRandomComic" xml:space="preserve">
+    <value>무작위 만화를 엽니다</value>
   </data>
   <data name="PageGap" xml:space="preserve">
     <value>페이지 간격</value>
