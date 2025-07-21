@@ -353,6 +353,21 @@ NOT                  - 논리 not. 예: NOT %tag = "hide this"
   <data name="FoldersHeader.Text" xml:space="preserve">
     <value>폴더</value>
   </data>
+  <data name="FunctionAverage" xml:space="preserve">
+    <value>평균</value>
+  </data>
+  <data name="FunctionItemCount" xml:space="preserve">
+    <value>품목 수</value>
+  </data>
+  <data name="FunctionMax" xml:space="preserve">
+    <value>최고</value>
+  </data>
+  <data name="FunctionMin" xml:space="preserve">
+    <value>최저한의</value>
+  </data>
+  <data name="FunctionSum" xml:space="preserve">
+    <value>합집합</value>
+  </data>
   <data name="GoBack" xml:space="preserve">
     <value>돌아가기</value>
   </data>
@@ -598,6 +613,9 @@ NOT                  - 논리 not. 예: NOT %tag = "hide this"
   </data>
   <data name="Sort" xml:space="preserve">
     <value>정렬</value>
+  </data>
+  <data name="SortingFunction" xml:space="preserve">
+    <value>정렬 기능</value>
   </data>
   <data name="Statistics" xml:space="preserve">
     <value>통계</value>

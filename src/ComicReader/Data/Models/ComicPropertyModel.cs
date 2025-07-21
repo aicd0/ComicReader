@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -80,17 +81,18 @@ internal class ComicPropertyModel
 
     public List<T> SortComics<T>(IEnumerable<T> items, Func<T, ComicModel> selector, bool ascending)
     {
-        IComicItemSorter sorter = GetComicItemSorter();
-        return sorter.SortComics(items, selector, ascending);
+        IItemSorter<ComicModel> sorter = GetComicItemSorter();
+        return sorter.Sort(items, selector, ascending);
     }
 
-    public List<GroupItem<T>> GroupComics<T>(IEnumerable<T> items, Func<T, ComicModel> selector, bool ascending)
+    public List<GroupItem<T>> GroupComics<T>(IEnumerable<T> items, Func<T, ComicModel> selector, bool ascending,
+        ComicFilterModel.FunctionTypeEnum sortingFunction, ComicPropertyModel? sortingProperty)
     {
         IComicGroupSorter sorter = GetComicGroupSorter();
-        return sorter.GroupComics(items, selector, ascending);
+        return sorter.GroupComics(items, selector, ascending, sortingFunction, sortingProperty);
     }
 
-    private IComicItemSorter GetComicItemSorter()
+    private IItemSorter<ComicModel> GetComicItemSorter()
     {
         string GetConcatenatedTag(ComicModel comic)
         {
@@ -111,29 +113,29 @@ internal class ComicPropertyModel
                 ComicCompletionStatusEnum.Completed => 100,
                 ComicCompletionStatusEnum.Started => 50,
                 ComicCompletionStatusEnum.NotStarted => 0,
-                _ => -1, // Unknown state
+                _ => -1,
             };
         }
 
         return Type switch
         {
-            PropertyTypeEnum.Title => new ComicItemSorter<List<string>>(
-                (x) => StringUtils.SmartFileNameKeySelector(x.Title ?? StringResourceProvider.Instance.Untitled), StringUtils.SmartFileNameComparer),
-            PropertyTypeEnum.Progress => new ComicItemSorter<int>((x) => x.Progress),
-            PropertyTypeEnum.Tag => new ComicItemSorter<List<string>>(
-                (x) => StringUtils.SmartFileNameKeySelector(GetConcatenatedTag(x)), StringUtils.SmartFileNameComparer),
-            PropertyTypeEnum.Rating => new ComicItemSorter<int>((x) => x.Rating),
-            PropertyTypeEnum.CompletionState => new ComicItemSorter<int>((x) => CompletionStateToComparable(x.CompletionState)),
-            PropertyTypeEnum.LastReadTime => new ComicItemSorter<long>((x) => x.LastVisit.Ticks),
-            _ => new ComicItemSorter<long>((x) => x.Id)
+            PropertyTypeEnum.Title => new SimpleSorter<ComicModel, List<string>>(
+                x => StringUtils.SmartFileNameKeySelector(x.Title ?? StringResourceProvider.Instance.Untitled), StringUtils.SmartFileNameComparer),
+            PropertyTypeEnum.Progress => new SimpleSorter<ComicModel, int>(x => x.Progress),
+            PropertyTypeEnum.Tag => new SimpleSorter<ComicModel, List<string>>(
+                x => StringUtils.SmartFileNameKeySelector(GetConcatenatedTag(x)), StringUtils.SmartFileNameComparer),
+            PropertyTypeEnum.Rating => new SimpleSorter<ComicModel, int>(x => x.Rating),
+            PropertyTypeEnum.CompletionState => new SimpleSorter<ComicModel, int>(x => CompletionStateToComparable(x.CompletionState)),
+            PropertyTypeEnum.LastReadTime => new SimpleSorter<ComicModel, long>(x => x.LastVisit.Ticks),
+            _ => new SimpleSorter<ComicModel, long>(x => x.Id),
         };
     }
 
     private IComicGroupSorter GetComicGroupSorter()
     {
-        GroupInfo<List<string>> GetTitleGroup(string title)
+        string GetTitleGroupName(ComicModel comic)
         {
-            title = title.TrimStart();
+            string title = comic.Title.TrimStart();
             string name;
             if (string.IsNullOrEmpty(title))
             {
@@ -143,82 +145,96 @@ internal class ComicPropertyModel
             {
                 name = title[0].ToString().ToUpper();
             }
-            return new(name, StringUtils.SmartFileNameKeySelector(name));
+            return name;
         }
 
-        GroupInfo<int> GetProgressGroup(int progress)
+        string GetProgressGroupName(ComicModel comic)
         {
-            progress = Math.Min(Math.Max(progress, 0), 100);
+            int progress = Math.Min(Math.Max(comic.Progress, 0), 100);
             if (progress < 10)
             {
-                return new("<10%", 0);
+                return "<10%";
             }
             if (progress >= 100)
             {
-                return new("100%", 100);
+                return "100%";
             }
-            return new($"{progress / 10 * 10}%", progress);
+            return $"{progress / 10 * 10}%";
         }
 
-        IEnumerable<GroupInfo<List<string>>> GetTagGroups(ComicModel comic)
+        IEnumerable<string> GetTagGroupNames(ComicModel comic)
         {
             ComicData.TagData? tagData = comic.Tags.FirstOrDefault(tag => tag.Name == Name);
             if (tagData == null || tagData.Tags.Count == 0)
             {
                 string name = StringResourceProvider.Instance.Ungrouped;
-                return [new(name, StringUtils.SmartFileNameKeySelector(name))];
+                return [name];
             }
-            List<GroupInfo<List<string>>> groups = new(tagData.Tags.Count);
-            foreach (string tag in tagData.Tags)
-            {
-                groups.Add(new(tag, StringUtils.SmartFileNameKeySelector(tag)));
-            }
-            return groups;
+            return [.. tagData.Tags];
         }
 
-        GroupInfo<int> GetRatingGroup(ComicModel comic)
+        string GetRatingGroupName(ComicModel comic)
         {
             int rating = comic.Rating;
             if (rating >= 5)
             {
-                return new("5", 5);
+                return "5";
             }
             if (rating <= 0)
             {
-                return new(StringResourceProvider.Instance.NoRating, 0);
+                return StringResourceProvider.Instance.NoRating;
             }
-            return new(rating.ToString(), rating);
+            return rating.ToString();
         }
 
-        GroupInfo<int> GetCompletionStateGroup(ComicCompletionStatusEnum state)
+        string GetCompletionStatusGroupName(ComicModel comic)
         {
-            return state switch
+            return comic.CompletionState switch
             {
-                ComicCompletionStatusEnum.Completed => new(StringResourceProvider.Instance.Finished, 3),
-                ComicCompletionStatusEnum.Started => new(StringResourceProvider.Instance.Reading, 2),
-                ComicCompletionStatusEnum.NotStarted => new(StringResourceProvider.Instance.Unread, 1),
-                _ => new(StringResourceProvider.Instance.Ungrouped, 0), // Unknown state
+                ComicCompletionStatusEnum.Completed => StringResourceProvider.Instance.Finished,
+                ComicCompletionStatusEnum.Started => StringResourceProvider.Instance.Reading,
+                ComicCompletionStatusEnum.NotStarted => StringResourceProvider.Instance.Unread,
+                _ => StringResourceProvider.Instance.Ungrouped,
             };
         }
 
-        GroupInfo<long> GetLastReadTimeGroup(DateTimeOffset lastReadTime)
+        int GetCompletionStatusGroupSortingKey(ComicModel comic)
         {
+            return comic.CompletionState switch
+            {
+                ComicCompletionStatusEnum.Completed => 3,
+                ComicCompletionStatusEnum.Started => 2,
+                ComicCompletionStatusEnum.NotStarted => 1,
+                _ => 0,
+            };
+        }
+
+        string GetLastReadTimeGroupName(ComicModel comic)
+        {
+            DateTimeOffset lastReadTime = comic.LastVisit;
             if (lastReadTime == DateTimeOffset.MinValue)
             {
-                return new(StringResourceProvider.Instance.Ungrouped, 0L);
+                return StringResourceProvider.Instance.Ungrouped;
             }
-            return new(lastReadTime.ToString("D", EnvironmentProvider.Instance.GetCurrentAppLanguageInfo()), lastReadTime.Ticks);
+            return lastReadTime.ToString("D", EnvironmentProvider.Instance.GetCurrentAppLanguageInfo());
         }
 
         return Type switch
         {
-            PropertyTypeEnum.Title => new ComicGroupSorter<List<string>>((x) => [GetTitleGroup(x.Title)], StringUtils.SmartFileNameComparer),
-            PropertyTypeEnum.Progress => new ComicGroupSorter<int>((x) => [GetProgressGroup(x.Progress)]),
-            PropertyTypeEnum.Tag => new ComicGroupSorter<List<string>>(GetTagGroups, StringUtils.SmartFileNameComparer),
-            PropertyTypeEnum.Rating => new ComicGroupSorter<int>((x) => [GetRatingGroup(x)]),
-            PropertyTypeEnum.CompletionState => new ComicGroupSorter<int>((x) => [GetCompletionStateGroup(x.CompletionState)]),
-            PropertyTypeEnum.LastReadTime => new ComicGroupSorter<long>((x) => [GetLastReadTimeGroup(x.LastVisit)]),
-            _ => new ComicGroupSorter<int>((x) => [new(StringResourceProvider.Instance.Ungrouped, 0)])
+            PropertyTypeEnum.Title => new ComicGroupSorter(x => [GetTitleGroupName(x)], new GroupSorter<GroupSortingKeySelectorParams, List<string>>(
+                x => StringUtils.SmartFileNameKeySelector(x.GroupName), x => string.Empty, StringUtils.SmartFileNameComparer)),
+            PropertyTypeEnum.Progress => new ComicGroupSorter(x => [GetProgressGroupName(x)], new GroupSorter<GroupSortingKeySelectorParams, int>(
+                x => Math.Clamp(x.Items[0].Progress, 0, 100), x => string.Empty)),
+            PropertyTypeEnum.Tag => new ComicGroupSorter(GetTagGroupNames, new GroupSorter<GroupSortingKeySelectorParams, List<string>>(
+                x => StringUtils.SmartFileNameKeySelector(x.GroupName), x => string.Empty, StringUtils.SmartFileNameComparer)),
+            PropertyTypeEnum.Rating => new ComicGroupSorter(x => [GetRatingGroupName(x)], new GroupSorter<GroupSortingKeySelectorParams, int>(
+                x => Math.Clamp(x.Items[0].Rating, 0, 5), x => string.Empty)),
+            PropertyTypeEnum.CompletionState => new ComicGroupSorter(x => [GetCompletionStatusGroupName(x)], new GroupSorter<GroupSortingKeySelectorParams, int>(
+                x => GetCompletionStatusGroupSortingKey(x.Items[0]), x => string.Empty)),
+            PropertyTypeEnum.LastReadTime => new ComicGroupSorter(x => [GetLastReadTimeGroupName(x)], new GroupSorter<GroupSortingKeySelectorParams, long>(
+                x => x.Items[0].LastVisit.Ticks, x => string.Empty)),
+            _ => new ComicGroupSorter(x => [new(StringResourceProvider.Instance.Ungrouped)], new GroupSorter<GroupSortingKeySelectorParams, int>(
+                x => 0, x => string.Empty)),
         };
     }
 
@@ -322,79 +338,193 @@ internal class ComicPropertyModel
     {
         public List<T> Items { get; } = items;
         public string Name { get; } = name;
-    }
-
-    private interface IComicItemSorter
-    {
-        List<T> SortComics<T>(IEnumerable<T> items, Func<T, ComicModel> selector, bool ascending);
-    }
-
-    private class ComicItemSorter<K>(Func<ComicModel, K> keySelector, IComparer<K>? keyComparer = null) : IComicItemSorter
-    {
-        public Func<ComicModel, K> ItemSortKeySelector = keySelector;
-        public IComparer<K> ItemComparer = keyComparer ?? Comparer<K>.Default;
-
-        public List<T> SortComics<T>(IEnumerable<T> items, Func<T, ComicModel> selector, bool ascending)
-        {
-            if (ascending)
-            {
-                return [.. items.OrderBy(x => ItemSortKeySelector(selector(x)), ItemComparer)];
-            }
-            else
-            {
-                return [.. items.OrderByDescending(x => ItemSortKeySelector(selector(x)), ItemComparer)];
-            }
-        }
+        public string Description { get; set; } = string.Empty;
     }
 
     private interface IComicGroupSorter
     {
-        List<GroupItem<T>> GroupComics<T>(IEnumerable<T> items, Func<T, ComicModel> selector, bool ascending);
+        List<GroupItem<T>> GroupComics<T>(IEnumerable<T> items, Func<T, ComicModel> selector, bool ascending,
+            ComicFilterModel.FunctionTypeEnum sortingFunction, ComicPropertyModel? sortingProperty);
     }
 
-    private class ComicGroupSorter<K>(Func<ComicModel, IEnumerable<GroupInfo<K>>> groupInfoSelector, IComparer<K>? keyComparer = null) : IComicGroupSorter
+    private class ComicGroupSorter(Func<ComicModel, IEnumerable<string>> groupNameSelector, IItemSorterWithKeyInfo<GroupSortingKeySelectorParams, string> defaultSorter) : IComicGroupSorter
     {
-        public Func<ComicModel, IEnumerable<GroupInfo<K>>> GroupInfoSelector = groupInfoSelector;
-        public IComparer<K> GroupComparer = keyComparer ?? Comparer<K>.Default;
+        private readonly Func<ComicModel, IEnumerable<string>> GroupNameSelector = groupNameSelector;
+        private readonly IItemSorterWithKeyInfo<GroupSortingKeySelectorParams, string> DefaultGroupSorter = defaultSorter;
 
-        public List<GroupItem<T>> GroupComics<T>(IEnumerable<T> items, Func<T, ComicModel> selector, bool ascending)
+        public List<GroupItem<T>> GroupComics<T>(IEnumerable<T> items, Func<T, ComicModel> selector, bool ascending,
+            ComicFilterModel.FunctionTypeEnum sortingFunction, ComicPropertyModel? sortingProperty)
         {
             Dictionary<string, List<T>> groupMap = [];
-            Dictionary<string, GroupInfo<K>> groupInfoMap = [];
             foreach (T item in items)
             {
-                IEnumerable<GroupInfo<K>> groupInfos = GroupInfoSelector(selector(item));
-                foreach (GroupInfo<K> groupInfo in groupInfos)
+                IEnumerable<string> groupNames = GroupNameSelector(selector(item));
+                foreach (string name in groupNames)
                 {
-                    if (!groupMap.TryGetValue(groupInfo.Name, out List<T>? group))
+                    if (!groupMap.TryGetValue(name, out List<T>? group))
                     {
                         group = [];
-                        groupMap[groupInfo.Name] = group;
+                        groupMap[name] = group;
                     }
                     group.Add(item);
-                    groupInfoMap[groupInfo.Name] = groupInfo;
                 }
             }
+
             List<GroupItem<T>> comicGroups = [];
             foreach (KeyValuePair<string, List<T>> p in groupMap)
             {
                 comicGroups.Add(new(p.Value, p.Key));
             }
+
+            IItemSorterWithKeyInfo<GroupSortingKeySelectorParams, string> sorter = GetSorter(sortingFunction, sortingProperty);
+            return sorter.Sort(comicGroups, x => new(x.Name, x.Items.ConvertAll(y => selector(y))), ascending,
+                (m, t) => m.Description = string.IsNullOrEmpty(t) ? string.Empty : $"({t})");
+        }
+
+        private IItemSorterWithKeyInfo<GroupSortingKeySelectorParams, string> GetSorter(ComicFilterModel.FunctionTypeEnum sortingFunction, ComicPropertyModel? sortingProperty)
+        {
+            double? PropertyToNumber(ComicModel comic)
+            {
+                return sortingProperty?.Type switch
+                {
+                    PropertyTypeEnum.Title => comic.Title.Length,
+                    PropertyTypeEnum.Tag => sortingProperty.Name.Length,
+                    PropertyTypeEnum.Progress => Math.Clamp(comic.Progress, 0, 100),
+                    PropertyTypeEnum.Rating => comic.Rating > 0 ? comic.Rating : null,
+                    PropertyTypeEnum.CompletionState => (int)comic.CompletionState,
+                    PropertyTypeEnum.LastReadTime => comic.LastVisit != DateTimeOffset.MinValue ? comic.LastVisit.ToUnixTimeMilliseconds() : null,
+                    _ => null,
+                };
+            }
+
+            string NumberToString(double value)
+            {
+                // If the value is an integer, return as is
+                if (value == Math.Truncate(value))
+                {
+                    return value.ToString(CultureInfo.InvariantCulture);
+                }
+
+                // Use "G17" to get the full precision, then trim to at most 2 digits after decimal
+                string str = value.ToString("G17", CultureInfo.InvariantCulture);
+
+                int dotIndex = str.IndexOf('.');
+                if (dotIndex < 0)
+                {
+                    return str;
+                }
+
+                // Find the end of the valid digits after decimal
+                int endIndex = dotIndex + 1;
+                int digits = 0;
+                while (endIndex < str.Length && digits < 2)
+                {
+                    char c = str[endIndex];
+                    if (char.IsDigit(c))
+                    {
+                        digits++;
+                    }
+
+                    endIndex++;
+                }
+
+                // If there are more digits, trim
+                if (endIndex < str.Length)
+                {
+                    str = str[..endIndex];
+                }
+
+                // Remove trailing zeros after decimal
+                if (digits > 0)
+                {
+                    // Remove trailing zeros, but keep at least one digit after decimal
+                    int lastNonZero = str.Length - 1;
+                    while (lastNonZero > dotIndex + 1 && str[lastNonZero] == '0')
+                    {
+                        lastNonZero--;
+                    }
+
+                    str = str.Substring(0, lastNonZero + 1);
+                }
+
+                // Remove trailing decimal point if no digits after
+                if (str.EndsWith('.'))
+                {
+                    str = str[..^1];
+                }
+
+                return str;
+            }
+
+            return sortingFunction switch
+            {
+                ComicFilterModel.FunctionTypeEnum.None => DefaultGroupSorter,
+                ComicFilterModel.FunctionTypeEnum.ItemCount => new GroupSorter<GroupSortingKeySelectorParams, int>(x => x.Items.Count, x => x.ToString()),
+                ComicFilterModel.FunctionTypeEnum.Max => new GroupSorter<GroupSortingKeySelectorParams, double>(x => x.Items.Max(PropertyToNumber) ?? 0, NumberToString),
+                ComicFilterModel.FunctionTypeEnum.Min => new GroupSorter<GroupSortingKeySelectorParams, double>(x => x.Items.Min(PropertyToNumber) ?? 0, NumberToString),
+                ComicFilterModel.FunctionTypeEnum.Sum => new GroupSorter<GroupSortingKeySelectorParams, double>(x => x.Items.Sum(PropertyToNumber) ?? 0, NumberToString),
+                ComicFilterModel.FunctionTypeEnum.Average => new GroupSorter<GroupSortingKeySelectorParams, double>(x => x.Items.Average(PropertyToNumber) ?? 0, NumberToString),
+                _ => DefaultGroupSorter,
+            };
+        }
+    }
+
+    private interface IItemSorter<K>
+    {
+        List<T> Sort<T>(IEnumerable<T> items, Func<T, K> selector, bool ascending);
+    }
+
+    private interface IItemSorterWithKeyInfo<K, M> : IItemSorter<K>
+    {
+        List<T> Sort<T>(IEnumerable<T> items, Func<T, K> selector, bool ascending, Action<T, M> keyBinder);
+    }
+
+    private class SimpleSorter<A, B>(Func<A, B> keySelector, IComparer<B>? comparer = null) : IItemSorter<A>
+    {
+        protected IComparer<B> Comparer { get; } = comparer ?? Comparer<B>.Default;
+        protected Func<A, B> KeySelector { get; } = keySelector;
+
+        public List<T> Sort<T>(IEnumerable<T> items, Func<T, A> selector, bool ascending)
+        {
             if (ascending)
             {
-                return [.. comicGroups.OrderBy(x => groupInfoMap[x.Name].SortKey, GroupComparer)];
+                return [.. items.OrderBy(x => KeySelector(selector(x)), Comparer)];
             }
             else
             {
-                return [.. comicGroups.OrderByDescending(x => groupInfoMap[x.Name].SortKey, GroupComparer)];
+                return [.. items.OrderByDescending(x => KeySelector(selector(x)), Comparer)];
             }
         }
     }
 
-    private class GroupInfo<T>(string name, T sortKey)
+    private class GroupSorter<A, B>(Func<A, B> keySelector, Func<B, string> keyInfoConverter, IComparer<B>? comparer = null) : SimpleSorter<A, B>(keySelector, comparer), IItemSorterWithKeyInfo<A, string>
     {
-        public string Name { get; } = name;
-        public T SortKey { get; } = sortKey;
+        private Func<B, string> KeyInfoConverter { get; } = keyInfoConverter;
+
+        public List<T> Sort<T>(IEnumerable<T> items, Func<T, A> selector, bool ascending, Action<T, string> keyBinder)
+        {
+            B GroupKeySelector(T item)
+            {
+                B key = KeySelector(selector(item));
+                keyBinder(item, KeyInfoConverter(key));
+                return key;
+            }
+
+            if (ascending)
+            {
+                return [.. items.OrderBy(GroupKeySelector, Comparer)];
+            }
+            else
+            {
+                return [.. items.OrderByDescending(GroupKeySelector, Comparer)];
+            }
+        }
+    }
+
+    private class GroupSortingKeySelectorParams(string groupName, List<ComicModel> items)
+    {
+        public string GroupName { get; } = groupName;
+        public List<ComicModel> Items { get; } = items;
     }
 
     private enum PropertyTypeEnum

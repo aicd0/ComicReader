@@ -352,6 +352,21 @@ Die Auswertung erfolgt in der folgenden Reihenfolge:
   <data name="FoldersHeader.Text" xml:space="preserve">
     <value>Ordner</value>
   </data>
+  <data name="FunctionAverage" xml:space="preserve">
+    <value>Durchschnitt</value>
+  </data>
+  <data name="FunctionItemCount" xml:space="preserve">
+    <value>Anzahl der Elemente</value>
+  </data>
+  <data name="FunctionMax" xml:space="preserve">
+    <value>Maximal</value>
+  </data>
+  <data name="FunctionMin" xml:space="preserve">
+    <value>Minimum</value>
+  </data>
+  <data name="FunctionSum" xml:space="preserve">
+    <value>Summe</value>
+  </data>
   <data name="GoBack" xml:space="preserve">
     <value>Geh zurück</value>
   </data>
@@ -597,6 +612,9 @@ Die Auswertung erfolgt in der folgenden Reihenfolge:
   </data>
   <data name="Sort" xml:space="preserve">
     <value>Sortierung</value>
+  </data>
+  <data name="SortingFunction" xml:space="preserve">
+    <value>Sortierfunktion</value>
   </data>
   <data name="Statistics" xml:space="preserve">
     <value>Statistiken</value>

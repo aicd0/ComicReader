@@ -353,6 +353,21 @@ NOT                      - Логическое не. Например: NOT %tag
   <data name="FoldersHeader.Text" xml:space="preserve">
     <value>Папки</value>
   </data>
+  <data name="FunctionAverage" xml:space="preserve">
+    <value>Средний</value>
+  </data>
+  <data name="FunctionItemCount" xml:space="preserve">
+    <value>Количество предметов</value>
+  </data>
+  <data name="FunctionMax" xml:space="preserve">
+    <value>Максимум</value>
+  </data>
+  <data name="FunctionMin" xml:space="preserve">
+    <value>Минимум</value>
+  </data>
+  <data name="FunctionSum" xml:space="preserve">
+    <value>Сумма</value>
+  </data>
   <data name="GoBack" xml:space="preserve">
     <value>Возвращаться</value>
   </data>
@@ -598,6 +613,9 @@ NOT                      - Логическое не. Например: NOT %tag
   </data>
   <data name="Sort" xml:space="preserve">
     <value>Сортировка</value>
+  </data>
+  <data name="SortingFunction" xml:space="preserve">
+    <value>Функция сортировки</value>
   </data>
   <data name="Statistics" xml:space="preserve">
     <value>Статистика</value>

@@ -52,6 +52,11 @@ public class StringResourceProvider
     public string FilterSettings => GetResourceString("FilterSettings");
     public string Finished => GetResourceString("Finished");
     public string FinishPercentage => GetResourceString("FinishPercentage");
+    public string FunctionAverage => GetResourceString("FunctionAverage");
+    public string FunctionItemCount => GetResourceString("FunctionItemCount");
+    public string FunctionMax => GetResourceString("FunctionMax");
+    public string FunctionMin => GetResourceString("FunctionMin");
+    public string FunctionSum => GetResourceString("FunctionSum");
     public string GoBack => GetResourceString("GoBack");
     public string GoForward => GetResourceString("GoForward");
     public string Group => GetResourceString("Group");
@@ -89,6 +94,7 @@ public class StringResourceProvider
     public string SetCompletionState => GetResourceString("SetCompletionState");
     public string ShowTagId => GetResourceString("ShowTagId");
     public string Sort => GetResourceString("Sort");
+    public string SortingFunction => GetResourceString("SortingFunction");
     public string Statistics => GetResourceString("Statistics");
     public string Tag => GetResourceString("Tag");
     public string Tags => GetResourceString("Tags");
