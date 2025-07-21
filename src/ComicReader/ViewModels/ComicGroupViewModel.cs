@@ -7,4 +7,5 @@ namespace ComicReader.ViewModels;
 
 internal partial class ComicGroupViewModel(string groupName, IEnumerable<ComicItemViewModel> items, bool collapsed) : SimpleGroupViewModel<ComicItemViewModel>(groupName, items, collapsed)
 {
+    public string Description { get; set; } = string.Empty;
 }

@@ -352,6 +352,21 @@ La evaluación se realizará en el siguiente orden:
   <data name="FoldersHeader.Text" xml:space="preserve">
     <value>Carpetas</value>
   </data>
+  <data name="FunctionAverage" xml:space="preserve">
+    <value>Promedio</value>
+  </data>
+  <data name="FunctionItemCount" xml:space="preserve">
+    <value>Recuento de artículos</value>
+  </data>
+  <data name="FunctionMax" xml:space="preserve">
+    <value>Máximo</value>
+  </data>
+  <data name="FunctionMin" xml:space="preserve">
+    <value>Mínimo</value>
+  </data>
+  <data name="FunctionSum" xml:space="preserve">
+    <value>Suma</value>
+  </data>
   <data name="GoBack" xml:space="preserve">
     <value>Volver</value>
   </data>
@@ -475,6 +490,9 @@ La evaluación se realizará en el siguiente orden:
   <data name="NoResultsDetail.Text" xml:space="preserve">
     <value>Intente buscar con diferentes palabras clave</value>
   </data>
+  <data name="None" xml:space="preserve">
+    <value>Ninguno</value>
+  </data>
   <data name="OpenInFileExplorer.ToolTipService.ToolTip" xml:space="preserve">
     <value>Abrir en el Explorador de archivos</value>
   </data>
@@ -594,6 +612,9 @@ La evaluación se realizará en el siguiente orden:
   </data>
   <data name="Sort" xml:space="preserve">
     <value>Clasificación</value>
+  </data>
+  <data name="SortingFunction" xml:space="preserve">
+    <value>Función de clasificación</value>
   </data>
   <data name="Statistics" xml:space="preserve">
     <value>Estadística</value>

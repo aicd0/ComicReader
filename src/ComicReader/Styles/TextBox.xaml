@@ -127,7 +127,7 @@
                             x:Name="ContentElement"
                             Grid.Row="1"
                             Grid.Column="0"
-                            Margin="4,1,8,0"
+                            Margin="2,1,8,0"
                             Padding="{TemplateBinding Padding}"
                             AutomationProperties.AccessibilityView="Raw"
                             HorizontalScrollBarVisibility="{TemplateBinding ScrollViewer.HorizontalScrollBarVisibility}"

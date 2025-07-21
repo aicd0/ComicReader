@@ -352,6 +352,21 @@ NOT               - 論理否定。例: NOT %tag = "hide this"
   <data name="FoldersHeader.Text" xml:space="preserve">
     <value>フォルダ</value>
   </data>
+  <data name="FunctionAverage" xml:space="preserve">
+    <value>平均</value>
+  </data>
+  <data name="FunctionItemCount" xml:space="preserve">
+    <value>アイテム数</value>
+  </data>
+  <data name="FunctionMax" xml:space="preserve">
+    <value>最大</value>
+  </data>
+  <data name="FunctionMin" xml:space="preserve">
+    <value>最小</value>
+  </data>
+  <data name="FunctionSum" xml:space="preserve">
+    <value>和</value>
+  </data>
   <data name="GoBack" xml:space="preserve">
     <value>戻る</value>
   </data>
@@ -475,6 +490,9 @@ NOT               - 論理否定。例: NOT %tag = "hide this"
   <data name="NoResultsDetail.Text" xml:space="preserve">
     <value>別のキーワードで検索してみてください</value>
   </data>
+  <data name="None" xml:space="preserve">
+    <value>なし</value>
+  </data>
   <data name="OpenInFileExplorer.ToolTipService.ToolTip" xml:space="preserve">
     <value>エクスプローラーで開く</value>
   </data>
@@ -594,6 +612,9 @@ NOT               - 論理否定。例: NOT %tag = "hide this"
   </data>
   <data name="Sort" xml:space="preserve">
     <value>ソート</value>
+  </data>
+  <data name="SortingFunction" xml:space="preserve">
+    <value>ソート機能</value>
   </data>
   <data name="Statistics" xml:space="preserve">
     <value>統計</value>

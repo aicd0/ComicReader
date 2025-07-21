@@ -13,6 +13,12 @@ class ComicFilterModel : JsonDatabase<ComicFilterModel.JsonModel>
 {
     public const string VIEW_TYPE_LARGE = "Large";
     public const string VIEW_TYPE_MEDIUM = "Medium";
+    public const string FUNCTION_TYPE_NONE = "None";
+    public const string FUNCTION_TYPE_ITEM_COUNT = "ItemCount";
+    public const string FUNCTION_TYPE_MAX = "Max";
+    public const string FUNCTION_TYPE_MIN = "Min";
+    public const string FUNCTION_TYPE_SUM = "Sum";
+    public const string FUNCTION_TYPE_AVERAGE = "Average";
 
     public static readonly ComicFilterModel Instance = new();
 
@@ -66,6 +72,12 @@ class ComicFilterModel : JsonDatabase<ComicFilterModel.JsonModel>
 
         [JsonPropertyName("GroupByAscending")]
         public bool? GroupByAscending { get; set; }
+
+        [JsonPropertyName("GroupSortingFunction")]
+        public string? GroupSortingFunction { get; set; }
+
+        [JsonPropertyName("GroupSortingProperty")]
+        public JsonNode? GroupSortingProperty { get; set; }
 
         [JsonPropertyName("ViewType")]
         public string? ViewType { get; set; }
@@ -123,6 +135,8 @@ class ComicFilterModel : JsonDatabase<ComicFilterModel.JsonModel>
         public bool SortByAscending { get; set; }
         public ComicPropertyModel? GroupBy { get; set; }
         public bool GroupByAscending { get; set; }
+        public FunctionTypeEnum GroupSortingFunction { get; set; } = FunctionTypeEnum.None;
+        public ComicPropertyModel? GroupSortingProperty { get; set; }
         public ViewTypeEnum ViewType { get; set; }
         public string Expression { get; set; } = "";
 
@@ -140,6 +154,8 @@ class ComicFilterModel : JsonDatabase<ComicFilterModel.JsonModel>
                 SortByAscending = SortByAscending,
                 GroupBy = GroupBy?.ToJson(),
                 GroupByAscending = GroupByAscending,
+                GroupSortingFunction = FunctionTypeToString(GroupSortingFunction),
+                GroupSortingProperty = GroupSortingProperty?.ToJson(),
                 ViewType = ViewTypeToString(ViewType),
                 Expression = Expression,
             };
@@ -159,6 +175,8 @@ class ComicFilterModel : JsonDatabase<ComicFilterModel.JsonModel>
                 SortByAscending = model.SortByAscending ?? false,
                 GroupBy = ComicPropertyModel.FromJson(model.GroupBy),
                 GroupByAscending = model.GroupByAscending ?? false,
+                GroupSortingFunction = StringToFunctionType(model.GroupSortingFunction ?? FUNCTION_TYPE_NONE),
+                GroupSortingProperty = ComicPropertyModel.FromJson(model.GroupSortingProperty),
                 ViewType = StringToViewType(model.ViewType ?? ""),
                 Expression = model.Expression ?? "",
             };
@@ -187,11 +205,49 @@ class ComicFilterModel : JsonDatabase<ComicFilterModel.JsonModel>
                 _ => ViewTypeEnum.Large,
             };
         }
+
+        public static string FunctionTypeToString(FunctionTypeEnum value)
+        {
+            return value switch
+            {
+                FunctionTypeEnum.None => FUNCTION_TYPE_NONE,
+                FunctionTypeEnum.ItemCount => FUNCTION_TYPE_ITEM_COUNT,
+                FunctionTypeEnum.Max => FUNCTION_TYPE_MAX,
+                FunctionTypeEnum.Min => FUNCTION_TYPE_MIN,
+                FunctionTypeEnum.Sum => FUNCTION_TYPE_SUM,
+                FunctionTypeEnum.Average => FUNCTION_TYPE_AVERAGE,
+                _ => FUNCTION_TYPE_NONE,
+            };
+        }
+
+        public static FunctionTypeEnum StringToFunctionType(string value)
+        {
+            return value switch
+            {
+                FUNCTION_TYPE_NONE => FunctionTypeEnum.None,
+                FUNCTION_TYPE_ITEM_COUNT => FunctionTypeEnum.ItemCount,
+                FUNCTION_TYPE_MAX => FunctionTypeEnum.Max,
+                FUNCTION_TYPE_MIN => FunctionTypeEnum.Min,
+                FUNCTION_TYPE_SUM => FunctionTypeEnum.Sum,
+                FUNCTION_TYPE_AVERAGE => FunctionTypeEnum.Average,
+                _ => FunctionTypeEnum.None,
+            };
+        }
     }
 
     public enum ViewTypeEnum
     {
         Large,
         Medium,
+    }
+
+    public enum FunctionTypeEnum
+    {
+        None,
+        ItemCount,
+        Max,
+        Min,
+        Sum,
+        Average,
     }
 }
