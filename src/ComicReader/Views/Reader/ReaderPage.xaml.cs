@@ -29,9 +29,6 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Input;
 
-using Windows.Storage;
-using Windows.System;
-
 namespace ComicReader.Views.Reader;
 
 internal sealed partial class ReaderPage : BasePage
@@ -329,7 +326,7 @@ internal sealed partial class ReaderPage : BasePage
         SetAsReadingComic();
         LoadReaderSettings();
         LoadComicInfo();
-        IComicConnection connection = await comic.OpenComicAsync();
+        IComicConnection? connection = await comic.OpenComicAsync();
         _comicConnection = connection;
 
         if (connection == null)
@@ -439,7 +436,6 @@ internal sealed partial class ReaderPage : BasePage
 
         LoadDescription(_comic.Description);
         ViewModel.ComicDir = _comic.Location;
-        ViewModel.CanDirOpenInFileExplorer = _comic.IsDirectory;
         ViewModel.IsEditable = _comic.IsEditable;
 
         LoadComicTag();
@@ -731,19 +727,7 @@ internal sealed partial class ReaderPage : BasePage
 
     private void OnDirectoryTapped(object sender, TappedRoutedEventArgs e)
     {
-        C0.Run(async delegate
-        {
-            ComicModel? comic = _comic;
-            if (comic == null)
-            {
-                return;
-            }
-            StorageFolder? folder = await Storage.TryGetFolder(comic.Location);
-            if (folder != null)
-            {
-                _ = await Launcher.LaunchFolderAsync(folder);
-            }
-        });
+        _comic?.ShowInFileExplorer();
     }
 
     private void OnEditInfoClick(object sender, RoutedEventArgs e)

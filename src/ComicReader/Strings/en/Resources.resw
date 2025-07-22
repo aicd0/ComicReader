@@ -501,7 +501,7 @@ The evaluation will be performed in the following order:
   <data name="None" xml:space="preserve">
     <value>None</value>
   </data>
-  <data name="OpenInFileExplorer.ToolTipService.ToolTip" xml:space="preserve">
+  <data name="OpenInFileExplorer" xml:space="preserve">
     <value>Open in File Explorer</value>
   </data>
   <data name="OpenInNewTab" xml:space="preserve">

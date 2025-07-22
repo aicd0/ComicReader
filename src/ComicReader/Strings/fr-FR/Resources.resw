@@ -499,7 +499,7 @@ L'évaluation sera effectuée dans l'ordre suivant :
   <data name="None" xml:space="preserve">
     <value>Aucun</value>
   </data>
-  <data name="OpenInFileExplorer.ToolTipService.ToolTip" xml:space="preserve">
+  <data name="OpenInFileExplorer" xml:space="preserve">
     <value>Ouvrir dans l'explorateur de fichiers</value>
   </data>
   <data name="OpenInNewTab" xml:space="preserve">

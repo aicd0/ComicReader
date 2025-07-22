@@ -500,7 +500,7 @@ NOT                      - Логическое не. Например: NOT %tag
   <data name="None" xml:space="preserve">
     <value>Никто</value>
   </data>
-  <data name="OpenInFileExplorer.ToolTipService.ToolTip" xml:space="preserve">
+  <data name="OpenInFileExplorer" xml:space="preserve">
     <value>Открыть в проводнике</value>
   </data>
   <data name="OpenInNewTab" xml:space="preserve">

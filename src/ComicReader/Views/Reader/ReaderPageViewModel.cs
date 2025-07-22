@@ -61,17 +61,6 @@ internal partial class ReaderPageViewModel : INotifyPropertyChanged
         }
     }
 
-    private bool _canDirOpenInFileExplorer = false;
-    public bool CanDirOpenInFileExplorer
-    {
-        get => _canDirOpenInFileExplorer;
-        set
-        {
-            _canDirOpenInFileExplorer = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(CanDirOpenInFileExplorer)));
-        }
-    }
-
     private ObservableCollection<TagCollectionViewModel> _comicTags = [];
     public ObservableCollection<TagCollectionViewModel> ComicTags
     {
