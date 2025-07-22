@@ -1,8 +1,6 @@
 // Copyright (c) aicd0. All rights reserved.
 // Licensed under the MIT License.
 
-#nullable disable
-
 using System;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -23,7 +21,7 @@ internal class ComicPdfData : ComicData
 {
     private const string TAG = "ComicPdfData";
 
-    private StorageFile ThisFile = null;
+    private StorageFile? ThisFile = null;
 
     public override bool IsEditable => !IsExternal;
 
@@ -51,36 +49,36 @@ internal class ComicPdfData : ComicData
         return comic;
     }
 
-    private async Task<TaskException> SetFile()
+    private async Task<StorageFile?> GetFile()
     {
-        if (ThisFile != null)
+        StorageFile? file = ThisFile;
+        if (file != null)
         {
-            return TaskException.Success;
+            return file;
         }
 
-        if (Location == null)
+        if (string.IsNullOrEmpty(Location))
         {
-            return TaskException.InvalidParameters;
+            return null;
         }
 
-        string base_path = ArchiveAccess.GetBasePath(Location, false);
-        StorageFile file = await Storage.TryGetFile(base_path);
-
+        string basePath = ArchiveAccess.GetBasePath(Location, false);
+        file = await Storage.TryGetFile(basePath);
         if (file == null)
         {
-            return TaskException.NoPermission;
+            return null;
         }
 
         ThisFile = file;
-        return TaskException.Success;
+        return file;
     }
 
     protected override async Task<TaskException> ReloadImages()
     {
-        TaskException r = await SetFile();
-        if (!r.Successful())
+        StorageFile? file = await GetFile();
+        if (file is null)
         {
-            return r;
+            return TaskException.Failure;
         }
 
         return TaskException.Success;
@@ -88,7 +86,13 @@ internal class ComicPdfData : ComicData
 
     public override string GetImageCacheKey(int index)
     {
-        return ThisFile.Path + ":" + index.ToString();
+        StorageFile? file = ThisFile;
+        if (file == null)
+        {
+            return string.Empty;
+        }
+
+        return file.Path + ":" + index.ToString();
     }
 
     public override int GetImageSignature(int index)
@@ -96,15 +100,15 @@ internal class ComicPdfData : ComicData
         return FileUtils.GetFileHashCode(ThisFile);
     }
 
-    public override async Task<IComicConnection> OpenComicAsync()
+    public override async Task<IComicConnection?> OpenComicAsync()
     {
-        TaskException r = await SetFile();
-        if (!r.Successful())
+        StorageFile? file = await GetFile();
+        if (file is null)
         {
             return null;
         }
 
-        PdfManager.IPdfConnection connection = await PdfManager.OpenPdf(ThisFile.Path, null);
+        PdfManager.IPdfConnection? connection = await PdfManager.OpenPdf(file.Path, null);
         if (connection == null)
         {
             return null;
@@ -132,14 +136,14 @@ internal class ComicPdfData : ComicData
             return _connection.GetPageCount();
         }
 
-        public async Task<IRandomAccessStream> GetImageStream(int index)
+        public async Task<IRandomAccessStream?> GetImageStream(int index)
         {
-            MemoryStream memoryStream = new();
+            MemoryStream? memoryStream = new();
             try
             {
                 SizeF size = _connection.GetPageSize(index);
                 CalculatePageSize(size.Width, size.Height, out int width, out int height);
-                using Image image = await _connection.Render(index, width, height);
+                using Image? image = await _connection.Render(index, width, height);
                 if (image == null)
                 {
                     return null;

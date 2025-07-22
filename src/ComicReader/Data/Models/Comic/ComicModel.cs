@@ -3,7 +3,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
@@ -19,6 +21,8 @@ namespace ComicReader.Data.Models.Comic;
 
 internal sealed class ComicModel
 {
+    private const string TAG = nameof(ComicModel);
+
     private readonly ComicData _internalModel;
 
     private ComicModel(ComicData comicData)
@@ -34,7 +38,6 @@ internal sealed class ComicModel
     public string Description => _internalModel.Description;
     public bool Hidden => _internalModel.Hidden;
     public long Id => _internalModel.Id;
-    public bool IsDirectory => _internalModel is ComicFolderData;
     public bool IsEditable => _internalModel.IsEditable;
     public bool IsExternal => _internalModel.IsExternal;
     public double LastPosition => _internalModel.LastPosition;
@@ -142,7 +145,7 @@ internal sealed class ComicModel
     // Utilities
     //
 
-    public Task<IComicConnection> OpenComicAsync()
+    public Task<IComicConnection?> OpenComicAsync()
     {
         return _internalModel.OpenComicAsync();
     }
@@ -150,6 +153,29 @@ internal sealed class ComicModel
     public Task<TaskException> ReloadImageFiles()
     {
         return _internalModel.ReloadImageFiles();
+    }
+
+    public void ShowInFileExplorer()
+    {
+        string fileExplorerPath = _internalModel.FileExplorerPath;
+        if (string.IsNullOrEmpty(fileExplorerPath))
+        {
+            Logger.F(TAG, "ShowInFileExplorer: FileExplorerPath is null or empty.");
+            return;
+        }
+
+        if (File.Exists(fileExplorerPath))
+        {
+            Process.Start("explorer.exe", $"/select,\"{fileExplorerPath}\"");
+        }
+        else if (Directory.Exists(fileExplorerPath))
+        {
+            Process.Start("explorer.exe", $"\"{fileExplorerPath}\"");
+        }
+        else
+        {
+            Logger.F(TAG, "ShowInFileExplorer: File or folder does not exist at path: " + fileExplorerPath);
+        }
     }
 
     //

@@ -29,4 +29,6 @@ internal interface IComicItemMenuFlyoutHandler
     void OnEditClick(object sender, RoutedEventArgs e);
 
     void OnSelectClicked(object sender, RoutedEventArgs e);
+
+    void OnOpenInFileExplorerClicked(object sender, RoutedEventArgs e);
 }

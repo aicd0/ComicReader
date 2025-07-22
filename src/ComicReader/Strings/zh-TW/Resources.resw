@@ -499,7 +499,7 @@ NOT                 - 邏輯非。例如：NOT %tag = "hide this"
   <data name="None" xml:space="preserve">
     <value>無</value>
   </data>
-  <data name="OpenInFileExplorer.ToolTipService.ToolTip" xml:space="preserve">
+  <data name="OpenInFileExplorer" xml:space="preserve">
     <value>在資源管理器中開啟</value>
   </data>
   <data name="OpenInNewTab" xml:space="preserve">

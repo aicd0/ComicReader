@@ -9,7 +9,7 @@ namespace ComicReader.Common.Imaging;
 
 internal interface IImageSource
 {
-    Task<IRandomAccessStream> GetImageStream();
+    Task<IRandomAccessStream?> GetImageStream();
 
     string GetUri();
 

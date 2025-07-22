@@ -73,6 +73,7 @@ public class StringResourceProvider
     public string None => GetResourceString("None");
     public string NoRating => GetResourceString("NoRating");
     public string NoResults => GetResourceString("NoResults");
+    public string OpenInFileExplorer => GetResourceString("OpenInFileExplorer");
     public string OpenInNewTab => GetResourceString("OpenInNewTab");
     public string OpenRandomComic => GetResourceString("OpenRandomComic");
     public string PageLayoutSingle => GetResourceString("PageLayoutSingle");

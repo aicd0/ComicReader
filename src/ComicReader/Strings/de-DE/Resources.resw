@@ -499,7 +499,7 @@ Die Auswertung erfolgt in der folgenden Reihenfolge:
   <data name="None" xml:space="preserve">
     <value>Keiner</value>
   </data>
-  <data name="OpenInFileExplorer.ToolTipService.ToolTip" xml:space="preserve">
+  <data name="OpenInFileExplorer" xml:space="preserve">
     <value>Im Datei-Explorer öffnen</value>
   </data>
   <data name="OpenInNewTab" xml:space="preserve">

@@ -23,7 +23,7 @@ internal class ComicImageSource : IImageSource
         _index = index;
     }
 
-    public async Task<IRandomAccessStream> GetImageStream()
+    public async Task<IRandomAccessStream?> GetImageStream()
     {
         return await _connection.GetImageStream(_index);
     }

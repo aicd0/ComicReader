@@ -229,12 +229,11 @@
                                             Text="{x:Bind ViewModel.ComicDir, Mode=OneWay}" />
                                         <InlineUIContainer>
                                             <FontIcon
-                                                x:Uid="OpenInFileExplorer"
                                                 Margin="0,0,0,-2.5"
                                                 FontSize="13"
                                                 Glyph="&#xE838;"
                                                 Tapped="OnDirectoryTapped"
-                                                Visibility="{x:Bind ViewModel.CanDirOpenInFileExplorer, Mode=OneWay}" />
+                                                ToolTipService.ToolTip="{x:Bind StringResource.OpenInFileExplorer}" />
                                         </InlineUIContainer>
                                     </Paragraph>
                                 </RichTextBlock>

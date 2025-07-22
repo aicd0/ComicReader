@@ -500,7 +500,7 @@ NOT                  - 논리 not. 예: NOT %tag = "hide this"
   <data name="None" xml:space="preserve">
     <value>없음</value>
   </data>
-  <data name="OpenInFileExplorer.ToolTipService.ToolTip" xml:space="preserve">
+  <data name="OpenInFileExplorer" xml:space="preserve">
     <value>파일 탐색기에서 열기</value>
   </data>
   <data name="OpenInNewTab" xml:space="preserve">

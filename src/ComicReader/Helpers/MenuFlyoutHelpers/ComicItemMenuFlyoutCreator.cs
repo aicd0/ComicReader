@@ -129,6 +129,18 @@ internal static class ComicItemMenuFlyoutCreator
             item.Click += handler.OnEditClick;
             result.Add(item);
         }
+        {
+            MenuFlyoutItem item = new()
+            {
+                Text = StringResourceProvider.Instance.OpenInFileExplorer,
+                Icon = new FontIcon
+                {
+                    Glyph = "\uE838"
+                }
+            };
+            item.Click += handler.OnOpenInFileExplorerClicked;
+            result.Add(item);
+        }
         result.Add(new MenuFlyoutSeparator());
         {
             MenuFlyoutItem item = new()

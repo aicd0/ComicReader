@@ -14,9 +14,14 @@ internal class ComicCoverImageSource(ComicModel comic) : IImageSource
 {
     private readonly ComicModel _comic = comic;
 
-    public async Task<IRandomAccessStream> GetImageStream()
+    public async Task<IRandomAccessStream?> GetImageStream()
     {
-        using IComicConnection connection = await _comic.OpenComicAsync();
+        using IComicConnection? connection = await _comic.OpenComicAsync();
+        if (connection == null)
+        {
+            return null;
+        }
+
         return await connection.GetImageStream(0);
     }
 

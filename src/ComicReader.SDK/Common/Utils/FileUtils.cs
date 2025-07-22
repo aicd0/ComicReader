@@ -82,8 +82,12 @@ public static class FileUtils
         return size;
     }
 
-    public static int GetFileHashCode(StorageFile file)
+    public static int GetFileHashCode(StorageFile? file)
     {
+        if (file == null)
+        {
+            return 0;
+        }
         try
         {
             var fileInfo = new FileInfo(file.Path);

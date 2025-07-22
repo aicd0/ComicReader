@@ -347,6 +347,7 @@ internal abstract class ComicData
     }
     public bool IsExternal { get; private set; }
     public abstract bool IsEditable { get; }
+    public virtual string FileExplorerPath => Location;
 
     private ComicType ValueType => Type;
     private string ValueLocation => Location;
@@ -670,7 +671,11 @@ internal abstract class ComicData
 
         _imageUpdated = true;
 
-        using IComicConnection connection = await OpenComicAsync();
+        using IComicConnection? connection = await OpenComicAsync();
+        if (connection == null)
+        {
+            return TaskException.NoPermission;
+        }
         if (connection.GetImageCount() == 0)
         {
             return TaskException.EmptySet;
@@ -740,7 +745,7 @@ internal abstract class ComicData
 
     public abstract int GetImageSignature(int index);
 
-    public abstract Task<IComicConnection> OpenComicAsync();
+    public abstract Task<IComicConnection?> OpenComicAsync();
 
     protected abstract Task<TaskException> ReloadImages();
 

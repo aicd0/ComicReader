@@ -22,9 +22,10 @@ internal class ComicArchiveData : ComicData
     private const string TAG = "ComicArchiveData";
 
     private StorageFile Archive;
-    private List<string> Entries = new();
+    private List<string> Entries = [];
 
     public override bool IsEditable => !IsExternal;
+    public override string FileExplorerPath => ArchiveAccess.GetBasePath(Location, false);
 
     private ComicArchiveData(bool is_external) :
         base(ComicType.Archive, is_external)
