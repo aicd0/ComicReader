@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using ComicReader.Common;
+using ComicReader.Common.Lifecycle;
 using ComicReader.Data.Tables;
 using ComicReader.SDK.Common.AutoProperty;
 using ComicReader.SDK.Common.DebugTools;
@@ -30,6 +31,12 @@ internal abstract class ComicData
     //
     // Static Variables
     //
+
+    private static readonly MutableLiveData<bool> _libraryUpdated = new(false);
+    public static LiveData<bool> LibraryUpdated => _libraryUpdated;
+
+    private static readonly MutableLiveData<bool> _isScanningLibrary = new(false);
+    public static LiveData<bool> IsScanningLibrary => _isScanningLibrary;
 
     private static string? _defaultTagsString = null;
     private static string DefaultTagsString
@@ -361,10 +368,6 @@ internal abstract class ComicData
     private string ValueCoverCacheKey => CoverCacheKey;
     private string ValueDescription => Description;
     private string ValueExt => JsonSerializer.Serialize(_ext);
-
-    public static Action? OnUpdated { get; set; }
-
-    public static bool IsRescanning { get; private set; } = false;
 
     //
     // Constructor
@@ -728,17 +731,17 @@ internal abstract class ComicData
                 return;
             }
 
-            IsRescanning = true;
+            _isScanningLibrary.Emit(true);
             try
             {
                 UpdateAllComicsInternal(skipExistingLocation).Wait();
             }
             finally
             {
-                IsRescanning = false;
+                _isScanningLibrary.Emit(false);
             }
 
-            OnUpdated?.Invoke();
+            _libraryUpdated.Emit(true);
         });
     }
 
@@ -1005,7 +1008,7 @@ internal abstract class ComicData
 
                 if (watch.LapSpan().TotalSeconds > 2)
                 {
-                    OnUpdated?.Invoke();
+                    _libraryUpdated.Emit(true);
                     watch.Lap();
                 }
             }

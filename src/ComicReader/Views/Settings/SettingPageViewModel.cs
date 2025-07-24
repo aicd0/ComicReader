@@ -23,6 +23,8 @@ using ComicReader.SDK.Common.Threading;
 using ComicReader.SDK.Common.Utils;
 using ComicReader.SDK.Data.SqlHelpers;
 
+using Microsoft.UI.Xaml;
+
 using Windows.Globalization;
 
 namespace ComicReader.Views.Settings;
@@ -280,14 +282,20 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
         _dispatcher.Submit($"{TAG}#Initialize", InitializeInternal);
     }
 
-    public void OnPageResume()
+    public void OnPageResume(FrameworkElement owner)
     {
-        ComicData.OnUpdated += OnComicDataUpdated;
-    }
+        ComicData.LibraryUpdated.Observe(owner, (_) =>
+        {
+            _dispatcher.Submit($"{TAG}#UpdateStatistis", () =>
+            {
+                UpdateStatistis();
+            });
+        });
 
-    public void OnPagePause()
-    {
-        ComicData.OnUpdated -= OnComicDataUpdated;
+        ComicData.IsScanningLibrary.ObserveSticky(owner, (bool isScanning) =>
+        {
+            IsRescanning = isScanning;
+        });
     }
 
     public void SetRemoveUnreachableComics(bool removeUnreachableComics)
@@ -369,7 +377,6 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
         UpdateLanguage(model);
         UpdateStatistis();
         UpdateCacheSize();
-        UpdateScanningStatus();
         UpdateOtherSettings();
     }
 
@@ -554,30 +561,12 @@ public partial class SettingPageViewModel : INotifyPropertyChanged
         });
     }
 
-    private void UpdateScanningStatus()
-    {
-        MainThreadUtils.RunInMainThread(() =>
-        {
-            IsRescanning = ComicData.IsRescanning;
-        });
-    }
-
     public void UpdateOtherSettings()
     {
         MainThreadUtils.RunInMainThread(() =>
         {
             DebugMode = DebugUtils.DebugMode;
         });
-    }
-
-    //
-    // Event handlers
-    //
-
-    private void OnComicDataUpdated()
-    {
-        UpdateScanningStatus();
-        UpdateStatistis();
     }
 
     //
