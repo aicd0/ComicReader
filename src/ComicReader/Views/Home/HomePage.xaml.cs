@@ -563,6 +563,19 @@ internal sealed partial class HomePage : BasePage
         GetMainPageAbility().OpenInCurrentTab(route);
     }
 
+    private void OpenRandomComicInNewTabButton_Click(object sender, RoutedEventArgs e)
+    {
+        ComicModel? comic = ViewModel.GetRandomComic();
+        if (comic == null)
+        {
+            return;
+        }
+
+        Route route = Route.Create(RouterConstants.SCHEME_APP + RouterConstants.HOST_READER)
+            .WithParam(RouterConstants.ARG_COMIC_ID, comic.Id.ToString());
+        GetMainPageAbility().OpenInNewTab(route);
+    }
+
     //
     // Helper Class
     //
