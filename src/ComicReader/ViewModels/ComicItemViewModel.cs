@@ -44,23 +44,21 @@ internal class ComicItemViewModel
         CompletionState = comic.CompletionState;
     }
 
-    public ComicItemViewModel(ComicItemViewModel source)
-    {
-        Comic = source.Comic;
-        Title = source.Title;
-        Detail = source.Detail;
-        Rating = source.Rating;
-        Progress = source.Progress;
-        IsFavorite = source.IsFavorite;
-        IsHide = source.IsHide;
-        CompletionState = source.CompletionState;
-        _image.Image = source._image.Image;
-        _image.ImageRequested = source._image.ImageRequested;
-    }
-
     //
     // Utilities
     //
+
+    public ComicItemViewModel Clone()
+    {
+        var model = new ComicItemViewModel(Comic)
+        {
+            Detail = Detail,
+            Progress = Progress
+        };
+        model._image.Image = _image.Image;
+        model._image.ImageRequested = _image.ImageRequested;
+        return model;
+    }
 
     public void UpdateProgress(bool compat)
     {

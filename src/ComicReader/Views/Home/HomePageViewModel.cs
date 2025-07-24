@@ -586,6 +586,22 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
         UpdateCollapseExpandGroupButtonStates();
     }
 
+    /// <summary>
+    /// Notifies that the specified collection of comic items has changed.
+    /// </summary>
+    /// <remarks>This method submits a notification task to the shared dispatcher, which processes the changes
+    /// asynchronously. Ensure that the <paramref name="items"/> collection is not null before calling this
+    /// method.</remarks>
+    /// <param name="items">The collection of <see cref="ComicItemViewModel"/> instances that have changed.</param>
+    public void NotifyItemsChanged(IEnumerable<ComicItemViewModel> items)
+    {
+        items = [.. items];
+        _sharedDispatcher.Submit("NotifyItemsChanged", delegate
+        {
+            ModifyExistingItems(items, (item) => { });
+        });
+    }
+
     private void OnComicSearchResult(IReadOnlyList<ComicModel> items)
     {
         _sharedDispatcher.Submit("OnComicSearchResult", delegate
@@ -707,7 +723,7 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
         Dictionary<ComicModel, ComicItemViewModel> changedItems = [];
         foreach (ComicItemViewModel item in items)
         {
-            ComicItemViewModel newItem = new(item);
+            ComicItemViewModel newItem = item.Clone();
             action(newItem);
             changedItems[item.Comic] = newItem;
         }
@@ -989,13 +1005,10 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
 
         await MainThreadUtils.RunInMainThread(delegate
         {
+            bool ComicComparer(ComicItemViewModel x, ComicItemViewModel y) => x.Comic.Id == y.Comic.Id;
+
             LibraryEmptyVisible = isEmpty;
 
-            Func<ComicItemViewModel, ComicItemViewModel, bool> comparer = (ComicItemViewModel x, ComicItemViewModel y) =>
-                x.Comic.Title == y.Comic.Title &&
-                x.Rating == y.Rating &&
-                x.Progress == y.Progress &&
-                x.IsFavorite == y.IsFavorite;
             if (comicsGrouped != null)
             {
                 Dictionary<string, ComicGroupViewModel> groupMap = [];
@@ -1007,7 +1020,7 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
                 {
                     if (groupMap.TryGetValue(item.GroupName, out ComicGroupViewModel? group))
                     {
-                        item.UpdateItems(group.Items, comparer);
+                        item.UpdateItems(group.Items, ComicComparer);
                     }
                 }
                 DiffUtils.UpdateCollection(GroupedComicItems, comicsGrouped, (ComicGroupViewModel x, ComicGroupViewModel y) => x.GroupName == y.GroupName && x.Description == y.Description);
@@ -1015,7 +1028,7 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
             }
             else if (comicsUngrouped != null)
             {
-                DiffUtils.UpdateCollection(UngroupedComicItems, comicsUngrouped, comparer);
+                DiffUtils.UpdateCollection(UngroupedComicItems, comicsUngrouped, ComicComparer);
                 GroupingEnabledLiveData.Emit(false);
             }
 
