@@ -49,15 +49,9 @@
 
                         <Grid.ContextFlyout>
                             <MenuFlyout>
-                                <MenuFlyoutItem
-                                    Click="OnOpenInNewTabClicked"
-                                    Icon="Document"
-                                    Text="{x:Bind StringResource.OpenInNewTab}" />
+                                <MenuFlyoutItem Click="OnOpenInNewTabClicked" Text="{x:Bind StringResource.OpenInNewTab}" />
                                 <MenuFlyoutSeparator />
-                                <MenuFlyoutItem
-                                    Click="OnDeleteItemClicked"
-                                    Icon="Delete"
-                                    Text="{x:Bind StringResource.Delete}" />
+                                <MenuFlyoutItem Click="OnDeleteItemClicked" Text="{x:Bind StringResource.Delete}" />
                             </MenuFlyout>
                         </Grid.ContextFlyout>
 
