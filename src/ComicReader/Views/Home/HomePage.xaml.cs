@@ -518,8 +518,9 @@ internal sealed partial class HomePage : BasePage
             {
                 return;
             }
+
             AppSettingsModel.Instance.AddComicFolder(folder.Path);
-            ComicModel.UpdateAllComics("HomePage#AddNewFolder", lazy: true);
+            ComicModel.UpdateAllComics("HomePage#AddNewFolder", skipExistingLocation: true);
         });
     }
 
@@ -530,7 +531,7 @@ internal sealed partial class HomePage : BasePage
 
     private void RefreshHyperlink_Click(Microsoft.UI.Xaml.Documents.Hyperlink sender, Microsoft.UI.Xaml.Documents.HyperlinkClickEventArgs args)
     {
-        ComicModel.UpdateAllComics("RefreshPage", lazy: true);
+        ComicModel.UpdateAllComics("RefreshPage");
     }
 
     //

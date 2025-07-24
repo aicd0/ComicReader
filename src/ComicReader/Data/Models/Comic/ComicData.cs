@@ -716,26 +716,27 @@ internal abstract class ComicData
         }, taskName);
     }
 
-    public static void UpdateAllComics(string reason, bool lazy)
+    public static void UpdateAllComics(string reason, bool skipExistingLocation)
     {
         int pendingCount = Interlocked.Increment(ref _pendingUpdateTaskCount);
-        Log($"UpdateAllComics#Enqueue(pending={pendingCount},reason={reason},lazy={lazy})");
-
+        Log($"UpdateAllComics#Enqueue(reason={reason},skipExistingLocation={skipExistingLocation})");
         TaskDispatcher.LongRunningThreadPool.Submit($"{TAG}#UpdateAllComics", delegate
         {
             int pendingCount = Interlocked.Decrement(ref _pendingUpdateTaskCount);
             if (pendingCount > 0)
             {
-                Log($"UpdateAllComics#Skip(pending={pendingCount})");
                 return;
             }
 
-            long session = Random.Shared.NextInt64();
-            Log($"UpdateAllComics#Start(session={session},lazy={lazy})");
             IsRescanning = true;
-            TaskException result = UpdateAllComicsInternal(lazy).Result;
-            IsRescanning = false;
-            Log($"UpdateAllComics#End(result={result},session={session})");
+            try
+            {
+                UpdateAllComicsInternal(skipExistingLocation).Wait();
+            }
+            finally
+            {
+                IsRescanning = false;
+            }
 
             OnUpdated?.Invoke();
         });
@@ -862,7 +863,7 @@ internal abstract class ComicData
             .Execute(SqlDatabaseManager.MainDatabase);
     }
 
-    private static async Task<TaskException> UpdateAllComicsInternal(bool lazy)
+    private static async Task<TaskException> UpdateAllComicsInternal(bool skipExistingLocation)
     {
         AppSettingsModel.ExternalModel appSettings = AppSettingsModel.Instance.GetModel();
 
@@ -975,7 +976,7 @@ internal abstract class ComicData
                     });
                 }
 
-                if (!lazy)
+                if (!skipExistingLocation)
                 {
                     var locKept = C3<string, string, string>.Intersect(
                         locScanned, locExist,

@@ -52,7 +52,7 @@ public sealed partial class ChooseLocationsDialog : BaseContentDialog
 
     private void ContentDialogPrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
     {
-        ComicModel.UpdateAllComics("ContentDialogPrimaryButtonClick", lazy: true);
+        ComicModel.UpdateAllComics("ContentDialogPrimaryButtonClick", skipExistingLocation: true);
     }
 
     private void ListViewLoaded(object sender, RoutedEventArgs e)

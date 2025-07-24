@@ -309,9 +309,9 @@ internal sealed class ComicModel
     // Utilities
     //
 
-    public static void UpdateAllComics(string reason, bool lazy)
+    public static void UpdateAllComics(string reason, bool skipExistingLocation = false)
     {
-        ComicData.UpdateAllComics(reason, lazy);
+        ComicData.UpdateAllComics(reason, skipExistingLocation);
     }
 
     public static async Task<List<string>> GetAllTagCategories()
