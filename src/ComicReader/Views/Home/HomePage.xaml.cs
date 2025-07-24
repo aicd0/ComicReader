@@ -497,13 +497,14 @@ internal sealed partial class HomePage : BasePage
 
     private void OnEditComicInfoClick(ComicItemViewModel item)
     {
-        List<ComicModel> selection = ViewModel.GetSelection(item).ConvertAll(x => x.Comic);
+        List<ComicItemViewModel> selection = ViewModel.GetSelection(item);
         C0.Run(async () =>
         {
-            var dialog = new EditComicInfoDialog(selection);
+            var dialog = new EditComicInfoDialog(selection.ConvertAll(x => x.Comic));
             ContentDialogResult result = await dialog.ShowAsync(XamlRoot);
             if (result == ContentDialogResult.Primary)
             {
+                ViewModel.NotifyItemsChanged(selection);
                 ViewModel.UpdateLibrary();
                 ViewModel.UpdateFilters();
             }

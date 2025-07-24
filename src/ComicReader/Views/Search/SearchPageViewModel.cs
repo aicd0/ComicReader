@@ -431,7 +431,7 @@ internal partial class SearchPageViewModel : INotifyPropertyChanged
         Dictionary<ComicModel, ComicItemViewModel> changedItems = [];
         foreach (ComicItemViewModel item in items)
         {
-            ComicItemViewModel newItem = new(item);
+            ComicItemViewModel newItem = item.Clone();
             action(newItem);
             changedItems[item.Comic] = newItem;
         }
