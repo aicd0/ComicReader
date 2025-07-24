@@ -45,13 +45,7 @@ internal sealed partial class SettingPage : BasePage
     protected override void OnResume()
     {
         base.OnResume();
-        ViewModel.OnPageResume();
-    }
-
-    protected override void OnPause()
-    {
-        base.OnPause();
-        ViewModel.OnPagePause();
+        ViewModel.OnPageResume(this);
     }
 
     //

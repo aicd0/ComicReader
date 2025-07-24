@@ -62,19 +62,14 @@ internal sealed partial class HomePage : BasePage
     protected override void OnResume()
     {
         base.OnResume();
-        ComicData.OnUpdated += OnComicDataUpdated;
         ObserveData();
-    }
-
-    protected override void OnPause()
-    {
-        base.OnPause();
-        ComicData.OnUpdated -= OnComicDataUpdated;
+        ViewModel.UpdateLibrary();
     }
 
     private void ObserveData()
     {
         ViewModel.FilterLiveData.ObserveSticky(this, UpdateFilters);
+
         ViewModel.GroupingEnabledLiveData.ObserveSticky(this, delegate (bool grouped)
         {
             if (_usingGroupSource == grouped)
@@ -99,6 +94,7 @@ internal sealed partial class HomePage : BasePage
                 });
             }
         });
+
         ViewModel.ViewTypeLiveData.ObserveSticky(this, delegate (ComicFilterModel.ViewTypeEnum type)
         {
             if (_viewType == type)
@@ -125,8 +121,18 @@ internal sealed partial class HomePage : BasePage
                     break;
             }
         });
+
         GetNavigationPageAbility().RegisterSearchTextChangeHandler(this, ViewModel.SetSearchText);
-        GetNavigationPageAbility().RegisterRefreshHandler(this, ViewModel.UpdateLibrary);
+
+        GetNavigationPageAbility().RegisterRefreshHandler(this, () =>
+        {
+            ComicModel.UpdateAllComics("HomePage#RefreshPage");
+        });
+
+        ComicData.LibraryUpdated.Observe(this, (_) =>
+        {
+            ViewModel.UpdateLibrary();
+        });
     }
 
     //
@@ -434,11 +440,6 @@ internal sealed partial class HomePage : BasePage
     private INavigationPageAbility GetNavigationPageAbility()
     {
         return GetAbility<INavigationPageAbility>()!;
-    }
-
-    private void OnComicDataUpdated()
-    {
-        ViewModel.UpdateLibrary();
     }
 
     //
