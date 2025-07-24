@@ -70,7 +70,7 @@ internal class InitTaskManager(Application application)
         DatabaseUpgradeManager.Instance.UpgradeDatabase();
 
         // Update comic library
-        ComicModel.UpdateAllComics("DatabaseManager#init", lazy: true);
+        ComicModel.UpdateAllComics("DatabaseManager#init");
     }
 
     private void InitializeAppTheme()

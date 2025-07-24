@@ -138,7 +138,7 @@ internal sealed partial class SettingPage : BasePage
     private void OnRescanFilesClicked(object sender, RoutedEventArgs e)
     {
         ViewModel.IsRescanning = true;
-        ComicModel.UpdateAllComics("OnRescanFilesClicked", lazy: false);
+        ComicModel.UpdateAllComics("OnRescanFilesClicked");
     }
 
     private void OnClearCacheClick(object sender, RoutedEventArgs e)
