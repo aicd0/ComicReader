@@ -319,6 +319,11 @@
                         Click="OpenRandomComicButton_Click"
                         IsEnabled="{x:Bind ViewModel.LibraryEmptyVisible, Mode=OneWay, Converter={StaticResource BooleanNegationConverter}}"
                         ToolTipService.ToolTip="{x:Bind StringResource.OpenRandomComic}">
+                        <Button.ContextFlyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem Click="OpenRandomComicInNewTabButton_Click" Text="{x:Bind StringResource.OpenInNewTab}" />
+                            </MenuFlyout>
+                        </Button.ContextFlyout>
                         <FontIcon FontSize="16" Glyph="&#xE8B1;" />
                     </Button>
                     <Button

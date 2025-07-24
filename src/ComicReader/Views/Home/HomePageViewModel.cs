@@ -532,8 +532,8 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
             {
                 return null;
             }
-            Random random = new();
-            int index = random.Next(_comicItems.Count);
+
+            int index = Random.Shared.Next(_comicItems.Count);
             return _comicItems[index].Comic;
         }
         finally
