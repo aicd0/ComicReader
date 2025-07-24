@@ -98,7 +98,7 @@ internal static class ComicItemMenuFlyoutCreator
                 Text = StringResourceProvider.Instance.Hide,
                 Icon = new FontIcon
                 {
-                    Glyph = "\uE8FF"
+                    Glyph = "\uED1A"
                 }
             };
             item.Click += handler.OnHideClicked;

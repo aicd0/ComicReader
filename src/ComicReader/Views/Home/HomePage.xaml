@@ -207,7 +207,7 @@
                     <AppBarButton
                         Click="CommandBarMarkAsUnreadClicked"
                         IsEnabled="{x:Bind ViewModel.IsCommandBarMarkAsUnreadEnabled, Mode=OneWay}"
-                        Label="{x:Bind StringResource.MarkAsUnread}">
+                        Label="{x:Bind StringResource.Unread}">
                         <AppBarButton.Icon>
                             <FontIcon Glyph="&#xEA3A;" />
                         </AppBarButton.Icon>
@@ -215,7 +215,7 @@
                     <AppBarButton
                         Click="CommandBarMarkAsReadingClicked"
                         IsEnabled="{x:Bind ViewModel.IsCommandBarMarkAsReadingEnabled, Mode=OneWay}"
-                        Label="{x:Bind StringResource.MarkAsReading}">
+                        Label="{x:Bind StringResource.Reading}">
                         <AppBarButton.Icon>
                             <FontIcon Glyph="&#xED5A;" />
                         </AppBarButton.Icon>
@@ -223,7 +223,7 @@
                     <AppBarButton
                         Click="CommandBarMarkAsReadClicked"
                         IsEnabled="{x:Bind ViewModel.IsCommandBarMarkAsReadEnabled, Mode=OneWay}"
-                        Label="{x:Bind StringResource.MarkAsRead}">
+                        Label="{x:Bind StringResource.Finished}">
                         <AppBarButton.Icon>
                             <FontIcon Glyph="&#xE8FB;" />
                         </AppBarButton.Icon>
@@ -233,7 +233,7 @@
                         IsEnabled="{x:Bind ViewModel.IsCommandBarHideEnabled, Mode=OneWay}"
                         Label="{x:Bind StringResource.Hide}">
                         <AppBarButton.Icon>
-                            <FontIcon Glyph="&#xE8FF;" />
+                            <FontIcon Glyph="&#xED1A;" />
                         </AppBarButton.Icon>
                     </AppBarButton>
                     <AppBarButton
@@ -316,24 +316,28 @@
                         Width="32"
                         Padding="0"
                         VerticalAlignment="Stretch"
-                        Click="CollapseExpandGroupButton_Click">
-                        <FontIcon FontSize="16" Glyph="&#xE712;" />
-                        <Button.Flyout>
-                            <MenuFlyout Placement="BottomEdgeAlignedRight">
-                                <MenuFlyoutItem
-                                    Click="CollapseAllButton_Click"
-                                    IsEnabled="{x:Bind ViewModel.IsCollapseAllEnabled, Mode=OneWay}"
-                                    Text="{x:Bind StringResource.CollapseAll}" />
-                                <MenuFlyoutItem
-                                    Click="ExpandAllButton_Click"
-                                    IsEnabled="{x:Bind ViewModel.IsExpandAllEnabled, Mode=OneWay}"
-                                    Text="{x:Bind StringResource.ExpandAll}" />
-                                <MenuFlyoutItem
-                                    Click="OpenRandomComicButton_Click"
-                                    IsEnabled="{x:Bind ViewModel.LibraryEmptyVisible, Mode=OneWay, Converter={StaticResource BooleanNegationConverter}}"
-                                    Text="{x:Bind StringResource.OpenRandomComic}" />
-                            </MenuFlyout>
-                        </Button.Flyout>
+                        Click="OpenRandomComicButton_Click"
+                        IsEnabled="{x:Bind ViewModel.LibraryEmptyVisible, Mode=OneWay, Converter={StaticResource BooleanNegationConverter}}"
+                        ToolTipService.ToolTip="{x:Bind StringResource.OpenRandomComic}">
+                        <FontIcon FontSize="16" Glyph="&#xE8B1;" />
+                    </Button>
+                    <Button
+                        Width="32"
+                        Padding="0"
+                        VerticalAlignment="Stretch"
+                        Click="CollapseAllButton_Click"
+                        IsEnabled="{x:Bind ViewModel.IsCollapseAllEnabled, Mode=OneWay}"
+                        ToolTipService.ToolTip="{x:Bind StringResource.CollapseAll}">
+                        <FontIcon FontSize="16" Glyph="&#xF165;" />
+                    </Button>
+                    <Button
+                        Width="32"
+                        Padding="0"
+                        VerticalAlignment="Stretch"
+                        Click="ExpandAllButton_Click"
+                        IsEnabled="{x:Bind ViewModel.IsExpandAllEnabled, Mode=OneWay}"
+                        ToolTipService.ToolTip="{x:Bind StringResource.ExpandAll}">
+                        <FontIcon FontSize="16" Glyph="&#xECCD;" />
                     </Button>
                 </StackPanel>
             </Grid>
