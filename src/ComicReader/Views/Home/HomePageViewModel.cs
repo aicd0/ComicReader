@@ -1016,14 +1016,17 @@ internal partial class HomePageViewModel : INotifyPropertyChanged
                 {
                     groupMap[item.GroupName] = item;
                 }
+
                 foreach (ComicGroupViewModel item in GroupedComicItems)
                 {
                     if (groupMap.TryGetValue(item.GroupName, out ComicGroupViewModel? group))
                     {
+                        item.Description = group.Description;
                         item.UpdateItems(group.Items, ComicComparer);
                     }
                 }
-                DiffUtils.UpdateCollection(GroupedComicItems, comicsGrouped, (ComicGroupViewModel x, ComicGroupViewModel y) => x.GroupName == y.GroupName && x.Description == y.Description);
+
+                DiffUtils.UpdateCollection(GroupedComicItems, comicsGrouped, (x, y) => x.GroupName == y.GroupName);
                 GroupingEnabledLiveData.Emit(true);
             }
             else if (comicsUngrouped != null)
